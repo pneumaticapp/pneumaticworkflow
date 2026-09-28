@@ -44,16 +44,6 @@ class SignUpMixin:
     # source switches the account log on, and no view had it.
     audit_source = None
 
-    def _get_request(self) -> Optional[HttpRequest]:
-
-        """ The request being handled, when there is one.
-
-            A view has it as an attribute; a service that mixes this
-            in has none, and then the events fall back to the context
-            the middleware published. """
-
-        return getattr(self, 'request', None)
-
     def after_signup(self, user: UserModel):
         """Create signup log and send notification if enabled"""
         if user.account.log_api_requests and self.source:
@@ -84,7 +74,7 @@ class SignUpMixin:
         password: Optional[str] = None,
     ) -> UserModel:
 
-        request = self._get_request()
+        request = getattr(self, 'request', None)
         is_superuser = getattr(request, 'is_superuser', False)
         user_service = UserService(
             is_superuser=is_superuser,
@@ -133,7 +123,7 @@ class SignUpMixin:
         ms_graph_user_id: Optional[str] = None,
     ) -> Tuple[UserModel, PneumaticToken]:
 
-        request = request or self._get_request()
+        request = request or self.request
         is_superuser = getattr(request, 'is_superuser', False)  # for Admin
         account_service = AccountService(
             is_superuser=is_superuser,
@@ -199,25 +189,6 @@ class SignUpMixin:
                     user_ip=request.META.get('HTTP_X_REAL_IP'),
                 )
         return account_owner, token
-
-
-class LoginEventMixin:
-
-    """ The sign in event of a login view: which provider signed
-        somebody in. Every view that mixes this in names its
-        audit_source.
-
-        The SSO providers built on BaseSSOService journal the login in
-        the service instead, where the new and the returning person
-        are told apart without the view having to ask. """
-
-    audit_source = None
-
-    def emit_login(self, user: UserModel, request) -> None:
-        AuditEventService.user_logged_in(
-            user=user,
-            source=self.audit_source,
-        )
 
 
 class SSORestrictionMixin:

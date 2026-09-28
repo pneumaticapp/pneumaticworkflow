@@ -1,15 +1,9 @@
 import pytest
 
-from src.accounts.enums import UserType
 from src.accounts.messages import MSG_A_0004
 from src.accounts.services.exceptions import ReassignUserSameUser
 from src.accounts.services.reassign import ReassignService
 from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import (
-    EventObjectType,
-    UserEvents,
-)
-from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_group,
@@ -21,10 +15,9 @@ from src.utils.validation import ErrorCode
 pytestmark = pytest.mark.django_db
 
 
-def test_reassign__user_to_user__emit_user_reassign(
+def test_reassign__user_to_user__audit_user_reassigned(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -47,11 +40,10 @@ def test_reassign__user_to_user__emit_user_reassign(
         ReassignService,
         attribute='reassign_everywhere',
     )
-    api_client.token_authenticate(
-        owner,
-        user_agent='Chrome/141',
-        user_ip='10.10.0.11',
+    user_reassigned_mock = mocker.patch(
+        'src.accounts.views.users.AuditEventService.user_reassigned',
     )
+    api_client.token_authenticate(owner)
 
     # act
     response = api_client.post(
@@ -62,29 +54,12 @@ def test_reassign__user_to_user__emit_user_reassign(
 
     # assert
     assert response.status_code == 204
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.REASSIGN
-    assert event.category == UserEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=owner.id,
-        email=owner.email,
-        user_type=UserType.USER,
+    user_reassigned_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        old_user=old_user,
+        new_user=new_user,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.USER,
-        id=old_user.id,
-    )
-    assert event.payload == {
-        'old_user_id': old_user.id,
-        'old_group_id': None,
-        'new_user_id': new_user.id,
-        'new_group_id': None,
-    }
-    assert event.ip == '10.10.0.11'
-    assert event.user_agent == 'Chrome/141'
     reassign_service_init_mock.assert_called_once_with(
         is_superuser=False,
         auth_type=AuthTokenType.USER,
@@ -95,10 +70,9 @@ def test_reassign__user_to_user__emit_user_reassign(
     reassign_everywhere_mock.assert_called_once_with()
 
 
-def test_reassign__group_to_group__emit_group_object(
+def test_reassign__group_to_group__audit_user_reassigned(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -121,6 +95,9 @@ def test_reassign__group_to_group__emit_group_object(
         ReassignService,
         attribute='reassign_everywhere',
     )
+    user_reassigned_mock = mocker.patch(
+        'src.accounts.views.users.AuditEventService.user_reassigned',
+    )
     api_client.token_authenticate(owner)
 
     # act
@@ -132,27 +109,12 @@ def test_reassign__group_to_group__emit_group_object(
 
     # assert
     assert response.status_code == 204
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.REASSIGN
-    assert event.category == UserEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=owner.id,
-        email=owner.email,
-        user_type=UserType.USER,
+    user_reassigned_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        old_group=old_group,
+        new_group=new_group,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.GROUP,
-        id=old_group.id,
-    )
-    assert event.payload == {
-        'old_user_id': None,
-        'old_group_id': old_group.id,
-        'new_user_id': None,
-        'new_group_id': new_group.id,
-    }
     reassign_service_init_mock.assert_called_once_with(
         is_superuser=False,
         auth_type=AuthTokenType.USER,
@@ -163,10 +125,9 @@ def test_reassign__group_to_group__emit_group_object(
     reassign_everywhere_mock.assert_called_once_with()
 
 
-def test_reassign__user_to_group__emit_user_object(
+def test_reassign__user_to_group__audit_user_reassigned(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -183,6 +144,9 @@ def test_reassign__user_to_group__emit_user_object(
         ReassignService,
         attribute='reassign_everywhere',
     )
+    user_reassigned_mock = mocker.patch(
+        'src.accounts.views.users.AuditEventService.user_reassigned',
+    )
     api_client.token_authenticate(owner)
 
     # act
@@ -194,27 +158,12 @@ def test_reassign__user_to_group__emit_user_object(
 
     # assert
     assert response.status_code == 204
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.REASSIGN
-    assert event.category == UserEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=owner.id,
-        email=owner.email,
-        user_type=UserType.USER,
+    user_reassigned_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        old_user=old_user,
+        new_group=new_group,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.USER,
-        id=old_user.id,
-    )
-    assert event.payload == {
-        'old_user_id': old_user.id,
-        'old_group_id': None,
-        'new_user_id': None,
-        'new_group_id': new_group.id,
-    }
     reassign_service_init_mock.assert_called_once_with(
         is_superuser=False,
         auth_type=AuthTokenType.USER,
@@ -225,10 +174,9 @@ def test_reassign__user_to_group__emit_user_object(
     reassign_everywhere_mock.assert_called_once_with()
 
 
-def test_reassign__service_exception__no_event(
+def test_reassign__service_exception__audit_not_called(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -252,6 +200,9 @@ def test_reassign__service_exception__no_event(
         attribute='reassign_everywhere',
         side_effect=ReassignUserSameUser(),
     )
+    user_reassigned_mock = mocker.patch(
+        'src.accounts.views.users.AuditEventService.user_reassigned',
+    )
     api_client.token_authenticate(owner)
 
     # act
@@ -266,7 +217,7 @@ def test_reassign__service_exception__no_event(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == MSG_A_0004
     assert response.data['details'] == {}
-    assert fake_stream.events == []
+    user_reassigned_mock.assert_not_called()
     reassign_service_init_mock.assert_called_once_with(
         is_superuser=False,
         auth_type=AuthTokenType.USER,
@@ -277,10 +228,9 @@ def test_reassign__service_exception__no_event(
     reassign_everywhere_mock.assert_called_once_with()
 
 
-def test_reassign__invalid_old_user__no_event(
+def test_reassign__invalid_old_user__audit_not_called(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -295,6 +245,9 @@ def test_reassign__invalid_old_user__no_event(
     reassign_everywhere_mock = mocker.patch.object(
         ReassignService,
         attribute='reassign_everywhere',
+    )
+    user_reassigned_mock = mocker.patch(
+        'src.accounts.views.users.AuditEventService.user_reassigned',
     )
     api_client.token_authenticate(owner)
 
@@ -312,6 +265,6 @@ def test_reassign__invalid_old_user__no_event(
     assert response.data['message'] == message
     assert response.data['details']['name'] == 'old_user'
     assert response.data['details']['reason'] == message
-    assert fake_stream.events == []
+    user_reassigned_mock.assert_not_called()
     reassign_service_init_mock.assert_not_called()
     reassign_everywhere_mock.assert_not_called()

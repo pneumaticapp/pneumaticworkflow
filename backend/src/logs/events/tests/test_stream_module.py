@@ -6,10 +6,12 @@ from src.logs.events.stream import (
 
 def test_get_stream__settings__configured_client(settings):
 
+    """ The key and the group are constants of the code: the file
+        service writes into the same key. The length comes from the
+        settings, which read it from .env as a number. """
+
     # arrange
     settings.LOGS_REDIS_URL = 'redis://localhost:6379/4'
-    settings.LOGS_STREAM_KEY = 'pneumatic:events-unit'
-    settings.LOGS_CONSUMER_GROUP = 'otlp'
     settings.LOGS_STREAM_MAXLEN = 10
 
     # act
@@ -17,10 +19,10 @@ def test_get_stream__settings__configured_client(settings):
 
     # assert
     assert stream.url == 'redis://localhost:6379/4'
-    assert stream.key == 'pneumatic:events-unit'
+    assert stream.key == 'pneumatic:events'
     assert stream.group == 'otlp'
     assert stream.maxlen == 10
-    assert stream.dead_key == 'pneumatic:events-unit:dead'
+    assert stream.dead_key == 'pneumatic:events:dead'
 
 
 def test_get_stream__called_twice__same_client(settings):
@@ -30,8 +32,6 @@ def test_get_stream__called_twice__same_client(settings):
 
     # arrange
     settings.LOGS_REDIS_URL = 'redis://localhost:6379/4'
-    settings.LOGS_STREAM_KEY = 'pneumatic:events-unit'
-    settings.LOGS_CONSUMER_GROUP = 'otlp'
     settings.LOGS_STREAM_MAXLEN = 10
     first = get_stream()
 
@@ -46,8 +46,6 @@ def test_get_stream__changed_settings__new_client(settings):
 
     # arrange
     settings.LOGS_REDIS_URL = 'redis://localhost:6379/4'
-    settings.LOGS_STREAM_KEY = 'pneumatic:events-unit'
-    settings.LOGS_CONSUMER_GROUP = 'otlp'
     settings.LOGS_STREAM_MAXLEN = 10
     first = get_stream()
     settings.LOGS_REDIS_URL = 'redis://localhost:6379/5'
@@ -58,6 +56,22 @@ def test_get_stream__changed_settings__new_client(settings):
     # assert
     assert second is not first
     assert second.url == 'redis://localhost:6379/5'
+
+
+def test_get_stream__changed_maxlen__new_client(settings):
+
+    # arrange
+    settings.LOGS_REDIS_URL = 'redis://localhost:6379/4'
+    settings.LOGS_STREAM_MAXLEN = 10
+    first = get_stream()
+    settings.LOGS_STREAM_MAXLEN = 20
+
+    # act
+    second = get_stream()
+
+    # assert
+    assert second is not first
+    assert second.maxlen == 20
 
 
 def test_consumer_name__process__host_name_only(mocker):

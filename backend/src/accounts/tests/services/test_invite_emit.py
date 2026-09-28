@@ -1,23 +1,16 @@
 import pytest
 
-from src.accounts.enums import (
-    BillingPlanType,
-    SourceType,
-    UserStatus,
-    UserType,
-)
+from src.accounts import messages
+from src.accounts.enums import BillingPlanType, SourceType, UserStatus
 from src.accounts.models import UserInvite
+from src.accounts.services.account import AccountService
 from src.accounts.services.exceptions import (
     AlreadyAcceptedInviteException,
+    AlreadyRegisteredException,
     UsersLimitInvitesException,
 )
 from src.accounts.services.user_invite import UserInviteService
 from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import (
-    EventObjectType,
-    UserEvents,
-)
-from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
@@ -28,10 +21,7 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-def test_invite_user__new_person__emit_invite_create(
-    mocker,
-    fake_stream,
-):
+def test_invite_user__new_person__audit_invite_created(mocker):
 
     # arrange
     account = create_test_account()
@@ -43,6 +33,9 @@ def test_invite_user__new_person__emit_invite_create(
     user_invite_actions_mock = mocker.patch.object(
         UserInviteService,
         attribute='_user_invite_actions',
+    )
+    invite_created_mock = mocker.patch(
+        'src.accounts.services.user_invite.AuditEventService.invite_created',
     )
     service = UserInviteService(request_user=owner)
 
@@ -54,31 +47,17 @@ def test_invite_user__new_person__emit_invite_create(
 
     # assert
     invite = UserInvite.objects.get(email='invited@test.test')
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.INVITE_CREATE
-    assert event.category == UserEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=owner.id,
-        email=owner.email,
-        user_type=UserType.USER,
+    invite_created_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        invited_user=invite.invited_user,
+        is_transfer=False,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(type=EventObjectType.INVITE)
-    assert event.payload == {
-        'target_email': 'invited@test.test',
-        'invited_user_id': invite.invited_user_id,
-        'is_transfer': False,
-    }
     user_create_actions_mock.assert_called_once_with(invite.invited_user)
     user_invite_actions_mock.assert_called_once_with(invite.invited_user)
 
 
-def test_invite_user__person_of_another_account__emit_transfer_invite(
-    mocker,
-    fake_stream,
-):
+def test_invite_user__person_of_another_account__audit_transfer(mocker):
 
     # arrange
     account = create_test_account()
@@ -100,6 +79,9 @@ def test_invite_user__person_of_another_account__emit_transfer_invite(
         UserInviteService,
         attribute='_send_transfer_email',
     )
+    invite_created_mock = mocker.patch(
+        'src.accounts.services.user_invite.AuditEventService.invite_created',
+    )
     service = UserInviteService(request_user=owner)
 
     # act
@@ -109,23 +91,16 @@ def test_invite_user__person_of_another_account__emit_transfer_invite(
     )
 
     # assert
-    invite = UserInvite.objects.get(account=account, email='moving@test.test')
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.INVITE_CREATE
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=owner.id,
-        email=owner.email,
-        user_type=UserType.USER,
+    invite = UserInvite.objects.get(
+        account=account,
+        email='moving@test.test',
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(type=EventObjectType.INVITE)
-    assert event.payload == {
-        'target_email': 'moving@test.test',
-        'invited_user_id': invite.invited_user_id,
-        'is_transfer': True,
-    }
+    invite_created_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        invited_user=invite.invited_user,
+        is_transfer=True,
+    )
     user_create_actions_mock.assert_called_once_with(invite.invited_user)
     user_transfer_actions_mock.assert_called_once_with(
         current_account_user=invite.invited_user,
@@ -137,21 +112,23 @@ def test_invite_user__person_of_another_account__emit_transfer_invite(
     )
 
 
-def test_invite_user__already_invited__no_event(
-    mocker,
-    fake_stream,
-):
+def test_invite_user__already_invited__audit_not_called(mocker):
 
-    """ Inviting a person who has a pending invite creates nothing,
-        so the journal gets nothing either. """
+    """ Inviting a person who has a pending invite creates nothing. """
 
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
-    create_invited_user(user=owner, email='invited@test.test')
+    create_invited_user(
+        user=owner,
+        email='invited@test.test',
+    )
     user_create_actions_mock = mocker.patch.object(
         UserInviteService,
         attribute='_user_create_actions',
+    )
+    invite_created_mock = mocker.patch(
+        'src.accounts.services.user_invite.AuditEventService.invite_created',
     )
     service = UserInviteService(request_user=owner)
 
@@ -162,106 +139,11 @@ def test_invite_user__already_invited__no_event(
     )
 
     # assert
-    assert fake_stream.events == []
+    invite_created_mock.assert_not_called()
     user_create_actions_mock.assert_not_called()
 
 
-def test_resend_invite__invited_person__emit_invite_resend(
-    mocker,
-    fake_stream,
-):
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    invited = create_invited_user(user=owner, email='invited@test.test')
-    user_invite_actions_mock = mocker.patch.object(
-        UserInviteService,
-        attribute='_user_invite_actions',
-    )
-    service = UserInviteService(request_user=owner)
-
-    # act
-    service.resend_invite(user_id=invited.id)
-
-    # assert
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.INVITE_RESEND
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=owner.id,
-        email=owner.email,
-        user_type=UserType.USER,
-    )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(type=EventObjectType.INVITE)
-    assert event.payload == {
-        'target_email': 'invited@test.test',
-        'invited_user_id': invited.id,
-        'is_transfer': False,
-    }
-    user_invite_actions_mock.assert_called_once_with(invited)
-
-
-def test_resend_invite__person_of_another_account__transfer_resent(
-    mocker,
-    fake_stream,
-):
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    invited = create_invited_user(user=owner, email='moving@test.test')
-    other_account = create_test_account(name='Other')
-    other_user = create_test_owner(
-        account=other_account,
-        email='moving@test.test',
-    )
-    send_transfer_email_mock = mocker.patch.object(
-        UserInviteService,
-        attribute='_send_transfer_email',
-    )
-    user_transfer_actions_mock = mocker.patch.object(
-        UserInviteService,
-        attribute='_user_transfer_actions',
-    )
-    service = UserInviteService(request_user=owner)
-
-    # act
-    service.resend_invite(user_id=invited.id)
-
-    # assert
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.INVITE_RESEND
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=owner.id,
-        email=owner.email,
-        user_type=UserType.USER,
-    )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(type=EventObjectType.INVITE)
-    assert event.payload == {
-        'target_email': 'moving@test.test',
-        'invited_user_id': invited.id,
-        'is_transfer': True,
-    }
-    send_transfer_email_mock.assert_called_once_with(
-        current_account_user=invited,
-        another_account_user=other_user,
-    )
-    user_transfer_actions_mock.assert_called_once_with(
-        current_account_user=invited,
-        another_account_user=other_user,
-    )
-
-
-def test_invite_user__users_limit__no_event(
-    mocker,
-    fake_stream,
-):
+def test_invite_user__users_limit__audit_not_called(mocker):
 
     # arrange
     account = create_test_account(plan=BillingPlanType.PREMIUM)
@@ -278,6 +160,9 @@ def test_invite_user__users_limit__no_event(
         UserInviteService,
         attribute='_user_invite_actions',
     )
+    invite_created_mock = mocker.patch(
+        'src.accounts.services.user_invite.AuditEventService.invite_created',
+    )
     service = UserInviteService(request_user=owner)
 
     # act
@@ -288,15 +173,90 @@ def test_invite_user__users_limit__no_event(
         )
 
     # assert
-    assert fake_stream.events == []
+    invite_created_mock.assert_not_called()
     user_create_actions_mock.assert_not_called()
     user_invite_actions_mock.assert_not_called()
 
 
-def test_resend_invite__already_accepted__no_event(
-    mocker,
-    fake_stream,
-):
+def test_resend_invite__invited_person__audit_invite_resent(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    invited = create_invited_user(
+        user=owner,
+        email='invited@test.test',
+    )
+    user_invite_actions_mock = mocker.patch.object(
+        UserInviteService,
+        attribute='_user_invite_actions',
+    )
+    invite_resent_mock = mocker.patch(
+        'src.accounts.services.user_invite.AuditEventService.invite_resent',
+    )
+    service = UserInviteService(request_user=owner)
+
+    # act
+    service.resend_invite(user_id=invited.id)
+
+    # assert
+    invite_resent_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        invited_user=invited,
+        is_transfer=False,
+    )
+    user_invite_actions_mock.assert_called_once_with(invited)
+
+
+def test_resend_invite__person_of_another_account__audit_transfer(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    invited = create_invited_user(
+        user=owner,
+        email='moving@test.test',
+    )
+    other_account = create_test_account(name='Other')
+    other_user = create_test_owner(
+        account=other_account,
+        email='moving@test.test',
+    )
+    send_transfer_email_mock = mocker.patch.object(
+        UserInviteService,
+        attribute='_send_transfer_email',
+    )
+    user_transfer_actions_mock = mocker.patch.object(
+        UserInviteService,
+        attribute='_user_transfer_actions',
+    )
+    invite_resent_mock = mocker.patch(
+        'src.accounts.services.user_invite.AuditEventService.invite_resent',
+    )
+    service = UserInviteService(request_user=owner)
+
+    # act
+    service.resend_invite(user_id=invited.id)
+
+    # assert
+    invite_resent_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        invited_user=invited,
+        is_transfer=True,
+    )
+    send_transfer_email_mock.assert_called_once_with(
+        current_account_user=invited,
+        another_account_user=other_user,
+    )
+    user_transfer_actions_mock.assert_called_once_with(
+        current_account_user=invited,
+        another_account_user=other_user,
+    )
+
+
+def test_resend_invite__already_accepted__audit_not_called(mocker):
 
     # arrange
     account = create_test_account()
@@ -306,6 +266,9 @@ def test_resend_invite__already_accepted__no_event(
         UserInviteService,
         attribute='_user_invite_actions',
     )
+    invite_resent_mock = mocker.patch(
+        'src.accounts.services.user_invite.AuditEventService.invite_resent',
+    )
     service = UserInviteService(request_user=owner)
 
     # act
@@ -313,18 +276,15 @@ def test_resend_invite__already_accepted__no_event(
         service.resend_invite(user_id=user.id)
 
     # assert
-    assert fake_stream.events == []
+    invite_resent_mock.assert_not_called()
     user_invite_actions_mock.assert_not_called()
 
 
-def test_accept__sso_callback__emit_invite_accept(
-    mocker,
-    fake_stream,
-):
+def test_accept__invited_user__audit_invite_accepted(mocker):
 
     """ An invite accepted through an SSO callback never touches the
-        endpoint: the event has to come from the service, which is the
-        one thing both ways in have in common. """
+        endpoint: the record has to come from the service, which is
+        the one thing both ways in have in common. """
 
     # arrange
     account = create_test_account()
@@ -354,6 +314,17 @@ def test_accept__sso_callback__emit_invite_accept(
         UserInviteService,
         attribute='group',
     )
+    identify_users_mock = mocker.patch(
+        'src.accounts.services.account.identify_users.delay',
+    )
+    account_group_mock = mocker.patch.object(
+        AccountService,
+        attribute='group',
+    )
+    invite_accepted_mock = mocker.patch(
+        'src.accounts.services.user_invite.AuditEventService.'
+        'invite_accepted',
+    )
     service = UserInviteService(
         request_user=invited,
         current_url='',
@@ -368,18 +339,10 @@ def test_accept__sso_callback__emit_invite_accept(
     )
 
     # assert
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.INVITE_ACCEPT
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=invited.id,
-        email=invited.email,
-        user_type=UserType.USER,
+    invite_accepted_mock.assert_called_once_with(
+        invited_user=invited,
+        invited_by_id=owner.id,
     )
-    assert event.auth_type is None
-    assert event.object == EventObject(type=EventObjectType.INVITE)
-    assert event.payload == {'invited_by_id': owner.id}
     create_onboarding_workflows_mock.assert_called_once_with()
     create_activated_workflows_mock.assert_called_once_with()
     send_user_updated_mock.assert_called_once_with(
@@ -390,9 +353,76 @@ def test_accept__sso_callback__emit_invite_accept(
     users_joined_mock.assert_called_once_with(invited)
     identify_mock.assert_called_once_with(invited)
     group_mock.assert_called_once_with(invited)
+    identify_users_mock.assert_called_once_with(
+        user_ids=(owner.id, invited.id),
+    )
+    account_group_mock.assert_called_once_with(
+        user=invited,
+        account=account,
+    )
 
 
-def test_decline__invited_user__emit_actor_is_the_invited_user(
+def test_accept__email_already_registered__audit_not_called(mocker):
+
+    """ The e-mail belongs to an active user of another account: the
+        save fails inside accept, and nothing was accepted. """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    invited = create_invited_user(
+        user=owner,
+        email='taken@test.test',
+    )
+    other_account = create_test_account(name='Other')
+    create_test_owner(
+        account=other_account,
+        email='taken@test.test',
+    )
+    create_onboarding_workflows_mock = mocker.patch(
+        'src.processes.services.system_workflows.SystemWorkflowService'
+        '.create_onboarding_workflows',
+    )
+    identify_users_mock = mocker.patch(
+        'src.accounts.services.account.identify_users.delay',
+    )
+    send_user_updated_mock = mocker.patch(
+        'src.accounts.services.user_invite.send_user_updated_notification'
+        '.delay',
+    )
+    users_joined_mock = mocker.patch(
+        'src.accounts.services.user_invite.AnalyticService.users_joined',
+    )
+    invite_accepted_mock = mocker.patch(
+        'src.accounts.services.user_invite.AuditEventService.'
+        'invite_accepted',
+    )
+    service = UserInviteService(
+        request_user=invited,
+        current_url='',
+        send_email=False,
+    )
+
+    # act
+    with pytest.raises(AlreadyRegisteredException) as ex:
+        service.accept(
+            invite=invited.invite,
+            first_name='Some',
+            last_name='Body',
+        )
+
+    # assert
+    assert ex.value.message == messages.MSG_A_0005
+    invited.refresh_from_db()
+    assert invited.status == UserStatus.INVITED
+    invite_accepted_mock.assert_not_called()
+    create_onboarding_workflows_mock.assert_not_called()
+    identify_users_mock.assert_not_called()
+    send_user_updated_mock.assert_not_called()
+    users_joined_mock.assert_not_called()
+
+
+def test_decline__invited_user__audit_actor_is_the_invited_user(
     mocker,
     identify_mock,
     group_mock,
@@ -411,29 +441,19 @@ def test_decline__invited_user__emit_actor_is_the_invited_user(
     send_user_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_user_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.logs.events.services.emit')
+    user_deactivated_mock = mocker.patch(
+        'src.accounts.services.user.AuditEventService.user_deactivated',
+    )
     service = UserInviteService(request_user=invited)
 
     # act
     service.decline(invited.invite)
 
     # assert
-    emit_mock.assert_called_once_with(
-        UserEvents.DEACTIVATE,
-        account_id=account.id,
-        actor=Actor(
-            id=invited.id,
-            email=invited.email,
-            user_type=UserType.USER,
-        ),
+    user_deactivated_mock.assert_called_once_with(
+        user=invited,
         auth_type=AuthTokenType.USER,
-        event_object=EventObject(type=EventObjectType.USER, id=invited.id),
-        payload={
-            'target_email': invited.email,
-            'status_before': UserStatus.INVITED,
-        },
-        workflow_id=None,
-        task_id=None,
+        target=invited,
     )
     identify_mock.assert_called_once_with(invited)
     identify_users_mock.assert_called_once_with(user_ids=(owner.id,))

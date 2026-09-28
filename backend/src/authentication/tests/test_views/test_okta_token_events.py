@@ -3,17 +3,12 @@ from uuid import uuid4
 import pytest
 from django.contrib.auth import get_user_model
 
-from src.accounts.enums import SourceType, UserType
+from src.accounts.enums import SourceType
 from src.authentication.enums import AuthTokenType
 from src.authentication.messages import MSG_AU_0009
 from src.authentication.services.exceptions import TokenInvalidOrExpired
 from src.authentication.services.okta import OktaService
 from src.generics.mixins.services import EncryptionMixin
-from src.logs.events.enums import (
-    EventObjectType,
-    UserEvents,
-)
-from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_owner,
@@ -25,12 +20,11 @@ UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
 
 
-def test_okta_token__existent_user__emit_user_login(
+def test_okta_token__existent_user__audit_user_logged_in(
     mocker,
     api_client,
     identify_mock,
     settings,
-    fake_stream,
 ):
 
     # arrange
@@ -74,6 +68,10 @@ def test_okta_token__existent_user__emit_user_login(
         'src.authentication.services.base_sso.'
         'AnalyticService.users_logged_in',
     )
+    user_logged_in_mock = mocker.patch(
+        'src.authentication.services.base_sso.AuditEventService'
+        '.user_logged_in',
+    )
     domain = 'dev-123456.okta.com'
     state = f'{uuid4()}{EncryptionMixin.encrypt(domain)}'
 
@@ -86,29 +84,14 @@ def test_okta_token__existent_user__emit_user_login(
         },
         HTTP_USER_AGENT='Some/Mozilla',
         REMOTE_ADDR='128.18.0.99',
-        HTTP_X_REQUEST_ID='audit-okta-1',
     )
 
     # assert
     assert response.status_code == 200
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.LOGIN
-    assert event.account_id == user.account_id
-    assert event.actor == Actor(
-        id=user.id,
-        email=user.email,
-        user_type=UserType.USER,
+    user_logged_in_mock.assert_called_once_with(
+        user=user,
+        source=SourceType.OKTA,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.USER,
-        id=user.id,
-    )
-    assert event.payload == {'source': SourceType.OKTA}
-    assert event.ip == '128.18.0.99'
-    assert event.user_agent == 'Some/Mozilla'
-    assert event.request_id == 'audit-okta-1'
     okta_service_init_mock.assert_called_once_with(domain=domain)
     get_first_access_token_mock.assert_called_once_with(
         '4/0AbUR2VMeHxU...',
@@ -131,16 +114,15 @@ def test_okta_token__existent_user__emit_user_login(
     identify_mock.assert_called_once_with(user)
 
 
-def test_okta_token__new_user__emit_user_signup_only(
+def test_okta_token__new_user__audit_user_signed_up_only(
     mocker,
     api_client,
     identify_mock,
     group_mock,
     settings,
-    fake_stream,
 ):
 
-    """ A sign up is one event: the login that ends the same request
+    """ A sign up is one record: the login that ends the same request
         is not reported on top of it. """
 
     # arrange
@@ -188,6 +170,13 @@ def test_okta_token__new_user__emit_user_signup_only(
         'src.authentication.services.base_sso.'
         'AnalyticService.users_logged_in',
     )
+    user_signed_up_mock = mocker.patch(
+        'src.authentication.views.mixins.AuditEventService.user_signed_up',
+    )
+    user_logged_in_mock = mocker.patch(
+        'src.authentication.services.base_sso.AuditEventService'
+        '.user_logged_in',
+    )
     domain = 'dev-123456.okta.com'
     state = f'{uuid4()}{EncryptionMixin.encrypt(domain)}'
 
@@ -200,31 +189,17 @@ def test_okta_token__new_user__emit_user_signup_only(
         },
         HTTP_USER_AGENT='Some/Mozilla',
         REMOTE_ADDR='128.18.0.99',
-        HTTP_X_REQUEST_ID='audit-okta-2',
     )
 
     # assert
     assert response.status_code == 200
     new_user = UserModel.objects.get(email=email)
     assert new_user.account_id == owner.account_id
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.SIGNUP
-    assert event.account_id == owner.account_id
-    assert event.actor == Actor(
-        id=new_user.id,
-        email=email,
-        user_type=UserType.USER,
+    user_signed_up_mock.assert_called_once_with(
+        user=new_user,
+        source=SourceType.OKTA,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.USER,
-        id=new_user.id,
-    )
-    assert event.payload == {'source': SourceType.OKTA}
-    assert event.ip == '128.18.0.99'
-    assert event.user_agent == 'Some/Mozilla'
-    assert event.request_id == 'audit-okta-2'
+    user_logged_in_mock.assert_not_called()
     okta_service_init_mock.assert_called_once_with(domain=domain)
     get_first_access_token_mock.assert_called_once_with(
         '4/0AbUR2VMeHxU...',
@@ -259,7 +234,7 @@ def test_okta_token__new_user__emit_user_signup_only(
     )
 
 
-def test_okta_token__invited_user__emit_user_login(
+def test_okta_token__invited_user__audit_user_logged_in(
     mocker,
     api_client,
     identify_mock,
@@ -316,7 +291,10 @@ def test_okta_token__invited_user__emit_user_login(
         'src.authentication.services.base_sso.'
         'AnalyticService.users_logged_in',
     )
-    emit_mock = mocker.patch('src.logs.events.services.emit')
+    user_logged_in_mock = mocker.patch(
+        'src.authentication.services.base_sso.AuditEventService'
+        '.user_logged_in',
+    )
     domain = 'dev-123456.okta.com'
     state = f'{uuid4()}{EncryptionMixin.encrypt(domain)}'
 
@@ -333,20 +311,9 @@ def test_okta_token__invited_user__emit_user_login(
 
     # assert
     assert response.status_code == 200
-    emit_mock.assert_called_once_with(
-        UserEvents.LOGIN,
-        account_id=invited_user.account_id,
-        actor=Actor(
-            id=invited_user.id,
-            email=invited_user.email,
-            user_type=UserType.USER,
-        ),
-        auth_type=AuthTokenType.USER,
-        event_object=EventObject(
-            type=EventObjectType.USER,
-            id=invited_user.id,
-        ),
-        payload={'source': SourceType.OKTA},
+    user_logged_in_mock.assert_called_once_with(
+        user=invited_user,
+        source=SourceType.OKTA,
     )
     okta_service_init_mock.assert_called_once_with(domain=domain)
     get_first_access_token_mock.assert_called_once_with(
@@ -376,12 +343,11 @@ def test_okta_token__invited_user__emit_user_login(
     identify_mock.assert_called_once_with(invited_user)
 
 
-def test_okta_token__authenticate_failed__no_event(
+def test_okta_token__authenticate_failed__audit_not_called(
     mocker,
     api_client,
     identify_mock,
     settings,
-    fake_stream,
 ):
 
     # arrange
@@ -404,6 +370,10 @@ def test_okta_token__authenticate_failed__no_event(
         'src.authentication.services.base_sso.'
         'AnalyticService.users_logged_in',
     )
+    user_logged_in_mock = mocker.patch(
+        'src.authentication.services.base_sso.AuditEventService'
+        '.user_logged_in',
+    )
     domain = 'dev-123456.okta.com'
     state = f'{uuid4()}{EncryptionMixin.encrypt(domain)}'
     code = '4/0AbUR2VMeHxU...'
@@ -422,7 +392,7 @@ def test_okta_token__authenticate_failed__no_event(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == str(MSG_AU_0009)
     assert response.data['details'] == {}
-    assert fake_stream.events == []
+    user_logged_in_mock.assert_not_called()
     okta_service_init_mock.assert_called_once_with(domain=domain)
     get_first_access_token_mock.assert_called_once_with(code, state)
     get_user_profile_mock.assert_not_called()

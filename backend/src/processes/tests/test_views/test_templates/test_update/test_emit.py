@@ -1,20 +1,14 @@
 import pytest
 
-from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import (
-    EventObjectType,
-    TemplateEvents,
-)
-from src.logs.events.schema import Actor, EventObject
 from src.processes.enums import (
     OwnerRole,
     OwnerType,
     PerformerType,
 )
-from src.processes.models.templates.template import Template
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_not_admin,
     create_test_owner,
     create_test_template,
 )
@@ -22,14 +16,13 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-def test_update__published_template__emit_template_publish(
+def test_update__active_template__audit_template_updated(
     mocker,
     api_client,
 ):
 
     # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
+    owner = create_test_owner()
     template = create_test_template(
         user=owner,
         is_active=True,
@@ -40,7 +33,7 @@ def test_update__published_template__emit_template_publish(
     update_workflows_mock = mocker.patch(
         'src.processes.views.template.update_workflows.delay',
     )
-    template_updated_mock = mocker.patch(
+    template_integrations_updated_mock = mocker.patch(
         'src.processes.services.templates.integrations'
         '.TemplateIntegrationsService.template_updated',
     )
@@ -52,7 +45,9 @@ def test_update__published_template__emit_template_publish(
         'src.processes.views.template.'
         'AnalyticService.templates_kickoff_updated',
     )
-    emit_mock = mocker.patch('src.logs.events.services.emit')
+    template_updated_mock = mocker.patch(
+        'src.processes.views.template.AuditEventService.template_updated',
+    )
 
     # act
     response = api_client.put(
@@ -92,27 +87,6 @@ def test_update__published_template__emit_template_publish(
     # assert
     assert response.status_code == 200
     template.refresh_from_db()
-    emit_mock.assert_called_once_with(
-        TemplateEvents.PUBLISH,
-        account_id=account.id,
-        actor=Actor(
-            id=owner.id,
-            email=owner.email,
-            user_type=UserType.USER,
-        ),
-        auth_type=AuthTokenType.USER,
-        event_object=EventObject(
-            type=EventObjectType.TEMPLATE,
-            id=template.id,
-        ),
-        payload={
-            'name': 'Onboarding changed',
-            'version': template.version,
-            'is_active': True,
-        },
-        workflow_id=None,
-        task_id=None,
-    )
     update_workflows_mock.assert_called_once_with(
         template_id=template.id,
         version=template.version,
@@ -120,7 +94,9 @@ def test_update__published_template__emit_template_publish(
         auth_type=AuthTokenType.USER,
         is_superuser=False,
     )
-    template_updated_mock.assert_called_once_with(template=template)
+    template_integrations_updated_mock.assert_called_once_with(
+        template=template,
+    )
     templates_updated_mock.assert_called_once_with(
         user=owner,
         template=template,
@@ -139,24 +115,22 @@ def test_update__published_template__emit_template_publish(
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
+    template_updated_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        template=template,
+    )
 
 
-def test_update__draft__emit_template_draft_save_with_draft_name(
+def test_update__draft__audit_template_updated(
     mocker,
     api_client,
 ):
 
-    """ A draft save of an existing template writes only is_active
-        to the template row, the edited name stays in the draft. The
-        event names what the person saved, not the last published
-        name of the row. """
-
     # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
+    owner = create_test_owner()
     template = create_test_template(
         user=owner,
-        name='Published name',
         is_active=True,
         tasks_count=1,
     )
@@ -164,11 +138,21 @@ def test_update__draft__emit_template_draft_save_with_draft_name(
     update_workflows_mock = mocker.patch(
         'src.processes.views.template.update_workflows.delay',
     )
-    template_updated_mock = mocker.patch(
+    template_integrations_updated_mock = mocker.patch(
         'src.processes.services.templates.integrations'
         '.TemplateIntegrationsService.template_updated',
     )
-    emit_mock = mocker.patch('src.logs.events.services.emit')
+    templates_updated_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_updated',
+    )
+    kickoff_updated_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_updated',
+    )
+    template_updated_mock = mocker.patch(
+        'src.processes.views.template.AuditEventService.template_updated',
+    )
 
     # act
     response = api_client.put(
@@ -188,58 +172,43 @@ def test_update__draft__emit_template_draft_save_with_draft_name(
     # assert
     assert response.status_code == 200
     template.refresh_from_db()
-    assert template.name == 'Published name'
-    emit_mock.assert_called_once_with(
-        TemplateEvents.DRAFT_SAVE,
-        account_id=account.id,
-        actor=Actor(
-            id=owner.id,
-            email=owner.email,
-            user_type=UserType.USER,
-        ),
-        auth_type=AuthTokenType.USER,
-        event_object=EventObject(
-            type=EventObjectType.TEMPLATE,
-            id=template.id,
-        ),
-        payload={
-            'name': 'Draft again',
-            'version': template.version,
-            'is_active': False,
-        },
-        workflow_id=None,
-        task_id=None,
-    )
     update_workflows_mock.assert_not_called()
-    template_updated_mock.assert_called_once_with(template=template)
+    template_integrations_updated_mock.assert_called_once_with(
+        template=template,
+    )
+    templates_updated_mock.assert_not_called()
+    kickoff_updated_mock.assert_not_called()
+    template_updated_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        template=template,
+    )
 
 
-def test_update__draft__event_keeps_request_context(
+def test_update__not_admin__audit_not_called(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
+    not_admin = create_test_not_admin(account=account)
     template = create_test_template(
         user=owner,
-        name='Published name',
         is_active=True,
         tasks_count=1,
     )
-    api_client.token_authenticate(
-        owner,
-        user_agent='Chrome/141',
-        user_ip='10.10.0.14',
-    )
+    api_client.token_authenticate(not_admin)
     update_workflows_mock = mocker.patch(
         'src.processes.views.template.update_workflows.delay',
     )
-    template_updated_mock = mocker.patch(
+    template_integrations_updated_mock = mocker.patch(
         'src.processes.services.templates.integrations'
         '.TemplateIntegrationsService.template_updated',
+    )
+    template_updated_mock = mocker.patch(
+        'src.processes.views.template.AuditEventService.template_updated',
     )
 
     # act
@@ -255,34 +224,10 @@ def test_update__draft__event_keeps_request_context(
             },
             'tasks': [],
         },
-        HTTP_X_REQUEST_ID='audit-template-2',
     )
 
     # assert
-    assert response.status_code == 200
-    saved = Template.objects.get(id=template.id)
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == TemplateEvents.DRAFT_SAVE
-    assert event.category == TemplateEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=owner.id,
-        email=owner.email,
-        user_type=UserType.USER,
-    )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.TEMPLATE,
-        id=saved.id,
-    )
-    assert event.payload == {
-        'name': 'Draft again',
-        'version': saved.version,
-        'is_active': False,
-    }
-    assert event.ip == '10.10.0.14'
-    assert event.user_agent == 'Chrome/141'
-    assert event.request_id == 'audit-template-2'
+    assert response.status_code == 403
     update_workflows_mock.assert_not_called()
-    template_updated_mock.assert_called_once_with(template=saved)
+    template_integrations_updated_mock.assert_not_called()
+    template_updated_mock.assert_not_called()

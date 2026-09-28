@@ -1086,6 +1086,10 @@ def test_partial_update_fields_ok(mocker):
         'src.generics.base.service.'
         'BaseModelService.partial_update',
     )
+    fieldset_updated_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'AuditEventService.fieldset_updated',
+    )
     data = {
         "fields": [
             {"api_name": "field_1", "value": "val"},
@@ -1100,6 +1104,14 @@ def test_partial_update_fields_ok(mocker):
     mock_update_fields.assert_called_once_with(fields_data=data['fields'])
     mock_update_rules.assert_not_called()
     mock_validate_rules.assert_called_once_with()
+    fieldset_updated_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        fieldset=fieldset,
+        update_kwargs={},
+        fields=[{"api_name": "field_1", "value": "val"}],
+        rules=None,
+    )
 
 
 def test_partial_update__rules__ok(mocker):
@@ -1131,6 +1143,10 @@ def test_partial_update__rules__ok(mocker):
         'src.processes.services.fieldsets.fieldset.'
         'FieldSetTemplateService._validate_rules',
     )
+    fieldset_updated_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'AuditEventService.fieldset_updated',
+    )
     service = FieldSetTemplateService(user=owner, instance=fieldset)
     data = {
         'rules': [
@@ -1147,6 +1163,14 @@ def test_partial_update__rules__ok(mocker):
     mock_update_fields.assert_not_called()
     mock_update_rules.assert_called_once_with(rules_data=data['rules'])
     mock_validate_rules.assert_called_once_with()
+    fieldset_updated_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        fieldset=fieldset,
+        update_kwargs={},
+        fields=None,
+        rules=[{"api_name": "rule_1", "condition": "eq"}],
+    )
 
 
 def test_delete__not_in_use__ok():
@@ -2209,7 +2233,7 @@ def test__get_clone__ok(mocker):
 
     """
     Clone shared fieldset via to_json + get_new_fieldset_data +
-    create
+    _create_shared_fieldset
     """
 
     # arrange
@@ -2254,8 +2278,9 @@ def test__get_clone__ok(mocker):
         'FieldSetTemplateService.get_new_fieldset_data',
         return_value=result_data,
     )
-    create_mock = mocker.patch(
-        'src.generics.base.service.BaseModelService.create',
+    create_shared_fieldset_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'FieldSetTemplateService._create_shared_fieldset',
         return_value=clone,
     )
 
@@ -2268,7 +2293,7 @@ def test__get_clone__ok(mocker):
     get_new_fieldset_data_mock.assert_called_once_with(
         shared_fieldset_data=instance_data,
     )
-    create_mock.assert_called_once_with(is_shared=True, **result_data)
+    create_shared_fieldset_mock.assert_called_once_with(**result_data)
 
 
 def test_create_shared_fieldset__valid__emit_fieldset_created(mocker):
@@ -2323,6 +2348,9 @@ def test_partial_update__not_used__emit_fieldset_updated(mocker):
         user=user,
         auth_type=AuthTokenType.API,
         fieldset=fieldset,
+        update_kwargs={'name': 'Clients'},
+        fields=None,
+        rules=None,
     )
     assert fieldset.name == 'Clients'
 
@@ -2423,8 +2451,9 @@ def test_delete__fieldset_in_use__not_emit(mocker):
 
 def test_get_clone__shared__emit_fieldset_cloned_only(mocker):
 
-    """ The clone is created bypassing create_shared_fieldset, so it
-        is not journaled as a creation too. """
+    """ The clone is created by _create_shared_fieldset, the part
+        without the record, so it is not journaled as a creation
+        too. """
 
     # arrange
     account = create_test_account()

@@ -81,15 +81,13 @@ class ChecklistService(BaseWorkflowService):
             instance=selection,
             user=self.user,
         )
-        is_changing = not selection.is_selected
         selection_service.mark()
-        if is_changing:
-            AuditEventService.checklist_item_marked(
-                user=self.user,
-                auth_type=self.auth_type,
-                checklist=self.instance,
-                selection_id=selection_id,
-            )
+        AuditEventService.checklist_item_marked(
+            user=self.user,
+            auth_type=self.auth_type,
+            checklist=selection.checklist,
+            selection_id=selection_id,
+        )
 
     def unmark(
         self,
@@ -100,12 +98,10 @@ class ChecklistService(BaseWorkflowService):
             instance=selection,
             user=self.user,
         )
-        is_changing = selection.is_selected
         selection_service.unmark()
-        if is_changing:
-            AuditEventService.checklist_item_unmarked(
-                user=self.user,
-                auth_type=self.auth_type,
-                checklist=self.instance,
-                selection_id=selection_id,
-            )
+        AuditEventService.checklist_item_unmarked(
+            user=self.user,
+            auth_type=self.auth_type,
+            checklist=selection.checklist,
+            selection_id=selection_id,
+        )

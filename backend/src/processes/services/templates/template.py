@@ -211,11 +211,10 @@ class TemplateService(BaseModelService):
                 auth_type=self.auth_type,
                 is_superuser=self.is_superuser,
             )
-            AuditEventService.template_saved(
+            AuditEventService.template_created(
                 user=self.user,
                 auth_type=self.auth_type,
                 template=self.instance,
-                name=self.instance.name,
                 source=TemplateSource.BY_STEPS,
             )
             return self.instance
@@ -309,11 +308,10 @@ class TemplateService(BaseModelService):
             auth_type=self.auth_type,
             is_superuser=self.is_superuser,
         )
-        AuditEventService.template_saved(
+        AuditEventService.template_created(
             user=self.user,
             auth_type=self.auth_type,
             template=template,
-            name=template.name,
             source=TemplateSource.LIBRARY,
         )
         return template

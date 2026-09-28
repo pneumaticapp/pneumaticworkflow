@@ -2,18 +2,16 @@ from datetime import date
 
 import pytest
 
-from src.accounts.enums import AbsenceStatus, UserType
+from src.accounts.enums import AbsenceStatus
 from src.accounts.models import UserVacation
 from src.accounts.services.vacation import VacationDelegationService
 from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import (
-    EventObjectType,
-    UserEvents,
-)
-from src.logs.events.schema import Actor, EventObject
+from src.processes.enums import PerformerType
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
+    create_test_group,
     create_test_not_admin,
     create_test_owner,
     create_test_template,
@@ -24,10 +22,7 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-def test_activate__new_vacation__emit_vacation_activate(
-    mocker,
-    fake_stream,
-):
+def test_activate__new_vacation__audit_vacation_activated(mocker):
 
     # arrange
     account = create_test_account()
@@ -41,10 +36,14 @@ def test_activate__new_vacation__emit_vacation_activate(
         account=account,
         email='s2@test.test',
     )
+    vacation_activated_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'AuditEventService.vacation_activated',
+    )
     send_user_updated_mock = mocker.patch(
         'src.accounts.services.vacation.send_user_updated_notification.delay',
     )
-    send_delegation_mock = mocker.patch(
+    send_vacation_delegation_notification_mock = mocker.patch(
         'src.accounts.services.vacation.'
         'send_vacation_delegation_notification.delay',
     )
@@ -62,41 +61,27 @@ def test_activate__new_vacation__emit_vacation_activate(
     )
 
     # assert
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.VACATION_ACTIVATE
-    assert event.category == UserEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=owner.id,
-        email=owner.email,
-        user_type=UserType.USER,
+    vacation_activated_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        target=user,
+        substitute_user_ids=[substitute_2.id, substitute_1.id],
+        absence_status=AbsenceStatus.SICK_LEAVE,
+        start_date=date(2026, 9, 1),
+        end_date=date(2026, 9, 20),
+        delegated_tasks_count=0,
+        is_update=False,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.USER,
-        id=user.id,
-    )
-    assert event.payload == {
-        'target_email': user.email,
-        'substitute_user_ids': [substitute_1.id, substitute_2.id],
-        'absence_status': AbsenceStatus.SICK_LEAVE,
-        'start_date': '2026-09-01',
-        'end_date': '2026-09-20',
-        'delegated_tasks_count': 0,
-        'is_update': False,
-    }
     send_user_updated_mock.assert_called_once_with(
         logging=account.log_api_requests,
         account_id=account.id,
         user_data=mocker.ANY,
     )
-    send_delegation_mock.assert_not_called()
+    send_vacation_delegation_notification_mock.assert_not_called()
 
 
-def test_activate__active_task_without_delegation__emit_delegated_count(
+def test_activate__active_task_without_delegation__audit_delegated_count(
     mocker,
-    fake_stream,
 ):
 
     # arrange
@@ -117,6 +102,13 @@ def test_activate__active_task_without_delegation__emit_delegated_count(
         'src.processes.services.events.'
         'WorkflowEventService.task_delegation_event',
     )
+    task_delegation_mock = mocker.patch(
+        'src.accounts.services.vacation.AuditEventService.task_delegation',
+    )
+    vacation_activated_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'AuditEventService.vacation_activated',
+    )
     schedule_sync_mock = mocker.patch(
         'src.accounts.services.vacation.'
         'schedule_sync_workflow_attachment_permissions',
@@ -124,7 +116,7 @@ def test_activate__active_task_without_delegation__emit_delegated_count(
     send_user_updated_mock = mocker.patch(
         'src.accounts.services.vacation.send_user_updated_notification.delay',
     )
-    send_delegation_mock = mocker.patch(
+    send_vacation_delegation_notification_mock = mocker.patch(
         'src.accounts.services.vacation.'
         'send_vacation_delegation_notification.delay',
     )
@@ -137,37 +129,30 @@ def test_activate__active_task_without_delegation__emit_delegated_count(
     service.activate(substitute_user_ids=[substitute.id])
 
     # assert
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.VACATION_ACTIVATE
-    assert event.category == UserEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=admin.id,
-        email=admin.email,
-        user_type=UserType.USER,
+    substitute_group = UserVacation.objects.get(user=owner).substitute_group
+    vacation_activated_mock.assert_called_once_with(
+        user=admin,
+        auth_type=AuthTokenType.USER,
+        target=owner,
+        substitute_user_ids=[substitute.id],
+        absence_status=AbsenceStatus.VACATION,
+        start_date=None,
+        end_date=None,
+        delegated_tasks_count=1,
+        is_update=False,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.USER,
-        id=owner.id,
-    )
-    assert event.payload == {
-        'target_email': owner.email,
-        'substitute_user_ids': [substitute.id],
-        'absence_status': AbsenceStatus.VACATION,
-        'start_date': None,
-        'end_date': None,
-        'delegated_tasks_count': 1,
-        'is_update': False,
-    }
     task_delegation_event_mock.assert_called_once_with(
         task=workflow.tasks.get(number=1),
         user=owner,
-        substitute_group=mocker.ANY,
+        substitute_group=substitute_group,
+    )
+    task_delegation_mock.assert_called_once_with(
+        task=workflow.tasks.get(number=1),
+        target=owner,
+        substitute_group=substitute_group,
     )
     schedule_sync_mock.assert_called_once_with(workflow.id)
-    send_delegation_mock.assert_called_once_with(
+    send_vacation_delegation_notification_mock.assert_called_once_with(
         user_id=substitute.id,
         user_email=substitute.email,
         user_first_name=substitute.first_name,
@@ -182,10 +167,106 @@ def test_activate__active_task_without_delegation__emit_delegated_count(
     )
 
 
-def test_activate__existing_vacation__emit_is_update_true(
-    mocker,
-    fake_stream,
-):
+def test_activate__regular_group_task__audit_task_delegation(mocker):
+
+    """ The person on vacation performs the task through a regular
+        group, not directly: the task is delegated all the same. """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    admin = create_test_admin(account=account)
+    substitute = create_test_not_admin(account=account)
+    regular_group = create_test_group(
+        account=account,
+        name='Dev Team',
+        users=[owner, admin],
+    )
+    template = create_test_template(
+        user=admin,
+        tasks_count=1,
+        is_active=True,
+    )
+    workflow = create_test_workflow(
+        user=admin,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.create(
+        task=task,
+        type=PerformerType.GROUP,
+        group=regular_group,
+    )
+    task_delegation_event_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+    task_delegation_mock = mocker.patch(
+        'src.accounts.services.vacation.AuditEventService.task_delegation',
+    )
+    vacation_activated_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'AuditEventService.vacation_activated',
+    )
+    schedule_sync_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'schedule_sync_workflow_attachment_permissions',
+    )
+    send_user_updated_mock = mocker.patch(
+        'src.accounts.services.vacation.send_user_updated_notification.delay',
+    )
+    send_vacation_delegation_notification_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'send_vacation_delegation_notification.delay',
+    )
+    service = VacationDelegationService(
+        user=owner,
+        request_user=admin,
+    )
+
+    # act
+    service.activate(substitute_user_ids=[substitute.id])
+
+    # assert
+    substitute_group = UserVacation.objects.get(user=owner).substitute_group
+    task_delegation_mock.assert_called_once_with(
+        task=task,
+        target=owner,
+        substitute_group=substitute_group,
+    )
+    task_delegation_event_mock.assert_called_once_with(
+        task=task,
+        user=owner,
+        substitute_group=substitute_group,
+    )
+    vacation_activated_mock.assert_called_once_with(
+        user=admin,
+        auth_type=AuthTokenType.USER,
+        target=owner,
+        substitute_user_ids=[substitute.id],
+        absence_status=AbsenceStatus.VACATION,
+        start_date=None,
+        end_date=None,
+        delegated_tasks_count=1,
+        is_update=False,
+    )
+    schedule_sync_mock.assert_called_once_with(workflow.id)
+    send_vacation_delegation_notification_mock.assert_called_once_with(
+        user_id=substitute.id,
+        user_email=substitute.email,
+        user_first_name=substitute.first_name,
+        account_id=account.id,
+        tasks_count=1,
+        vacation_owner_name=owner.get_full_name(),
+    )
+    send_user_updated_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        user_data=mocker.ANY,
+    )
+
+
+def test_activate__existing_vacation__audit_is_update_true(mocker):
 
     # arrange
     account = create_test_account()
@@ -205,10 +286,14 @@ def test_activate__existing_vacation__emit_is_update_true(
         start_date=date(2099, 1, 1),
         absence_status=AbsenceStatus.ACTIVE,
     )
+    vacation_activated_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'AuditEventService.vacation_activated',
+    )
     send_user_updated_mock = mocker.patch(
         'src.accounts.services.vacation.send_user_updated_notification.delay',
     )
-    send_delegation_mock = mocker.patch(
+    send_vacation_delegation_notification_mock = mocker.patch(
         'src.accounts.services.vacation.'
         'send_vacation_delegation_notification.delay',
     )
@@ -224,42 +309,26 @@ def test_activate__existing_vacation__emit_is_update_true(
     )
 
     # assert
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.VACATION_ACTIVATE
-    assert event.category == UserEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=user.id,
-        email=user.email,
-        user_type=UserType.USER,
+    vacation_activated_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        target=user,
+        substitute_user_ids=[substitute_2.id],
+        absence_status=AbsenceStatus.VACATION,
+        start_date=None,
+        end_date=date(2099, 2, 1),
+        delegated_tasks_count=0,
+        is_update=True,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.USER,
-        id=user.id,
-    )
-    assert event.payload == {
-        'target_email': user.email,
-        'substitute_user_ids': [substitute_2.id],
-        'absence_status': AbsenceStatus.VACATION,
-        'start_date': None,
-        'end_date': '2099-02-01',
-        'delegated_tasks_count': 0,
-        'is_update': True,
-    }
     send_user_updated_mock.assert_called_once_with(
         logging=account.log_api_requests,
         account_id=account.id,
         user_data=mocker.ANY,
     )
-    send_delegation_mock.assert_not_called()
+    send_vacation_delegation_notification_mock.assert_not_called()
 
 
-def test_activate__no_request_user__emit_no_actor(
-    mocker,
-    fake_stream,
-):
+def test_activate__no_request_user__audit_no_actor(mocker):
 
     """ A scheduled task turns the vacation on for nobody. """
 
@@ -268,10 +337,14 @@ def test_activate__no_request_user__emit_no_actor(
     create_test_owner(account=account)
     user = create_test_not_admin(account=account)
     substitute = create_test_admin(account=account)
+    vacation_activated_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'AuditEventService.vacation_activated',
+    )
     send_user_updated_mock = mocker.patch(
         'src.accounts.services.vacation.send_user_updated_notification.delay',
     )
-    send_delegation_mock = mocker.patch(
+    send_vacation_delegation_notification_mock = mocker.patch(
         'src.accounts.services.vacation.'
         'send_vacation_delegation_notification.delay',
     )
@@ -281,48 +354,40 @@ def test_activate__no_request_user__emit_no_actor(
     service.activate(substitute_user_ids=[substitute.id])
 
     # assert
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.VACATION_ACTIVATE
-    assert event.category == UserEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor is None
-    assert event.auth_type is None
-    assert event.object == EventObject(
-        type=EventObjectType.USER,
-        id=user.id,
+    vacation_activated_mock.assert_called_once_with(
+        user=None,
+        auth_type=AuthTokenType.USER,
+        target=user,
+        substitute_user_ids=[substitute.id],
+        absence_status=AbsenceStatus.VACATION,
+        start_date=None,
+        end_date=None,
+        delegated_tasks_count=0,
+        is_update=False,
     )
-    assert event.payload == {
-        'target_email': user.email,
-        'substitute_user_ids': [substitute.id],
-        'absence_status': AbsenceStatus.VACATION,
-        'start_date': None,
-        'end_date': None,
-        'delegated_tasks_count': 0,
-        'is_update': False,
-    }
     send_user_updated_mock.assert_called_once_with(
         logging=account.log_api_requests,
         account_id=account.id,
         user_data=mocker.ANY,
     )
-    send_delegation_mock.assert_not_called()
+    send_vacation_delegation_notification_mock.assert_not_called()
 
 
-def test_activate__api_key_auth__emit_api_key_actor(
-    mocker,
-    fake_stream,
-):
+def test_activate__api_key_auth__audit_api_key_actor(mocker):
 
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
     user = create_test_not_admin(account=account)
     substitute = create_test_admin(account=account)
+    vacation_activated_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'AuditEventService.vacation_activated',
+    )
     send_user_updated_mock = mocker.patch(
         'src.accounts.services.vacation.send_user_updated_notification.delay',
     )
-    send_delegation_mock = mocker.patch(
+    send_vacation_delegation_notification_mock = mocker.patch(
         'src.accounts.services.vacation.'
         'send_vacation_delegation_notification.delay',
     )
@@ -336,42 +401,26 @@ def test_activate__api_key_auth__emit_api_key_actor(
     service.activate(substitute_user_ids=[substitute.id])
 
     # assert
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.VACATION_ACTIVATE
-    assert event.category == UserEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=owner.id,
-        email=owner.email,
-        user_type=UserType.USER,
+    vacation_activated_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.API,
+        target=user,
+        substitute_user_ids=[substitute.id],
+        absence_status=AbsenceStatus.VACATION,
+        start_date=None,
+        end_date=None,
+        delegated_tasks_count=0,
+        is_update=False,
     )
-    assert event.auth_type == AuthTokenType.API
-    assert event.object == EventObject(
-        type=EventObjectType.USER,
-        id=user.id,
-    )
-    assert event.payload == {
-        'target_email': user.email,
-        'substitute_user_ids': [substitute.id],
-        'absence_status': AbsenceStatus.VACATION,
-        'start_date': None,
-        'end_date': None,
-        'delegated_tasks_count': 0,
-        'is_update': False,
-    }
     send_user_updated_mock.assert_called_once_with(
         logging=account.log_api_requests,
         account_id=account.id,
         user_data=mocker.ANY,
     )
-    send_delegation_mock.assert_not_called()
+    send_vacation_delegation_notification_mock.assert_not_called()
 
 
-def test_activate__delegation_failed__no_event(
-    mocker,
-    fake_stream,
-):
+def test_activate__delegation_failed__audit_not_called(mocker):
 
     # arrange
     account = create_test_account()
@@ -383,10 +432,14 @@ def test_activate__delegation_failed__no_event(
         attribute='delegate_tasks',
         side_effect=ValueError('broken'),
     )
+    vacation_activated_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'AuditEventService.vacation_activated',
+    )
     send_user_updated_mock = mocker.patch(
         'src.accounts.services.vacation.send_user_updated_notification.delay',
     )
-    send_delegation_mock = mocker.patch(
+    send_vacation_delegation_notification_mock = mocker.patch(
         'src.accounts.services.vacation.'
         'send_vacation_delegation_notification.delay',
     )
@@ -401,16 +454,13 @@ def test_activate__delegation_failed__no_event(
 
     # assert
     assert str(ex.value) == 'broken'
-    assert fake_stream.events == []
     delegate_tasks_mock.assert_called_once_with(group=mocker.ANY)
+    vacation_activated_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
-    send_delegation_mock.assert_not_called()
+    send_vacation_delegation_notification_mock.assert_not_called()
 
 
-def test_deactivate__existing_vacation__emit_vacation_deactivate(
-    mocker,
-    fake_stream,
-):
+def test_deactivate__existing_vacation__audit_vacation_deactivated(mocker):
 
     # arrange
     account = create_test_account()
@@ -421,6 +471,10 @@ def test_deactivate__existing_vacation__emit_vacation_deactivate(
         user=user,
         substitutes=[substitute],
         absence_status=AbsenceStatus.VACATION,
+    )
+    vacation_deactivated_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'AuditEventService.vacation_deactivated',
     )
     send_user_updated_mock = mocker.patch(
         'src.accounts.services.vacation.send_user_updated_notification.delay',
@@ -435,22 +489,11 @@ def test_deactivate__existing_vacation__emit_vacation_deactivate(
 
     # assert
     assert not UserVacation.objects.filter(user=user).exists()
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.VACATION_DEACTIVATE
-    assert event.category == UserEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=owner.id,
-        email=owner.email,
-        user_type=UserType.USER,
+    vacation_deactivated_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        target=user,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.USER,
-        id=user.id,
-    )
-    assert event.payload == {'target_email': user.email}
     send_user_updated_mock.assert_called_once_with(
         logging=account.log_api_requests,
         account_id=account.id,
@@ -458,10 +501,7 @@ def test_deactivate__existing_vacation__emit_vacation_deactivate(
     )
 
 
-def test_deactivate__no_request_user__emit_no_actor(
-    mocker,
-    fake_stream,
-):
+def test_deactivate__no_request_user__audit_no_actor(mocker):
 
     # arrange
     account = create_test_account()
@@ -473,6 +513,10 @@ def test_deactivate__no_request_user__emit_no_actor(
         substitutes=[substitute],
         absence_status=AbsenceStatus.VACATION,
     )
+    vacation_deactivated_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'AuditEventService.vacation_deactivated',
+    )
     send_user_updated_mock = mocker.patch(
         'src.accounts.services.vacation.send_user_updated_notification.delay',
     )
@@ -482,18 +526,11 @@ def test_deactivate__no_request_user__emit_no_actor(
     service.deactivate()
 
     # assert
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.VACATION_DEACTIVATE
-    assert event.category == UserEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor is None
-    assert event.auth_type is None
-    assert event.object == EventObject(
-        type=EventObjectType.USER,
-        id=user.id,
+    vacation_deactivated_mock.assert_called_once_with(
+        user=None,
+        auth_type=AuthTokenType.USER,
+        target=user,
     )
-    assert event.payload == {'target_email': user.email}
     send_user_updated_mock.assert_called_once_with(
         logging=account.log_api_requests,
         account_id=account.id,
@@ -501,15 +538,16 @@ def test_deactivate__no_request_user__emit_no_actor(
     )
 
 
-def test_deactivate__no_vacation__no_event(
-    mocker,
-    fake_stream,
-):
+def test_deactivate__no_vacation__audit_not_called(mocker):
 
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
     user = create_test_not_admin(account=account)
+    vacation_deactivated_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'AuditEventService.vacation_deactivated',
+    )
     send_user_updated_mock = mocker.patch(
         'src.accounts.services.vacation.send_user_updated_notification.delay',
     )
@@ -523,13 +561,12 @@ def test_deactivate__no_vacation__no_event(
 
     # assert
     assert result == user
-    assert fake_stream.events == []
+    vacation_deactivated_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
 
 
-def test_clear_substitute_groups__last_substitute__emit_system_deactivate(
+def test_clear_substitute_groups__last_substitute__audit_no_actor(
     mocker,
-    fake_stream,
 ):
 
     """ The vacation ends because its last substitute left: nobody
@@ -544,6 +581,10 @@ def test_clear_substitute_groups__last_substitute__emit_system_deactivate(
         substitutes=[substitute],
         absence_status=AbsenceStatus.VACATION,
     )
+    vacation_deactivated_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'AuditEventService.vacation_deactivated',
+    )
     send_user_updated_mock = mocker.patch(
         'src.accounts.services.vacation.send_user_updated_notification.delay',
     )
@@ -553,18 +594,52 @@ def test_clear_substitute_groups__last_substitute__emit_system_deactivate(
 
     # assert
     assert not UserVacation.objects.filter(user=owner).exists()
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.VACATION_DEACTIVATE
-    assert event.category == UserEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor is None
-    assert event.auth_type is None
-    assert event.object == EventObject(
-        type=EventObjectType.USER,
-        id=owner.id,
+    vacation_deactivated_mock.assert_called_once_with(
+        user=None,
+        auth_type=AuthTokenType.USER,
+        target=owner,
     )
-    assert event.payload == {'target_email': owner.email}
+    send_user_updated_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        user_data=mocker.ANY,
+    )
+
+
+def test_clear_substitute_groups__request_user__audit_actor(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    admin = create_test_admin(account=account)
+    substitute = create_test_not_admin(account=account)
+    create_test_vacation(
+        user=owner,
+        substitutes=[substitute],
+        absence_status=AbsenceStatus.VACATION,
+    )
+    vacation_deactivated_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'AuditEventService.vacation_deactivated',
+    )
+    send_user_updated_mock = mocker.patch(
+        'src.accounts.services.vacation.send_user_updated_notification.delay',
+    )
+
+    # act
+    VacationDelegationService.clear_substitute_groups(
+        user=substitute,
+        request_user=admin,
+        auth_type=AuthTokenType.API,
+    )
+
+    # assert
+    assert not UserVacation.objects.filter(user=owner).exists()
+    vacation_deactivated_mock.assert_called_once_with(
+        user=admin,
+        auth_type=AuthTokenType.API,
+        target=owner,
+    )
     send_user_updated_mock.assert_called_once_with(
         logging=account.log_api_requests,
         account_id=account.id,

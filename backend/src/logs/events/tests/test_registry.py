@@ -1,13 +1,15 @@
 import pytest
 
 from src.logs.events import registry as registry_module
-from src.logs.events.adapters.workflow import WORKFLOW_EVENT_TYPE_NAMES
 from src.logs.events.enums import (
     EVENT_CLASSES,
     EventCategory,
     FileEvents,
+    TaskEvents,
     TemplateEvents,
     UserEvents,
+    WorkflowEvents,
+    event_names_of,
 )
 from src.logs.events.exceptions import (
     EventsError,
@@ -179,11 +181,18 @@ def test_registry__events_class__category_of_the_class(events_class):
     assert categories == {events_class.CATEGORY}
 
 
-@pytest.mark.parametrize('name', sorted(WORKFLOW_EVENT_TYPE_NAMES.values()))
+@pytest.mark.parametrize(
+    'name',
+    (
+        event_names_of(events_class=WorkflowEvents)
+        + event_names_of(events_class=TaskEvents)
+    ),
+)
 def test_registry__workflow_type__described(name):
 
-    """ The adapter maps all 24 workflow event types onto a declared
-        type of the workflows or the tasks category. """
+    """ AuditEventService writes the actions of a workflow and of its
+        tasks straight away: every type it names is declared with a
+        description under the workflows or the tasks category. """
 
     # arrange
     categories = {EventCategory.WORKFLOWS, EventCategory.TASKS}
@@ -194,6 +203,26 @@ def test_registry__workflow_type__described(name):
     # assert
     assert event_type.category in categories
     assert event_type.description != ''
+
+
+@pytest.mark.parametrize(
+    'name',
+    ('workflow.delay', 'template.publish', 'template.draft_save'),
+)
+def test_registry__retired_type__not_declared(name):
+
+    """ A delay of the workflow is written as the delay of its task,
+        and a template is created or updated whatever its state: the
+        old names are gone from the journal. """
+
+    # arrange
+    declared = set(REGISTRY)
+
+    # act
+    is_declared = name in declared
+
+    # assert
+    assert is_declared is False
 
 
 def test_registry__login_as__users_category():

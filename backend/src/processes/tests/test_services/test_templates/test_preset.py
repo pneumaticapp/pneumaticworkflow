@@ -208,6 +208,10 @@ class TestTemplatePresetService:
             service,
             '_reset_default_presets',
         )
+        template_preset_updated_mock = mocker.patch(
+            'src.processes.services.templates.preset.'
+            'AuditEventService.template_preset_updated',
+        )
 
         # act
         service.partial_update(
@@ -223,6 +227,17 @@ class TestTemplatePresetService:
             fields_data=new_fields,
         )
         reset_default_mock.assert_called_once_with()
+        template_preset_updated_mock.assert_called_once_with(
+            user=user,
+            auth_type=AuthTokenType.USER,
+            preset=preset,
+            update_kwargs={
+                'name': 'Updated Preset',
+                'is_default': True,
+                'type': PresetType.ACCOUNT,
+            },
+            fields=new_fields,
+        )
 
         preset.refresh_from_db()
         assert preset.name == "Updated Preset"
@@ -550,6 +565,8 @@ class TestTemplatePresetService:
             user=user,
             auth_type=AuthTokenType.API,
             preset=preset,
+            update_kwargs={'name': 'Sales view'},
+            fields=None,
         )
         assert preset.name == 'Sales view'
 
@@ -558,8 +575,9 @@ class TestTemplatePresetService:
         mocker,
     ):
 
-        """ Setting the default bypasses partial_update, so it is not
-            journaled as an update too. """
+        """ Setting the default goes through _partial_update, the part
+            without the record, so it is not journaled as an update
+            too. """
 
         # arrange
         account = create_test_account()

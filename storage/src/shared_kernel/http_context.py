@@ -29,12 +29,13 @@ def get_client_ip(request: Request) -> str:
     else would ride in every record of the request at whatever
     length the client chose.
 
-    This is stricter than the backend on purpose: backend/src/utils/
-    http.py falls back to the first hop of X-Forwarded-For, which is
-    client controlled in the same situation. Behind our own nginx
-    both read X-Real-IP and agree; behind a foreign one this service
-    prefers the socket address to a header anybody can write. The
-    rate limit middleware keeps its own reading of the header.
+    This is stricter than the backend on purpose: the backend journal
+    (backend/src/logs/events/middleware.py) takes X-Real-IP as it is
+    and without it falls back to AnonymousMixin, the first hop of
+    X-Forwarded-For. Behind our own nginx both read X-Real-IP and
+    agree; behind a foreign one this service prefers the socket
+    address to a header anybody can write. The rate limit middleware
+    keeps its own reading of the header.
     """
     real_ip = _valid_ip(request.headers.get(REAL_IP_HEADER))
     if real_ip:

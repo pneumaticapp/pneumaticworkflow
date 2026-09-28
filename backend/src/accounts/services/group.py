@@ -1,7 +1,6 @@
 from collections import defaultdict
 from typing import List, Optional
 
-from celery import Task as CeleryTask
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
@@ -51,7 +50,7 @@ UserModel = get_user_model()
 
 class UserGroupService(BaseModelService):
 
-    def _get_template_ids(self) -> List[int]:
+    def _get_template_ids(self):
         template_owner_ids = TemplateOwner.objects.filter(
             type=OwnerType.GROUP,
             group=self.instance,
@@ -74,7 +73,7 @@ class UserGroupService(BaseModelService):
         photo: Optional[str] = '',
         users: Optional[List[int]] = None,
         **kwargs,
-    ) -> UserGroup:
+    ):
         self.instance = UserGroup.objects.create(
             name=name,
             photo=photo,
@@ -128,13 +127,13 @@ class UserGroupService(BaseModelService):
             user=self.user,
             auth_type=self.auth_type,
             group=self.instance,
-            users_ids=list(users or ()),
+            users_ids=users,
         )
 
     def _send_users_notification(
         self,
         user_ids: List[int],
-        send_notification_task: CeleryTask,
+        send_notification_task,
     ):
         query = FetchGroupTaskNotificationRecipientsQuery(
             group_id=self.instance.id,
@@ -243,7 +242,7 @@ class UserGroupService(BaseModelService):
         self,
         force_save: bool = False,
         **update_kwargs,
-    ) -> UserGroup:
+    ):
         old_photo = self.instance.photo
         users = update_kwargs.pop('users', None)
         new_name = update_kwargs.get('name')
@@ -278,17 +277,6 @@ class UserGroupService(BaseModelService):
                 type=FieldType.USER,
                 group_id=self.instance.id,
             ).update(value=new_name)
-
-        changed_fields = []
-        if added_users_ids or removed_users_ids:
-            changed_fields.append('users')
-        if new_name is not None and new_name != self.instance.name:
-            changed_fields.append('name')
-        # A photo is empty both as NULL and as '': the row stores NULL
-        # and the client sends it back as an empty string.
-        photo_changed = (new_photo or None) != (old_photo or None)
-        if 'photo' in update_kwargs and photo_changed:
-            changed_fields.append('photo')
 
         if (
             added_users_ids or
@@ -334,9 +322,8 @@ class UserGroupService(BaseModelService):
             user=self.user,
             auth_type=self.auth_type,
             group=self.instance,
-            changed_fields=changed_fields,
-            added_users_ids=added_users_ids or [],
-            removed_users_ids=removed_users_ids or [],
+            update_kwargs=update_kwargs,
+            users_ids=users,
         )
 
         if added_users_ids:

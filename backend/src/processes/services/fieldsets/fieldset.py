@@ -83,7 +83,7 @@ class FieldSetTemplateService(BaseModelService):
         self.instance = FieldsetTemplate.objects.create(**create_kwargs)
         return self.instance
 
-    def create_shared_fieldset(
+    def _create_shared_fieldset(
         self,
         name: str,
         title: str = '',
@@ -97,7 +97,7 @@ class FieldSetTemplateService(BaseModelService):
         """ Creates a shared FieldSetTemplate
             that is not linked to a template. """
 
-        fieldset = super().create(
+        return super().create(
             name=name,
             title=title,
             description=description,
@@ -107,6 +107,9 @@ class FieldSetTemplateService(BaseModelService):
             is_shared=True,
             **kwargs,
         )
+
+    def create_shared_fieldset(self, **kwargs) -> FieldsetTemplate:
+        fieldset = self._create_shared_fieldset(**kwargs)
         AuditEventService.fieldset_created(
             user=self.user,
             auth_type=self.auth_type,
@@ -291,6 +294,9 @@ class FieldSetTemplateService(BaseModelService):
                 user=self.user,
                 auth_type=self.auth_type,
                 fieldset=self.instance,
+                update_kwargs=update_kwargs,
+                fields=fields_data,
+                rules=rules_data,
             )
             return self.instance
 
@@ -474,7 +480,7 @@ class FieldSetTemplateService(BaseModelService):
         )
         clone_data['name'] = clone_data['name'] + ' - clone'
         source_fieldset_id = self.instance.id
-        clone = super().create(is_shared=True, **clone_data)
+        clone = self._create_shared_fieldset(**clone_data)
         AuditEventService.fieldset_cloned(
             user=self.user,
             auth_type=self.auth_type,

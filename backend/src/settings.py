@@ -15,11 +15,6 @@ from urllib.parse import urlparse
 
 from configurations import Configuration, values
 from corsheaders.defaults import default_headers
-from src.logs.enums import (
-    DEFAULT_CONSUMER_BATCH_SIZE,
-    DEFAULT_STREAM_MAXLEN,
-    LogsBackend,
-)
 from src.notifications.enums import EmailProvider
 
 
@@ -537,22 +532,17 @@ class Common(Configuration):
         'src.storage.tasks',
     ]
 
-    LOGS_BACKEND = env.get('LOGS_BACKEND', LogsBackend.NONE)
-    LOGS_REDIS_URL = env.get('LOGS_REDIS_URL', '')
-    LOGS_OTLP_ENDPOINT = env.get(
-        'LOGS_OTLP_ENDPOINT',
-        'http://otel-collector:4318',
-    )
-    LOGS_STREAM_KEY = 'pneumatic:events'
-    LOGS_STREAM_MAXLEN = int(
-        env.get('LOGS_STREAM_MAXLEN', DEFAULT_STREAM_MAXLEN),
-    )
-    LOGS_CONSUMER_GROUP = 'otlp'
-    LOGS_CONSUMER_BATCH_SIZE = int(
-        env.get('LOGS_CONSUMER_BATCH_SIZE', DEFAULT_CONSUMER_BATCH_SIZE),
-    )
-    LOGS_SERVICE_NAME = 'pneumatic-backend'
-    LOGS_SERVICE_VERSION = env.get('RELEASE', '0.0.0')
+    # The values come from .env: the journal is off unless each of the
+    # five below is set (src/logs/events/emitter.logs_enabled). An empty
+    # number is 0, which is unset; one that is not a number stops the
+    # start.
+    LOGS_BACKEND = env.get('LOGS_BACKEND')
+    LOGS_REDIS_URL = env.get('LOGS_REDIS_URL')
+    LOGS_OTLP_ENDPOINT = env.get('LOGS_OTLP_ENDPOINT')
+    LOGS_STREAM_MAXLEN = int(env.get('LOGS_STREAM_MAXLEN') or 0)
+    LOGS_CONSUMER_BATCH_SIZE = int(env.get('LOGS_CONSUMER_BATCH_SIZE') or 0)
+
+    LOGS_SERVICE_VERSION = env.get('RELEASE')
     LOGS_STRICT = False
 
     # reCaptcha
@@ -654,7 +644,7 @@ class Testing(Common):
 
     # No event reaches Redis unless a test asks for it
     # (fixture events_enabled of src/logs/events/tests).
-    LOGS_BACKEND = LogsBackend.NONE
+    LOGS_BACKEND = None
     # A typo in an event type has to break the test, not to end up
     # in the debug category unnoticed.
     LOGS_STRICT = True

@@ -74,7 +74,6 @@ def test_get_sink__changed_endpoint__new_sink(settings):
 def test_send__ok_response__batch_posted_to_the_collector(mocker, settings):
 
     # arrange
-    settings.LOGS_SERVICE_NAME = 'pneumatic-backend'
     settings.LOGS_SERVICE_VERSION = '1.0.0'
     settings.CONFIGURATION_CURRENT = 'Testing'
     records = [('1-0', make_event()), ('2-0', make_event())]
@@ -146,7 +145,6 @@ def test_send__ok_response_without_a_body__delivered(mocker, settings):
         JSON raises, and that must not fail the delivery. """
 
     # arrange
-    settings.LOGS_SERVICE_NAME = 'pneumatic-backend'
     settings.LOGS_SERVICE_VERSION = '1.0.0'
     settings.CONFIGURATION_CURRENT = 'Testing'
     records = [('1-0', make_event())]
@@ -195,7 +193,6 @@ def test_send__ok_response_without_a_body__delivered(mocker, settings):
 def test_send__ok_response_with_a_text_body__delivered(mocker, settings):
 
     # arrange
-    settings.LOGS_SERVICE_NAME = 'pneumatic-backend'
     settings.LOGS_SERVICE_VERSION = '1.0.0'
     settings.CONFIGURATION_CURRENT = 'Testing'
     records = [('1-0', make_event())]
@@ -260,7 +257,6 @@ def test_send__unreadable_partial_success__delivered(
         reason to keep the batch: it was accepted. """
 
     # arrange
-    settings.LOGS_SERVICE_NAME = 'pneumatic-backend'
     settings.LOGS_SERVICE_VERSION = '1.0.0'
     settings.CONFIGURATION_CURRENT = 'Testing'
     records = [('1-0', make_event())]
@@ -312,7 +308,6 @@ def test_send__partial_success__reported_but_delivered(mocker, settings):
         the batch counts as delivered and gets acked. """
 
     # arrange
-    settings.LOGS_SERVICE_NAME = 'pneumatic-backend'
     settings.LOGS_SERVICE_VERSION = '1.0.0'
     settings.CONFIGURATION_CURRENT = 'Testing'
     records = [('1-0', make_event()), ('2-0', make_event())]
@@ -374,7 +369,6 @@ def test_send__partial_success__reported_but_delivered(mocker, settings):
 def test_send__full_success__nothing_reported(mocker, settings):
 
     # arrange
-    settings.LOGS_SERVICE_NAME = 'pneumatic-backend'
     settings.LOGS_SERVICE_VERSION = '1.0.0'
     settings.CONFIGURATION_CURRENT = 'Testing'
     records = [('1-0', make_event())]
@@ -420,10 +414,62 @@ def test_send__full_success__nothing_reported(mocker, settings):
     time_ns_mock.assert_called_once_with()
 
 
+def test_send__no_release__batch_without_a_version(mocker, settings):
+
+    """ The version is RELEASE of .env, and a deployment may leave it
+        out: the sink hands None to build_otlp_payload as it is. That
+        None leaves service.version out of the batch, the branch of
+        test_build__record_of_another_service__no_version. """
+
+    # arrange
+    settings.LOGS_SERVICE_VERSION = None
+    settings.CONFIGURATION_CURRENT = 'Testing'
+    records = [('1-0', make_event())]
+    build_otlp_payload_mock = mocker.patch(
+        'src.logs.events.sinks.otlp.build_otlp_payload',
+        return_value={'resourceLogs': []},
+    )
+    time_ns_mock = mocker.patch(
+        'src.logs.events.sinks.otlp.time.time_ns',
+        return_value=1788862535000000000,
+    )
+    report_error_mock = mocker.patch(
+        'src.logs.events.sinks.otlp.report_error',
+    )
+    response_mock = mocker.Mock(status_code=200, headers={})
+    response_mock.json.return_value = {}
+    post_mock = mocker.patch(
+        'src.logs.events.sinks.otlp.requests.Session.post',
+        return_value=response_mock,
+    )
+    sink = OTLPSink(endpoint='http://otel-collector:4318')
+
+    # act
+    sink.send(records=records)
+
+    # assert
+    build_otlp_payload_mock.assert_called_once_with(
+        records,
+        service_name='pneumatic-backend',
+        service_version=None,
+        environment='Testing',
+        observed_ns=1788862535000000000,
+    )
+    post_mock.assert_called_once_with(
+        'http://otel-collector:4318/v1/logs',
+        data=b'{"resourceLogs": []}',
+        headers={'Content-Type': 'application/json'},
+        timeout=(3.05, 10.0),
+    )
+    response_mock.raise_for_status.assert_called_once_with()
+    response_mock.json.assert_called_once_with()
+    time_ns_mock.assert_called_once_with()
+    report_error_mock.assert_not_called()
+
+
 def test_send__server_error__temporary_error(mocker, settings):
 
     # arrange
-    settings.LOGS_SERVICE_NAME = 'pneumatic-backend'
     settings.LOGS_SERVICE_VERSION = '1.0.0'
     settings.CONFIGURATION_CURRENT = 'Testing'
     records = [('1-0', make_event())]
@@ -490,7 +536,6 @@ def test_send__misconfigured_endpoint__temporary_error(
         stream instead of going to the dead letter. """
 
     # arrange
-    settings.LOGS_SERVICE_NAME = 'pneumatic-backend'
     settings.LOGS_SERVICE_VERSION = '1.0.0'
     settings.CONFIGURATION_CURRENT = 'Testing'
     records = [('1-0', make_event())]
@@ -572,7 +617,6 @@ def test_send__too_many_requests__delay_of_the_header(
         ignored. """
 
     # arrange
-    settings.LOGS_SERVICE_NAME = 'pneumatic-backend'
     settings.LOGS_SERVICE_VERSION = '1.0.0'
     settings.CONFIGURATION_CURRENT = 'Testing'
     records = [('1-0', make_event())]
@@ -635,7 +679,6 @@ def test_send__too_many_requests_without_the_header__no_delay(
 ):
 
     # arrange
-    settings.LOGS_SERVICE_NAME = 'pneumatic-backend'
     settings.LOGS_SERVICE_VERSION = '1.0.0'
     settings.CONFIGURATION_CURRENT = 'Testing'
     records = [('1-0', make_event())]
@@ -700,7 +743,6 @@ def test_send__bad_request__answer_body_in_the_log_only(
 
     # arrange
     caplog.set_level(logging.WARNING, logger='pneumatic.events')
-    settings.LOGS_SERVICE_NAME = 'pneumatic-backend'
     settings.LOGS_SERVICE_VERSION = '1.0.0'
     settings.CONFIGURATION_CURRENT = 'Testing'
     records = [('1-0', make_event())]
@@ -779,7 +821,6 @@ def test_send__batch_condemned_by_the_status__permanent_error(
         block the stream on it forever. """
 
     # arrange
-    settings.LOGS_SERVICE_NAME = 'pneumatic-backend'
     settings.LOGS_SERVICE_VERSION = '1.0.0'
     settings.CONFIGURATION_CURRENT = 'Testing'
     records = [('1-0', make_event()), ('2-0', make_event())]
@@ -851,7 +892,6 @@ def test_send__unreadable_error_body__permanent_error_logged_without_it(
 
     # arrange
     caplog.set_level(logging.WARNING, logger='pneumatic.events')
-    settings.LOGS_SERVICE_NAME = 'pneumatic-backend'
     settings.LOGS_SERVICE_VERSION = '1.0.0'
     settings.CONFIGURATION_CURRENT = 'Testing'
     records = [('1-0', make_event())]
@@ -916,7 +956,6 @@ def test_send__unreadable_error_body__permanent_error_logged_without_it(
 def test_send__connection_error__temporary_error(mocker, settings):
 
     # arrange
-    settings.LOGS_SERVICE_NAME = 'pneumatic-backend'
     settings.LOGS_SERVICE_VERSION = '1.0.0'
     settings.CONFIGURATION_CURRENT = 'Testing'
     records = [('1-0', make_event())]
@@ -965,7 +1004,6 @@ def test_send__connection_error__temporary_error(mocker, settings):
 def test_send__read_timeout__temporary_error(mocker, settings):
 
     # arrange
-    settings.LOGS_SERVICE_NAME = 'pneumatic-backend'
     settings.LOGS_SERVICE_VERSION = '1.0.0'
     settings.CONFIGURATION_CURRENT = 'Testing'
     records = [('1-0', make_event())]
@@ -1014,7 +1052,6 @@ def test_send__error_without_a_response__temporary_error(mocker, settings):
     """ An unknown failure keeps the batch pending, never acked. """
 
     # arrange
-    settings.LOGS_SERVICE_NAME = 'pneumatic-backend'
     settings.LOGS_SERVICE_VERSION = '1.0.0'
     settings.CONFIGURATION_CURRENT = 'Testing'
     records = [('1-0', make_event())]
@@ -1070,7 +1107,6 @@ def test_send__error_while_building_the_batch__permanent_error(
         on the same batch forever, so they go to the dead letter. """
 
     # arrange
-    settings.LOGS_SERVICE_NAME = 'pneumatic-backend'
     settings.LOGS_SERVICE_VERSION = '1.0.0'
     settings.CONFIGURATION_CURRENT = 'Testing'
     records = [('1-0', make_event())]
@@ -1116,7 +1152,6 @@ def test_send__error_while_building_the_batch__permanent_error(
 def test_send__own_session__reused_between_batches(mocker, settings):
 
     # arrange
-    settings.LOGS_SERVICE_NAME = 'pneumatic-backend'
     settings.LOGS_SERVICE_VERSION = '1.0.0'
     settings.CONFIGURATION_CURRENT = 'Testing'
     first_records = [('1-0', make_event())]
@@ -1197,7 +1232,6 @@ def test_send__endpoint_with_credential__not_in_the_error(mocker, settings):
         repeat it. """
 
     # arrange
-    settings.LOGS_SERVICE_NAME = 'pneumatic-backend'
     settings.LOGS_SERVICE_VERSION = '1.0.0'
     settings.CONFIGURATION_CURRENT = 'Testing'
     records = [('1-0', make_event())]
@@ -1256,7 +1290,6 @@ def test_send__rejected_with_credential_in_endpoint__report_without_it(
 
     # arrange
     caplog.set_level(logging.WARNING, logger='pneumatic.events')
-    settings.LOGS_SERVICE_NAME = 'pneumatic-backend'
     settings.LOGS_SERVICE_VERSION = '1.0.0'
     settings.CONFIGURATION_CURRENT = 'Testing'
     records = [('1-0', make_event())]

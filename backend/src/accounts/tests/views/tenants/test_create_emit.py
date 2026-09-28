@@ -1,16 +1,11 @@
 import pytest
 
-from src.accounts.enums import BillingPlanType, LeaseLevel, UserType
+from src.accounts.enums import BillingPlanType, LeaseLevel
 from src.accounts.messages import MSG_A_0025
 from src.accounts.services.account import AccountService
 from src.accounts.services.exceptions import AccountServiceException
 from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import (
-    AccountEvents,
-    EventObjectType,
-)
-from src.logs.events.schema import Actor, EventObject
 from src.payment.messages import MSG_BL_0008
 from src.payment.stripe.exceptions import CardError
 from src.payment.stripe.service import StripeService
@@ -24,10 +19,9 @@ from src.utils.validation import ErrorCode
 pytestmark = pytest.mark.django_db
 
 
-def test_create__free_plan__emit_tenant_create_in_master_account(
+def test_create__free_plan__audit_tenant_created(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -65,7 +59,7 @@ def test_create__free_plan__emit_tenant_create_in_master_account(
         'src.accounts.services.user.UserService.create_tenant_account_owner',
         return_value=tenant_owner,
     )
-    sys_workflow_service_init_mock = mocker.patch.object(
+    system_workflow_service_init_mock = mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
         return_value=None,
@@ -84,11 +78,10 @@ def test_create__free_plan__emit_tenant_create_in_master_account(
     tenants_added_mock = mocker.patch(
         'src.analysis.services.AnalyticService.tenants_added',
     )
-    api_client.token_authenticate(
-        master_owner,
-        user_agent='Chrome/141',
-        user_ip='10.10.0.12',
+    tenant_created_mock = mocker.patch(
+        'src.accounts.views.tenants.AuditEventService.tenant_created',
     )
+    api_client.token_authenticate(master_owner)
 
     # act
     response = api_client.post(
@@ -99,27 +92,11 @@ def test_create__free_plan__emit_tenant_create_in_master_account(
 
     # assert
     assert response.status_code == 200
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == AccountEvents.TENANT_CREATE
-    assert event.category == AccountEvents.CATEGORY
-    assert event.account_id == master_account.id
-    assert event.actor == Actor(
-        id=master_owner.id,
-        email=master_owner.email,
-        user_type=UserType.USER,
+    tenant_created_mock.assert_called_once_with(
+        user=master_owner,
+        auth_type=AuthTokenType.USER,
+        tenant=tenant_account,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.ACCOUNT,
-        id=tenant_account.id,
-    )
-    assert event.payload == {
-        'name': 'Tenant name',
-        'billing_plan': BillingPlanType.FREEMIUM,
-    }
-    assert event.ip == '10.10.0.12'
-    assert event.user_agent == 'Chrome/141'
     account_service_init_mock.assert_called_once_with(
         is_superuser=False,
         auth_type=AuthTokenType.USER,
@@ -137,7 +114,9 @@ def test_create__free_plan__emit_tenant_create_in_master_account(
         tenant_account=tenant_account,
         master_account=master_account,
     )
-    sys_workflow_service_init_mock.assert_called_once_with(user=tenant_owner)
+    system_workflow_service_init_mock.assert_called_once_with(
+        user=tenant_owner,
+    )
     create_onboarding_templates_mock.assert_called_once_with()
     create_activated_templates_mock.assert_called_once_with()
     increase_plan_users_mock.assert_not_called()
@@ -149,10 +128,9 @@ def test_create__free_plan__emit_tenant_create_in_master_account(
     )
 
 
-def test_create__account_service_exception__no_event(
+def test_create__account_service_exception__audit_not_called(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -178,6 +156,9 @@ def test_create__account_service_exception__no_event(
     tenants_added_mock = mocker.patch(
         'src.analysis.services.AnalyticService.tenants_added',
     )
+    tenant_created_mock = mocker.patch(
+        'src.accounts.views.tenants.AuditEventService.tenant_created',
+    )
     api_client.token_authenticate(master_owner)
 
     # act
@@ -192,7 +173,7 @@ def test_create__account_service_exception__no_event(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == MSG_A_0025
     assert response.data['details'] == {}
-    assert fake_stream.events == []
+    tenant_created_mock.assert_not_called()
     account_service_init_mock.assert_called_once_with(
         is_superuser=False,
         auth_type=AuthTokenType.USER,
@@ -209,10 +190,9 @@ def test_create__account_service_exception__no_event(
     tenants_added_mock.assert_not_called()
 
 
-def test_create__stripe_exception__no_event(
+def test_create__stripe_exception__audit_not_called(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -250,7 +230,7 @@ def test_create__stripe_exception__no_event(
         'src.accounts.services.user.UserService.create_tenant_account_owner',
         return_value=tenant_owner,
     )
-    sys_workflow_service_init_mock = mocker.patch.object(
+    system_workflow_service_init_mock = mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
         return_value=None,
@@ -279,6 +259,9 @@ def test_create__stripe_exception__no_event(
     tenants_added_mock = mocker.patch(
         'src.analysis.services.AnalyticService.tenants_added',
     )
+    tenant_created_mock = mocker.patch(
+        'src.accounts.views.tenants.AuditEventService.tenant_created',
+    )
     api_client.token_authenticate(master_owner)
 
     # act
@@ -293,7 +276,7 @@ def test_create__stripe_exception__no_event(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == MSG_BL_0008
     assert response.data['details'] == {}
-    assert fake_stream.events == []
+    tenant_created_mock.assert_not_called()
     account_service_init_mock.assert_called_once_with(
         is_superuser=False,
         auth_type=AuthTokenType.USER,
@@ -311,7 +294,7 @@ def test_create__stripe_exception__no_event(
         tenant_account=tenant_account,
         master_account=master_account,
     )
-    sys_workflow_service_init_mock.assert_called_once_with(
+    system_workflow_service_init_mock.assert_called_once_with(
         user=tenant_owner,
     )
     create_onboarding_templates_mock.assert_called_once_with()

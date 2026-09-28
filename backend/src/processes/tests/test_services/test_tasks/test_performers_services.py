@@ -1302,6 +1302,10 @@ class TestTaskPerformersService:
             'src.processes.services.tasks.performers.'
             'send_new_task_notification.delay',
         )
+        task_performer_created_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'AuditEventService.task_performer_created',
+        )
         is_superuser = False
         auth_type = AuthTokenType.USER
 
@@ -1350,6 +1354,12 @@ class TestTaskPerformersService:
                 },
             ).data,
         ).count() == 1
+        task_performer_created_mock.assert_called_once_with(
+            user=request_user,
+            auth_type=auth_type,
+            task=task,
+            performer=user_performer,
+        )
 
     def test_create_actions__user_in_group__not_send(self, mocker):
 
@@ -1390,6 +1400,10 @@ class TestTaskPerformersService:
             'src.processes.services.tasks.performers.'
             'send_new_task_notification.delay',
         )
+        task_performer_created_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'AuditEventService.task_performer_created',
+        )
         is_superuser = False
         auth_type = AuthTokenType.USER
 
@@ -1420,6 +1434,12 @@ class TestTaskPerformersService:
                 },
             ).data,
         ).count() == 1
+        task_performer_created_mock.assert_called_once_with(
+            user=request_user,
+            auth_type=auth_type,
+            task=task,
+            performer=user_performer,
+        )
 
     def test_create_actions__add_yourself__not_send_email(self, mocker):
 
@@ -1434,6 +1454,10 @@ class TestTaskPerformersService:
         performer_created_event_mock = mocker.patch(
             'src.processes.services.events.'
             'WorkflowEventService.performer_created_event',
+        )
+        task_performer_created_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'AuditEventService.task_performer_created',
         )
         send_new_task_websocket_mock = mocker.patch(
             'src.notifications.tasks'
@@ -1458,6 +1482,12 @@ class TestTaskPerformersService:
         # assert
         performer_created_event_mock.assert_called_once_with(
             user=user,
+            task=task,
+            performer=user,
+        )
+        task_performer_created_mock.assert_called_once_with(
+            user=user,
+            auth_type=auth_type,
             task=task,
             performer=user,
         )
@@ -1497,6 +1527,10 @@ class TestTaskPerformersService:
             'src.processes.services.tasks.performers.'
             'send_new_task_notification.delay',
         )
+        task_performer_created_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'AuditEventService.task_performer_created',
+        )
         is_superuser = False
         auth_type = AuthTokenType.USER
 
@@ -1530,6 +1564,12 @@ class TestTaskPerformersService:
             logo_lg=None,
             is_returned=False,
         )
+        task_performer_created_mock.assert_called_once_with(
+            user=user,
+            auth_type=auth_type,
+            task=task,
+            performer=user_performer,
+        )
 
     def test_create_actions__external_workflow__ok(self, mocker):
 
@@ -1555,6 +1595,10 @@ class TestTaskPerformersService:
         send_new_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.performers.'
             'send_new_task_notification.delay',
+        )
+        task_performer_created_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'AuditEventService.task_performer_created',
         )
         is_superuser = False
         auth_type = AuthTokenType.USER
@@ -1589,6 +1633,12 @@ class TestTaskPerformersService:
             logo_lg=None,
             is_returned=False,
         )
+        task_performer_created_mock.assert_called_once_with(
+            user=user,
+            auth_type=auth_type,
+            task=task,
+            performer=user_performer,
+        )
 
     def test_create_actions__not_send_notify_for_transfered__ok(self, mocker):
 
@@ -1603,6 +1653,10 @@ class TestTaskPerformersService:
         send_new_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.performers.'
             'send_new_task_notification.delay',
+        )
+        task_performer_created_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'AuditEventService.task_performer_created',
         )
         is_superuser = False
         auth_type = AuthTokenType.USER
@@ -1632,6 +1686,12 @@ class TestTaskPerformersService:
         workflow.refresh_from_db()
         assert not WorkflowPermissionService(workflow).has_view(
             user=transfer_performer,
+        )
+        task_performer_created_mock.assert_called_once_with(
+            user=request_user,
+            auth_type=auth_type,
+            task=task,
+            performer=transfer_performer,
         )
 
     def test_create_actions__with_deleted_group_taskperformer__ok(
@@ -1684,6 +1744,10 @@ class TestTaskPerformersService:
             'src.processes.services.tasks.performers.'
             'send_new_task_notification.delay',
         )
+        task_performer_created_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'AuditEventService.task_performer_created',
+        )
         is_superuser = False
         auth_type = AuthTokenType.USER
 
@@ -1714,6 +1778,12 @@ class TestTaskPerformersService:
                 },
             ).data,
         ).count() == 1
+        task_performer_created_mock.assert_called_once_with(
+            user=request_user,
+            auth_type=auth_type,
+            task=task,
+            performer=user_performer,
+        )
 
     def test_delete_actions__user_in_group__not_send(
         self,
@@ -1771,6 +1841,10 @@ class TestTaskPerformersService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_deleted_event',
         )
+        task_performer_deleted_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'AuditEventService.task_performer_deleted',
+        )
         send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
             '.send_task_deleted_notification.delay',
@@ -1792,6 +1866,12 @@ class TestTaskPerformersService:
         complete_task_mock.assert_not_called()
         performer_deleted_event_mock.assert_called_once_with(
             user=request_user,
+            task=task,
+            performer=deleted_performer,
+        )
+        task_performer_deleted_mock.assert_called_once_with(
+            user=request_user,
+            auth_type=auth_type,
             task=task,
             performer=deleted_performer,
         )
@@ -1851,6 +1931,10 @@ class TestTaskPerformersService:
             'src.notifications.tasks'
             '.send_task_deleted_notification.delay',
         )
+        task_performer_deleted_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'AuditEventService.task_performer_deleted',
+        )
         is_superuser = False
         auth_type = AuthTokenType.USER
 
@@ -1868,6 +1952,12 @@ class TestTaskPerformersService:
         complete_task_mock.assert_not_called()
         performer_deleted_event_mock.assert_called_once_with(
             user=request_user,
+            task=task,
+            performer=deleted_performer,
+        )
+        task_performer_deleted_mock.assert_called_once_with(
+            user=request_user,
+            auth_type=auth_type,
             task=task,
             performer=deleted_performer,
         )
@@ -1932,6 +2022,10 @@ class TestTaskPerformersService:
             'src.notifications.tasks'
             '.send_task_deleted_notification.delay',
         )
+        task_performer_deleted_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'AuditEventService.task_performer_deleted',
+        )
         is_superuser = False
         auth_type = AuthTokenType.USER
 
@@ -1954,6 +2048,12 @@ class TestTaskPerformersService:
         complete_task_mock.assert_called_once_with(task=task)
         performer_deleted_event_mock.assert_called_once_with(
             user=request_user,
+            task=task,
+            performer=deleted_performer,
+        )
+        task_performer_deleted_mock.assert_called_once_with(
+            user=request_user,
+            auth_type=auth_type,
             task=task,
             performer=deleted_performer,
         )
@@ -2019,6 +2119,10 @@ class TestTaskPerformersService:
             'src.notifications.tasks'
             '.send_task_deleted_notification.delay',
         )
+        task_performer_deleted_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'AuditEventService.task_performer_deleted',
+        )
         is_superuser = False
         auth_type = AuthTokenType.USER
 
@@ -2041,6 +2145,12 @@ class TestTaskPerformersService:
         complete_task_mock.assert_called_once_with(task=task)
         performer_deleted_event_mock.assert_called_once_with(
             user=request_user,
+            task=task,
+            performer=deleted_performer,
+        )
+        task_performer_deleted_mock.assert_called_once_with(
+            user=request_user,
+            auth_type=auth_type,
             task=task,
             performer=deleted_performer,
         )
@@ -2105,6 +2215,10 @@ class TestTaskPerformersService:
             'src.notifications.tasks'
             '.send_task_deleted_notification.delay',
         )
+        task_performer_deleted_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'AuditEventService.task_performer_deleted',
+        )
         is_superuser = False
         auth_type = AuthTokenType.USER
 
@@ -2122,6 +2236,12 @@ class TestTaskPerformersService:
         complete_task_mock.assert_not_called()
         performer_deleted_event_mock.assert_called_once_with(
             user=request_user,
+            task=task,
+            performer=deleted_performer,
+        )
+        task_performer_deleted_mock.assert_called_once_with(
+            user=request_user,
+            auth_type=auth_type,
             task=task,
             performer=deleted_performer,
         )
@@ -2164,7 +2284,7 @@ class TestTaskPerformersService:
             type=PerformerType.GROUP,
         )
 
-        mocker.patch(
+        performer_deleted_event_mock = mocker.patch(
             'src.processes.services.events.'
             'WorkflowEventService.performer_deleted_event',
         )
@@ -2184,6 +2304,10 @@ class TestTaskPerformersService:
                 'src.notifications.tasks'
                 '.send_task_deleted_notification.delay',
             )
+        )
+        task_performer_deleted_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'AuditEventService.task_performer_deleted',
         )
 
         # act
@@ -2215,6 +2339,17 @@ class TestTaskPerformersService:
                 ),
             ],
             account_id=account.id,
+        )
+        performer_deleted_event_mock.assert_called_once_with(
+            user=request_user,
+            task=task,
+            performer=deleted_performer,
+        )
+        task_performer_deleted_mock.assert_called_once_with(
+            user=request_user,
+            auth_type=AuthTokenType.USER,
+            task=task,
+            performer=deleted_performer,
         )
 
 
@@ -2321,8 +2456,13 @@ class TestGuestPerformersService:
             'src.authentication.services.guest_auth.'
             'GuestJWTAuthService.activate_task_guest_cache',
         )
+        task_performer_created_mock = mocker.patch(
+            'src.processes.services.tasks.guests.'
+            'AuditEventService.task_performer_created',
+        )
         current_url = '/page'
         is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         GuestPerformersService._create_actions(
@@ -2331,9 +2471,16 @@ class TestGuestPerformersService:
             task=task,
             current_url=current_url,
             is_superuser=is_superuser,
+            auth_type=auth_type,
         )
 
         # assert
+        task_performer_created_mock.assert_called_once_with(
+            user=request_user,
+            auth_type=auth_type,
+            task=task,
+            performer=user_guest,
+        )
         assert WorkflowEvent.objects.filter(
             workflow=workflow,
             account=request_user.account,
@@ -2427,17 +2574,29 @@ class TestGuestPerformersService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_deleted_event',
         )
+        task_performer_deleted_mock = mocker.patch(
+            'src.processes.services.tasks.guests.'
+            'AuditEventService.task_performer_deleted',
+        )
+        auth_type = AuthTokenType.USER
 
         # act
         GuestPerformersService._delete_actions(
             request_user=request_user,
             user=deleted_guest,
             task=task,
+            auth_type=auth_type,
         )
 
         # assert
         performer_deleted_event_mock.assert_called_once_with(
             user=request_user,
+            task=task,
+            performer=deleted_guest,
+        )
+        task_performer_deleted_mock.assert_called_once_with(
+            user=request_user,
+            auth_type=auth_type,
             task=task,
             performer=deleted_guest,
         )
@@ -2495,17 +2654,28 @@ class TestGuestPerformersService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_deleted_event',
         )
+        task_performer_deleted_mock = mocker.patch(
+            'src.processes.services.tasks.guests.'
+            'AuditEventService.task_performer_deleted',
+        )
 
         # act
         GuestPerformersService._delete_actions(
             request_user=request_user,
             user=deleted_guest,
             task=task,
+            auth_type=AuthTokenType.USER,
         )
 
         # assert
         performer_deleted_event_mock.assert_called_once_with(
             user=request_user,
+            task=task,
+            performer=deleted_guest,
+        )
+        task_performer_deleted_mock.assert_called_once_with(
+            user=request_user,
+            auth_type=AuthTokenType.USER,
             task=task,
             performer=deleted_guest,
         )
@@ -2570,17 +2740,28 @@ class TestGuestPerformersService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_deleted_event',
         )
+        task_performer_deleted_mock = mocker.patch(
+            'src.processes.services.tasks.guests.'
+            'AuditEventService.task_performer_deleted',
+        )
 
         # act
         GuestPerformersService._delete_actions(
             request_user=request_user,
             user=deleted_guest,
             task=task,
+            auth_type=AuthTokenType.USER,
         )
 
         # assert
         performer_deleted_event_mock.assert_called_once_with(
             user=request_user,
+            task=task,
+            performer=deleted_guest,
+        )
+        task_performer_deleted_mock.assert_called_once_with(
+            user=request_user,
+            auth_type=AuthTokenType.USER,
             task=task,
             performer=deleted_guest,
         )
@@ -2949,6 +3130,10 @@ class TestGroupPerformerService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_group_created_event',
         )
+        task_performer_group_created_mock = mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'AuditEventService.task_performer_group_created',
+        )
         send_new_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.performers.'
             'send_new_task_notification.delay',
@@ -2966,6 +3151,12 @@ class TestGroupPerformerService:
             user=user,
             task=task,
             performer=group,
+        )
+        task_performer_group_created_mock.assert_called_once_with(
+            user=user,
+            auth_type=AuthTokenType.USER,
+            task=task,
+            group=group,
         )
         send_new_task_websocket_mock.assert_not_called()
         send_new_task_notification_mock.assert_called_once_with(
@@ -3020,6 +3211,10 @@ class TestGroupPerformerService:
             'src.notifications.tasks'
             '.send_new_task_websocket.delay',
         )
+        task_performer_group_created_mock = mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'AuditEventService.task_performer_group_created',
+        )
 
         # act
         service._create_group_actions(group=group)
@@ -3029,6 +3224,12 @@ class TestGroupPerformerService:
             user=user,
             task=task,
             performer=group,
+        )
+        task_performer_group_created_mock.assert_called_once_with(
+            user=user,
+            auth_type=AuthTokenType.USER,
+            task=task,
+            group=group,
         )
         send_new_task_notification_mock.assert_not_called()
         send_new_task_websocket_mock.assert_not_called()
@@ -3062,6 +3263,10 @@ class TestGroupPerformerService:
             'src.notifications.tasks'
             '.send_new_task_websocket.delay',
         )
+        task_performer_group_created_mock = mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'AuditEventService.task_performer_group_created',
+        )
 
         # act
         service._create_group_actions(group=group)
@@ -3071,6 +3276,12 @@ class TestGroupPerformerService:
             user=user2,
             task=task,
             performer=group,
+        )
+        task_performer_group_created_mock.assert_called_once_with(
+            user=user2,
+            auth_type=AuthTokenType.USER,
+            task=task,
+            group=group,
         )
         send_new_task_notification_mock.assert_not_called()
         send_new_task_websocket_mock.assert_called_once_with(
@@ -3107,6 +3318,10 @@ class TestGroupPerformerService:
             'src.notifications.tasks'
             '.send_new_task_websocket.delay',
         )
+        task_performer_group_created_mock = mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'AuditEventService.task_performer_group_created',
+        )
 
         # act
         service._create_group_actions(group=group)
@@ -3116,6 +3331,12 @@ class TestGroupPerformerService:
             user=user2,
             task=task,
             performer=group,
+        )
+        task_performer_group_created_mock.assert_called_once_with(
+            user=user2,
+            auth_type=AuthTokenType.USER,
+            task=task,
+            group=group,
         )
         send_new_task_notification_mock.assert_not_called()
         send_new_task_websocket_mock.assert_called_once_with(
@@ -3153,6 +3374,10 @@ class TestGroupPerformerService:
             'src.notifications.tasks'
             '.send_new_task_websocket.delay',
         )
+        task_performer_group_created_mock = mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'AuditEventService.task_performer_group_created',
+        )
 
         # act
         service._create_group_actions(group=group)
@@ -3162,6 +3387,12 @@ class TestGroupPerformerService:
             user=user,
             task=task,
             performer=group,
+        )
+        task_performer_group_created_mock.assert_called_once_with(
+            user=user,
+            auth_type=AuthTokenType.USER,
+            task=task,
+            group=group,
         )
         send_new_task_notification_mock.assert_not_called()
         send_new_task_websocket_mock.assert_not_called()
@@ -3591,6 +3822,10 @@ class TestGroupPerformerService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_group_deleted_event',
         )
+        task_performer_group_deleted_mock = mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'AuditEventService.task_performer_group_deleted',
+        )
         send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
             '.send_task_deleted_notification.delay',
@@ -3619,6 +3854,12 @@ class TestGroupPerformerService:
             user=user,
             task=task,
             performer=group,
+        )
+        task_performer_group_deleted_mock.assert_called_once_with(
+            user=user,
+            auth_type=AuthTokenType.USER,
+            task=task,
+            group=group,
         )
         send_task_deleted_notification_mock.assert_not_called()
         complete_task_mock.assert_called_once_with(task=task)
@@ -3664,6 +3905,10 @@ class TestGroupPerformerService:
             'src.processes.services.workflow_action.'
             'WorkflowActionService.start_workflow',
         )
+        task_performer_group_deleted_mock = mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'AuditEventService.task_performer_group_deleted',
+        )
 
         # act
         service._delete_group_actions(group=group)
@@ -3673,6 +3918,12 @@ class TestGroupPerformerService:
             user=user,
             task=task,
             performer=group,
+        )
+        task_performer_group_deleted_mock.assert_called_once_with(
+            user=user,
+            auth_type=AuthTokenType.USER,
+            task=task,
+            group=group,
         )
         send_task_deleted_notification_mock.assert_called_once_with(
             task_id=task.id,
@@ -3725,6 +3976,10 @@ class TestGroupPerformerService:
             'src.processes.services.workflow_action'
             '.WorkflowActionService.complete_task',
         )
+        task_performer_group_deleted_mock = mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'AuditEventService.task_performer_group_deleted',
+        )
 
         # act
         service._delete_group_actions(group=group)
@@ -3734,6 +3989,12 @@ class TestGroupPerformerService:
             user=user,
             task=task,
             performer=group,
+        )
+        task_performer_group_deleted_mock.assert_called_once_with(
+            user=user,
+            auth_type=AuthTokenType.USER,
+            task=task,
+            group=group,
         )
         send_task_deleted_notification_mock.assert_not_called()
         workflow_action_service_init_mock.assert_not_called()
@@ -3776,7 +4037,7 @@ class TestGroupPerformerService:
             is_superuser=False,
             auth_type=AuthTokenType.USER,
         )
-        mocker.patch(
+        performer_group_deleted_event_mock = mocker.patch(
             'src.processes.services.events.'
             'WorkflowEventService'
             '.performer_group_deleted_event',
@@ -3799,6 +4060,10 @@ class TestGroupPerformerService:
             'src.processes.services.workflow_action'
             '.WorkflowActionService.complete_task',
         )
+        task_performer_group_deleted_mock = mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'AuditEventService.task_performer_group_deleted',
+        )
 
         # act
         service._delete_group_actions(group=group)
@@ -3807,6 +4072,17 @@ class TestGroupPerformerService:
         # status, so can_be_completed returns False
         workflow_action_service_init_mock.assert_not_called()
         complete_task_mock.assert_not_called()
+        performer_group_deleted_event_mock.assert_called_once_with(
+            user=user,
+            task=task,
+            performer=group,
+        )
+        task_performer_group_deleted_mock.assert_called_once_with(
+            user=user,
+            auth_type=AuthTokenType.USER,
+            task=task,
+            group=group,
+        )
 
 
 class TestReassignPermissionsCalledFromActions:
@@ -3837,6 +4113,10 @@ class TestReassignPermissionsCalledFromActions:
             'src.processes.services.tasks.performers.'
             'reassign_restricted_permissions_for_task',
         )
+        task_performer_created_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'AuditEventService.task_performer_created',
+        )
 
         # act
         TaskPerformersService._create_actions(
@@ -3853,6 +4133,12 @@ class TestReassignPermissionsCalledFromActions:
             user=request_user,
         )
         send_notification_mock.assert_called_once()
+        task_performer_created_mock.assert_called_once_with(
+            user=request_user,
+            auth_type=AuthTokenType.USER,
+            task=task,
+            performer=user_performer,
+        )
 
     def test_task_performers__delete_actions__calls_reassign(self, mocker):
 
@@ -3881,6 +4167,10 @@ class TestReassignPermissionsCalledFromActions:
             'src.processes.services.tasks.performers.'
             'reassign_restricted_permissions_for_task',
         )
+        task_performer_deleted_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'AuditEventService.task_performer_deleted',
+        )
 
         # act
         TaskPerformersService._delete_actions(
@@ -3897,6 +4187,12 @@ class TestReassignPermissionsCalledFromActions:
             user=request_user,
         )
         performer_deleted_event_mock.assert_called_once()
+        task_performer_deleted_mock.assert_called_once_with(
+            user=request_user,
+            auth_type=AuthTokenType.USER,
+            task=task,
+            performer=user_performer,
+        )
         send_deleted_notification_mock.assert_called_once()
 
     # --- GuestPerformersService ---
@@ -3933,6 +4229,10 @@ class TestReassignPermissionsCalledFromActions:
             'src.processes.services.tasks.guests.'
             'reassign_restricted_permissions_for_task',
         )
+        task_performer_created_mock = mocker.patch(
+            'src.processes.services.tasks.guests.'
+            'AuditEventService.task_performer_created',
+        )
 
         # act
         GuestPerformersService._create_actions(
@@ -3941,6 +4241,7 @@ class TestReassignPermissionsCalledFromActions:
             request_user=request_user,
             current_url='/page',
             is_superuser=False,
+            auth_type=AuthTokenType.USER,
         )
 
         # assert
@@ -3953,6 +4254,12 @@ class TestReassignPermissionsCalledFromActions:
         guest_invite_sent_mock.assert_called_once()
         guest_invited_mock.assert_called_once()
         activate_cache_mock.assert_called_once()
+        task_performer_created_mock.assert_called_once_with(
+            user=request_user,
+            auth_type=AuthTokenType.USER,
+            task=task,
+            performer=guest,
+        )
 
     def test_guest_performers__delete_actions__calls_reassign(self, mocker):
 
@@ -3991,6 +4298,10 @@ class TestReassignPermissionsCalledFromActions:
             'src.processes.services.tasks.guests.'
             'reassign_restricted_permissions_for_task',
         )
+        task_performer_deleted_mock = mocker.patch(
+            'src.processes.services.tasks.guests.'
+            'AuditEventService.task_performer_deleted',
+        )
 
         # act
         GuestPerformersService._delete_actions(
@@ -4007,6 +4318,12 @@ class TestReassignPermissionsCalledFromActions:
             user=request_user,
         )
         performer_deleted_event_mock.assert_called_once()
+        task_performer_deleted_mock.assert_called_once_with(
+            user=request_user,
+            auth_type=AuthTokenType.USER,
+            task=task,
+            performer=guest,
+        )
         send_deleted_notification_mock.assert_not_called()
         deactivate_cache_mock.assert_called_once()
 
@@ -4048,6 +4365,10 @@ class TestReassignPermissionsCalledFromActions:
             'src.processes.services.tasks.groups.'
             'reassign_restricted_permissions_for_task',
         )
+        task_performer_group_created_mock = mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'AuditEventService.task_performer_group_created',
+        )
 
         # act
         service._create_group_actions(group=group)
@@ -4058,6 +4379,12 @@ class TestReassignPermissionsCalledFromActions:
             user=user,
         )
         group_created_event_mock.assert_called_once()
+        task_performer_group_created_mock.assert_called_once_with(
+            user=user,
+            auth_type=AuthTokenType.USER,
+            task=task,
+            group=group,
+        )
         send_notification_mock.assert_called_once()
         send_websocket_mock.assert_not_called()
 
@@ -4097,6 +4424,10 @@ class TestReassignPermissionsCalledFromActions:
             'src.processes.services.tasks.groups.'
             'reassign_restricted_permissions_for_task',
         )
+        task_performer_group_deleted_mock = mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'AuditEventService.task_performer_group_deleted',
+        )
 
         # act
         service._delete_group_actions(group=group)
@@ -4107,6 +4438,12 @@ class TestReassignPermissionsCalledFromActions:
             user=user,
         )
         group_deleted_event_mock.assert_called_once()
+        task_performer_group_deleted_mock.assert_called_once_with(
+            user=user,
+            auth_type=AuthTokenType.USER,
+            task=task,
+            group=group,
+        )
         send_deleted_notification_mock.assert_not_called()
 
 
@@ -4141,7 +4478,7 @@ class TestTaskPerformersDeleteAttachmentSync:
             'src.processes.services.tasks.performers.'
             'WorkflowPermissionService.sync_view',
         )
-        mocker.patch(
+        performer_deleted_event_mock = mocker.patch(
             'src.processes.services.events.'
             'WorkflowEventService.performer_deleted_event',
         )
@@ -4152,6 +4489,10 @@ class TestTaskPerformersDeleteAttachmentSync:
         mocker.patch(
             'src.processes.services.tasks.performers.'
             'reassign_restricted_permissions_for_task',
+        )
+        task_performer_deleted_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'AuditEventService.task_performer_deleted',
         )
 
         # act
@@ -4165,6 +4506,17 @@ class TestTaskPerformersDeleteAttachmentSync:
 
         # assert
         sync_mock.assert_called_once_with(task.workflow_id)
+        performer_deleted_event_mock.assert_called_once_with(
+            user=owner,
+            task=task,
+            performer=performer,
+        )
+        task_performer_deleted_mock.assert_called_once_with(
+            user=owner,
+            auth_type=AuthTokenType.USER,
+            task=task,
+            performer=performer,
+        )
 
 
 class TestGroupPerformerDeleteAttachmentSync:
@@ -4206,7 +4558,7 @@ class TestGroupPerformerDeleteAttachmentSync:
             'src.processes.services.tasks.groups.'
             'WorkflowPermissionService.sync_performer_group',
         )
-        mocker.patch(
+        performer_group_deleted_event_mock = mocker.patch(
             'src.processes.services.events.'
             'WorkflowEventService'
             '.performer_group_deleted_event',
@@ -4215,6 +4567,10 @@ class TestGroupPerformerDeleteAttachmentSync:
             'src.processes.services.tasks.groups.'
             'reassign_restricted_permissions_for_task',
         )
+        task_performer_group_deleted_mock = mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'AuditEventService.task_performer_group_deleted',
+        )
 
         # act
         service._delete_group_actions(group=group)
@@ -4222,4 +4578,15 @@ class TestGroupPerformerDeleteAttachmentSync:
         # assert
         sync_mock.assert_called_once_with(
             task.workflow_id,
+        )
+        performer_group_deleted_event_mock.assert_called_once_with(
+            user=user,
+            task=task,
+            performer=group,
+        )
+        task_performer_group_deleted_mock.assert_called_once_with(
+            user=user,
+            auth_type=AuthTokenType.USER,
+            task=task,
+            group=group,
         )

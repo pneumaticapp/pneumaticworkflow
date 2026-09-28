@@ -410,7 +410,7 @@ class UsersAdmin(JournaledAdminMixin, UserAdmin, SignUpMixin):
             service = AccountService(instance=obj.account, user=obj)
             service.update_users_counts()
         else:
-            self.signup(
+            account_owner, _ = self.signup(
                 email=obj.email,
                 first_name=obj.first_name,
                 last_name=obj.last_name,
@@ -418,6 +418,8 @@ class UsersAdmin(JournaledAdminMixin, UserAdmin, SignUpMixin):
                 billing_sync=False,
                 request=request,
             )
+            obj.id = account_owner.id
+            obj.account_id = account_owner.account_id
 
     def send_digest(self, request, queryset):
         names = []

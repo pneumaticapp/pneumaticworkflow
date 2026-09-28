@@ -12,6 +12,7 @@ from src.accounts.tokens import (
     DigestUnsubscribeToken,
     UnsubscribeEmailToken,
 )
+from src.analysis.enums import MailoutType
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.generics.mixins.views import (
@@ -20,8 +21,6 @@ from src.generics.mixins.views import (
 from src.logs.events import AuditEventService
 
 UserModel = get_user_model()
-
-DIGEST_SUBSCRIPTION_FIELD = 'is_digest_subscriber'
 
 
 class UnsubscribeDigestView(
@@ -37,7 +36,6 @@ class UnsubscribeDigestView(
             try:
                 token_data = DigestUnsubscribeToken(token=token)
                 user = UserModel.objects.get(id=token_data['user_id'])
-                was_subscribed = user.is_digest_subscriber
                 user.is_digest_subscriber = False
                 user.save(update_fields=['is_digest_subscriber'])
                 AnalyticService.users_digest(
@@ -45,11 +43,10 @@ class UnsubscribeDigestView(
                     is_superuser=False,
                     auth_type=AuthTokenType.USER,
                 )
-                if was_subscribed:
-                    AuditEventService.user_unsubscribed(
-                        user=user,
-                        email_type=DIGEST_SUBSCRIPTION_FIELD,
-                    )
+                AuditEventService.user_unsubscribed(
+                    user=user,
+                    email_type=MailoutType.MAP[MailoutType.WF_DIGEST],
+                )
             except TokenError:
                 message = MSG_A_0008
         else:
@@ -77,14 +74,12 @@ class UnsubscribeEmailView(
                 token_data = UnsubscribeEmailToken(token=token)
                 user = UserModel.objects.get(id=token_data['user_id'])
                 email_type = token_data['email_type']
-                was_subscribed = getattr(user, email_type)
                 setattr(user, email_type, False)
                 user.save(update_fields=[email_type])
-                if was_subscribed:
-                    AuditEventService.user_unsubscribed(
-                        user=user,
-                        email_type=email_type,
-                    )
+                AuditEventService.user_unsubscribed(
+                    user=user,
+                    email_type=email_type,
+                )
             except TokenError:
                 message = MSG_A_0008
         else:

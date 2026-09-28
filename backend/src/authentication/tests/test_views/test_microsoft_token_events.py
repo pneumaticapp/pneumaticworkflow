@@ -1,19 +1,17 @@
-
 import pytest
 from django.contrib.auth import get_user_model
 
-from src.accounts.enums import SourceType, UserStatus, UserType
+from src.accounts.enums import SourceType, UserStatus
 from src.authentication.entities import UserData
 from src.authentication.enums import AuthTokenType
-from src.authentication.messages import MSG_AU_0016
-from src.authentication.services.microsoft import MicrosoftAuthService
-from src.logs.events.schema import Actor, EventObject
-from src.logs.events.emitter import NO_ACCOUNT
-from src.logs.events.enums import (
-    EventObjectType,
-    LoginFailedReason,
-    UserEvents,
+from src.authentication.messages import (
+    MSG_AU_0003,
+    MSG_AU_0009,
+    MSG_AU_0016,
 )
+from src.authentication.services.exceptions import TokenInvalidOrExpired
+from src.authentication.services.microsoft import MicrosoftAuthService
+from src.logs.events.enums import LoginFailedReason
 from src.processes.services.system_workflows import (
     SystemWorkflowService,
 )
@@ -22,17 +20,17 @@ from src.processes.tests.fixtures import (
     create_test_admin,
     create_test_owner,
 )
+from src.utils.validation import ErrorCode
 
 UserModel = get_user_model()
 
 pytestmark = pytest.mark.django_db
 
 
-def test_microsoft_token__existent_user__emit_user_login(
+def test_microsoft_token__existent_user__audit_user_logged_in(
     mocker,
     api_client,
     settings,
-    fake_stream,
 ):
 
     # arrange
@@ -69,9 +67,13 @@ def test_microsoft_token__existent_user__emit_user_login(
         'src.authentication.services.microsoft.'
         'MicrosoftAuthService.save_tokens_for_user',
     )
-    update_contacts_mock = mocker.patch(
+    update_microsoft_contacts_mock = mocker.patch(
         'src.authentication.tasks.'
         'update_microsoft_contacts.delay',
+    )
+    user_logged_in_mock = mocker.patch(
+        'src.authentication.views.microsoft.AuditEventService.'
+        'user_logged_in',
     )
     auth_response = {
         'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
@@ -86,29 +88,14 @@ def test_microsoft_token__existent_user__emit_user_login(
         data=auth_response,
         HTTP_USER_AGENT='Some/Mozilla',
         HTTP_X_REAL_IP='128.18.0.99',
-        HTTP_X_REQUEST_ID='audit-microsoft-1',
     )
 
     # assert
     assert response.status_code == 200
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.LOGIN
-    assert event.account_id == user.account_id
-    assert event.actor == Actor(
-        id=user.id,
-        email=user.email,
-        user_type=UserType.USER,
+    user_logged_in_mock.assert_called_once_with(
+        user=user,
+        source=SourceType.MICROSOFT,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.USER,
-        id=user.id,
-    )
-    assert event.payload == {'source': SourceType.MICROSOFT}
-    assert event.ip == '128.18.0.99'
-    assert event.user_agent == 'Some/Mozilla'
-    assert event.request_id == 'audit-microsoft-1'
     microsoft_auth_service_init_mock.assert_called_once_with()
     get_user_data_mock.assert_called_once_with(auth_response=auth_response)
     get_auth_token_mock.assert_called_once_with(
@@ -118,19 +105,18 @@ def test_microsoft_token__existent_user__emit_user_login(
     )
     apply_photo_mock.assert_called_once_with(user, user_data)
     save_tokens_mock.assert_called_once_with(user)
-    update_contacts_mock.assert_called_once_with(user.id)
+    update_microsoft_contacts_mock.assert_called_once_with(user.id)
 
 
-def test_microsoft_token__new_user__emit_user_signup_only(
+def test_microsoft_token__new_user__audit_user_signed_up_only(
     mocker,
     api_client,
     identify_mock,
     group_mock,
     settings,
-    fake_stream,
 ):
 
-    """ A sign up is one event: no login is reported on top of it. """
+    """ A sign up is one record: no login is reported on top of it. """
 
     # arrange
     settings.PROJECT_CONF = {
@@ -197,9 +183,16 @@ def test_microsoft_token__new_user__emit_user_signup_only(
         'src.authentication.services.microsoft.'
         'MicrosoftAuthService.save_tokens_for_user',
     )
-    update_contacts_mock = mocker.patch(
+    update_microsoft_contacts_mock = mocker.patch(
         'src.authentication.tasks.'
         'update_microsoft_contacts.delay',
+    )
+    user_signed_up_mock = mocker.patch(
+        'src.authentication.views.mixins.AuditEventService.user_signed_up',
+    )
+    user_logged_in_mock = mocker.patch(
+        'src.authentication.views.microsoft.AuditEventService.'
+        'user_logged_in',
     )
     auth_response = {
         'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
@@ -214,31 +207,17 @@ def test_microsoft_token__new_user__emit_user_signup_only(
         data=auth_response,
         HTTP_USER_AGENT='Some/Mozilla',
         HTTP_X_REAL_IP='128.18.0.99',
-        HTTP_X_REQUEST_ID='audit-microsoft-2',
     )
 
     # assert
     assert response.status_code == 200
     assert response.data['token'] == 'new-user-token'
     new_user = UserModel.objects.get(email=email)
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.SIGNUP
-    assert event.account_id == new_user.account_id
-    assert event.actor == Actor(
-        id=new_user.id,
-        email=email,
-        user_type=UserType.USER,
+    user_signed_up_mock.assert_called_once_with(
+        user=new_user,
+        source=SourceType.MICROSOFT,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.USER,
-        id=new_user.id,
-    )
-    assert event.payload == {'source': SourceType.MICROSOFT}
-    assert event.ip == '128.18.0.99'
-    assert event.user_agent == 'Some/Mozilla'
-    assert event.request_id == 'audit-microsoft-2'
+    user_logged_in_mock.assert_not_called()
     microsoft_auth_service_init_mock.assert_called_once_with()
     get_user_data_mock.assert_called_once_with(auth_response=auth_response)
     system_workflow_service_init_mock.assert_called_once_with(
@@ -270,10 +249,10 @@ def test_microsoft_token__new_user__emit_user_signup_only(
     )
     apply_photo_mock.assert_called_once_with(new_user, user_data)
     save_tokens_mock.assert_called_once_with(new_user)
-    update_contacts_mock.assert_called_once_with(new_user.id)
+    update_microsoft_contacts_mock.assert_called_once_with(new_user.id)
 
 
-def test_microsoft_token__signup_disabled__emit_login_failed(
+def test_microsoft_token__signup_disabled__audit_login_failed(
     mocker,
     api_client,
     settings,
@@ -319,11 +298,18 @@ def test_microsoft_token__signup_disabled__emit_login_failed(
         'src.authentication.services.microsoft.'
         'MicrosoftAuthService.save_tokens_for_user',
     )
-    update_contacts_mock = mocker.patch(
+    update_microsoft_contacts_mock = mocker.patch(
         'src.authentication.tasks.'
         'update_microsoft_contacts.delay',
     )
-    emit_mock = mocker.patch('src.logs.events.services.emit')
+    login_failed_mock = mocker.patch(
+        'src.authentication.views.microsoft.AuditEventService.'
+        'login_failed',
+    )
+    user_logged_in_mock = mocker.patch(
+        'src.authentication.views.microsoft.AuditEventService.'
+        'user_logged_in',
+    )
     auth_response = {
         'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
         'client_info': 'eyJ1aWQi...0YjY2ZGFkIn0',
@@ -339,28 +325,24 @@ def test_microsoft_token__signup_disabled__emit_login_failed(
 
     # assert
     assert response.status_code == 401
-    emit_mock.assert_called_once_with(
-        UserEvents.LOGIN_FAILED,
-        account_id=NO_ACCOUNT,
-        event_object=EventObject(type=EventObjectType.USER),
-        payload={
-            'email': user.email,
-            'reason': LoginFailedReason.SIGNUP_DISABLED,
-        },
+    assert response.data['detail'] == MSG_AU_0003
+    login_failed_mock.assert_called_once_with(
+        reason=LoginFailedReason.SIGNUP_DISABLED,
+        email=user.email,
     )
+    user_logged_in_mock.assert_not_called()
     microsoft_auth_service_init_mock.assert_called_once_with()
     get_user_data_mock.assert_called_once_with(auth_response=auth_response)
     get_auth_token_mock.assert_not_called()
     apply_photo_mock.assert_not_called()
     save_tokens_mock.assert_not_called()
-    update_contacts_mock.assert_not_called()
+    update_microsoft_contacts_mock.assert_not_called()
 
 
-def test_microsoft_token__sso_required__emit_login_failed(
+def test_microsoft_token__sso_required__audit_login_failed(
     mocker,
     api_client,
     settings,
-    fake_stream,
 ):
 
     """ A person who is not the owner of the account may only sign
@@ -408,9 +390,17 @@ def test_microsoft_token__sso_required__emit_login_failed(
         'src.authentication.services.microsoft.'
         'MicrosoftAuthService.save_tokens_for_user',
     )
-    update_contacts_mock = mocker.patch(
+    update_microsoft_contacts_mock = mocker.patch(
         'src.authentication.tasks.'
         'update_microsoft_contacts.delay',
+    )
+    login_failed_mock = mocker.patch(
+        'src.authentication.views.microsoft.AuditEventService.'
+        'login_failed',
+    )
+    user_logged_in_mock = mocker.patch(
+        'src.authentication.views.microsoft.AuditEventService.'
+        'user_logged_in',
     )
     auth_response = {
         'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
@@ -428,30 +418,23 @@ def test_microsoft_token__sso_required__emit_login_failed(
     # assert
     assert response.status_code == 400
     assert response.data[0] == MSG_AU_0016
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.LOGIN_FAILED
-    assert event.account_id == NO_ACCOUNT
-    assert event.actor is None
-    assert event.auth_type is None
-    assert event.object == EventObject(type=EventObjectType.USER)
-    assert event.payload == {
-        'email': user.email,
-        'reason': LoginFailedReason.SSO_REQUIRED,
-    }
+    login_failed_mock.assert_called_once_with(
+        reason=LoginFailedReason.SSO_REQUIRED,
+        email=user.email,
+    )
+    user_logged_in_mock.assert_not_called()
     microsoft_auth_service_init_mock.assert_called_once_with()
     get_user_data_mock.assert_called_once_with(auth_response=auth_response)
     get_auth_token_mock.assert_not_called()
     apply_photo_mock.assert_not_called()
     save_tokens_mock.assert_not_called()
-    update_contacts_mock.assert_not_called()
+    update_microsoft_contacts_mock.assert_not_called()
 
 
-def test_microsoft_token__photo_upload_fails__no_event(
+def test_microsoft_token__photo_upload_fails__audit_not_called(
     mocker,
     api_client,
     settings,
-    fake_stream,
 ):
 
     """ The login is journalled after the rest of the sign in: a
@@ -492,9 +475,13 @@ def test_microsoft_token__photo_upload_fails__no_event(
         'src.authentication.services.microsoft.'
         'MicrosoftAuthService.save_tokens_for_user',
     )
-    update_contacts_mock = mocker.patch(
+    update_microsoft_contacts_mock = mocker.patch(
         'src.authentication.tasks.'
         'update_microsoft_contacts.delay',
+    )
+    user_logged_in_mock = mocker.patch(
+        'src.authentication.views.microsoft.AuditEventService.'
+        'user_logged_in',
     )
     auth_response = {
         'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
@@ -513,7 +500,7 @@ def test_microsoft_token__photo_upload_fails__no_event(
         )
 
     # assert
-    assert fake_stream.events == []
+    user_logged_in_mock.assert_not_called()
     microsoft_auth_service_init_mock.assert_called_once_with()
     get_user_data_mock.assert_called_once_with(auth_response=auth_response)
     get_auth_token_mock.assert_called_once_with(
@@ -523,4 +510,74 @@ def test_microsoft_token__photo_upload_fails__no_event(
     )
     apply_photo_mock.assert_called_once_with(user, user_data)
     save_tokens_mock.assert_not_called()
-    update_contacts_mock.assert_not_called()
+    update_microsoft_contacts_mock.assert_not_called()
+
+
+def test_microsoft_token__auth_exception__audit_not_called(
+    mocker,
+    api_client,
+    settings,
+):
+
+    # arrange
+    settings.PROJECT_CONF = {**settings.PROJECT_CONF, 'MS_AUTH': True}
+    microsoft_auth_service_init_mock = mocker.patch.object(
+        MicrosoftAuthService,
+        attribute='__init__',
+        return_value=None,
+    )
+    get_user_data_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.get_user_data',
+        side_effect=TokenInvalidOrExpired(),
+    )
+    get_auth_token_mock = mocker.patch(
+        'src.authentication.services.user_auth.'
+        'AuthService.get_auth_token',
+    )
+    apply_photo_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.apply_photo_to_user',
+    )
+    save_tokens_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.save_tokens_for_user',
+    )
+    update_microsoft_contacts_mock = mocker.patch(
+        'src.authentication.tasks.'
+        'update_microsoft_contacts.delay',
+    )
+    login_failed_mock = mocker.patch(
+        'src.authentication.views.microsoft.AuditEventService.'
+        'login_failed',
+    )
+    user_logged_in_mock = mocker.patch(
+        'src.authentication.views.microsoft.AuditEventService.'
+        'user_logged_in',
+    )
+    auth_response = {
+        'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
+        'client_info': 'eyJ1aWQi...0YjY2ZGFkIn0',
+        'state': 'KvpfgTSUmwtOaPny',
+        'session_state': '0d046a4b-061a-4de5-be04-472a06763149',
+    }
+
+    # act
+    response = api_client.get(
+        path='/auth/microsoft/token',
+        data=auth_response,
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == str(MSG_AU_0009)
+    assert response.data['details'] == {}
+    user_logged_in_mock.assert_not_called()
+    login_failed_mock.assert_not_called()
+    microsoft_auth_service_init_mock.assert_called_once_with()
+    get_user_data_mock.assert_called_once_with(auth_response=auth_response)
+    get_auth_token_mock.assert_not_called()
+    apply_photo_mock.assert_not_called()
+    save_tokens_mock.assert_not_called()
+    update_microsoft_contacts_mock.assert_not_called()

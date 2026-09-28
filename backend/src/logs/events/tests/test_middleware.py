@@ -6,6 +6,7 @@ from django.http import HttpResponse
 from src.logs.events.context import get_context
 from src.logs.events.middleware import (
     REQUEST_ID_HEADER,
+    USER_AGENT_MAX,
     EventContextMiddleware,
 )
 
@@ -269,8 +270,9 @@ def test_call__context_build_failed__original_error_raised(
 
     # arrange
     request = request_factory.get('/', HTTP_X_REQUEST_ID='abc')
-    context_from_request_mock = mocker.patch(
-        'src.logs.events.middleware.context_from_request',
+    user_ip_mock = mocker.patch.object(
+        EventContextMiddleware,
+        attribute='_user_ip',
         side_effect=ValueError('boom'),
     )
     uuid4_mock = mocker.patch('src.logs.events.middleware.uuid4')
@@ -284,7 +286,7 @@ def test_call__context_build_failed__original_error_raised(
     # assert
     assert str(ex.value) == 'boom'
     assert get_context() is None
-    context_from_request_mock.assert_called_once_with(request)
+    user_ip_mock.assert_called_once_with(request)
     get_response_mock.assert_not_called()
     uuid4_mock.assert_not_called()
 
@@ -333,3 +335,195 @@ def test_request_id__allowed_punctuation__reused(
     assert request.request_id == given
     assert response[REQUEST_ID_HEADER] == given
     uuid4_mock.assert_not_called()
+
+
+def test_user_ip__real_ip_and_forwarded_for__real_ip_wins(request_factory):
+
+    """ X-Real-IP is the address our nginx writes; X-Forwarded-For
+        keeps whatever the client sent in front of it. """
+
+    # arrange
+    request = request_factory.get(
+        '/',
+        HTTP_X_REAL_IP='1.2.3.4',
+        HTTP_X_FORWARDED_FOR='5.6.7.8,10.0.0.1',
+        REMOTE_ADDR='10.0.0.2',
+    )
+    middleware = EventContextMiddleware(lambda inner: HttpResponse())
+
+    # act
+    ip = middleware._user_ip(request=request)
+
+    # assert
+    assert ip == '1.2.3.4'
+
+
+def test_user_ip__empty_real_ip__forwarded_for_first_hop(request_factory):
+
+    # arrange
+    request = request_factory.get(
+        '/',
+        HTTP_X_REAL_IP='',
+        HTTP_X_FORWARDED_FOR='5.6.7.8,10.0.0.1',
+    )
+    middleware = EventContextMiddleware(lambda inner: HttpResponse())
+
+    # act
+    ip = middleware._user_ip(request=request)
+
+    # assert
+    assert ip == '5.6.7.8'
+
+
+def test_user_ip__no_real_ip__address_of_the_mixin(request_factory, mocker):
+
+    """ A request that came around nginx has no X-Real-IP: the address
+        is the one AnonymousMixin reads. """
+
+    # arrange
+    request = request_factory.get('/')
+    get_user_ip_mock = mocker.patch.object(
+        EventContextMiddleware,
+        attribute='get_user_ip',
+        return_value='5.6.7.8',
+    )
+    middleware = EventContextMiddleware(lambda inner: HttpResponse())
+
+    # act
+    ip = middleware._user_ip(request=request)
+
+    # assert
+    assert ip == '5.6.7.8'
+    get_user_ip_mock.assert_called_once_with(request)
+
+
+def test_user_ip__garbage_real_ip__kept_as_sent(request_factory):
+
+    """ The address is not validated on purpose: X-Real-IP is written
+        by our nginx, and the value goes into the record as it came,
+        the same as AnonymousMixin hands it to the tokens. """
+
+    # arrange
+    request = request_factory.get(
+        '/',
+        HTTP_X_REAL_IP='<script>not-an-ip</script>',
+    )
+    middleware = EventContextMiddleware(lambda inner: HttpResponse())
+
+    # act
+    ip = middleware._user_ip(request=request)
+
+    # assert
+    assert ip == '<script>not-an-ip</script>'
+
+
+def test_user_ip__long_real_ip__kept_whole(request_factory):
+
+    """ No length limit either, unlike the user agent. """
+
+    # arrange
+    request = request_factory.get('/', HTTP_X_REAL_IP='1' * 1000)
+    middleware = EventContextMiddleware(lambda inner: HttpResponse())
+
+    # act
+    ip = middleware._user_ip(request=request)
+
+    # assert
+    assert ip == '1' * 1000
+
+
+def test_user_ip__garbage_forwarded_for__first_hop_as_sent(
+    request_factory,
+):
+
+    """ Without X-Real-IP the first hop of X-Forwarded-For is the
+        address, whatever the client put there. """
+
+    # arrange
+    request = request_factory.get(
+        '/',
+        HTTP_X_FORWARDED_FOR='not-an-ip,10.0.0.1',
+    )
+    middleware = EventContextMiddleware(lambda inner: HttpResponse())
+
+    # act
+    ip = middleware._user_ip(request=request)
+
+    # assert
+    assert ip == 'not-an-ip'
+
+
+def test_user_ip__long_forwarded_for__first_hop_kept_whole(
+    request_factory,
+):
+
+    # arrange
+    request = request_factory.get(
+        '/',
+        HTTP_X_FORWARDED_FOR=f'{"2" * 1000},10.0.0.1',
+    )
+    middleware = EventContextMiddleware(lambda inner: HttpResponse())
+
+    # act
+    ip = middleware._user_ip(request=request)
+
+    # assert
+    assert ip == '2' * 1000
+
+
+def test_user_agent__longer_than_the_limit__trimmed(request_factory):
+
+    """ Every event of the request carries the header, and a client
+        sends whatever length it likes. """
+
+    # arrange
+    request = request_factory.get(
+        '/',
+        HTTP_USER_AGENT='a' * (USER_AGENT_MAX + 100),
+    )
+    middleware = EventContextMiddleware(lambda inner: HttpResponse())
+
+    # act
+    user_agent = middleware._user_agent(request=request)
+
+    # assert
+    assert user_agent == 'a' * USER_AGENT_MAX
+
+
+def test_user_agent__at_the_limit__kept(request_factory):
+
+    # arrange
+    request = request_factory.get('/', HTTP_USER_AGENT='a' * USER_AGENT_MAX)
+    middleware = EventContextMiddleware(lambda inner: HttpResponse())
+
+    # act
+    user_agent = middleware._user_agent(request=request)
+
+    # assert
+    assert user_agent == 'a' * USER_AGENT_MAX
+
+
+def test_user_agent__empty_header__none(request_factory):
+
+    # arrange
+    request = request_factory.get('/', HTTP_USER_AGENT='')
+    middleware = EventContextMiddleware(lambda inner: HttpResponse())
+
+    # act
+    user_agent = middleware._user_agent(request=request)
+
+    # assert
+    assert user_agent is None
+
+
+def test_user_agent__no_header__none(request_factory):
+
+    # arrange
+    request = request_factory.get('/')
+    middleware = EventContextMiddleware(lambda inner: HttpResponse())
+
+    # act
+    user_agent = middleware._user_agent(request=request)
+
+    # assert
+    assert user_agent is None

@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from src.shared_kernel.config import LOGS_BACKEND_NONE, BaseAppSettings
+from src.shared_kernel.config import BaseAppSettings
 
 
 def test_settings__no_secret_key__raise_error(monkeypatch):
@@ -149,11 +149,15 @@ def test_settings__logs_backend_default__logs_disabled(monkeypatch):
     assert result is False
 
 
-def test_settings__logs_backend_none__logs_disabled():
+def test_settings__logs_backend_empty__logs_disabled():
+    """Compose passes an unset LOGS_BACKEND as an empty string."""
+
     # arrange
     settings = BaseAppSettings(
         DJANGO_SECRET_KEY='test-key',
-        LOGS_BACKEND=LOGS_BACKEND_NONE,
+        LOGS_BACKEND='',
+        LOGS_REDIS_URL='redis://:pw@redis:6379/4',
+        LOGS_STREAM_MAXLEN=1000,
     )
 
     # act
@@ -163,15 +167,108 @@ def test_settings__logs_backend_none__logs_disabled():
     assert result is False
 
 
-def test_settings__logs_backend_unknown__accepted_and_enabled():
-    """The backend accepts any string there; this service only asks
-    whether the pipeline is on, so a backend it never heard of must
-    not stop it."""
+def test_settings__logs_backend_unknown__disabled():
+    """The backend writes only to the stores it knows and is off for
+    any other value; this service has to agree with it."""
 
     # arrange
     settings = BaseAppSettings(
         DJANGO_SECRET_KEY='test-key',
         LOGS_BACKEND='loki',
+        LOGS_REDIS_URL='redis://:pw@redis:6379/4',
+        LOGS_STREAM_MAXLEN=1000,
+    )
+
+    # act
+    result = settings.logs_enabled
+
+    # assert
+    assert result is False
+
+
+def test_settings__logs_on_all_values__enabled():
+    # arrange
+    settings = BaseAppSettings(
+        DJANGO_SECRET_KEY='test-key',
+        LOGS_BACKEND='otlp',
+        LOGS_REDIS_URL='redis://:pw@redis:6379/4',
+        LOGS_STREAM_MAXLEN=1000,
+    )
+
+    # act
+    result = settings.logs_enabled
+
+    # assert
+    assert result is True
+
+
+@pytest.mark.parametrize(
+    'missing',
+    ['LOGS_REDIS_URL', 'LOGS_STREAM_MAXLEN'],
+)
+def test_settings__logs_on_value_empty__disabled(missing, monkeypatch):
+    """No defaults: a store named with an empty buffer setting - the
+    way compose passes an unset one - keeps the journal off, the way
+    the backend does."""
+
+    # arrange
+    values = {
+        'LOGS_REDIS_URL': 'redis://:pw@redis:6379/4',
+        'LOGS_STREAM_MAXLEN': 1000,
+    }
+    values[missing] = ''
+    monkeypatch.delenv(missing, raising=False)
+    settings = BaseAppSettings(
+        DJANGO_SECRET_KEY='test-key',
+        LOGS_BACKEND='elasticsearch',
+        _env_file=None,
+        **values,
+    )
+
+    # act
+    result = settings.logs_enabled
+
+    # assert
+    assert result is False
+
+
+@pytest.mark.parametrize(
+    'missing',
+    ['LOGS_REDIS_URL', 'LOGS_STREAM_MAXLEN'],
+)
+def test_settings__logs_on_value_not_passed__disabled(missing, monkeypatch):
+    """A buffer setting absent from the environment altogether keeps
+    the journal off as well."""
+
+    # arrange
+    values = {
+        'LOGS_REDIS_URL': 'redis://:pw@redis:6379/4',
+        'LOGS_STREAM_MAXLEN': 1000,
+    }
+    del values[missing]
+    monkeypatch.delenv(missing, raising=False)
+    settings = BaseAppSettings(
+        DJANGO_SECRET_KEY='test-key',
+        LOGS_BACKEND='elasticsearch',
+        _env_file=None,
+        **values,
+    )
+
+    # act
+    result = settings.logs_enabled
+
+    # assert
+    assert result is False
+
+
+def test_settings__logs_on_elasticsearch_all_values__enabled():
+    # arrange
+    settings = BaseAppSettings(
+        DJANGO_SECRET_KEY='test-key',
+        LOGS_BACKEND='elasticsearch',
+        LOGS_REDIS_URL='redis://:pw@redis:6379/4',
+        LOGS_STREAM_MAXLEN=1000,
+        _env_file=None,
     )
 
     # act
@@ -206,15 +303,16 @@ def test_settings__logs_on_rediss_url__accepted():
     assert result == 'rediss://:pw@redis:6380/4'
 
 
-def test_settings__logs_off_url_not_redis__accepted():
+def test_settings__logs_off_url_not_redis__accepted(monkeypatch):
     """With the pipeline off the URL is never dialled, so it is not
     checked either: a stale value must not stop the service."""
 
     # arrange
+    monkeypatch.delenv('LOGS_BACKEND', raising=False)
     settings = BaseAppSettings(
         DJANGO_SECRET_KEY='test-key',
-        LOGS_BACKEND=LOGS_BACKEND_NONE,
         LOGS_REDIS_URL='http://redis:6379/4',
+        _env_file=None,
     )
 
     # act

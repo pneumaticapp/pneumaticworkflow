@@ -48,10 +48,6 @@ class DataSetItemService(BaseModelService):
         **update_kwargs,
     ) -> DatasetItem:
 
-        changed_fields = sorted(
-            name for name, value in update_kwargs.items()
-            if getattr(self.instance, name) != value
-        )
         self.update_fields.update(update_kwargs.keys())
         for field_name, value in update_kwargs.items():
             setattr(self.instance, field_name, value)
@@ -62,13 +58,12 @@ class DataSetItemService(BaseModelService):
                 raise DataSetServiceException(
                     message=MSG_DS_0002(value=self.instance.value),
                 ) from ex
-            if changed_fields:
-                AuditEventService.dataset_item_updated(
-                    user=self.user,
-                    auth_type=self.auth_type,
-                    item=self.instance,
-                    changed_fields=changed_fields,
-                )
+            AuditEventService.dataset_item_updated(
+                user=self.user,
+                auth_type=self.auth_type,
+                item=self.instance,
+                update_kwargs=update_kwargs,
+            )
         return self.instance
 
     def delete(self):

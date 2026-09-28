@@ -2,7 +2,6 @@ import logging
 
 import redis
 
-from src.logs.enums import LogsBackend
 from src.logs.events.consumer import (
     LOCK_EXPIRE,
     ConsumerStats,
@@ -17,7 +16,35 @@ from src.logs.events.tasks import (
 def test_consume_events__pipeline_off__lock_not_taken(mocker, settings):
 
     # arrange
-    settings.LOGS_BACKEND = LogsBackend.NONE
+    settings.LOGS_BACKEND = None
+    periodic_lock_mock = mocker.patch(
+        'src.logs.events.tasks.periodic_lock',
+    )
+    consumer_class_mock = mocker.patch(
+        'src.logs.events.tasks.EventsConsumer',
+    )
+    report_error_mock = mocker.patch('src.logs.events.tasks.report_error')
+
+    # act
+    consume_events()
+
+    # assert
+    periodic_lock_mock.assert_not_called()
+    consumer_class_mock.assert_not_called()
+    report_error_mock.assert_not_called()
+
+
+def test_consume_events__no_batch_size__lock_not_taken(
+    mocker,
+    events_enabled,
+):
+
+    """ A batch size of 0 - the settings read an empty value so -
+        is the journal off: the tick returns before a consumer is
+        built that would read nothing. """
+
+    # arrange
+    events_enabled.LOGS_CONSUMER_BATCH_SIZE = 0
     periodic_lock_mock = mocker.patch(
         'src.logs.events.tasks.periodic_lock',
     )

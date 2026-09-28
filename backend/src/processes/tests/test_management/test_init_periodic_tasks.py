@@ -4,18 +4,12 @@ import pytest
 from django.core.management import call_command
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 
-from src.logs.enums import LogsBackend
-
 pytestmark = pytest.mark.django_db
 
 
-def test_handle__logs_disabled__consumer_task_created(settings):
-
-    """ The task is registered whatever LOGS_BACKEND is: with the
-        journal off it returns on its first line. """
+def test_handle__ok__consumer_task_created():
 
     # arrange
-    settings.LOGS_BACKEND = LogsBackend.NONE
     stdout = StringIO()
 
     # act

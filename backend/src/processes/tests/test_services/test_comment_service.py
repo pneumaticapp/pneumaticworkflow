@@ -77,6 +77,10 @@ def test_create__not_another_performers__ok(mocker):
         'WorkflowEventService.comment_created_event',
         return_value=event,
     )
+    comment_created_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.comment_created',
+    )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
@@ -131,6 +135,11 @@ def test_create__not_another_performers__ok(mocker):
         text=text,
         clear_text=clear_text,
         after_create_actions=False,
+    )
+    comment_created_mock.assert_called_once_with(
+        user=account_owner,
+        auth_type=auth_type,
+        comment=event,
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
     refresh_attachments_mock.assert_called_once_with(
@@ -193,6 +202,10 @@ def test_create__notified_users__ok(mocker, status):
         'WorkflowEventService.comment_created_event',
         return_value=event,
     )
+    comment_created_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.comment_created',
+    )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
@@ -251,6 +264,11 @@ def test_create__notified_users__ok(mocker, status):
         text=text,
         clear_text=clear_text,
         after_create_actions=False,
+    )
+    comment_created_mock.assert_called_once_with(
+        user=account_owner,
+        auth_type=auth_type,
+        comment=event,
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
     refresh_attachments_mock.assert_called_once_with(
@@ -318,6 +336,10 @@ def test_create_mentioned_users__ok(mocker):
         'WorkflowEventService.comment_created_event',
         return_value=event,
     )
+    comment_created_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.comment_created',
+    )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
@@ -376,6 +398,11 @@ def test_create_mentioned_users__ok(mocker):
         text=text,
         clear_text=clear_text,
         after_create_actions=False,
+    )
+    comment_created_mock.assert_called_once_with(
+        user=account_owner,
+        auth_type=auth_type,
+        comment=event,
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
     refresh_attachments_mock.assert_called_once_with(
@@ -444,6 +471,10 @@ def test_create__with_attachments__ok(mocker):
         'WorkflowEventService.comment_created_event',
         return_value=event,
     )
+    comment_created_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.comment_created',
+    )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
@@ -498,6 +529,11 @@ def test_create__with_attachments__ok(mocker):
         text=text,
         clear_text=clear_text,
         after_create_actions=False,
+    )
+    comment_created_mock.assert_called_once_with(
+        user=account_owner,
+        auth_type=auth_type,
+        comment=event,
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
     refresh_attachments_mock.assert_called_once_with(
@@ -576,6 +612,10 @@ def test_create__find_attachments_in_text__ok(data, mocker):
         'WorkflowEventService.comment_created_event',
         return_value=event,
     )
+    comment_created_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.comment_created',
+    )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
@@ -630,6 +670,11 @@ def test_create__find_attachments_in_text__ok(data, mocker):
         text=text,
         clear_text=clear_text,
         after_create_actions=False,
+    )
+    comment_created_mock.assert_called_once_with(
+        user=account_owner,
+        auth_type=auth_type,
+        comment=event,
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
     refresh_attachments_mock.assert_called_once_with(
@@ -688,6 +733,10 @@ def test_create__not_found_attachments_in_text__ok(text, mocker):
         'WorkflowEventService.comment_created_event',
         return_value=event,
     )
+    comment_created_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.comment_created',
+    )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
@@ -743,6 +792,11 @@ def test_create__not_found_attachments_in_text__ok(text, mocker):
         clear_text=clear_text,
         after_create_actions=False,
     )
+    comment_created_mock.assert_called_once_with(
+        user=account_owner,
+        auth_type=auth_type,
+        comment=event,
+    )
     get_new_comment_recipients_mock.assert_called_once_with(task)
     refresh_attachments_mock.assert_called_once_with(
         source=event,
@@ -780,6 +834,10 @@ def test_create__task_delete__raise_exception(mocker):
     comment_created_event_mock = mocker.patch(
         'src.processes.services.events.'
         'WorkflowEventService.comment_created_event',
+    )
+    comment_created_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.comment_created',
     )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
@@ -823,6 +881,7 @@ def test_create__task_delete__raise_exception(mocker):
     assert ex.value.message == messages.MSG_PW_0077
     clear_text_mock.assert_not_called()
     comment_created_event_mock.assert_not_called()
+    comment_created_mock.assert_not_called()
     refresh_attachments_mock.assert_not_called()
     send_notifications_mock.assert_not_called()
     send_comment_notification_mock.assert_not_called()
@@ -857,6 +916,10 @@ def test_create__workflow_ended__raise_exception(mocker):
     comment_created_event_mock = mocker.patch(
         'src.processes.services.events.'
         'WorkflowEventService.comment_created_event',
+    )
+    comment_created_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.comment_created',
     )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
@@ -900,6 +963,7 @@ def test_create__workflow_ended__raise_exception(mocker):
     assert ex.value.message == messages.MSG_PW_0048
     clear_text_mock.assert_not_called()
     comment_created_event_mock.assert_not_called()
+    comment_created_mock.assert_not_called()
     refresh_attachments_mock.assert_not_called()
     get_new_comment_recipients_mock.assert_not_called()
     send_comment_notification_mock.assert_not_called()
@@ -928,6 +992,10 @@ def test_create__not_text_and_attachment__raise_exception(mocker):
     comment_created_event_mock = mocker.patch(
         'src.processes.services.events.'
         'WorkflowEventService.comment_created_event',
+    )
+    comment_created_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.comment_created',
     )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
@@ -969,6 +1037,7 @@ def test_create__not_text_and_attachment__raise_exception(mocker):
     assert ex.value.message == messages.MSG_PW_0047
     clear_text_mock.assert_not_called()
     comment_created_event_mock.assert_not_called()
+    comment_created_mock.assert_not_called()
     refresh_attachments_mock.assert_not_called()
     get_new_comment_recipients_mock.assert_not_called()
     comment_added_analysis_mock.assert_not_called()
@@ -1003,6 +1072,10 @@ def test_create__inactive_task__raise_exception(mocker, status):
     comment_created_event_mock = mocker.patch(
         'src.processes.services.events.'
         'WorkflowEventService.comment_created_event',
+    )
+    comment_created_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.comment_created',
     )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
@@ -1046,6 +1119,7 @@ def test_create__inactive_task__raise_exception(mocker, status):
     assert ex.value.message == messages.MSG_PW_0089
     clear_text_mock.assert_not_called()
     comment_created_event_mock.assert_not_called()
+    comment_created_mock.assert_not_called()
     refresh_attachments_mock.assert_not_called()
     get_new_comment_recipients_mock.assert_not_called()
     send_comment_notification_mock.assert_not_called()
@@ -2889,6 +2963,10 @@ def test_create_reaction__first__ok(mocker):
         'src.processes.services.events.'
         'CommentService._send_event_updated',
     )
+    create_reaction_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.create_reaction',
+    )
     reaction = ':dumb face:'
     is_superuser = True
     auth_type = AuthTokenType.API
@@ -2916,6 +2994,12 @@ def test_create_reaction__first__ok(mocker):
         workflow=workflow,
         is_superuser=is_superuser,
         auth_type=auth_type,
+    )
+    create_reaction_mock.assert_called_once_with(
+        user=user,
+        auth_type=auth_type,
+        comment=event,
+        value=reaction,
     )
     send_workflow_event_mock.assert_called_once()
     send_reaction_notification_mock.assert_called_once_with(
@@ -2965,6 +3049,10 @@ def test_create_reaction__long_comment__cut_off(mocker):
         'src.processes.services.events.'
         'CommentService._send_event_updated',
     )
+    create_reaction_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.create_reaction',
+    )
     reaction = ':dumb face:'
     is_superuser = True
     auth_type = AuthTokenType.API
@@ -2992,6 +3080,12 @@ def test_create_reaction__long_comment__cut_off(mocker):
         workflow=workflow,
         is_superuser=is_superuser,
         auth_type=auth_type,
+    )
+    create_reaction_mock.assert_called_once_with(
+        user=user,
+        auth_type=auth_type,
+        comment=event,
+        value=reaction,
     )
     send_workflow_event_mock.assert_called_once()
     send_reaction_notification_mock.assert_called_once_with(
@@ -3039,6 +3133,10 @@ def test_create_reaction__not_comment_text__ok(mocker):
         'src.processes.services.events.'
         'CommentService._send_event_updated',
     )
+    create_reaction_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.create_reaction',
+    )
     reaction = ':dumb face:'
     is_superuser = True
     auth_type = AuthTokenType.API
@@ -3066,6 +3164,12 @@ def test_create_reaction__not_comment_text__ok(mocker):
         workflow=workflow,
         is_superuser=is_superuser,
         auth_type=auth_type,
+    )
+    create_reaction_mock.assert_called_once_with(
+        user=user,
+        auth_type=auth_type,
+        comment=event,
+        value=reaction,
     )
     send_workflow_event_mock.assert_called_once()
     send_reaction_notification_mock.assert_called_once_with(
@@ -3119,6 +3223,10 @@ def test_create_reaction__second__ok(mocker):
         'src.processes.services.events.'
         'CommentService._send_event_updated',
     )
+    create_reaction_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.create_reaction',
+    )
     is_superuser = True
     auth_type = AuthTokenType.API
     service = CommentService(
@@ -3145,6 +3253,12 @@ def test_create_reaction__second__ok(mocker):
         workflow=workflow,
         is_superuser=is_superuser,
         auth_type=auth_type,
+    )
+    create_reaction_mock.assert_called_once_with(
+        user=user,
+        auth_type=auth_type,
+        comment=event,
+        value=reaction,
     )
     send_workflow_event_mock.assert_called_once()
     send_reaction_notification_mock.assert_called_once_with(
@@ -3193,6 +3307,10 @@ def test_create_reaction__duplicate__skip(mocker):
         'src.processes.services.events.'
         'CommentService._send_event_updated',
     )
+    create_reaction_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.create_reaction',
+    )
     send_reaction_notification_mock = mocker.patch(
         'src.processes.services.events.'
         'send_reaction_notification.delay',
@@ -3218,6 +3336,7 @@ def test_create_reaction__duplicate__skip(mocker):
     event.refresh_from_db()
     assert event.reactions[reaction] == [user.id]
     create_reaction_analysis_mock.assert_not_called()
+    create_reaction_mock.assert_not_called()
     send_workflow_event_mock.assert_not_called()
     send_reaction_notification_mock.assert_not_called()
 
@@ -3255,6 +3374,10 @@ def test_delete_reaction__last__remove_reaction(mocker):
         'src.processes.services.events.'
         'CommentService._send_event_updated',
     )
+    delete_reaction_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.delete_reaction',
+    )
     is_superuser = True
     auth_type = AuthTokenType.API
     service = CommentService(
@@ -3281,6 +3404,12 @@ def test_delete_reaction__last__remove_reaction(mocker):
         workflow=workflow,
         is_superuser=is_superuser,
         auth_type=auth_type,
+    )
+    delete_reaction_mock.assert_called_once_with(
+        user=user,
+        auth_type=auth_type,
+        comment=event,
+        value=reaction,
     )
     send_workflow_event_mock.assert_called_once()
 
@@ -3318,6 +3447,10 @@ def test_delete_reaction__not_last__remove_only_user_id(mocker):
         'src.processes.services.events.'
         'CommentService._send_event_updated',
     )
+    delete_reaction_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.delete_reaction',
+    )
     is_superuser = True
     auth_type = AuthTokenType.API
     service = CommentService(
@@ -3344,6 +3477,12 @@ def test_delete_reaction__not_last__remove_only_user_id(mocker):
         workflow=workflow,
         is_superuser=is_superuser,
         auth_type=auth_type,
+    )
+    delete_reaction_mock.assert_called_once_with(
+        user=user,
+        auth_type=auth_type,
+        comment=event,
+        value=reaction,
     )
     send_workflow_event_mock.assert_called_once()
 
@@ -3379,6 +3518,10 @@ def test_delete_reaction__not_exist_reaction__skip(mocker):
         'src.processes.services.events.'
         'CommentService._send_event_updated',
     )
+    delete_reaction_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.delete_reaction',
+    )
     is_superuser = True
     auth_type = AuthTokenType.API
     service = CommentService(
@@ -3400,6 +3543,7 @@ def test_delete_reaction__not_exist_reaction__skip(mocker):
     event.refresh_from_db()
     assert event.reactions == {}
     reaction_deleted_analysis_mock.assert_not_called()
+    delete_reaction_mock.assert_not_called()
     send_workflow_event_mock.assert_not_called()
 
 
@@ -3434,6 +3578,10 @@ def test_delete_reaction__not_exist_user_id__skip(mocker):
         'src.processes.services.events.'
         'CommentService._send_event_updated',
     )
+    delete_reaction_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.delete_reaction',
+    )
     is_superuser = True
     auth_type = AuthTokenType.API
     service = CommentService(
@@ -3455,6 +3603,7 @@ def test_delete_reaction__not_exist_user_id__skip(mocker):
     event.refresh_from_db()
     assert event.reactions == {}
     reaction_deleted_analysis_mock.assert_not_called()
+    delete_reaction_mock.assert_not_called()
     send_workflow_event_mock.assert_not_called()
 
 
@@ -3492,6 +3641,10 @@ def test_create_reaction__to_yourself_comment__ok(mocker):
         'src.processes.services.events.'
         'CommentService._send_event_updated',
     )
+    create_reaction_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.create_reaction',
+    )
     reaction = ':dumb face:'
     is_superuser = True
     auth_type = AuthTokenType.API
@@ -3519,6 +3672,12 @@ def test_create_reaction__to_yourself_comment__ok(mocker):
         workflow=workflow,
         is_superuser=is_superuser,
         auth_type=auth_type,
+    )
+    create_reaction_mock.assert_called_once_with(
+        user=user,
+        auth_type=auth_type,
+        comment=event,
+        value=reaction,
     )
     send_workflow_event_mock.assert_called_once()
     send_reaction_notification_mock.assert_not_called()
@@ -3648,12 +3807,12 @@ def test_update__text__emit_comment_updated(mocker):
         text='New text',
         user=account_owner,
         is_superuser=False,
-        auth_type=service.auth_type,
+        auth_type=AuthTokenType.USER,
         workflow=workflow,
     )
     comment_updated_mock.assert_called_once_with(
         user=account_owner,
-        auth_type=service.auth_type,
+        auth_type=AuthTokenType.USER,
         comment=event,
     )
 
@@ -3704,13 +3863,14 @@ def test_update__inactive_task__not_emit(mocker):
     )
 
     # act
-    with pytest.raises(exceptions.CommentedTaskNotActive):
+    with pytest.raises(exceptions.CommentedTaskNotActive) as ex:
         service.update(
             text='New text',
             force_save=True,
         )
 
     # assert
+    assert ex.value.message == messages.MSG_PW_0089
     refresh_attachments_mock.assert_not_called()
     send_event_updated_mock.assert_not_called()
     sync_perms_mock.assert_not_called()
@@ -3771,12 +3931,12 @@ def test_delete__active_task__emit_comment_deleted(mocker):
         text='Clear text',
         user=account_owner,
         is_superuser=False,
-        auth_type=service.auth_type,
+        auth_type=AuthTokenType.USER,
         workflow=workflow,
     )
     comment_deleted_mock.assert_called_once_with(
         user=account_owner,
-        auth_type=service.auth_type,
+        auth_type=AuthTokenType.USER,
         comment=event,
     )
 
@@ -3825,11 +3985,40 @@ def test_delete__inactive_task__not_emit(mocker):
     )
 
     # act
-    with pytest.raises(exceptions.CommentedTaskNotActive):
+    with pytest.raises(exceptions.CommentedTaskNotActive) as ex:
         service.delete()
 
     # assert
+    assert ex.value.message == messages.MSG_PW_0089
     send_event_updated_mock.assert_not_called()
     sync_perms_mock.assert_not_called()
     comment_deleted_analysis_mock.assert_not_called()
     comment_deleted_mock.assert_not_called()
+
+
+def test_create__no_task__not_emit(mocker):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    comment_created_event_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.comment_created_event',
+    )
+    comment_created_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.comment_created',
+    )
+    service = CommentService(user=account_owner)
+
+    # act
+    with pytest.raises(exceptions.CommentedNotTask) as ex:
+        service.create(
+            task=None,
+            text='Text comment',
+        )
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0077
+    comment_created_event_mock.assert_not_called()
+    comment_created_mock.assert_not_called()

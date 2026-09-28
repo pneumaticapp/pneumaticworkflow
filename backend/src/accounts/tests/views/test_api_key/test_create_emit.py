@@ -1,13 +1,7 @@
 import pytest
 
-from src.accounts.enums import UserType
-from src.accounts.services.api_key import APIKeyService
+from src.accounts.models import APIKey
 from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import (
-    ApiKeyEvents,
-    EventObjectType,
-)
-from src.logs.events.schema import Actor, EventObject, to_json
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_not_admin,
@@ -17,70 +11,47 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-def test_create__api_keys_endpoint__event_has_no_raw_key(
+def test_create__api_keys_endpoint__audit_api_key_created(
+    mocker,
     api_client,
-    fake_stream,
 ):
-
-    """ The whole record written to the stream is checked, not the
-        payload alone: a key that reaches a log backend is a key an
-        operator of that backend can sign in with. """
 
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
-    api_client.token_authenticate(
-        owner,
-        user_agent='Chrome/141',
-        user_ip='10.10.0.12',
+    api_key_created_mock = mocker.patch(
+        'src.accounts.services.api_key.AuditEventService.api_key_created',
     )
+    api_client.token_authenticate(owner)
 
     # act
     response = api_client.post(
         path='/accounts/api-keys',
         data={'name': 'CI key'},
-        HTTP_X_REQUEST_ID='audit-api-key-1',
     )
 
     # assert
     assert response.status_code == 201
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    record = to_json(event.to_dict())
-    assert response.data['token'] not in record
-    assert 'token' not in event.payload
-    assert event.type == ApiKeyEvents.CREATE
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=owner.id,
-        email=owner.email,
-        user_type=UserType.USER,
+    api_key = APIKey.objects.get(id=response.data['id'])
+    api_key_created_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        api_key=api_key,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.API_KEY,
-        id=response.data['id'],
-    )
-    assert event.payload == {
-        'name': 'CI key',
-        'target_user_id': owner.id,
-    }
-    assert event.ip == '10.10.0.12'
-    assert event.user_agent == 'Chrome/141'
-    assert event.request_id == 'audit-api-key-1'
 
 
-def test_create__not_admin__no_event(
+def test_create__not_admin__audit_not_called(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
     account = create_test_account()
     create_test_owner(account=account)
     user = create_test_not_admin(account=account)
-    create_mock = mocker.patch.object(APIKeyService, attribute='create')
+    api_key_created_mock = mocker.patch(
+        'src.accounts.services.api_key.AuditEventService.api_key_created',
+    )
     api_client.token_authenticate(user)
 
     # act
@@ -91,5 +62,5 @@ def test_create__not_admin__no_event(
 
     # assert
     assert response.status_code == 403
-    assert fake_stream.events == []
-    create_mock.assert_not_called()
+    assert not APIKey.objects.filter(user=user).exists()
+    api_key_created_mock.assert_not_called()

@@ -245,7 +245,7 @@
         "type": "loki",
         "uid": "pneumatic-loki"
       },
-      "description": "template.publish by an account that signed up over the time range.",
+      "description": "template.create or template.update of an active template (payload.is_active) by an account that signed up over the time range.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -298,7 +298,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "count((sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"template.publish\" [$__range]))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range])))",
+          "expr": "count((sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=~\"template.create|template.update\" | payload_is_active=\"true\" [$__range]))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range])))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -596,7 +596,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "count((sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"template.publish\" [$__range]))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range])))",
+          "expr": "count((sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=~\"template.create|template.update\" | payload_is_active=\"true\" [$__range]))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range])))",
           "instant": true,
           "legendFormat": "Published a template",
           "queryType": "instant",
@@ -1010,7 +1010,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "(sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"template.publish\" [$__range]))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range]))",
+          "expr": "(sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=~\"template.create|template.update\" | payload_is_active=\"true\" [$__range]))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range]))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -1241,7 +1241,7 @@
         "type": "loki",
         "uid": "pneumatic-loki"
       },
-      "description": "template.publish per new account.",
+      "description": "template.create and template.update of active templates (payload.is_active) per new account.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1300,7 +1300,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "(sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"template.publish\" [$__range]))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range]))",
+          "expr": "(sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=~\"template.create|template.update\" | payload_is_active=\"true\" [$__range]))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range]))",
           "instant": true,
           "legendFormat": "{{account_id}}",
           "queryType": "instant",

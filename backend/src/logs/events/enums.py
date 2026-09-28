@@ -135,11 +135,10 @@ class WorkflowEvents:
 
     CATEGORY = EventCategory.WORKFLOWS
 
-    # One per WorkflowEventType, mapped by adapters/workflow.py
+    # Written next to the WorkflowEvent of the same action
     RUN = 'workflow.run'
     COMPLETE = 'workflow.complete'
     ENDED = 'workflow.ended'
-    DELAY = 'workflow.delay'
     REVERT = 'workflow.revert'
     ENDED_BY_CONDITION = 'workflow.ended_by_condition'
     URGENT = 'workflow.urgent'
@@ -156,7 +155,7 @@ class TaskEvents:
 
     CATEGORY = EventCategory.TASKS
 
-    # One per WorkflowEventType, mapped by adapters/workflow.py
+    # Written next to the WorkflowEvent of the same action
     START = 'task.start'
     COMPLETE = 'task.complete'
     REVERT = 'task.revert'
@@ -173,6 +172,8 @@ class TaskEvents:
     # Changed in place: no WorkflowEvent behind them
     COMMENT_UPDATE = 'task.comment_update'
     COMMENT_DELETE = 'task.comment_delete'
+    REACTION_CREATE = 'task.reaction_create'
+    REACTION_DELETE = 'task.reaction_delete'
     CHECKLIST_MARK = 'task.checklist_mark'
     CHECKLIST_UNMARK = 'task.checklist_unmark'
 
@@ -241,8 +242,8 @@ class TemplateEvents:
 
     CATEGORY = EventCategory.TEMPLATES
 
-    PUBLISH = 'template.publish'
-    DRAFT_SAVE = 'template.draft_save'
+    CREATE = 'template.create'
+    UPDATE = 'template.update'
     CLONE = 'template.clone'
     DELETE = 'template.delete'
     EXPORT = 'template.export'

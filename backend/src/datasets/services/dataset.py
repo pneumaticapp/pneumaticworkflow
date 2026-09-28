@@ -61,73 +61,10 @@ class DataSetService(BaseModelService):
             items_count=len(items or ()),
         )
 
-    def partial_update(
-        self,
-        **update_kwargs,
-    ) -> Dataset:
-
-        items_data = update_kwargs.pop('items', None)
-        changed_fields = sorted(
-            name for name, value in update_kwargs.items()
-            if getattr(self.instance, name) != value
-        )
-        try:
-            result = super().partial_update(
-                force_save=True,
-                **update_kwargs,
-            )
-        except IntegrityError as ex:
-            raise DataSetNameNotUniqueException from ex
-        if items_data is not None:
-            self.update_items(items_data=items_data)
-        send_dataset_updated_notification.delay(
-            logging=self.account.log_api_requests,
-            account_id=self.account.id,
-            dataset_data=DatasetSerializer(self.instance).data,
-        )
-        if changed_fields:
-            AuditEventService.dataset_updated(
-                user=self.user,
-                auth_type=self.auth_type,
-                dataset=self.instance,
-                changed_fields=changed_fields,
-            )
-        return result
-
-    def delete(self) -> None:
-        send_dataset_deleted_notification.delay(
-            logging=self.account.log_api_requests,
-            account_id=self.account.id,
-            dataset_data=DatasetSerializer(self.instance).data,
-        )
-        self.instance.delete()
-        AuditEventService.dataset_deleted(
-            user=self.user,
-            auth_type=self.auth_type,
-            dataset=self.instance,
-        )
-
-    def create_items(
+    def _update_items(
         self,
         items_data: List[Dict],
     ):
-        service = DataSetItemService(
-            user=self.user,
-            is_superuser=self.is_superuser,
-            auth_type=self.auth_type,
-        )
-        for item_data in items_data:
-            service.create(
-                dataset_id=self.instance.id,
-                **item_data,
-            )
-
-    def update_items(
-        self,
-        items_data: List[Dict],
-    ):
-        """ All dataset items will be updated """
-
         existing_items = {
             item.id: item
             for item in self.instance.items.all()
@@ -164,3 +101,88 @@ class DataSetService(BaseModelService):
                     auth_type=self.auth_type,
                     item=item,
                 )
+
+    @staticmethod
+    def _record_kwargs(update_kwargs: Dict) -> Dict:
+
+        """ The kwargs for the record, the items copied as the request
+            sent them: _update_items pops the ids out of them. """
+
+        record_kwargs = dict(update_kwargs)
+        if record_kwargs.get('items') is not None:
+            record_kwargs['items'] = [
+                dict(item) for item in record_kwargs['items']
+            ]
+        return record_kwargs
+
+    def partial_update(
+        self,
+        **update_kwargs,
+    ) -> Dataset:
+
+        record_kwargs = self._record_kwargs(update_kwargs)
+        items_data = update_kwargs.pop('items', None)
+        try:
+            result = super().partial_update(
+                force_save=True,
+                **update_kwargs,
+            )
+        except IntegrityError as ex:
+            raise DataSetNameNotUniqueException from ex
+        if items_data is not None:
+            self._update_items(items_data=items_data)
+        send_dataset_updated_notification.delay(
+            logging=self.account.log_api_requests,
+            account_id=self.account.id,
+            dataset_data=DatasetSerializer(self.instance).data,
+        )
+        AuditEventService.dataset_updated(
+            user=self.user,
+            auth_type=self.auth_type,
+            dataset=self.instance,
+            update_kwargs=record_kwargs,
+        )
+        return result
+
+    def delete(self) -> None:
+        send_dataset_deleted_notification.delay(
+            logging=self.account.log_api_requests,
+            account_id=self.account.id,
+            dataset_data=DatasetSerializer(self.instance).data,
+        )
+        self.instance.delete()
+        AuditEventService.dataset_deleted(
+            user=self.user,
+            auth_type=self.auth_type,
+            dataset=self.instance,
+        )
+
+    def create_items(
+        self,
+        items_data: List[Dict],
+    ):
+        service = DataSetItemService(
+            user=self.user,
+            is_superuser=self.is_superuser,
+            auth_type=self.auth_type,
+        )
+        for item_data in items_data:
+            service.create(
+                dataset_id=self.instance.id,
+                **item_data,
+            )
+
+    def update_items(
+        self,
+        items_data: List[Dict],
+    ):
+        """ All dataset items will be updated """
+
+        record_kwargs = self._record_kwargs({'items': items_data})
+        self._update_items(items_data=items_data)
+        AuditEventService.dataset_updated(
+            user=self.user,
+            auth_type=self.auth_type,
+            dataset=self.instance,
+            update_kwargs=record_kwargs,
+        )

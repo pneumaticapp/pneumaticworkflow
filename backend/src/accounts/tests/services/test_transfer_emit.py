@@ -1,16 +1,10 @@
 import pytest
 
-from src.accounts.enums import UserType
 from src.accounts.services.reassign import ReassignService
 from src.accounts.services.user import UserService
 from src.accounts.services.user_transfer import UserTransferService
 from src.accounts.tokens import TransferToken
 from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import (
-    EventObjectType,
-    UserEvents,
-)
-from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
@@ -21,14 +15,7 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-def test_accept_transfer__valid_token__emit_in_the_new_account(
-    mocker,
-    fake_stream,
-):
-
-    """ The record goes to the account the person arrived in and
-        names the account left behind; that account has its own
-        user.deactivate from the deactivation of the previous user. """
+def test_accept_transfer__valid_token__audit_user_transferred(mocker):
 
     # arrange
     prev_account = create_test_account(name='prev')
@@ -72,31 +59,24 @@ def test_accept_transfer__valid_token__emit_in_the_new_account(
         UserTransferService,
         attribute='_after_transfer_actions',
     )
+    user_transferred_mock = mocker.patch(
+        'src.accounts.services.user_transfer.AuditEventService.'
+        'user_transferred',
+    )
     service = UserTransferService()
 
     # act
-    service.accept_transfer(user_id=new_user.id, token_str=str(token))
+    service.accept_transfer(
+        user_id=new_user.id,
+        token_str=str(token),
+    )
 
     # assert
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.TRANSFER
-    assert event.category == UserEvents.CATEGORY
-    assert event.account_id == new_account.id
-    assert event.actor == Actor(
-        id=new_user.id,
-        email='transferred@test.test',
-        user_type=UserType.USER,
+    user_transferred_mock.assert_called_once_with(
+        user=new_user,
+        auth_type=AuthTokenType.USER,
+        prev_user=prev_user,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.USER,
-        id=new_user.id,
-    )
-    assert event.payload == {
-        'prev_account_id': prev_account.id,
-        'prev_user_id': prev_user.id,
-    }
     get_valid_token_mock.assert_called_once_with(str(token))
     get_valid_user_mock.assert_called_once_with(new_user.id)
     get_valid_prev_user_mock.assert_called_once_with()
@@ -105,10 +85,7 @@ def test_accept_transfer__valid_token__emit_in_the_new_account(
     after_transfer_actions_mock.assert_called_once_with()
 
 
-def test_accept_transfer__activation_failed__no_event(
-    mocker,
-    fake_stream,
-):
+def test_accept_transfer__activation_failed__audit_not_called(mocker):
 
     # arrange
     prev_account = create_test_account(name='prev')
@@ -146,15 +123,22 @@ def test_accept_transfer__activation_failed__no_event(
         attribute='_activate_user',
         side_effect=ValueError('broken'),
     )
+    user_transferred_mock = mocker.patch(
+        'src.accounts.services.user_transfer.AuditEventService.'
+        'user_transferred',
+    )
     service = UserTransferService()
 
     # act
     with pytest.raises(ValueError) as ex:
-        service.accept_transfer(user_id=new_user.id, token_str='token')
+        service.accept_transfer(
+            user_id=new_user.id,
+            token_str='token',
+        )
 
     # assert
     assert str(ex.value) == 'broken'
-    assert fake_stream.events == []
+    user_transferred_mock.assert_not_called()
     get_valid_token_mock.assert_called_once_with('token')
     get_valid_user_mock.assert_called_once_with(new_user.id)
     get_valid_prev_user_mock.assert_called_once_with()

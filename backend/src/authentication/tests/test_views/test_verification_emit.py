@@ -1,14 +1,8 @@
 import pytest
 
-from src.accounts.enums import UserType
 from src.accounts.tokens import VerificationToken
 from src.authentication import messages
 from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import (
-    AccountEvents,
-    EventObjectType,
-)
-from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
@@ -19,10 +13,9 @@ from src.utils.validation import ErrorCode
 pytestmark = pytest.mark.django_db
 
 
-def test_verify__not_verified__emit_account_verify(
+def test_verify__not_verified__audit_account_verified(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -33,6 +26,10 @@ def test_verify__not_verified__emit_account_verify(
         'src.authentication.views.verification.'
         'AnalyticService.account_verified',
     )
+    audit_account_verified_mock = mocker.patch(
+        'src.authentication.views.verification.AuditEventService.'
+        'account_verified',
+    )
 
     # act
     response = api_client.get(f'/auth/verification?token={token}')
@@ -41,22 +38,7 @@ def test_verify__not_verified__emit_account_verify(
     assert response.status_code == 204
     account.refresh_from_db()
     assert account.is_verified is True
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == AccountEvents.VERIFY
-    assert event.category == AccountEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=owner.id,
-        email=owner.email,
-        user_type=UserType.USER,
-    )
-    assert event.auth_type is None
-    assert event.object == EventObject(
-        type=EventObjectType.ACCOUNT,
-        id=account.id,
-    )
-    assert event.payload == {}
+    audit_account_verified_mock.assert_called_once_with(user=owner)
     account_verified_mock.assert_called_once_with(
         user=owner,
         is_superuser=False,
@@ -64,10 +46,9 @@ def test_verify__not_verified__emit_account_verify(
     )
 
 
-def test_verify__already_verified__no_event(
+def test_verify__already_verified__audit_not_called(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -78,20 +59,23 @@ def test_verify__already_verified__no_event(
         'src.authentication.views.verification.'
         'AnalyticService.account_verified',
     )
+    audit_account_verified_mock = mocker.patch(
+        'src.authentication.views.verification.AuditEventService.'
+        'account_verified',
+    )
 
     # act
     response = api_client.get(f'/auth/verification?token={token}')
 
     # assert
     assert response.status_code == 204
-    assert fake_stream.events == []
+    audit_account_verified_mock.assert_not_called()
     account_verified_mock.assert_not_called()
 
 
-def test_verify__wrong_token__no_event(
+def test_verify__wrong_token__audit_not_called(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -100,6 +84,10 @@ def test_verify__wrong_token__no_event(
     account_verified_mock = mocker.patch(
         'src.authentication.views.verification.'
         'AnalyticService.account_verified',
+    )
+    audit_account_verified_mock = mocker.patch(
+        'src.authentication.views.verification.AuditEventService.'
+        'account_verified',
     )
 
     # act
@@ -112,14 +100,13 @@ def test_verify__wrong_token__no_event(
     assert response.data['details'] == {}
     account.refresh_from_db()
     assert account.is_verified is False
-    assert fake_stream.events == []
+    audit_account_verified_mock.assert_not_called()
     account_verified_mock.assert_not_called()
 
 
-def test_resend__not_verified__emit_verification_resend(
+def test_resend__not_verified__audit_verification_resent(
     mocker,
     api_client,
-    fake_stream,
     verification_check_true_mock,
 ):
 
@@ -134,11 +121,11 @@ def test_resend__not_verified__emit_verification_resend(
         'src.authentication.views.verification.'
         'send_verification_notification.delay',
     )
-    api_client.token_authenticate(
-        admin,
-        user_agent='Chrome/141',
-        user_ip='10.10.0.14',
+    verification_resent_mock = mocker.patch(
+        'src.authentication.views.verification.AuditEventService.'
+        'verification_resent',
     )
+    api_client.token_authenticate(admin)
 
     # act
     response = api_client.post('/auth/resend-verification')
@@ -146,24 +133,11 @@ def test_resend__not_verified__emit_verification_resend(
     # assert
     assert response.status_code == 200
     assert response.data['email'] == owner.email
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == AccountEvents.VERIFICATION_RESEND
-    assert event.category == AccountEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=admin.id,
-        email=admin.email,
-        user_type=UserType.USER,
+    verification_resent_mock.assert_called_once_with(
+        user=admin,
+        auth_type=AuthTokenType.USER,
+        account_owner=owner,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.ACCOUNT,
-        id=account.id,
-    )
-    assert event.payload == {'target_email': owner.email}
-    assert event.ip == '10.10.0.14'
-    assert event.user_agent == 'Chrome/141'
     send_verification_mock.assert_called_once_with(
         user_id=owner.id,
         user_email=owner.email,
@@ -174,10 +148,9 @@ def test_resend__not_verified__emit_verification_resend(
     )
 
 
-def test_resend__verification_check_off__no_event(
+def test_resend__verification_check_off__audit_not_called(
     mocker,
     api_client,
-    fake_stream,
     settings,
 ):
 
@@ -189,6 +162,10 @@ def test_resend__verification_check_off__no_event(
         'src.authentication.views.verification.'
         'send_verification_notification.delay',
     )
+    verification_resent_mock = mocker.patch(
+        'src.authentication.views.verification.AuditEventService.'
+        'verification_resent',
+    )
     api_client.token_authenticate(owner)
 
     # act
@@ -196,14 +173,13 @@ def test_resend__verification_check_off__no_event(
 
     # assert
     assert response.status_code == 200
-    assert fake_stream.events == []
+    verification_resent_mock.assert_not_called()
     send_verification_mock.assert_not_called()
 
 
-def test_resend__already_verified__no_event(
+def test_resend__already_verified__audit_not_called(
     mocker,
     api_client,
-    fake_stream,
     verification_check_true_mock,
 ):
 
@@ -214,6 +190,10 @@ def test_resend__already_verified__no_event(
         'src.authentication.views.verification.'
         'send_verification_notification.delay',
     )
+    verification_resent_mock = mocker.patch(
+        'src.authentication.views.verification.AuditEventService.'
+        'verification_resent',
+    )
     api_client.token_authenticate(owner)
 
     # act
@@ -221,5 +201,5 @@ def test_resend__already_verified__no_event(
 
     # assert
     assert response.status_code == 200
-    assert fake_stream.events == []
+    verification_resent_mock.assert_not_called()
     send_verification_mock.assert_not_called()

@@ -30,7 +30,6 @@ from src.authentication.throttling import (
     AuthMSTokenThrottle,
 )
 from src.authentication.views.mixins import (
-    LoginEventMixin,
     SignUpMixin,
     SSORestrictionMixin,
 )
@@ -49,7 +48,6 @@ UserModel = get_user_model()
 class MSAuthViewSet(
     SSORestrictionMixin,
     SignUpMixin,
-    LoginEventMixin,
     CustomViewSetMixin,
     BaseIdentifyMixin,
     GenericViewSet,
@@ -123,7 +121,10 @@ class MSAuthViewSet(
             service.save_tokens_for_user(user)
             update_microsoft_contacts.delay(user.id)
             if not is_signup:
-                self.emit_login(user=user, request=request)
+                AuditEventService.user_logged_in(
+                    user=user,
+                    source=self.audit_source,
+                )
             return self.response_ok({'token': token})
 
     @action(methods=('GET',), detail=False, url_path='auth-uri')

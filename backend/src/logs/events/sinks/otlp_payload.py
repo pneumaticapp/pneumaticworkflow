@@ -32,7 +32,7 @@ def build_otlp_payload(
     records: List[Tuple[str, Event]],
     *,
     service_name: str,
-    service_version: str,
+    service_version: Optional[str],
     environment: str,
     observed_ns: int,
 ) -> Dict[str, Any]:

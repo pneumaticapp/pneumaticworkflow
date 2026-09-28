@@ -27,15 +27,11 @@ from src.authentication.permissions import (
     PrivateApiPermission,
 )
 from src.authentication.services.user_auth import AuthService
-from src.authentication.views.mixins import (
-    LoginEventMixin,
-    SSORestrictionMixin,
-)
+from src.authentication.views.mixins import SSORestrictionMixin
 from src.generics.mixins.views import (
     BaseResponseMixin,
 )
 from src.logs.events import AuditEventService
-from src.logs.events.services import USERNAME_PARAM
 from src.logs.events.enums import LoginFailedReason
 from src.notifications.tasks import send_verification_notification
 
@@ -44,14 +40,12 @@ UserModel = get_user_model()
 
 class TokenObtainPairCustomView(
     SSORestrictionMixin,
-    LoginEventMixin,
     CreateAPIView,
     BaseIdentifyMixin,
     BaseResponseMixin,
 ):
     permission_classes = (AllowAny,)
     authentication_classes = []
-    audit_source = SourceType.EMAIL
 
     def post(self, request, *args, **kwargs):
         user = authenticate(**request.data)
@@ -59,7 +53,7 @@ class TokenObtainPairCustomView(
         if not user:
             AuditEventService.login_failed(
                 reason=LoginFailedReason.BAD_CREDENTIALS,
-                email=request.data.get(USERNAME_PARAM),
+                email=request.data.get('username'),
             )
             raise AuthenticationFailed(MSG_AU_0003)
 
@@ -103,7 +97,10 @@ class TokenObtainPairCustomView(
             ),
             user_ip=request.META.get('HTTP_X_REAL_IP'),
         )
-        self.emit_login(user=user, request=request)
+        AuditEventService.user_logged_in(
+            user=user,
+            source=SourceType.EMAIL,
+        )
         return self.response_ok({'token': token})
 
 

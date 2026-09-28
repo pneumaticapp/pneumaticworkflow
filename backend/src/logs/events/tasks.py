@@ -29,7 +29,7 @@ MAX_SECONDS = tick_budget(
 
 
 @shared_task(ignore_result=True)
-def consume_events() -> None:
+def consume_events():
 
     """ Beat task: deliver one portion of the stream to the
         collector. Ticks never overlap thanks to the lock, and the
@@ -69,7 +69,7 @@ def _run_tick() -> ConsumerStats:
     return consumer.run_once()
 
 
-def _report_tick_error(message: str, exc: Exception) -> None:
+def _report_tick_error(message: str, exc: Exception):
 
     """ Only the class of the error leaves: the text of a Redis error
         may carry the connection URL, and the password with it. """
@@ -82,7 +82,7 @@ def _report_tick_error(message: str, exc: Exception) -> None:
     )
 
 
-def _report_failed_delivery(stats: ConsumerStats) -> None:
+def _report_failed_delivery(stats: ConsumerStats):
 
     """ The consumer already logged the batch; Sentry gets one
         message a minute for as long as the receiver stays down. """
@@ -96,7 +96,7 @@ def _report_failed_delivery(stats: ConsumerStats) -> None:
     )
 
 
-def _report_cleared_entries(stats: ConsumerStats) -> None:
+def _report_cleared_entries(stats: ConsumerStats):
 
     """ The stream already logged the entries it cleared. A vanished
         one was trimmed off the stream while it was pending, an event

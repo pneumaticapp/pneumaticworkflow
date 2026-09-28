@@ -13,6 +13,8 @@ logger = logging.getLogger('pneumatic.events')
 
 CONNECT_TIMEOUT = 1
 SOCKET_TIMEOUT = 2
+STREAM_KEY = 'pneumatic:events'
+CONSUMER_GROUP = 'otlp'
 BUSYGROUP = 'BUSYGROUP'
 DEAD_SUFFIX = ':dead'
 DEAD_MAXLEN = 10000
@@ -183,7 +185,7 @@ class EventStream:
             approximate=True,
         )
 
-    def ensure_group(self) -> None:
+    def ensure_group(self):
 
         """ Create the group from the very first entry (id '0'), so
             events written before the first consumer tick are read. """
@@ -291,8 +293,8 @@ def get_stream() -> EventStream:
 
     params = (
         settings.LOGS_REDIS_URL,
-        settings.LOGS_STREAM_KEY,
-        settings.LOGS_CONSUMER_GROUP,
+        STREAM_KEY,
+        CONSUMER_GROUP,
         settings.LOGS_STREAM_MAXLEN,
     )
     stream = _streams.get(params)

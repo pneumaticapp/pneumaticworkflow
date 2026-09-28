@@ -1221,6 +1221,16 @@
           },
           {
             "selected": false,
+            "text": "task.reaction_create",
+            "value": "task.reaction_create"
+          },
+          {
+            "selected": false,
+            "text": "task.reaction_delete",
+            "value": "task.reaction_delete"
+          },
+          {
+            "selected": false,
             "text": "task.revert",
             "value": "task.revert"
           },
@@ -1251,6 +1261,11 @@
           },
           {
             "selected": false,
+            "text": "template.create",
+            "value": "template.create"
+          },
+          {
+            "selected": false,
             "text": "template.delete",
             "value": "template.delete"
           },
@@ -1258,11 +1273,6 @@
             "selected": false,
             "text": "template.draft_discard",
             "value": "template.draft_discard"
-          },
-          {
-            "selected": false,
-            "text": "template.draft_save",
-            "value": "template.draft_save"
           },
           {
             "selected": false,
@@ -1281,8 +1291,8 @@
           },
           {
             "selected": false,
-            "text": "template.publish",
-            "value": "template.publish"
+            "text": "template.update",
+            "value": "template.update"
           },
           {
             "selected": false,
@@ -1426,11 +1436,6 @@
           },
           {
             "selected": false,
-            "text": "workflow.delay",
-            "value": "workflow.delay"
-          },
-          {
-            "selected": false,
             "text": "workflow.ended",
             "value": "workflow.ended"
           },
@@ -1485,7 +1490,7 @@
             "value": "workflow.urgent"
           }
         ],
-        "query": "account.update,account.verification_resend,account.verify,admin.create,admin.delete,admin.update,api_key.create,api_key.revoke,billing.payment_confirm,billing.purchase,billing.subscription_cancel,dataset.create,dataset.delete,dataset.item_create,dataset.item_delete,dataset.item_update,dataset.update,fieldset.clone,fieldset.create,fieldset.delete,fieldset.update,file.access_denied,file.download,file.upload,group.create,group.delete,group.update,invite.accept,invite.create,invite.resend,task.checklist_mark,task.checklist_unmark,task.comment,task.comment_delete,task.comment_update,task.complete,task.delay,task.delegation,task.due_date_changed,task.performer_created,task.performer_deleted,task.performer_group_created,task.performer_group_deleted,task.revert,task.skip,task.skip_no_performers,task.start,template.ai_generate,template.clone,template.delete,template.draft_discard,template.draft_save,template.export,template.library_fill,template.library_import,template.publish,template_preset.create,template_preset.delete,template_preset.set_default,template_preset.update,tenant.create,tenant.delete,tenant.login_as,user.admin_toggle,user.create,user.deactivate,user.login,user.login_as,user.login_failed,user.logout,user.password_change,user.password_reset,user.password_reset_request,user.password_set,user.reassign,user.signup,user.transfer,user.unsubscribe,user.update,user.vacation_activate,user.vacation_deactivate,webhook.subscribe,webhook.unsubscribe,workflow.complete,workflow.delay,workflow.ended,workflow.ended_by_condition,workflow.force_delay,workflow.force_resume,workflow.not_urgent,workflow.revert,workflow.run,workflow.sub_workflow_run,workflow.terminate,workflow.update,workflow.urgent",
+        "query": "account.update,account.verification_resend,account.verify,admin.create,admin.delete,admin.update,api_key.create,api_key.revoke,billing.payment_confirm,billing.purchase,billing.subscription_cancel,dataset.create,dataset.delete,dataset.item_create,dataset.item_delete,dataset.item_update,dataset.update,fieldset.clone,fieldset.create,fieldset.delete,fieldset.update,file.access_denied,file.download,file.upload,group.create,group.delete,group.update,invite.accept,invite.create,invite.resend,task.checklist_mark,task.checklist_unmark,task.comment,task.comment_delete,task.comment_update,task.complete,task.delay,task.delegation,task.due_date_changed,task.performer_created,task.performer_deleted,task.performer_group_created,task.performer_group_deleted,task.reaction_create,task.reaction_delete,task.revert,task.skip,task.skip_no_performers,task.start,template.ai_generate,template.clone,template.create,template.delete,template.draft_discard,template.export,template.library_fill,template.library_import,template.update,template_preset.create,template_preset.delete,template_preset.set_default,template_preset.update,tenant.create,tenant.delete,tenant.login_as,user.admin_toggle,user.create,user.deactivate,user.login,user.login_as,user.login_failed,user.logout,user.password_change,user.password_reset,user.password_reset_request,user.password_set,user.reassign,user.signup,user.transfer,user.unsubscribe,user.update,user.vacation_activate,user.vacation_deactivate,webhook.subscribe,webhook.unsubscribe,workflow.complete,workflow.ended,workflow.ended_by_condition,workflow.force_delay,workflow.force_resume,workflow.not_urgent,workflow.revert,workflow.run,workflow.sub_workflow_run,workflow.terminate,workflow.update,workflow.urgent",
         "queryValue": "",
         "skipUrlSync": false,
         "type": "custom"

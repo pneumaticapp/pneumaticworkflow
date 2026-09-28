@@ -1,13 +1,7 @@
 import pytest
 
-from src.accounts.enums import UserType
 from src.accounts.messages import MSG_A_0046
 from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import (
-    EventObjectType,
-    UserEvents,
-)
-from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
@@ -19,11 +13,10 @@ from src.utils.validation import ErrorCode
 pytestmark = pytest.mark.django_db
 
 
-def test_put__name_changed__emit_user_update_on_self(
+def test_put__name_changed__audit_update_kwargs(
     mocker,
     identify_mock,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -36,11 +29,10 @@ def test_put__name_changed__emit_user_update_on_self(
     send_user_updated_mock = mocker.patch(
         'src.accounts.services.user.send_user_updated_notification.delay',
     )
-    api_client.token_authenticate(
-        user,
-        user_agent='Chrome/141',
-        user_ip='10.10.0.10',
+    user_updated_mock = mocker.patch(
+        'src.accounts.services.user.AuditEventService.user_updated',
     )
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.put(
@@ -51,27 +43,15 @@ def test_put__name_changed__emit_user_update_on_self(
 
     # assert
     assert response.status_code == 200
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.UPDATE
-    assert event.category == UserEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=user.id,
-        email=user.email,
-        user_type=UserType.USER,
+    user_updated_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        target=user,
+        update_kwargs={'first_name': user.first_name, 'last_name': 'New'},
+        user_groups=None,
+        subordinates=None,
+        is_password_set=False,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.USER,
-        id=user.id,
-    )
-    assert event.payload == {
-        'target_email': user.email,
-        'changed_fields': ['last_name'],
-    }
-    assert event.ip == '10.10.0.10'
-    assert event.user_agent == 'Chrome/141'
     identify_mock.assert_called_once_with(user)
     send_user_updated_mock.assert_called_once_with(
         logging=account.log_api_requests,
@@ -80,11 +60,10 @@ def test_put__name_changed__emit_user_update_on_self(
     )
 
 
-def test_put__password_sent__emit_update_then_password_change(
+def test_put__password_sent__audit_password_set(
     mocker,
     identify_mock,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -93,6 +72,9 @@ def test_put__password_sent__emit_update_then_password_change(
     user = create_test_not_admin(account=account)
     send_user_updated_mock = mocker.patch(
         'src.accounts.services.user.send_user_updated_notification.delay',
+    )
+    user_updated_mock = mocker.patch(
+        'src.accounts.services.user.AuditEventService.user_updated',
     )
     api_client.token_authenticate(user)
 
@@ -105,35 +87,15 @@ def test_put__password_sent__emit_update_then_password_change(
 
     # assert
     assert response.status_code == 200
-    assert len(fake_stream.events) == 2
-    actor = Actor(
-        id=user.id,
-        email=user.email,
-        user_type=UserType.USER,
+    user_updated_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        target=user,
+        update_kwargs={},
+        user_groups=None,
+        subordinates=None,
+        is_password_set=True,
     )
-    event_object = EventObject(
-        type=EventObjectType.USER,
-        id=user.id,
-    )
-    update_event = fake_stream.events[0][1]
-    assert update_event.type == UserEvents.UPDATE
-    assert update_event.category == UserEvents.CATEGORY
-    assert update_event.account_id == account.id
-    assert update_event.actor == actor
-    assert update_event.auth_type == AuthTokenType.USER
-    assert update_event.object == event_object
-    assert update_event.payload == {
-        'target_email': user.email,
-        'changed_fields': ['password'],
-    }
-    password_event = fake_stream.events[1][1]
-    assert password_event.type == UserEvents.PASSWORD_CHANGE
-    assert password_event.category == UserEvents.CATEGORY
-    assert password_event.account_id == account.id
-    assert password_event.actor == actor
-    assert password_event.auth_type == AuthTokenType.USER
-    assert password_event.object == event_object
-    assert password_event.payload == {}
     identify_mock.assert_called_once_with(user)
     send_user_updated_mock.assert_called_once_with(
         logging=account.log_api_requests,
@@ -142,11 +104,10 @@ def test_put__password_sent__emit_update_then_password_change(
     )
 
 
-def test_put__admin_revokes_own_admin__emit_update_then_admin_toggle(
+def test_put__admin_revokes_own_admin__audit_is_admin(
     mocker,
     identify_mock,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -155,6 +116,9 @@ def test_put__admin_revokes_own_admin__emit_update_then_admin_toggle(
     user = create_test_admin(account=account)
     send_user_updated_mock = mocker.patch(
         'src.accounts.services.user.send_user_updated_notification.delay',
+    )
+    user_updated_mock = mocker.patch(
+        'src.accounts.services.user.AuditEventService.user_updated',
     )
     api_client.token_authenticate(user)
 
@@ -167,37 +131,17 @@ def test_put__admin_revokes_own_admin__emit_update_then_admin_toggle(
 
     # assert
     assert response.status_code == 200
-    assert len(fake_stream.events) == 2
-    actor = Actor(
-        id=user.id,
-        email=user.email,
-        user_type=UserType.USER,
+    user.refresh_from_db()
+    assert user.is_admin is False
+    user_updated_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        target=user,
+        update_kwargs={'is_admin': False},
+        user_groups=None,
+        subordinates=None,
+        is_password_set=False,
     )
-    event_object = EventObject(
-        type=EventObjectType.USER,
-        id=user.id,
-    )
-    update_event = fake_stream.events[0][1]
-    assert update_event.type == UserEvents.UPDATE
-    assert update_event.account_id == account.id
-    assert update_event.actor == actor
-    assert update_event.auth_type == AuthTokenType.USER
-    assert update_event.object == event_object
-    assert update_event.payload == {
-        'target_email': user.email,
-        'changed_fields': ['is_admin'],
-    }
-    toggle_event = fake_stream.events[1][1]
-    assert toggle_event.type == UserEvents.ADMIN_TOGGLE
-    assert toggle_event.category == UserEvents.CATEGORY
-    assert toggle_event.account_id == account.id
-    assert toggle_event.actor == actor
-    assert toggle_event.auth_type == AuthTokenType.USER
-    assert toggle_event.object == event_object
-    assert toggle_event.payload == {
-        'is_admin': False,
-        'target_email': user.email,
-    }
     identify_mock.assert_called_once_with(user)
     send_user_updated_mock.assert_called_once_with(
         logging=account.log_api_requests,
@@ -206,12 +150,13 @@ def test_put__admin_revokes_own_admin__emit_update_then_admin_toggle(
     )
 
 
-def test_put__same_values__no_event(
+def test_put__same_values__audit_update_kwargs(
     mocker,
     identify_mock,
     api_client,
-    fake_stream,
 ):
+
+    """ A request that arrived is an update, whatever it sent. """
 
     # arrange
     account = create_test_account()
@@ -219,6 +164,9 @@ def test_put__same_values__no_event(
     user = create_test_not_admin(account=account)
     send_user_updated_mock = mocker.patch(
         'src.accounts.services.user.send_user_updated_notification.delay',
+    )
+    user_updated_mock = mocker.patch(
+        'src.accounts.services.user.AuditEventService.user_updated',
     )
     api_client.token_authenticate(user)
 
@@ -237,7 +185,21 @@ def test_put__same_values__no_event(
 
     # assert
     assert response.status_code == 200
-    assert fake_stream.events == []
+    user_updated_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        target=user,
+        update_kwargs={
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'phone': user.phone,
+            'language': user.language,
+            'timezone': user.timezone,
+        },
+        user_groups=None,
+        subordinates=None,
+        is_password_set=False,
+    )
     identify_mock.assert_called_once_with(user)
     send_user_updated_mock.assert_called_once_with(
         logging=account.log_api_requests,
@@ -246,11 +208,10 @@ def test_put__same_values__no_event(
     )
 
 
-def test_put__escalate_privileges__no_event(
+def test_put__escalate_privileges__audit_not_called(
     mocker,
     identify_mock,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -259,6 +220,9 @@ def test_put__escalate_privileges__no_event(
     user = create_test_not_admin(account=account)
     send_user_updated_mock = mocker.patch(
         'src.accounts.services.user.send_user_updated_notification.delay',
+    )
+    user_updated_mock = mocker.patch(
+        'src.accounts.services.user.AuditEventService.user_updated',
     )
     api_client.token_authenticate(user)
 
@@ -275,47 +239,6 @@ def test_put__escalate_privileges__no_event(
     assert response.data['message'] == str(MSG_A_0046)
     assert response.data['details']['name'] == 'is_admin'
     assert response.data['details']['reason'] == str(MSG_A_0046)
-    assert fake_stream.events == []
+    user_updated_mock.assert_not_called()
     identify_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
-
-
-def test_put__blank_photo_over_null__no_event(
-    mocker,
-    identify_mock,
-    api_client,
-    fake_stream,
-):
-
-    """ A profile without a photo stores NULL, the client sends it back
-        as an empty string: the same absence, not an edit. """
-
-    # arrange
-    account = create_test_account()
-    create_test_owner(account=account)
-    user = create_test_not_admin(account=account, photo=None)
-    send_user_updated_mock = mocker.patch(
-        'src.accounts.services.user.send_user_updated_notification.delay',
-    )
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.put(
-        '/accounts/user',
-        data={
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'photo': '',
-        },
-        format='json',
-    )
-
-    # assert
-    assert response.status_code == 200
-    assert fake_stream.events == []
-    identify_mock.assert_called_once_with(user)
-    send_user_updated_mock.assert_called_once_with(
-        logging=account.log_api_requests,
-        account_id=account.id,
-        user_data=mocker.ANY,
-    )

@@ -1,12 +1,6 @@
 import pytest
 
-from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import (
-    BillingEvents,
-    EventObjectType,
-)
-from src.logs.events.schema import Actor, EventObject
 from src.payment import messages
 from src.payment.stripe.exceptions import StripeServiceException
 from src.payment.stripe.service import StripeService
@@ -20,15 +14,13 @@ from src.utils.validation import ErrorCode
 pytestmark = pytest.mark.django_db
 
 
-def test_cancel__owner__emit_subscription_cancel(
+def test_cancel__owner__audit_subscription_cancelled(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
+    owner = create_test_owner()
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
@@ -38,6 +30,9 @@ def test_cancel__owner__emit_subscription_cancel(
         StripeService,
         attribute='cancel_subscription',
     )
+    subscription_cancelled_mock = mocker.patch(
+        'src.payment.views.AuditEventService.subscription_cancelled',
+    )
     api_client.token_authenticate(user=owner)
 
     # act
@@ -45,34 +40,21 @@ def test_cancel__owner__emit_subscription_cancel(
 
     # assert
     assert response.status_code == 204
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == BillingEvents.SUBSCRIPTION_CANCEL
-    assert event.category == BillingEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=owner.id,
-        email=owner.email,
-        user_type=UserType.USER,
-    )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.ACCOUNT,
-        id=account.id,
-    )
-    assert event.payload == {}
     stripe_service_init_mock.assert_called_once_with(
         user=owner,
         auth_type=AuthTokenType.USER,
         is_superuser=False,
     )
     cancel_subscription_mock.assert_called_once_with()
+    subscription_cancelled_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+    )
 
 
-def test_cancel__admin__no_event(
+def test_cancel__admin__audit_not_called(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -86,6 +68,9 @@ def test_cancel__admin__no_event(
         StripeService,
         attribute='cancel_subscription',
     )
+    subscription_cancelled_mock = mocker.patch(
+        'src.payment.views.AuditEventService.subscription_cancelled',
+    )
     api_client.token_authenticate(user=admin)
 
     # act
@@ -93,15 +78,14 @@ def test_cancel__admin__no_event(
 
     # assert
     assert response.status_code == 403
-    assert fake_stream.events == []
     stripe_service_init_mock.assert_not_called()
     cancel_subscription_mock.assert_not_called()
+    subscription_cancelled_mock.assert_not_called()
 
 
-def test_cancel__service_exception__no_event(
+def test_cancel__service_exception__audit_not_called(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -116,6 +100,9 @@ def test_cancel__service_exception__no_event(
         attribute='cancel_subscription',
         side_effect=StripeServiceException(message=messages.MSG_BL_0005),
     )
+    subscription_cancelled_mock = mocker.patch(
+        'src.payment.views.AuditEventService.subscription_cancelled',
+    )
     api_client.token_authenticate(user=owner)
 
     # act
@@ -126,19 +113,18 @@ def test_cancel__service_exception__no_event(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == messages.MSG_BL_0005
     assert response.data['details'] == {}
-    assert fake_stream.events == []
     stripe_service_init_mock.assert_called_once_with(
         user=owner,
         auth_type=AuthTokenType.USER,
         is_superuser=False,
     )
     cancel_subscription_mock.assert_called_once_with()
+    subscription_cancelled_mock.assert_not_called()
 
 
-def test_cancel__billing_sync_off__no_event(
+def test_cancel__billing_sync_off__audit_not_called(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -153,6 +139,9 @@ def test_cancel__billing_sync_off__no_event(
         StripeService,
         attribute='cancel_subscription',
     )
+    subscription_cancelled_mock = mocker.patch(
+        'src.payment.views.AuditEventService.subscription_cancelled',
+    )
     api_client.token_authenticate(user=owner)
 
     # act
@@ -163,6 +152,6 @@ def test_cancel__billing_sync_off__no_event(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == messages.MSG_BL_0018
     assert response.data['details'] == {}
-    assert fake_stream.events == []
     stripe_service_init_mock.assert_not_called()
     cancel_subscription_mock.assert_not_called()
+    subscription_cancelled_mock.assert_not_called()

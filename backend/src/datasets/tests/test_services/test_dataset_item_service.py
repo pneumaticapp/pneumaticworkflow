@@ -1,5 +1,6 @@
 import pytest
 
+from src.authentication.enums import AuthTokenType
 from src.datasets.models import DatasetItem
 from src.datasets.messages import MSG_DS_0002
 from src.datasets.services.dataset_item import DataSetItemService
@@ -145,20 +146,17 @@ def test__create_actions__created__emit_dataset_item_created(mocker):
     )
 
     # act
-    service._create_actions(
-        dataset_id=dataset.id,
-        value=item.value,
-    )
+    service._create_actions()
 
     # assert
     dataset_item_created_mock.assert_called_once_with(
         user=user,
-        auth_type=service.auth_type,
+        auth_type=AuthTokenType.USER,
         item=item,
     )
 
 
-def test__partial_update__changed_fields__emit_dataset_item_updated(mocker):
+def test__partial_update__new_values__emit_dataset_item_updated(mocker):
 
     # arrange
     account = create_test_account()
@@ -172,6 +170,7 @@ def test__partial_update__changed_fields__emit_dataset_item_updated(mocker):
         user=user,
         instance=item,
     )
+    new_order = item.order + 1
     dataset_item_updated_mock = mocker.patch(
         'src.datasets.services.dataset_item.'
         'AuditEventService.dataset_item_updated',
@@ -180,19 +179,57 @@ def test__partial_update__changed_fields__emit_dataset_item_updated(mocker):
     # act
     service.partial_update(
         value='Renamed',
-        order=item.order + 1,
+        order=new_order,
     )
 
     # assert
     dataset_item_updated_mock.assert_called_once_with(
         user=user,
-        auth_type=service.auth_type,
+        auth_type=AuthTokenType.USER,
         item=item,
-        changed_fields=['order', 'value'],
+        update_kwargs={'value': 'Renamed', 'order': new_order},
     )
 
 
-def test__partial_update__same_values__not_emit(mocker):
+def test__partial_update__same_values__emit_dataset_item_updated(mocker):
+
+    """ Written on every save, a value changed or not. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(
+        account=account,
+        items_count=1,
+    )
+    item = dataset.items.get()
+    service = DataSetItemService(
+        user=user,
+        instance=item,
+    )
+    value = item.value
+    order = item.order
+    dataset_item_updated_mock = mocker.patch(
+        'src.datasets.services.dataset_item.'
+        'AuditEventService.dataset_item_updated',
+    )
+
+    # act
+    service.partial_update(
+        value=value,
+        order=order,
+    )
+
+    # assert
+    dataset_item_updated_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        item=item,
+        update_kwargs={'value': value, 'order': order},
+    )
+
+
+def test__partial_update__not_force_save__not_emit(mocker):
 
     # arrange
     account = create_test_account()
@@ -212,12 +249,13 @@ def test__partial_update__same_values__not_emit(mocker):
     )
 
     # act
-    service.partial_update(
-        value=item.value,
-        order=item.order,
+    result = service.partial_update(
+        force_save=False,
+        value='Renamed',
     )
 
     # assert
+    assert result.value == 'Renamed'
     dataset_item_updated_mock.assert_not_called()
 
 
@@ -274,6 +312,6 @@ def test__delete__existing_item__emit_dataset_item_deleted(mocker):
     assert not DatasetItem.objects.filter(id=item.id).exists()
     dataset_item_deleted_mock.assert_called_once_with(
         user=user,
-        auth_type=service.auth_type,
+        auth_type=AuthTokenType.USER,
         item=item,
     )

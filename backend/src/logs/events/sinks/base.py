@@ -16,7 +16,7 @@ class BaseSink(ABC):
         through _handle_error(), so the consumer sees only
         SinkTemporaryError and SinkPermanentError. """
 
-    def send(self, records: List[Tuple[str, Event]]) -> None:
+    def send(self, records: List[Tuple[str, Event]]):
         if not records:
             return
         try:
@@ -32,7 +32,7 @@ class BaseSink(ABC):
             ) from exc
 
     @abstractmethod
-    def _send(self, records: List[Tuple[str, Event]]) -> None:
+    def _send(self, records: List[Tuple[str, Event]]):
         raise NotImplementedError
 
     @abstractmethod
@@ -40,7 +40,7 @@ class BaseSink(ABC):
         self,
         exc: Exception,
         records: List[Tuple[str, Event]],
-    ) -> None:
+    ):
 
         """ Classify the transport error and raise a pipeline one. """
 

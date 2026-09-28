@@ -1,4 +1,4 @@
-from typing_extensions import Literal
+from typing_extensions import Literal, get_args
 
 
 class AccountEventType:
@@ -47,20 +47,19 @@ class RequestDirection:
 class LogsBackend:
 
     """ Value of LOGS_BACKEND: where the collector sends the events.
-        NONE switches the whole pipeline off, emit() writes nothing. """
+        Any other value, an unset one included, switches the whole
+        pipeline off, emit() writes nothing. """
 
     OTLP = 'otlp'
     ELASTICSEARCH = 'elasticsearch'
-    NONE = 'none'
 
     LITERALS = Literal[
         OTLP,
         ELASTICSEARCH,
-        NONE,
     ]
+    VALUES = set(get_args(LITERALS))
 
 
-DEFAULT_STREAM_MAXLEN = 250000
-DEFAULT_CONSUMER_BATCH_SIZE = 1000
+SERVICE_NAME = 'pneumatic-backend'
 DEFAULT_CONSUMER_IDLE_MS = 60000
 CONSUMER_INTERVAL_SECONDS = 5

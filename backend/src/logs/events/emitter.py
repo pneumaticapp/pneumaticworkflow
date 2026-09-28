@@ -8,7 +8,7 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from src.logs.enums import LogsBackend
+from src.logs.enums import SERVICE_NAME, LogsBackend
 from src.logs.events.context import RequestContext, get_context
 from src.logs.events.registry import resolve_event_type
 from src.logs.events.reporting import report_error
@@ -39,10 +39,10 @@ class StreamCircuit:
     def is_open(self, now: float) -> bool:
         return now < self.open_until
 
-    def trip(self, now: float) -> None:
+    def trip(self, now: float):
         self.open_until = now + CIRCUIT_OPEN_SECONDS
 
-    def reset(self) -> None:
+    def reset(self):
         self.open_until = 0.0
         self.dropped = 0
 
@@ -54,9 +54,20 @@ def logs_enabled() -> bool:
 
     """ Whether the journal is on. A caller that has to read the
         database to build a payload asks this first: with the journal
-        off (the default) the reads would be wasted. """
+        off (the default) the reads would be wasted.
 
-    return settings.LOGS_BACKEND != LogsBackend.NONE
+        The journal is on only when .env names a store and gives every
+        value the pipeline needs: without one of them nothing could be
+        buffered or delivered, and the events would pile up for
+        nothing. """
+
+    return (
+        settings.LOGS_BACKEND in LogsBackend.VALUES
+        and bool(settings.LOGS_REDIS_URL)
+        and bool(settings.LOGS_STREAM_MAXLEN)
+        and bool(settings.LOGS_OTLP_ENDPOINT)
+        and bool(settings.LOGS_CONSUMER_BATCH_SIZE)
+    )
 
 
 def emit(
@@ -124,7 +135,7 @@ def _build_event(
     return Event(
         type=event_type,
         category=declared.category,
-        service=settings.LOGS_SERVICE_NAME,
+        service=SERVICE_NAME,
         ts=ts or timezone.now(),
         # account_id is an index label of the log backend, that is the
         # tenant boundary of the journal. None would reach it as the
@@ -187,7 +198,7 @@ def _write(event: Event):
         _circuit.dropped = 0
 
 
-def _report_stream_error(exc: Exception) -> None:
+def _report_stream_error(exc: Exception):
 
     """ A Redis outage happens on every single request: the log line
         shows all of them, Sentry gets the throttled one.

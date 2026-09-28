@@ -60,9 +60,9 @@ class EventEmitter:
     def __init__(
         self,
         *,
-        url: str,
+        url: str | None,
         key: str,
-        maxlen: int,
+        maxlen: int | None,
         enabled: bool,
     ) -> None:
         """Initialize the emitter.
@@ -71,7 +71,8 @@ class EventEmitter:
             url: Redis URL of the events buffer (LOGS_REDIS_URL).
             key: Name of the stream (STREAM_KEY).
             maxlen: Approximate cap of the stream (LOGS_STREAM_MAXLEN).
-            enabled: False makes every write a no-op (LOGS_BACKEND=none).
+            enabled: False makes every write a no-op (settings.logs_enabled:
+                the url and the maxlen are set whenever it is True).
 
         """
         self._url = url

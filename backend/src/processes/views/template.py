@@ -434,14 +434,12 @@ class TemplateViewSet(
                 template=template,
                 user_agent=get_user_agent(request),
             )
-        response_data = serializer.get_response_data()
-        AuditEventService.template_saved(
+        AuditEventService.template_created(
             user=request.user,
             auth_type=request.token_type,
             template=template,
-            name=response_data['name'],
         )
-        return self.response_ok(response_data)
+        return self.response_ok(serializer.get_response_data())
 
     @extend_schema(
         tags=['Templates'],
@@ -502,15 +500,13 @@ class TemplateViewSet(
                 auth_type=request.token_type,
                 **serializer.get_analysis_counters(),
             )
-        response_serializer = self.get_serializer(instance=template)
-        response_data = response_serializer.get_response_data()
-        AuditEventService.template_saved(
+        AuditEventService.template_updated(
             user=request.user,
             auth_type=request.token_type,
             template=template,
-            name=response_data['name'],
         )
-        return self.response_ok(response_data)
+        response_serializer = self.get_serializer(instance=template)
+        return self.response_ok(response_serializer.get_response_data())
 
     @extend_schema(
         tags=['Templates'],
@@ -531,11 +527,11 @@ class TemplateViewSet(
         )
         serializer = self.get_serializer(data=template_data_clone)
         with transaction.atomic():
-            clone = serializer.save_as_draft()
+            serializer.save_as_draft()
         AuditEventService.template_cloned(
             user=request.user,
             auth_type=request.token_type,
-            template=clone,
+            template=serializer.instance,
             name=template_data_clone['name'],
         )
         return self.response_ok(serializer.get_response_data())
@@ -1040,7 +1036,7 @@ class TemplateViewSet(
             slz.discard_changes()
         else:
             template.delete()
-        AuditEventService.template_draft_discarded(
+        AuditEventService.template_discarded_changes(
             user=request.user,
             auth_type=request.token_type,
             template=template,
@@ -1080,10 +1076,10 @@ class TemplateViewSet(
         # One record per export, not one per page: the client walks
         # the pages with offset, and only the first one is the action.
         if not filter_slz.validated_data.get('offset'):
-            AuditEventService.templates_exported(
-                user=request.user,
+            AuditEventService.templates_export(
+                user=user,
                 auth_type=request.token_type,
-                filters=dict(filter_slz.validated_data),
+                filters=filter_slz.validated_data,
             )
         return self.paginated_response(queryset)
 

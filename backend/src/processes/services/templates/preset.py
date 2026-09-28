@@ -51,7 +51,7 @@ class TemplatePresetService(BaseModelService):
             preset=self.instance,
         )
 
-    def partial_update(
+    def _partial_update(
         self,
         force_save: bool = False,
         **update_kwargs,
@@ -67,16 +67,26 @@ class TemplatePresetService(BaseModelService):
         if fields:
             self._create_or_update_preset_fields(fields_data=fields)
 
+        return result
+
+    def partial_update(
+        self,
+        force_save: bool = False,
+        **update_kwargs,
+    ) -> TemplatePreset:
+        result = self._partial_update(force_save=force_save, **update_kwargs)
+        fields = update_kwargs.pop('fields', None)
         AuditEventService.template_preset_updated(
             user=self.user,
             auth_type=self.auth_type,
             preset=self.instance,
+            update_kwargs=update_kwargs,
+            fields=fields,
         )
         return result
 
     def set_default(self) -> TemplatePreset:
-        super().partial_update(is_default=True, force_save=True)
-        self._reset_default_presets()
+        self._partial_update(is_default=True, force_save=True)
         AuditEventService.template_preset_set_default(
             user=self.user,
             auth_type=self.auth_type,

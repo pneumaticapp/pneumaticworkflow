@@ -49,7 +49,6 @@ DECLARATIONS = (
         (WorkflowEvents.RUN, 'Workflow started'),
         (WorkflowEvents.COMPLETE, 'Workflow completed'),
         (WorkflowEvents.ENDED, 'Workflow ended by a user'),
-        (WorkflowEvents.DELAY, 'Workflow delayed'),
         (WorkflowEvents.REVERT, 'Workflow returned to a previous task'),
         (WorkflowEvents.ENDED_BY_CONDITION, 'Workflow ended by a condition'),
         (WorkflowEvents.URGENT, 'Workflow marked as urgent'),
@@ -78,6 +77,8 @@ DECLARATIONS = (
         (TaskEvents.DELEGATION, 'Task delegated to another performer'),
         (TaskEvents.COMMENT_UPDATE, 'Comment edited by its author'),
         (TaskEvents.COMMENT_DELETE, 'Comment deleted by its author'),
+        (TaskEvents.REACTION_CREATE, 'Reaction added to a comment'),
+        (TaskEvents.REACTION_DELETE, 'Reaction removed from a comment'),
         (TaskEvents.CHECKLIST_MARK, 'Checklist item marked'),
         (TaskEvents.CHECKLIST_UNMARK, 'Checklist item unmarked'),
     )),
@@ -130,8 +131,8 @@ DECLARATIONS = (
         (ApiKeyEvents.REVOKE, 'API key revoked'),
     )),
     (TemplateEvents, (
-        (TemplateEvents.PUBLISH, 'Template published'),
-        (TemplateEvents.DRAFT_SAVE, 'Template draft saved'),
+        (TemplateEvents.CREATE, 'Template created'),
+        (TemplateEvents.UPDATE, 'Template changed'),
         (TemplateEvents.CLONE, 'Template cloned into a new draft'),
         (TemplateEvents.DELETE, 'Template deleted'),
         (TemplateEvents.EXPORT, 'Templates exported'),
@@ -160,8 +161,7 @@ DECLARATIONS = (
         (DatasetEvents.ITEM_DELETE, 'Dataset row deleted'),
     )),
     (BillingEvents, (
-        (BillingEvents.PURCHASE,
-         'Subscription purchased or checkout started'),
+        (BillingEvents.PURCHASE, 'Subscription purchased'),
         (BillingEvents.SUBSCRIPTION_CANCEL, 'Subscription cancelled'),
         (BillingEvents.PAYMENT_CONFIRM,
          'Payment confirmed through the checkout link'),
@@ -221,7 +221,7 @@ def resolve_event_type(name: str) -> EventType:
     return EventType(name, EventCategory.OTHER)
 
 
-def validate_registry() -> None:
+def validate_registry():
 
     """ Raise EventsError if the registry declaration is broken:
         a duplicated or malformed name, a category that is not one,

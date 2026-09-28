@@ -91,22 +91,17 @@ class AccountView(
             data=request.data,
         )
         slz.is_valid(raise_exception=True)
-        changed_fields = sorted(
-            name for name, value in slz.validated_data.items()
-            if getattr(instance, name) != value
-        )
         service = AccountService(
             instance=slz.instance,
             user=self.request.user,
         )
         service.partial_update(**slz.validated_data, force_save=True)
-        if changed_fields:
-            AuditEventService.account_updated(
-                user=request.user,
-                auth_type=request.token_type,
-                account=instance,
-                changed_fields=changed_fields,
-            )
+        AuditEventService.account_updated(
+            user=request.user,
+            auth_type=request.token_type,
+            account=instance,
+            update_kwargs=slz.validated_data,
+        )
         return self.response_ok(slz.data)
 
 

@@ -936,7 +936,7 @@ def test_get_from_sys_template__library__emit_template_filled_from_library(
     )
 
 
-def test_create_template_by_steps__valid__emit_template_saved(mocker):
+def test_create_template_by_steps__valid__emit_template_created(mocker):
 
     # arrange
     user = create_test_owner()
@@ -957,9 +957,9 @@ def test_create_template_by_steps__valid__emit_template_saved(mocker):
         'src.analysis.services.AnalyticService.'
         'template_generated_from_landing',
     )
-    template_saved_mock = mocker.patch(
+    template_created_mock = mocker.patch(
         'src.processes.services.templates.template.'
-        'AuditEventService.template_saved',
+        'AuditEventService.template_created',
     )
 
     # act
@@ -975,11 +975,10 @@ def test_create_template_by_steps__valid__emit_template_saved(mocker):
         auth_type=auth_type,
         is_superuser=False,
     )
-    template_saved_mock.assert_called_once_with(
+    template_created_mock.assert_called_once_with(
         user=user,
         auth_type=auth_type,
         template=template,
-        name=name,
         source=TemplateSource.BY_STEPS,
     )
 
@@ -1012,9 +1011,9 @@ def test_create_template_by_steps__validation_error__not_emit(mocker):
         'src.analysis.services.AnalyticService.'
         'template_generated_from_landing',
     )
-    template_saved_mock = mocker.patch(
+    template_created_mock = mocker.patch(
         'src.processes.services.templates.template.'
-        'AuditEventService.template_saved',
+        'AuditEventService.template_created',
     )
 
     # act
@@ -1044,10 +1043,10 @@ def test_create_template_by_steps__validation_error__not_emit(mocker):
         },
     )
     template_generated_from_landing_mock.assert_not_called()
-    template_saved_mock.assert_not_called()
+    template_created_mock.assert_not_called()
 
 
-def test_create_template_from_library_template__valid__emit_template_saved(
+def test_create_template_from_library_template__valid__emit_template_created(
     mocker,
 ):
 
@@ -1059,10 +1058,7 @@ def test_create_template_from_library_template__valid__emit_template_saved(
         auth_type=auth_type,
     )
     system_template = create_test_system_template()
-    template = create_test_template(
-        user=user,
-        name='Library template',
-    )
+    template = create_test_template(user=user)
     create_template_from_sys_template_mock = mocker.patch(
         'src.processes.services.templates.template.'
         'TemplateService.create_template_from_sys_template',
@@ -1072,9 +1068,9 @@ def test_create_template_from_library_template__valid__emit_template_saved(
         'src.analysis.services.AnalyticService.'
         'template_created_from_landing_library',
     )
-    template_saved_mock = mocker.patch(
+    template_created_mock = mocker.patch(
         'src.processes.services.templates.template.'
-        'AuditEventService.template_saved',
+        'AuditEventService.template_created',
     )
 
     # act
@@ -1092,10 +1088,9 @@ def test_create_template_from_library_template__valid__emit_template_saved(
         auth_type=auth_type,
         is_superuser=False,
     )
-    template_saved_mock.assert_called_once_with(
+    template_created_mock.assert_called_once_with(
         user=user,
         auth_type=auth_type,
         template=template,
-        name='Library template',
         source=TemplateSource.LIBRARY,
     )

@@ -1,13 +1,13 @@
 import pytest
 
-from src.accounts.enums import UserStatus, UserType
+from src.accounts import messages
+from src.accounts.enums import UserStatus
+from src.accounts.services.exceptions import (
+    PreventAccountOwnerDeletion,
+    PreventSelfDeletion,
+)
 from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import (
-    EventObjectType,
-    UserEvents,
-)
-from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
@@ -17,7 +17,7 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-def test_deactivate__service_call__emit_user_deactivate(
+def test_deactivate__service_call__audit_user_deactivated(
     mocker,
     identify_mock,
     group_mock,
@@ -36,8 +36,13 @@ def test_deactivate__service_call__emit_user_deactivate(
     send_user_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_user_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.logs.events.services.emit')
-    service = UserService(instance=target, user=owner)
+    user_deactivated_mock = mocker.patch(
+        'src.accounts.services.user.AuditEventService.user_deactivated',
+    )
+    service = UserService(
+        instance=target,
+        user=owner,
+    )
 
     # act
     service.deactivate()
@@ -45,22 +50,10 @@ def test_deactivate__service_call__emit_user_deactivate(
     # assert
     target.refresh_from_db()
     assert target.status == UserStatus.INACTIVE
-    emit_mock.assert_called_once_with(
-        UserEvents.DEACTIVATE,
-        account_id=account.id,
-        actor=Actor(
-            id=owner.id,
-            email=owner.email,
-            user_type=UserType.USER,
-        ),
+    user_deactivated_mock.assert_called_once_with(
+        user=owner,
         auth_type=AuthTokenType.USER,
-        event_object=EventObject(type=EventObjectType.USER, id=target.id),
-        payload={
-            'target_email': target.email,
-            'status_before': UserStatus.ACTIVE,
-        },
-        workflow_id=None,
-        task_id=None,
+        target=target,
     )
     identify_mock.assert_called_once_with(target)
 
@@ -81,7 +74,7 @@ def test_deactivate__service_call__emit_user_deactivate(
     )
 
 
-def test_deactivate__api_key_auth__emit_api_auth_type(
+def test_deactivate__api_key_auth__audit_api_auth_type(
     mocker,
     identify_mock,
     group_mock,
@@ -100,7 +93,9 @@ def test_deactivate__api_key_auth__emit_api_auth_type(
     send_user_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_user_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.logs.events.services.emit')
+    user_deactivated_mock = mocker.patch(
+        'src.accounts.services.user.AuditEventService.user_deactivated',
+    )
     service = UserService(
         instance=target,
         user=owner,
@@ -111,22 +106,10 @@ def test_deactivate__api_key_auth__emit_api_auth_type(
     service.deactivate()
 
     # assert
-    emit_mock.assert_called_once_with(
-        UserEvents.DEACTIVATE,
-        account_id=account.id,
-        actor=Actor(
-            id=owner.id,
-            email=owner.email,
-            user_type=UserType.USER,
-        ),
+    user_deactivated_mock.assert_called_once_with(
+        user=owner,
         auth_type=AuthTokenType.API,
-        event_object=EventObject(type=EventObjectType.USER, id=target.id),
-        payload={
-            'target_email': target.email,
-            'status_before': UserStatus.ACTIVE,
-        },
-        workflow_id=None,
-        task_id=None,
+        target=target,
     )
     identify_mock.assert_called_once_with(target)
     identify_users_mock.assert_called_once_with(user_ids=(owner.id,))
@@ -144,14 +127,15 @@ def test_deactivate__api_key_auth__emit_api_auth_type(
     )
 
 
-def test_deactivate__no_user__emit_no_actor(
+def test_deactivate__no_user__audit_user_none(
     mocker,
     identify_mock,
     group_mock,
 ):
 
-    """ A service without a user is a background job, the transfer
-        of an account for one: nobody in particular did it. """
+    """ The service takes no user (BaseModelService makes it
+        optional), and then the record has no actor. No caller does
+        that today: the account transfer passes user=prev_user. """
 
     # arrange
     account = create_test_account()
@@ -165,28 +149,26 @@ def test_deactivate__no_user__emit_no_actor(
     send_user_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_user_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.logs.events.services.emit')
-    service = UserService(account=account, instance=target)
+    user_deactivated_mock = mocker.patch(
+        'src.accounts.services.user.AuditEventService.user_deactivated',
+    )
+    service = UserService(
+        account=account,
+        instance=target,
+    )
 
     # act
     service.deactivate(skip_validation=True)
 
     # assert
-    emit_mock.assert_called_once_with(
-        UserEvents.DEACTIVATE,
-        account_id=account.id,
-        actor=None,
-        auth_type=None,
-        event_object=EventObject(type=EventObjectType.USER, id=target.id),
-        payload={
-            'target_email': target.email,
-            'status_before': UserStatus.ACTIVE,
-        },
-        workflow_id=None,
-        task_id=None,
+    user_deactivated_mock.assert_called_once_with(
+        user=None,
+        auth_type=AuthTokenType.USER,
+        target=target,
     )
 
-    # No user, no account analytics: only the target is identified.
+    # The account analytics run with the target as the user; nobody
+    # active is left in the account, so the list of users is empty.
     identify_mock.assert_called_once_with(target)
     identify_users_mock.assert_called_once_with(user_ids=())
     group_mock.assert_called_once_with(user=target, account=account)
@@ -201,3 +183,69 @@ def test_deactivate__no_user__emit_no_actor(
         account_id=account.id,
         user_data=mocker.ANY,
     )
+
+
+def test_deactivate__self__audit_not_called(mocker):
+
+    # arrange
+    account = create_test_account()
+    create_test_owner(account=account)
+    admin = create_test_admin(account=account)
+    send_user_deactivated_mock = mocker.patch(
+        'src.notifications.tasks.send_user_deactivated_notification.delay',
+    )
+    send_user_deleted_mock = mocker.patch(
+        'src.notifications.tasks.send_user_deleted_notification.delay',
+    )
+    user_deactivated_mock = mocker.patch(
+        'src.accounts.services.user.AuditEventService.user_deactivated',
+    )
+    service = UserService(
+        instance=admin,
+        user=admin,
+    )
+
+    # act
+    with pytest.raises(PreventSelfDeletion) as ex:
+        service.deactivate()
+
+    # assert
+    assert ex.value.message == str(messages.MSG_A_0047)
+    admin.refresh_from_db()
+    assert admin.status == UserStatus.ACTIVE
+    user_deactivated_mock.assert_not_called()
+    send_user_deactivated_mock.assert_not_called()
+    send_user_deleted_mock.assert_not_called()
+
+
+def test_deactivate__account_owner__audit_not_called(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    admin = create_test_admin(account=account)
+    send_user_deactivated_mock = mocker.patch(
+        'src.notifications.tasks.send_user_deactivated_notification.delay',
+    )
+    send_user_deleted_mock = mocker.patch(
+        'src.notifications.tasks.send_user_deleted_notification.delay',
+    )
+    user_deactivated_mock = mocker.patch(
+        'src.accounts.services.user.AuditEventService.user_deactivated',
+    )
+    service = UserService(
+        instance=owner,
+        user=admin,
+    )
+
+    # act
+    with pytest.raises(PreventAccountOwnerDeletion) as ex:
+        service.deactivate()
+
+    # assert
+    assert ex.value.message == str(messages.MSG_A_0048)
+    owner.refresh_from_db()
+    assert owner.status == UserStatus.ACTIVE
+    user_deactivated_mock.assert_not_called()
+    send_user_deactivated_mock.assert_not_called()
+    send_user_deleted_mock.assert_not_called()

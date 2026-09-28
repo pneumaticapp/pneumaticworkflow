@@ -4,10 +4,7 @@ from dataclasses import dataclass
 from functools import partial
 from typing import Callable, Optional
 
-from src.logs.enums import (
-    DEFAULT_CONSUMER_BATCH_SIZE,
-    DEFAULT_CONSUMER_IDLE_MS,
-)
+from src.logs.enums import DEFAULT_CONSUMER_IDLE_MS
 from src.logs.events.exceptions import (
     SinkPermanentError,
     SinkTemporaryError,
@@ -85,10 +82,10 @@ class TickBudget:
             or time.monotonic() >= self.deadline
         )
 
-    def take(self) -> None:
+    def take(self):
         self.batches -= 1
 
-    def stop(self) -> None:
+    def stop(self):
 
         """ Nothing more goes out in this tick: the sink either keeps
             the batch pending or rejects it for good. """
@@ -108,7 +105,7 @@ class EventsConsumer:
         self,
         stream: EventStream,
         sink: BaseSink,
-        batch_size: int = DEFAULT_CONSUMER_BATCH_SIZE,
+        batch_size: int,
         max_batches: int = DEFAULT_MAX_BATCHES,
         idle_ms: int = DEFAULT_CONSUMER_IDLE_MS,
         consumer: Optional[str] = None,
@@ -143,7 +140,7 @@ class EventsConsumer:
         read: Callable[[], ParsedEntries],
         stats: ConsumerStats,
         budget: TickBudget,
-    ) -> None:
+    ):
 
         """ Deliver batch after batch until the source runs dry or the
             tick budget is spent. The stream has already cleared the
@@ -163,7 +160,7 @@ class EventsConsumer:
         entries: Entries,
         stats: ConsumerStats,
         budget: TickBudget,
-    ) -> None:
+    ):
 
         """ Send one batch, retrying only what is worth retrying. """
 
@@ -184,7 +181,7 @@ class EventsConsumer:
             self._ack(entries, stats)
             return
 
-    def _ack(self, entries: Entries, stats: ConsumerStats) -> None:
+    def _ack(self, entries: Entries, stats: ConsumerStats):
         stats.delivered += len(entries)
         stats.acked += self.stream.ack(
             [entry_id for entry_id, _ in entries],
@@ -195,7 +192,7 @@ class EventsConsumer:
         entries: Entries,
         stats: ConsumerStats,
         exc: SinkPermanentError,
-    ) -> None:
+    ):
 
         """ The batch will never be accepted: park it aside and ack,
             a poison record must not block the stream. The tick ends
@@ -216,7 +213,7 @@ class EventsConsumer:
         entries: Entries,
         stats: ConsumerStats,
         exc: SinkTemporaryError,
-    ) -> None:
+    ):
         stats.failed = True
         logger.warning(
             '%s records left pending after %s attempts: %s',

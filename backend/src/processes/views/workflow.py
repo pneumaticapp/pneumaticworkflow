@@ -353,7 +353,6 @@ class WorkflowViewSet(
         is_urgent_changed = (
             is_urgent is not None and is_urgent != workflow.is_urgent
         )
-        changed_fields = serializer.get_changed_fields()
         workflow = serializer.save()
         AnalyticService.workflows_updated(
             workflow=workflow,
@@ -361,16 +360,12 @@ class WorkflowViewSet(
             is_superuser=request.is_superuser,
             user=request.user,
         )
-        if changed_fields:
-            AuditEventService.workflow_updated(
-                user=request.user,
-                auth_type=request.token_type,
-                workflow=workflow,
-                changed_fields=changed_fields,
-                kickoff_fields=sorted(
-                    serializer.validated_data.get('kickoff') or (),
-                ),
-            )
+        AuditEventService.workflow_updated(
+            user=request.user,
+            auth_type=request.token_type,
+            workflow=workflow,
+            update_kwargs=serializer.validated_data,
+        )
         if is_urgent_changed:
             AnalyticService.workflows_urgent(
                 workflow=workflow,

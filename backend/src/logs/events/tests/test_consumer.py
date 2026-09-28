@@ -129,6 +129,7 @@ def test_run_once__empty_stream__nothing_sent(mocker):
     consumer = EventsConsumer(
         stream=stream,
         sink=sink_mock,
+        batch_size=1000,
         consumer='consumer-1',
         sleep=sleep_mock,
     )
@@ -221,6 +222,7 @@ def test_run_once__deadline_reached__nothing_delivered(mocker):
     consumer = EventsConsumer(
         stream=stream,
         sink=sink_mock,
+        batch_size=1000,
         consumer='consumer-1',
         sleep=sleep_mock,
         max_seconds=0,
@@ -283,6 +285,7 @@ def test_run_once__retry_after__pause_of_the_receiver_is_used(mocker):
     consumer = EventsConsumer(
         stream=stream,
         sink=sink_mock,
+        batch_size=1000,
         consumer='consumer-1',
         sleep=sleep_mock,
     )
@@ -455,6 +458,7 @@ def test_run_once__fresh_entries_of_another_consumer__not_claimed(mocker):
     consumer = EventsConsumer(
         stream=stream,
         sink=sink_mock,
+        batch_size=1000,
         idle_ms=60000,
         consumer='consumer-1',
         sleep=sleep_mock,
@@ -591,6 +595,7 @@ def test_run_once__delivered_batch__tick_line_in_the_log(mocker, caplog):
     consumer = EventsConsumer(
         stream=stream,
         sink=sink_mock,
+        batch_size=1000,
         consumer='consumer-1',
         sleep=sleep_mock,
     )
@@ -620,6 +625,7 @@ def test_init__no_consumer_name__host_name(mocker):
     consumer = EventsConsumer(
         stream=stream,
         sink=sink_mock,
+        batch_size=1000,
     )
 
     # assert

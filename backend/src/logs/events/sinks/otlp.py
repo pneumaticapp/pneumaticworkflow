@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Tuple
 import requests
 from django.conf import settings
 
+from src.logs.enums import SERVICE_NAME
 from src.logs.events.exceptions import (
     SinkPermanentError,
     SinkTemporaryError,
@@ -57,10 +58,10 @@ class OTLPSink(BaseSink):
         # connection for every batch it sends.
         self.session = session or requests.Session()
 
-    def _send(self, records: List[Tuple[str, Event]]) -> None:
+    def _send(self, records: List[Tuple[str, Event]]):
         payload = build_otlp_payload(
             records,
-            service_name=settings.LOGS_SERVICE_NAME,
+            service_name=SERVICE_NAME,
             service_version=settings.LOGS_SERVICE_VERSION,
             environment=settings.CONFIGURATION_CURRENT,
             observed_ns=time.time_ns(),
@@ -78,7 +79,7 @@ class OTLPSink(BaseSink):
         self,
         exc: Exception,
         records: List[Tuple[str, Event]],
-    ) -> None:
+    ):
 
         """ Only an answer that condemns this very batch is permanent
             (PERMANENT_STATUSES); network trouble and every other
@@ -158,7 +159,7 @@ class OTLPSink(BaseSink):
         self,
         response: requests.Response,
         count: int,
-    ) -> None:
+    ):
 
         """ A 2xx with partialSuccess means the collector took the
             batch but dropped some records. Sending them again would

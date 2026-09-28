@@ -370,8 +370,8 @@ esac
 LOGS_BACKEND_VALUE=$(
     grep -E "^\s*LOGS_BACKEND=" "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | sed 's/#.*//' | tr -d '"'"'"'[:space:]'
 )
-case "${LOGS_BACKEND_VALUE:-none}" in
-  none|"")
+case "$LOGS_BACKEND_VALUE" in
+  "")
     ;;
   otlp)
     COMPOSE_ARGS+=('--profile' 'logs-otlp')
@@ -383,7 +383,7 @@ case "${LOGS_BACKEND_VALUE:-none}" in
     print_info "First start only: hand the queue volume to the collector, see the Elasticsearch section of default.env"
     ;;
   *)
-    print_error "LOGS_BACKEND=$LOGS_BACKEND_VALUE is not one of: otlp, elasticsearch, none"
+    print_error "LOGS_BACKEND=$LOGS_BACKEND_VALUE is not one of: otlp, elasticsearch (leave it empty to keep the journal off)"
     exit 1
     ;;
 esac

@@ -176,7 +176,7 @@ services:
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
       FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
       FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
-      LOGS_BACKEND: ${LOGS_BACKEND:-none}
+      LOGS_BACKEND: ${LOGS_BACKEND:-}
       LOGS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/4"
       LOGS_OTLP_ENDPOINT: ${LOGS_OTLP_ENDPOINT:-http://otel-collector:4318}
       LOGS_STREAM_MAXLEN: ${LOGS_STREAM_MAXLEN:-250000}
@@ -309,7 +309,7 @@ services:
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
       FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
       FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
-      LOGS_BACKEND: ${LOGS_BACKEND:-none}
+      LOGS_BACKEND: ${LOGS_BACKEND:-}
       LOGS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/4"
       LOGS_OTLP_ENDPOINT: ${LOGS_OTLP_ENDPOINT:-http://otel-collector:4318}
       LOGS_STREAM_MAXLEN: ${LOGS_STREAM_MAXLEN:-250000}
@@ -435,7 +435,7 @@ services:
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
       FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
       FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
-      LOGS_BACKEND: ${LOGS_BACKEND:-none}
+      LOGS_BACKEND: ${LOGS_BACKEND:-}
       LOGS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/4"
       LOGS_OTLP_ENDPOINT: ${LOGS_OTLP_ENDPOINT:-http://otel-collector:4318}
       LOGS_STREAM_MAXLEN: ${LOGS_STREAM_MAXLEN:-250000}
@@ -563,7 +563,7 @@ services:
       BACKEND_PRIVATE_URL: ${BACKEND_PRIVATE_URL:-http://pneumatic-nginx/}
       SENTRY_DSN: ${SENTRY_FILE_DSN:-}
       SENTRY_ENVIRONMENT: ${ENVIRONMENT:-Production}
-      LOGS_BACKEND: ${LOGS_BACKEND:-none}
+      LOGS_BACKEND: ${LOGS_BACKEND:-}
       LOGS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/4"
       LOGS_STREAM_MAXLEN: ${LOGS_STREAM_MAXLEN:-250000}
     command: >
@@ -654,7 +654,7 @@ services:
     profiles: ["logs-otlp", "logs-elasticsearch"]
     command:
       - --config=/etc/otel/base.yaml
-      - --config=/etc/otel/backend-${LOGS_BACKEND:-none}.yaml
+      - --config=/etc/otel/backend-${LOGS_BACKEND:-}.yaml
     environment:
       LOGS_OTLP_EXPORT_ENDPOINT: ${LOGS_OTLP_EXPORT_ENDPOINT:-}
       LOGS_OTLP_EXPORT_AUTH: ${LOGS_OTLP_EXPORT_AUTH:-}

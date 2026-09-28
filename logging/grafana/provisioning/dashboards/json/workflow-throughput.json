@@ -960,7 +960,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (event_type) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"task.revert|workflow.revert|task.delay|workflow.delay|workflow.force_delay|workflow.force_resume|task.due_date_changed|task.skip_no_performers|task.delegation|workflow.urgent\" [$__auto]))",
+          "expr": "sum by (event_type) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"task.revert|workflow.revert|task.delay|workflow.force_delay|workflow.force_resume|task.due_date_changed|task.skip_no_performers|task.delegation|workflow.urgent\" [$__auto]))",
           "legendFormat": "{{event_type}}",
           "queryType": "range",
           "refId": "A"

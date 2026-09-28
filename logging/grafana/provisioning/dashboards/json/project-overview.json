@@ -2145,7 +2145,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (event_type) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"task.start|task.complete|task.revert|task.comment|task.delegation|task.skip|task.comment_update|task.comment_delete|task.checklist_mark|task.checklist_unmark\" [$__auto]))",
+          "expr": "sum by (event_type) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"task.start|task.complete|task.revert|task.comment|task.delegation|task.skip|task.comment_update|task.comment_delete|task.reaction_create|task.reaction_delete|task.checklist_mark|task.checklist_unmark\" [$__auto]))",
           "legendFormat": "{{event_type}}",
           "queryType": "range",
           "refId": "A"
@@ -2215,7 +2215,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "template.publish"
+              "options": "template.create"
             },
             "properties": [
               {
@@ -2270,7 +2270,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (event_type) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"template.publish|template.draft_save|template.clone|template.delete|template.export|template.draft_discard|template.ai_generate|template.library_fill|template.library_import\" [$__auto]))",
+          "expr": "sum by (event_type) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"template.create|template.update|template.clone|template.delete|template.export|template.draft_discard|template.ai_generate|template.library_fill|template.library_import\" [$__auto]))",
           "legendFormat": "{{event_type}}",
           "queryType": "range",
           "refId": "A"

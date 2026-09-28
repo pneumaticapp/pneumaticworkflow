@@ -1,10 +1,9 @@
 import json
-from typing import List, Optional
+from typing import Optional
 
 import requests
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import QuerySet
 
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
@@ -27,8 +26,6 @@ from src.webhooks.models import WebHook
 
 UserModel = get_user_model()
 
-ALL_EVENTS = 'all'
-
 
 class WebhookService:
 
@@ -50,34 +47,25 @@ class WebhookService:
         if event not in self._get_events():
             raise exceptions.InvalidEventException
 
-    def _targets(self, queryset: QuerySet) -> List[str]:
-        return sorted(set(queryset.values_list('target', flat=True)))
-
     def unsubscribe(self):
-        hooks = WebHook.objects.on_account(self.account.id)
-        targets = self._targets(hooks)
-        hooks.delete()
+        WebHook.objects.on_account(self.account.id).delete()
         service = TemplateIntegrationsService(
             account=self.account,
             user=self.user,
             is_superuser=self.is_superuser,
         )
         service.webhooks_unsubscribed()
-        for target in targets:
-            AuditEventService.webhook_unsubscribed(
-                user=self.user,
-                auth_type=self.auth_type,
-                url=target,
-                event=ALL_EVENTS,
-            )
+        AuditEventService.webhook_unsubscribed(
+            user=self.user,
+            auth_type=self.auth_type,
+            event='all',
+        )
 
     def unsubscribe_event(self, event: str):
         self._validate_event(event)
-        hooks = WebHook.objects.on_account(
+        WebHook.objects.on_account(
             self.account.id,
-        ).for_event(event)
-        targets = self._targets(hooks)
-        hooks.delete()
+        ).for_event(event).delete()
         if not WebHook.objects.on_account(
             self.account.id,
         ).exists():
@@ -87,13 +75,11 @@ class WebhookService:
                 is_superuser=self.is_superuser,
             )
             service.webhooks_unsubscribed()
-        for target in targets:
-            AuditEventService.webhook_unsubscribed(
-                user=self.user,
-                auth_type=self.auth_type,
-                url=target,
-                event=event,
-            )
+        AuditEventService.webhook_unsubscribed(
+            user=self.user,
+            auth_type=self.auth_type,
+            event=event,
+        )
 
     def subscribe(self, url: str):
         with transaction.atomic():
@@ -120,7 +106,7 @@ class WebhookService:
                 user=self.user,
                 auth_type=self.auth_type,
                 url=url,
-                event=ALL_EVENTS,
+                event='all',
             )
 
     def subscribe_event(

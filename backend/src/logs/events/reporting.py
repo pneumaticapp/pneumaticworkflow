@@ -12,7 +12,7 @@ def report_error(
     data: Dict[str, Any],
     level: SentryLogLevel.LITERALS = SentryLogLevel.ERROR,
     key: Optional[str] = None,
-) -> None:
+):
 
     """ Send a message to Sentry, at most once per REPORT_INTERVAL for
         the same key. Callers keep their own log line: the log is

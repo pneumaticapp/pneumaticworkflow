@@ -16,6 +16,7 @@ from src.logs.events.emitter import (
     _report_stream_error,
     _write,
     emit,
+    logs_enabled,
 )
 from src.logs.events.enums import (
     ApiKeyEvents,
@@ -64,7 +65,25 @@ def test_emit__pipeline_off__nothing_written(
 ):
 
     # arrange
-    settings.LOGS_BACKEND = LogsBackend.NONE
+    settings.LOGS_BACKEND = None
+
+    # act
+    emit(event_type=UserEvents.LOGIN, account_id=5)
+
+    # assert
+    assert fake_stream.events == []
+
+
+def test_emit__no_redis_url__nothing_written(
+    settings,
+    fake_stream,
+):
+
+    """ A backend without the buffer it needs is the journal off: the
+        events would pile up with nothing to deliver them. """
+
+    # arrange
+    settings.LOGS_REDIS_URL = None
 
     # act
     emit(event_type=UserEvents.LOGIN, account_id=5)
@@ -137,7 +156,6 @@ def test_emit__committed_transaction__callback_writes_the_event(
 
 
 def test_emit__stream_error__request_not_broken(
-    settings,
     fake_stream,
     mocker,
 ):
@@ -147,7 +165,6 @@ def test_emit__stream_error__request_not_broken(
         would drop every callback registered after this one. """
 
     # arrange
-    settings.LOGS_SERVICE_NAME = 'pneumatic-test'
     error = redis.ConnectionError('down')
     xadd_mock = mocker.patch.object(
         fake_stream,
@@ -167,7 +184,7 @@ def test_emit__stream_error__request_not_broken(
         Event(
             type=UserEvents.LOGIN,
             category=EventCategory.USERS,
-            service='pneumatic-test',
+            service='pneumatic-backend',
             ts=moment,
             account_id=5,
         ),
@@ -229,11 +246,12 @@ def test_emit__misconfigured_url__request_not_broken(
     mocker,
 ):
 
-    """ An empty LOGS_REDIS_URL makes redis-py raise ValueError, which
-        is not a RedisError: _write has to catch that one too. """
+    """ A LOGS_REDIS_URL without a scheme makes redis-py raise
+        ValueError, which is not a RedisError: _write has to catch
+        that one too. An empty one turns the journal off instead. """
 
     # arrange
-    error = ValueError('empty url')
+    error = ValueError('url without a scheme')
     get_stream_mock = mocker.patch(
         'src.logs.events.emitter.get_stream',
         side_effect=error,
@@ -622,22 +640,157 @@ def test_build_event__account_not_given__no_account_marker():
     assert event.account_id == NO_ACCOUNT
 
 
-def test_build_event__settings__service_name_of_the_backend(settings):
+def test_build_event__any_event__service_name_of_the_backend():
 
     """ The stream is shared with the file service: every record
-        names its writer, the sink no longer assumes the backend. """
+        names its writer, the sink no longer assumes the backend. The
+        name is a constant of the code, not a value of .env: the
+        dashboards filter by it. """
 
     # arrange
-    settings.LOGS_SERVICE_NAME = 'pneumatic-test'
+    account_id = 5
 
     # act
     event = _build_event(
         event_type=UserEvents.LOGIN,
-        account_id=5,
+        account_id=account_id,
     )
 
     # assert
-    assert event.service == 'pneumatic-test'
+    assert event.service == 'pneumatic-backend'
+
+
+def test_logs_enabled__otlp_and_every_value__true(events_enabled):
+
+    # arrange
+    events_enabled.LOGS_BACKEND = LogsBackend.OTLP
+
+    # act
+    result = logs_enabled()
+
+    # assert
+    assert result is True
+
+
+def test_logs_enabled__elasticsearch_and_every_value__true(events_enabled):
+
+    # arrange
+    events_enabled.LOGS_BACKEND = LogsBackend.ELASTICSEARCH
+
+    # act
+    result = logs_enabled()
+
+    # assert
+    assert result is True
+
+
+def test_logs_enabled__no_backend__false(events_enabled):
+
+    """ The configuration of the test suite and of a deployment that
+        does not collect events at all. """
+
+    # arrange
+    events_enabled.LOGS_BACKEND = None
+
+    # act
+    result = logs_enabled()
+
+    # assert
+    assert result is False
+
+
+@pytest.mark.parametrize('backend', ('', 'OTLP', 'loki'))
+def test_logs_enabled__unknown_backend__false(events_enabled, backend):
+
+    """ Only a store the collector can deliver to turns the journal
+        on: an empty value, which compose passes for an unset one,
+        and a name of another spelling both keep it off. """
+
+    # arrange
+    events_enabled.LOGS_BACKEND = backend
+
+    # act
+    result = logs_enabled()
+
+    # assert
+    assert result is False
+
+
+def test_logs_enabled__no_redis_url__false(events_enabled):
+
+    # arrange
+    events_enabled.LOGS_REDIS_URL = None
+
+    # act
+    result = logs_enabled()
+
+    # assert
+    assert result is False
+
+
+def test_logs_enabled__empty_redis_url__false(events_enabled):
+
+    """ LOGS_REDIS_URL= in .env reads as an empty string. """
+
+    # arrange
+    events_enabled.LOGS_REDIS_URL = ''
+
+    # act
+    result = logs_enabled()
+
+    # assert
+    assert result is False
+
+
+def test_logs_enabled__no_stream_maxlen__false(events_enabled):
+
+    # arrange
+    events_enabled.LOGS_STREAM_MAXLEN = 0
+
+    # act
+    result = logs_enabled()
+
+    # assert
+    assert result is False
+
+
+def test_logs_enabled__no_otlp_endpoint__false(events_enabled):
+
+    # arrange
+    events_enabled.LOGS_OTLP_ENDPOINT = None
+
+    # act
+    result = logs_enabled()
+
+    # assert
+    assert result is False
+
+
+def test_logs_enabled__no_consumer_batch_size__false(events_enabled):
+
+    # arrange
+    events_enabled.LOGS_CONSUMER_BATCH_SIZE = 0
+
+    # act
+    result = logs_enabled()
+
+    # assert
+    assert result is False
+
+
+def test_logs_enabled__test_settings__false(settings):
+
+    """ No event reaches Redis unless a test asks for it: the test
+        settings leave the store unnamed. """
+
+    # arrange
+    settings.LOGS_BACKEND = None
+
+    # act
+    result = logs_enabled()
+
+    # assert
+    assert result is False
 
 
 def test_emit__patched_name__the_one_the_callers_import():

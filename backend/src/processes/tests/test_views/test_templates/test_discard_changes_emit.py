@@ -1,12 +1,6 @@
 import pytest
 
-from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import (
-    EventObjectType,
-    TemplateEvents,
-)
-from src.logs.events.schema import Actor, EventObject
 from src.processes.models.templates.template import Template
 from src.processes.tests.fixtures import (
     create_test_account,
@@ -18,78 +12,54 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-def test_discard_changes__template_with_tasks__emit_draft_discard(
+def test_discard_changes__template_with_tasks__audit_not_deleted(
+    mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
+    owner = create_test_owner()
     template = create_test_template(
         user=owner,
-        name='Onboarding',
         is_active=True,
         tasks_count=1,
     )
-    api_client.token_authenticate(
-        owner,
-        user_agent='Chrome/141',
-        user_ip='10.10.0.21',
+    template_discarded_changes_mock = mocker.patch(
+        'src.processes.views.template.AuditEventService'
+        '.template_discarded_changes',
     )
+    api_client.token_authenticate(owner)
 
     # act
-    response = api_client.post(
-        f'/templates/{template.id}/discard-changes',
-        HTTP_X_REQUEST_ID='audit-template-21',
-    )
+    response = api_client.post(f'/templates/{template.id}/discard-changes')
 
     # assert
     assert response.status_code == 204
     template.refresh_from_db()
     assert template.is_deleted is False
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == TemplateEvents.DRAFT_DISCARD
-    assert event.category == TemplateEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=owner.id,
-        email=owner.email,
-        user_type=UserType.USER,
+    template_discarded_changes_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        template=template,
+        template_deleted=False,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.TEMPLATE,
-        id=template.id,
-    )
-    assert event.payload == {
-        'name': 'Onboarding',
-        'version': template.version,
-        'is_active': True,
-        'template_deleted': False,
-    }
-    assert event.ip == '10.10.0.21'
-    assert event.user_agent == 'Chrome/141'
-    assert event.request_id == 'audit-template-21'
 
 
-def test_discard_changes__template_without_tasks__emit_template_deleted(
+def test_discard_changes__template_without_tasks__audit_deleted(
+    mocker,
     api_client,
-    fake_stream,
 ):
 
-    """ A template with no tasks was never published: discarding its
-        draft deletes the template, and the event has to say so. """
-
     # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
+    owner = create_test_owner()
     template = create_test_template(
         user=owner,
-        name='Onboarding draft',
         is_active=False,
         tasks_count=0,
+    )
+    template_discarded_changes_mock = mocker.patch(
+        'src.processes.views.template.AuditEventService'
+        '.template_discarded_changes',
     )
     api_client.token_authenticate(owner)
 
@@ -99,32 +69,17 @@ def test_discard_changes__template_without_tasks__emit_template_deleted(
     # assert
     assert response.status_code == 204
     assert not Template.objects.filter(id=template.id).exists()
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == TemplateEvents.DRAFT_DISCARD
-    assert event.category == TemplateEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=owner.id,
-        email=owner.email,
-        user_type=UserType.USER,
+    template_discarded_changes_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        template=template,
+        template_deleted=True,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.TEMPLATE,
-        id=template.id,
-    )
-    assert event.payload == {
-        'name': 'Onboarding draft',
-        'version': template.version,
-        'is_active': False,
-        'template_deleted': True,
-    }
 
 
-def test_discard_changes__not_admin__no_event(
+def test_discard_changes__not_admin__audit_not_called(
+    mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -136,6 +91,10 @@ def test_discard_changes__not_admin__no_event(
         is_active=True,
         tasks_count=1,
     )
+    template_discarded_changes_mock = mocker.patch(
+        'src.processes.views.template.AuditEventService'
+        '.template_discarded_changes',
+    )
     api_client.token_authenticate(not_admin)
 
     # act
@@ -143,4 +102,4 @@ def test_discard_changes__not_admin__no_event(
 
     # assert
     assert response.status_code == 403
-    assert fake_stream.events == []
+    template_discarded_changes_mock.assert_not_called()

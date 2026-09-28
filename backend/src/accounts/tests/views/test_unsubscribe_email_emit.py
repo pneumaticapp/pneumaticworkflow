@@ -1,13 +1,11 @@
 import pytest
 
-from src.accounts.enums import UserType
+from src.accounts.messages import (
+    MSG_A_0008,
+    MSG_A_0014,
+)
 from src.accounts.tokens import UnsubscribeEmailToken
 from src.analysis.enums import MailoutType
-from src.logs.events.enums import (
-    EventObjectType,
-    UserEvents,
-)
-from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_not_admin,
@@ -17,9 +15,9 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-def test_unsubscribe__valid_token__emit_token_email_type(
+def test_unsubscribe__valid_token__audit_user_unsubscribed(
+    mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -32,65 +30,102 @@ def test_unsubscribe__valid_token__emit_token_email_type(
             email_type=MailoutType.TASKS_DIGEST,
         ),
     )
+    user_unsubscribed_mock = mocker.patch(
+        'src.accounts.views.unsubscribes.AuditEventService.'
+        'user_unsubscribed',
+    )
 
     # act
     response = api_client.get(f'/accounts/emails/unsubscribe?token={token}')
 
     # assert
     assert response.status_code == 200
+    assert str(MSG_A_0014) in response.content.decode()
     user.refresh_from_db()
     assert user.is_tasks_digest_subscriber is False
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.UNSUBSCRIBE
-    assert event.category == UserEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=user.id,
-        email=user.email,
-        user_type=UserType.USER,
+    user_unsubscribed_mock.assert_called_once_with(
+        user=user,
+        email_type=MailoutType.MAP[MailoutType.TASKS_DIGEST],
     )
-    assert event.auth_type is None
-    assert event.object == EventObject(
-        type=EventObjectType.USER,
-        id=user.id,
-    )
-    assert event.payload == {
-        'email_type': MailoutType.MAP[MailoutType.TASKS_DIGEST],
-    }
 
 
-def test_unsubscribe__incorrect_token__no_event(
+def test_unsubscribe__already_unsubscribed__audit_user_unsubscribed(
+    mocker,
     api_client,
-    fake_stream,
+):
+
+    # arrange
+    account = create_test_account()
+    create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    user.is_tasks_digest_subscriber = False
+    user.save(update_fields=['is_tasks_digest_subscriber'])
+    token = str(
+        UnsubscribeEmailToken.create_token(
+            user_id=user.id,
+            email_type=MailoutType.TASKS_DIGEST,
+        ),
+    )
+    user_unsubscribed_mock = mocker.patch(
+        'src.accounts.views.unsubscribes.AuditEventService.'
+        'user_unsubscribed',
+    )
+
+    # act
+    response = api_client.get(f'/accounts/emails/unsubscribe?token={token}')
+
+    # assert
+    assert response.status_code == 200
+    assert str(MSG_A_0014) in response.content.decode()
+    user.refresh_from_db()
+    assert user.is_tasks_digest_subscriber is False
+    user_unsubscribed_mock.assert_called_once_with(
+        user=user,
+        email_type=MailoutType.MAP[MailoutType.TASKS_DIGEST],
+    )
+
+
+def test_unsubscribe__incorrect_token__audit_not_called(
+    mocker,
+    api_client,
 ):
 
     # arrange
     user = create_test_owner()
+    user_unsubscribed_mock = mocker.patch(
+        'src.accounts.views.unsubscribes.AuditEventService.'
+        'user_unsubscribed',
+    )
 
     # act
     response = api_client.get('/accounts/emails/unsubscribe?token=12345')
 
     # assert
     assert response.status_code == 200
+    assert str(MSG_A_0008) in response.content.decode()
     user.refresh_from_db()
     assert user.is_tasks_digest_subscriber is True
-    assert fake_stream.events == []
+    user_unsubscribed_mock.assert_not_called()
 
 
-def test_unsubscribe__no_token__no_event(
+def test_unsubscribe__no_token__audit_not_called(
+    mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
     user = create_test_owner()
+    user_unsubscribed_mock = mocker.patch(
+        'src.accounts.views.unsubscribes.AuditEventService.'
+        'user_unsubscribed',
+    )
 
     # act
     response = api_client.get('/accounts/emails/unsubscribe')
 
     # assert
     assert response.status_code == 200
+    assert str(MSG_A_0008) in response.content.decode()
     user.refresh_from_db()
     assert user.is_tasks_digest_subscriber is True
-    assert fake_stream.events == []
+    user_unsubscribed_mock.assert_not_called()

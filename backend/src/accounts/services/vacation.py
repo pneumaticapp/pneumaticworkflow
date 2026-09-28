@@ -220,6 +220,11 @@ class VacationDelegationService:
                     user=self.user,
                     substitute_group=group,
                 )
+                AuditEventService.task_delegation(
+                    task=p.task,
+                    target=self.user,
+                    substitute_group=group,
+                )
 
         # 2. Create group performers for user's regular
         # group tasks
@@ -273,6 +278,11 @@ class VacationDelegationService:
                     WorkflowEventService.task_delegation_event(
                         task=task,
                         user=self.user,
+                        substitute_group=group,
+                    )
+                    AuditEventService.task_delegation(
+                        task=task,
+                        target=self.user,
                         substitute_group=group,
                     )
 

@@ -1,14 +1,9 @@
 import pytest
 
-from src.accounts.enums import BillingPlanType, LeaseLevel, UserType
+from src.accounts.enums import BillingPlanType, LeaseLevel
 from src.accounts.models import Account
 from src.accounts.services.account import AccountService
 from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import (
-    AccountEvents,
-    EventObjectType,
-)
-from src.logs.events.schema import Actor, EventObject
 from src.payment.messages import MSG_BL_0005
 from src.payment.stripe.exceptions import SubscriptionNotExist
 from src.payment.stripe.service import StripeService
@@ -21,10 +16,9 @@ from src.utils.validation import ErrorCode
 pytestmark = pytest.mark.django_db
 
 
-def test_delete__free_plan__emit_tenant_delete_in_master_account(
+def test_delete__free_plan__audit_tenant_deleted(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -37,7 +31,6 @@ def test_delete__free_plan__emit_tenant_delete_in_master_account(
         lease_level=LeaseLevel.TENANT,
         master_account=master_account,
     )
-    tenant_id = tenant_account.id
     create_test_owner(
         account=tenant_account,
         email='tenant_owner@test.test',
@@ -58,39 +51,22 @@ def test_delete__free_plan__emit_tenant_delete_in_master_account(
     increase_plan_users_mock = mocker.patch(
         'src.accounts.views.tenants.increase_plan_users.delay',
     )
-    api_client.token_authenticate(
-        master_owner,
-        user_agent='Chrome/141',
-        user_ip='10.10.0.13',
+    tenant_deleted_mock = mocker.patch(
+        'src.accounts.views.tenants.AuditEventService.tenant_deleted',
     )
+    api_client.token_authenticate(master_owner)
 
     # act
-    response = api_client.delete(f'/tenants/{tenant_id}')
+    response = api_client.delete(f'/tenants/{tenant_account.id}')
 
     # assert
     assert response.status_code == 204
-    assert not Account.objects.filter(id=tenant_id).exists()
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == AccountEvents.TENANT_DELETE
-    assert event.category == AccountEvents.CATEGORY
-    assert event.account_id == master_account.id
-    assert event.actor == Actor(
-        id=master_owner.id,
-        email=master_owner.email,
-        user_type=UserType.USER,
+    assert not Account.objects.filter(id=tenant_account.id).exists()
+    tenant_deleted_mock.assert_called_once_with(
+        user=master_owner,
+        auth_type=AuthTokenType.USER,
+        tenant=tenant_account,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.ACCOUNT,
-        id=tenant_id,
-    )
-    assert event.payload == {
-        'name': 'Tenant name',
-        'billing_plan': BillingPlanType.FREEMIUM,
-    }
-    assert event.ip == '10.10.0.13'
-    assert event.user_agent == 'Chrome/141'
     account_service_init_mock.assert_called_once_with(
         instance=master_account,
         user=master_owner,
@@ -102,10 +78,9 @@ def test_delete__free_plan__emit_tenant_delete_in_master_account(
     increase_plan_users_mock.assert_not_called()
 
 
-def test_delete__stripe_exception__no_event(
+def test_delete__stripe_exception__audit_not_called(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -139,6 +114,9 @@ def test_delete__stripe_exception__no_event(
     increase_plan_users_mock = mocker.patch(
         'src.accounts.views.tenants.increase_plan_users.delay',
     )
+    tenant_deleted_mock = mocker.patch(
+        'src.accounts.views.tenants.AuditEventService.tenant_deleted',
+    )
     api_client.token_authenticate(master_owner)
 
     # act
@@ -150,7 +128,7 @@ def test_delete__stripe_exception__no_event(
     assert response.data['message'] == MSG_BL_0005
     assert response.data['details'] == {}
     assert Account.objects.filter(id=tenant_account.id).exists()
-    assert fake_stream.events == []
+    tenant_deleted_mock.assert_not_called()
     stripe_service_init_mock.assert_called_once_with(
         user=master_owner,
         subscription_account=tenant_account,
@@ -162,10 +140,9 @@ def test_delete__stripe_exception__no_event(
     increase_plan_users_mock.assert_not_called()
 
 
-def test_delete__another_account_tenant__no_event(
+def test_delete__another_account_tenant__audit_not_called(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -183,6 +160,9 @@ def test_delete__another_account_tenant__no_event(
     increase_plan_users_mock = mocker.patch(
         'src.accounts.views.tenants.increase_plan_users.delay',
     )
+    tenant_deleted_mock = mocker.patch(
+        'src.accounts.views.tenants.AuditEventService.tenant_deleted',
+    )
     api_client.token_authenticate(master_owner)
 
     # act
@@ -191,5 +171,5 @@ def test_delete__another_account_tenant__no_event(
     # assert
     assert response.status_code == 403
     assert Account.objects.filter(id=another_tenant.id).exists()
-    assert fake_stream.events == []
+    tenant_deleted_mock.assert_not_called()
     increase_plan_users_mock.assert_not_called()

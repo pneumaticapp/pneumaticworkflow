@@ -1,66 +1,50 @@
 import pytest
 
-from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import (
-    EventObjectType,
-    TemplateEvents,
-)
-from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_not_admin,
     create_test_owner,
-    create_test_template,
 )
 
 pytestmark = pytest.mark.django_db
 
 
-def test_export__no_filters__emit_template_export(
+def test_export__no_filters__audit_templates_export(
     mocker,
     api_client,
 ):
 
     # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    create_test_template(user=owner, is_active=True, tasks_count=1)
+    owner = create_test_owner()
+    templates_export_mock = mocker.patch(
+        'src.processes.views.template.AuditEventService.templates_export',
+    )
     api_client.token_authenticate(owner)
-    emit_mock = mocker.patch('src.logs.events.services.emit')
 
     # act
     response = api_client.get('/templates/export')
 
     # assert
     assert response.status_code == 200
-    emit_mock.assert_called_once_with(
-        TemplateEvents.EXPORT,
-        account_id=account.id,
-        actor=Actor(
-            id=owner.id,
-            email=owner.email,
-            user_type=UserType.USER,
-        ),
+    templates_export_mock.assert_called_once_with(
+        user=owner,
         auth_type=AuthTokenType.USER,
-        event_object=EventObject(type=EventObjectType.TEMPLATE),
-        payload={'filters': {'is_active': None, 'is_public': None}},
-        workflow_id=None,
-        task_id=None,
+        filters={'is_active': None, 'is_public': None},
     )
 
 
-def test_export__filters__emit_the_filters_of_the_request(
+def test_export__filters__audit_with_request_filters(
     mocker,
     api_client,
 ):
 
     # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    create_test_template(user=owner, is_active=True, tasks_count=1)
+    owner = create_test_owner()
+    templates_export_mock = mocker.patch(
+        'src.processes.views.template.AuditEventService.templates_export',
+    )
     api_client.token_authenticate(owner)
-    emit_mock = mocker.patch('src.logs.events.services.emit')
 
     # act
     response = api_client.get(
@@ -69,144 +53,81 @@ def test_export__filters__emit_the_filters_of_the_request(
 
     # assert
     assert response.status_code == 200
-    emit_mock.assert_called_once_with(
-        TemplateEvents.EXPORT,
-        account_id=account.id,
-        actor=Actor(
-            id=owner.id,
-            email=owner.email,
-            user_type=UserType.USER,
-        ),
+    templates_export_mock.assert_called_once_with(
+        user=owner,
         auth_type=AuthTokenType.USER,
-        event_object=EventObject(type=EventObjectType.TEMPLATE),
-        payload={
-            'filters': {
-                'is_active': True,
-                'is_public': None,
-                'ordering': 'name',
-            },
+        filters={
+            'is_active': True,
+            'is_public': None,
+            'ordering': 'name',
         },
-        workflow_id=None,
-        task_id=None,
     )
 
 
-def test_export__first_page__emit_template_export(
+def test_export__first_page__audit_templates_export(
     mocker,
     api_client,
 ):
 
     # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    create_test_template(user=owner, is_active=True, tasks_count=1)
+    owner = create_test_owner()
+    templates_export_mock = mocker.patch(
+        'src.processes.views.template.AuditEventService.templates_export',
+    )
     api_client.token_authenticate(owner)
-    emit_mock = mocker.patch('src.logs.events.services.emit')
 
     # act
     response = api_client.get('/templates/export?limit=10&offset=0')
 
     # assert
     assert response.status_code == 200
-    emit_mock.assert_called_once_with(
-        TemplateEvents.EXPORT,
-        account_id=account.id,
-        actor=Actor(
-            id=owner.id,
-            email=owner.email,
-            user_type=UserType.USER,
-        ),
+    templates_export_mock.assert_called_once_with(
+        user=owner,
         auth_type=AuthTokenType.USER,
-        event_object=EventObject(type=EventObjectType.TEMPLATE),
-        payload={
-            'filters': {
-                'is_active': None,
-                'is_public': None,
-                'limit': 10,
-                'offset': 0,
-            },
+        filters={
+            'is_active': None,
+            'is_public': None,
+            'limit': 10,
+            'offset': 0,
         },
-        workflow_id=None,
-        task_id=None,
     )
 
 
-def test_export__next_page__no_event(
+def test_export__next_page__audit_not_called(
     mocker,
     api_client,
 ):
 
-    """ One event per export: a page after the first one is the same
+    """ One record per export: a page after the first one is the same
         export read further, not a new one. """
 
     # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    create_test_template(user=owner, is_active=True, tasks_count=1)
+    owner = create_test_owner()
+    templates_export_mock = mocker.patch(
+        'src.processes.views.template.AuditEventService.templates_export',
+    )
     api_client.token_authenticate(owner)
-    emit_mock = mocker.patch('src.logs.events.services.emit')
 
     # act
     response = api_client.get('/templates/export?limit=10&offset=10')
 
     # assert
     assert response.status_code == 200
-    emit_mock.assert_not_called()
+    templates_export_mock.assert_not_called()
 
 
-def test_export__filters__event_keeps_request_context(
+def test_export__not_admin__audit_not_called(
+    mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
     account = create_test_account()
-    owner = create_test_owner(account=account)
-    create_test_template(user=owner, is_active=True, tasks_count=1)
-    api_client.token_authenticate(
-        owner,
-        user_agent='Chrome/141',
-        user_ip='10.10.0.16',
-    )
-
-    # act
-    response = api_client.get(
-        '/templates/export?is_active=true',
-        HTTP_X_REQUEST_ID='audit-template-4',
-    )
-
-    # assert
-    assert response.status_code == 200
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == TemplateEvents.EXPORT
-    assert event.category == TemplateEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=owner.id,
-        email=owner.email,
-        user_type=UserType.USER,
-    )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(type=EventObjectType.TEMPLATE)
-    assert event.payload == {
-        'filters': {'is_active': True, 'is_public': None},
-    }
-    assert event.ip == '10.10.0.16'
-    assert event.user_agent == 'Chrome/141'
-    assert event.request_id == 'audit-template-4'
-
-
-def test_export__not_admin__no_event(
-    api_client,
-    fake_stream,
-):
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
+    create_test_owner(account=account)
     not_admin = create_test_not_admin(account=account)
-    create_test_template(user=owner, is_active=True, tasks_count=1)
+    templates_export_mock = mocker.patch(
+        'src.processes.views.template.AuditEventService.templates_export',
+    )
     api_client.token_authenticate(not_admin)
 
     # act
@@ -214,4 +135,4 @@ def test_export__not_admin__no_event(
 
     # assert
     assert response.status_code == 403
-    assert fake_stream.events == []
+    templates_export_mock.assert_not_called()

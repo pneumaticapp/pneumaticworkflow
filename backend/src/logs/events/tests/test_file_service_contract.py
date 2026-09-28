@@ -8,7 +8,6 @@
     types and the auth types. A change on either side breaks the other
     side's test instead of the dead letter of a running deployment. """
 
-from django.conf import settings
 from typing_extensions import get_args
 
 from src.accounts.enums import UserType
@@ -20,6 +19,7 @@ from src.logs.events.enums import (
 from src.logs.events.registry import resolve_event_type
 from src.logs.events.schema import Event
 from src.logs.events.sinks.otlp_payload import build_otlp_payload
+from src.logs.events.stream import STREAM_KEY
 from src.logs.events.tests.fixtures import (
     load_file_service_contract,
     load_file_service_record,
@@ -269,7 +269,7 @@ def test_stream_key__file_service_contract__backend_reads_that_stream():
     contract = load_file_service_contract()
 
     # act
-    stream_key = settings.LOGS_STREAM_KEY
+    stream_key = STREAM_KEY
 
     # assert
     assert stream_key == contract['stream_key']

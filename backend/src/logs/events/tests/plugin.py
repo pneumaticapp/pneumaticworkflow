@@ -53,9 +53,17 @@ def reset_sink_cache():
 @pytest.fixture
 def events_enabled(settings):
 
-    """ Turn the pipeline on: tests run with LOGS_BACKEND='none'. """
+    """ Turn the pipeline on: the test settings leave LOGS_BACKEND
+        unset, and logs_enabled() wants every value of .env the
+        pipeline needs, so all of them are filled in. Nothing is ever
+        dialled: a test that writes swaps the stream for the in memory
+        one, a test of the consumer swaps the stream and the sink. """
 
     settings.LOGS_BACKEND = LogsBackend.OTLP
+    settings.LOGS_REDIS_URL = 'redis://localhost:6379/4'
+    settings.LOGS_STREAM_MAXLEN = 1000000
+    settings.LOGS_OTLP_ENDPOINT = 'http://otel-collector:4318'
+    settings.LOGS_CONSUMER_BATCH_SIZE = 1000
     return settings
 
 
@@ -98,7 +106,7 @@ def fake_stream(scheduled_stream, run_on_commit):
 
     """ The same stream with the writes immediate: what a test needs
         to read back the event an action published. A test of the
-        pipeline being off sets LOGS_BACKEND back to none itself. """
+        pipeline being off sets LOGS_BACKEND back to None itself. """
 
     return scheduled_stream
 

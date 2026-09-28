@@ -1,12 +1,6 @@
 import pytest
 
-from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import (
-    EventObjectType,
-    TemplateEvents,
-)
-from src.logs.events.schema import Actor, EventObject
 from src.processes.models.templates.template import Template
 from src.processes.tests.fixtures import (
     create_test_account,
@@ -17,17 +11,16 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-def test_clone__template__emit_template_clone(
+def test_clone__template__audit_template_cloned(
     mocker,
     api_client,
 ):
 
-    """ The event is about the copy, not the original: the object is
-        the new draft and the name is the one the draft got. """
+    """ The record is about the copy, not the original: the template
+        is the new draft and the name is the one the draft got. """
 
     # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
+    owner = create_test_owner()
     template = create_test_template(
         user=owner,
         name='Onboarding',
@@ -39,7 +32,9 @@ def test_clone__template__emit_template_clone(
         'src.processes.services.templates.integrations.'
         'TemplateIntegrationsService.create_integrations_for_template',
     )
-    emit_mock = mocker.patch('src.logs.events.services.emit')
+    template_cloned_mock = mocker.patch(
+        'src.processes.views.template.AuditEventService.template_cloned',
+    )
 
     # act
     response = api_client.post(f'/templates/{template.id}/clone')
@@ -48,94 +43,18 @@ def test_clone__template__emit_template_clone(
     assert response.status_code == 200
     clone = Template.objects.get(id=response.data['id'])
     assert clone.id != template.id
-    emit_mock.assert_called_once_with(
-        TemplateEvents.CLONE,
-        account_id=account.id,
-        actor=Actor(
-            id=owner.id,
-            email=owner.email,
-            user_type=UserType.USER,
-        ),
-        auth_type=AuthTokenType.USER,
-        event_object=EventObject(
-            type=EventObjectType.TEMPLATE,
-            id=clone.id,
-        ),
-        payload={
-            'name': 'Onboarding - clone',
-            'version': clone.version,
-            'is_active': False,
-        },
-        workflow_id=None,
-        task_id=None,
-    )
     create_integrations_mock.assert_called_once_with(template=clone)
-
-
-def test_clone__template__event_keeps_request_context(
-    mocker,
-    api_client,
-    fake_stream,
-):
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    template = create_test_template(
+    template_cloned_mock.assert_called_once_with(
         user=owner,
-        name='Onboarding',
-        is_active=True,
-        tasks_count=1,
-    )
-    api_client.token_authenticate(
-        owner,
-        user_agent='Chrome/141',
-        user_ip='10.10.0.17',
-    )
-    create_integrations_mock = mocker.patch(
-        'src.processes.services.templates.integrations.'
-        'TemplateIntegrationsService.create_integrations_for_template',
+        auth_type=AuthTokenType.USER,
+        template=clone,
+        name='Onboarding - clone',
     )
 
-    # act
-    response = api_client.post(
-        f'/templates/{template.id}/clone',
-        HTTP_X_REQUEST_ID='audit-template-5',
-    )
 
-    # assert
-    assert response.status_code == 200
-    clone = Template.objects.get(id=response.data['id'])
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == TemplateEvents.CLONE
-    assert event.category == TemplateEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=owner.id,
-        email=owner.email,
-        user_type=UserType.USER,
-    )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.TEMPLATE,
-        id=clone.id,
-    )
-    assert event.payload == {
-        'name': 'Onboarding - clone',
-        'version': clone.version,
-        'is_active': False,
-    }
-    assert event.ip == '10.10.0.17'
-    assert event.user_agent == 'Chrome/141'
-    assert event.request_id == 'audit-template-5'
-    create_integrations_mock.assert_called_once_with(template=clone)
-
-
-def test_clone__template_of_another_account__no_event(
+def test_clone__template_of_another_account__audit_not_called(
     mocker,
     api_client,
-    fake_stream,
 ):
 
     # arrange
@@ -156,6 +75,9 @@ def test_clone__template_of_another_account__no_event(
         'src.processes.services.templates.integrations.'
         'TemplateIntegrationsService.create_integrations_for_template',
     )
+    template_cloned_mock = mocker.patch(
+        'src.processes.views.template.AuditEventService.template_cloned',
+    )
 
     # act
     response = api_client.post(f'/templates/{template.id}/clone')
@@ -163,5 +85,5 @@ def test_clone__template_of_another_account__no_event(
     # assert
     assert response.status_code == 404
     assert Template.objects.count() == 1
-    assert fake_stream.events == []
     create_integrations_mock.assert_not_called()
+    template_cloned_mock.assert_not_called()

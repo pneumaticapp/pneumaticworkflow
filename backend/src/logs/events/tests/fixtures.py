@@ -22,7 +22,6 @@ from src.logs.events.stream import (
     EventStream,
     ParsedEntries,
 )
-from src.processes.enums import WorkflowEventType
 
 Entries = List[Tuple[str, Event]]
 
@@ -83,7 +82,7 @@ class FakeEventStream:
         self._trim()
         return entry_id
 
-    def ensure_group(self) -> None:
+    def ensure_group(self):
         self.group_created = True
 
     def read_pending(self, consumer: str, count: int) -> ParsedEntries:
@@ -145,7 +144,7 @@ class FakeEventStream:
 
         return self.events[-1][1] if self.events else None
 
-    def _trim(self) -> None:
+    def _trim(self):
         extra = len(self.events) - self.maxlen
         if extra > 0:
             del self.events[:extra]
@@ -236,7 +235,7 @@ def make_smoke_event(number: int = 0) -> Event:
     )
 
 
-def fill_stream(stream, count: int = 3) -> None:
+def fill_stream(stream, count: int = 3):
 
     """ Append count smoke events and make sure the group exists. """
 
@@ -269,75 +268,6 @@ def event_name_values() -> Set[str]:
     }
 
 
-def expected_workflow_events() -> Tuple[Tuple[int, str, str], ...]:
-
-    """ (WorkflowEventType, event type, category) of every workflow
-        event. Transcribed from the table of 5.1 of the plan on
-        purpose: reading the answer out of the registry would compare
-        it with itself. """
-
-    workflows = EventCategory.WORKFLOWS
-    tasks = EventCategory.TASKS
-    return (
-        (WorkflowEventType.RUN, 'workflow.run', workflows),
-        (WorkflowEventType.COMPLETE, 'workflow.complete', workflows),
-        (WorkflowEventType.TASK_START, 'task.start', tasks),
-        (WorkflowEventType.TASK_COMPLETE, 'task.complete', tasks),
-        (WorkflowEventType.TASK_REVERT, 'task.revert', tasks),
-        (WorkflowEventType.COMMENT, 'task.comment', tasks),
-        (WorkflowEventType.ENDED, 'workflow.ended', workflows),
-        (WorkflowEventType.DELAY, 'workflow.delay', workflows),
-        (WorkflowEventType.REVERT, 'workflow.revert', workflows),
-        (WorkflowEventType.TASK_SKIP, 'task.skip', tasks),
-        (
-            WorkflowEventType.ENDED_BY_CONDITION,
-            'workflow.ended_by_condition',
-            workflows,
-        ),
-        (WorkflowEventType.URGENT, 'workflow.urgent', workflows),
-        (WorkflowEventType.NOT_URGENT, 'workflow.not_urgent', workflows),
-        (
-            WorkflowEventType.TASK_SKIP_NO_PERFORMERS,
-            'task.skip_no_performers',
-            tasks,
-        ),
-        (
-            WorkflowEventType.TASK_PERFORMER_CREATED,
-            'task.performer_created',
-            tasks,
-        ),
-        (
-            WorkflowEventType.TASK_PERFORMER_DELETED,
-            'task.performer_deleted',
-            tasks,
-        ),
-        (WorkflowEventType.FORCE_RESUME, 'workflow.force_resume', workflows),
-        (WorkflowEventType.FORCE_DELAY, 'workflow.force_delay', workflows),
-        (
-            WorkflowEventType.DUE_DATE_CHANGED,
-            'task.due_date_changed',
-            tasks,
-        ),
-        (
-            WorkflowEventType.SUB_WORKFLOW_RUN,
-            'workflow.sub_workflow_run',
-            workflows,
-        ),
-        (
-            WorkflowEventType.TASK_PERFORMER_GROUP_CREATED,
-            'task.performer_group_created',
-            tasks,
-        ),
-        (
-            WorkflowEventType.TASK_PERFORMER_GROUP_DELETED,
-            'task.performer_group_deleted',
-            tasks,
-        ),
-        (WorkflowEventType.TASK_DELAY, 'task.delay', tasks),
-        (WorkflowEventType.TASK_DELEGATION, 'task.delegation', tasks),
-    )
-
-
 class FakeSink(BaseSink):
 
     """ Concrete BaseSink for the tests of its template method.
@@ -358,11 +288,11 @@ class FakeSink(BaseSink):
         self.raises = raises
         self.handled: List[Exception] = []
 
-    def _send(self, records: Entries) -> None:
+    def _send(self, records: Entries):
         if self.error is not None:
             raise self.error
 
-    def _handle_error(self, exc: Exception, records: Entries) -> None:
+    def _handle_error(self, exc: Exception, records: Entries):
         self.handled.append(exc)
         if self.raises is not None:
             raise self.raises

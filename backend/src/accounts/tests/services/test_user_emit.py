@@ -1,15 +1,11 @@
 import pytest
 
-from src.accounts.enums import AbsenceStatus, UserStatus, UserType
+from src.accounts.enums import AbsenceStatus, UserStatus
 from src.accounts.messages import MSG_A_0055
 from src.accounts.services.exceptions import UserServiceException
 from src.accounts.services.user import UserService
+from src.accounts.services.vacation import VacationDelegationService
 from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import (
-    EventObjectType,
-    UserEvents,
-)
-from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
@@ -22,14 +18,10 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-def test_partial_update__no_request_user__emit_system_password_set(
+def test_partial_update__no_request_user__audit_password_set(
     mocker,
     identify_mock,
-    fake_stream,
 ):
-
-    """ Nobody is behind a service without a user, so a password it
-        sends is set for the person, never changed by them. """
 
     # arrange
     account = create_test_account()
@@ -37,6 +29,9 @@ def test_partial_update__no_request_user__emit_system_password_set(
     target = create_test_not_admin(account=account)
     send_user_updated_mock = mocker.patch(
         'src.accounts.services.user.send_user_updated_notification.delay',
+    )
+    user_updated_mock = mocker.patch(
+        'src.accounts.services.user.AuditEventService.user_updated',
     )
     service = UserService(
         account=account,
@@ -47,30 +42,15 @@ def test_partial_update__no_request_user__emit_system_password_set(
     service.partial_update(raw_password='new strong password')
 
     # assert
-    assert len(fake_stream.events) == 2
-    event_object = EventObject(
-        type=EventObjectType.USER,
-        id=target.id,
+    user_updated_mock.assert_called_once_with(
+        user=None,
+        auth_type=AuthTokenType.USER,
+        target=target,
+        update_kwargs={},
+        user_groups=None,
+        subordinates=None,
+        is_password_set=True,
     )
-    update_event = fake_stream.events[0][1]
-    assert update_event.type == UserEvents.UPDATE
-    assert update_event.category == UserEvents.CATEGORY
-    assert update_event.account_id == account.id
-    assert update_event.actor is None
-    assert update_event.auth_type is None
-    assert update_event.object == event_object
-    assert update_event.payload == {
-        'target_email': target.email,
-        'changed_fields': ['password'],
-    }
-    password_event = fake_stream.events[1][1]
-    assert password_event.type == UserEvents.PASSWORD_SET
-    assert password_event.category == UserEvents.CATEGORY
-    assert password_event.account_id == account.id
-    assert password_event.actor is None
-    assert password_event.auth_type is None
-    assert password_event.object == event_object
-    assert password_event.payload == {'target_email': target.email}
     identify_mock.assert_called_once_with(target)
     send_user_updated_mock.assert_called_once_with(
         logging=account.log_api_requests,
@@ -79,10 +59,9 @@ def test_partial_update__no_request_user__emit_system_password_set(
     )
 
 
-def test_partial_update__group_instances__emit_group_ids(
+def test_partial_update__group_instances__audit_user_groups(
     mocker,
     identify_mock,
-    fake_stream,
 ):
 
     # arrange
@@ -93,6 +72,9 @@ def test_partial_update__group_instances__emit_group_ids(
     send_user_updated_mock = mocker.patch(
         'src.accounts.services.user.send_user_updated_notification.delay',
     )
+    user_updated_mock = mocker.patch(
+        'src.accounts.services.user.AuditEventService.user_updated',
+    )
     service = UserService(
         user=owner,
         instance=target,
@@ -102,27 +84,15 @@ def test_partial_update__group_instances__emit_group_ids(
     service.partial_update(user_groups=[group])
 
     # assert
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.UPDATE
-    assert event.category == UserEvents.CATEGORY
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        id=owner.id,
-        email=owner.email,
-        user_type=UserType.USER,
+    user_updated_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        target=target,
+        update_kwargs={},
+        user_groups=[group],
+        subordinates=None,
+        is_password_set=False,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.USER,
-        id=target.id,
-    )
-    assert event.payload == {
-        'target_email': target.email,
-        'changed_fields': ['groups'],
-        'added_groups_ids': [group.id],
-        'removed_groups_ids': [],
-    }
     identify_mock.assert_called_once_with(target)
     send_user_updated_mock.assert_called_once_with(
         logging=account.log_api_requests,
@@ -131,10 +101,96 @@ def test_partial_update__group_instances__emit_group_ids(
     )
 
 
-def test_partial_update__service_exception__no_event(
+def test_partial_update__subordinates__audit_subordinates(
     mocker,
     identify_mock,
-    fake_stream,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    target = create_test_admin(account=account)
+    subordinate = create_test_not_admin(account=account)
+    send_user_updated_mock = mocker.patch(
+        'src.accounts.services.user.send_user_updated_notification.delay',
+    )
+    user_updated_mock = mocker.patch(
+        'src.accounts.services.user.AuditEventService.user_updated',
+    )
+    service = UserService(
+        user=owner,
+        instance=target,
+    )
+
+    # act
+    service.partial_update(subordinates=[subordinate])
+
+    # assert
+    subordinate.refresh_from_db()
+    assert subordinate.manager_id == target.id
+    user_updated_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        target=target,
+        update_kwargs={},
+        user_groups=None,
+        subordinates=[subordinate],
+        is_password_set=False,
+    )
+    identify_mock.assert_called_once_with(target)
+    send_user_updated_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        user_data=mocker.ANY,
+    )
+
+
+def test_partial_update__same_values__audit_update_kwargs(
+    mocker,
+    identify_mock,
+):
+
+    """ A request that arrived is an update, whatever it sent. """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    target = create_test_not_admin(account=account)
+    send_user_updated_mock = mocker.patch(
+        'src.accounts.services.user.send_user_updated_notification.delay',
+    )
+    user_updated_mock = mocker.patch(
+        'src.accounts.services.user.AuditEventService.user_updated',
+    )
+    service = UserService(
+        user=owner,
+        instance=target,
+    )
+
+    # act
+    service.partial_update(first_name=target.first_name)
+
+    # assert
+    user_updated_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        target=target,
+        update_kwargs={'first_name': target.first_name},
+        user_groups=None,
+        subordinates=None,
+        is_password_set=False,
+    )
+    identify_mock.assert_called_once_with(target)
+    send_user_updated_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        user_data=mocker.ANY,
+    )
+
+
+def test_partial_update__service_exception__audit_not_called(
+    mocker,
+    identify_mock,
 ):
 
     # arrange
@@ -143,6 +199,9 @@ def test_partial_update__service_exception__no_event(
     target = create_test_not_admin(account=account)
     send_user_updated_mock = mocker.patch(
         'src.accounts.services.user.send_user_updated_notification.delay',
+    )
+    user_updated_mock = mocker.patch(
+        'src.accounts.services.user.AuditEventService.user_updated',
     )
     service = UserService(
         user=owner,
@@ -158,16 +217,15 @@ def test_partial_update__service_exception__no_event(
 
     # assert
     assert ex.value.message == str(MSG_A_0055)
-    assert fake_stream.events == []
+    user_updated_mock.assert_not_called()
     identify_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
 
 
-def test_deactivate__absent_user__emit_vacation_deactivate_by_request_user(
+def test_deactivate__absent_user__vacation_deactivated_by_request_user(
     mocker,
     identify_mock,
     group_mock,
-    fake_stream,
 ):
 
     # arrange
@@ -183,14 +241,23 @@ def test_deactivate__absent_user__emit_vacation_deactivate_by_request_user(
     identify_users_mock = mocker.patch(
         'src.accounts.services.account.identify_users.delay',
     )
-    send_user_updated_mock = mocker.patch(
-        'src.accounts.services.vacation.send_user_updated_notification.delay',
+    vacation_delegation_service_init_mock = mocker.patch.object(
+        VacationDelegationService,
+        attribute='__init__',
+        return_value=None,
+    )
+    vacation_deactivate_mock = mocker.patch.object(
+        VacationDelegationService,
+        attribute='deactivate',
     )
     send_user_deactivated_mock = mocker.patch(
         'src.notifications.tasks.send_user_deactivated_notification.delay',
     )
     send_user_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_user_deleted_notification.delay',
+    )
+    user_deactivated_mock = mocker.patch(
+        'src.accounts.services.user.AuditEventService.user_deactivated',
     )
     service = UserService(
         user=owner,
@@ -203,34 +270,17 @@ def test_deactivate__absent_user__emit_vacation_deactivate_by_request_user(
     # assert
     target.refresh_from_db()
     assert target.status == UserStatus.INACTIVE
-    assert len(fake_stream.events) == 2
-    actor = Actor(
-        id=owner.id,
-        email=owner.email,
-        user_type=UserType.USER,
+    vacation_delegation_service_init_mock.assert_called_once_with(
+        target,
+        request_user=owner,
+        auth_type=AuthTokenType.USER,
     )
-    event_object = EventObject(
-        type=EventObjectType.USER,
-        id=target.id,
+    vacation_deactivate_mock.assert_called_once_with()
+    user_deactivated_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        target=target,
     )
-    vacation_event = fake_stream.events[0][1]
-    assert vacation_event.type == UserEvents.VACATION_DEACTIVATE
-    assert vacation_event.category == UserEvents.CATEGORY
-    assert vacation_event.account_id == account.id
-    assert vacation_event.actor == actor
-    assert vacation_event.auth_type == AuthTokenType.USER
-    assert vacation_event.object == event_object
-    assert vacation_event.payload == {'target_email': target.email}
-    deactivate_event = fake_stream.events[1][1]
-    assert deactivate_event.type == UserEvents.DEACTIVATE
-    assert deactivate_event.account_id == account.id
-    assert deactivate_event.actor == actor
-    assert deactivate_event.auth_type == AuthTokenType.USER
-    assert deactivate_event.object == event_object
-    assert deactivate_event.payload == {
-        'target_email': target.email,
-        'status_before': UserStatus.ACTIVE,
-    }
     identify_mock.assert_called_once_with(target)
     group_mock.assert_called_once_with(
         user=target,
@@ -238,11 +288,6 @@ def test_deactivate__absent_user__emit_vacation_deactivate_by_request_user(
     )
     identify_users_mock.assert_called_once_with(
         user_ids=(owner.id, substitute.id),
-    )
-    send_user_updated_mock.assert_called_once_with(
-        logging=account.log_api_requests,
-        account_id=account.id,
-        user_data=mocker.ANY,
     )
     send_user_deactivated_mock.assert_called_once_with(
         user_id=target.id,

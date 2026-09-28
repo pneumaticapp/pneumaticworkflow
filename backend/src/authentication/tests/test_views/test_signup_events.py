@@ -1,13 +1,8 @@
 import pytest
 from django.contrib.auth import get_user_model
 
-from src.accounts.enums import SourceType, UserType
+from src.accounts.enums import SourceType
 from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import (
-    EventObjectType,
-    UserEvents,
-)
-from src.logs.events.schema import Actor, EventObject
 from src.processes.services.system_workflows import (
     SystemWorkflowService,
 )
@@ -18,18 +13,13 @@ UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
 
 
-def test_create__email_signup__emit_user_signup_only(
+def test_create__email_signup__audit_user_signed_up(
     mocker,
     api_client,
     identify_mock,
     group_mock,
     settings,
-    fake_stream,
 ):
-
-    """ A sign up is one event: no login is reported on top of it,
-        and the request of the sign up form is the source of the
-        address and the browser. """
 
     # arrange
     settings.PROJECT_CONF = {**settings.PROJECT_CONF, 'SIGNUP': True}
@@ -65,6 +55,9 @@ def test_create__email_signup__emit_user_signup_only(
         'AuthService.get_auth_token',
         return_value='new-user-token',
     )
+    user_signed_up_mock = mocker.patch(
+        'src.authentication.views.signup.AuditEventService.user_signed_up',
+    )
     email = 'new_user@pneumatic.app'
 
     # act
@@ -73,32 +66,16 @@ def test_create__email_signup__emit_user_signup_only(
         data={'email': email},
         HTTP_USER_AGENT='Some/Mozilla',
         HTTP_X_REAL_IP='128.18.0.99',
-        HTTP_X_REQUEST_ID='audit-signup-1',
     )
 
     # assert
     assert response.status_code == 200
     assert response.data['token'] == 'new-user-token'
     new_user = UserModel.objects.get(email=email)
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == UserEvents.SIGNUP
-    assert event.category == UserEvents.CATEGORY
-    assert event.account_id == new_user.account_id
-    assert event.actor == Actor(
-        id=new_user.id,
-        email=email,
-        user_type=UserType.USER,
+    user_signed_up_mock.assert_called_once_with(
+        user=new_user,
+        source=SourceType.EMAIL,
     )
-    assert event.auth_type == AuthTokenType.USER
-    assert event.object == EventObject(
-        type=EventObjectType.USER,
-        id=new_user.id,
-    )
-    assert event.payload == {'source': SourceType.EMAIL}
-    assert event.ip == '128.18.0.99'
-    assert event.user_agent == 'Some/Mozilla'
-    assert event.request_id == 'audit-signup-1'
     system_workflow_service_init_mock.assert_called_once_with(
         user=new_user,
     )
@@ -128,17 +105,19 @@ def test_create__email_signup__emit_user_signup_only(
     )
 
 
-def test_create__signup_disabled__no_event(
+def test_create__signup_disabled__audit_not_called(
     mocker,
     api_client,
     settings,
-    fake_stream,
 ):
 
     # arrange
     settings.PROJECT_CONF = {**settings.PROJECT_CONF, 'SIGNUP': False}
     account_created_mock = mocker.patch(
         'src.analysis.services.AnalyticService.account_created',
+    )
+    user_signed_up_mock = mocker.patch(
+        'src.authentication.views.signup.AuditEventService.user_signed_up',
     )
     email = 'new_user@pneumatic.app'
 
@@ -150,21 +129,25 @@ def test_create__signup_disabled__no_event(
 
     # assert
     assert response.status_code == 401
-    assert fake_stream.events == []
+    message = 'Authentication credentials were not provided.'
+    assert response.data['detail'] == message
+    user_signed_up_mock.assert_not_called()
     account_created_mock.assert_not_called()
 
 
-def test_create__invalid_email__no_event(
+def test_create__invalid_email__audit_not_called(
     mocker,
     api_client,
     settings,
-    fake_stream,
 ):
 
     # arrange
     settings.PROJECT_CONF = {**settings.PROJECT_CONF, 'SIGNUP': True}
     account_created_mock = mocker.patch(
         'src.analysis.services.AnalyticService.account_created',
+    )
+    user_signed_up_mock = mocker.patch(
+        'src.authentication.views.signup.AuditEventService.user_signed_up',
     )
     email = 'not-an-email'
 
@@ -181,5 +164,5 @@ def test_create__invalid_email__no_event(
     assert response.data['message'] == message
     assert response.data['details']['name'] == 'email'
     assert response.data['details']['reason'] == message
-    assert fake_stream.events == []
+    user_signed_up_mock.assert_not_called()
     account_created_mock.assert_not_called()

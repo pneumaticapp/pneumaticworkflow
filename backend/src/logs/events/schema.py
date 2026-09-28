@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional, Union
 from urllib.parse import urlsplit, urlunsplit
 
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import Model
 
 from src.accounts.enums import UserType
 from src.logs.events.enums import EventCategory, EventObjectType
@@ -16,7 +17,7 @@ TS_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
 TS_SUFFIX = 'Z'
 
 PAYLOAD_STR_MAX = 2000
-PAYLOAD_MAX_BYTES = 32768
+PAYLOAD_MAX_BYTES = 65536
 PAYLOAD_MAX_DEPTH = 2
 FIRST_DEPTH = 1
 # Depth of a value inside a container that is collapsed into a JSON
@@ -24,6 +25,7 @@ FIRST_DEPTH = 1
 NO_DEPTH_LIMIT = None
 REDACTED_VALUE = '[redacted]'
 TRUNCATED_KEY = '_truncated'
+PAYLOAD_SCALAR_TYPES = (str, int, float, bool)
 SIZE_KEY = '_size'
 SECRET_KEY_PARTS = (
     'password',
@@ -203,8 +205,9 @@ def normalize_payload(payload: Optional[dict]) -> dict:
 
     """ Make a payload safe to store and to send:
         no secrets, no deep nesting, no huge strings.
-        An oversized payload is replaced by its size marker: a single
-        event must not be able to fill up the stream. """
+        An oversized payload is cut down to its size marker: a single
+        event must not be able to fill up the stream. See _truncated
+        for what stays next to the marker. """
 
     if not payload:
         return {}
@@ -220,8 +223,30 @@ def normalize_payload(payload: Optional[dict]) -> dict:
             data={'size': size, 'limit': PAYLOAD_MAX_BYTES},
             level=SentryLogLevel.WARNING,
         )
-        return {TRUNCATED_KEY: True, SIZE_KEY: size}
+        return _truncated(normalized, size)
     return normalized
+
+
+def _truncated(normalized: Dict[str, Any], size: int) -> Dict[str, Any]:
+
+    """ The size marker with the scalars of the top level: the name or
+        the is_active of a template are what a dashboard filters the
+        events by, and it is the lists and the dicts next to them - the
+        tasks and the fields of the template - that make a payload
+        big. Every string is already cut to PAYLOAD_STR_MAX. When the
+        scalars alone are over the limit too, only the marker is
+        left. """
+
+    truncated = {
+        name: value
+        for name, value in normalized.items()
+        if value is None or isinstance(value, PAYLOAD_SCALAR_TYPES)
+    }
+    truncated[TRUNCATED_KEY] = True
+    truncated[SIZE_KEY] = size
+    if len(to_json(truncated).encode('utf-8')) > PAYLOAD_MAX_BYTES:
+        return {TRUNCATED_KEY: True, SIZE_KEY: size}
+    return truncated
 
 
 def _normalize_dict(value: dict, depth: Optional[int]) -> Dict[str, Any]:
@@ -347,8 +372,12 @@ def without_userinfo(url: str) -> str:
 
 def _to_scalar(value: Any) -> Any:
 
-    """ Convert a non JSON type the way DjangoJSONEncoder does. """
+    """ Convert a non JSON type the way DjangoJSONEncoder does. A row
+        of the database is its id: the kwargs of an update carry the
+        manager or the groups of a user as model instances. """
 
+    if isinstance(value, Model):
+        return value.pk
     try:
         return DjangoJSONEncoder().default(value)
     except TypeError:

@@ -12,6 +12,11 @@ from src.logs.events.schema import (
     without_url_secrets,
 )
 from src.logs.events.tests.fixtures import EVENT_TS
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_group,
+    create_test_owner,
+)
 from src.utils.logging import SentryLogLevel
 
 
@@ -421,8 +426,32 @@ def test_normalize_payload__oversized__replaced_by_size_marker(mocker):
     """ A single event must not be able to fill up the stream: the
         payload is replaced by its size marker, and the loss of an
         audit payload is reported (throttled, an emitter loop would
-        flood Sentry). 40 keys of 1000 bytes plus the JSON syntax
-        make 40550 bytes. """
+        flood Sentry). 70 keys of 1000 bytes plus the JSON syntax
+        make 70970 bytes. """
+
+    # arrange
+    payload = {f'key_{num}': 'x' * 1000 for num in range(70)}
+    report_error_mock = mocker.patch(
+        'src.logs.events.schema.report_error',
+    )
+
+    # act
+    result = normalize_payload(payload=payload)
+
+    # assert
+    assert result == {'_truncated': True, '_size': 70970}
+    report_error_mock.assert_called_once_with(
+        message='Event payload dropped: over the size limit',
+        data={'size': 70970, 'limit': PAYLOAD_MAX_BYTES},
+        level=SentryLogLevel.WARNING,
+    )
+
+
+def test_normalize_payload__whole_template_size__kept(mocker):
+
+    """ A whole template goes into the record of its save: 40 keys of
+        1000 bytes, 40550 bytes with the JSON syntax, are well below
+        the limit of 64 KiB. """
 
     # arrange
     payload = {f'key_{num}': 'x' * 1000 for num in range(40)}
@@ -434,24 +463,20 @@ def test_normalize_payload__oversized__replaced_by_size_marker(mocker):
     result = normalize_payload(payload=payload)
 
     # assert
-    assert result == {'_truncated': True, '_size': 40550}
-    report_error_mock.assert_called_once_with(
-        message='Event payload dropped: over the size limit',
-        data={'size': 40550, 'limit': PAYLOAD_MAX_BYTES},
-        level=SentryLogLevel.WARNING,
-    )
+    assert result == payload
+    report_error_mock.assert_not_called()
 
 
 def test_normalize_payload__at_the_size_limit__kept(mocker):
 
     """ The limit is the largest payload that is still stored whole:
-        the marker replaces only a bigger one. 16 keys of 2000 bytes
-        make 32224 bytes with the JSON syntax, the pad key of 533
+        the marker replaces only a bigger one. 32 keys of 2000 bytes
+        make 64448 bytes with the JSON syntax, the pad key of 1077
         bytes brings the total to exactly PAYLOAD_MAX_BYTES. """
 
     # arrange
-    payload = {f'key_{num:02d}': 'x' * 2000 for num in range(16)}
-    payload['pad'] = 'y' * 533
+    payload = {f'key_{num:02d}': 'x' * 2000 for num in range(32)}
+    payload['pad'] = 'y' * 1077
     report_error_mock = mocker.patch(
         'src.logs.events.schema.report_error',
     )
@@ -463,6 +488,175 @@ def test_normalize_payload__at_the_size_limit__kept(mocker):
     assert result == payload
     assert result is not payload
     report_error_mock.assert_not_called()
+
+
+def test_normalize_payload__one_byte_over_the_limit__size_marker(mocker):
+
+    # arrange
+    payload = {f'key_{num:02d}': 'x' * 2000 for num in range(32)}
+    payload['pad'] = 'y' * 1078
+    report_error_mock = mocker.patch(
+        'src.logs.events.schema.report_error',
+    )
+
+    # act
+    result = normalize_payload(payload=payload)
+
+    # assert
+    assert result == {'_truncated': True, '_size': 65537}
+    report_error_mock.assert_called_once_with(
+        message='Event payload dropped: over the size limit',
+        data={'size': 65537, 'limit': PAYLOAD_MAX_BYTES},
+        level=SentryLogLevel.WARNING,
+    )
+
+
+def test_normalize_payload__oversized_list__top_level_scalars_kept(
+    mocker,
+):
+
+    """ The tasks of a template make its payload big, while the
+        dashboards filter the events by its name and is_active: the
+        scalars of the top level stay next to the size marker, the
+        list goes. 40 tasks of 2000 bytes make 80265 bytes. """
+
+    # arrange
+    payload = {
+        'name': 'Onboarding',
+        'is_active': True,
+        'tasks_count': 40,
+        'rate': 0.5,
+        'description': None,
+        'tasks': ['x' * 2000 for _ in range(40)],
+    }
+    report_error_mock = mocker.patch(
+        'src.logs.events.schema.report_error',
+    )
+
+    # act
+    result = normalize_payload(payload=payload)
+
+    # assert
+    assert result == {
+        'name': 'Onboarding',
+        'is_active': True,
+        'tasks_count': 40,
+        'rate': 0.5,
+        'description': None,
+        '_truncated': True,
+        '_size': 80265,
+    }
+    report_error_mock.assert_called_once_with(
+        message='Event payload dropped: over the size limit',
+        data={'size': 80265, 'limit': PAYLOAD_MAX_BYTES},
+        level=SentryLogLevel.WARNING,
+    )
+
+
+def test_normalize_payload__oversized_dict__top_level_scalars_kept(
+    mocker,
+):
+
+    """ A dict of the top level goes the same way as a list. 40 fields
+        of 2000 bytes make 80675 bytes. """
+
+    # arrange
+    payload = {
+        'name': 'Onboarding',
+        'kickoff': {f'field_{num:02d}': 'x' * 2000 for num in range(40)},
+    }
+    report_error_mock = mocker.patch(
+        'src.logs.events.schema.report_error',
+    )
+
+    # act
+    result = normalize_payload(payload=payload)
+
+    # assert
+    assert result == {
+        'name': 'Onboarding',
+        '_truncated': True,
+        '_size': 80675,
+    }
+    report_error_mock.assert_called_once_with(
+        message='Event payload dropped: over the size limit',
+        data={'size': 80675, 'limit': PAYLOAD_MAX_BYTES},
+        level=SentryLogLevel.WARNING,
+    )
+
+
+def test_normalize_payload__oversized_scalars_and_list__marker_only(
+    mocker,
+):
+
+    """ The scalars of the top level are over the limit on their own:
+        keeping them would not bound the event, so only the marker is
+        left. 33 strings of 2000 bytes and a list make 67477 bytes. """
+
+    # arrange
+    payload = {f'key_{num:02d}': 'x' * 2000 for num in range(33)}
+    payload['tasks'] = ['y' * 1000]
+    report_error_mock = mocker.patch(
+        'src.logs.events.schema.report_error',
+    )
+
+    # act
+    result = normalize_payload(payload=payload)
+
+    # assert
+    assert result == {'_truncated': True, '_size': 67477}
+    report_error_mock.assert_called_once_with(
+        message='Event payload dropped: over the size limit',
+        data={'size': 67477, 'limit': PAYLOAD_MAX_BYTES},
+        level=SentryLogLevel.WARNING,
+    )
+
+
+@pytest.mark.django_db
+def test_normalize_payload__model_instance__primary_key():
+
+    """ The kwargs of an update carry the manager of a user as a row
+        of the database: the journal gets its id, not its text. """
+
+    # arrange
+    manager = create_test_owner()
+    payload = {'manager': manager}
+
+    # act
+    result = normalize_payload(payload=payload)
+
+    # assert
+    assert result == {'manager': manager.id}
+
+
+@pytest.mark.django_db
+def test_normalize_payload__list_of_model_instances__primary_keys():
+
+    # arrange
+    account = create_test_account()
+    first_group = create_test_group(account=account, name='Sales')
+    second_group = create_test_group(account=account, name='Support')
+    payload = {'user_groups': [first_group, second_group]}
+
+    # act
+    result = normalize_payload(payload=payload)
+
+    # assert
+    assert result == {'user_groups': [first_group.id, second_group.id]}
+
+
+@pytest.mark.django_db
+def test_normalize_payload__model_instance_too_deep__id_in_the_string():
+
+    # arrange
+    manager = create_test_owner()
+    payload = {'a': {'b': {'manager': manager}}}
+
+    # act
+    result = normalize_payload(payload=payload)
+
+    # assert
+    assert result == {'a': {'b': f'{{"manager": {manager.id}}}'}}
 
 
 def test_without_url_secrets__relative_url__kept_as_it_is():
