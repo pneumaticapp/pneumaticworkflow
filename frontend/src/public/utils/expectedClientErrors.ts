@@ -17,6 +17,7 @@ const EXPECTED_AUTH_PATTERNS = [
   'Authentication credentials were not provided',
   'You do not have permission',
   'Request was throttled',
+  'Invalid login or password',
 ];
 
 // Validation — user input errors, not code bugs

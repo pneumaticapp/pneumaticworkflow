@@ -1,82 +1,390 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { IFieldsetRuntime } from '../../../types/fieldset';
 import { IExtraField } from '../../../types/template';
-import { ITask } from '../../../types/tasks';
+import { sortFieldsByOrder } from '../../../utils/workflows';
 import { ExtraFieldsHelper } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
 import { getEditedFields } from '../../TemplateEdit/ExtraFields/utils/getEditedFields';
-import { addOrUpdateStorageOutput, fieldsetsStorage, getOutputFromStorage } from '../utils/storageOutputs';
+import { ITask } from '../../../types/tasks';
+import {
+  addOrUpdateStorageOutput,
+  getOutputFromStorage,
+  removeOutputFromLocalStorage,
+  fieldsetsStorage,
+  outputStorage,
+  TFieldsetDraftMetadata,
+  TOutputDraftMetadata,
+} from '../utils/storageOutputs';
 import { createFlushableDebounce } from '../utils/createFlushableDebounce';
+import { getTaskOutputFingerprint } from '../utils/getTaskOutputFingerprint';
 
 export function useTaskOutput(task: ITask) {
   const [outputValues, setOutputValues] = useState<IExtraField[]>([]);
-  const [fieldsetOutputValues, setFieldsetOutputValues] = useState<IFieldsetRuntime[]>([]);
-  const saveOutputsToStorageDebounced = useMemo(() => createFlushableDebounce(300, addOrUpdateStorageOutput), []);
-  const saveFieldsetsToStorageDebounced = useMemo(() => createFlushableDebounce(300, fieldsetsStorage.save), []);
-  const taskOutputSignature = useMemo(() => JSON.stringify(task.output), [task.output]);
-  const taskFieldsetsSignature = useMemo(() => JSON.stringify(task.fieldsets), [task.fieldsets]);
+  const [fieldsetOutputValues, setFieldsetOutputValues] = useState<IFieldsetRuntime[]>(task.fieldsets ?? []);
+  const pendingStorageOutputRef = useRef<{
+    taskId: number;
+    output: IExtraField[];
+    metadata: TOutputDraftMetadata;
+  } | null>(null);
+  const pendingStorageFieldsetsRef = useRef<{
+    taskId: number;
+    fieldsets: IFieldsetRuntime[];
+    metadata: TFieldsetDraftMetadata;
+  } | null>(null);
+  const saveOutputsToStorageDebounced = useMemo(
+    () =>
+      createFlushableDebounce(300, () => {
+        const pendingStorageOutput = pendingStorageOutputRef.current;
+
+        if (!pendingStorageOutput) return;
+
+        pendingStorageOutputRef.current = null;
+        addOrUpdateStorageOutput(
+          pendingStorageOutput.taskId,
+          pendingStorageOutput.output,
+          pendingStorageOutput.metadata,
+        );
+      }),
+    [],
+  );
+  const saveFieldsetsToStorageDebounced = useMemo(
+    () =>
+      createFlushableDebounce(300, () => {
+        const pendingStorageFieldsets = pendingStorageFieldsetsRef.current;
+
+        if (!pendingStorageFieldsets) return;
+
+        pendingStorageFieldsetsRef.current = null;
+        fieldsetsStorage.save(
+          pendingStorageFieldsets.taskId,
+          pendingStorageFieldsets.fieldsets,
+          pendingStorageFieldsets.metadata,
+        );
+      }),
+    [],
+  );
+  const outputSyncStateRef = useRef({
+    taskId: null as number | null,
+    dateStarted: null as string | null,
+    outputFingerprint: '',
+    outputDefinitionSignature: '',
+    fieldFingerprints: {} as Record<string, string>,
+    validatedFingerprints: {} as Record<string, string>,
+  });
+  const fieldsetSyncStateRef = useRef({
+    taskId: null as number | null,
+    dateStarted: null as string | null,
+    fieldsetsFingerprint: '',
+    fieldFingerprints: {} as Record<string, Record<string, string>>,
+    validatedFingerprints: {} as Record<string, Record<string, string>>,
+  });
+  const taskOutputFingerprint = useMemo(() => getTaskOutputFingerprint(task.output), [task.output]);
+  const taskOutputDefinitionSignature = useMemo(() => JSON.stringify(task.output), [task.output]);
+  const taskFieldsetsFingerprint = useMemo(() => JSON.stringify(task.fieldsets ?? []), [task.fieldsets]);
 
   useEffect(() => {
-    const storageOutput = getOutputFromStorage(task.id);
-    setOutputValues(new ExtraFieldsHelper(task.output, storageOutput).getFieldsWithValues());
+    const { output, id, dateStarted } = task;
+    const syncState = outputSyncStateRef.current;
+    const isNewTask = syncState.taskId !== id;
+    const isTaskRestarted = syncState.taskId === id && syncState.dateStarted !== dateStarted;
+    const isServerOutputChanged = syncState.taskId === id && syncState.outputFingerprint !== taskOutputFingerprint;
+    const isServerOutputDefinitionChanged =
+      syncState.taskId === id && syncState.outputDefinitionSignature !== taskOutputDefinitionSignature;
 
-    const storedFieldsetsByApiName = new Map(
-      fieldsetsStorage.get(task.id)?.map((fieldset) => [fieldset.apiNameBinding, fieldset]) ?? [],
+    if (!isNewTask && !isTaskRestarted && !isServerOutputDefinitionChanged) {
+      return;
+    }
+
+    const fieldFingerprints = Object.fromEntries(
+      output.map((field) => [field.apiName, getTaskOutputFingerprint([field])]),
+    );
+    let storageOutput: IExtraField[] | undefined;
+    let validatedFingerprints: Record<string, string> = {};
+
+    if (isNewTask) {
+      const pendingStorageOutput = pendingStorageOutputRef.current;
+
+      if (pendingStorageOutput) {
+        saveOutputsToStorageDebounced.cancel();
+        pendingStorageOutputRef.current = null;
+        addOrUpdateStorageOutput(
+          pendingStorageOutput.taskId,
+          pendingStorageOutput.output,
+          pendingStorageOutput.metadata,
+        );
+      }
+
+      const storedEntry = outputStorage.getEntry(id);
+      if (storedEntry?.metadata) {
+        if (storedEntry.metadata.dateStarted !== dateStarted) {
+          removeOutputFromLocalStorage(id);
+        } else {
+          storageOutput = storedEntry.data.filter(
+            (field) => storedEntry.metadata?.fieldFingerprints[field.apiName] === fieldFingerprints[field.apiName],
+          );
+          validatedFingerprints = Object.fromEntries(
+            storageOutput.map((field) => [field.apiName, fieldFingerprints[field.apiName]]),
+          );
+          addOrUpdateStorageOutput(id, storageOutput, { dateStarted, fieldFingerprints: validatedFingerprints });
+        }
+      } else {
+        // Restore unvalidated legacy drafts for this session only; do not stamp
+        // current server fingerprints onto them.
+        storageOutput = storedEntry?.data;
+      }
+    } else if (isTaskRestarted) {
+      saveOutputsToStorageDebounced.cancel();
+      pendingStorageOutputRef.current = null;
+      removeOutputFromLocalStorage(id);
+    } else if (isServerOutputChanged) {
+      saveOutputsToStorageDebounced.cancel();
+      const pendingStorageOutput = pendingStorageOutputRef.current;
+      const savedOutput = pendingStorageOutput?.taskId === id ? pendingStorageOutput.output : getOutputFromStorage(id);
+
+      storageOutput = savedOutput?.filter(
+        (field) => syncState.fieldFingerprints[field.apiName] === fieldFingerprints[field.apiName],
+      );
+      validatedFingerprints = Object.fromEntries(
+        (storageOutput ?? [])
+          .filter((field) => syncState.validatedFingerprints[field.apiName] === fieldFingerprints[field.apiName])
+          .map((field) => [field.apiName, fieldFingerprints[field.apiName]]),
+      );
+
+      if (savedOutput) {
+        pendingStorageOutputRef.current = null;
+        addOrUpdateStorageOutput(id, storageOutput ?? [], { dateStarted, fieldFingerprints: validatedFingerprints });
+      }
+    } else if (isServerOutputDefinitionChanged) {
+      const pendingStorageOutput = pendingStorageOutputRef.current;
+      storageOutput = pendingStorageOutput?.taskId === id ? pendingStorageOutput.output : getOutputFromStorage(id);
+      validatedFingerprints = syncState.validatedFingerprints;
+    }
+
+    const outputFieldsWithValues = sortFieldsByOrder(
+      new ExtraFieldsHelper(output, storageOutput).getFieldsWithValues(),
+    );
+
+    setOutputValues(outputFieldsWithValues);
+    syncState.taskId = id;
+    syncState.dateStarted = dateStarted;
+    syncState.outputFingerprint = taskOutputFingerprint;
+    syncState.outputDefinitionSignature = taskOutputDefinitionSignature;
+    syncState.fieldFingerprints = fieldFingerprints;
+    syncState.validatedFingerprints = validatedFingerprints;
+  }, [task.id, task.dateStarted, taskOutputDefinitionSignature, taskOutputFingerprint, saveOutputsToStorageDebounced]);
+
+  useEffect(() => {
+    const { id, dateStarted, fieldsets = [] } = task;
+    const syncState = fieldsetSyncStateRef.current;
+    const isNewTask = syncState.taskId !== id;
+    const isTaskRestarted = syncState.taskId === id && syncState.dateStarted !== dateStarted;
+    const isServerFieldsetsChanged =
+      syncState.taskId === id && syncState.fieldsetsFingerprint !== taskFieldsetsFingerprint;
+
+    if (!isNewTask && !isTaskRestarted && !isServerFieldsetsChanged) return;
+
+    const fieldFingerprints = Object.fromEntries(
+      fieldsets.map((fieldset) => [
+        fieldset.apiNameBinding,
+        Object.fromEntries(fieldset.fields.map((field) => [field.apiName, getTaskOutputFingerprint([field])])),
+      ]),
+    );
+    let savedFieldsets: IFieldsetRuntime[] | undefined;
+    let validatedFingerprints: Record<string, Record<string, string>> = {};
+
+    if (isNewTask) {
+      const pendingStorageFieldsets = pendingStorageFieldsetsRef.current;
+      if (pendingStorageFieldsets) {
+        saveFieldsetsToStorageDebounced.cancel();
+        pendingStorageFieldsetsRef.current = null;
+        fieldsetsStorage.save(
+          pendingStorageFieldsets.taskId,
+          pendingStorageFieldsets.fieldsets,
+          pendingStorageFieldsets.metadata,
+        );
+      }
+
+      const storedEntry = fieldsetsStorage.getEntry(id);
+      if (storedEntry?.metadata) {
+        if (storedEntry.metadata.dateStarted !== dateStarted) {
+          fieldsetsStorage.remove(id);
+        } else {
+          savedFieldsets = storedEntry.data
+            .map((fieldset) => ({
+              ...fieldset,
+              fields: fieldset.fields.filter((field) => {
+                const serverFingerprint = fieldFingerprints[fieldset.apiNameBinding]?.[field.apiName];
+
+                return (
+                  serverFingerprint !== undefined &&
+                  storedEntry.metadata?.fieldFingerprints[fieldset.apiNameBinding]?.[field.apiName] ===
+                    serverFingerprint
+                );
+              }),
+            }))
+            .filter((fieldset) => fieldset.fields.length > 0);
+          validatedFingerprints = Object.fromEntries(
+            savedFieldsets.map((fieldset) => [
+              fieldset.apiNameBinding,
+              Object.fromEntries(
+                fieldset.fields.map((field) => [
+                  field.apiName,
+                  fieldFingerprints[fieldset.apiNameBinding]?.[field.apiName],
+                ]),
+              ),
+            ]),
+          );
+          fieldsetsStorage.save(id, savedFieldsets, { dateStarted, fieldFingerprints: validatedFingerprints });
+        }
+      } else {
+        // Restore unvalidated legacy drafts for this session only; do not stamp
+        // current server fingerprints onto them.
+        savedFieldsets = storedEntry?.data;
+      }
+    } else if (isTaskRestarted) {
+      saveFieldsetsToStorageDebounced.cancel();
+      pendingStorageFieldsetsRef.current = null;
+      fieldsetsStorage.remove(id);
+    } else {
+      const pendingStorageFieldsets = pendingStorageFieldsetsRef.current;
+      savedFieldsets =
+        pendingStorageFieldsets?.taskId === id ? pendingStorageFieldsets.fieldsets : fieldsetsStorage.get(id);
+
+      if (savedFieldsets) {
+        savedFieldsets = savedFieldsets
+          .map((fieldset) => ({
+            ...fieldset,
+            fields: fieldset.fields.filter((field) => {
+              const serverFingerprint = fieldFingerprints[fieldset.apiNameBinding]?.[field.apiName];
+
+              return (
+                serverFingerprint !== undefined &&
+                syncState.fieldFingerprints[fieldset.apiNameBinding]?.[field.apiName] === serverFingerprint
+              );
+            }),
+          }))
+          .filter((fieldset) => fieldset.fields.length > 0);
+        validatedFingerprints = Object.fromEntries(
+          savedFieldsets
+            .map((fieldset): [string, Record<string, string>] => [
+              fieldset.apiNameBinding,
+              Object.fromEntries(
+                fieldset.fields
+                  .map((field) => [field.apiName, fieldFingerprints[fieldset.apiNameBinding]?.[field.apiName]])
+                  .filter(
+                    ([apiName, serverFingerprint]) =>
+                      syncState.validatedFingerprints[fieldset.apiNameBinding]?.[apiName] === serverFingerprint,
+                  ),
+              ),
+            ])
+            .filter(([, fingerprints]) => Object.keys(fingerprints).length > 0),
+        );
+        saveFieldsetsToStorageDebounced.cancel();
+        fieldsetsStorage.save(id, savedFieldsets, { dateStarted, fieldFingerprints: validatedFingerprints });
+        pendingStorageFieldsetsRef.current = null;
+      }
+    }
+
+    const savedFieldsetsByApiName = new Map(
+      savedFieldsets?.map((fieldset) => [fieldset.apiNameBinding, fieldset]) ?? [],
     );
     setFieldsetOutputValues(
-      (task.fieldsets ?? []).map((fieldset) => ({
+      fieldsets.map((fieldset) => ({
         ...fieldset,
         fields: new ExtraFieldsHelper(
           fieldset.fields,
-          storedFieldsetsByApiName.get(fieldset.apiNameBinding)?.fields,
+          savedFieldsetsByApiName.get(fieldset.apiNameBinding)?.fields,
         ).getFieldsWithValues(),
       })),
     );
 
-    return () => {
-      saveOutputsToStorageDebounced.flush();
-      saveFieldsetsToStorageDebounced.flush();
-    };
-  }, [
-    task.id,
-    task.dateStarted,
-    taskOutputSignature,
-    taskFieldsetsSignature,
-    saveFieldsetsToStorageDebounced,
-    saveOutputsToStorageDebounced,
-  ]);
-
-  const editField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
-    setOutputValues((previousOutputFields) => {
-      const newFields = getEditedFields(previousOutputFields, apiName, changedProps);
-      saveOutputsToStorageDebounced(task.id, newFields);
-
-      return newFields;
-    });
-  };
-
-  const editFieldsetField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
-    setFieldsetOutputValues((previousFieldsets) => {
-      const nextFieldsets = previousFieldsets.map((fieldset) => ({
-        ...fieldset,
-        fields: getEditedFields(fieldset.fields, apiName, changedProps),
-      }));
-      saveFieldsetsToStorageDebounced(task.id, nextFieldsets);
-
-      return nextFieldsets;
-    });
-  };
+    syncState.taskId = id;
+    syncState.dateStarted = dateStarted;
+    syncState.fieldsetsFingerprint = taskFieldsetsFingerprint;
+    syncState.fieldFingerprints = fieldFingerprints;
+    syncState.validatedFingerprints = validatedFingerprints;
+  }, [task.id, task.dateStarted, taskFieldsetsFingerprint, saveFieldsetsToStorageDebounced]);
 
   const flushOutputs = () => {
     saveOutputsToStorageDebounced.flush();
     saveFieldsetsToStorageDebounced.flush();
   };
 
-  return {
-    editField,
-    editFieldsetField,
-    fieldsetOutputValues,
-    flushOutputs,
-    outputValues,
+  useEffect(() => () => flushOutputs(), [saveFieldsetsToStorageDebounced, saveOutputsToStorageDebounced]);
+
+  const editField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
+    const serverField = task.output.find((field) => field.apiName === apiName);
+
+    // Only the edited field is known to match the server definition; legacy restored fields stay session-scoped.
+    if (serverField) {
+      const serverFingerprint = getTaskOutputFingerprint([serverField]);
+      outputSyncStateRef.current.fieldFingerprints[apiName] = serverFingerprint;
+      outputSyncStateRef.current.validatedFingerprints = {
+        ...outputSyncStateRef.current.validatedFingerprints,
+        [apiName]: serverFingerprint,
+      };
+    }
+
+    setOutputValues((previousOutputFields) => {
+      const newFields = getEditedFields(previousOutputFields, apiName, changedProps);
+
+      pendingStorageOutputRef.current = {
+        taskId: task.id,
+        output: newFields,
+        metadata: {
+          dateStarted: task.dateStarted,
+          fieldFingerprints: { ...outputSyncStateRef.current.validatedFingerprints },
+        },
+      };
+      saveOutputsToStorageDebounced();
+
+      return newFields;
+    });
   };
+
+  const editFieldsetField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
+    const matchingFieldsets =
+      task.fieldsets?.filter((fieldset) => fieldset.fields.some((field) => field.apiName === apiName)) ?? [];
+
+    // The edit lands in every fieldset with this apiName, so each binding gets its own stamp.
+    matchingFieldsets.forEach((fieldset) => {
+      const serverField = fieldset.fields.find((field) => field.apiName === apiName);
+
+      if (!serverField) return;
+
+      const fingerprint = getTaskOutputFingerprint([serverField]);
+      const syncState = fieldsetSyncStateRef.current;
+      syncState.fieldFingerprints[fieldset.apiNameBinding] = {
+        ...syncState.fieldFingerprints[fieldset.apiNameBinding],
+        [apiName]: fingerprint,
+      };
+      syncState.validatedFingerprints = {
+        ...syncState.validatedFingerprints,
+        [fieldset.apiNameBinding]: {
+          ...syncState.validatedFingerprints[fieldset.apiNameBinding],
+          [apiName]: fingerprint,
+        },
+      };
+    });
+
+    setFieldsetOutputValues((previousFieldsets) => {
+      const nextFieldsets = previousFieldsets.map((fieldset) => ({
+        ...fieldset,
+        fields: getEditedFields(fieldset.fields, apiName, changedProps),
+      }));
+
+      pendingStorageFieldsetsRef.current = {
+        taskId: task.id,
+        fieldsets: nextFieldsets,
+        metadata: {
+          dateStarted: task.dateStarted,
+          fieldFingerprints: { ...fieldsetSyncStateRef.current.validatedFingerprints },
+        },
+      };
+      saveFieldsetsToStorageDebounced();
+      return nextFieldsets;
+    });
+  };
+
+  return { outputValues, fieldsetOutputValues, editField, editFieldsetField, flushOutputs };
 }

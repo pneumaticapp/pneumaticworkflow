@@ -1,5 +1,6 @@
 import { captureException as sentryCaptureException } from './sentryCapture';
 import { isExpectedClientError } from './expectedClientErrors';
+import { InterceptorError } from '../api/InterceptorError';
 
 function findError(args: unknown[]): Error | undefined {
   return args.find((arg): arg is Error => arg instanceof Error);
@@ -20,6 +21,9 @@ function logError(...args: unknown[]): void {
   console.error(...args);
   const err = findError(args);
   if (err) {
+    if (err instanceof InterceptorError) {
+      return;
+    }
     sentryCaptureException(err);
   } else if (args.length > 0) {
     const message =

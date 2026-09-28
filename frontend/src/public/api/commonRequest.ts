@@ -13,6 +13,7 @@ import { isExpectedClientError } from '../utils/expectedClientErrors';
 
 import { InterceptorError } from './InterceptorError';
 import { createApiError } from './utils/createApiError';
+import { bufferNetworkError } from './networkErrorBuffer';
 
 export { InterceptorError };
 
@@ -115,17 +116,24 @@ axiosInstance.interceptors.response.use(
         logger.error('Response Error:', error.response.status, responseData);
       }
     } else if (error.request) {
-      // Don't log error.request (XMLHttpRequest) — contains auth tokens via __sentry_xhr_v3__
-      // Don't log error.config.headers — contains Authorization Bearer token
-      logger.error('Request Error:', {
-        message: error.message,
-        code: error.code,
-        status: error.status,
-        method: error.config?.method,
-        url: error.config?.url,
-        baseURL: error.config?.baseURL,
-        timeout: error.config?.timeout,
-      });
+      if (error.code === 'ERR_NETWORK') {
+        bufferNetworkError({
+          method: error.config?.method,
+          url: error.config?.url,
+        });
+      } else {
+        // Don't log error.request (XMLHttpRequest) — contains auth tokens via __sentry_xhr_v3__
+        // Don't log error.config.headers — contains Authorization Bearer token
+        logger.error('Request Error:', {
+          message: error.message,
+          code: error.code,
+          status: error.status,
+          method: error.config?.method,
+          url: error.config?.url,
+          baseURL: error.config?.baseURL,
+          timeout: error.config?.timeout,
+        });
+      }
     } else {
       logger.error('Error:', error.message);
     }
