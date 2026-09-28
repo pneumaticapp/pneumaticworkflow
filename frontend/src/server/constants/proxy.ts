@@ -12,7 +12,7 @@ export const PROXY_ALLOWED_ROUTES = [
   '/auth/reset-password.*',
   '/auth/change-password',
   '/accounts/invites.*',
-  '/accounts/api-key',
+  '/accounts/api-keys.*',
   '/auth/resend-verification',
   '/auth/verification.*',
 ];

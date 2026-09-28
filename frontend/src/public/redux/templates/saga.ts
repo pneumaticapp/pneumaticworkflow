@@ -22,7 +22,12 @@ import {
 } from '../actions';
 import { getTemplatesSystem } from '../../api/getSystemTemplates';
 import { getTemplatesIntegrationsStats } from '../../api/getTemplatesIntegrationsStats';
-import { IExtraField, TTemplateFieldFieldset, TTemplateIntegrationStatsApi, TTransformedTask } from '../../types/template';
+import {
+  IExtraField,
+  TTemplateFieldFieldset,
+  TTemplateIntegrationStatsApi,
+  TTransformedTask,
+} from '../../types/template';
 import { buildRuntimeMergedOutputParts } from '../../components/TemplateEdit/TaskOutputFlow/mergeTaskOutputFlow';
 import { logger } from '../../utils/logger';
 import { getErrorMessage } from '../../utils/getErrorMessage';
@@ -39,7 +44,7 @@ import { LIMIT_LOAD_SYSTEMS_TEMPLATES, LIMIT_LOAD_TEMPLATES, varibleIdRegex } fr
 import { SYSTEM_MERGED_OUTPUTS } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { isRequestCanceled } from '../../utils/isRequestCanceled';
-import { getIsAdmin } from '../selectors/user';
+import { getCanAccessTemplateIntegrations, getIsAdmin } from '../selectors/user';
 
 export function* fetchTemplatesSystem() {
   const isAdmin: ReturnType<typeof getIsAdmin> = yield select(getIsAdmin);
@@ -99,9 +104,8 @@ export function* fetchTemplatesSystemCategories() {
 
 function* fetchTemplates({ payload: offset = 0 }: TLoadTemplates) {
   try {
-    const { templatesList, templatesListSorting }: ReturnType<typeof getTemplatesStore> = yield select(
-      getTemplatesStore,
-    );
+    const { templatesList, templatesListSorting }: ReturnType<typeof getTemplatesStore> =
+      yield select(getTemplatesStore);
 
     const { count, results } = yield getTemplatesByOwners({
       offset,
@@ -161,20 +165,26 @@ export function* handleLoadTemplateVariables(templateId: number) {
     const transformedTasks: TTransformedTask[] = [
       ...[{ apiName: '-2', name: 'System', needSteName: null, mergedOutputs: SYSTEM_MERGED_OUTPUTS }],
       ...(hasContent(kickoff)
-        ? [{
-          apiName: '-1',
-          name: 'Kick-off',
-          mergedOutputs: buildRuntimeMergedOutputParts(kickoff.fields, kickoff.fieldsets.filter((fieldset) => fieldset.fields.length > 0)),
-        }]
+        ? [
+            {
+              apiName: '-1',
+              name: 'Kick-off',
+              mergedOutputs: buildRuntimeMergedOutputParts(
+                kickoff.fields,
+                kickoff.fieldsets.filter((fieldset) => fieldset.fields.length > 0),
+              ),
+            },
+          ]
         : []),
-      ...tasks
-        .filter(hasContent)
-        .map((task) => ({
-          apiName: task.apiName,
-          name: task.name,
-          ...(varibleIdRegex.test(task.name) && { needSteName: true }),
-          mergedOutputs: buildRuntimeMergedOutputParts(task.fields, task.fieldsets.filter((fieldset) => fieldset.fields.length > 0)),
-        })),
+      ...tasks.filter(hasContent).map((task) => ({
+        apiName: task.apiName,
+        name: task.name,
+        ...(varibleIdRegex.test(task.name) && { needSteName: true }),
+        mergedOutputs: buildRuntimeMergedOutputParts(
+          task.fields,
+          task.fieldsets.filter((fieldset) => fieldset.fields.length > 0),
+        ),
+      })),
     ];
     yield put(saveTemplateTasks({ templateId, transformedTasks }));
   } catch (error) {
@@ -189,6 +199,14 @@ export function* handleLoadTemplateVariables(templateId: number) {
 }
 
 export function* loadTemplateIntegrationsStatsSaga({ payload: { templates } }: TLoadTemplateIntegrationsStats) {
+  const canAccessIntegrations: ReturnType<typeof getCanAccessTemplateIntegrations> = yield select(
+    getCanAccessTemplateIntegrations,
+  );
+
+  if (!canAccessIntegrations) {
+    return;
+  }
+
   try {
     const stats: TTemplateIntegrationStatsApi[] = yield call(getTemplatesIntegrationsStats, { templates });
     yield put(setTemplateIntegrationsStats(stats));

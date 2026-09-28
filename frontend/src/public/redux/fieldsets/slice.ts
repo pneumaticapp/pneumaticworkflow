@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { IFieldsetsStore, IFieldsetsList } from '../../types/redux';
 import {
-  IFieldsetCatalogItem, ICreateFieldsetParams,
+  IFieldsetCatalogItem,
+  ICreateFieldsetParams,
   IUpdateFieldsetParams,
   EFieldsetsSorting,
 } from '../../types/fieldset';
@@ -33,11 +33,8 @@ const fieldsetsSlice = createSlice({
   name: 'fieldsets',
   initialState,
   reducers: {
-    loadFieldsets: (state, action: PayloadAction<{ offset: number }>) => {
+    loadFieldsets: (state, _action: PayloadAction<{ offset: number }>) => {
       state.isLoading = true;
-      if (action.payload.offset === 0) {
-        state.fieldsetsList = { count: 0, offset: 0, items: [] };
-      }
     },
 
     loadFieldsetsSuccess: (state, action: PayloadAction<IFieldsetsList>) => {
@@ -96,9 +93,7 @@ const fieldsetsSlice = createSlice({
       state.currentFieldset = action.payload;
       state.isCurrentFieldsetLoading = false;
 
-      const listIndex = state.fieldsetsList.items.findIndex(
-        (item) => item.id === action.payload.id
-      );
+      const listIndex = state.fieldsetsList.items.findIndex((item) => item.id === action.payload.id);
       if (listIndex !== -1) {
         state.fieldsetsList.items[listIndex].name = action.payload.name;
         state.fieldsetsList.items[listIndex].description = action.payload.description;
@@ -115,6 +110,10 @@ const fieldsetsSlice = createSlice({
 
     deleteFieldsetAction: (state, _action: PayloadAction<TDeleteFieldsetPayload>) => {
       state.isLoading = true;
+      state.isCatalogLoaded = false;
+    },
+
+    cloneFieldsetAction: (state, _action: PayloadAction<{ id: number }>) => {
       state.isCatalogLoaded = false;
     },
 
@@ -160,6 +159,7 @@ export const {
   createFieldsetAction,
   updateFieldsetAction,
   deleteFieldsetAction,
+  cloneFieldsetAction,
   removeFieldsetFromList,
 
   loadFieldsetsCatalog,

@@ -2459,6 +2459,53 @@ def test_run__not_admin__ok(
     assert workflow.workflow_starter.id == not_admin.id
 
 
+def test_run__first_task_require_all_and_skip_for_starter__ok(
+    mocker,
+    api_client,
+):
+
+    # arrange
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    mocker.patch(
+        'src.notifications.tasks.send_new_task_notification.delay',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_started',
+    )
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    performer = create_test_admin(account=account)
+    template = create_test_template(
+        user=owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    template_task = template.tasks.get(number=1)
+    template_task.raw_performers.all().delete()
+    template_task.add_raw_performer(performer)
+    template_task.skip_for_starter = True
+    template_task.require_completion_by_all = True
+    template_task.save(
+        update_fields=['skip_for_starter', 'require_completion_by_all'],
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(f'/templates/{template.id}/run')
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    task = workflow.tasks.get(number=1)
+    assert workflow.workflow_starter_id == owner.id
+    assert task.status == TaskStatus.ACTIVE
+    assert task.require_completion_by_all is True
+    assert task.skip_for_starter is True
+
+
 def test_run__api_request__ok(mocker, api_client):
 
     # arrange
@@ -4448,6 +4495,82 @@ def test_run__deleted_performer_in_ancestor_task___validation_error(
     assert response.data['message'] == message
     assert response.data['details']['name'] == 'ancestor_task_id'
     assert response.data['details']['reason'] == message
+
+
+def test_run__ancestor_group_user_only__validation_error(
+    mocker,
+    api_client,
+):
+
+    """
+    Ghost GROUP_USER on ancestor task without USER/GROUP assignment
+    → run with ancestor_task_id raises MSG_PW_0075
+    """
+
+    # arrange
+    send_new_task_notification_mock = mocker.patch(
+        'src.notifications.tasks'
+        '.send_new_task_notification.delay',
+    )
+    workflows_started_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_request_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.api_request',
+    )
+    workflow_run_event_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    sub_workflow_run_event_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.sub_workflow_run_event',
+    )
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user_1 = create_test_not_admin(account=account)
+    parent_workflow = create_test_workflow(
+        user=owner,
+        tasks_count=1,
+    )
+    ancestor_task = parent_workflow.tasks.get(number=1)
+    TaskPerformer.objects.filter(task_id=ancestor_task.id).delete()
+    TaskPerformer.objects.create(
+        task_id=ancestor_task.id,
+        user_id=user_1.id,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+    )
+    template = create_test_template(
+        user=user_1,
+        is_active=True,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user_1)
+    message = messages.MSG_PW_0075
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'name': 'Test name',
+            'ancestor_task_id': ancestor_task.id,
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    assert response.data['details']['name'] == 'ancestor_task_id'
+    assert response.data['details']['reason'] == message
+    send_new_task_notification_mock.assert_not_called()
+    workflows_started_mock.assert_not_called()
+    api_request_mock.assert_not_called()
+    workflow_run_event_mock.assert_not_called()
+    sub_workflow_run_event_mock.assert_not_called()
 
 
 def test_run__account_owner_not_performer_in_ancestor_task__ok(

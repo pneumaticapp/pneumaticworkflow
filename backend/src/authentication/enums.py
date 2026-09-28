@@ -29,6 +29,12 @@ class ResetPasswordStatus:
     EXPIRED = 1
     INVALID = 2
 
+    CHOICES = (
+        (VALID, 'Valid'),
+        (EXPIRED, 'Expired'),
+        (INVALID, 'Invalid'),
+    )
+
 
 class AuthTokenType:
 

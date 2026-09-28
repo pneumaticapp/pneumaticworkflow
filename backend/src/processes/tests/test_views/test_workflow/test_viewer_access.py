@@ -16,6 +16,10 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
 )
+from src.permissions.enums import PermissionSource
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 UserModel = get_user_model()
 
@@ -491,7 +495,11 @@ class TestWorkflowViewerAccess:
             task=task,
             user=performer_user,
         )
-        workflow.members.add(performer_user)
+        WorkflowPermissionService(workflow).grant_view(
+            user=performer_user,
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
 
         api_client.token_authenticate(performer_user)
         url = reverse('workflows-detail', args=[workflow.id])
@@ -523,7 +531,11 @@ class TestWorkflowViewerAccess:
             is_admin=False,
             is_account_owner=False,
         )
-        workflow.members.add(member_user)
+        WorkflowPermissionService(workflow).grant_view(
+            user=member_user,
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
 
         api_client.token_authenticate(member_user)
         url = reverse('workflows-detail', args=[workflow.id])
@@ -562,7 +574,11 @@ class TestWorkflowViewerAccess:
             is_admin=False,
             is_account_owner=False,
         )
-        workflow.members.add(member_user)
+        WorkflowPermissionService(workflow).grant_view(
+            user=member_user,
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
 
         api_client.token_authenticate(member_user)
         url = reverse('workflows-detail', args=[workflow.id])

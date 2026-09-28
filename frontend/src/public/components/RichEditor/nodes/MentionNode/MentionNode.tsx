@@ -48,12 +48,7 @@ export class MentionNode extends DecoratorNode<React.ReactElement> {
   }
 
   static clone(node: MentionNode): MentionNode {
-    return new MentionNode(
-      node.mentionId,
-      node.mentionName,
-      node.mentionLink,
-      node.getKey(),
-    );
+    return new MentionNode(node.mentionId, node.mentionName, node.mentionLink, node.getKey());
   }
 
   static importJSON(serialized: SerializedMentionNode): MentionNode {
@@ -83,7 +78,6 @@ export class MentionNode extends DecoratorNode<React.ReactElement> {
     return this.mentionLink;
   }
 
-  // eslint-disable-next-line class-methods-use-this -- Lexical DecoratorNode override
   isInline(): boolean {
     return true;
   }
@@ -153,13 +147,9 @@ export class MentionNode extends DecoratorNode<React.ReactElement> {
 }
 
 export function $createMentionNode(payload: TMentionNodePayload): MentionNode {
-  return $applyNodeReplacement(
-    new MentionNode(payload.id, payload.name, payload.link),
-  );
+  return $applyNodeReplacement(new MentionNode(payload.id, payload.name, payload.link));
 }
 
-export function $isMentionNode(
-  node: LexicalNode | null | undefined,
-): node is MentionNode {
+export function $isMentionNode(node: LexicalNode | null | undefined): node is MentionNode {
   return node instanceof MentionNode;
 }

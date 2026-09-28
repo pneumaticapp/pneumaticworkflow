@@ -23,15 +23,8 @@ import {
   selectStartOfChecklistItem,
   selectEndOfChecklistItem,
 } from './checklistPluginUtils';
-import {
-  $createChecklistNode,
-  $createChecklistItemNode,
-  $isChecklistNode,
-  $isChecklistItemNode,
-} from '../../nodes';
+import { $createChecklistNode, $createChecklistItemNode, $isChecklistNode, $isChecklistItemNode } from '../../nodes';
 import { createChecklistApiName, createChecklistSelectionApiName } from '../../../../utils/createId';
-
-
 
 export function createEnterKeyHandler(editor: LexicalEditor) {
   return (event: KeyboardEvent | null): boolean => {
@@ -68,10 +61,7 @@ export function createInsertChecklistHandler(editor: LexicalEditor) {
 
       const selectedBlocks = getSelectedRootBlocks();
       const convertibleBlocks = selectedBlocks.filter(
-        (b) =>
-          !$isChecklistNode(b) &&
-          !$isChecklistItemNode(b) &&
-          !$isListNode(b),
+        (b) => !$isChecklistNode(b) && !$isChecklistItemNode(b) && !$isListNode(b),
       );
       if (convertibleBlocks.length >= 2) {
         const firstItem = convertBlocksToChecklist(convertibleBlocks);
@@ -82,12 +72,7 @@ export function createInsertChecklistHandler(editor: LexicalEditor) {
       }
 
       const block = getBlockNodeFromSelection();
-      if (
-        block !== null &&
-        !$isChecklistNode(block) &&
-        !$isChecklistItemNode(block) &&
-        !$isListNode(block)
-      ) {
+      if (block !== null && !$isChecklistNode(block) && !$isChecklistItemNode(block) && !$isListNode(block)) {
         const newItem = convertBlockToChecklist(block);
         if (newItem !== null) {
           selectEndOfChecklistItem(newItem);
@@ -168,9 +153,7 @@ export function createPasteClipboardNodesHandler() {
     if (hasChecklist) assignNewChecklistIds(payload.nodes);
     const filtered = removeDuplicateClipboardParagraphs(payload.nodes);
     const changed =
-      hasChecklist ||
-      filtered.length !== payload.nodes.length ||
-      filtered.some((n, i) => n !== payload.nodes[i]);
+      hasChecklist || filtered.length !== payload.nodes.length || filtered.some((n, i) => n !== payload.nodes[i]);
     if (!changed) return false;
     payload.selection.insertNodes(filtered);
     return true;

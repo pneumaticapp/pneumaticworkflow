@@ -20,6 +20,24 @@ const createMockTask = (task: Partial<ITaskListItem>): ITaskListItem => {
 };
 
 describe('getTaskListWithNewTask', () => {
+  it('does not insert a task that is already in the list', () => {
+    const existingTask = createMockTask({ id: 1 });
+    const initialTaskList: ITaskList = {
+      items: [existingTask, createMockTask({ id: 2 })],
+      count: 2,
+      offset: 2,
+    };
+
+    const resultTaskList = getTaskListWithNewTask(
+      initialTaskList,
+      createMockTask({ id: 1, name: 'Duplicate event' }),
+      ETaskListSorting.DateDesc,
+    );
+
+    expect(resultTaskList).toBe(initialTaskList);
+    expect(resultTaskList.items.filter((task) => task.id === 1)).toHaveLength(1);
+  });
+
   it('inserts task in the top of list if sorting is "Newest first"', () => {
     const initialTaskList: ITaskList = {
       items: [createMockTask({ id: 1 }), createMockTask({ id: 2 }), createMockTask({ id: 3 })],

@@ -42,6 +42,7 @@ class NotificationMethod:
     dataset_created = 'dataset_created'
     dataset_updated = 'dataset_updated'
     dataset_deleted = 'dataset_deleted'
+    account_plan_changed = 'account_plan_changed'
     workflows_digest = 'workflows_digest'
     tasks_digest = 'tasks_digest'
     user_deactivated = 'user_deactivated'
@@ -87,6 +88,7 @@ class NotificationMethod:
         dataset_created,
         dataset_updated,
         dataset_deleted,
+        account_plan_changed,
         workflows_digest,
         tasks_digest,
         user_deactivated,
@@ -166,6 +168,7 @@ class EmailType:
 
 
 cio_template_ids = {
+    EmailType.INVITE: env.get('CIO_TEMPLATE__INVITE'),
     EmailType.RESET_PASSWORD: env.get('CIO_TEMPLATE__RESET_PASSWORD'),
     EmailType.USER_DEACTIVATED: env.get('CIO_TEMPLATE__USER_DEACTIVATED'),
     EmailType.NEW_TASK: env.get('CIO_TEMPLATE__NEW_TASK'),

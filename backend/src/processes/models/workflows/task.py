@@ -4,7 +4,9 @@ from typing import TYPE_CHECKING, List, Optional, Set, Tuple
 
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models.constraints import UniqueConstraint
 from django.utils import timezone
+from django.db.models import Q
 
 from src.accounts.enums import UserStatus
 from src.accounts.models import (
@@ -12,8 +14,10 @@ from src.accounts.models import (
     Notification,
     UserGroup,
 )
+from src.executor import RawSqlExecutor
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
+from src.permissions.enums import PermissionSource
 from src.processes.enums import (
     DirectlyStatus,
     FieldType,
@@ -27,10 +31,11 @@ from src.processes.models.mixins import (
     TaskRawPerformersMixin,
 )
 from src.processes.models.workflows.workflow import Workflow
+from src.processes.queries import GetTaskPerformersQuery
 from src.processes.querysets import (
     DelayBaseQuerySet,
     TaskPerformerQuerySet,
-    TasksQuerySet,
+    TaskQuerySet,
 )
 
 if TYPE_CHECKING:
@@ -93,7 +98,7 @@ class Task(
         help_text='Does not contains markdown',
     )
 
-    objects = BaseSoftDeleteManager.from_queryset(TasksQuerySet)()
+    objects = BaseSoftDeleteManager.from_queryset(TaskQuerySet)()
 
     def reset_delay(self, delay=None):
         if delay is None:
@@ -191,9 +196,6 @@ class Task(
         )
         raw_performer.save()
         return raw_performer
-
-    def exclude_directly_deleted_taskperformer_set(self):
-        return self.taskperformer_set.exclude_directly_deleted()
 
     def get_default_performer(self) -> UserModel:
 
@@ -470,6 +472,7 @@ class Task(
                             DirectlyStatus.NO_STATUS
                         )
                         task_performer.save(update_fields=('directly_status',))
+                        created_performers_user_ids.append(user_id)
         if group_ids:
             for group_id, raw_performers_ in group_ids.items():
                 task_performer, created = TaskPerformer.objects.get_or_create(
@@ -500,6 +503,7 @@ class Task(
                             DirectlyStatus.NO_STATUS
                         )
                         task_performer.save(update_fields=('directly_status',))
+                        created_performers_group_ids.append(group_id)
         if raw_performers_for_update:
             from src.processes.models.workflows.raw_performer import (
                 RawPerformer,
@@ -521,7 +525,27 @@ class Task(
         Notification.objects.exclude_users(
             union_user_ids,
         ).by_task(self.id).delete()
-        self.workflow.members.add(*created_performers_user_ids)
+        # Guardian: sync view for newly created USER / GROUP performers.
+        # Lazy imports: model → service / celery would cycle at import time.
+        if created_performers_user_ids or created_performers_group_ids:
+            from src.processes.services.workflow_permissions import (
+                WorkflowPermissionService,
+            )
+            from src.storage.tasks import (
+                schedule_sync_workflow_attachment_permissions,
+            )
+            perm_svc = WorkflowPermissionService(self.workflow)
+            if created_performers_user_ids:
+                perm_svc.grant_view_bulk(
+                    user_ids=created_performers_user_ids,
+                    source_type=PermissionSource.PERFORMER,
+                    source_id=self.id,
+                )
+            for group_id in created_performers_group_ids:
+                perm_svc.sync_performer_group(group_id=group_id)
+            schedule_sync_workflow_attachment_permissions(
+                self.workflow_id,
+            )
         return (
             created_performers_user_ids,
             created_performers_group_ids,
@@ -542,6 +566,7 @@ class Task(
         performers_to_delete = (
             TaskPerformer.objects
             .by_task(self.id)
+            .type_user_or_group()
             .exclude_ids(task_performer_ids)
             .exclude_directly_changed()
         )
@@ -554,6 +579,31 @@ class Task(
                 deleted_user_ids.append(performer_to_delete.user_id)
         if deleted_user_ids or deleted_group_ids:
             performers_to_delete.delete()
+            from src.processes.services.workflow_permissions import (
+                WorkflowPermissionService,
+            )
+            from src.storage.tasks import (
+                schedule_sync_workflow_attachment_permissions,
+            )
+            perm_service = WorkflowPermissionService(self.workflow)
+            if deleted_user_ids:
+                remaining_user_ids = (
+                    TaskPerformer.objects
+                    .by_task(self.id)
+                    .exclude_directly_deleted()
+                    .filter(type=PerformerType.USER)
+                    .values_list('user_id', flat=True)
+                )
+                perm_service.sync_view(
+                    user_ids=remaining_user_ids,
+                    source_type=PermissionSource.PERFORMER,
+                    source_id=self.id,
+                )
+            for group_id in deleted_group_ids:
+                perm_service.sync_performer_group(group_id=group_id)
+            schedule_sync_workflow_attachment_permissions(
+                self.workflow_id,
+            )
         return deleted_user_ids, deleted_group_ids
 
     def delete_raw_performer(
@@ -588,18 +638,58 @@ class Task(
         super().delete_raw_performers()
         self._delete_orphaned_performers()
 
-    def can_be_completed(self) -> bool:
+    def get_user_performers(self):
+
+        """ Assigned USER performers only (excludes GROUP_USER markers). """
+
+        return self.performers.filter(
+            taskperformer__type=PerformerType.USER,
+            taskperformer__is_deleted=False,
+        ).distinct()
+
+    def can_be_completed(self, by_user: Optional[UserModel] = None) -> bool:
 
         if self.is_completed is True:
             return False
+
         task_performers = self.taskperformer_set.exclude_directly_deleted()
-        completed_performers = task_performers.completed().exists()
-        incompleted_performers = task_performers.not_completed().exists()
-        by_all = self.require_completion_by_all
-        return (
-            (not by_all and completed_performers) or
-            (by_all and not incompleted_performers)
-        )
+        if not task_performers.exists():
+            return True
+        if self.require_completion_by_all:
+            query = GetTaskPerformersQuery(
+                task_id=self.id,
+                is_completed=False,
+            )
+            data = RawSqlExecutor.fetch(*query.get_sql())
+            incompleted_user_ids = {e['id'] for e in data}
+            if by_user:
+                # incompleted_user_ids contains only last incompleted user
+                result = incompleted_user_ids == {by_user.id}
+            else:
+                result = len(incompleted_user_ids) == 0
+        else:
+            if by_user:
+                completed_performers = task_performers.filter(
+                    Q(is_completed=True)
+                    | Q(
+                        is_completed=False,
+                        user_id=by_user.id,
+                        type=PerformerType.USER,
+                    )
+                    | Q(
+                        is_completed=False,
+                        type=PerformerType.GROUP,
+                        group__users=by_user.id,
+                    ),
+                )
+            else:
+                completed_performers = (
+                    task_performers
+                    .type_user_or_group()
+                    .completed()
+                )
+            result = completed_performers.exists()
+        return result
 
     def get_revert_tasks(self):
 
@@ -696,7 +786,7 @@ class TaskForList(
     due_date_tsp = models.FloatField(null=True)
     status = models.CharField(max_length=50)
 
-    objects = BaseSoftDeleteManager.from_queryset(TasksQuerySet)()
+    objects = BaseSoftDeleteManager.from_queryset(TaskQuerySet)()
 
     def __str__(self):
         return self.name
@@ -754,12 +844,16 @@ class Delay(SoftDeleteModel):
     objects = BaseSoftDeleteManager.from_queryset(DelayBaseQuerySet)()
 
 
-class TaskPerformer(
-    SoftDeleteModel,
-):
+class TaskPerformer(SoftDeleteModel):
 
     class Meta:
-        unique_together = ('user', 'task')
+        constraints = [
+            UniqueConstraint(
+                fields=['task', 'user', 'type'],
+                condition=Q(is_deleted=False),
+                name='processes_taskperformer_user_id_task_id_type_unique',
+            ),
+        ]
         ordering = ('user_id',)
 
     user = models.ForeignKey(
@@ -787,5 +881,9 @@ class TaskPerformer(
     )
     is_completed = models.BooleanField(default=False)
     date_completed = models.DateTimeField(null=True)
+
+    @property
+    def type_group(self):
+        return self.type == PerformerType.GROUP
 
     objects = BaseSoftDeleteManager.from_queryset(TaskPerformerQuerySet)()

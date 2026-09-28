@@ -5,11 +5,7 @@ import { patchTaskInList } from '../../tasks/slice';
 import { ITask } from '../../../types/tasks';
 import { IWorkflowTaskClient } from '../../../types/workflow';
 
-export function getTaskWithRenamedWorkflow(
-  task: ITask,
-  workflowId: number,
-  workflowName: string,
-): ITask | null {
+export function getTaskWithRenamedWorkflow(task: ITask, workflowId: number, workflowName: string): ITask | null {
   const isMainWorkflow = workflowId === task.workflow.id;
   const isSubWorkflow = task.subWorkflows?.some((subWorkflow) => subWorkflow.id === workflowId);
 
@@ -46,10 +42,12 @@ export function* syncRenamedWorkflowToTasks(
 
   yield all(
     workflowTasks.map((workflowTask) =>
-      put(patchTaskInList({
-        taskId: workflowTask.id,
-        task: { workflowName },
-      })),
+      put(
+        patchTaskInList({
+          taskId: workflowTask.id,
+          task: { workflowName },
+        }),
+      ),
     ),
   );
 }

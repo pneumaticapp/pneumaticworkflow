@@ -43,13 +43,7 @@ jest.mock('reactstrap', () => ({
     </button>
   ),
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <div role="menu">{children}</div>,
-  DropdownItem: ({
-    children,
-    onClick,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-  }) => (
+  DropdownItem: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => (
     <button type="button" onClick={onClick}>
       {children}
     </button>
@@ -127,5 +121,20 @@ describe('FilterSelect', () => {
     expect(screen.getByText('Template A')).toBeInTheDocument();
     expect(screen.getByText('Template B')).toBeInTheDocument();
     expect(screen.queryByText('No items found')).not.toBeInTheDocument();
+  });
+
+  it('renders option with ReactNode label and triggers onChange on selection click', () => {
+    const handleSelect = jest.fn();
+    render(
+      <FilterSelect {...defaultProps} options={[{ id: 1, name: 'Template ReactNode' }]} onChange={handleSelect} />,
+    );
+
+    openDropdown();
+
+    const optionButton = screen.getByText('Template ReactNode');
+    fireEvent.click(optionButton);
+
+    expect(handleSelect).toHaveBeenCalledTimes(1);
+    expect(handleSelect).toHaveBeenCalledWith(1);
   });
 });

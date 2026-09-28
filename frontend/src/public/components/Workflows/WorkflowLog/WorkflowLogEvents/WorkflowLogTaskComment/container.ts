@@ -4,7 +4,8 @@ import {
   createReactionComment,
   watchedComment,
   editComment,
-  deleteComment } from '../../../../../redux/workflows/slice';
+  deleteComment,
+} from '../../../../../redux/workflows/slice';
 import { TWorkflowLogTaskCommentProps, WorkflowLogTaskComment } from './WorkflowLogTaskComment';
 
 import { IApplicationState } from '../../../../../types/redux';

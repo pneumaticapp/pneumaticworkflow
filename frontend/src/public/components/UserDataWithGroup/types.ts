@@ -1,4 +1,4 @@
-import { ETemplateOwnerType } from "../../types/template";
+import { ETemplateOwnerType } from '../../types/template';
 
 export interface IUserDataWithGroupProps {
   type: ETemplateOwnerType;

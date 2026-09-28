@@ -1,5 +1,9 @@
-import { IChangeUserAdminProps, ITeamFetchStartedProps, TOpenDeleteUserModalPayload } from "../../../redux/accounts/types";
-import { EUserListSorting, TUserListItem } from "../../../types/user";
+import {
+  IChangeUserAdminProps,
+  ITeamFetchStartedProps,
+  TOpenDeleteUserModalPayload,
+} from '../../../redux/accounts/types';
+import { EUserListSorting, TUserListItem } from '../../../types/user';
 
 export interface IUsersProps {
   currentUserId: number;
@@ -16,6 +20,16 @@ export interface IUsersProps {
   openTeamInvitesPopup(): void;
   loadInvitesUsers(): void;
   setGeneralLoaderVisibility(isVisible: boolean): void;
-  loadChangeUserManager(payload: { id: number; managerId: number | null; onSuccess?: () => void; onError?: () => void }): void;
-  loadChangeUserReports(payload: { id: number; reportIds: number[]; onSuccess?: () => void; onError?: () => void }): void;
+  loadChangeUserManager(payload: {
+    id: number;
+    managerId: number | null;
+    onSuccess?: () => void;
+    onError?: () => void;
+  }): void;
+  loadChangeUserReports(payload: {
+    id: number;
+    reportIds: number[];
+    onSuccess?: () => void;
+    onError?: () => void;
+  }): void;
 }

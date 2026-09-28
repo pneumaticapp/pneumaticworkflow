@@ -1,6 +1,6 @@
 .process-highlights-feed__container {
   /* stylelint-disable-next-line declaration-no-important */
-  max-width: 856px !important;
+  max-width: 85.6rem !important;
 }
 
 .loading {
@@ -8,8 +8,8 @@
   position: absolute !important;
   top: 0 !important;
   right: 0 !important;
-  left: 0 !important;
   bottom: 0 !important;
+  left: 0 !important;
   /* stylelint-enable declaration-no-important */
   margin: auto;
   opacity: 1;
@@ -20,51 +20,51 @@
 }
 
 .filters__title {
-  margin-bottom: 16px;
-  font-family: 'Abhaya Libre', 'Times New Roman', Arial;
-  font-size: 36px;
+  @mixin h2;
+
+  margin-bottom: 1.6rem;
   font-weight: 800;
-  line-height: 40px;
+  color: var(--pneumatic-color-black100);
   letter-spacing: -0.01em;
-  color: #262522;
 }
 
 .filters__separator {
-  margin-bottom: 32px;
-  border-top: 2px solid #262522;
+  margin-bottom: 3.2rem;
+  border-top: 0.2rem solid var(--pneumatic-color-black100);
 }
 
 .filters__buttons {
   display: flex;
   flex-flow: row wrap;
   align-items: center;
+  margin-top: 3.2rem;
 }
 
 .button_save-container {
-  margin-right: 16px;
+  margin-right: 1.6rem;
 }
 
 .button_clear-container {
-  padding: 12px 0;
+  padding: 1.2rem 0;
 }
 
 .feed__spinner {
   /* stylelint-disable-next-line declaration-no-important */
   position: absolute !important;
-  align-self: center;
   /* stylelint-disable-next-line declaration-no-important */
   top: 100% !important;
+  align-self: center;
 }
 
 .feed {
   position: relative;
   display: flex;
-  /* height: 100%; */
   flex-flow: column;
+
   /* The min height is needed for the infinite scroll to work properly  */
-  min-height: 10px;
+  min-height: 1rem;
 
   @media (--desktop) {
-    padding-left: 24px;
+    padding-left: 2.4rem;
   }
 }

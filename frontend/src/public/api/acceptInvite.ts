@@ -8,13 +8,15 @@ export interface IRegisterUserResponse {
 }
 
 export function acceptInvite(id: string, body: TUserInvited) {
-  const { api: { urls }} = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   return commonRequest<IRegisterUserResponse>(
     urls.acceptInvite.replace(':id', id),
     {
       method: 'POST',
-      data: mapRequestBody(body as unknown as {[key: string]: string}),
+      data: mapRequestBody(body as unknown as { [key: string]: string }),
     },
     {
       type: 'local',

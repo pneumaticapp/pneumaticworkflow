@@ -99,9 +99,7 @@ export function DatasetModal({ type }: IDatasetModalProps) {
         <Header tag="p" size="6" className={styles['dataset-modal__title']}>
           {formatMessage({ id: title })}
         </Header>
-        <p className={styles['dataset-modal__description']}>
-          {formatMessage({ id: description })}
-        </p>
+        <p className={styles['dataset-modal__description']}>{formatMessage({ id: description })}</p>
         <form onSubmit={handleSubmit} data-autofocus-first-field>
           <InputField
             autoFocus

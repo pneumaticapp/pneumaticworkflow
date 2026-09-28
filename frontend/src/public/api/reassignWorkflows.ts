@@ -8,7 +8,9 @@ export type TReassignWorkflowsRequest = {
 };
 
 export function reassignWorkflows(oldUser: number, newUser: number) {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   const requestBody: TReassignWorkflowsRequest = { oldUser, newUser };
 

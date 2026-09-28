@@ -13,23 +13,15 @@ export function TemplateLayout({ children }: ITemplateLayoutProps) {
   const { formatMessage } = useIntl();
 
   const renderLeftContent = () => {
-    return (
-      <ReturnLink
-        label={formatMessage({ id: 'menu.templates' })}
-        route={ERoutes.Templates}
-      />
-    );
+    return <ReturnLink label={formatMessage({ id: 'menu.templates' })} route={ERoutes.Templates} />;
   };
 
   return (
     <>
       <TopNavContainer leftContent={renderLeftContent()} />
       <main>
-        <div className="container-fluid">
-          {children}
-        </div>
+        <div className="container-fluid">{children}</div>
       </main>
     </>
   );
 }
-

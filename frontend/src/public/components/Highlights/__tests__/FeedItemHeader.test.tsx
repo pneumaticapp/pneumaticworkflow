@@ -29,11 +29,8 @@ jest.mock('../../Attachments', () => ({ Attachments: () => null }));
 jest.mock('../../UserData', () => ({ UserData: () => null }));
 jest.mock('../../UserDataWithGroup', () => ({
   __esModule: true,
-  default: ({
-    children,
-  }: {
-    children: (group: { firstName: string }) => React.ReactNode;
-  }) => children({ firstName: 'Engineering Team' }),
+  default: ({ children }: { children: (group: { firstName: string }) => React.ReactNode }) =>
+    children({ firstName: 'Engineering Team' }),
 }));
 jest.mock('../Ellipsis', () => ({
   Ellipsis: jest.fn(({ expand }: { expand: () => void }) => (

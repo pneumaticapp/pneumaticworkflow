@@ -176,10 +176,31 @@ class TaskUpdateVersionService(
 
         # TODO Move to TaskFieldService
 
+        # Runtime fieldset fields are linked via fieldset only (task=None).
+        # Look up by fieldset+api_name so values are preserved on version
+        # update.
+        if fieldset is not None:
+            return TaskField.objects.update_or_create(
+                fieldset=fieldset,
+                api_name=field_data['api_name'],
+                defaults={
+                    'name': field_data['name'],
+                    'description': field_data['description'],
+                    'type': field_data['type'],
+                    'is_required': field_data['is_required'],
+                    'is_hidden': field_data['is_hidden'],
+                    'order': field_data['order'],
+                    'workflow': self.instance.workflow,
+                    'account': self.instance.account,
+                    'dataset_id': field_data['dataset_id'],
+                    'task': self.instance,
+                },
+            )
+
         return TaskField.objects.update_or_create(
             task=self.instance,
             api_name=field_data['api_name'],
-            fieldset=fieldset,
+            fieldset=None,
             defaults={
                 'name': field_data['name'],
                 'description': field_data['description'],

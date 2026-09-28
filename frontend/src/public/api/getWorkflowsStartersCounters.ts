@@ -14,7 +14,9 @@ export function getWorkflowsStartersCounters({
   templatesIdsFilter,
   performersIdsFilter,
 }: IGetWorkflowsStartersCountersConfig) {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   return commonRequest<TUserCounter[]>(
     `${urls.workflowsStartersCounters}?${getQueryString({
@@ -34,5 +36,7 @@ export function getQueryString({
     statusFilter !== EWorkflowsStatus.All && `status=${statusFilter}`,
     `template_ids=${templatesIdsFilter.join(',')}`,
     canFilterByCurrentPerformer(statusFilter) && `current_performer_ids=${performersIdsFilter.join(',')}`,
-  ].filter(Boolean).join('&');
+  ]
+    .filter(Boolean)
+    .join('&');
 }

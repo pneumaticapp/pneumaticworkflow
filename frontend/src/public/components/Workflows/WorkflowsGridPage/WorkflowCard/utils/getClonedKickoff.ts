@@ -3,44 +3,66 @@
 import {
   EExtraFieldType,
   IExtraField,
-  IKickoffClient,
+  ITemplateKickoffClient,
+  IRuntimeKickoffClient,
   TExtraFieldValue,
 } from '../../../../../types/template';
 import { IWorkflowDetailsKickoff } from '../../../../../types/workflow';
 import { getEditKickoff } from '../../../../../utils/workflows';
 import { normalizeSelections } from '../../../../TemplateEdit/utils/normalizeSelections';
+import { normalizeCheckboxValue } from '../../../../../utils/fields';
+import { IFieldsetField, IFieldsetRuntime } from '../../../../../types/fieldset';
 
-export function getClonedKickoff(
-  workflowKickoff: IWorkflowDetailsKickoff,
-  templateKickoff: IKickoffClient,
-): IKickoffClient {
-  const kickoff = getEditKickoff(workflowKickoff);
-  const normalizedKickoffFields = kickoff.fields
+function normalizeKickoffFields(
+  fields: (IExtraField | IFieldsetField)[] = [],
+  templateKickoffFields: (IExtraField | IFieldsetField)[] = [],
+): IExtraField[] {
+  return fields
     .map((field) => {
-      const templateField = templateKickoff.fields.find((templateField) => templateField.apiName === field.apiName);
+      const templateField = templateKickoffFields.find((templateField) => templateField.apiName === field.apiName);
       if (!templateField) {
         return null;
       }
 
-      return cloneFieldSelections(field, templateField);
+      return cloneFieldSelections(field as IExtraField, templateField as IExtraField);
     })
     .filter(Boolean) as IExtraField[];
+}
 
-  const finalFields = normalizedKickoffFields.map((field) => {
-    if (field.type !== EExtraFieldType.Checkbox) {
-      return field;
-    }
+export function getClonedKickoff(
+  workflowKickoff: IWorkflowDetailsKickoff,
+  templateKickoff: ITemplateKickoffClient,
+): IRuntimeKickoffClient {
+  const kickoff = getEditKickoff(workflowKickoff);
+  const finalFields = normalizeKickoffFields(kickoff.fields, templateKickoff.fields);
 
-    if (Array.isArray(field.value)) {
-      return field;
-    }
+  const finalFieldsets: IFieldsetRuntime[] = (kickoff.fieldsets || [])
+    .map((fieldset) => {
+      // TODO (Technical Debt): Backend workflow fieldsets contain raw properties (id, apiName),
+      // while client-side template fieldsets expect apiNameBinding.
+      // We fall back to fieldset.apiName to safely match template fieldsets.
+      const fieldsetApiName = fieldset.apiNameBinding || (fieldset as any).apiName;
 
-    const arrayValue = typeof field.value === 'string' && field.value !== '' ? field.value.split(', ') : [];
+      const templateFieldset = (templateKickoff.fieldsets || []).find(
+        (fieldsetFromTemplate) => fieldsetFromTemplate.apiNameBinding === fieldsetApiName,
+      );
 
-    return { ...field, value: arrayValue as TExtraFieldValue };
-  });
+      if (!templateFieldset) {
+        return null;
+      }
 
-  return { ...kickoff, fields: finalFields };
+      return {
+        ...fieldset,
+        fields: normalizeKickoffFields(fieldset.fields, templateFieldset.fields),
+      };
+    })
+    .filter((fieldset): fieldset is IFieldsetRuntime => Boolean(fieldset));
+
+  return {
+    ...kickoff,
+    fields: finalFields,
+    fieldsets: finalFieldsets,
+  };
 }
 
 function cloneFieldSelections(field: IExtraField, templateField: IExtraField): IExtraField {
@@ -51,7 +73,7 @@ function cloneFieldSelections(field: IExtraField, templateField: IExtraField): I
   let normalizedValue = field.value;
 
   if (normalizedValue) {
-    const parts = Array.isArray(normalizedValue) ? normalizedValue : (normalizedValue as string).split(', ');
+    const parts = normalizeCheckboxValue(normalizedValue);
     const filtered = parts.filter((value) => templateValues.includes(value));
 
     if (field.type === EExtraFieldType.Checkbox) {

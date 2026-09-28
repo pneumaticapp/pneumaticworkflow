@@ -4,17 +4,40 @@
 }
 
 .card-user {
-  margin-left: -4px;
-  display: flex;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
 
-  &:first-child {
-    margin-left: 0;
+  img {
+    width: 100%;
+    height: 100%;
+    vertical-align: unset;
+    object-fit: cover;
+    border-radius: 50%;
   }
 }
 
+.card-users > .card-user:not(:first-child) {
+  margin-left: -0.4rem;
+}
+
+.card-users button {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+.card-users > button:not(:first-child) {
+  margin-left: -0.4rem;
+}
+
 .card-users__more {
-  margin-left: 8px;
-  font-size: 13px;
-  line-height: 16px;
-  color: #979795;
+  margin-left: 0.8rem;
+  font-size: 1.3rem;
+  line-height: 1.6rem;
+  color: var(--pneumatic-color-black48);
 }

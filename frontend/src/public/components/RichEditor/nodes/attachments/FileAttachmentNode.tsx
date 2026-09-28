@@ -36,15 +36,7 @@ function FileAttachmentComponent({
     });
   }, [editor, nodeKey]);
 
-  return (
-    <DocumentAttachment
-      url={url}
-      name={name ?? url}
-      isEdit
-      isClickable={false}
-      deleteFile={deleteFile}
-    />
-  );
+  return <DocumentAttachment url={url} name={name ?? url} isEdit isClickable={false} deleteFile={deleteFile} />;
 }
 
 export class FileAttachmentNode extends DecoratorNode<React.ReactElement> {
@@ -59,12 +51,7 @@ export class FileAttachmentNode extends DecoratorNode<React.ReactElement> {
   }
 
   static clone(node: FileAttachmentNode): FileAttachmentNode {
-    return new FileAttachmentNode(
-      node.attachmentUrl,
-      node.attachmentId,
-      node.attachmentName,
-      node.getKey(),
-    );
+    return new FileAttachmentNode(node.attachmentUrl, node.attachmentId, node.attachmentName, node.getKey());
   }
 
   static importJSON(serialized: SerializedFileAttachmentNode): FileAttachmentNode {
@@ -130,41 +117,23 @@ export class FileAttachmentNode extends DecoratorNode<React.ReactElement> {
     return div;
   }
 
-  // eslint-disable-next-line class-methods-use-this
   updateDOM(): false {
     return false;
   }
 
   getTextContent(): string {
-    return buildAttachmentMarkdownString(
-      this.attachmentName ?? '',
-      this.attachmentUrl,
-      this.attachmentId,
-      'file',
-    );
+    return buildAttachmentMarkdownString(this.attachmentName ?? '', this.attachmentUrl, this.attachmentId, 'file');
   }
 
   decorate(): React.ReactElement {
-    return (
-      <FileAttachmentComponent
-        nodeKey={this.getKey()}
-        url={this.attachmentUrl}
-        name={this.attachmentName}
-      />
-    );
+    return <FileAttachmentComponent nodeKey={this.getKey()} url={this.attachmentUrl} name={this.attachmentName} />;
   }
 }
 
-export function $createFileAttachmentNode(
-  payload: TAttachmentPayload,
-): FileAttachmentNode {
-  return $applyNodeReplacement(
-    new FileAttachmentNode(payload.url, payload.id, payload.name),
-  );
+export function $createFileAttachmentNode(payload: TAttachmentPayload): FileAttachmentNode {
+  return $applyNodeReplacement(new FileAttachmentNode(payload.url, payload.id, payload.name));
 }
 
-export function $isFileAttachmentNode(
-  node: LexicalNode | null | undefined,
-): node is FileAttachmentNode {
+export function $isFileAttachmentNode(node: LexicalNode | null | undefined): node is FileAttachmentNode {
   return node instanceof FileAttachmentNode;
 }

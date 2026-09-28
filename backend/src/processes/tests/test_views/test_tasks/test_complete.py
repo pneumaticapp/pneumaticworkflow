@@ -26,8 +26,58 @@ from src.processes.tests.fixtures import (
     create_test_workflow, create_test_dataset,
 )
 from src.utils.validation import ErrorCode
+from src.permissions.enums import PermissionSource
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
+
+
+def test_complete__next_task_require_all_and_skip_for_starter__ok(
+    api_client,
+):
+    """
+    P1: require_completion_by_all + skip_for_starter on the next task
+    must not 500 when completing the predecessor via /v2/tasks/:id/complete.
+
+    Minimal reproduction from the RCBA report: clean starter who is not
+    a performer on either task; task 2 has both flags true.
+    """
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    performer = create_test_admin(account=account)
+    workflow = create_test_workflow(performer, tasks_count=2)
+    workflow.workflow_starter = starter
+    workflow.save(update_fields=['workflow_starter'])
+
+    task_1 = workflow.tasks.get(number=1)
+    task_1.skip_for_starter = True
+    task_1.require_completion_by_all = False
+    task_1.save(
+        update_fields=['skip_for_starter', 'require_completion_by_all'],
+    )
+
+    task_2 = workflow.tasks.get(number=2)
+    task_2.skip_for_starter = True
+    task_2.require_completion_by_all = True
+    task_2.save(
+        update_fields=['skip_for_starter', 'require_completion_by_all'],
+    )
+
+    api_client.token_authenticate(performer)
+
+    # act
+    response = api_client.post(f'/v2/tasks/{task_1.id}/complete')
+
+    # assert
+    assert response.status_code == 200
+    task_1.refresh_from_db()
+    task_2.refresh_from_db()
+    assert task_1.status == TaskStatus.COMPLETED
+    assert task_2.status == TaskStatus.ACTIVE
 
 
 def test_complete__response_body__ok(
@@ -332,7 +382,11 @@ def test_complete__user_not_performer__permission_denied(
     workflow = create_test_workflow(owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
     user = create_test_admin(account=account)
-    workflow.members.add(user)
+    WorkflowPermissionService(workflow).grant_view(
+        user=user,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',

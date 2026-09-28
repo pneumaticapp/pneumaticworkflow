@@ -1,4 +1,5 @@
 from django.db.models import Q
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import LimitOffsetPagination
@@ -29,10 +30,20 @@ from src.reports.queries.workflows import (
     WorkflowBreakdownNowQuery,
     WorkflowBreakdownQuery,
 )
+from src.openapi import (
+    ACCESS_DASHBOARD,
+    BREAKDOWN_BY_STEPS_PARAMS,
+    DATE_RANGE_PARAMS,
+    FORBIDDEN,
+    UNAUTHORIZED,
+)
 from src.reports.serializers import (
     AccountDashboardOverviewSerializer,
     BreakdownByStepsFilterSerializer,
+    DashboardBreakdownByStepItemSerializer,
     DashboardFilterSerializer,
+    DashboardOverviewResponseSerializer,
+    WorkflowsDashboardBreakdownItemSerializer,
 )
 
 
@@ -51,6 +62,17 @@ class WorkflowsDashboardViewSet(
         'overview': AccountDashboardOverviewSerializer,
     }
 
+    @extend_schema(
+        tags=['Reports'],
+        summary='Workflows dashboard overview',
+        description=ACCESS_DASHBOARD,
+        parameters=DATE_RANGE_PARAMS,
+        responses={
+            200: DashboardOverviewResponseSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     @action(methods=['get'], detail=False)
     def overview(self, request):
         filter_slz = DashboardFilterSerializer(data=request.GET)
@@ -70,6 +92,17 @@ class WorkflowsDashboardViewSet(
         data = RawSqlExecutor.fetchone(*query.get_sql())
         return self.response_ok(data)
 
+    @extend_schema(
+        tags=['Reports'],
+        summary='Workflows breakdown',
+        description=ACCESS_DASHBOARD,
+        parameters=DATE_RANGE_PARAMS,
+        responses={
+            200: WorkflowsDashboardBreakdownItemSerializer(many=True),
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     @action(methods=['get'], detail=False)
     def breakdown(self, request):
         filter_slz = DashboardFilterSerializer(data=request.GET)
@@ -89,6 +122,17 @@ class WorkflowsDashboardViewSet(
         data = list(RawSqlExecutor.fetch(*query.get_sql()))
         return self.response_ok(data)
 
+    @extend_schema(
+        tags=['Reports'],
+        summary='Workflows breakdown by tasks',
+        description=ACCESS_DASHBOARD,
+        parameters=BREAKDOWN_BY_STEPS_PARAMS,
+        responses={
+            200: DashboardBreakdownByStepItemSerializer(many=True),
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     @action(methods=['get'], detail=False, url_path='by-tasks')
     def by_tasks(self, request):
         filter_slz = BreakdownByStepsFilterSerializer(data=request.GET)

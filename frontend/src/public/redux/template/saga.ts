@@ -74,9 +74,14 @@ function applySavedTemplateIds(lastTemplateState: ITemplateClient, savedTemplate
     ...insertId(lastTemplateState, savedTemplate),
     publicUrl: savedTemplate.publicUrl,
     embedUrl: savedTemplate.embedUrl,
+    kickoff: {
+      ...lastTemplateState.kickoff,
+      fieldsets: savedTemplate.kickoff.fieldsets,
+    },
     tasks: lastTemplateState.tasks.map((task) => ({
       ...task,
       ancestors: savedTasksMap.get(task.apiName)?.ancestors || [],
+      fieldsets: savedTasksMap.get(task.apiName)?.fieldsets || task.fieldsets,
     })),
   };
 }
@@ -118,7 +123,8 @@ function* fetchTemplate({ payload: id }: TLoadTemplate) {
     yield setTemplateByTemplateResponse(template);
 
     const isCatalogLoaded: ReturnType<typeof getIsCatalogLoaded> = yield select(getIsCatalogLoaded);
-    const isCatalogLoading: ReturnType<typeof getFieldsetsCatalogIsLoading> = yield select(getFieldsetsCatalogIsLoading);
+    const isCatalogLoading: ReturnType<typeof getFieldsetsCatalogIsLoading> =
+      yield select(getFieldsetsCatalogIsLoading);
 
     if (!isCatalogLoaded && !isCatalogLoading) {
       yield put(loadFieldsetsCatalog());

@@ -40,6 +40,7 @@ from src.generics.fields import (
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
 )
+from src.permissions.enums import PermissionObjectType
 from src.processes.enums import (
     OwnerType,
     PerformerType,
@@ -375,3 +376,22 @@ class VacationActivateSerializer(
         if start and end and start >= end:
             raise serializers.ValidationError(MSG_A_0054)
         return attrs
+
+
+class UserPermissionRequestSerializer(
+    CustomValidationErrorMixin,
+    serializers.Serializer,
+):
+    obj_type = serializers.ChoiceField(
+        choices=PermissionObjectType.CHOICES,
+    )
+    obj_ids = CommaSeparatedListField(
+        allow_empty=False,
+        child=serializers.IntegerField(min_value=1),
+    )
+
+
+class UserPermissionResponseSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    has_view = serializers.BooleanField()
+    has_change = serializers.BooleanField()

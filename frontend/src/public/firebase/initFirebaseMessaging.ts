@@ -6,7 +6,11 @@ import { saveFirebaseDeviceToken } from './utils';
 import { getBrowserConfig } from '../utils/getConfig';
 
 export function initFirebaseMessaging() {
-  const { config: { firebase: { vapidKey, config } } } = getBrowserConfig();
+  const {
+    config: {
+      firebase: { vapidKey, config },
+    },
+  } = getBrowserConfig();
 
   // Notification is undefined in some browsers. This check is crucial.
   if (typeof Notification === 'undefined') {

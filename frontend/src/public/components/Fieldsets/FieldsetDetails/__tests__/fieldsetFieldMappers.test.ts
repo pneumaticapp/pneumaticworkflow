@@ -1,12 +1,12 @@
-
 import { normalizeFieldForUI, normalizeFieldsForUI } from '../fieldsetFieldMappers';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
 import { EExtraFieldType, IExtraField } from '../../../../types/template';
 
-const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
-  apiName: `f-${Math.random().toString(36).slice(2, 6)}`,
-  ...overrides,
-});
+const makeField = (overrides: Partial<IExtraField> = {}) =>
+  makeExtraField({
+    apiName: `f-${Math.random().toString(36).slice(2, 6)}`,
+    ...overrides,
+  });
 
 describe('fieldsetFieldMappers', () => {
   describe('normalizeFieldForUI', () => {

@@ -16,7 +16,7 @@ const tooltipTextMap: { [key in EPageTitle]: string } = {
   [EPageTitle.Highlights]: 'workflow-highlights.title.tooltip',
   [EPageTitle.Integrations]: 'integrations.title.tooltip',
   [EPageTitle.Team]: 'team.title.tooltip',
-  [EPageTitle.Datasets]: 'datasets.title.tooltip', 
+  [EPageTitle.Datasets]: 'datasets.title.tooltip',
   [EPageTitle.Fieldsets]: 'fieldsets.title.tooltip',
 };
 

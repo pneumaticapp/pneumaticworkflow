@@ -24,7 +24,8 @@ export function TemplateSettings() {
     setFieldValue(field as string, value, false);
   };
 
-  const handleChangeTextField = (field: keyof ITemplateClient) => (value: string) => handleChangeTemplateField(field)(value);
+  const handleChangeTextField = (field: keyof ITemplateClient) => (value: string) =>
+    handleChangeTemplateField(field)(value);
 
   const handleSetInfoWarnings = (infoWarningsLocal: ((props: IInfoWarningProps) => JSX.Element)[]) => {
     if (isArrayWithItems(infoWarningsLocal)) {

@@ -20,7 +20,6 @@ const UserDataWithGroup: React.FC<IUserDataWithGroupProps> = ({ type, idItem, ch
     return <>{children(groupAvatar)}</>;
   }
 
-
   return (
     <UserData userId={idItem}>
       {(user) => {

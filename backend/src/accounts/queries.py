@@ -259,10 +259,53 @@ class DeleteUserGroupFromTaskPerformerQuery(BaseDeleteTaskPerformerQuery):
     delete_field = "user_id"
     substitution_field = "group_id"
 
+    def get_sql(self):
+        """Delete conflicting GROUP performers before reassigning USER.
+
+        Only matches assignment USER rows for the deleted user — not
+        GROUP_USER completion markers.
+        """
+        return f"""
+        DELETE FROM processes_taskperformer
+        WHERE
+          {self.substitution_field} = %(substitution_id)s AND
+          type = '{PerformerType.GROUP}' AND
+          task_id IN (
+            SELECT task_id FROM processes_taskperformer
+            WHERE {self.delete_field} = %(delete_id)s
+            AND type = '{PerformerType.USER}'
+            AND task_id IN (
+                SELECT id FROM processes_task
+                WHERE status != 'completed'
+            )
+          )
+        """, self.params
+
 
 class DeleteUserFromTaskPerformerQuery(BaseDeleteTaskPerformerQuery):
     delete_field = "user_id"
     substitution_field = "user_id"
+
+    def get_sql(self):
+        """Delete conflicting USER performers before reassigning USER.
+
+        Only matches assignment USER rows — not GROUP_USER markers.
+        """
+        return f"""
+        DELETE FROM processes_taskperformer
+        WHERE
+          {self.substitution_field} = %(substitution_id)s AND
+          type = '{PerformerType.USER}' AND
+          task_id IN (
+            SELECT task_id FROM processes_taskperformer
+            WHERE {self.delete_field} = %(delete_id)s
+            AND type = '{PerformerType.USER}'
+            AND task_id IN (
+                SELECT id FROM processes_task
+                WHERE status != 'completed'
+            )
+          )
+        """, self.params
 
 
 class BaseDeleteTemplateOwnerQuery(SqlQueryObject):
@@ -312,62 +355,6 @@ class DeleteUserGroupFromTemplateOwnerQuery(BaseDeleteTemplateOwnerQuery):
 class DeleteUserFromTemplateOwnerQuery(BaseDeleteTemplateOwnerQuery):
     delete_field = "user_id"
     substitution_field = "user_id"
-
-
-class DeleteUserFromWorkflowMembersQuery(SqlQueryObject):
-
-    """ Deletes membership records for user_to_delete
-        where user_to_substitution exists in workflow """
-
-    def __init__(
-        self,
-        user_to_delete: int,
-        user_to_substitution: int,
-    ):
-        self.user_to_delete = user_to_delete
-        self.user_to_substitution = user_to_substitution
-
-    def get_sql(self):
-        return """
-        DELETE FROM processes_workflow_members
-        WHERE
-          user_id = %(user_to_delete)s AND
-          workflow_id IN (
-            SELECT workflow_id FROM processes_workflow_members
-            WHERE user_id = %(user_to_substitution)s
-          )
-        """, {
-            'user_to_delete': self.user_to_delete,
-            'user_to_substitution': self.user_to_substitution,
-        }
-
-
-class DeleteUserFromWorkflowOwnersQuery(SqlQueryObject):
-
-    """ Deletes ownership records for user_to_delete
-        where user_to_substitution exists in workflow """
-
-    def __init__(
-        self,
-        user_to_delete: int,
-        user_to_substitution: int,
-    ):
-        self.user_to_delete = user_to_delete
-        self.user_to_substitution = user_to_substitution
-
-    def get_sql(self):
-        return """
-        DELETE FROM processes_workflow_owners
-        WHERE
-          user_id = %(user_to_delete)s AND
-          workflow_id IN (
-            SELECT workflow_id FROM processes_workflow_owners
-            WHERE user_id = %(user_to_substitution)s
-          )
-        """, {
-            'user_to_delete': self.user_to_delete,
-            'user_to_substitution': self.user_to_substitution,
-        }
 
 
 class BaseDeleteTemplateConditionsQuery(SqlQueryObject):

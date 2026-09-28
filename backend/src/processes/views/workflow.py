@@ -1,5 +1,6 @@
 from typing import Optional, List
 
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.generics import (
     get_object_or_404,
@@ -22,8 +23,28 @@ from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.paginations import DefaultPagination
 from src.generics.permissions import (
+    DenyAll,
     IsAuthenticated,
     UserIsAuthenticated,
+)
+from src.openapi import (
+    ACCESS_ACCOUNT_OWNER,
+    ACCESS_AUTH,
+    ACCESS_WORKFLOW_COMMENT,
+    ACCESS_WORKFLOW_EVENTS,
+    ACCESS_WORKFLOW_MEMBER,
+    ACCESS_WORKFLOW_OWNER,
+    EMPTY,
+    FORBIDDEN,
+    NOT_FOUND,
+    UNAUTHORIZED,
+    VALIDATION_ERROR,
+    WEBHOOK_EXAMPLE_PARAMS,
+    WORKFLOW_EVENTS_PARAMS,
+    WORKFLOW_FIELDS_PARAMS,
+    WORKFLOW_LIST_PARAMS,
+    WorkflowWebhookExampleSerializer,
+    access_description,
 )
 from src.processes.enums import (
     WorkflowEventType,
@@ -53,7 +74,6 @@ from src.processes.serializers.workflows.workflow import (
     WorkflowListSerializer,
     WorkflowReturnToTaskSerializer,
     WorkflowSnoozeSerializer,
-    WorkflowTaskCompleteSerializer,
     WorkflowUpdateSerializer,
 )
 from src.processes.services.events import CommentService
@@ -61,8 +81,15 @@ from src.processes.services.exceptions import (
     CommentServiceException,
     WorkflowActionServiceException,
 )
-from src.processes.services.tasks.exceptions import TaskFieldException
+
+
 from src.processes.services.workflow_action import WorkflowActionService
+from src.processes.queries import (
+    WorkflowPermissionQuery,
+)
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 from src.utils.validation import raise_validation_error
 from src.webhooks.enums import HookEvent
 
@@ -74,13 +101,14 @@ class WorkflowViewSet(
     GenericViewSet,
 ):
 
+    serializer_class = WorkflowListSerializer
     filter_backends = (PneumaticFilterBackend, )
     action_serializer_classes = {
         'retrieve': WorkflowDetailsSerializer,
         'comment': CommentCreateSerializer,
-        'complete': WorkflowTaskCompleteSerializer,
         'return_to': WorkflowReturnToTaskSerializer,
         'finish': WorkflowFinishSerializer,
+        'update': WorkflowUpdateSerializer,
         'partial_update': WorkflowUpdateSerializer,
         'list': WorkflowListSerializer,
         'fields': WorkflowFieldsSerializer,
@@ -101,6 +129,8 @@ class WorkflowViewSet(
 
     def get_serializer_context(self, **kwargs):
         context = super().get_serializer_context(**kwargs)
+        if getattr(self, 'swagger_fake_view', False):
+            return context
         context['user'] = self.request.user
         context['account'] = self.request.user.account
         context['is_superuser'] = self.request.is_superuser
@@ -110,11 +140,13 @@ class WorkflowViewSet(
         return context
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Workflow.objects.none()
         user = self.request.user
         queryset = Workflow.objects.on_account(user.account_id)
         if self.action == 'webhook_example':
             queryset = queryset.filter(
-                owners=user.id,
+                WorkflowPermissionQuery.change_q(user.id),
             ).order_by('-date_created')
         return self.prefetch_queryset(queryset)
 
@@ -193,7 +225,7 @@ class WorkflowViewSet(
                 WorkflowOwnerPermission(),
                 UsersOverlimitedPermission(),
             )
-        if self.action == 'partial_update':
+        if self.action in ('partial_update', 'update'):
             return (
                 UserIsAuthenticated(),
                 BillingPlanPermission(),
@@ -232,8 +264,21 @@ class WorkflowViewSet(
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
             )
-        return super().get_permissions()
+        # Safety fallthrough: any unmatched action is denied by default
+        # to prevent accidental exposure of new endpoints.
+        return (DenyAll(),)
 
+    @extend_schema(
+        tags=['Workflows'],
+        summary='List workflows',
+        description=ACCESS_AUTH,
+        parameters=WORKFLOW_LIST_PARAMS,
+        responses={
+            200: WorkflowListSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     def list(self, request, *args, **kwargs):
         filter_slz = WorkflowListFilterSerializer(data=request.GET)
         filter_slz.is_valid(raise_exception=True)
@@ -242,14 +287,58 @@ class WorkflowViewSet(
             account_id=request.user.account_id,
             user_id=request.user.id,
         )
-        return self.paginated_response(qst)
+        page = self.paginate_queryset(qst)
+        instances = page if page is not None else qst
+        wf_ids = [w.id for w in instances]
+        owners_map = (
+            WorkflowPermissionService.get_users_with_change_map(wf_ids)
+            if wf_ids else {}
+        )
+        serializer = self.get_serializer(
+            instances,
+            many=True,
+            extra_fields={'owners_map': owners_map},
+        )
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return self.response_ok(serializer.data)
 
+    @extend_schema(
+        tags=['Workflows'],
+        summary='Get workflow',
+        description=ACCESS_WORKFLOW_MEMBER,
+        responses={
+            200: WorkflowDetailsSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     def retrieve(self, request, pk=None):
         queryset = self.get_queryset()
         instance = get_object_or_404(queryset, id=pk)
         serializer = self.get_serializer(instance)
         return self.response_ok(serializer.data)
 
+    @extend_schema(
+        tags=['Workflows'],
+        summary='Update workflow',
+        description=access_description(
+            'UserIsAuthenticated',
+            'ExpiredSubscriptionPermission',
+            'BillingPlanPermission',
+            'WorkflowOwnerPermission',
+            'UsersOverlimitedPermission',
+        ),
+        request=WorkflowUpdateSerializer,
+        responses={
+            200: WorkflowDetailsSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     def partial_update(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         workflow = get_object_or_404(queryset, id=kwargs.get('pk'))
@@ -285,6 +374,23 @@ class WorkflowViewSet(
             WorkflowDetailsSerializer(instance=workflow).data,
         )
 
+    @extend_schema(exclude=True)
+    def update(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+
+    @extend_schema(
+        tags=['Workflows'],
+        summary='Add comment to workflow',
+        description=ACCESS_WORKFLOW_COMMENT,
+        request=CommentCreateSerializer,
+        responses={
+            200: WorkflowEventSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['post'], detail=True)
     def comment(self, request, *args, **kwargs):
         workflow = self.get_object()
@@ -310,34 +416,19 @@ class WorkflowViewSet(
             WorkflowEventSerializer(instance=event).data,
         )
 
-    @action(methods=['post'], detail=True, url_path='task-complete')
-    def complete(self, request, *args, **kwargs):
-        workflow = self.get_object()
-        serializer = self.get_serializer(
-            data=request.data,
-            extra_fields={'workflow': workflow},
-        )
-        serializer.is_valid(raise_exception=True)
-        service = WorkflowActionService(
-            workflow=workflow,
-            user=request.user,
-            auth_type=request.token_type,
-            is_superuser=request.is_superuser,
-        )
-        try:
-            service.complete_task_for_user(
-                task=serializer.validated_data['task'],
-                fields_values=serializer.validated_data.get('output'),
-            )
-        except WorkflowActionServiceException as ex:
-            raise_validation_error(message=ex.message)
-        except TaskFieldException as ex:
-            raise_validation_error(
-                message=ex.message,
-                api_name=ex.api_name,
-            )
-        return self.response_ok()
-
+    @extend_schema(
+        tags=['Workflows'],
+        summary='Return workflow to previous task',
+        description=ACCESS_WORKFLOW_OWNER,
+        request=WorkflowReturnToTaskSerializer,
+        responses={
+            200: EMPTY,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['post'], detail=True, url_path='return-to')
     def return_to(self, request, **kwargs):
         workflow = self.get_object()
@@ -360,6 +451,18 @@ class WorkflowViewSet(
             raise_validation_error(message=ex.message)
         return self.response_ok()
 
+    @extend_schema(
+        tags=['Workflows'],
+        summary='Terminate workflow',
+        description=ACCESS_WORKFLOW_OWNER,
+        responses={
+            200: EMPTY,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     def destroy(self, request, *args, **kwargs):
         service = WorkflowActionService(
             workflow=self.get_object(),
@@ -373,6 +476,18 @@ class WorkflowViewSet(
             raise_validation_error(message=ex.message)
         return self.response_ok()
 
+    @extend_schema(
+        tags=['Workflows'],
+        summary='Resume snoozed workflow',
+        description=ACCESS_WORKFLOW_OWNER,
+        responses={
+            200: WorkflowDetailsSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['post'], detail=True)
     def resume(self, request, *args, **kwargs):
         workflow = self.get_object()
@@ -389,6 +504,18 @@ class WorkflowViewSet(
         serializer = self.get_serializer(workflow)
         return self.response_ok(serializer.data)
 
+    @extend_schema(
+        tags=['Workflows'],
+        summary='Force-complete workflow',
+        description=ACCESS_WORKFLOW_OWNER,
+        request=WorkflowFinishSerializer,
+        responses={
+            200: EMPTY,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['post'], detail=True)
     def finish(self, request, *args, **kwargs):
         workflow = self.get_object()
@@ -412,6 +539,17 @@ class WorkflowViewSet(
         )
         return self.response_ok()
 
+    @extend_schema(
+        tags=['Workflows'],
+        summary='List workflow fields',
+        description=ACCESS_ACCOUNT_OWNER,
+        parameters=WORKFLOW_FIELDS_PARAMS,
+        responses={
+            200: WorkflowFieldsSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     @action(methods=['get'], detail=False)
     def fields(self, request, *args, **kwargs):
         filter_slz = WorkflowFieldsFilterSerializer(data=request.GET)
@@ -422,6 +560,19 @@ class WorkflowViewSet(
         )
         return self.paginated_response(qst)
 
+    @extend_schema(
+        tags=['Workflows'],
+        summary='Snooze workflow',
+        description=ACCESS_WORKFLOW_OWNER,
+        request=WorkflowSnoozeSerializer,
+        responses={
+            200: WorkflowDetailsSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['post'], detail=True)
     def snooze(self, request, *args, **kwargs):
         request_slz = WorkflowSnoozeSerializer(data=request.data)
@@ -442,6 +593,18 @@ class WorkflowViewSet(
         serializer = self.get_serializer(workflow)
         return self.response_ok(serializer.data)
 
+    @extend_schema(
+        tags=['Workflows'],
+        summary='List workflow events',
+        description=ACCESS_WORKFLOW_EVENTS,
+        parameters=WORKFLOW_EVENTS_PARAMS,
+        responses={
+            200: WorkflowEventSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['get'], detail=True)
     def events(self, request, *args, **kwargs):
         workflow = self.get_object()
@@ -457,6 +620,18 @@ class WorkflowViewSet(
         qst = self.filter_queryset(qst)
         return self.paginated_response(qst)
 
+    @extend_schema(
+        tags=['Workflows'],
+        summary='Webhook payload example',
+        description=ACCESS_AUTH,
+        parameters=WEBHOOK_EXAMPLE_PARAMS,
+        responses={
+            200: WorkflowWebhookExampleSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['get'], url_path='webhook-example', detail=False)
     def webhook_example(self, request, *args, **kwargs):
         workflow = self.filter_queryset(self.get_queryset()).first()

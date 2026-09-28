@@ -172,7 +172,7 @@ if [ ! -f ".env" ]; then
     FORM_DOMAIN=""
     if [ "$ADDRESS_IS_DOMAIN" = true ]; then
         echo ""
-        read -rp "Use default address for Sharable kickoff forms ($SERVER_ADDRESS/forms)? [Y/n]: " forms_choice
+        read -rp "Use default address for Sharable kickoff forms ($SERVER_ADDRESS/forms)? [y/n]: " forms_choice
         forms_choice=$(strip_invisible "$forms_choice")
         case "$forms_choice" in
             [Nn]|[Nn][Oo])

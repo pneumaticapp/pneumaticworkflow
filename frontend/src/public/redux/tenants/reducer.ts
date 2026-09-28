@@ -9,7 +9,6 @@ const INIT_STATE: ITenantsStore = {
   sorting: ETenantsSorting.NameAsc,
 };
 
-// eslint-disable-next-line @typescript-eslint/default-param-last
 export const reducer = (state = INIT_STATE, action: TTenantsActions): ITenantsStore => {
   switch (action.type) {
     case ETenantsActions.CreateTenant:

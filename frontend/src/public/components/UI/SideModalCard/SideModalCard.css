@@ -1,8 +1,8 @@
 .card-container {
-  padding: 1.6rem;
   display: flex;
-  overflow: hidden;
   flex-flow: column;
+  padding: 1.6rem;
+  overflow: hidden;
   background: var(--pneumatic-color-beige);
   border: none;
   border-radius: 1.6rem;
@@ -13,8 +13,8 @@
   @mixin h6;
 
   font-weight: 800;
-  word-break: break-word;
   color: var(--pneumatic-color-black100);
+  overflow-wrap: anywhere;
 }
 
 .card__footer {

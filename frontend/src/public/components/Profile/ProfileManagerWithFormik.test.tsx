@@ -14,10 +14,7 @@ jest.mock('react-redux', () => ({
 
 jest.mock('./ProfileManager', () => ({
   ProfileManager: jest.fn(({ onManagerChange }: any) => (
-    <button
-      data-testid="change-manager-btn"
-      onClick={() => onManagerChange(42)}
-    >
+    <button data-testid="change-manager-btn" onClick={() => onManagerChange(42)}>
       Change Manager
     </button>
   )),
@@ -44,12 +41,8 @@ jest.mock('../UI/Buttons/Button', () => ({
 }));
 
 jest.mock('../UI/Fields/InputField', () => ({
-  FormikInputField: ({ name, ...props }: any) => (
-    <input data-testid={`input-${name}`} name={name} {...props} />
-  ),
-  InputField: ({ value, ...props }: any) => (
-    <input data-testid="input-field" value={value || ''} readOnly {...props} />
-  ),
+  FormikInputField: ({ name, ...props }: any) => <input data-testid={`input-${name}`} name={name} {...props} />,
+  InputField: ({ value, ...props }: any) => <input data-testid="input-field" value={value || ''} readOnly {...props} />,
 }));
 
 jest.mock('../UI', () => ({
@@ -77,29 +70,30 @@ jest.mock('../../redux/accounts/slice', () => ({
   usersFetchStarted: jest.fn(() => ({ type: 'usersFetchStarted' })),
 }));
 
-const makeUser = (overrides: Partial<IAuthUser> = {}): IAuthUser => ({
-  id: 1,
-  email: 'test@test.com',
-  firstName: 'PropFirst',
-  lastName: 'PropLast',
-  phone: '111-prop',
-  loading: false,
-  isDigestSubscriber: true,
-  isTasksDigestSubscriber: true,
-  isCommentsMentionsSubscriber: true,
-  isNewTasksSubscriber: true,
-  isNewslettersSubscriber: true,
-  isSpecialOffersSubscriber: true,
-  language: 'en',
-  timezone: 'UTC',
-  dateFdw: '0',
-  dateFmt: '%m/%d/%Y, %I:%M %p',
-  isAdmin: false,
-  isAccountOwner: false,
-  managerId: null,
-  reportIds: [],
-  ...overrides,
-} as IAuthUser);
+const makeUser = (overrides: Partial<IAuthUser> = {}): IAuthUser =>
+  ({
+    id: 1,
+    email: 'test@test.com',
+    firstName: 'PropFirst',
+    lastName: 'PropLast',
+    phone: '111-prop',
+    loading: false,
+    isDigestSubscriber: true,
+    isTasksDigestSubscriber: true,
+    isCommentsMentionsSubscriber: true,
+    isNewTasksSubscriber: true,
+    isNewslettersSubscriber: true,
+    isSpecialOffersSubscriber: true,
+    language: 'en',
+    timezone: 'UTC',
+    dateFdw: '0',
+    dateFmt: '%m/%d/%Y, %I:%M %p',
+    isAdmin: false,
+    isAccountOwner: false,
+    managerId: null,
+    reportIds: [],
+    ...overrides,
+  }) as IAuthUser;
 
 describe('Profile — ProfileManagerSection', () => {
   const mockEditCurrentUser = jest.fn();
@@ -125,7 +119,7 @@ describe('Profile — ProfileManagerSection', () => {
         onVacationActivate={jest.fn()}
         onVacationDeactivate={jest.fn()}
         availableUsers={[]}
-      />
+      />,
     );
 
     userEvent.click(screen.getByTestId('change-manager-btn'));
@@ -149,7 +143,7 @@ describe('Profile — ProfileManagerSection', () => {
         onVacationActivate={jest.fn()}
         onVacationDeactivate={jest.fn()}
         availableUsers={[]}
-      />
+      />,
     );
 
     userEvent.click(screen.getByTestId('change-manager-btn'));

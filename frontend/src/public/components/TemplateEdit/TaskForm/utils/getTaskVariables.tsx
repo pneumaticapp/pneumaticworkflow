@@ -1,10 +1,10 @@
-/* eslint-disable max-len */
 import * as React from 'react';
 import { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 
 import {
-  IKickoffClient,
+  ITemplateKickoffClient,
+  IRuntimeKickoffClient,
   IExtraField,
   ITemplateTaskClient,
   IFieldsetBindingClient,
@@ -46,7 +46,7 @@ export function getLocalizedSystemVariable({
 }
 
 type TGetVariablesParam = {
-  kickoff: Pick<IKickoffClient, 'fields'> & { fieldsets?: (IFieldsetBindingClient | TTemplateFieldFieldset)[] };
+  kickoff: Pick<ITemplateKickoffClient, 'fields'> & { fieldsets?: (IFieldsetBindingClient | TTemplateFieldFieldset)[] };
   tasks: (Pick<ITemplateTaskClient, 'fields' | 'apiName'> & {
     name?: ITemplateTaskClient['name'];
     fieldsets?: (IFieldsetBindingClient | TTemplateFieldFieldset)[];
@@ -89,37 +89,26 @@ export function getSystemVariables(): TTaskVariable[] {
   ];
 }
 
-export function getFieldVariables({
-  kickoff,
-  tasks,
-  templateId,
-}: TGetVariablesParam): TTaskVariable[] {
-  const tasksVariables =
-    tasks.flatMap((task) => {
-      const taskName = task.name || '';
-      const richTaskName = templateId ? (
-        <StepName initialStepName={taskName} templateId={templateId} />
-      ) : (
-        taskName
-      );
+export function getFieldVariables({ kickoff, tasks, templateId }: TGetVariablesParam): TTaskVariable[] {
+  const tasksVariables = tasks.flatMap((task) => {
+    const taskName = task.name || '';
+    const richTaskName = templateId ? <StepName initialStepName={taskName} templateId={templateId} /> : taskName;
 
-      const fromTaskFields = task.fields.map((field) =>
-        getVariableFromField(field, taskName, richTaskName),
-      );
+    const fromTaskFields = task.fields.map((field) => getVariableFromField(field, taskName, richTaskName));
 
-      const fromTaskFieldsets = getVariablesFromSelectedFieldsets(
-        task.fieldsets,
-        (fieldset) => `${taskName} · ${fieldset.name}`,
-        (fieldset) => (
-          <>
-            {richTaskName}
-            {` · ${fieldset.name}`}
-          </>
-        ),
-      );
+    const fromTaskFieldsets = getVariablesFromSelectedFieldsets(
+      task.fieldsets,
+      (fieldset) => `${taskName} · ${fieldset.name}`,
+      (fieldset) => (
+        <>
+          {richTaskName}
+          {` · ${fieldset.name}`}
+        </>
+      ),
+    );
 
-      return [...fromTaskFields, ...fromTaskFieldsets];
-    });
+    return [...fromTaskFields, ...fromTaskFieldsets];
+  });
 
   const kickoffVariables = getKickoffVariables(kickoff);
 
@@ -131,7 +120,9 @@ export function getVariables(params: TGetVariablesParam): TTaskVariable[] {
 }
 
 export function getKickoffVariables(
-  kickoff?: Pick<IKickoffClient, 'fields'> & { fieldsets?: (IFieldsetBindingClient | TTemplateFieldFieldset)[] },
+  kickoff?: Pick<ITemplateKickoffClient, 'fields'> & {
+    fieldsets?: (IFieldsetBindingClient | TTemplateFieldFieldset)[];
+  },
 ) {
   const fromFields = kickoff?.fields.map((field) => getVariableFromField(field, 'Kick-off form')) ?? [];
   const fromFieldsets = getVariablesFromSelectedFieldsets(
@@ -144,7 +135,7 @@ export function getKickoffVariables(
 }
 
 export function getTaskVariables(
-  kickoff: IKickoffClient,
+  kickoff: ITemplateKickoffClient,
   tasks: ITemplateTaskClient[],
   currentTask: ITemplateTaskClient,
   templateId?: number,
@@ -189,7 +180,7 @@ export const getSingleLineVariables = (variables: TTaskVariable[]) => {
 };
 
 export const useWorkflowNameVariables = (
-  kickoff?: Pick<IKickoffClient, 'fields' | 'fieldsets'>,
+  kickoff?: Pick<ITemplateKickoffClient | IRuntimeKickoffClient, 'fields' | 'fieldsets'>,
 ) => {
   const { formatMessage } = useIntl();
 
@@ -227,13 +218,10 @@ export const useWorkflowNameVariables = (
     [formatMessage],
   );
 
-  const kickoffSingleLineVriables = useMemo(
-    () => getSingleLineVariables(getKickoffVariables(kickoff)),
-    [kickoff],
-  );
+  const kickoffSingleLineVriables = useMemo(() => getSingleLineVariables(getKickoffVariables(kickoff)), [kickoff]);
 
-  return useMemo(() => [...CUSTOM_VARIABLES, ...kickoffSingleLineVriables], [
-    CUSTOM_VARIABLES,
-    kickoffSingleLineVriables,
-  ]);
+  return useMemo(
+    () => [...CUSTOM_VARIABLES, ...kickoffSingleLineVriables],
+    [CUSTOM_VARIABLES, kickoffSingleLineVriables],
+  );
 };

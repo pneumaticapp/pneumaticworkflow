@@ -6,7 +6,6 @@ import { IAddCardButtonProps } from './types';
 
 import styles from './AddCardButton.css';
 
-
 function AddCardButtonComponent({ title, caption, icon, onClick, to, className, testId }: IAddCardButtonProps) {
   const content = (
     <div className={styles['custom-card']}>
@@ -16,9 +15,7 @@ function AddCardButtonComponent({ title, caption, icon, onClick, to, className, 
         </Header>
         <span className={styles['custom-card__caption']}>{caption}</span>
       </div>
-      <div className={styles['custom-card__icon']}>
-        {icon}
-      </div>
+      <div className={styles['custom-card__icon']}>{icon}</div>
     </div>
   );
 

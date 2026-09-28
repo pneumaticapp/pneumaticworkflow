@@ -83,6 +83,7 @@ def test_clone__ok(api_client, mocker):
     assert response.data['label_position'] == clone.label_position
     assert response.data['layout'] == clone.layout
     assert response.data['api_name'] == clone.api_name
+    assert response.data['usage'] == []
 
     assert len(response.data['fields']) == 1
     assert response.data['fields'][0]['name'] == clone_field.name

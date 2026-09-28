@@ -1,7 +1,4 @@
-import {
-  activateVacation,
-  deactivateVacation,
-} from '../vacation';
+import { activateVacation, deactivateVacation } from '../vacation';
 import { commonRequest } from '../commonRequest';
 
 jest.mock('../commonRequest', () => ({
@@ -41,13 +38,10 @@ describe('vacation API', () => {
       activateVacation(body);
 
       expect(commonRequest).toHaveBeenCalledTimes(1);
-      expect(commonRequest).toHaveBeenCalledWith(
-        '/accounts/user/activate-vacation',
-        {
-          data: body,
-          method: 'POST',
-        },
-      );
+      expect(commonRequest).toHaveBeenCalledWith('/accounts/user/activate-vacation', {
+        data: body,
+        method: 'POST',
+      });
     });
 
     it('sends POST to another user URL with userId', () => {
@@ -60,13 +54,10 @@ describe('vacation API', () => {
       activateVacation(body, 42);
 
       expect(commonRequest).toHaveBeenCalledTimes(1);
-      expect(commonRequest).toHaveBeenCalledWith(
-        '/accounts/users/42/activate-vacation',
-        {
-          data: body,
-          method: 'POST',
-        },
-      );
+      expect(commonRequest).toHaveBeenCalledWith('/accounts/users/42/activate-vacation', {
+        data: body,
+        method: 'POST',
+      });
     });
   });
 
@@ -75,24 +66,18 @@ describe('vacation API', () => {
       deactivateVacation();
 
       expect(commonRequest).toHaveBeenCalledTimes(1);
-      expect(commonRequest).toHaveBeenCalledWith(
-        '/accounts/user/deactivate-vacation',
-        {
-          method: 'POST',
-        },
-      );
+      expect(commonRequest).toHaveBeenCalledWith('/accounts/user/deactivate-vacation', {
+        method: 'POST',
+      });
     });
 
     it('sends POST to another user URL with userId', () => {
       deactivateVacation(42);
 
       expect(commonRequest).toHaveBeenCalledTimes(1);
-      expect(commonRequest).toHaveBeenCalledWith(
-        '/accounts/users/42/deactivate-vacation',
-        {
-          method: 'POST',
-        },
-      );
+      expect(commonRequest).toHaveBeenCalledWith('/accounts/users/42/deactivate-vacation', {
+        method: 'POST',
+      });
     });
   });
 });

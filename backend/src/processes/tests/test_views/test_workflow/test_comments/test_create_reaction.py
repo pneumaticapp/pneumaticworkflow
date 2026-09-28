@@ -1,4 +1,5 @@
 import pytest
+from guardian.shortcuts import remove_perm
 
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
@@ -10,7 +11,7 @@ from src.processes.services.events import (
 from src.processes.services.exceptions import (
     CommentServiceException,
 )
-from src.processes.enums import OwnerRole, OwnerType
+from src.processes.enums import OwnerRole, OwnerType, WorkflowPermission
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
     create_test_account,
@@ -20,6 +21,10 @@ from src.processes.tests.fixtures import (
     create_test_workflow,
 )
 from src.utils.validation import ErrorCode
+from src.permissions.enums import PermissionSource
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -35,7 +40,7 @@ def test_create_reaction__account_owner__ok(api_client, mocker):
     )
     workflow = create_test_workflow(user)
     task = workflow.tasks.get(number=1)
-    workflow.members.remove(owner)
+    remove_perm(WorkflowPermission.VIEW, owner, workflow)
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
         task=task,
@@ -70,7 +75,7 @@ def test_create_reaction__account_owner__ok(api_client, mocker):
         is_superuser=False,
     )
     create_reaction_mock.assert_called_once_with(value=value)
-    assert not workflow.members.filter(id=owner.id).exists()
+    assert not WorkflowPermissionService(workflow).has_view(user=owner)
 
 
 def test_create_reaction__workflow_member__ok(api_client, mocker):
@@ -83,7 +88,11 @@ def test_create_reaction__workflow_member__ok(api_client, mocker):
         is_account_owner=False,
     )
     workflow = create_test_workflow(owner)
-    workflow.members.add(user)
+    WorkflowPermissionService(workflow).grant_view(
+        user=user,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     task = workflow.tasks.get(number=1)
     event = WorkflowEventService.comment_created_event(
         text='Some comment',

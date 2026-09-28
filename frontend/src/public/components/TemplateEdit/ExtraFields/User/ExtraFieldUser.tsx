@@ -139,9 +139,9 @@ export function ExtraFieldUser({
             isRequired={isRequired || false}
             isDisabled={isDisabled}
             mode={mode}
+            labelPosition={labelPosition}
             labelBackgroundColor={labelBackgroundColor}
             handleChangeName={handleChangeName}
-            className={styles['kick-off-input__name_label-left_centered']}
           />
         ) : (
           <div className={fieldNameClassName}>

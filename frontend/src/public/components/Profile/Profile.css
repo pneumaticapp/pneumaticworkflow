@@ -1,23 +1,23 @@
 /* stylelint-disable declaration-no-important */
 
 .header {
-  margin-bottom: 3.2rem;
-  padding: 0;
   display: block;
+  padding: 0;
+  margin-bottom: 3.2rem;
   text-align: center;
 }
 
 .avatar {
-  margin-bottom: 3.2rem;
   display: flex;
   justify-content: center;
+  margin-bottom: 3.2rem;
 }
 
 .profile-form {
+  align-self: auto;
   padding: 8rem;
   background: var(--pneumatic-color-white);
   border-radius: 2.4rem;
-  align-self: auto;
 
   @media (--mobile) {
     padding: 8rem 3.2rem;
@@ -68,17 +68,17 @@
 }
 
 .manager-card {
-  margin-top: 12px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
   gap: 8px;
+  align-items: flex-start;
+  margin-top: 12px;
 }
 
 .manager-card__info {
   display: flex;
-  align-items: center;
   gap: 12px;
+  align-items: center;
 }
 
 .manager-card__details {
@@ -99,17 +99,17 @@
 }
 
 .manager-card__actions {
-  margin-left: 48px;
   display: flex;
   align-items: center;
+  margin-left: 48px;
   font-size: 11px;
   font-weight: bold;
   text-transform: uppercase;
 }
 
 .manager-card__link {
-  cursor: pointer;
   color: var(--orange);
+  cursor: pointer;
 }
 
 .manager-card__link:hover {
@@ -136,8 +136,8 @@
 }
 
 .selected-users {
-  margin-top: 0.8rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.8rem;
+  margin-top: 0.8rem;
 }

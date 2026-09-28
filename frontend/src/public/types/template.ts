@@ -36,7 +36,7 @@ export interface ITemplate {
 
 export interface ITemplateClient extends Omit<ITemplate, 'kickoff' | 'tasks'> {
   tasks: ITemplateTaskClient[];
-  kickoff: IKickoffClient;
+  kickoff: ITemplateKickoffClient;
 }
 
 export enum ETemplateOwnerRole {
@@ -67,9 +67,9 @@ export type TTransformedTask = {
   mergedOutputs: TRuntimeMergedOutputPart[];
 };
 
-
 export type TTemplateFieldFieldset = Pick<
-  IFieldsetRuntime, 'name' | 'description' | 'apiNameBinding' | 'fields' | 'order' | 'labelPosition'
+  IFieldsetRuntime,
+  'name' | 'title' | 'description' | 'apiNameBinding' | 'fields' | 'order' | 'labelPosition'
 >;
 
 export interface ITemplateTask {
@@ -99,11 +99,7 @@ export interface ITemplateTaskClient extends Omit<ITemplateTask, 'fieldsets'> {
 export type TDueDateRuleTarget = 'field' | 'workflow started' | 'task started' | 'task completed';
 export type TDueDateRulePreposition = 'before' | 'after';
 type IDueDateRuleAPI =
-  | 'before field'
-  | 'after workflow started'
-  | 'after task started'
-  | 'after task completed'
-  | 'after field';
+  'before field' | 'after workflow started' | 'after task started' | 'after task completed' | 'after field';
 
 export type IDueDate = {
   apiName: string;
@@ -150,14 +146,19 @@ export enum ETaskPerformerType {
   Manager = 'manager',
 }
 
-export interface ITemplateResponse extends Omit<ITemplate, 'id' | 'tasks' | 'tasksCount' | 'performersCount' | 'kickoff'> {
+export interface ITemplateResponse extends Omit<
+  ITemplate,
+  'id' | 'tasks' | 'tasksCount' | 'performersCount' | 'kickoff'
+> {
   id: number;
   tasks: ITemplateTaskResponse[];
   kickoff: Omit<IKickoff, 'fieldsets'> & { fieldsets: IFieldsetBinding[] };
 }
 
-export interface ITemplateTaskResponse
-  extends Omit<ITemplateTask, 'uuid' | 'conditions' | 'rawDueDate' | 'apiName' | 'id' | 'fieldsets'> {
+export interface ITemplateTaskResponse extends Omit<
+  ITemplateTask,
+  'uuid' | 'conditions' | 'rawDueDate' | 'apiName' | 'id' | 'fieldsets'
+> {
   id: number;
   conditions: IConditionResponse[];
   rawDueDate: IDueDateAPI | null;
@@ -210,7 +211,6 @@ export type TConditionRulePredicateResponse = {
   operator: EConditionOperators;
 } & TConditionPredicateValue;
 
-
 /** Fieldset template object from list API response (camelCased by commonRequest) */
 export interface IFieldsetTemplateData {
   id: number;
@@ -237,8 +237,12 @@ export interface IKickoff {
   fieldsets: IFieldsetBinding[];
 }
 
-export interface IKickoffClient extends Omit<IKickoff, 'fieldsets'> {
+export interface ITemplateKickoffClient extends Omit<IKickoff, 'fieldsets'> {
   fieldsets: IFieldsetBindingClient[];
+}
+
+export interface IRuntimeKickoffClient extends Omit<IKickoff, 'fieldsets'> {
+  fieldsets: IFieldsetRuntime[];
 }
 
 /** Kickoff shape from template list APIs (GET /templates/, GET /templates/titles-by-owners) */

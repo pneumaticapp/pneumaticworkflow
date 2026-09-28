@@ -1,10 +1,14 @@
 import { createElement } from 'react';
 import { render, screen } from '@testing-library/react';
 
-import { EExtraFieldType, IKickoffClient, ITemplateTaskClient } from '../../../../../types/template';
+import { EExtraFieldType, ITemplateKickoffClient, ITemplateTaskClient } from '../../../../../types/template';
 import { IFieldsetRuntime } from '../../../../../types/fieldset';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
-import { makeFieldsetRuntime, makeFieldsetBindingClient, makeFieldsetField } from '../../../../../__stubs__/fieldsets.factory';
+import {
+  makeFieldsetRuntime,
+  makeFieldsetBindingClient,
+  makeFieldsetField,
+} from '../../../../../__stubs__/fieldsets.factory';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { TTaskVariable } from '../../../types';
 import {
@@ -20,7 +24,7 @@ import {
   SYSTEM_VARIABLE_SUBTITLE,
 } from '../getTaskVariables';
 
-const mockKikoff: IKickoffClient = {
+const mockKikoff: ITemplateKickoffClient = {
   description: 'Kickoff description',
   fields: [
     makeExtraField({
@@ -119,7 +123,6 @@ const mockBindingFields = [
   }),
 ];
 
-
 describe('getTaskVariables', () => {
   it("correctly gets 1st task's variables", () => {
     const tasks: ITemplateTaskClient[] = [mockTask1, mockTask2];
@@ -170,11 +173,13 @@ describe('getTaskVariables', () => {
   it('appends variables from selected task fieldsets with combined subtitles', () => {
     const taskWithFieldset: ITemplateTaskClient = {
       ...mockTask1,
-      fieldsets: [makeFieldsetBindingClient({
-        apiNameBinding: mockFieldsetData.apiNameBinding,
-        name: mockFieldsetData.name,
-        fields: mockBindingFields,
-      })],
+      fieldsets: [
+        makeFieldsetBindingClient({
+          apiNameBinding: mockFieldsetData.apiNameBinding,
+          name: mockFieldsetData.name,
+          fields: mockBindingFields,
+        }),
+      ],
     };
     const tasks: ITemplateTaskClient[] = [taskWithFieldset, mockTask2];
     const actualResult = getTaskVariables(mockKikoff, tasks, mockTask2);
@@ -223,13 +228,15 @@ describe('getTaskVariables', () => {
 
 describe('getKickoffVariables with fieldsets', () => {
   it('adds kickoff fieldset fields after regular kickoff fields', () => {
-    const kickoff: IKickoffClient = {
+    const kickoff: ITemplateKickoffClient = {
       ...mockKikoff,
-      fieldsets: [makeFieldsetBindingClient({
-        apiNameBinding: mockFieldsetData.apiNameBinding,
-        name: mockFieldsetData.name,
-        fields: mockBindingFields,
-      })],
+      fieldsets: [
+        makeFieldsetBindingClient({
+          apiNameBinding: mockFieldsetData.apiNameBinding,
+          name: mockFieldsetData.name,
+          fields: mockBindingFields,
+        }),
+      ],
     };
     const vars = getKickoffVariables(kickoff);
 
@@ -242,7 +249,7 @@ describe('getKickoffVariables with fieldsets', () => {
   });
 
   it('skips fieldset missing from catalog without crashing or producing phantom options', () => {
-    const kickoff: IKickoffClient = {
+    const kickoff: ITemplateKickoffClient = {
       ...mockKikoff,
       fieldsets: [
         makeFieldsetBindingClient({ apiNameBinding: 'missing-fs' }),
@@ -358,28 +365,19 @@ describe('getSingleLineVariables', () => {
 });
 
 describe('useWorkflowNameVariables', () => {
-  function TestWrapper({
-    kickoff,
-  }: {
-    kickoff?: Parameters<typeof useWorkflowNameVariables>[0];
-  }) {
+  function TestWrapper({ kickoff }: { kickoff?: Parameters<typeof useWorkflowNameVariables>[0] }) {
     const vars = useWorkflowNameVariables(kickoff);
     return createElement(
       'div',
       null,
       vars.map((v) =>
-        createElement(
-          'span',
-          { key: v.apiName, 'data-testid': `var-${v.apiName}`, 'data-type': v.type },
-          v.title,
-        ),
+        createElement('span', { key: v.apiName, 'data-testid': `var-${v.apiName}`, 'data-type': v.type }, v.title),
       ),
     );
   }
 
   it('includes 4 system variables plus single-line kickoff and fieldset fields, filters out multi-line types', () => {
-
-    const kickoff: IKickoffClient = {
+    const kickoff: ITemplateKickoffClient = {
       description: '',
       fields: [
         makeExtraField({
@@ -393,28 +391,30 @@ describe('useWorkflowNameVariables', () => {
           order: 1,
         }),
       ],
-      fieldsets: [makeFieldsetBindingClient({
-        apiNameBinding: 'fs-name',
-        fields: [
-          makeFieldsetField({
-            apiName: 'fs-date',
-            name: 'FS Date',
-            type: EExtraFieldType.Date,
-          }),
-          makeFieldsetField({
-            apiName: 'fs-number',
-            name: 'FS Number',
-            type: EExtraFieldType.Number,
-            order: 1,
-          }),
-          makeFieldsetField({
-            apiName: 'fs-text',
-            name: 'FS Text',
-            type: EExtraFieldType.Text,
-            order: 2,
-          }),
-        ],
-      })],
+      fieldsets: [
+        makeFieldsetBindingClient({
+          apiNameBinding: 'fs-name',
+          fields: [
+            makeFieldsetField({
+              apiName: 'fs-date',
+              name: 'FS Date',
+              type: EExtraFieldType.Date,
+            }),
+            makeFieldsetField({
+              apiName: 'fs-number',
+              name: 'FS Number',
+              type: EExtraFieldType.Number,
+              order: 1,
+            }),
+            makeFieldsetField({
+              apiName: 'fs-text',
+              name: 'FS Text',
+              type: EExtraFieldType.Text,
+              order: 2,
+            }),
+          ],
+        }),
+      ],
     };
 
     render(createElement(TestWrapper, { kickoff }));

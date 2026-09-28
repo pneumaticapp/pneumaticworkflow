@@ -1,12 +1,12 @@
 .toggle {
   all: unset;
   display: flex;
+  align-items: center;
+  justify-content: center;
   width: 40px;
   height: 40px;
   background: var(--pneumatic-color-black4);
   border-radius: 8px;
-  justify-content: center;
-  align-items: center;
 }
 
 .toggle_is-expanded {

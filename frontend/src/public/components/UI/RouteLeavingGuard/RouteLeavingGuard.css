@@ -6,16 +6,16 @@
 }
 
 .controlls {
-  margin-top: 32px;
   display: flex;
+  margin-top: 32px;
 
   > *:not(:last-child) {
     margin-right: 8px;
 
     @media (--mobile) {
+      width: 100%;
       margin-right: 0;
       margin-bottom: 8px;
-      width: 100%;
     }
   }
 

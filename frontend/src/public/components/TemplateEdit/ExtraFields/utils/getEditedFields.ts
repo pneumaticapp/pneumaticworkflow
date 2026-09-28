@@ -5,7 +5,7 @@ export const getEditedFields = (
   editedFieldApiName: string,
   changedProps: Partial<IExtraField>,
 ): IExtraField[] => {
-  const newFields = initialFields.map(field => {
+  const newFields = initialFields.map((field) => {
     if (field.apiName !== editedFieldApiName) {
       return field;
     }

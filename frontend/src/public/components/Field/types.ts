@@ -1,9 +1,6 @@
 import type { ChangeEvent, KeyboardEvent, ReactNode } from 'react';
 
-type NativeInputProps = Omit<
-  React.InputHTMLAttributes<HTMLInputElement>,
-  'onChange' | 'value'
->;
+type NativeInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'>;
 
 export interface IFieldProps extends NativeInputProps {
   labelClassName?: string;
@@ -23,6 +20,7 @@ export interface IFieldProps extends NativeInputProps {
   isFromConditionValueField?: boolean;
   value?: string | number | string[];
   innerRef?: React.Ref<HTMLInputElement>;
+  'data-use-input'?: boolean;
 }
 
 export enum EFieldTagName {

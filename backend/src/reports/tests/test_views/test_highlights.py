@@ -295,10 +295,7 @@ def test__return_task__ok(api_client, mocker):
     text_comment = 'text_comment'
     api_client.token_authenticate(user)
     api_client.post(
-        f'/workflows/{workflow.id}/task-complete',
-        data={
-            'task_id': task_1.id,
-        },
+        f'/v2/tasks/{task_1.id}/complete',
     )
     api_client.post(
         f'/v2/tasks/{task_2.id}/revert',
@@ -346,10 +343,7 @@ def test__return_to_task__ok(api_client, mocker):
     task = workflow.tasks.get(number=1)
     api_client.token_authenticate(user)
     api_client.post(
-        f'/workflows/{workflow.id}/task-complete',
-        data={
-            'task_id': task.id,
-        },
+        f'/v2/tasks/{task.id}/complete',
     )
     api_client.post(
         f'/workflows/{workflow.id}/return-to',

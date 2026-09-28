@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from drf_spectacular.utils import extend_schema
 from rest_framework.generics import (
     ListAPIView,
 )
@@ -12,6 +13,7 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     IsAuthenticated,
 )
+from src.openapi import FORBIDDEN, UNAUTHORIZED
 
 UserModel = get_user_model()
 
@@ -23,6 +25,15 @@ class ContextUserView(
 
     permission_classes = (IsAuthenticated,)
 
+    @extend_schema(
+        tags=['Auth'],
+        summary='Get current session context',
+        responses={
+            200: ContextUserSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     def get(self, request, *args, **kwargs):
         data = ContextUserSerializer(
             request.user,

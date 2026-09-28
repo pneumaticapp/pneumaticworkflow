@@ -54,6 +54,7 @@ interface IFilterSelectCommonProps<
   optionLabelKey: LabelKey;
   containerClassname?: string;
   selectAllLabel?: string;
+  id?: string;
   resetFilter(): void;
   selectAll?(): void;
   Icon?(props: SVGAttributes<SVGElement>): JSX.Element;
@@ -115,6 +116,7 @@ export function FilterSelect<
     renderPlaceholder,
     positionFixed = false,
     getOptionSelectionKey,
+    id,
   } = props;
   const allOptions = flatGroupedOptions || options;
   const getSelectionKey = getOptionSelectionKey ?? ((option: TOption) => option[optionIdKey]);
@@ -213,7 +215,7 @@ export function FilterSelect<
     }
 
     const filteredValues: (TOption | string)[] = [];
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     Array.from(groupedOptions.entries()).forEach(([_, group]) => {
       if (!searchText) {
         filteredValues.push(group.title, ...group.options);
@@ -402,6 +404,7 @@ export function FilterSelect<
             toggleClassName,
             isClearHovered && styles['active-value_clear-hovered'],
           )}
+          {...(id && { id })}
         >
           {Icon && <Icon className={styles['icon']} />}
           <span className={styles['active-value__text']}>{renderPlaceholder(allOptions)}</span>

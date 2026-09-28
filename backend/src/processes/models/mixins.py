@@ -314,7 +314,7 @@ class TaskRawPerformersMixin:
             group=group,
             field=field,
             source_task_api_name=source_task_api_name,
-        ).delete()[0]
+        ).delete()
 
     def delete_raw_performers(self):
 

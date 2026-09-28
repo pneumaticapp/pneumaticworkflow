@@ -1,6 +1,5 @@
 from typing import List, Optional
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.db import IntegrityError, transaction
@@ -15,7 +14,6 @@ from src.accounts.enums import (
     UserStatus,
 )
 from src.accounts.models import (
-    APIKey,
     Contact,
     UserInvite,
 )
@@ -37,10 +35,6 @@ from src.analysis.mixins import (
 )
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
-from src.authentication.tokens import PneumaticToken
-from src.logs.enums import AccountEventStatus
-from src.logs.service import AccountLogService
-from src.notifications.enums import EmailProvider
 from src.notifications.tasks import (
     send_user_created_notification,
     send_user_updated_notification,
@@ -153,13 +147,6 @@ class UserInviteService(
         )
 
     def _user_create_actions(self, user: UserModel):
-
-        APIKey.objects.get_or_create(
-            user=user,
-            name=user.get_full_name(),
-            account_id=user.account_id,
-            key=PneumaticToken.create(user, for_api_key=True),
-        )
         send_user_created_notification.delay(
             logging=user.account.log_api_requests,
             account_id=user.account.id,
@@ -170,33 +157,14 @@ class UserInviteService(
 
         self.identify(user)
         invite_token = self._get_invite_token(user)
-        if settings.EMAIL_PROVIDER == EmailProvider.SMTP:
-            send_invite_notification.delay(
-                user_id=user.id,
-                user_email=user.email,
-                account_id=self.account.id,
-                token=invite_token,
-                logo_lg=self.account.logo_lg,
-                logging=self.account.log_api_requests,
-            )
-        else:
-            AnalyticService.users_invited(
-                invite_to=user,
-                is_superuser=self.is_superuser,
-                invite_token=invite_token,
-            )
-        if self.account.log_api_requests:
-            AccountLogService().email_message(
-                title=f'Email to: {user.email}: Invite sent',
-                request_data={
-                    'token': invite_token,
-                    'from': self.request_user.email,
-                    'to': user.email,
-                },
-                account_id=self.account.id,
-                status=AccountEventStatus.SUCCESS,
-                contractor=settings.EMAIL_PROVIDER,
-            )
+        send_invite_notification.delay(
+            user_id=user.id,
+            user_email=user.email,
+            account_id=self.account.id,
+            token=invite_token,
+            logo_lg=self.account.logo_lg,
+            logging=self.account.log_api_requests,
+        )
         AnalyticService.users_invite_sent(
             invite_from=self.request_user,
             invite_to=user,
@@ -247,13 +215,6 @@ class UserInviteService(
         another_account_user: UserModel,
     ):
         self.identify(current_account_user)
-        # TODO Do not send invite_token.
-        #   Fix in https://my.pneumatic.app/workflows/15691
-        AnalyticService.users_invited(
-            invite_to=another_account_user,
-            is_superuser=self.is_superuser,
-            invite_token=self._get_invite_token(another_account_user),
-        )
         AnalyticService.users_invite_sent(
             invite_from=self.request_user,
             invite_to=another_account_user,

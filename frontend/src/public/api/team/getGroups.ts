@@ -13,9 +13,7 @@ export function getGroups(config: IGetGroupsConfig) {
     api: { urls },
   } = getBrowserConfigEnv();
 
-  return commonRequest<IGroup[]>(`${urls.groups}?${getGroupsQueryString(config)}`,
-    {},
-    { shouldThrow: true },);
+  return commonRequest<IGroup[]>(`${urls.groups}?${getGroupsQueryString(config)}`, {}, { shouldThrow: true });
 }
 
 export function getGroupsQueryString({ ordering }: IGetGroupsConfig) {

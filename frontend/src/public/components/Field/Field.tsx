@@ -86,17 +86,32 @@ export function Field({
 
   function renderContent(): React.ReactElement {
     switch (tagName) {
-      case EFieldTagName.Textarea:
-        return (
+      case EFieldTagName.Textarea: {
+        const textarea = (
           <textarea
-            className={classnames(styles['textarea'], showError && styles['textarea_error'])}
+            className={classnames(
+              styles['textarea'],
+              icon && styles['input_with-icon'],
+              showError && styles['textarea_error'],
+            )}
             value={normalizeFieldValue(value)}
             onChange={onChange}
             onBlur={() => setTouched(true)}
             placeholder={placeholder}
             disabled={disabled}
+            data-use-input={inputRest['data-use-input']}
           />
         );
+
+        if (!icon) return textarea;
+
+        return (
+          <div className={styles['icon-container']}>
+            {textarea}
+            <div className={styles['icon']}>{icon}</div>
+          </div>
+        );
+      }
       case EFieldTagName.RichText:
         return (
           <RichEditor

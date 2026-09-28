@@ -1,4 +1,3 @@
-/* eslint-disable indent */
 import { EMPTY_RULE, IRule, isEmpty, isInvalidUrl, validateFieldCreator } from '../../../../utils/validators';
 import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../../types/template';
 import { isArrayWithItems } from '../../../../utils/helpers';

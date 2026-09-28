@@ -1,16 +1,18 @@
-@keyframes slideIn {
+@keyframes slide-in {
   0% {
     transform: translateX(100%);
   }
+
   100% {
     transform: translateX(0);
   }
 }
 
-@keyframes slideDown {
+@keyframes slide-down {
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(100%);
   }
@@ -18,14 +20,14 @@
 
 .side-modal {
   position: fixed;
-  z-index: 1050;
   top: 1rem;
   right: 0;
   bottom: 1rem;
-  padding: 3.2rem;
-  overflow: hidden;
+  z-index: 1050;
   width: 41.6rem;
   max-width: calc(100% - 1.6rem);
+  padding: 3.2rem;
+  overflow: hidden;
   color: var(--pneumatic-color-white);
   background-color: var(--pneumatic-color-black100);
   border-radius: 3.2rem 0 0 3.2rem;
@@ -36,18 +38,18 @@
 }
 
 .side-modal_opened {
-  animation: slideIn var(--menu-collapse-time) ease-out;
+  animation: slide-in var(--menu-collapse-time) ease-out;
 }
 
 .side-modal_closed {
-  animation: slideDown var(--menu-collapse-time) ease-out;
+  animation: slide-down var(--menu-collapse-time) ease-out;
 }
 
 .side-modal_close {
   position: absolute;
-  z-index: 1;
   top: 3rem;
   right: 2.5rem;
+  z-index: 1;
   cursor: pointer;
   background-color: transparent;
   border: 0;
@@ -73,13 +75,13 @@
 }
 
 .side-modal-parts_header {
-  margin-right: 3rem;
   min-height: 2.4rem;
+  margin-right: 3rem;
 }
 
 .side-modal-parts_body {
-  min-height: 2rem;
   flex-grow: 1;
+  min-height: 2rem;
 }
 
 .side-modal-parts_footer {

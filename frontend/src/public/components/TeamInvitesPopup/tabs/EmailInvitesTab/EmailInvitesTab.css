@@ -1,12 +1,12 @@
 .scrollbar {
+  /* stylelint-disable-next-line declaration-no-important */
+  padding-right: 32px !important;
+  padding-bottom: 32px;
+  padding-left: 32px;
   margin-top: 32px;
   /* stylelint-disable-next-line declaration-no-important */
   margin-right: -32px !important;
   margin-left: -32px;
-  /* stylelint-disable-next-line declaration-no-important */
-  padding-right: 32px !important;
-  padding-left: 32px;
-  padding-bottom: 32px;
 }
 
 .form {
@@ -30,15 +30,15 @@
 
 .invite__email {
   overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 15px;
   line-height: 20px;
   white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 .invite__status {
-  margin-left: 8px;
   display: flex;
+  margin-left: 8px;
 }
 
 .loader {

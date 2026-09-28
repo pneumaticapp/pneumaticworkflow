@@ -1,9 +1,13 @@
-﻿from datetime import timedelta
+﻿import json
+from datetime import timedelta
 
 import pytest
+from channels.layers import get_channel_layer
 from channels.testing import WebsocketCommunicator
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
+from uvicorn.protocols.utils import ClientDisconnected
+from websockets.exceptions import ConnectionClosedError
 
 from src.accounts.enums import NotificationType, UserType
 from src.accounts.models import Notification
@@ -23,6 +27,7 @@ from src.notifications.services.websockets import (
 from src.processes.models.workflows.task import Delay
 from src.processes.tests.fixtures import (
     create_invited_user,
+    create_test_owner,
     create_test_user,
     create_test_workflow,
 )
@@ -704,6 +709,98 @@ async def test_consumer__ping_pong__ok(mocker, api_client):
     # assert
     response = await communicator.receive_output()
     assert response['text'] == PneumaticBaseConsumer.HEARTBEAT_PONG_MESSAGE
+    await communicator.disconnect()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'send_side_effect',
+    (ClientDisconnected(), ConnectionClosedError(None, None)),
+)
+async def test_receive__closed_socket__suppressed(
+    mocker,
+    send_side_effect,
+):
+
+    """ Closed socket during PONG must not leak into Sentry. """
+
+    # arrange
+    user = create_test_owner()
+    get_user_from_token_mock = mocker.patch(
+        'src.authentication.'
+        'middleware.PneumaticToken.get_user_from_token',
+        return_value=user,
+    )
+    communicator = WebsocketCommunicator(
+        application,
+        '/ws/events?auth_token=123456',
+    )
+    await communicator.connect()
+    send_mock = mocker.patch(
+        'src.consumers.AsyncWebsocketConsumer.send',
+        side_effect=send_side_effect,
+    )
+
+    # act
+    await communicator.send_to(
+        text_data=PneumaticBaseConsumer.HEARTBEAT_PING_MESSAGE,
+    )
+
+    # assert
+    assert await communicator.receive_nothing()
+    get_user_from_token_mock.assert_called_once_with('123456')
+    send_mock.assert_called_once_with(
+        text_data=PneumaticBaseConsumer.HEARTBEAT_PONG_MESSAGE,
+    )
+    await communicator.disconnect()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'send_side_effect',
+    (ClientDisconnected(), ConnectionClosedError(None, None)),
+)
+async def test_notification__closed_socket__suppressed(
+    mocker,
+    send_side_effect,
+):
+
+    """ Closed socket during event push must not leak into Sentry. """
+
+    # arrange
+    user = create_test_owner()
+    notification = {'id': 1}
+    get_user_from_token_mock = mocker.patch(
+        'src.authentication.'
+        'middleware.PneumaticToken.get_user_from_token',
+        return_value=user,
+    )
+    communicator = WebsocketCommunicator(
+        application,
+        '/ws/events?auth_token=123456',
+    )
+    await communicator.connect()
+    send_mock = mocker.patch(
+        'src.consumers.AsyncWebsocketConsumer.send',
+        side_effect=send_side_effect,
+    )
+    layer = get_channel_layer()
+
+    # act
+    await layer.group_send(
+        f'events_{user.id}',
+        {
+            'type': 'notification',
+            'notification': notification,
+        },
+    )
+
+    # assert
+    assert await communicator.receive_nothing()
+    get_user_from_token_mock.assert_called_once_with('123456')
+    send_mock.assert_called_once_with(
+        text_data=json.dumps(notification),
+    )
     await communicator.disconnect()
 
 
@@ -1426,5 +1523,50 @@ def test_send_dataset_deleted__ok(mocker):
         method_name=NotificationMethod.dataset_deleted,
         group_name=f'events_{user_id}',
         data=dataset_data,
+        sync=True,
+    )
+
+
+def test_send_account_plan_changed__ok(mocker):
+
+    """send_account_plan_changed routes to EventsConsumer correct payload"""
+
+    # arrange
+    user_id = 42
+    plan_data = {
+        'billing_plan': 'premium',
+        'billing_period': 'monthly',
+        'plan_expiration': '2026-08-15',
+        'plan_expiration_tsp': 1721036800.0,
+        'trial_is_active': False,
+        'trial_ended': False,
+        'is_subscribed': True,
+        'active_users': 5,
+        'tenants_active_users': 0,
+        'max_users': 10,
+        'billing_sync': True,
+    }
+    send_mock = mocker.patch(
+        'src.notifications.services.websockets.'
+        'WebSocketService._send',
+    )
+    service = WebSocketService(
+        logging=True,
+        logo_lg='https://logo.com',
+        account_id=123,
+    )
+
+    # act
+    service.send_account_plan_changed(
+        user_id=user_id,
+        plan_data=plan_data,
+        sync=True,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        method_name=NotificationMethod.account_plan_changed,
+        group_name=f'events_{user_id}',
+        data=plan_data,
         sync=True,
     )

@@ -2,15 +2,9 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 import classNames from 'classnames';
 
-import {
-  TrashIcon,
-  PencilIcon,
-  UnionIcon,
-  SettingsIcon,
-  MoreIcon,
-} from '../../icons';
+import { TrashIcon, PencilIcon, UnionIcon, SettingsIcon, MoreIcon } from '../../icons';
 
-import { Dropdown , TDropdownOption } from '../Dropdown';
+import { Dropdown, TDropdownOption } from '../Dropdown';
 
 import { IModifyDropdownProps, EModifyDropdownToggle } from './types';
 
@@ -24,23 +18,33 @@ export function ModifyDropdown({
   editLabel,
   cloneLabel,
   deleteLabel,
+  isReadOnly,
   className,
   toggleType,
 }: IModifyDropdownProps) {
   const { formatMessage } = useIntl();
+
   const options: TDropdownOption[] = [
     {
       label: editLabel,
       onClick: onEdit,
       Icon: PencilIcon,
       size: 'sm',
+      ...(isReadOnly && {
+        isDisabled: true,
+        disabledTooltip: formatMessage({ id: 'fieldsets.usage.disabled-tooltip' }),
+      }),
     },
-    ...(cloneLabel ? [{
-      label: cloneLabel,
-      onClick: onClone,
-      Icon: UnionIcon,
-      size: 'sm' as const,
-    }] : []),
+    ...(cloneLabel
+      ? [
+          {
+            label: cloneLabel,
+            onClick: onClone,
+            Icon: UnionIcon,
+            size: 'sm' as const,
+          },
+        ]
+      : []),
     {
       label: deleteLabel,
       onClick: onDelete,
@@ -49,6 +53,10 @@ export function ModifyDropdown({
       withUpperline: true,
       withConfirmation: true,
       size: 'sm' as const,
+      ...(isReadOnly && {
+        isDisabled: true,
+        disabledTooltip: formatMessage({ id: 'fieldsets.usage.disabled-tooltip' }),
+      }),
     },
   ];
 
@@ -74,10 +82,5 @@ export function ModifyDropdown({
     );
   };
 
-  return (
-    <Dropdown
-      renderToggle={renderToggle}
-      options={options}
-    />
-  );
+  return <Dropdown renderToggle={renderToggle} options={options} />;
 }

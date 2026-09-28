@@ -24,9 +24,11 @@ export const TemplateSystemCard = ({ id, name, color, description, icon }: ITemp
         <div className={styles['card__header']}>
           <div className={styles['card__title']}>{sanitizeText(name)}</div>
         </div>
-        {description && <div className={styles['card__description']}>
-          <RichText text={description} embedVideos={false} />
-        </div>}
+        {description && (
+          <div className={styles['card__description']}>
+            <RichText text={description} embedVideos={false} />
+          </div>
+        )}
         {icon && (
           <div className={styles['card__footer']}>
             <div className={styles['card__icon']}>

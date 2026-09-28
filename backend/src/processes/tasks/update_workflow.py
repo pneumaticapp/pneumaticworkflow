@@ -4,21 +4,22 @@ from celery import shared_task
 from django.db import transaction
 
 from src.authentication.enums import AuthTokenType
-from src.executor import RawSqlExecutor
 from src.processes.enums import WorkflowStatus
 from src.processes.models.templates.template import (
     Template,
     TemplateVersion,
 )
 from src.processes.models.workflows.workflow import Workflow
-from src.processes.queries import (
-    UpdateWorkflowMemberQuery,
-    UpdateWorkflowOwnersQuery,
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
 )
 from src.processes.services.workflows.workflow_version import (
     WorkflowUpdateVersionService,
 )
 from src.processes.tasks.tasks import UserModel
+from src.storage.tasks import (
+    schedule_sync_workflow_attachment_permissions,
+)
 
 
 def _update_workflows(
@@ -34,10 +35,13 @@ def _update_workflows(
         return
 
     updated_by = UserModel.objects.get(id=updated_by)
-    version_dict = TemplateVersion.objects.filter(
+    template_version = TemplateVersion.objects.filter(
         template_id=template_id,
         version=version,
-    ).first().data
+    ).first()
+    if template_version is None:
+        return
+    version_dict = template_version.data
 
     for _workflow in template.workflows.all().only('id'):
         with transaction.atomic():
@@ -45,12 +49,19 @@ def _update_workflows(
                 id=_workflow.id,
             )
             if not workflow.is_version_lower(version):
-                return
+                continue
             if workflow.status == WorkflowStatus.DONE:
                 template_owner_ids = Template.objects.filter(
                     id=workflow.template_id,
                 ).get_owners_as_users()
-                workflow.owners.set(template_owner_ids)
+                # Guardian: set change + TEMPLATE_OWNER view
+                perm_svc = WorkflowPermissionService(workflow)
+                perm_svc.set_view_and_change(
+                    user_ids=list(template_owner_ids),
+                )
+                schedule_sync_workflow_attachment_permissions(
+                    workflow.id,
+                )
             else:
                 version_service = WorkflowUpdateVersionService(
                     instance=workflow,
@@ -86,16 +97,25 @@ def update_workflows(**kwargs):
     },
 )
 def update_workflow_owners(template_ids: List[int]):
-    with transaction.atomic():
-        Workflow.owners.through.objects.filter(
-            workflow__template_id__in=template_ids,
-        ).delete()
-        for template_id in template_ids:
-            query_workflow = UpdateWorkflowOwnersQuery(
-                template_id=template_id,
+    """Rebuild Guardian change_workflow when template owners change.
+
+    Only updates TEMPLATE_OWNER / change rows via set_view_and_change.
+    Performer UOP is unchanged when owners change — do not call
+    sync_performer_sources here (avoids double work with reassign
+    members sync and unnecessary load).
+    """
+    for template_id in template_ids:
+        template_owner_ids = list(
+            Template.objects.filter(
+                id=template_id,
+            ).get_owners_as_users(),
+        )
+        workflows = Workflow.objects.filter(
+            template_id=template_id,
+            is_deleted=False,
+        ).only('id', 'account_id', 'template_id')
+        for workflow in workflows:
+            WorkflowPermissionService(workflow).set_view_and_change(
+                user_ids=template_owner_ids,
             )
-            RawSqlExecutor.execute(*query_workflow.insert_sql())
-            query_member = UpdateWorkflowMemberQuery(
-                template_id=template_id,
-            )
-            RawSqlExecutor.execute(*query_member.insert_sql())
+            schedule_sync_workflow_attachment_permissions(workflow.id)

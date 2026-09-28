@@ -11,7 +11,10 @@ from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
     FieldsetTemplateRule,
 )
-from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateSelection,
+)
 from src.processes.services.exceptions import (
     FieldsetTemplateInUseException,
     FieldsetTemplateSharedIdMissing,
@@ -60,7 +63,7 @@ def test__create_instance__default_params__ok():
     name = 'Test fieldset'
 
     # act
-    service._create_instance(
+    fieldset = service._create_instance(
         name=name,
         template_id=template.id,
         is_shared=False,
@@ -68,15 +71,16 @@ def test__create_instance__default_params__ok():
     )
 
     # assert
-    assert service.instance is not None
-    assert service.instance.name == name
-    assert service.instance.api_name
-    assert service.instance.template_id == template.id
-    assert service.instance.shared_fieldset_id == shared_fieldset.id
-    assert service.instance.account_id == account.id
-    assert service.instance.description == ''
-    assert service.instance.label_position == LabelPosition.TOP
-    assert service.instance.layout == FieldSetLayout.VERTICAL
+    assert service.instance == fieldset
+    assert fieldset.name == name
+    assert fieldset.api_name
+    assert fieldset.template_id == template.id
+    assert fieldset.shared_fieldset_id == shared_fieldset.id
+    assert fieldset.account_id == account.id
+    assert fieldset.title == name
+    assert fieldset.description == ''
+    assert fieldset.label_position == LabelPosition.TOP
+    assert fieldset.layout == FieldSetLayout.VERTICAL
 
 
 def test__create_instance__all_params__ok():
@@ -106,7 +110,7 @@ def test__create_instance__all_params__ok():
     api_name = 'fs-1'
 
     # act
-    service._create_instance(
+    fieldset = service._create_instance(
         name=name,
         template_id=template.id,
         is_shared=False,
@@ -118,13 +122,13 @@ def test__create_instance__all_params__ok():
     )
 
     # assert
-    assert service.instance.name == name
-    assert service.instance.template_id == template.id
-    assert service.instance.shared_fieldset_id == shared_fieldset.id
-    assert service.instance.description == description
-    assert service.instance.label_position == label_position
-    assert service.instance.layout == layout
-    assert service.instance.api_name == api_name
+    assert fieldset.name == name
+    assert fieldset.template_id == template.id
+    assert fieldset.shared_fieldset_id == shared_fieldset.id
+    assert fieldset.description == description
+    assert fieldset.label_position == label_position
+    assert fieldset.layout == layout
+    assert fieldset.api_name == api_name
 
 
 def test__create_instance__shared_fieldset__ok():
@@ -142,27 +146,31 @@ def test__create_instance__shared_fieldset__ok():
         auth_type=AuthTokenType.USER,
     )
     name = 'Test fieldset'
+    title = 'User friendly title'
+    description = 'User friendly description'
 
     # act
-    service._create_instance(
+    fieldset = service._create_instance(
         name=name,
+        title=title,
+        description=description,
         is_shared=True,
     )
 
     # assert
     assert service.instance is not None
-    assert service.instance.name == name
-    assert service.instance.is_shared is True
-    assert service.instance.template_id is None
-    assert service.instance.title == ''
-    assert service.instance.description == ''
-    assert service.instance.kickoff_id is None
-    assert service.instance.task_id is None
-    assert service.instance.shared_fieldset_id is None
-    assert service.instance.api_name
-    assert service.instance.account_id == account.id
-    assert service.instance.label_position == LabelPosition.TOP
-    assert service.instance.layout == FieldSetLayout.VERTICAL
+    assert fieldset.name == name
+    assert fieldset.is_shared is True
+    assert fieldset.template_id is None
+    assert fieldset.title == title
+    assert fieldset.description == description
+    assert fieldset.kickoff_id is None
+    assert fieldset.task_id is None
+    assert fieldset.shared_fieldset_id is None
+    assert fieldset.api_name
+    assert fieldset.account_id == account.id
+    assert fieldset.label_position == LabelPosition.TOP
+    assert fieldset.layout == FieldSetLayout.VERTICAL
 
 
 def test__create_instance__is_shared_api_name_provided__ok():
@@ -183,16 +191,16 @@ def test__create_instance__is_shared_api_name_provided__ok():
     api_name = 'fs-custom-1'
 
     # act
-    service._create_instance(
+    fieldset = service._create_instance(
         name=name,
         is_shared=True,
         api_name=api_name,
     )
 
     # assert
-    assert service.instance.api_name == api_name
-    assert service.instance.is_shared is True
-    assert service.instance.template_id is None
+    assert fieldset.api_name == api_name
+    assert fieldset.is_shared is True
+    assert fieldset.template_id is None
 
 
 def test__create_instance__not_shared_no_template_id__raise_exception():
@@ -564,6 +572,7 @@ def test__update_fields__existing_field__ok(mocker):
     )
     field_template_service_partial_update_mock.assert_called_once_with(
         name='Updated Field 1',
+        api_name=field_1.api_name,
         force_save=True,
     )
     field_template_service_create_mock.assert_not_called()
@@ -592,7 +601,11 @@ def test__update_fields__new_field__ok(mocker):
         instance=fieldset,
     )
     fields_data = [
-        {'name': 'New Field', 'type': 'number', 'order': 1},
+        {
+            'name': 'New Field',
+            'type': 'number', 'order': 1,
+            'api_name': 'field-api-name',
+        },
     ]
 
     # mock
@@ -625,6 +638,7 @@ def test__update_fields__new_field__ok(mocker):
     field_template_service_create_mock.assert_called_once_with(
         fieldset_id=fieldset.id,
         template_id=template.id,
+        api_name='field-api-name',
         name='New Field',
         type='number',
         order=1,
@@ -803,6 +817,7 @@ def test_update_rules__existing_rule__ok(mocker):
     )
     fs_rule_update_mock.assert_called_once_with(
         value='200',
+        api_name=rule_1.api_name,
     )
     fieldset_template_rule_service_create_mock.assert_not_called()
 
@@ -829,7 +844,11 @@ def test_update_rules__new_rule__ok(mocker):
         instance=fieldset,
     )
     rules_data = [
-        {'type': FieldSetRuleType.SUM_EQUAL, 'value': '100'},
+        {
+            'type': FieldSetRuleType.SUM_EQUAL,
+            'value': '100',
+            'api_name': 'rule-api-name',
+        },
     ]
 
     # mock
@@ -862,6 +881,7 @@ def test_update_rules__new_rule__ok(mocker):
     fs_rule_create_mock.assert_called_once_with(
         fieldset_id=fieldset.id,
         type=FieldSetRuleType.SUM_EQUAL,
+        api_name='rule-api-name',
         value='100',
     )
     fs_rule_update_mock.assert_not_called()
@@ -1313,7 +1333,7 @@ def test_create_shared_fieldset__ok():
     # assert
     assert result.name == name
     assert result.is_shared is True
-    assert result.title == ''
+    assert result.title == name
     assert result.description == ''
     assert result.label_position == LabelPosition.TOP
     assert result.layout == FieldSetLayout.VERTICAL
@@ -1379,15 +1399,27 @@ def test__replace_api_names__fields_and_rules__ok(mocker):
     old_field_api = 'old-field-1'
     shared_fieldset_data = {
         'api_name': 'old-fs',
-        'fields': [{'api_name': old_field_api, 'name': 'F 1'}],
+        'fields': [
+            {
+                'api_name': old_field_api,
+                'name': 'F 1',
+                'selections': [{'api_name': 'old-selection-1', 'value': 'A'}],
+            },
+        ],
         'rules': [{'api_name': 'old-rule-1', 'fields': [old_field_api]}],
     }
     new_fs_api = 'new-fs-1'
     new_field_api = 'new-field-1'
+    new_selection_api = 'new-selection-1'
     new_rule_api = 'new-rule-1'
     create_api_name_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.create_api_name',
-        side_effect=[new_fs_api, new_field_api, new_rule_api],
+        side_effect=[
+            new_fs_api,
+            new_field_api,
+            new_selection_api,
+            new_rule_api,
+        ],
     )
 
     # act
@@ -1398,13 +1430,17 @@ def test__replace_api_names__fields_and_rules__ok(mocker):
     # assert
     assert result['api_name'] == new_fs_api
     assert result['fields'][0]['api_name'] == new_field_api
+    assert (
+        result['fields'][0]['selections'][0]['api_name'] == new_selection_api
+    )
     assert result['rules'][0]['api_name'] == new_rule_api
     assert result['rules'][0]['fields'][0] == new_field_api
-    assert create_api_name_mock.call_count == 3
+    assert create_api_name_mock.call_count == 4
     create_api_name_mock.assert_has_calls(
         [
             mocker.call(FieldsetTemplate.api_name_prefix),
             mocker.call(FieldTemplate.api_name_prefix),
+            mocker.call(FieldTemplateSelection.api_name_prefix),
             mocker.call(FieldsetTemplateRule.api_name_prefix),
         ],
         any_order=True,

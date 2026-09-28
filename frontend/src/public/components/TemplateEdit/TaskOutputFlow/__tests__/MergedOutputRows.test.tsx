@@ -27,14 +27,10 @@ jest.mock('../../ExtraFields', () => ({
       'div',
       { 'data-testid': 'extra-field-intl' },
       field.name,
-      moveFieldUp
-        && React.createElement(
-          'button',
-          { 'data-testid': `field-up-${field.apiName}`, onClick: moveFieldUp },
-          'FieldUp',
-        ),
-      moveFieldDown
-        && React.createElement(
+      moveFieldUp &&
+        React.createElement('button', { 'data-testid': `field-up-${field.apiName}`, onClick: moveFieldUp }, 'FieldUp'),
+      moveFieldDown &&
+        React.createElement(
           'button',
           { 'data-testid': `field-down-${field.apiName}`, onClick: moveFieldDown },
           'FieldDown',
@@ -43,16 +39,11 @@ jest.mock('../../ExtraFields', () => ({
 }));
 
 jest.mock('../../ExtraFields/utils/ExtraFieldsLabels', () => ({
-  ExtraFieldsLabels: () =>
-    React.createElement('div', { 'data-testid': 'extra-fields-labels' }),
+  ExtraFieldsLabels: () => React.createElement('div', { 'data-testid': 'extra-fields-labels' }),
 }));
 
 jest.mock('../FieldsetFlowRowDropdown', () => ({
-  FieldsetFlowRowDropdown: ({
-    onMoveUp,
-    onMoveDown,
-    onRemove,
-  }: TFieldsetFlowRowDropdownMockProps) =>
+  FieldsetFlowRowDropdown: ({ onMoveUp, onMoveDown, onRemove }: TFieldsetFlowRowDropdownMockProps) =>
     React.createElement(
       'div',
       null,
@@ -62,20 +53,32 @@ jest.mock('../FieldsetFlowRowDropdown', () => ({
     ),
 }));
 
-const makeField = (apiName: string) => makeExtraField({
-  apiName,
-  name: `Field ${apiName}`,
-});
+jest.mock('../FieldsetEditorTitle', () => ({
+  FieldsetEditorTitle: ({ title }: { title: string }) =>
+    React.createElement('div', { 'data-testid': 'fieldset-editor-title' }, title),
+}));
+
+const makeField = (apiName: string) =>
+  makeExtraField({
+    apiName,
+    name: `Field ${apiName}`,
+  });
 
 const fieldRow = (apiName: string): TMergedTaskOutputRow => ({
   kind: 'field',
   field: makeField(apiName),
 });
 
-const fieldsetRow = (apiNameBinding: string, name = 'Test Fieldset', fieldsCount = 0): TMergedTaskOutputRow => ({
+const fieldsetRow = (
+  apiNameBinding: string,
+  name = 'Test Fieldset',
+  fieldsCount = 0,
+  title?: string,
+): TMergedTaskOutputRow => ({
   ...makeFieldsetBindingClient({
     apiNameBinding,
     name,
+    title: title ?? `Title of ${name}`,
     fields: Array.from({ length: fieldsCount }, (_, index) =>
       makeFieldsetField({ apiName: `${apiNameBinding}-field-${index}` }),
     ),
@@ -90,6 +93,7 @@ describe('MergedOutputRows', () => {
     onMoveRow: jest.fn(),
     onEditField: jest.fn(() => jest.fn()),
     onRemoveFieldset: jest.fn(),
+    onEditFieldsetTitle: jest.fn(),
     datasetOptions: [],
     accountId: 1,
     formatMessage: intlMock.formatMessage,
@@ -97,97 +101,59 @@ describe('MergedOutputRows', () => {
   });
 
   it('field row renders ExtraFieldIntl with the field name', () => {
-    render(
-      React.createElement(MergedOutputRows, makeProps({ mergedRows: [fieldRow('f-1')] })),
-    );
+    render(React.createElement(MergedOutputRows, makeProps({ mergedRows: [fieldRow('f-1')] })));
     expect(screen.getByText('Field f-1')).toBeInTheDocument();
   });
 
-  it('fieldset with name → renders "<prefix>: <name>" with exact text', () => {
-    const prefix = intlMock.formatMessage({ id: 'fieldsets.title' });
+  it('fieldset row → renders header with catalog name inline and FieldsetEditorTitle with title', () => {
+    const HEADER_LABEL = intlMock.formatMessage({ id: 'fieldsets.header-label' });
 
     render(
       React.createElement(
         MergedOutputRows,
-        makeProps({ mergedRows: [fieldsetRow('fs-1', 'Fieldset Alpha')] }),
+        makeProps({
+          mergedRows: [fieldsetRow('fs-1', 'Fieldset Alpha', 0, 'Custom Title Alpha')],
+        }),
       ),
     );
 
-    expect(screen.getByText(`${prefix}: Fieldset Alpha`)).toBeInTheDocument();
-  });
-
-  it('fieldset with empty name → renders "<prefix>: <fallback>" with exact text', () => {
-    const prefix = intlMock.formatMessage({ id: 'fieldsets.title' });
-    const fallback = intlMock.formatMessage({ id: 'tasks.task-fieldsets' });
-
-    render(
-      React.createElement(
-        MergedOutputRows,
-        makeProps({ mergedRows: [fieldsetRow('fs-empty', '')] }),
-      ),
-    );
-
-    expect(screen.getByText(`${prefix}: ${fallback}`)).toBeInTheDocument();
+    expect(screen.getByText(`${HEADER_LABEL}: Fieldset Alpha`)).toBeInTheDocument();
+    expect(screen.getByTestId('fieldset-editor-title')).toHaveTextContent('Custom Title Alpha');
   });
 
   it('renders ExtraFieldsLabels when fieldset has fields', () => {
-    render(
-      React.createElement(
-        MergedOutputRows,
-        makeProps({ mergedRows: [fieldsetRow('fs-1', 'Fieldset A', 2)] }),
-      ),
-    );
+    render(React.createElement(MergedOutputRows, makeProps({ mergedRows: [fieldsetRow('fs-1', 'Fieldset A', 2)] })));
 
     expect(screen.getByTestId('extra-fields-labels')).toBeInTheDocument();
   });
 
   it('does NOT render ExtraFieldsLabels when fieldset has no fields', () => {
-    render(
-      React.createElement(
-        MergedOutputRows,
-        makeProps({ mergedRows: [fieldsetRow('fs-1', 'Fieldset A', 0)] }),
-      ),
-    );
+    render(React.createElement(MergedOutputRows, makeProps({ mergedRows: [fieldsetRow('fs-1', 'Fieldset A', 0)] })));
 
     expect(screen.queryByTestId('extra-fields-labels')).not.toBeInTheDocument();
   });
 
   it('renders FieldsetFlowRowDropdown for kind=fieldset rows', () => {
-    render(
-      React.createElement(
-        MergedOutputRows,
-        makeProps({ mergedRows: [fieldsetRow('fs-1')] }),
-      ),
-    );
+    render(React.createElement(MergedOutputRows, makeProps({ mergedRows: [fieldsetRow('fs-1')] })));
 
     expect(screen.getByRole('button', { name: 'Remove' })).toBeInTheDocument();
   });
 
-  it('click Remove → onRemoveFieldset(sharedFieldsetId) called once', () => {
+  it('click Remove → onRemoveFieldset(apiNameBinding) called once', () => {
     const onRemoveFieldset = jest.fn();
 
-    render(
-      React.createElement(
-        MergedOutputRows,
-        makeProps({ mergedRows: [fieldsetRow('fs-1')], onRemoveFieldset }),
-      ),
-    );
+    render(React.createElement(MergedOutputRows, makeProps({ mergedRows: [fieldsetRow('fs-1')], onRemoveFieldset })));
 
     userEvent.click(screen.getByRole('button', { name: 'Remove' }));
 
     expect(onRemoveFieldset).toHaveBeenCalledTimes(1);
-    expect(onRemoveFieldset).toHaveBeenCalledWith(1);
+    expect(onRemoveFieldset).toHaveBeenCalledWith('fs-1');
   });
 
   it('click Up → onMoveRow(0, "up") called once, "down" not called', () => {
     const onMoveRow = jest.fn();
 
-    render(
-      React.createElement(
-        MergedOutputRows,
-        makeProps({ mergedRows: [fieldsetRow('fs-1')], onMoveRow }),
-      ),
-    );
+    render(React.createElement(MergedOutputRows, makeProps({ mergedRows: [fieldsetRow('fs-1')], onMoveRow })));
 
     userEvent.click(screen.getByRole('button', { name: 'Up' }));
 
@@ -199,12 +165,7 @@ describe('MergedOutputRows', () => {
   it('click Down → onMoveRow(0, "down") called once, "up" not called', () => {
     const onMoveRow = jest.fn();
 
-    render(
-      React.createElement(
-        MergedOutputRows,
-        makeProps({ mergedRows: [fieldsetRow('fs-1')], onMoveRow }),
-      ),
-    );
+    render(React.createElement(MergedOutputRows, makeProps({ mergedRows: [fieldsetRow('fs-1')], onMoveRow })));
 
     userEvent.click(screen.getByRole('button', { name: 'Down' }));
 
@@ -214,15 +175,9 @@ describe('MergedOutputRows', () => {
   });
 
   it('field rows: first has only Down, middle has both, last has only Up', () => {
-    const rows: TMergedTaskOutputRow[] = [
-      fieldRow('f-0'),
-      fieldRow('f-1'),
-      fieldRow('f-2'),
-    ];
+    const rows: TMergedTaskOutputRow[] = [fieldRow('f-0'), fieldRow('f-1'), fieldRow('f-2')];
 
-    render(
-      React.createElement(MergedOutputRows, makeProps({ mergedRows: rows })),
-    );
+    render(React.createElement(MergedOutputRows, makeProps({ mergedRows: rows })));
 
     expect(screen.queryByTestId('field-up-f-0')).not.toBeInTheDocument();
     expect(screen.getByTestId('field-down-f-0')).toBeInTheDocument();

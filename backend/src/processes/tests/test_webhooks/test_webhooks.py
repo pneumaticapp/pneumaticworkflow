@@ -1,7 +1,7 @@
 import pytest
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from typing_extensions import OrderedDict
+from typing import OrderedDict
 
 from src.processes.enums import TaskStatus, WorkflowStatus
 from src.processes.models.workflows.workflow import Workflow

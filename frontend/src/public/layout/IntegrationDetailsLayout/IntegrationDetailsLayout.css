@@ -1,28 +1,28 @@
 .container {
-  margin: 0 auto;
   display: flex;
   max-width: 1088px;
+  margin: 0 auto;
 
   @media (--mobile) {
     flex-direction: column;
     justify-content: center;
   }
 
-  @media (min-width: 1600px) {
+  @media (width >= 1600px) {
     max-width: 1312px;
   }
 }
 
 .common {
-  margin-right: 64px;
-  width: 272px;
   flex-shrink: 0;
+  width: 272px;
+  margin-right: 64px;
 
   @media (--mobile) {
     display: none;
   }
 
-  @media (min-width: 1600px) {
+  @media (width >= 1600px) {
     width: 384px;
   }
 }

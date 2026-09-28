@@ -106,9 +106,9 @@
 
 .sidebar-ribbon {
   position: absolute;
-  z-index: -1;
   top: 2.4rem;
   right: -0.1rem;
+  z-index: -1;
   width: calc(100% - 2.5rem);
   height: 2.4rem;
   text-align: right;
@@ -136,9 +136,9 @@
 
 .sidebar-ribbon-tail {
   position: absolute;
-  z-index: 0;
   top: 50%;
   right: -0.4rem;
+  z-index: 0;
   margin-top: -1.2rem;
 }
 
@@ -157,13 +157,13 @@
   top: -0.4rem;
   left: 1.8rem;
   display: flex;
-  width: 3.7rem;
   justify-content: flex-end;
+  width: 3.7rem;
 
   @media (--mobile) {
     top: auto;
-    left: -0.5rem;
     bottom: 1.2rem;
+    left: -0.5rem;
   }
 }
 
@@ -176,18 +176,18 @@
   }
 
   .counter {
-    padding: 0.2rem 0.4rem;
     display: flex;
+    align-items: center;
+    justify-content: center;
     min-width: 2rem;
     max-width: 3.7rem;
     height: 2rem;
-    align-items: center;
-    justify-content: center;
+    padding: 0.2rem 0.4rem;
     border-radius: 1.2rem;
 
     span {
-      padding: 0;
       visibility: unset;
+      padding: 0;
       font-size: 1.1rem;
       font-weight: 800;
       line-height: 1.6rem;
@@ -214,20 +214,20 @@
 .logo {
   @media (--mobile) {
     position: absolute;
-    z-index: 1;
     top: 1.6rem;
     left: 1.6rem;
+    z-index: 1;
   }
 }
 
 .help {
   position: absolute;
-  left: 1.6rem;
   bottom: 1.6rem;
-  margin: 0;
-  padding: 0;
+  left: 1.6rem;
   display: flex;
   align-items: center;
+  padding: 0;
+  margin: 0;
   color: var(--pneumatic-color-link-hover);
   background: none;
   border: 0;
@@ -260,20 +260,20 @@
 
   @media (--desktop) {
     position: absolute;
-    z-index: 1;
     top: 1.6rem;
     left: 1.6rem;
+    z-index: 1;
     display: block;
-    border-radius: 50%;
     outline: none;
+    border-radius: 50%;
   }
 }
 
 .logo-mobile {
   position: absolute;
-  z-index: 1040;
   top: 1.6rem;
   left: 0;
+  z-index: 1040;
   width: 6.4rem;
   height: 6.4rem;
   border-radius: 0 3.2rem 3.2rem 0;
@@ -293,8 +293,8 @@
 
 .mobile-item {
   @media (--mobile) {
-    margin-bottom: 3.2rem;
     height: unset;
+    margin-bottom: 3.2rem;
 
     &:first-child {
       margin-top: 1.6rem;
@@ -307,8 +307,8 @@
 
   a {
     @media (--mobile) {
-      padding: 0;
       height: unset;
+      padding: 0;
     }
   }
 }
@@ -322,19 +322,19 @@
 .sidebar__bottom {
   position: absolute;
   right: 1.6rem;
-  left: 1.6rem;
   bottom: 1.6rem;
+  left: 1.6rem;
   padding: 0;
 }
 
 .sidebar__start-button {
-  padding: 0;
   display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   height: 4rem;
-  flex-flow: row nowrap;
-  justify-content: center;
-  align-items: center;
+  padding: 0;
   color: var(--pneumatic-color-black100);
   background: var(--pneumatic-color-white);
   border: none;
@@ -372,8 +372,8 @@
   font-size: 1.5rem;
   font-weight: 800;
   line-height: 2rem;
-  white-space: nowrap;
   word-break: keep-all;
+  white-space: nowrap;
   opacity: 0;
 }
 
@@ -390,9 +390,9 @@
 }
 
 .menu-wrapper__list {
-  margin: auto;
-  padding-left: 0;
   width: 100%;
+  padding-left: 0;
+  margin: auto;
   list-style: none;
 
   @media (--mobile) {
@@ -419,9 +419,9 @@
 
 :global(.sidebar) {
   position: fixed;
-  z-index: 1030;
   top: 0;
   bottom: 0;
+  z-index: 1030;
   height: calc(100% - 10rem);
   transition: border-radius var(--menu-collapse-time);
 
@@ -431,21 +431,23 @@
 }
 
 :global(.sidebar) :global(.scrollbar-container) {
-  margin-right: 0;
   padding-right: 0;
+  margin-right: 0;
 }
 
 :global(.sidebar) :global(.main-menu) {
   position: fixed;
-  z-index: 3;
   top: 1rem;
-  left: 0;
   bottom: 1rem;
+  left: 0;
+  z-index: 3;
+  width: 20rem;
   padding-top: 6.6rem;
   padding-bottom: 6.6rem;
-  width: 20rem;
   border-radius: 0 2rem 2rem 0;
-  transition: transform var(--menu-collapse-time), width var(--menu-collapse-time);
+  transition:
+    transform var(--menu-collapse-time),
+    width var(--menu-collapse-time);
 
   @media (--mobile) {
     width: calc(100vw - 1.6rem);
@@ -454,9 +456,9 @@
 }
 
 :global(.main-menu) :global(.scroll) {
-  margin-right: unset;
-  padding-right: unset;
   height: 100%;
+  padding-right: unset;
+  margin-right: unset;
 }
 
 :global(.main-menu) :global(.scroll) :global(.ps__thumb-y) {
@@ -470,9 +472,9 @@
 
 :global(.main-menu) :global(ul) :global(li) {
   position: relative;
-  margin-bottom: 4rem;
   width: auto;
   min-width: 20rem;
+  margin-bottom: 4rem;
 }
 
 :global(.main-menu) :global(ul) :global(li:last-child) {
@@ -484,20 +486,22 @@
   font-size: 1.1rem;
   line-height: 1.6rem;
   text-align: left;
-  letter-spacing: 0.05em;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 :global(.main-menu) :global(li) :global(a) {
-  padding-left: 2.3rem;
   display: flex;
-  width: auto;
   align-items: center;
+  width: auto;
+  padding-left: 2.3rem;
   font-size: 1.5rem;
-  font-weight: bold;
   font-style: normal;
+  font-weight: bold;
   border-radius: 2.4rem;
-  transition: color var(--menu-collapse-time), background var(--menu-collapse-time);
+  transition:
+    color var(--menu-collapse-time),
+    background var(--menu-collapse-time);
 }
 
 :global(.main-menu) :global(li) :global(i) {
@@ -563,8 +567,8 @@
   }
 
   :global(.main-menu) .mobile-item a {
-    padding: 0;
     height: unset;
+    padding: 0;
   }
 
   :global(.sidebar) :global(.main-menu).menu__extra-space {

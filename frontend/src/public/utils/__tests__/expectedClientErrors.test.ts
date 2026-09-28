@@ -27,6 +27,10 @@ describe('isExpectedClientError', () => {
     expect(isExpectedClientError('Request was throttled. Expected available in 30 seconds.')).toBe(true);
   });
 
+  it('returns true for invalid login or password', () => {
+    expect(isExpectedClientError({ detail: 'Invalid login or password.' })).toBe(true);
+  });
+
   it('returns true for validation error pattern', () => {
     expect(isExpectedClientError({ code: 'validation_error', detail: 'invalid field' })).toBe(true);
   });

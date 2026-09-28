@@ -34,9 +34,7 @@ interface IGetDropdownStepsProps {
   rule: TConditionRule;
 }
 
-export const CONDITION_DISABLED_OPERATOR: (EStartingType | EExtraFieldType)[] = [
-  EStartingType.Kickoff
-];
+export const CONDITION_DISABLED_OPERATOR: (EStartingType | EExtraFieldType)[] = [EStartingType.Kickoff];
 export const OPERATORS_WITHOUT_VALUE = [
   EConditionOperators.Exist,
   EConditionOperators.NotExist,

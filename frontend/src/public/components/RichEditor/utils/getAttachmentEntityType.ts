@@ -1,8 +1,5 @@
 import type { TAttachmentType } from '../../../types/attachments';
-import {
-  getAttachmentTypeByFilename,
-  getAttachmentTypeByUrl,
-} from '../../Attachments/utils/getAttachmentType';
+import { getAttachmentTypeByFilename, getAttachmentTypeByUrl } from '../../Attachments/utils/getAttachmentType';
 import { ECustomEditorEntities } from './types';
 
 const ATTACHMENT_ENTITIES_MAP: { [key in TAttachmentType]: ECustomEditorEntities } = {

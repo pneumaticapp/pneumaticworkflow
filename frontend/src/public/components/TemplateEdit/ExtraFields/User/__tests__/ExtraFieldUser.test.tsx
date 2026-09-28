@@ -52,18 +52,20 @@ jest.mock('../../utils/FieldLabel', () => ({
 describe('ExtraFieldUser', () => {
   const mockEditField = jest.fn();
 
-  const mockUsers: TUserListItem[] = [{
-    id: 1,
-    firstName: 'User1',
-    lastName: '',
-    email: 'user1@test.com',
-    phone: '',
-    photo: '',
-    type: 'user',
-    status: EUserStatus.Active,
-    isAdmin: false,
-    isAccountOwner: false,
-  }];
+  const mockUsers: TUserListItem[] = [
+    {
+      id: 1,
+      firstName: 'User1',
+      lastName: '',
+      email: 'user1@test.com',
+      phone: '',
+      photo: '',
+      type: 'user',
+      status: EUserStatus.Active,
+      isAdmin: false,
+      isAccountOwner: false,
+    },
+  ];
   const mockGroups = [{ id: 1, name: 'Group1' }];
 
   beforeEach(() => {
@@ -80,11 +82,12 @@ describe('ExtraFieldUser', () => {
     return mock.mock.calls[mock.mock.calls.length - 1][0];
   };
 
-  const createBaseField = (overrides = {}) => makeExtraField({
-    name: 'User Field',
-    type: EExtraFieldType.User,
-    ...overrides,
-  });
+  const createBaseField = (overrides = {}) =>
+    makeExtraField({
+      name: 'User Field',
+      type: EExtraFieldType.User,
+      ...overrides,
+    });
 
   const baseProps: IExtraFieldUserProps = {
     field: createBaseField(),
@@ -160,14 +163,14 @@ describe('ExtraFieldUser', () => {
   });
 
   describe('label-left support', () => {
-    it('ProcessRun + labelPosition=Left: renders FieldLabel with centered class', () => {
+    it('ProcessRun + labelPosition=Left: passes labelPosition=Left to FieldLabel', () => {
       render(<ExtraFieldUser {...baseProps} labelPosition={EFieldLabelPosition.Left} />);
 
       const fieldLabelMock = FieldLabel as jest.Mock;
       expect(fieldLabelMock).toHaveBeenCalledTimes(1);
       expect(fieldLabelMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          className: expect.stringContaining('centered'),
+          labelPosition: EFieldLabelPosition.Left,
         }),
         {},
       );

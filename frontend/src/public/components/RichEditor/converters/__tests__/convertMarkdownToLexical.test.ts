@@ -9,8 +9,7 @@ jest.mock('../../../../utils/checklists/prepareChecklistsForRendering', () => ({
 }));
 
 jest.mock('@lexical/markdown', () => ({
-  $convertFromMarkdownString: (prepared: string, _transformers: unknown) =>
-    mockConvertFromMarkdownString(prepared),
+  $convertFromMarkdownString: (prepared: string, _transformers: unknown) => mockConvertFromMarkdownString(prepared),
 }));
 
 describe('applyMarkdownToEditor', () => {
@@ -74,9 +73,7 @@ describe('applyMarkdownToEditor', () => {
 
   it('calls update when templateVariables are passed', () => {
     const { EExtraFieldType } = require('../../../../types/template');
-    const templateVariables = [
-      { apiName: 'var1', title: 'Var 1', subtitle: '', type: EExtraFieldType.Text },
-    ];
+    const templateVariables = [{ apiName: 'var1', title: 'Var 1', subtitle: '', type: EExtraFieldType.Text }];
     applyMarkdownToEditor(editor, '{{var1}}', { templateVariables });
     expect(editor.update).toHaveBeenCalled();
     expect(mockConvertFromMarkdownString).toHaveBeenCalled();

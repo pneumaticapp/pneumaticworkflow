@@ -66,40 +66,64 @@ self.addEventListener('push', (e) => {
 });
 
 const messaging = firebase.messaging();
+const appHost = '<%= host %>';
+
+// Keep in sync with resolveNotificationUrl.ts
+function resolveNotificationUrl(data, host) {
+  if (!data) {
+    return null;
+  }
+
+  if (data.link) {
+    return data.link;
+  }
+
+  if (data.task_id) {
+    const normalizedHost = host.replace(/\/$/, '');
+    return `${normalizedHost}/tasks/${data.task_id}/`;
+  }
+
+  return null;
+}
 
 messaging.onBackgroundMessage(function (payload) {
   const notificationTitle = payload.data.title;
   const notificationBody = payload.data.body;
+  const url = resolveNotificationUrl(payload.data, appHost);
 
   const notificationOptions = {
     body: notificationBody,
+    data: {
+      link: url,
+    },
   };
 
-  self.addEventListener('notificationclick', function (event) {
-    const taskId = payload.data.task_id;
-    if (!taskId) {
-      return;
-    }
-
-    let url = `<%= host %>tasks/${taskId}/`;
-    event.notification.close(); // Android needs explicit close.
-    event.waitUntil(
-      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-        // Check if there is already a window/tab open with the target URL
-        for (var i = 0; i < windowClients.length; i++) {
-          var client = windowClients[i];
-          // If so, just focus it.
-          if (client.url === url && 'focus' in client) {
-            return client.focus();
-          }
-        }
-        // If not, then open the target URL in a new window/tab.
-        if (clients.openWindow) {
-          return clients.openWindow(url);
-        }
-      }),
-    );
-  });
-
   return self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+self.addEventListener('notificationclick', function (event) {
+  const url = event.notification.data && event.notification.data.link;
+
+  event.notification.close();
+
+  if (!url) {
+    return;
+  }
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      for (var i = 0; i < windowClients.length; i++) {
+        var client = windowClients[i];
+        if ('focus' in client) {
+          if ('navigate' in client) {
+            return client.navigate(url).then((navigatedClient) => navigatedClient.focus());
+          }
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(url);
+      }
+    }),
+  );
 });

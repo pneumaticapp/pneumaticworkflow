@@ -61,7 +61,10 @@ describe('getDropdownOperators', () => {
       expect(result).toEqual([
         { operator: EConditionOperators.Completed, label: mockMessages['templates.conditions.completed'] },
         { operator: EConditionOperators.Skipped, label: mockMessages['templates.conditions.skipped'] },
-        { operator: EConditionOperators.CompletedOrSkipped, label: mockMessages['templates.conditions.completed-or-skipped'] },
+        {
+          operator: EConditionOperators.CompletedOrSkipped,
+          label: mockMessages['templates.conditions.completed-or-skipped'],
+        },
       ]);
     });
 

@@ -5,22 +5,21 @@ import { closeDeleteUserModal, declineInvite, deleteUser } from '../../../../red
 import { IDeleteTeamUserPopupProps, DeleteTeamUserPopup } from './DeleteTeamUserPopup';
 import { EUserStatus } from '../../../../types/user';
 
-type TStoreProps = Pick<IDeleteTeamUserPopupProps,
-| 'user'
-| 'usersList'
-| 'modalState'
-| 'isUserActive'
-| 'userWorkflowsCount'
+type TStoreProps = Pick<
+  IDeleteTeamUserPopupProps,
+  'user' | 'usersList' | 'modalState' | 'isUserActive' | 'userWorkflowsCount'
 >;
 type TDispatchProps = Pick<IDeleteTeamUserPopupProps, 'declineInvite' | 'deleteUser' | 'closeModal'>;
 
 export function mapStateToProps({
-  accounts: { users, deleteUserModal: { user, state: modalState, userWorkflowsCount } },
+  accounts: {
+    users,
+    deleteUserModal: { user, state: modalState, userWorkflowsCount },
+  },
 }: IApplicationState): TStoreProps {
-
   return {
     user,
-    usersList: users.filter(currentUser => currentUser.status && currentUser.status === EUserStatus.Active),
+    usersList: users.filter((currentUser) => currentUser.status && currentUser.status === EUserStatus.Active),
     isUserActive: user?.status === EUserStatus.Active,
     modalState,
     userWorkflowsCount,
@@ -33,7 +32,7 @@ export const mapDispatchToProps: TDispatchProps = {
   closeModal: closeDeleteUserModal,
 };
 
-export const DeleteTeamUserPopupContainer = connect<
-TStoreProps,
-TDispatchProps
->(mapStateToProps, mapDispatchToProps)(DeleteTeamUserPopup);
+export const DeleteTeamUserPopupContainer = connect<TStoreProps, TDispatchProps>(
+  mapStateToProps,
+  mapDispatchToProps,
+)(DeleteTeamUserPopup);

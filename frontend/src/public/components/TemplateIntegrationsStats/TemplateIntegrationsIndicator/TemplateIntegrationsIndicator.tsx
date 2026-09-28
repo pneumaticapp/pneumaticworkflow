@@ -25,38 +25,36 @@ export function TemplateIntegrationsIndicator({
 
   return (
     <TemplateIntegrationsStats templateId={templateId} exlcude={exlcude}>
-      {connectedIntegrations => {
-        const indicator = isArrayWithItems(connectedIntegrations)
-          ? (
-            <Tooltip
-              content={(
-                <div className={styles['indicator-tooltip']}>
-                  {connectedIntegrations.map(i => integrationsSettings[i].title).join('\n')}
+      {(connectedIntegrations) => {
+        const indicator = isArrayWithItems(connectedIntegrations) ? (
+          <Tooltip
+            content={
+              <div className={styles['indicator-tooltip']}>
+                {connectedIntegrations.map((i) => integrationsSettings[i].title).join('\n')}
+              </div>
+            }
+          >
+            {integratedIndicator}
+          </Tooltip>
+        ) : (
+          <Tooltip
+            content={
+              <div className={styles['indicator-tooltip']}>
+                {formatMessage({ id: 'dashboard.integrations-tooltip' })}
+                <div className={styles['indicator-tooltip__link']}>
+                  <a target="_blank" href={ELearnMoreLinks.Integrations} rel="noreferrer">
+                    {formatMessage({ id: 'dashboard.integrations-tooltip-link' })}
+                  </a>
                 </div>
-              )}
-            >
-             {integratedIndicator}
-            </Tooltip>
-          )
-          : (
-            <Tooltip
-              content={(
-                <div className={styles['indicator-tooltip']}>
-                  {formatMessage({ id: 'dashboard.integrations-tooltip' })}
-                  <div className={styles['indicator-tooltip__link']}>
-                    <a target="_blank" href={ELearnMoreLinks.Integrations} rel="noreferrer">
-                      {formatMessage({ id: 'dashboard.integrations-tooltip-link' })}
-                    </a>
-                  </div>
-                </div>
-              )}
-            >
-              {disconnectedIndicator}
-            </Tooltip>
-          );
+              </div>
+            }
+          >
+            {disconnectedIndicator}
+          </Tooltip>
+        );
 
         return indicator;
       }}
     </TemplateIntegrationsStats>
-  )
+  );
 }

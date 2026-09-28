@@ -22,7 +22,8 @@ from src.processes.tests.fixtures import (
     create_test_account,
     create_test_not_admin,
     create_test_owner,
-    create_test_shared_fieldset,
+    create_test_shared_fieldset, create_test_template,
+    create_test_fieldset_template,
 )
 from src.utils.validation import ErrorCode
 
@@ -100,6 +101,7 @@ def test_partial_update__all_fields__ok(api_client, mocker):
     assert response.data['label_position'] == data['label_position']
     assert response.data['layout'] == data['layout']
     assert response.data['api_name'] == data['api_name']
+    assert response.data['usage'] == []
 
     assert len(response.data['fields']) == 1
     assert response.data['fields'][0]['name'] == field.name
@@ -163,6 +165,64 @@ def test_partial_update__name__ok(api_client, mocker):
     fieldset_service_init_mock.assert_called_once_with(
         user=user,
         instance=fieldset,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    fieldset_partial_update_mock.assert_called_once_with(
+        name=data['name'],
+    )
+
+
+def test_partial_update_fieldset_is_used__return_usage(api_client, mocker):
+
+    """ Partial update with minimal request data """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    shared_fieldset = create_test_shared_fieldset(
+        account=account,
+    )
+    data = {
+        'name': 'Updated Name',
+    }
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    task = template.tasks.get(number=1)
+    create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=task,
+        shared_fieldset=shared_fieldset,
+    )
+    fieldset_service_init_mock = mocker.patch.object(
+        FieldSetTemplateService,
+        attribute='__init__',
+        return_value=None,
+    )
+    fieldset_partial_update_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.partial_update',
+        return_value=shared_fieldset,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.patch(
+        f'/fieldsets/{shared_fieldset.id}',
+        data=data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == shared_fieldset.id
+    assert len(response.data['usage']) == 1
+    assert response.data['usage'][0]['id'] == template.id
+    assert response.data['usage'][0]['name'] == template.name
+    fieldset_service_init_mock.assert_called_once_with(
+        user=user,
+        instance=shared_fieldset,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )

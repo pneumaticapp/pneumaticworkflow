@@ -31,6 +31,12 @@
   color: var(--pneumatic-color-black16);
   justify-content: center;
   align-items: center;
+
+  svg,
+  svg path {
+    fill: currentcolor;
+    color: currentcolor;
+  }
 }
 
 .field__error-text {

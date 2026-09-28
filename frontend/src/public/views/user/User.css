@@ -4,16 +4,16 @@
 }
 
 .oauth {
-  margin: -4px;
   display: flex;
+  margin: -4px;
 
   @media (--mobile) {
     flex-direction: column;
   }
 
   &__button {
-    margin: 4px;
     width: 100%;
+    margin: 4px;
   }
 }
 
@@ -33,9 +33,9 @@
 
   p {
     position: relative;
-    margin: 0;
-    padding: 0 8px;
     display: inline-block;
+    padding: 0 8px;
+    margin: 0;
     color: var(--pneumatic-color-black48);
     background: white;
   }
@@ -47,8 +47,8 @@
   }
 
   &__captcha {
-    margin-top: 8px;
     max-width: 100%;
+    margin-top: 8px;
   }
 
   &__terms {
@@ -59,24 +59,25 @@
   }
 
   &__settings {
-    margin: 16px 0;
     display: flex;
-    line-height: 20px;
     justify-content: space-between;
+    margin: 16px 0;
+    line-height: 20px;
   }
 
   &__submit {
-    margin-top: 16px;
     width: 100%;
+    margin-top: 16px;
   }
 }
 
 .footnote {
   margin-top: 32px;
   line-height: 20px;
-  text-align: center;
   color: var(--pneumatic-color-black72);
+  text-align: center;
 }
+
 .footnote-register {
   margin-top: 1.6rem;
 }

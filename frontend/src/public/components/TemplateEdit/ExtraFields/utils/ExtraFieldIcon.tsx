@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
 
@@ -12,25 +11,18 @@ export interface IExtraFieldIconProps {
   tooltipText: string;
   tooltipTitle: string;
   onClick(): void;
+  disabled?: boolean;
 }
 
-export function ExtraFieldIcon({ Icon, tooltipText, tooltipTitle, onClick }: IExtraFieldIconProps) {
+export function ExtraFieldIcon({ Icon, tooltipText, tooltipTitle, onClick, disabled }: IExtraFieldIconProps) {
   const buttonRef = React.useRef(null);
 
   return (
     <>
-      <button
-        className={styles['component-icon-container']}
-        ref={buttonRef}
-        onClick={onClick}
-      >
+      <button className={styles['component-icon-container']} ref={buttonRef} onClick={onClick} disabled={disabled}>
         <Icon className={styles['component-icon']} />
       </button>
-      <CustomTooltip
-        target={buttonRef}
-        tooltipText={tooltipText}
-        tooltipTitle={tooltipTitle}
-      />
+      <CustomTooltip target={buttonRef} tooltipText={tooltipText} tooltipTitle={tooltipTitle} />
     </>
   );
 }

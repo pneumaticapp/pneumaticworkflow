@@ -6,7 +6,9 @@ export type TCountUserWorkflowsResponse = {
 };
 
 export function countUserWorkflows(userId: number) {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   return commonRequest<TCountUserWorkflowsResponse>(
     urls.countUserWorkflows.replace(':id', String(userId)),

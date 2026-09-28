@@ -48,9 +48,8 @@ if configuration in (
 
 app = Celery('src', **celery_config)
 app.conf.setdefault('broker_login_method', 'PLAIN')
-app.config_from_object('django.conf:settings')
 
-
+# Before config_from_object: CELERY_IMPORTS load modules that import this.
 default_lock_expire = 60 * 10  # Lock expires in 10 minutes
 
 
@@ -71,3 +70,6 @@ def periodic_lock(
     finally:
         if timezone.now() < timeout_at and status:
             cache.delete(lock_id)
+
+
+app.config_from_object('django.conf:settings')

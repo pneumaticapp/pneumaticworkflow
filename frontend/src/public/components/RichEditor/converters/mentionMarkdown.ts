@@ -5,10 +5,7 @@ import { MentionNode, $createMentionNode, $isMentionNode } from '../nodes/Mentio
 
 export const MENTION: TextMatchTransformer = {
   dependencies: [MentionNode],
-  export: (node) =>
-    $isMentionNode(node)
-      ? `[${escapeMarkdownLinkText(node.getName())}|${node.getId()}]`
-      : null,
+  export: (node) => ($isMentionNode(node) ? `[${escapeMarkdownLinkText(node.getName())}|${node.getId()}]` : null),
   importRegExp: new RegExp(mentionsRegex.source, mentionsRegex.flags),
   regExp: new RegExp(mentionsRegex.source, mentionsRegex.flags),
   replace: (textNode, match) => {

@@ -8,27 +8,17 @@ import { parseMarkdownToFiles } from '../../utils/parseMarkdownFiles';
 
 import styles from './KickoffOutputs.css';
 
-export function FileOutput({
-  name,
-  attachments,
-  markdownValue,
-}: IExtraField) {
+export function FileOutput({ name, attachments, markdownValue }: IExtraField) {
   const { formatMessage } = useIntl();
 
   const renderValue = () => {
     const defaultValue = (
-      <span className={styles['output__text']}>
-        {formatMessage({ id: 'template.kick-off-form-unfilled-value' })}
-      </span>
+      <span className={styles['output__text']}>{formatMessage({ id: 'template.kick-off-form-unfilled-value' })}</span>
     );
 
-    const files = isArrayWithItems(attachments)
-      ? attachments
-      : parseMarkdownToFiles(markdownValue);
+    const files = isArrayWithItems(attachments) ? attachments : parseMarkdownToFiles(markdownValue);
 
-    return isArrayWithItems(files) ? (
-      <Attachments attachments={files} isEdit={false} />
-    ) : defaultValue;
+    return isArrayWithItems(files) ? <Attachments attachments={files} isEdit={false} /> : defaultValue;
   };
 
   return (

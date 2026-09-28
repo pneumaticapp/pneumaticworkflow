@@ -18,7 +18,7 @@ from unittest.mock import patch, MagicMock
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import call_command
 from django.db import connection
-from guardian.models import UserObjectPermission
+from src.permissions.models import UserObjectPermission
 
 from src.processes.enums import FieldType
 from src.processes.models.workflows.attachment import (

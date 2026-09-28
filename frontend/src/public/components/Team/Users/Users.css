@@ -1,13 +1,13 @@
 /* stylelint-disable declaration-no-important */
 .container {
-  margin: 0 auto;
   max-width: 86.4rem;
+  margin: 0 auto;
 }
 
 .search {
   position: relative;
-  margin-bottom: 3.2rem;
   width: 100%;
+  margin-bottom: 3.2rem;
 }
 
 .search__icon {
@@ -24,7 +24,7 @@
 
 .search-field__input {
   padding-left: 4.8rem !important;
-  background-color: var(----background-color);
+  background-color: var(--background-color);
 }
 
 .cards {
@@ -37,13 +37,13 @@
 
 .card {
   position: relative;
-  padding: 3.2rem 16rem 3.2rem 3.2rem;
   display: flex;
+  align-items: center;
   min-height: 10.4rem;
+  padding: 3.2rem 16rem 3.2rem 3.2rem;
   color: var(--pneumatic-color-black100);
   background-color: white;
   border-radius: 2.4rem;
-  align-items: center;
   transition: box-shadow 0.2s ease-in-out;
 
   &:hover {
@@ -61,8 +61,8 @@
   top: 3.2rem;
   right: 3.2rem;
   display: flex;
-  height: 4rem;
   align-items: center;
+  height: 4rem;
 }
 
 .card-admin {
@@ -72,8 +72,8 @@
   font-weight: bold;
   line-height: 1.6rem;
   text-align: right;
-  letter-spacing: 0.05em;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 
   @media (--mobile) {
     top: calc(100% - 4.8rem);
@@ -90,8 +90,8 @@
 }
 
 .card-more {
-  cursor: pointer;
   color: var(--pneumatic-color-black16);
+  cursor: pointer;
   transition: color 0.1s ease-in-out;
 
   &.card-more_active,
@@ -127,21 +127,21 @@
   font-size: 1.1rem;
   font-weight: bold;
   line-height: 1.6rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   color: var(--pneumatic-color-black32);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .card-absent-badge {
-  margin-left: 0.8rem;
   padding: 0.2rem 0.6rem;
+  margin-left: 0.8rem;
   font-size: 1rem;
   font-weight: 600;
   line-height: 1.4rem;
   vertical-align: middle;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
   color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   background-color: var(--pneumatic-color-link-dark, #f5a623);
   border-radius: 0.4rem;
 }
@@ -152,15 +152,15 @@
 
 .invite-button {
   all: unset;
-  margin-bottom: 0.8rem;
   display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   height: 10.4rem;
+  margin-bottom: 0.8rem;
   color: var(--pneumatic-color-link-dark);
   background: white;
   border-radius: 2.4rem;
-  justify-content: center;
-  align-items: center;
   transition: all 0.2s ease-in-out;
 
   &:hover {

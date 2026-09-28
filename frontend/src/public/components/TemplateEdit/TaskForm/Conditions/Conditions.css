@@ -4,6 +4,7 @@
     declaration-no-important,
     selector-max-compound-selectors
 */
+
 /* .conditions {
   Add styles when multiple conditions will be enabled
 } */
@@ -13,12 +14,12 @@
 }
 
 .paywall-text {
-  margin: 0;
   padding-right: 4rem;
+  margin: 0;
   font-size: 1.5rem;
   line-height: 2rem;
-  text-align: center;
   color: var(--pneumatic-color-black32);
+  text-align: center;
 }
 
 .paywall-text__upgrade {
@@ -41,18 +42,18 @@
 
 .condition-rule__settings-inner {
   position: relative;
-  margin: -0.4rem;
-  padding-right: 4rem;
   display: flex;
   flex-wrap: wrap;
+  padding-right: 4rem;
+  margin: -0.4rem;
 
   &.condition-rule__settings_disabled::before {
     position: absolute;
-    z-index: 1;
     top: 0;
     right: 4rem;
-    left: 0;
     bottom: 0;
+    left: 0;
+    z-index: 1;
     pointer-events: none;
     content: '';
     background: var(--pneumatic-color-white);
@@ -62,7 +63,7 @@
   .condition-rule__setting {
     margin: 0.4rem;
 
-    @media (max-width: 1000px) {
+    @media (width <= 1000px) {
       width: 100%;
     }
   }
@@ -75,17 +76,17 @@
     .react-datepicker-wrapper {
       .react-datepicker__input-container {
         input {
-          padding: 1.4rem 5rem 1.4rem 1.6rem !important;
           width: 100% !important;
           height: 4rem;
+          padding: 1.4rem 5rem 1.4rem 1.6rem !important;
           font-family: Nunito, sans-serif !important;
           font-size: 1.5rem !important;
           line-height: 2rem !important;
           color: var(--pneumatic-color-black100) !important;
+          outline: none !important;
           background: var(--pneumatic-color-white) !important;
           border: 0.1rem solid var(--pneumatic-color-black16) !important;
           border-radius: 0.8rem !important;
-          outline: none !important;
           transition: 0.15s ease-in border-color !important;
 
           &:focus {
@@ -104,7 +105,7 @@
 .condition-rule__field {
   width: 49.1%;
 
-  @media (max-width: 1150px) {
+  @media (width <= 1150px) {
     width: 100%;
   }
 }
@@ -112,7 +113,7 @@
 .condition-rule__operator {
   width: 24%;
 
-  @media (max-width: 1150px) {
+  @media (width <= 1150px) {
     width: calc(50% - 0.8rem);
   }
 }
@@ -122,25 +123,25 @@
 }
 
 .condition-rule__value {
-  flex-basis: 0;
   flex-grow: 1;
+  flex-basis: 0;
 
   .condition__value-field-select-menu {
     width: 189.5%;
 
-    @media (max-width: 1340px) {
+    @media (width <= 1340px) {
       width: 163%;
     }
 
-    @media (max-width: 1150px) {
+    @media (width <= 1150px) {
       width: 100%;
     }
   }
 }
 
 .condition-rule__logic-operation {
-  margin-bottom: 0.8rem;
   width: 10rem;
+  margin-bottom: 0.8rem;
 }
 
 .select {
@@ -160,8 +161,8 @@
 }
 
 .text-field {
-  margin: 0;
   width: 100%;
+  margin: 0;
 
   input {
     height: 4rem;
@@ -174,8 +175,8 @@
 
   div {
     overflow: hidden;
-    white-space: nowrap;
     text-overflow: ellipsis;
+    white-space: nowrap;
 
     span {
       display: inline !important;
@@ -186,13 +187,14 @@
 .variable-title {
   font-weight: bold;
 }
+
 .variable-richsubtitle {
   color: var(--pneumatic-color-black48);
 }
 
 .condition__tooltop {
-  overflow: hidden;
   width: 100%;
+  overflow: hidden;
 }
 
 .condition__tooltop-box {
@@ -203,6 +205,7 @@
 .condition__dropdown-option-is-selected {
   color: var(--pneumatic-color-black32);
 }
+
 .condition__value-field-select-option {
   @mixin text-overflow;
 }

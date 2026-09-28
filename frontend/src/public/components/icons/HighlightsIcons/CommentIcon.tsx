@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
 
@@ -10,14 +9,7 @@ export interface ICommentIconProps extends React.SVGAttributes<SVGElement> {
 
 export function CommentIcon({ fill = '#B9B9B8', size = 'lg', ...rest }: ICommentIconProps) {
   const largeIcon = (
-    <svg
-      width="32"
-      height="32"
-      viewBox="0 0 32 32"
-      fill={fill}
-      xmlns="http://www.w3.org/2000/svg"
-      {...rest}
-    >
+    <svg width="32" height="32" viewBox="0 0 32 32" fill={fill} xmlns="http://www.w3.org/2000/svg" {...rest}>
       <path
         fillRule="evenodd"
         clipRule="evenodd"

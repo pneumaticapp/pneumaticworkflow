@@ -1,7 +1,4 @@
-import {
-  removeDuplicateClipboardParagraphs,
-  nodesContainChecklist,
-} from '../checklistPluginUtils';
+import { removeDuplicateClipboardParagraphs, nodesContainChecklist } from '../checklistPluginUtils';
 
 /**
  * ChecklistPlugin utils tests. Functions that create Lexical nodes ($createParagraphNode,

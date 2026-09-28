@@ -8,9 +8,7 @@ import { KickoffOutputs } from '../../../KickoffOutputs';
 import { EditKickoffContainer } from '../../../KickoffEdit';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
 import { makeFieldsetRuntime } from '../../../../__stubs__/fieldsets.factory';
-import {
-  IExtraField,
-} from '../../../../types/template';
+import { IExtraField } from '../../../../types/template';
 import { IFieldsetRuntime } from '../../../../types/fieldset';
 import {
   EWorkflowStatus,
@@ -31,14 +29,12 @@ jest.mock('react-dom', () => {
 jest.mock('reactstrap', () => ({
   Modal: ({ children, isOpen }: { children: React.ReactNode; isOpen: boolean }) =>
     isOpen ? React.createElement('div', { 'data-testid': 'modal' }, children) : null,
-  ModalBody: ({ children }: { children: React.ReactNode }) =>
-    React.createElement('div', null, children),
+  ModalBody: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
 }));
 
 jest.mock('react-outside-click-handler', () => ({
   __esModule: true,
-  default: ({ children }: { children: React.ReactNode }) =>
-    React.createElement('div', null, children),
+  default: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
 }));
 
 jest.mock('react-textarea-autosize', () => ({
@@ -122,15 +118,17 @@ jest.mock('../../utils/getWorkflowProgressColor', () => ({
   getWorkflowProgressColor: jest.fn(() => 'green'),
 }));
 
-const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
-  apiName: `f-${Math.random().toString(36).slice(2, 6)}`,
-  ...overrides,
-});
+const makeField = (overrides: Partial<IExtraField> = {}) =>
+  makeExtraField({
+    apiName: `f-${Math.random().toString(36).slice(2, 6)}`,
+    ...overrides,
+  });
 
-const makeFieldset = (overrides: Partial<IFieldsetRuntime> & { fields: IExtraField[] }) => makeFieldsetRuntime({
-  name: 'Fieldset',
-  ...overrides,
-});
+const makeFieldset = (overrides: Partial<IFieldsetRuntime> & { fields: IExtraField[] }) =>
+  makeFieldsetRuntime({
+    name: 'Fieldset',
+    ...overrides,
+  });
 
 const makeWorkflow = (overrides: Partial<IWorkflowDetailsClient> = {}): IWorkflowDetailsClient =>
   ({
@@ -165,7 +163,7 @@ const makeWorkflow = (overrides: Partial<IWorkflowDetailsClient> = {}): IWorkflo
     areOverdueTasks: false,
     oldestDeadline: null,
     ...overrides,
-  } as IWorkflowDetailsClient);
+  }) as IWorkflowDetailsClient;
 
 const makeViewWorkflowEdit = (kickoffOutput: IExtraField[] = []): IWorkflowEdit => ({
   workflow: {
@@ -224,9 +222,7 @@ const baseProps = {
 };
 
 const renderWithIntl = (ui: React.ReactElement) =>
-  render(
-    React.createElement(IntlProvider, { locale: 'en', messages: enMessages }, ui),
-  );
+  render(React.createElement(IntlProvider, { locale: 'en', messages: enMessages }, ui));
 
 describe('WorkflowModal', () => {
   beforeEach(() => {
@@ -256,9 +252,7 @@ describe('WorkflowModal', () => {
       const lastCallProps = koMock.mock.calls[koMock.mock.calls.length - 1][0];
       expect(lastCallProps.fieldsets).toHaveLength(1);
       expect(lastCallProps.fieldsets).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ apiNameBinding: 'fs-1' }),
-        ]),
+        expect.arrayContaining([expect.objectContaining({ apiNameBinding: 'fs-1' })]),
       );
     });
 
@@ -283,9 +277,7 @@ describe('WorkflowModal', () => {
 
     it('edit mode: EditKickoffContainer receives fieldsets from local state', () => {
       const fsField = makeField({ apiName: 'fs-e1', value: 'edit-val' });
-      const fieldsets: IFieldsetRuntime[] = [
-        makeFieldset({ fields: [fsField], order: 1 }),
-      ];
+      const fieldsets: IFieldsetRuntime[] = [makeFieldset({ fields: [fsField], order: 1 })];
 
       const workflow = makeWorkflow({
         kickoff: { id: 1, description: '', output: [], fieldsets },
@@ -304,9 +296,7 @@ describe('WorkflowModal', () => {
       const lastCallProps = ekMock.mock.calls[ekMock.mock.calls.length - 1][0];
       expect(lastCallProps.fieldsets).toHaveLength(1);
       expect(lastCallProps.fieldsets[0].fields).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ apiName: 'fs-e1', value: 'edit-val' }),
-        ]),
+        expect.arrayContaining([expect.objectContaining({ apiName: 'fs-e1', value: 'edit-val' })]),
       );
     });
 
@@ -356,18 +346,14 @@ describe('WorkflowModal', () => {
       expect(lastCallProps.fieldsets).toHaveLength(1);
       expect(lastCallProps.fieldsets[0].apiNameBinding).toBe('fs-new');
       expect(lastCallProps.fieldsets[0].fields).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ apiName: 'new-field' }),
-        ]),
+        expect.arrayContaining([expect.objectContaining({ apiName: 'new-field' })]),
       );
     });
 
     it('save merges fieldset fields into kickoff.fields and calls editWorkflow', () => {
       const kickoffField = makeField({ apiName: 'k1', value: 'kick-val' });
       const fsField = makeField({ apiName: 'fs-s1', value: 'fs-val' });
-      const fieldsets: IFieldsetRuntime[] = [
-        makeFieldset({ fields: [fsField], order: 1 }),
-      ];
+      const fieldsets: IFieldsetRuntime[] = [makeFieldset({ fields: [fsField], order: 1 })];
 
       const workflow = makeWorkflow({
         kickoff: { id: 1, description: '', output: [kickoffField], fieldsets },
@@ -405,9 +391,7 @@ describe('WorkflowModal', () => {
 
     it('cancel calls setIsEditKickoff(false) and resets setWorkflowEdit', () => {
       const fsField = makeField({ apiName: 'fs-c1', value: 'original' });
-      const fieldsets: IFieldsetRuntime[] = [
-        makeFieldset({ fields: [fsField], order: 1 }),
-      ];
+      const fieldsets: IFieldsetRuntime[] = [makeFieldset({ fields: [fsField], order: 1 })];
 
       const workflow = makeWorkflow({
         kickoff: { id: 1, description: '', output: [], fieldsets },
