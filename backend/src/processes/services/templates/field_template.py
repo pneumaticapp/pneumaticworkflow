@@ -57,7 +57,11 @@ class FieldTemplateService(BaseModelService):
         self._validate(**kwargs)
         return super().create(**kwargs)
 
-    def partial_update(self, **update_kwargs) -> Model:
+    def partial_update(
+        self,
+        revalidate_rulesets: bool = True,
+        **update_kwargs,
+    ) -> Model:
         self._validate(**update_kwargs)
         old_type = self.instance.type
         selections_data = update_kwargs.pop('selections', None)
@@ -69,7 +73,7 @@ class FieldTemplateService(BaseModelService):
         if rulesets_data is not None:
             self.update_rulesets(rulesets_data=rulesets_data)
         new_type = update_kwargs.get('type', old_type)
-        if new_type != old_type:
+        if revalidate_rulesets and new_type != old_type:
             self._revalidate_dependent_rulesets()
         return result
 

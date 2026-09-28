@@ -2,6 +2,7 @@ import pytest
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     FieldRuleOperator,
+    FieldRuleType,
     FieldSetLayout,
     FieldSetRuleOperator,
     FieldType,
@@ -23,9 +24,11 @@ from src.processes.models.templates.fields import (
 )
 from src.processes.services.exceptions import (
     FieldsetTemplateInUseException,
+    FieldsetTemplateRuleSumMaxFieldsNotNumber,
     FieldsetTemplateServiceException,
     FieldsetTemplateSharedIdMissing,
     FieldsetTemplateTemplateIdMissing,
+    FieldTemplateRuleSetServiceException,
 )
 from src.processes.services.templates.field_template import (
     FieldTemplateService,
@@ -658,6 +661,7 @@ def test__update_fields__existing_field__ok(mocker):
         name='Updated Field 1',
         api_name=field_1.api_name,
         force_save=True,
+        revalidate_rulesets=False,
     )
     field_template_service_create_mock.assert_not_called()
 
@@ -1147,6 +1151,7 @@ def test_partial_update_fields_ok(mocker):
     mock_update_fields = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
         'FieldSetTemplateService._update_fields',
+        return_value=[],
     )
     mock_update_rules = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
@@ -1223,6 +1228,448 @@ def test_partial_update__rulesets__ok(mocker):
     mock_super_partial_update.assert_not_called()
     mock_update_fields.assert_not_called()
     mock_update_rules.assert_called_once_with(rulesets_data=data['rulesets'])
+
+
+def _field_with_rule(
+    account,
+    template,
+    fieldset,
+    api_name,
+    field_type,
+    operator,
+    source_api_name,
+):
+    field = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        fieldset=fieldset,
+        name=api_name,
+        type=field_type,
+        api_name=api_name,
+        order=1,
+    )
+    ruleset = FieldTemplateRuleSet.objects.create(
+        field=field,
+        account=account,
+        template=template,
+        name='Rule',
+        type=FieldRuleType.VALIDATOR,
+    )
+    group_or = FieldTemplateRuleGroupOr.objects.create(
+        ruleset=ruleset,
+        account=account,
+        template=template,
+    )
+    group_and = FieldTemplateRuleGroupAnd.objects.create(
+        group_or=group_or,
+        account=account,
+        template=template,
+        field=source_api_name,
+        operator=operator,
+        value='1',
+    )
+    return field, ruleset, group_or, group_and
+
+
+def test_partial_update__type_and_own_ruleset__ok():
+
+    """
+    Type change and a replacement validator in one payload
+    are both stored. Revalidation sees the new operator.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+    )
+    field, ruleset, group_or, group_and = _field_with_rule(
+        account=account,
+        template=template,
+        fieldset=fieldset,
+        api_name='field-a',
+        field_type=FieldType.STRING,
+        operator=FieldRuleOperator.CONTAIN,
+        source_api_name=None,
+    )
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=fieldset,
+    )
+    fields_data = [{
+        'api_name': field.api_name,
+        'type': FieldType.NUMBER,
+        'rulesets': [{
+            'api_name': ruleset.api_name,
+            'type': FieldRuleType.VALIDATOR,
+            'name': 'Rule',
+            'groups_or': [{
+                'api_name': group_or.api_name,
+                'groups_and': [{
+                    'api_name': group_and.api_name,
+                    'operator': FieldRuleOperator.GREATER_THAN,
+                    'value': '1',
+                }],
+            }],
+        }],
+    }]
+
+    # act
+    service.partial_update(fields=fields_data)
+
+    # assert
+    field.refresh_from_db()
+    group_and.refresh_from_db()
+    assert field.type == FieldType.NUMBER
+    assert group_and.operator == FieldRuleOperator.GREATER_THAN
+
+
+def test_partial_update__type_without_rulesets__raise_exception():
+
+    """
+    Type change without rulesets keeps the old validator.
+    The operator is illegal for the new type, so the
+    update is rejected and nothing is stored.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+    )
+    field, ruleset, group_or, group_and = _field_with_rule(
+        account=account,
+        template=template,
+        fieldset=fieldset,
+        api_name='field-a',
+        field_type=FieldType.STRING,
+        operator=FieldRuleOperator.CONTAIN,
+        source_api_name=None,
+    )
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=fieldset,
+    )
+
+    # act
+    with pytest.raises(FieldTemplateRuleSetServiceException):
+        service.partial_update(
+            fields=[{
+                'api_name': field.api_name,
+                'type': FieldType.NUMBER,
+            }],
+        )
+
+    # assert
+    field.refresh_from_db()
+    group_and.refresh_from_db()
+    assert field.type == FieldType.STRING
+    assert group_and.operator == FieldRuleOperator.CONTAIN
+    assert field.rulesets.filter(id=ruleset.id).exists()
+
+
+def test_partial_update__type_and_other_field_rule__ok():
+
+    """
+    Another field's rule points at the field whose type
+    changes. The same payload replaces that rule with an
+    operator allowed for the new type.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+    )
+    source = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        fieldset=fieldset,
+        name='Source',
+        type=FieldType.STRING,
+        api_name='field-a',
+        order=1,
+    )
+    other, ruleset, group_or, group_and = _field_with_rule(
+        account=account,
+        template=template,
+        fieldset=fieldset,
+        api_name='field-b',
+        field_type=FieldType.STRING,
+        operator=FieldRuleOperator.CONTAIN,
+        source_api_name=source.api_name,
+    )
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=fieldset,
+    )
+    fields_data = [
+        {
+            'api_name': source.api_name,
+            'type': FieldType.NUMBER,
+        },
+        {
+            'api_name': other.api_name,
+            'rulesets': [{
+                'api_name': ruleset.api_name,
+                'type': FieldRuleType.SHOW,
+                'name': 'Rule',
+                'groups_or': [{
+                    'api_name': group_or.api_name,
+                    'groups_and': [{
+                        'api_name': group_and.api_name,
+                        'field': source.api_name,
+                        'operator': FieldRuleOperator.GREATER_THAN,
+                        'value': '1',
+                    }],
+                }],
+            }],
+        },
+    ]
+
+    # act
+    service.partial_update(fields=fields_data)
+
+    # assert
+    source.refresh_from_db()
+    group_and.refresh_from_db()
+    assert source.type == FieldType.NUMBER
+    assert group_and.operator == FieldRuleOperator.GREATER_THAN
+
+
+def test_partial_update__type_other_field_rule_omitted__raise():
+
+    """
+    Another field stays in the payload without its rulesets.
+    Its rule still points at the changed field with an
+    operator illegal for the new type, so the update
+    is rejected.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+    )
+    source = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        fieldset=fieldset,
+        name='Source',
+        type=FieldType.STRING,
+        api_name='field-a',
+        order=1,
+    )
+    _field_with_rule(
+        account=account,
+        template=template,
+        fieldset=fieldset,
+        api_name='field-b',
+        field_type=FieldType.STRING,
+        operator=FieldRuleOperator.CONTAIN,
+        source_api_name=source.api_name,
+    )
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=fieldset,
+    )
+
+    # act
+    with pytest.raises(FieldTemplateRuleSetServiceException):
+        service.partial_update(
+            fields=[
+                {
+                    'api_name': source.api_name,
+                    'type': FieldType.NUMBER,
+                },
+                {'api_name': 'field-b'},
+            ],
+        )
+
+    # assert
+    source.refresh_from_db()
+    assert source.type == FieldType.STRING
+
+
+def test_partial_update__type_and_sum_ruleset__ok():
+
+    """
+    Sum rule is rewritten in the same payload so it no
+    longer includes the field whose type leaves number.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+    )
+    changed = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        fieldset=fieldset,
+        name='Changed',
+        type=FieldType.NUMBER,
+        api_name='field-a',
+        order=1,
+    )
+    kept = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        fieldset=fieldset,
+        name='Kept',
+        type=FieldType.NUMBER,
+        api_name='field-b',
+        order=2,
+    )
+    ruleset = FieldSetTemplateRuleSet.objects.create(
+        account=account,
+        template=template,
+        fieldset=fieldset,
+        api_name='ruleset-sum',
+    )
+    ruleset.fields.add(changed, kept)
+    group_or = FieldSetTemplateRuleGroupOr.objects.create(
+        fieldset_rule=ruleset,
+        account=account,
+        api_name='group-or-sum',
+    )
+    FieldSetTemplateRuleGroupAnd.objects.create(
+        group_or=group_or,
+        account=account,
+        api_name='group-and-sum',
+        operator=FieldSetRuleOperator.SUM_EQUAL,
+        value='10',
+    )
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=fieldset,
+    )
+
+    # act
+    service.partial_update(
+        fields=[
+            {
+                'api_name': changed.api_name,
+                'type': FieldType.STRING,
+            },
+            {'api_name': kept.api_name},
+        ],
+        rulesets=[{
+            'api_name': ruleset.api_name,
+            'fields': [kept.api_name],
+            'groups_or': [{
+                'api_name': group_or.api_name,
+                'groups_and': [{
+                    'api_name': 'group-and-sum',
+                    'operator': FieldSetRuleOperator.SUM_EQUAL,
+                    'value': '10',
+                }],
+            }],
+        }],
+    )
+
+    # assert
+    changed.refresh_from_db()
+    ruleset.refresh_from_db()
+    assert changed.type == FieldType.STRING
+    assert list(ruleset.fields.values_list('api_name', flat=True)) == [
+        kept.api_name,
+    ]
+
+
+def test_partial_update__type_sum_ruleset_omitted__raise():
+
+    """
+    Sum rule still includes the field after its type
+    leaves number. The update is rejected.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+    )
+    changed = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        fieldset=fieldset,
+        name='Changed',
+        type=FieldType.NUMBER,
+        api_name='field-a',
+        order=1,
+    )
+    ruleset = FieldSetTemplateRuleSet.objects.create(
+        account=account,
+        template=template,
+        fieldset=fieldset,
+        api_name='ruleset-sum',
+    )
+    ruleset.fields.add(changed)
+    group_or = FieldSetTemplateRuleGroupOr.objects.create(
+        fieldset_rule=ruleset,
+        account=account,
+        api_name='group-or-sum',
+    )
+    FieldSetTemplateRuleGroupAnd.objects.create(
+        group_or=group_or,
+        account=account,
+        api_name='group-and-sum',
+        operator=FieldSetRuleOperator.SUM_EQUAL,
+        value='10',
+    )
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=fieldset,
+    )
+
+    # act
+    with pytest.raises(FieldsetTemplateRuleSumMaxFieldsNotNumber):
+        service.partial_update(
+            fields=[{
+                'api_name': changed.api_name,
+                'type': FieldType.STRING,
+            }],
+        )
+
+    # assert
+    changed.refresh_from_db()
+    assert changed.type == FieldType.NUMBER
 
 
 def test_delete__not_in_use__ok():

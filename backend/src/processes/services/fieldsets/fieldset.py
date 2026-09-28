@@ -206,12 +206,14 @@ class FieldSetTemplateService(BaseModelService):
     def _update_fields(
         self,
         fields_data: List[Dict],
-    ):
+    ) -> List[FieldTemplateService]:
         """ All fieldset fields will be updated.
 
             Rulesets are applied after every field in the payload
             exists, same as _create_fields. A rule may point at a
-            field declared later in the list. """
+            field declared later in the list. Returns services
+            whose type changed. The caller revalidates them after
+            fieldset rulesets are written. """
 
         existing_fields = {
             field.api_name: field
@@ -219,22 +221,29 @@ class FieldSetTemplateService(BaseModelService):
         }
         fields_api_names = set()
         deferred_rulesets = []
+        type_changed = []
         for field_data in fields_data:
             field_data_dict = dict(field_data)
             field_data_dict.pop('id', None)
             field_rulesets = field_data_dict.pop('rulesets', None)
             field_api_name = field_data_dict.get('api_name')
             if field_api_name and field_api_name in existing_fields:
+                field = existing_fields[field_api_name]
+                old_type = field.type
                 service = FieldTemplateService(
                     user=self.user,
                     is_superuser=self.is_superuser,
                     auth_type=self.auth_type,
-                    instance=existing_fields[field_api_name],
+                    instance=field,
                 )
                 service.partial_update(
                     force_save=True,
+                    revalidate_rulesets=False,
                     **field_data_dict,
                 )
+                new_type = field_data_dict.get('type', old_type)
+                if new_type != old_type:
+                    type_changed.append(service)
                 fields_api_names.add(field_api_name)
             else:
                 service = FieldTemplateService(
@@ -260,6 +269,7 @@ class FieldSetTemplateService(BaseModelService):
                 raise FieldsetTemplateServiceException(
                     ex.message,
                 ) from ex
+        return type_changed
 
     def partial_update(
         self,
@@ -277,10 +287,15 @@ class FieldSetTemplateService(BaseModelService):
                     force_save=True,
                     **update_kwargs,
                 )
+            type_changed = []
             if fields_data is not None:
-                self._update_fields(fields_data=fields_data)
+                type_changed = self._update_fields(
+                    fields_data=fields_data,
+                )
             if rulesets_data is not None:
                 self.update_rulesets(rulesets_data=rulesets_data)
+            for field_service in type_changed:
+                field_service._revalidate_dependent_rulesets()
             return self.instance
 
     def delete(self) -> None:
