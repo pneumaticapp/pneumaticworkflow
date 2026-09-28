@@ -13,7 +13,8 @@ from src.processes.models.templates.fields import (
 from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.services.exceptions import (
     FieldTemplateSelectionsRequired,
-    FieldTemplateUserMustBeRequired, FieldTemplateServiceException,
+    FieldTemplateUserMustBeRequired,
+    FieldTemplateServiceException,
     FieldTemplateRuleSetServiceException,
 )
 from src.processes.services.templates.field_template_rule import (

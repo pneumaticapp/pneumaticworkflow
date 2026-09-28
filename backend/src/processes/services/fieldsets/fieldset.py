@@ -215,7 +215,6 @@ class FieldSetTemplateService(BaseModelService):
         fields_api_names = set()
         for field_data in fields_data:
             field_data_dict = dict(field_data)
-            # Field-level rulesets are not created here yet.
             field_data_dict.pop('id', None)
             field_api_name = field_data_dict.get('api_name')
             if field_api_name and field_api_name in existing_fields:
@@ -242,6 +241,12 @@ class FieldSetTemplateService(BaseModelService):
 
         self.instance.fields.exclude(api_name__in=fields_api_names).delete()
 
+    UPDATABLE_FIELDS = {'order', 'title', 'description'}
+    NESTED_HANDLERS = {
+        'fields': '_update_fields',
+        'rulesets': 'update_rulesets',
+    }
+
     def partial_update(
         self,
         **update_kwargs,
@@ -250,19 +255,23 @@ class FieldSetTemplateService(BaseModelService):
         if self.instance.is_shared and self.instance.child_fieldsets.exists():
             raise FieldsetTemplateInUseException2
 
-        rulesets_data = update_kwargs.pop('rulesets', None)
-        fields_data = update_kwargs.pop('fields', None)
+        nested = {
+            k: update_kwargs.pop(k)
+            for k in self.NESTED_HANDLERS
+            if k in update_kwargs
+        }
+        update_kwargs = {
+            k: v for k, v in update_kwargs.items()
+            if k in self.UPDATABLE_FIELDS
+        }
         with transaction.atomic():
             if update_kwargs:
                 self.instance = super().partial_update(
                     force_save=True,
                     **update_kwargs,
                 )
-
-            if fields_data is not None:
-                self._update_fields(fields_data=fields_data)
-            if rulesets_data is not None:
-                self.update_rulesets(rulesets_data=rulesets_data)
+            for key, data in nested.items():
+                getattr(self, self.NESTED_HANDLERS[key])(data)
             return self.instance
 
     def delete(self) -> None:

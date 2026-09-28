@@ -277,24 +277,20 @@ class FieldsetMixin:
             fieldset_api_name = fieldset_data.get('api_name')
             if fieldset_api_name and fieldset_api_name in existing_fieldsets:
                 fieldset = existing_fieldsets[fieldset_api_name]
-                update_kwargs = {}
-                if fieldset.order != fieldset_data['order']:
-                    update_kwargs['order'] = fieldset_data['order']
-                if fieldset.title != fieldset_data['title']:
-                    update_kwargs['title'] = fieldset_data['title']
-                if fieldset.description != fieldset_data['description']:
-                    update_kwargs['description'] = fieldset_data['description']
-
-                if update_kwargs:
-                    service = FieldSetTemplateService(
-                        instance=fieldset,
-                        user=user,
-                    )
-                    service.partial_update(
-                        order=fieldset_data['order'],
-                        title=fieldset_data.get('title'),
-                        description=fieldset_data.get('description'),
-                    )
+                update_kwargs = {
+                    'order': fieldset_data['order'],
+                    'title': fieldset_data.get('title'),
+                    'description': fieldset_data.get('description'),
+                }
+                if fieldset_data.get('fields'):
+                    update_kwargs['fields'] = fieldset_data['fields']
+                if fieldset_data.get('rulesets'):
+                    update_kwargs['rulesets'] = fieldset_data['rulesets']
+                service = FieldSetTemplateService(
+                    instance=fieldset,
+                    user=user,
+                )
+                service.partial_update(**update_kwargs)
                 fieldsets_api_names.add(fieldset.api_name)
             else:
                 shared_fieldset = fieldset_data['shared_fieldset_id']
