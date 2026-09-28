@@ -2,10 +2,11 @@
 from copy import deepcopy
 from typing import Dict, List, Optional
 from django.contrib.auth import get_user_model
-from django.db import transaction
+from django.db import IntegrityError, transaction
 
 from src.generics.base.service import BaseModelService
 from src.processes.enums import LabelPosition, FieldSetLayout
+from src.processes.messages.fieldset import MSG_FS_0014
 from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
@@ -206,16 +207,22 @@ class FieldSetTemplateService(BaseModelService):
         self,
         fields_data: List[Dict],
     ):
-        """ All fieldset fields will be updated """
+        """ All fieldset fields will be updated.
+
+            Rulesets are applied after every field in the payload
+            exists, same as _create_fields. A rule may point at a
+            field declared later in the list. """
 
         existing_fields = {
             field.api_name: field
             for field in self.instance.fields.all()
         }
         fields_api_names = set()
+        deferred_rulesets = []
         for field_data in fields_data:
             field_data_dict = dict(field_data)
             field_data_dict.pop('id', None)
+            field_rulesets = field_data_dict.pop('rulesets', None)
             field_api_name = field_data_dict.get('api_name')
             if field_api_name and field_api_name in existing_fields:
                 service = FieldTemplateService(
@@ -224,7 +231,10 @@ class FieldSetTemplateService(BaseModelService):
                     auth_type=self.auth_type,
                     instance=existing_fields[field_api_name],
                 )
-                service.partial_update(force_save=True, **field_data_dict)
+                service.partial_update(
+                    force_save=True,
+                    **field_data_dict,
+                )
                 fields_api_names.add(field_api_name)
             else:
                 service = FieldTemplateService(
@@ -238,14 +248,18 @@ class FieldSetTemplateService(BaseModelService):
                     **field_data_dict,
                 )
                 fields_api_names.add(field.api_name)
+            if field_rulesets is not None:
+                deferred_rulesets.append((service, field_rulesets))
 
         self.instance.fields.exclude(api_name__in=fields_api_names).delete()
 
-    UPDATABLE_FIELDS = {'order', 'title', 'description'}
-    NESTED_HANDLERS = {
-        'fields': '_update_fields',
-        'rulesets': 'update_rulesets',
-    }
+        for service, rulesets_data in deferred_rulesets:
+            try:
+                service.update_rulesets(rulesets_data=rulesets_data)
+            except FieldTemplateServiceException as ex:
+                raise FieldsetTemplateServiceException(
+                    ex.message,
+                ) from ex
 
     def partial_update(
         self,
@@ -255,23 +269,18 @@ class FieldSetTemplateService(BaseModelService):
         if self.instance.is_shared and self.instance.child_fieldsets.exists():
             raise FieldsetTemplateInUseException2
 
-        nested = {
-            k: update_kwargs.pop(k)
-            for k in self.NESTED_HANDLERS
-            if k in update_kwargs
-        }
-        update_kwargs = {
-            k: v for k, v in update_kwargs.items()
-            if k in self.UPDATABLE_FIELDS
-        }
+        rulesets_data = update_kwargs.pop('rulesets', None)
+        fields_data = update_kwargs.pop('fields', None)
         with transaction.atomic():
             if update_kwargs:
                 self.instance = super().partial_update(
                     force_save=True,
                     **update_kwargs,
                 )
-            for key, data in nested.items():
-                getattr(self, self.NESTED_HANDLERS[key])(data)
+            if fields_data is not None:
+                self._update_fields(fields_data=fields_data)
+            if rulesets_data is not None:
+                self.update_rulesets(rulesets_data=rulesets_data)
             return self.instance
 
     def delete(self) -> None:
@@ -381,6 +390,13 @@ class FieldSetTemplateService(BaseModelService):
             )
         except FieldsetTemplateRuleSetServiceException as ex:
             raise FieldsetTemplateServiceException(message=ex.message) from ex
+        except IntegrityError as ex:
+            raise FieldsetTemplateServiceException(
+                message=MSG_FS_0014(
+                    name=self._get_step_name(),
+                    api_name=ruleset_data.get('api_name'),
+                ),
+            ) from ex
 
     def create_rulesets(
         self,
