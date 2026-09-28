@@ -1,5 +1,6 @@
 import pytest
 
+from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     FieldType,
     OwnerRole,
@@ -728,10 +729,14 @@ def test_update__update_kickoff__fieldset_all_fields__ok(
         assert fieldset.label_position == shared_fieldset.label_position
 
 
-def test_update__kickoff_update_active_template__not_change_fs_api_names(
+def test_update__kickoff_active_keep_fs_api_names__ok(
     mocker,
     api_client,
 ):
+
+    """
+    Active template update keeps fieldset api_names
+    """
 
     # arrange
     account = create_test_account()
@@ -742,15 +747,7 @@ def test_update__kickoff_update_active_template__not_change_fs_api_names(
     shared_fieldset = create_test_shared_fieldset(
         account=account,
         rule_operator=FieldSetRuleOperator.SUM_EQUAL,
-    )
-    shared_field = shared_fieldset.fields.first()
-    shared_field.type = FieldType.RADIO
-    shared_field.save(update_fields=['type'])
-    FieldTemplateSelection.objects.create(
-        value='Option 1',
-        field_template=shared_field,
-        template=template,
-        api_name=f'{shared_field.api_name}-shared-selection-1',
+        rule_value='10',
     )
     fieldset = create_test_fieldset_template(
         account=account,
@@ -765,22 +762,21 @@ def test_update__kickoff_update_active_template__not_change_fs_api_names(
     group_or = ruleset.groups_or.first()
     group_and = group_or.groups_and.first()
     field = fieldset.fields.first()
-    selection = field.selections.all().first()
 
     new_title = 'New title'
-    mocker.patch(
+    create_integrations_for_template_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         'create_integrations_for_template',
     )
-    mocker.patch(
+    template_updated_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.template_updated',
     )
-    mocker.patch(
+    templates_updated_mock = mocker.patch(
         'src.processes.views.template.AnalyticService.templates_updated',
     )
-    mocker.patch(
+    templates_kickoff_updated_mock = mocker.patch(
         'src.processes.views.template.'
         'AnalyticService.templates_kickoff_updated',
     )
@@ -815,12 +811,6 @@ def test_update__kickoff_update_active_template__not_change_fs_api_names(
                                 'api_name': field.api_name,
                                 'type': field.type,
                                 'order': field.order,
-                                'selections': [
-                                    {
-                                        'value': selection.value,
-                                        'api_name': selection.api_name,
-                                    },
-                                ],
                             },
                         ],
                         'rulesets': [
@@ -886,10 +876,28 @@ def test_update__kickoff_update_active_template__not_change_fs_api_names(
     assert len(kickoff_fieldset['fields']) == 1
     field_data = kickoff_fieldset['fields'][0]
     assert field_data['api_name'] == field.api_name
-
-    assert len(field_data['selections']) == 1
-    selection_data = field_data['selections'][0]
-    assert selection_data['api_name'] == selection.api_name
+    create_integrations_for_template_mock.assert_not_called()
+    template_updated_mock.assert_called_once_with(
+        template=template,
+    )
+    templates_kickoff_updated_mock.assert_called_once_with(
+        user=user,
+        template=template,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    templates_updated_mock.assert_called_once_with(
+        user=user,
+        template=template,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        kickoff_fields_count=0,
+        tasks_count=1,
+        tasks_fields_count=0,
+        delays_count=0,
+        due_in_count=0,
+        conditions_count=0,
+    )
 
 
 def test_update__kickoff_update_inactive_template__not_change_fs_api_names(
@@ -2884,13 +2892,13 @@ def test_update__add_fieldset_with_expanded_fields__preserves_api_names(
     assert selection_data['api_name'] == selection_api_name
 
 
-def test_update__existing_fieldset_ignores_fields_in_payload__ok(
+def test_update__existing_fieldset_syncs_fields_in_payload__ok(
     mocker,
     api_client,
 ):
 
-    """ Updating an existing fieldset by api_name must ignore fields
-        from payload and only apply order/title/description changes. """
+    """ Updating an existing fieldset by api_name applies fields
+        from the payload together with order, title and description. """
 
     # arrange
     account = create_test_account()
@@ -2909,21 +2917,20 @@ def test_update__existing_fieldset_ignores_fields_in_payload__ok(
         order=1,
         api_name='existing-fs',
     )
-    original_field = fieldset.fields.get()
-    original_field_api_name = original_field.api_name
-    mocker.patch(
+    original_field_api_name = fieldset.fields.get().api_name
+    create_integrations_for_template_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         'create_integrations_for_template',
     )
-    mocker.patch(
+    template_updated_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.template_updated',
     )
-    mocker.patch(
+    templates_updated_mock = mocker.patch(
         'src.processes.views.template.AnalyticService.templates_updated',
     )
-    mocker.patch(
+    templates_kickoff_updated_mock = mocker.patch(
         'src.processes.views.template.'
         'AnalyticService.templates_kickoff_updated',
     )
@@ -2998,9 +3005,33 @@ def test_update__existing_fieldset_ignores_fields_in_payload__ok(
     fieldset_data = response.data['kickoff']['fieldsets'][0]
     field_data = fieldset_data['fields'][0]
     assert fieldset.fields.count() == 1
-    assert field.api_name == original_field_api_name
-    assert field_data['api_name'] == original_field_api_name
-    assert field.api_name != 'tampered-field-api-name'
+    assert field.api_name == 'tampered-field-api-name'
+    assert field_data['api_name'] == 'tampered-field-api-name'
+    assert not fieldset.fields.filter(
+        api_name=original_field_api_name,
+    ).exists()
+    create_integrations_for_template_mock.assert_not_called()
+    template_updated_mock.assert_called_once_with(
+        template=template,
+    )
+    templates_kickoff_updated_mock.assert_called_once_with(
+        user=user,
+        template=template,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    templates_updated_mock.assert_called_once_with(
+        user=user,
+        template=template,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        kickoff_fields_count=0,
+        tasks_count=1,
+        tasks_fields_count=0,
+        delays_count=0,
+        due_in_count=0,
+        conditions_count=0,
+    )
 
 
 def test_update__create_fieldset_with_shared_api_names__preserved_in_response(

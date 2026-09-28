@@ -374,10 +374,10 @@ def test__get_valid_fields__empty_fields_api_names__ok():
     assert result == []
 
 
-def test__get_valid_fields__unknown_api_name__exception():
+def test__get_valid_fields__unknown_api_name__empty():
 
     """
-    Unknown api_name is rejected instead of being dropped from the M2M
+    Unknown api_name is silently dropped — returns empty list
     """
 
     # arrange
@@ -403,20 +403,16 @@ def test__get_valid_fields__unknown_api_name__exception():
     )
 
     # act
-    with pytest.raises(FieldsetTemplateRuleSetServiceException) as ex:
-        service._get_valid_fields(fields_api_names=['missing'])
+    result = service._get_valid_fields(fields_api_names=['missing'])
 
     # assert
-    assert ex.value.message == fs_messages.MSG_FS_0005(
-        rule=ruleset.api_name,
-        field='missing',
-    )
+    assert result == []
 
 
-def test__get_valid_fields__known_and_unknown__exception():
+def test__get_valid_fields__known_and_unknown__returns_known_only():
 
     """
-    One existing field and one unknown api_name → exception, not a partial M2M
+    One existing field and one unknown api_name → returns only known field
     """
 
     # arrange
@@ -451,16 +447,13 @@ def test__get_valid_fields__known_and_unknown__exception():
     )
 
     # act
-    with pytest.raises(FieldsetTemplateRuleSetServiceException) as ex:
-        service._get_valid_fields(
-            fields_api_names=[field.api_name, 'missing'],
-        )
+    result = service._get_valid_fields(
+        fields_api_names=[field.api_name, 'missing'],
+    )
 
     # assert
-    assert ex.value.message == fs_messages.MSG_FS_0005(
-        rule=ruleset.api_name,
-        field='missing',
-    )
+    assert len(result) == 1
+    assert result[0].api_name == field.api_name
 
 
 def test__create_instance__default_params__ok():

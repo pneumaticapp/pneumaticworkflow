@@ -2123,10 +2123,14 @@ def test_update__missing_name__validation_error(mocker, api_client):
     assert response.data['message'] == 'Name: this field is required.'
 
 
-def test_update__duplicate_ruleset_api_name__validation_error(
+def test_update__duplicate_ruleset_api_name__ok(
     mocker,
     api_client,
 ):
+
+    """
+    Duplicate ruleset api_name updates the existing ruleset
+    """
 
     # arrange
     account = create_test_account()
@@ -2135,6 +2139,8 @@ def test_update__duplicate_ruleset_api_name__validation_error(
     task = template.tasks.first()
     step_name = task.name
     ruleset_api_name = 'field-ruleset-1'
+    duplicate_ruleset_name = 'Duplicate'
+    duplicate_value = 'dup'
     field_name = 'Broken field'
     source_field = FieldTemplate.objects.create(
         type=FieldType.STRING,
@@ -2161,7 +2167,7 @@ def test_update__duplicate_ruleset_api_name__validation_error(
         source_field_api_name=source_field.api_name,
         ruleset_api_name=ruleset_api_name,
     )
-    mocker.patch(
+    template_updated_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.template_updated',
     )
@@ -2231,7 +2237,7 @@ def test_update__duplicate_ruleset_api_name__validation_error(
                                 },
                                 {
                                     'api_name': ruleset_api_name,
-                                    'name': 'Duplicate',
+                                    'name': duplicate_ruleset_name,
                                     'type': FieldRuleType.SHOW,
                                     'groups_or': [
                                         {
@@ -2245,7 +2251,7 @@ def test_update__duplicate_ruleset_api_name__validation_error(
                                                         FieldRuleOperator
                                                         .EQUAL
                                                     ),
-                                                    'value': 'dup',
+                                                    'value': duplicate_value,
                                                 },
                                             ],
                                         },
@@ -2266,13 +2272,26 @@ def test_update__duplicate_ruleset_api_name__validation_error(
     )
 
     # assert
-    assert response.status_code == 400
-    message = MSG_PT_0075(
-        task_name=step_name,
-        field_name=target_field.name,
-        api_name=ruleset_api_name,
+    assert response.status_code == 200
+    field_data = response.data['tasks'][0]['fields'][1]
+    assert field_data['api_name'] == target_field.api_name
+    assert len(field_data['rulesets']) == 1
+    ruleset_data = field_data['rulesets'][0]
+    assert ruleset_data['api_name'] == ruleset_api_name
+    assert ruleset_data['name'] == duplicate_ruleset_name
+    assert len(ruleset_data['groups_or']) == 1
+    group_or_data = ruleset_data['groups_or'][0]
+    assert len(group_or_data['groups_and']) == 1
+    group_and_data = group_or_data['groups_and'][0]
+    assert group_and_data['value'] == duplicate_value
+    target_field.refresh_from_db()
+    assert target_field.rulesets.count() == 1
+    surviving = target_field.rulesets.get()
+    assert surviving.api_name == ruleset_api_name
+    assert surviving.name == duplicate_ruleset_name
+    template_updated_mock.assert_called_once_with(
+        template=template,
     )
-    assert response.data['message'] == message
 
 
 @pytest.mark.parametrize(

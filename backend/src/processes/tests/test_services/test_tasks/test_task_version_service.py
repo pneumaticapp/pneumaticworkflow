@@ -2979,8 +2979,8 @@ def test__update_field_rulesets__key_missing__keep():
     # act
     service._update_field_rulesets(field=field, rulesets_data=None, version=1)
 
-    # assert — None means "nothing known", all existing rulesets are cleared
-    assert not FieldRuleSet.objects.filter(id=existing_ruleset.id).exists()
+    # assert — None means "nothing known", existing rulesets are kept
+    assert FieldRuleSet.objects.filter(id=existing_ruleset.id).exists()
 
 
 def test__update_field_rulesets__multiple__ok():

@@ -711,6 +711,14 @@ def test__update_group_and__field_in_payload__ok():
         operator=FieldRuleOperator.EQUAL,
         value='yes',
     )
+    FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        name='Field 2',
+        type=FieldType.STRING,
+        order=2,
+        api_name='field-2',
+    )
     new_field = 'field-2'
     group_and_data = {
         'field': new_field,
@@ -896,6 +904,14 @@ def test__update_group_and__all_fields_in_payload__ok():
         field=field.api_name,
         operator=FieldRuleOperator.EQUAL,
         value='yes',
+    )
+    FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        name='Field 2',
+        type=FieldType.STRING,
+        order=2,
+        api_name='field-2',
     )
     new_field = 'field-2'
     operator = FieldRuleOperator.CONTAIN
