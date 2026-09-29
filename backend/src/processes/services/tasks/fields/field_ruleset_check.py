@@ -8,7 +8,6 @@ from src.processes.enums import (
     FieldRuleType,
     FieldType,
     PredicateOperator,
-    PredicateType,
 )
 from src.processes.models.workflows.fields import (
     FieldRuleGroupAnd,
@@ -20,7 +19,6 @@ from src.processes.services.tasks.fields.resolvers import (
     DateFieldResolver,
     DropdownFieldResolver,
     FileFieldResolver,
-    GroupFieldResolver,
     NumberFieldResolver,
     StringFieldResolver,
     UserFieldResolver,
@@ -41,7 +39,6 @@ OPERATOR_MAP = {
         PredicateOperator.MORE_THAN
     ),
 }
-
 
 
 class FieldRuleSetCheckService:
@@ -65,7 +62,6 @@ class FieldRuleSetCheckService:
         FieldType.CHECKBOX: CheckboxFieldResolver,
         FieldType.USER: UserFieldResolver,
         FieldType.DATE: DateFieldResolver,
-        PredicateType.GROUP: GroupFieldResolver,
     }
 
     @classmethod

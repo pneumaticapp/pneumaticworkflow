@@ -112,18 +112,23 @@ class DropdownFieldResolver(FieldRuleResolver):
 
 
 class UserFieldResolver(FieldRuleResolver):
-    def _prepare_args(self):
-        self.field_value = self._source.user_id or None
-        self.predicate_value = (
-            int(self._value) if self._value else None
-        )
 
+    """ A user field stores a user or a group, not both.
+        exists treats either id as filled. equal reads
+        user_id: the rule value does not say which id it is. """
 
-class GroupFieldResolver(FieldRuleResolver):
     def _prepare_args(self):
-        self.field_value = (
-            self._source.group_id or None
-        )
+        if self._operator in {
+            PredicateOperator.EXIST,
+            PredicateOperator.NOT_EXIST,
+        }:
+            self.field_value = (
+                self._source.user_id
+                or self._source.group_id
+                or None
+            )
+        else:
+            self.field_value = self._source.user_id or None
         self.predicate_value = (
             int(self._value) if self._value else None
         )

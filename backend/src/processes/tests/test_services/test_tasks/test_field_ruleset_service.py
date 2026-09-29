@@ -435,3 +435,139 @@ def test_apply_show_rulesets__without_workflow_id__type_error():
     # act / assert
     with pytest.raises(TypeError):
         FieldRuleSetCheckService.apply_show_rulesets([field])
+
+
+def create_user_source_field(
+    workflow,
+    task,
+    api_name='user-field-1',
+    user_id=None,
+    group_id=None,
+):
+    return TaskField.objects.create(
+        account=workflow.account,
+        workflow=workflow,
+        task=task,
+        type=FieldType.USER,
+        api_name=api_name,
+        name=api_name,
+        user_id=user_id,
+        group_id=group_id,
+    )
+
+
+def test_apply_show_rulesets__user_group_exists__visible():
+
+    """ exists passes when a user field stores a group. """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    create_user_source_field(workflow, task, group_id=15)
+    field = create_target_field(workflow, task)
+    field.is_hidden = True
+    field.save(update_fields=['is_hidden'])
+    create_show_ruleset(
+        field,
+        'user-field-1',
+        value=None,
+        operator=FieldRuleOperator.EXIST,
+    )
+
+    # act
+    FieldRuleSetCheckService.apply_show_rulesets(
+        [field],
+        workflow_id=workflow.id,
+    )
+
+    # assert
+    field.refresh_from_db()
+    assert field.is_hidden is False
+
+
+def test_apply_show_rulesets__user_field_empty__hidden():
+
+    """ exists fails when a user field has neither id. """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    create_user_source_field(workflow, task)
+    field = create_target_field(workflow, task)
+    create_show_ruleset(
+        field,
+        'user-field-1',
+        value=None,
+        operator=FieldRuleOperator.EXIST,
+    )
+
+    # act
+    FieldRuleSetCheckService.apply_show_rulesets(
+        [field],
+        workflow_id=workflow.id,
+    )
+
+    # assert
+    field.refresh_from_db()
+    assert field.is_hidden is True
+
+
+def test_apply_show_rulesets__user_group_equal__hidden():
+
+    """ equal keeps reading user_id. A stored group does
+        not match the rule value. """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    create_user_source_field(workflow, task, group_id=15)
+    field = create_target_field(workflow, task)
+    create_show_ruleset(
+        field,
+        'user-field-1',
+        value='15',
+        operator=FieldRuleOperator.EQUAL,
+    )
+
+    # act
+    FieldRuleSetCheckService.apply_show_rulesets(
+        [field],
+        workflow_id=workflow.id,
+    )
+
+    # assert
+    field.refresh_from_db()
+    assert field.is_hidden is True
+
+
+def test_apply_show_rulesets__user_id_equal__visible():
+
+    """ equal passes when user_id matches the rule value. """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    create_user_source_field(workflow, task, user_id=15)
+    field = create_target_field(workflow, task)
+    field.is_hidden = True
+    field.save(update_fields=['is_hidden'])
+    create_show_ruleset(
+        field,
+        'user-field-1',
+        value='15',
+        operator=FieldRuleOperator.EQUAL,
+    )
+
+    # act
+    FieldRuleSetCheckService.apply_show_rulesets(
+        [field],
+        workflow_id=workflow.id,
+    )
+
+    # assert
+    field.refresh_from_db()
+    assert field.is_hidden is False
