@@ -91,7 +91,7 @@ function applySavedTemplateIds(lastTemplateState: ITemplateClient, savedTemplate
 }
 
 function isSameMountedTemplate(storeTemplate: ITemplateClient, templateSnapshot?: ITemplateClient): boolean {
-  return !templateSnapshot || storeTemplate.id === (templateSnapshot.id ?? null);
+  return !templateSnapshot || (storeTemplate.id ?? null) === (templateSnapshot.id ?? null);
 }
 
 function* mergeSupersededCreateResponse(
