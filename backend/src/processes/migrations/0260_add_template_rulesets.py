@@ -44,14 +44,16 @@ def migrate_fieldset_template_rules(apps, schema_editor):
             template_id=template_id,
             account_id=rule.account_id,
         )
+        # api_name is unique per parent only, and the column holds 200
+        # chars: a suffix on a client-supplied name could overflow it.
         group_or = GroupOr.objects.create(
-            api_name=f'{rule.api_name}-group-or',
+            api_name=rule.api_name,
             fieldset_rule=ruleset,
             template_id=template_id,
             account_id=rule.account_id,
         )
         GroupAnd.objects.create(
-            api_name=f'{rule.api_name}-group-and',
+            api_name=rule.api_name,
             group_or=group_or,
             template_id=template_id,
             account_id=rule.account_id,
