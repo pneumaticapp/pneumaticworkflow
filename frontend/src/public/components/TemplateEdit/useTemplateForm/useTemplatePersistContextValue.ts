@@ -68,8 +68,9 @@ export function useTemplatePersistContextValue({
       }
 
       // Mirror the latest Redux snapshot so server-stamped fields are not diffed as user edits.
+      // Keep the same reference in both refs: confirmConsumedChanges detects a newer sync by identity.
       latestReduxBaselineRef.current = reduxTemplate;
-      previousValuesRef.current = { ...reduxTemplate };
+      previousValuesRef.current = reduxTemplate;
     };
 
     return () => {

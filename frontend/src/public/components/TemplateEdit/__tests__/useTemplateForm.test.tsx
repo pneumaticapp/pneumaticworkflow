@@ -491,6 +491,57 @@ describe('TemplateFormPersistProvider deactivation', () => {
     expect(patchTemplate).not.toHaveBeenCalled();
   });
 
+  it('does not re-dispatch saved fields after an explicit submit confirms', async () => {
+    const template = makeTemplate({ isActive: true, name: 'Original' });
+    let handle: ISpyHandle | null = null;
+
+    const { rerender } = render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
+
+    rerender(
+      <TemplateFormHarness
+        initialTemplate={{ ...template }}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
+
+    act(() => {
+      handle!.setFieldValue('name', 'Saved edit', false);
+    });
+    act(() => {
+      handle!.consumePendingChanges({ isActive: true });
+    });
+
+    (patchTemplate as unknown as jest.Mock).mockClear();
+
+    await act(async () => {
+      handle!.confirmConsumedChanges();
+      jest.advanceTimersByTime(TEMPLATE_FORM_PERSIST_DEBOUNCE_MS);
+      await Promise.resolve();
+    });
+
+    act(() => {
+      handle!.setFieldValue('description', 'Next edit', false);
+    });
+    await act(async () => {
+      jest.advanceTimersByTime(TEMPLATE_FORM_PERSIST_DEBOUNCE_MS);
+      await Promise.resolve();
+    });
+
+    expect(patchTemplate).toHaveBeenCalledTimes(1);
+    expect(patchTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({ changedFields: { description: 'Next edit' } }),
+    );
+  });
+
   it('persists an edit made while an explicit submit is in flight', async () => {
     const template = makeTemplate({ isActive: true, name: 'Original', dateUpdated: null });
     let handle: ISpyHandle | null = null;
