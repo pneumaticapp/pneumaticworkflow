@@ -185,12 +185,14 @@ export function useTemplatePersistContextValue({
       if (explicitFields && Object.keys(explicitFields).length > 0) {
         if (consumedPendingRef.current) {
           consumedPendingRef.current.explicitFields = explicitFields;
+          consumedPendingRef.current.dispatchedValues = valuesRef.current;
         } else {
           consumedPendingRef.current = {
             previousBaseline: previousValuesRef.current,
             isUserEdit: false,
             pendingUserEdits: {},
             explicitFields,
+            dispatchedValues: valuesRef.current,
           };
           previousValuesRef.current = valuesRef.current;
         }

@@ -3,13 +3,20 @@ import React from 'react';
 import type { FC, MutableRefObject } from 'react';
 import { act, render } from '@testing-library/react';
 
+import { ITemplateClient, ITemplateTaskClient, ETaskPerformerType } from '../../../types/template';
 import {
-  ITemplateClient,
-  ITemplateTaskClient,
-  ETaskPerformerType,
-} from '../../../types/template';
-import { EConditionAction, EConditionOperators, EConditionLogicOperations, TConditionRule } from '../TaskForm/Conditions/types';
-import { TemplateForm, useTemplateField, useTemplateForm, useTemplatePersist, useTemplateSaveRetry } from '../useTemplateForm';
+  EConditionAction,
+  EConditionOperators,
+  EConditionLogicOperations,
+  TConditionRule,
+} from '../TaskForm/Conditions/types';
+import {
+  TemplateForm,
+  useTemplateField,
+  useTemplateForm,
+  useTemplatePersist,
+  useTemplateSaveRetry,
+} from '../useTemplateForm';
 import { TEMPLATE_FORM_PERSIST_DEBOUNCE_MS } from '../useTemplateForm/TemplateFormPersistProvider';
 import { shouldRunReferenceCleanup } from '../useTemplateForm/templateFormReferenceCleanup';
 import { getTemplateVariablesFingerprint } from '../useTemplateForm/templateFormUtils';
@@ -216,15 +223,13 @@ function TemplateFormHarness({
   initialTemplate: ITemplateClient;
   spy: (handle: ISpyHandle) => void;
 }) {
-  const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } = useTemplateForm(initialTemplate);
+  const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } =
+    useTemplateForm(initialTemplate);
 
   const Spy: FC = () => {
-    const {
-      values,
-      setFieldValue: contextSetFieldValue,
-      setValues: contextSetValues,
-    } = useTemplateField();
-    const { consumePendingChanges, confirmConsumedChanges, revertConsumedChanges, abandonPendingChanges } = useTemplatePersist();
+    const { values, setFieldValue: contextSetFieldValue, setValues: contextSetValues } = useTemplateField();
+    const { consumePendingChanges, confirmConsumedChanges, revertConsumedChanges, abandonPendingChanges } =
+      useTemplatePersist();
     spy({
       values,
       dirtyRef,
@@ -271,7 +276,14 @@ describe('TemplateFormPersistProvider deactivation', () => {
     const template = makeTemplate({ isActive: false, name: 'Original', isPublic: false });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('name', 'In-flight edit', false);
@@ -286,7 +298,14 @@ describe('TemplateFormPersistProvider deactivation', () => {
     const template = makeTemplate({ isActive: true, description: 'old' });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('description', 'new description', false);
@@ -302,7 +321,14 @@ describe('TemplateFormPersistProvider deactivation', () => {
     const template = makeTemplate({ isActive: true, description: 'old' });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('description', 'new description', false);
@@ -318,7 +344,14 @@ describe('TemplateFormPersistProvider deactivation', () => {
     const template = makeTemplate({ isActive: true, isPublic: false });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('isPublic', true, false);
@@ -334,7 +367,14 @@ describe('TemplateFormPersistProvider deactivation', () => {
     const template = makeTemplate({ isActive: true, isPublic: false });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     mockDispatch.mockClear();
     (patchTemplate as unknown as jest.Mock).mockClear();
@@ -355,7 +395,14 @@ describe('TemplateFormPersistProvider deactivation', () => {
     });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('kickoff', { description: 'new kickoff', fields: [] }, false);
@@ -373,7 +420,14 @@ describe('TemplateFormPersistProvider deactivation', () => {
     });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('kickoff', { description: 'same', fields: [{ apiName: 'f-1' }] }, false);
@@ -391,7 +445,14 @@ describe('TemplateFormPersistProvider deactivation', () => {
     });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('kickoff', { description: 'new kickoff', fields: [] }, false);
@@ -407,7 +468,14 @@ describe('TemplateFormPersistProvider deactivation', () => {
     let handle: ISpyHandle | null = null;
     const owners = [{ id: 1, role: 'owner' }] as any;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('owners', owners, false);
@@ -423,12 +491,50 @@ describe('TemplateFormPersistProvider deactivation', () => {
     expect(patchTemplate).not.toHaveBeenCalled();
   });
 
+  it('persists an edit made while an explicit submit is in flight', async () => {
+    const template = makeTemplate({ isActive: true, name: 'Original', dateUpdated: null });
+    let handle: ISpyHandle | null = null;
+
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
+
+    act(() => {
+      handle!.consumePendingChanges({ isActive: true });
+      handle!.setFieldValue('name', 'In-flight edit', false);
+    });
+
+    (patchTemplate as unknown as jest.Mock).mockClear();
+
+    await act(async () => {
+      handle!.confirmConsumedChanges();
+      jest.advanceTimersByTime(TEMPLATE_FORM_PERSIST_DEBOUNCE_MS);
+      await Promise.resolve();
+    });
+
+    expect(patchTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({ changedFields: expect.objectContaining({ name: 'In-flight edit' }) }),
+    );
+  });
+
   it('restores the persist baseline and re-queues autosave when an explicit submit fails after consume', async () => {
     const template = makeTemplate({ isActive: true, owners: [] });
     let handle: ISpyHandle | null = null;
     const owners = [{ id: 1, role: 'owner' }] as any;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('owners', owners, false);
@@ -452,7 +558,14 @@ describe('TemplateFormPersistProvider deactivation', () => {
     const template = makeTemplate({ isActive: true, name: 'Original', dateUpdated: null });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('name', 'Unsaved edit', false);
@@ -475,7 +588,12 @@ describe('TemplateFormPersistProvider deactivation', () => {
     let handle: ISpyHandle | null = null;
 
     const { rerender } = render(
-      <StatefulTemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />,
+      <StatefulTemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
     );
 
     act(() => {
@@ -483,7 +601,9 @@ describe('TemplateFormPersistProvider deactivation', () => {
       rerender(
         <StatefulTemplateFormHarness
           initialTemplate={{ ...template, isActive: true }}
-          spy={(h) => { handle = h; }}
+          spy={(h) => {
+            handle = h;
+          }}
         />,
       );
     });
@@ -502,7 +622,14 @@ describe('TemplateFormPersistProvider deactivation', () => {
     const template = makeTemplate({ isActive: false, name: 'Original', dateUpdated: null });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('name', 'Unsaved edit', false);
@@ -528,7 +655,14 @@ describe('TemplateFormPersistProvider deactivation', () => {
     const template = makeTemplate({ isActive: false, name: 'Original', dateUpdated: null });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('name', 'Unsaved edit', false);
@@ -560,7 +694,12 @@ describe('TemplateFormPersistProvider deactivation', () => {
     const owners = [{ id: 1, role: 'owner' }] as any;
 
     const { rerender } = render(
-      <StatefulTemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />,
+      <StatefulTemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
     );
 
     act(() => {
@@ -579,7 +718,9 @@ describe('TemplateFormPersistProvider deactivation', () => {
             owners,
             isActive: false,
           }}
-          spy={(h) => { handle = h; }}
+          spy={(h) => {
+            handle = h;
+          }}
         />,
       );
     });
@@ -603,7 +744,14 @@ describe('TemplateFormPersistProvider deactivation', () => {
     let handle: ISpyHandle | null = null;
     const owners = [{ id: 1, role: 'owner' }] as any;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('owners', owners, false);
@@ -623,7 +771,12 @@ describe('TemplateFormPersistProvider deactivation', () => {
     let handle: ISpyHandle | null = null;
 
     const { rerender } = render(
-      <StatefulTemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />,
+      <StatefulTemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
     );
 
     act(() => {
@@ -641,7 +794,9 @@ describe('TemplateFormPersistProvider deactivation', () => {
           isActive: false,
           dateUpdated: '2026-07-01T00:00:00Z',
         }}
-        spy={(h) => { handle = h; }}
+        spy={(h) => {
+          handle = h;
+        }}
       />,
     );
 
@@ -652,7 +807,14 @@ describe('TemplateFormPersistProvider deactivation', () => {
     const template = makeTemplate({ isActive: true, description: 'old' });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('description', 'first edit', false);
@@ -671,7 +833,14 @@ describe('TemplateFormPersistProvider deactivation', () => {
     const template = makeTemplate({ isActive: false, description: 'old' });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     // Two separate user events (separate acts) — each produces its own render
     // and resets the debounced flush timer. After the debounce window, only the
@@ -697,7 +866,14 @@ describe('TemplateFormPersistProvider deactivation', () => {
     const template = makeTemplate({ isActive: true, description: 'old', name: 'Original' });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('description', 'first edit', false);
@@ -726,7 +902,14 @@ describe('TemplateFormPersistProvider deactivation', () => {
     const template = makeTemplate({ isActive: true, description: 'old', name: 'Original' });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('description', 'first edit', false);
@@ -769,7 +952,12 @@ describe('TemplateFormPersistProvider deactivation', () => {
     let handle: ISpyHandle | null = null;
 
     const { unmount } = render(
-      <TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />,
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
     );
 
     act(() => {
@@ -791,7 +979,14 @@ describe('TemplateFormPersistProvider deactivation', () => {
     const template = makeTemplate({ isActive: true, description: 'old', name: 'Original' });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('description', 'discarded edit', false);
@@ -839,7 +1034,12 @@ describe('TemplateFormPersistProvider deactivation', () => {
     let handle: ISpyHandle | null = null;
 
     const { unmount } = render(
-      <TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />,
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
     );
 
     act(() => {
@@ -866,7 +1066,14 @@ describe('TemplateFormPersistProvider deactivation', () => {
     const template = makeTemplate({ isActive: true, description: 'old' });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('description', 'first edit', false);
@@ -910,7 +1117,9 @@ describe('useTemplateForm reinitialize', () => {
       <HookHarness
         currentTemplate={templateA}
         templateIdentityKey={1}
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -922,7 +1131,9 @@ describe('useTemplateForm reinitialize', () => {
       <HookHarness
         currentTemplate={templateB}
         templateIdentityKey={2}
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -940,7 +1151,9 @@ describe('useTemplateForm reinitialize', () => {
       <HookHarness
         currentTemplate={newTemplate}
         templateIdentityKey="create:/templates/create/"
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -952,7 +1165,9 @@ describe('useTemplateForm reinitialize', () => {
       <HookHarness
         currentTemplate={savedTemplate}
         templateIdentityKey={42}
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -971,7 +1186,9 @@ describe('useTemplateForm reinitialize', () => {
       <HookHarness
         currentTemplate={createTemplate}
         templateIdentityKey="create:/templates/create/"
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -983,7 +1200,9 @@ describe('useTemplateForm reinitialize', () => {
       <HookHarness
         currentTemplate={savedTemplate}
         templateIdentityKey={42}
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -991,7 +1210,9 @@ describe('useTemplateForm reinitialize', () => {
       <HookHarness
         currentTemplate={otherTemplate}
         templateIdentityKey={43}
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -1008,7 +1229,9 @@ describe('useTemplateForm reinitialize', () => {
       <HookHarness
         currentTemplate={newTemplate}
         templateIdentityKey="create:/templates/create/"
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -1020,7 +1243,9 @@ describe('useTemplateForm reinitialize', () => {
       <HookHarness
         currentTemplate={{ ...newTemplate, name: 'AI Template' }}
         templateIdentityKey="create:/templates/create-with-ai/"
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -1036,7 +1261,9 @@ describe('useTemplateForm reinitialize', () => {
     const { rerender } = render(
       <HookHarness
         currentTemplate={template}
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -1050,7 +1277,9 @@ describe('useTemplateForm reinitialize', () => {
           ...template,
           dateUpdated: '2026-07-01T00:00:00Z',
         }}
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -1066,7 +1295,9 @@ describe('useTemplateForm reinitialize', () => {
     const { rerender } = render(
       <HookHarness
         currentTemplate={template}
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -1086,7 +1317,9 @@ describe('useTemplateForm reinitialize', () => {
           ...template,
           dateUpdated: '2026-07-01T00:00:00Z',
         }}
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -1103,7 +1336,9 @@ describe('useTemplateForm reinitialize', () => {
     render(
       <HookHarness
         currentTemplate={template}
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -1127,7 +1362,9 @@ describe('useTemplateForm reinitialize', () => {
     const { rerender } = render(
       <HookHarness
         currentTemplate={template}
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -1142,7 +1379,9 @@ describe('useTemplateForm reinitialize', () => {
           tasks: [task1, task2],
           dateUpdated: '2026-07-01T00:00:00Z',
         }}
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -1162,7 +1401,9 @@ describe('useTemplateForm reinitialize', () => {
     const { rerender } = render(
       <HookHarness
         currentTemplate={template}
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -1178,7 +1419,9 @@ describe('useTemplateForm reinitialize', () => {
           tasks: [task1, task2, task3],
           dateUpdated: '2026-07-01T00:00:00Z',
         }}
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -1200,7 +1443,9 @@ describe('useTemplateForm reinitialize', () => {
     const { rerender } = render(
       <HookHarness
         currentTemplate={template}
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -1217,7 +1462,9 @@ describe('useTemplateForm reinitialize', () => {
           ...template,
           dateUpdated: '2026-07-01T00:00:00Z',
         }}
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -1235,7 +1482,9 @@ describe('useTemplateForm reinitialize', () => {
     const { rerender } = render(
       <HookHarness
         currentTemplate={template}
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -1249,7 +1498,9 @@ describe('useTemplateForm reinitialize', () => {
           ...template,
           dateUpdated: '2026-07-01T00:00:00Z',
         }}
-        onReady={(result) => { hookResult = result; }}
+        onReady={(result) => {
+          hookResult = result;
+        }}
       />,
     );
 
@@ -1271,7 +1522,9 @@ describe('TemplateFormPersistProvider reinitialize', () => {
     const { rerender } = render(
       <StatefulTemplateFormHarness
         initialTemplate={template}
-        spy={(h) => { handle = h; }}
+        spy={(h) => {
+          handle = h;
+        }}
       />,
     );
 
@@ -1287,7 +1540,9 @@ describe('TemplateFormPersistProvider reinitialize', () => {
           description: 'saved edit',
           isActive: false,
         }}
-        spy={(h) => { handle = h; }}
+        spy={(h) => {
+          handle = h;
+        }}
       />,
     );
     await flushPersist();
@@ -1304,7 +1559,9 @@ describe('TemplateFormPersistProvider reinitialize', () => {
             isActive: false,
             dateUpdated: '2026-07-01T00:00:00Z',
           }}
-          spy={(h) => { handle = h; }}
+          spy={(h) => {
+            handle = h;
+          }}
         />,
       );
     });
@@ -1327,7 +1584,9 @@ describe('TemplateFormPersistProvider reinitialize', () => {
     const { rerender } = render(
       <StatefulTemplateFormHarness
         initialTemplate={template}
-        spy={(h) => { handle = h; }}
+        spy={(h) => {
+          handle = h;
+        }}
       />,
     );
 
@@ -1347,7 +1606,9 @@ describe('TemplateFormPersistProvider reinitialize', () => {
             isActive: true,
             dateUpdated: '2026-07-01T00:00:00Z',
           }}
-          spy={(h) => { handle = h; }}
+          spy={(h) => {
+            handle = h;
+          }}
         />,
       );
     });
@@ -1363,7 +1624,9 @@ describe('TemplateFormPersistProvider reinitialize', () => {
     const { rerender } = render(
       <StatefulTemplateFormHarness
         initialTemplate={template}
-        spy={(h) => { handle = h; }}
+        spy={(h) => {
+          handle = h;
+        }}
       />,
     );
 
@@ -1382,7 +1645,9 @@ describe('TemplateFormPersistProvider reinitialize', () => {
           isActive: false,
           dateUpdated: '2026-07-01T00:00:00Z',
         }}
-        spy={(h) => { handle = h; }}
+        spy={(h) => {
+          handle = h;
+        }}
       />,
     );
 
@@ -1403,7 +1668,9 @@ describe('TemplateFormPersistProvider reinitialize', () => {
     const { rerender } = render(
       <StatefulTemplateFormHarness
         initialTemplate={template}
-        spy={(h) => { handle = h; }}
+        spy={(h) => {
+          handle = h;
+        }}
       />,
     );
 
@@ -1421,7 +1688,9 @@ describe('TemplateFormPersistProvider reinitialize', () => {
             dateUpdated: '2026-07-01T00:00:00Z',
             owners: [{ id: 1, role: 'owner' }] as any,
           }}
-          spy={(h) => { handle = h; }}
+          spy={(h) => {
+            handle = h;
+          }}
         />,
       );
     });
@@ -1444,7 +1713,12 @@ describe('TemplateFormPersistProvider reinitialize', () => {
     let handle: ISpyHandle | null = null;
 
     const { rerender } = render(
-      <StatefulTemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />,
+      <StatefulTemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
     );
 
     act(() => {
@@ -1460,7 +1734,9 @@ describe('TemplateFormPersistProvider reinitialize', () => {
           tasks: [{ ...task, name: 'Edited Task', ancestors: [] }],
           dateUpdated: '2026-07-01T00:00:00Z',
         }}
-        spy={(h) => { handle = h; }}
+        spy={(h) => {
+          handle = h;
+        }}
       />,
     );
 
@@ -1479,7 +1755,9 @@ describe('TemplateFormPersistProvider reinitialize', () => {
     const { rerender } = render(
       <StatefulTemplateFormHarness
         initialTemplate={template}
-        spy={(h) => { handle = h; }}
+        spy={(h) => {
+          handle = h;
+        }}
       />,
     );
 
@@ -1496,7 +1774,9 @@ describe('TemplateFormPersistProvider reinitialize', () => {
           isActive: false,
           dateUpdated: '2026-07-01T00:00:00Z',
         }}
-        spy={(h) => { handle = h; }}
+        spy={(h) => {
+          handle = h;
+        }}
       />,
     );
     await flushPersist();
@@ -1522,7 +1802,9 @@ describe('TemplateFormPersistProvider reinitialize', () => {
     const { rerender } = render(
       <StatefulTemplateFormHarness
         initialTemplate={template}
-        spy={(h) => { handle = h; }}
+        spy={(h) => {
+          handle = h;
+        }}
       />,
     );
 
@@ -1534,7 +1816,9 @@ describe('TemplateFormPersistProvider reinitialize', () => {
             ...template,
             dateUpdated: '2026-07-01T00:00:00Z',
           }}
-          spy={(h) => { handle = h; }}
+          spy={(h) => {
+            handle = h;
+          }}
         />,
       );
     });
@@ -1549,10 +1833,12 @@ describe('TemplateFormPersistProvider reinitialize', () => {
       isActive: false,
       tasks: [expect.objectContaining({ name: 'Edited Task' })],
     });
-    expect(Object.prototype.hasOwnProperty.call(
-      (patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields,
-      'tasks.0.name',
-    )).toBe(false);
+    expect(
+      Object.prototype.hasOwnProperty.call(
+        (patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields,
+        'tasks.0.name',
+      ),
+    ).toBe(false);
   });
 });
 
@@ -1598,7 +1884,14 @@ describe('useTemplateForm reference cleanup', () => {
     });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue(
@@ -1628,7 +1921,14 @@ describe('useTemplateForm reference cleanup', () => {
     const template = makeTemplate({ tasks: [deletedTask, remainingTask] });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('tasks', [{ ...remainingTask, number: 1 }], false);
@@ -1673,7 +1973,14 @@ describe('useTemplateForm reference cleanup', () => {
     });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('description', 'saved edit', false);
@@ -1712,7 +2019,14 @@ describe('useTemplateForm reference cleanup', () => {
     });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('description', 'saved edit', false);
@@ -1741,7 +2055,14 @@ describe('useTemplateForm reference cleanup', () => {
     });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('tasks.0.name', 'Renamed {{missing-field}}', false);
@@ -1770,7 +2091,14 @@ describe('useTemplateForm reference cleanup', () => {
     const template = makeTemplate({ tasks: [taskWithOutput, dependentTask] });
     let handle: ISpyHandle | null = null;
 
-    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+    render(
+      <TemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => {
+          handle = h;
+        }}
+      />,
+    );
 
     act(() => {
       handle!.setFieldValue('tasks.0.fields', [], false);
@@ -1796,7 +2124,8 @@ describe('useTemplateSaveRetry', () => {
     initialTemplate: ITemplateClient;
     onReady(retry: () => void, setFieldValue: (field: string, value: unknown, shouldValidate?: boolean) => void): void;
   }) {
-    const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } = useTemplateForm(initialTemplate);
+    const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } =
+      useTemplateForm(initialTemplate);
 
     const RetrySpy: FC = () => {
       const { setFieldValue: contextSetFieldValue } = useTemplateField();
@@ -1858,7 +2187,9 @@ describe('useTemplateSaveRetry', () => {
     render(
       <SaveRetryHarness
         initialTemplate={template}
-        onReady={(retry) => { retryFailedSave = retry; }}
+        onReady={(retry) => {
+          retryFailedSave = retry;
+        }}
       />,
     );
 
@@ -1921,7 +2252,8 @@ describe('useTemplateSaveRetry', () => {
     let persist: Pick<ISpyHandle, 'consumePendingChanges' | 'revertConsumedChanges'> | null = null;
 
     function ActivationRetryHarness() {
-      const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } = useTemplateForm(template);
+      const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } =
+        useTemplateForm(template);
 
       const RetrySpy: FC = () => {
         retryFailedSave = useTemplateSaveRetry();
