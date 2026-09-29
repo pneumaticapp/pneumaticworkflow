@@ -52,3 +52,7 @@ MSG_AU_0019 = _(
     'Please contact support.',
 )
 MSG_AU_0020 = _('Format field is required')
+MSG_AU_0021 = _(
+    'This user has been deactivated. '
+    'Please contact your account administrator.',
+)
