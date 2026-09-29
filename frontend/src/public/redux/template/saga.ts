@@ -90,12 +90,24 @@ function applySavedTemplateIds(lastTemplateState: ITemplateClient, savedTemplate
   };
 }
 
-function* mergeSupersededCreateResponse(savedTemplate: ITemplateClient, wasCreate: boolean) {
+function isSameMountedTemplate(storeTemplate: ITemplateClient, templateSnapshot?: ITemplateClient): boolean {
+  return !templateSnapshot || storeTemplate.id === (templateSnapshot.id ?? null);
+}
+
+function* mergeSupersededCreateResponse(
+  savedTemplate: ITemplateClient,
+  wasCreate: boolean,
+  templateSnapshot?: ITemplateClient,
+) {
   if (!wasCreate || !savedTemplate.id) {
     return;
   }
 
   const lastTemplateState: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
+
+  if (!isSameMountedTemplate(lastTemplateState, templateSnapshot)) {
+    return;
+  }
 
   if (lastTemplateState.id) {
     return;
@@ -326,7 +338,7 @@ function* fetchSaveTemplate(
         checkSomeRouteIsActive(ERoutes.TemplatesCreate, ERoutes.TemplatesCreateAI, ERoutes.TemplatesEdit);
 
       if (canSyncEditorState) {
-        yield mergeSupersededCreateResponse(savedTemplate, isTemplateCreated);
+        yield mergeSupersededCreateResponse(savedTemplate, isTemplateCreated, templateSnapshot);
       }
     }
 
@@ -340,7 +352,7 @@ function* fetchSaveTemplate(
       !templateSnapshot ||
       checkSomeRouteIsActive(ERoutes.TemplatesCreate, ERoutes.TemplatesCreateAI, ERoutes.TemplatesEdit);
 
-    if (isTemplatePage && canSyncEditorState) {
+    if (isTemplatePage && canSyncEditorState && isSameMountedTemplate(lastTemplateState, templateSnapshot)) {
       yield put(setTemplate({ ...lastTemplateState, isActive: false }));
     }
 
@@ -349,10 +361,11 @@ function* fetchSaveTemplate(
     return;
   }
 
-  // Only a mounted editor needs store repopulation or a redirect after save.
+  // Only the mounted editor that issued the snapshot needs store repopulation or a redirect.
   if (
     templateSnapshot &&
-    !checkSomeRouteIsActive(ERoutes.TemplatesCreate, ERoutes.TemplatesCreateAI, ERoutes.TemplatesEdit)
+    (!checkSomeRouteIsActive(ERoutes.TemplatesCreate, ERoutes.TemplatesCreateAI, ERoutes.TemplatesEdit) ||
+      !isSameMountedTemplate(lastTemplateState, templateSnapshot))
   ) {
     onSuccess?.();
     return;

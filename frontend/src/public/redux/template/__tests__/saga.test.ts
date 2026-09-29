@@ -540,4 +540,45 @@ describe('fetchSaveTemplate — fieldsets in mapTemplateRequest', () => {
       ]),
     );
   });
+
+  it('does not apply an unmount flush response to a different mounted template', async () => {
+    const oldTemplateSnapshot = makeTemplate({ id: 5 });
+    const mountedTemplate = makeTemplate({ id: 7, name: 'Mounted Template' });
+    const mockState = {
+      ...makeSaveMockState(),
+      template: { data: mountedTemplate },
+    };
+
+    (checkSomeRouteIsActive as jest.Mock).mockReturnValue(true);
+    (mapTemplateRequest as jest.Mock).mockReturnValue({ id: 5 });
+    (updateTemplate as jest.Mock).mockResolvedValue(oldTemplateSnapshot);
+
+    const channel = stdChannel();
+    const dispatched: IDispatchedAction[] = [];
+
+    const saga = runSaga(
+      {
+        channel,
+        dispatch: (action: IDispatchedAction) => {
+          dispatched.push(action);
+        },
+        getState: () => mockState,
+      },
+      function* wrapper() {
+        yield call(watchSaveTemplate);
+      },
+    );
+
+    channel.put({
+      type: ETemplateActions.Save,
+      payload: { templateSnapshot: oldTemplateSnapshot },
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    saga.cancel();
+
+    expect(dispatched).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: ETemplateActions.SetTemplate })]),
+    );
+  });
 });
