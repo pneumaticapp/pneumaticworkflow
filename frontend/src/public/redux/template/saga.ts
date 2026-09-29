@@ -94,14 +94,31 @@ function applySavedTemplateIds(lastTemplateState: ITemplateClient, savedTemplate
   };
 }
 
-function isSameMountedTemplate(storeTemplate: ITemplateClient, templateSnapshot?: ITemplateClient): boolean {
-  return !templateSnapshot || (storeTemplate.id ?? null) === (templateSnapshot.id ?? null);
+function isSameMountedTemplate(
+  storeTemplate: ITemplateClient,
+  templateSnapshot?: ITemplateClient,
+  requestId?: TAutosavePersistRequest,
+): boolean {
+  if (!templateSnapshot) {
+    return true;
+  }
+
+  const storeId = storeTemplate.id ?? null;
+  const snapshotId = templateSnapshot.id ?? null;
+
+  if (storeId !== snapshotId) {
+    return false;
+  }
+
+  // Two id-less drafts are only the same editor while the scope that issued the request is alive.
+  return snapshotId !== null || !isAutosavePersistScopeClosed(requestId);
 }
 
 function* mergeSupersededCreateResponse(
   savedTemplate: ITemplateClient,
   wasCreate: boolean,
   templateSnapshot?: ITemplateClient,
+  requestId?: TAutosavePersistRequest,
 ) {
   if (!wasCreate || !savedTemplate.id) {
     return;
@@ -109,7 +126,7 @@ function* mergeSupersededCreateResponse(
 
   const lastTemplateState: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
 
-  if (!isSameMountedTemplate(lastTemplateState, templateSnapshot)) {
+  if (!isSameMountedTemplate(lastTemplateState, templateSnapshot, requestId)) {
     return;
   }
 
@@ -349,7 +366,7 @@ function* fetchSaveTemplate(
         checkSomeRouteIsActive(ERoutes.TemplatesCreate, ERoutes.TemplatesCreateAI, ERoutes.TemplatesEdit);
 
       if (canSyncEditorState) {
-        yield mergeSupersededCreateResponse(savedTemplate, isTemplateCreated, templateSnapshot);
+        yield mergeSupersededCreateResponse(savedTemplate, isTemplateCreated, templateSnapshot, requestId);
       }
     }
 
@@ -363,7 +380,7 @@ function* fetchSaveTemplate(
       !templateSnapshot ||
       checkSomeRouteIsActive(ERoutes.TemplatesCreate, ERoutes.TemplatesCreateAI, ERoutes.TemplatesEdit);
 
-    if (isTemplatePage && canSyncEditorState && isSameMountedTemplate(lastTemplateState, templateSnapshot)) {
+    if (isTemplatePage && canSyncEditorState && isSameMountedTemplate(lastTemplateState, templateSnapshot, requestId)) {
       yield put(setTemplate({ ...lastTemplateState, isActive: false }));
     }
 
@@ -376,7 +393,7 @@ function* fetchSaveTemplate(
   if (
     templateSnapshot &&
     (!checkSomeRouteIsActive(ERoutes.TemplatesCreate, ERoutes.TemplatesCreateAI, ERoutes.TemplatesEdit) ||
-      !isSameMountedTemplate(lastTemplateState, templateSnapshot))
+      !isSameMountedTemplate(lastTemplateState, editingTemplate, requestId))
   ) {
     onSuccess?.();
     return;

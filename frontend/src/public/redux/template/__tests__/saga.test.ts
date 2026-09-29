@@ -718,4 +718,88 @@ describe('fetchSaveTemplate — fieldsets in mapTemplateRequest', () => {
       expect.arrayContaining([expect.objectContaining({ type: ETemplateActions.SetTemplate })]),
     );
   });
+
+  it('does not apply a closed-scope create response to another unsaved editor', async () => {
+    const otherDraft = makeTemplate({ id: undefined, name: 'Other Draft' });
+    const oldDraftSnapshot = makeTemplate({ id: undefined, name: 'Old Draft' });
+    const mockState = {
+      ...makeSaveMockState(),
+      template: { data: otherDraft },
+    };
+    const closedRequest = allocateAutosavePersistRequest(createAutosavePersistScope());
+    closeAutosavePersistScope(closedRequest.scope);
+
+    (checkSomeRouteIsActive as jest.Mock).mockReturnValue(true);
+    (mapTemplateRequest as jest.Mock).mockImplementation((template: ITemplate) => template);
+    (createTemplate as jest.Mock).mockResolvedValue(makeTemplate({ id: 55 }));
+
+    const channel = stdChannel();
+    const dispatched: IDispatchedAction[] = [];
+
+    const saga = runSaga(
+      {
+        channel,
+        dispatch: (action: IDispatchedAction) => {
+          dispatched.push(action);
+        },
+        getState: () => mockState,
+      },
+      function* wrapper() {
+        yield call(watchSaveTemplate);
+      },
+    );
+
+    channel.put({
+      type: ETemplateActions.Save,
+      payload: { templateSnapshot: oldDraftSnapshot, requestId: closedRequest },
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    saga.cancel();
+
+    expect(dispatched).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: ETemplateActions.SetTemplate })]),
+    );
+  });
+
+  it('dispatches save success when a queued snapshot reused the mounted id', async () => {
+    const draftSnapshot = makeTemplate({ id: undefined });
+    const mountedTemplate = makeTemplate({ id: 42 });
+    const mockState = {
+      ...makeSaveMockState(),
+      template: { data: mountedTemplate },
+    };
+
+    (checkSomeRouteIsActive as jest.Mock).mockReturnValue(true);
+    (mapTemplateRequest as jest.Mock).mockImplementation((template: ITemplate) => template);
+    (updateTemplate as jest.Mock).mockResolvedValue(mountedTemplate);
+
+    const channel = stdChannel();
+    const dispatched: IDispatchedAction[] = [];
+
+    const saga = runSaga(
+      {
+        channel,
+        dispatch: (action: IDispatchedAction) => {
+          dispatched.push(action);
+        },
+        getState: () => mockState,
+      },
+      function* wrapper() {
+        yield call(watchSaveTemplate);
+      },
+    );
+
+    channel.put({
+      type: ETemplateActions.Save,
+      payload: { templateSnapshot: draftSnapshot },
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    saga.cancel();
+
+    expect(dispatched).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: ETemplateActions.SaveSuccess })]),
+    );
+  });
 });
