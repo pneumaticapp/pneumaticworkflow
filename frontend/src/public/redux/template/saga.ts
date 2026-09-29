@@ -160,7 +160,14 @@ function* patchTemplateSaga({
 
   yield put(setTemplateStatus(ETemplateStatus.Saving));
 
-  const nonDeactivativeFields: (keyof ITemplateClient)[] = ['isActive', 'isPublic', 'publicUrl'];
+  const nonDeactivativeFields: (keyof ITemplateClient)[] = [
+    'isActive',
+    'isPublic',
+    'publicUrl',
+    'publicSuccessUrl',
+    'isEmbedded',
+    'embedUrl',
+  ];
   let shouldDeactivateTemplate =
     changedFields.isActive === true
       ? false

@@ -3,7 +3,14 @@ import { haveSameKickoffFields } from '../../../utils/template';
 import { getChangedFields } from './templateFormUtils';
 
 // Mirror patchTemplateSaga's deactivation in Formik on the same tick as the edit.
-const NON_DEACTIVATIVE_FIELDS: (keyof ITemplateClient)[] = ['isActive', 'isPublic', 'publicUrl'];
+const NON_DEACTIVATIVE_FIELDS: (keyof ITemplateClient)[] = [
+  'isActive',
+  'isPublic',
+  'publicUrl',
+  'publicSuccessUrl',
+  'isEmbedded',
+  'embedUrl',
+];
 
 function shouldDeactivateTemplate(changedFields: Partial<ITemplateClient>, previousTemplate: ITemplateClient): boolean {
   if (changedFields.isActive === true) {
