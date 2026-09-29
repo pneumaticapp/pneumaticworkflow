@@ -1,6 +1,6 @@
 import json
 import string
-from typing import Optional
+from typing import Dict, List, Optional, Union
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 from django.utils.crypto import get_random_string
@@ -113,8 +113,15 @@ class AIAgentService(BaseModelService):
             self.instance.user.delete()
             self.instance.delete()
 
-    def _get_fields_values(self, task: Task) -> dict[str, str]:
-        user_message = TaskUserMessageService(task=task).get_message()
+    def _get_fields_values(
+        self,
+        task: Task,
+    ) -> Dict[str, Union[str, List[str]]]:
+        message_service = TaskUserMessageService(task=task)
+        user_message = message_service.get_user_message()
+        system_message = message_service.get_system_message(
+            system_prompt=self.instance.system_prompt,
+        )
         AIAgentAction.objects.create(
             account_id=self.instance.account_id,
             agent_id=self.instance.id,
@@ -129,7 +136,7 @@ class AIAgentService(BaseModelService):
             auth_type=self.auth_type,
         )
         response = provider_service.get_completion(
-            system_message=self.instance.system_prompt,
+            system_message=system_message,
             user_message=user_message,
             model=self.instance.model,
             agent=self.instance,
@@ -145,6 +152,7 @@ class AIAgentService(BaseModelService):
         response_parser = TaskResponseService(
             task=task,
             text=response,
+            user=self.user,
         )
         return response_parser.get_fields_values()
 

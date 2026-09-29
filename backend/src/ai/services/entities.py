@@ -1,4 +1,4 @@
-from typing import Dict, Callable
+from typing import Dict, NamedTuple, Callable
 from typing_extensions import TypedDict
 
 
@@ -9,3 +9,12 @@ class ProviderConfig(TypedDict):
     base_url: str
     handler: Callable
     endpoints: Dict[str, str]
+
+
+
+class FieldTag(NamedTuple):
+
+    """ A <field> tag of the agent answer """
+
+    value: str
+    attrs: Dict[str, str]
