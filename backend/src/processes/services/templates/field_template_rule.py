@@ -57,37 +57,38 @@ class FieldTemplateRuleSetService(BaseModelService):
 
         """ Run once the whole template is saved: by then every source
             field exists, so a reference that still does not resolve is
-            a typo and not a field created later in the same request. """
+            a typo and not a field created later in the same request.
+            Operators skipped back then are checked here as well. """
 
-        group_and = (
+        groups_and = (
             FieldTemplateRuleGroupAnd.objects
             .filter(group_or__ruleset__template=template)
             .exclude(field__isnull=True)
             .exclude(field='')
-            .exclude(
-                field__in=FieldTemplate.objects
-                .filter(template=template)
-                .values('api_name'),
-            )
             .select_related(
                 'group_or__ruleset__field__task',
                 'group_or__ruleset__field__fieldset__task',
             )
-            .first()
         )
-        if group_and is None:
-            return
-        owner = group_and.group_or.ruleset.field
-        task = owner.task or (
-            owner.fieldset.task if owner.fieldset_id else None
-        )
-        raise FieldTemplateRuleSetServiceException(
-            message=MSG_PT_0076(
-                task_name=task.name if task else 'Kickoff',
-                field_name=owner.name,
-                api_name=group_and.field,
-            ),
-        )
+        for group_and in groups_and:
+            service = cls(
+                account=template.account,
+                instance=group_and.group_or.ruleset,
+            )
+            if service._get_source_field(group_and=group_and) is not None:
+                service._validate(group_and=group_and)
+                continue
+            owner = group_and.group_or.ruleset.field
+            task = owner.task or (
+                owner.fieldset.task if owner.fieldset_id else None
+            )
+            raise FieldTemplateRuleSetServiceException(
+                message=MSG_PT_0076(
+                    task_name=task.name if task else 'Kickoff',
+                    field_name=owner.name,
+                    api_name=group_and.field,
+                ),
+            )
 
     def _get_source_field(
         self,

@@ -2424,3 +2424,50 @@ def test__validate_template_rules__validator_without_field__ok():
 
     # assert
     assert result is None
+
+
+def test__validate_template_rules__operator_not_allowed__raise_exception():
+
+    """ Operator skipped while the source was missing is caught here """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    task = template.tasks.first()
+    source_field = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        task=task,
+        name='Source field',
+        type=FieldType.DATE,
+        api_name='field-1',
+        order=0,
+    )
+    target_field = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        task=task,
+        name='Target field',
+        type=FieldType.STRING,
+        api_name='field-2',
+        order=1,
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=target_field,
+        source_field_api_name=source_field.api_name,
+        operator=FieldRuleOperator.CONTAIN,
+    )
+
+    # act
+    with pytest.raises(FieldTemplateRuleSetServiceException) as ex:
+        FieldTemplateRuleSetService.validate_template_rules(template=template)
+
+    # assert
+    assert ex.value.message == pt_messages.MSG_PT_0078(
+        field=source_field.name,
+        operator=FieldRuleOperator.CONTAIN,
+        field_type=FieldType.DATE,
+    )
