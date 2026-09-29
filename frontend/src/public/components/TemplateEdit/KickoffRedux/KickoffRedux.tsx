@@ -217,7 +217,7 @@ function KickoffReduxContent({
           </div>
         )}
 
-        <KickoffShareForm className={styles['share-form']} />
+        {fieldContext && <KickoffShareForm className={styles['share-form']} />}
       </>
     );
   };
