@@ -4,9 +4,14 @@ import { call } from 'redux-saga/effects';
 import { fetchTemplate, watchPatchTemplate, watchSaveTemplate, createOrUpdateTemplate } from '../saga';
 import { getTemplate } from '../../../api/getTemplate';
 import { updateTemplate } from '../../../api/updateTemplate';
+import { createTemplate } from '../../../api/createTemplate';
 import { NotificationManager } from '../../../components/UI/Notifications';
 import { logger } from '../../../utils/logger';
-import { allocateAutosavePersistRequest, createAutosavePersistScope } from '../persistRequest';
+import {
+  allocateAutosavePersistRequest,
+  closeAutosavePersistScope,
+  createAutosavePersistScope,
+} from '../persistRequest';
 import { ETemplateActions, TLoadTemplate } from '../actions';
 import { loadFieldsetsCatalog, loadFieldsetsCatalogSuccess, loadFieldsetsCatalogFailed } from '../../fieldsets/slice';
 import { ETemplateStatus } from '../../../types/redux';
@@ -577,6 +582,138 @@ describe('fetchSaveTemplate — fieldsets in mapTemplateRequest', () => {
     await new Promise((resolve) => setTimeout(resolve, 100));
     saga.cancel();
 
+    expect(dispatched).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: ETemplateActions.SetTemplate })]),
+    );
+  });
+
+  it('applies the created id and redirects when a create snapshot has no id yet', async () => {
+    const createDraft = makeTemplate({ id: undefined });
+    const savedTemplate = makeTemplate({ id: 42 });
+    const mockState = {
+      ...makeSaveMockState(),
+      template: { data: createDraft },
+    };
+
+    (checkSomeRouteIsActive as jest.Mock).mockReturnValue(true);
+    (mapTemplateRequest as jest.Mock).mockImplementation((template: ITemplate) => template);
+    (createTemplate as jest.Mock).mockResolvedValue(savedTemplate);
+
+    const channel = stdChannel();
+    const dispatched: IDispatchedAction[] = [];
+
+    const saga = runSaga(
+      {
+        channel,
+        dispatch: (action: IDispatchedAction) => {
+          dispatched.push(action);
+        },
+        getState: () => mockState,
+      },
+      function* wrapper() {
+        yield call(watchSaveTemplate);
+      },
+    );
+
+    channel.put({
+      type: ETemplateActions.Save,
+      payload: { templateSnapshot: createDraft },
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    saga.cancel();
+
+    expect(dispatched).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: ETemplateActions.SetTemplate,
+          payload: expect.objectContaining({ id: 42 }),
+        }),
+      ]),
+    );
+  });
+
+  it('reuses the id assigned by the first create autosave for a queued snapshot', async () => {
+    const draftSnapshot = makeTemplate({ id: undefined });
+    const mountedTemplate = makeTemplate({ id: 42 });
+    const mockState = {
+      ...makeSaveMockState(),
+      template: { data: mountedTemplate },
+    };
+
+    (checkSomeRouteIsActive as jest.Mock).mockReturnValue(true);
+    (mapTemplateRequest as jest.Mock).mockImplementation((template: ITemplate) => template);
+    (updateTemplate as jest.Mock).mockResolvedValue(mountedTemplate);
+
+    const channel = stdChannel();
+    const dispatched: IDispatchedAction[] = [];
+
+    const saga = runSaga(
+      {
+        channel,
+        dispatch: (action: IDispatchedAction) => {
+          dispatched.push(action);
+        },
+        getState: () => mockState,
+      },
+      function* wrapper() {
+        yield call(watchSaveTemplate);
+      },
+    );
+
+    channel.put({
+      type: ETemplateActions.Save,
+      payload: { templateSnapshot: draftSnapshot },
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    saga.cancel();
+
+    expect(mapTemplateRequest).toHaveBeenCalledWith(expect.objectContaining({ id: 42 }));
+    expect(updateTemplate).toHaveBeenCalled();
+    expect(createTemplate).not.toHaveBeenCalled();
+  });
+
+  it('does not reuse the mounted id for a snapshot from a closed editor scope', async () => {
+    const draftSnapshot = makeTemplate({ id: undefined });
+    const mountedTemplate = makeTemplate({ id: 7 });
+    const mockState = {
+      ...makeSaveMockState(),
+      template: { data: mountedTemplate },
+    };
+    const closedRequest = allocateAutosavePersistRequest(createAutosavePersistScope());
+    closeAutosavePersistScope(closedRequest.scope);
+
+    (checkSomeRouteIsActive as jest.Mock).mockReturnValue(true);
+    (mapTemplateRequest as jest.Mock).mockImplementation((template: ITemplate) => template);
+    (createTemplate as jest.Mock).mockResolvedValue(makeTemplate({ id: 55 }));
+
+    const channel = stdChannel();
+    const dispatched: IDispatchedAction[] = [];
+
+    const saga = runSaga(
+      {
+        channel,
+        dispatch: (action: IDispatchedAction) => {
+          dispatched.push(action);
+        },
+        getState: () => mockState,
+      },
+      function* wrapper() {
+        yield call(watchSaveTemplate);
+      },
+    );
+
+    channel.put({
+      type: ETemplateActions.Save,
+      payload: { templateSnapshot: draftSnapshot, requestId: closedRequest },
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    saga.cancel();
+
+    expect(mapTemplateRequest).toHaveBeenCalledWith(expect.objectContaining({ id: undefined }));
+    expect(updateTemplate).not.toHaveBeenCalled();
     expect(dispatched).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ type: ETemplateActions.SetTemplate })]),
     );

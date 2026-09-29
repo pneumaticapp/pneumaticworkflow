@@ -39,7 +39,11 @@ import {
   TSaveTemplate,
   TStopAITemplateGeneration,
 } from './actions';
-import { isAutosavePersistRequestCurrent, TAutosavePersistRequest } from './persistRequest';
+import {
+  isAutosavePersistRequestCurrent,
+  isAutosavePersistScopeClosed,
+  TAutosavePersistRequest,
+} from './persistRequest';
 
 import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../selectors/user';
 import { createTemplate } from '../../api/createTemplate';
@@ -320,7 +324,14 @@ function* fetchSaveTemplate(
   const isSubscribed: ReturnType<typeof getIsUserSubsribed> = yield select(getIsUserSubsribed);
   const users: ReturnType<typeof getUsers> = yield select(getUsers);
 
-  const editingTemplate: ReturnType<typeof getTemplateData> = templateSnapshot || (yield select(getTemplateData));
+  const mountedTemplate: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
+  // A queued snapshot may predate the id assigned by the first create autosave; reuse it only while its editor lives.
+  const editingTemplate: ITemplateClient = templateSnapshot
+    ? {
+        ...templateSnapshot,
+        id: templateSnapshot.id ?? (isAutosavePersistScopeClosed(requestId) ? undefined : mountedTemplate.id),
+      }
+    : mountedTemplate;
   const templateRequest = mapTemplateRequest(editingTemplate);
 
   const isTemplateCreated = !templateRequest.id;

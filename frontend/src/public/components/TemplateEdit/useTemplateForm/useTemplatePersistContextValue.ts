@@ -8,6 +8,7 @@ import { ETemplateStatus } from '../../../types/redux';
 import {
   abandonAutosavePersistRequests,
   allocateAutosavePersistRequest,
+  closeAutosavePersistScope,
   createAutosavePersistScope,
   isAutosavePersistRequestCurrent,
   TAutosavePersistRequest,
@@ -282,6 +283,7 @@ export function useTemplatePersistContextValue({
   useEffect(
     () => () => {
       flushPersistRef.current();
+      closeAutosavePersistScope(persistScopeRef.current);
     },
     [],
   );
