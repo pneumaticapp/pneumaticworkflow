@@ -9,7 +9,7 @@ from src.processes.enums import (
     PerformerType,
 )
 from src.processes.messages.template import (
-    MSG_PT_0075,
+    MSG_PT_0076,
     MSG_PT_0079,
     MSG_PT_0080,
 )
@@ -2750,3 +2750,107 @@ def test_update__task_field_rules__validator_types_with_selections__ok(
     assert group_and_data['field'] is None
     assert group_and_data['operator'] == operator
     assert group_and_data['value'] == value
+
+
+def test_update__show_rule_not_existent_field__validation_error(
+    mocker,
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user, is_active=True, tasks_count=1)
+    task = template.tasks.first()
+    target_field = FieldTemplate.objects.create(
+        type=FieldType.STRING,
+        name='Target field',
+        order=2,
+        task=task,
+        api_name='field-2',
+        template=template,
+        account=account,
+    )
+    ruleset, group_or, group_and = create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=target_field,
+        source_field_api_name='field-not-existent',
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data={
+            'id': template.id,
+            'name': template.name,
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fields': [
+                        {
+                            'name': target_field.name,
+                            'type': target_field.type,
+                            'order': target_field.order,
+                            'api_name': target_field.api_name,
+                            'rulesets': [
+                                {
+                                    'api_name': ruleset.api_name,
+                                    'name': ruleset.name,
+                                    'type': FieldRuleType.SHOW,
+                                    'groups_or': [
+                                        {
+                                            'api_name': group_or.api_name,
+                                            'groups_and': [
+                                                {
+                                                    'api_name': (
+                                                        group_and.api_name
+                                                    ),
+                                                    'field': group_and.field,
+                                                    'operator': (
+                                                        group_and.operator
+                                                    ),
+                                                    'value': group_and.value,
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == MSG_PT_0076(
+        task_name=task.name,
+        field_name=target_field.name,
+        api_name='field-not-existent',
+    )

@@ -21,8 +21,10 @@ from src.processes.services.exceptions import (
 from src.processes.services.templates.field_template_rule import (
     FieldTemplateRuleSetService,
 )
+from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_field_show_ruleset,
     create_test_owner,
     create_test_template,
 )
@@ -2287,3 +2289,138 @@ def test_partial_update__groups_or_is_not_none__ok(mocker):
     assert result == ruleset
     assert ruleset.order == order
     set_groups_or_mock.assert_called_once_with(groups_or_data=groups_or)
+
+
+def test__validate_template_rules__not_existent_source__raise_exception():
+
+    """ Condition points to an api_name absent from the template """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    task = template.tasks.first()
+    target_field = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        task=task,
+        name='Target field',
+        type=FieldType.STRING,
+        api_name='field-2',
+        order=1,
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=target_field,
+        source_field_api_name='field-not-existent',
+    )
+
+    # act
+    with pytest.raises(FieldTemplateRuleSetServiceException) as ex:
+        FieldTemplateRuleSetService.validate_template_rules(template=template)
+
+    # assert
+    assert ex.value.message == pt_messages.MSG_PT_0076(
+        task_name=task.name,
+        field_name=target_field.name,
+        api_name='field-not-existent',
+    )
+
+
+def test__validate_template_rules__source_in_another_fieldset__ok():
+
+    """ Source field of another fieldset resolves inside the template """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    task = template.tasks.first()
+    source_fieldset = FieldsetTemplate.objects.create(
+        account=account,
+        template=template,
+        task=task,
+        name='Source fieldset',
+        api_name='fieldset-1',
+        order=0,
+    )
+    source_field = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        fieldset=source_fieldset,
+        name='Source field',
+        type=FieldType.STRING,
+        api_name='field-1',
+        order=0,
+    )
+    target_field = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        task=task,
+        name='Target field',
+        type=FieldType.STRING,
+        api_name='field-2',
+        order=1,
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=target_field,
+        source_field_api_name=source_field.api_name,
+    )
+
+    # act
+    result = FieldTemplateRuleSetService.validate_template_rules(
+        template=template,
+    )
+
+    # assert
+    assert result is None
+
+
+def test__validate_template_rules__validator_without_field__ok():
+
+    """ Validator condition reads its owner, so field stays empty """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    task = template.tasks.first()
+    field = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        task=task,
+        name='Field',
+        type=FieldType.STRING,
+        api_name='field-1',
+        order=1,
+    )
+    ruleset = FieldTemplateRuleSet.objects.create(
+        account=account,
+        template=template,
+        field=field,
+        name='Validator ruleset',
+        type=FieldRuleType.VALIDATOR,
+    )
+    group_or = FieldTemplateRuleGroupOr.objects.create(
+        account=account,
+        template=template,
+        ruleset=ruleset,
+    )
+    FieldTemplateRuleGroupAnd.objects.create(
+        account=account,
+        template=template,
+        group_or=group_or,
+        operator=FieldRuleOperator.EQUAL,
+        value='yes',
+    )
+
+    # act
+    result = FieldTemplateRuleSetService.validate_template_rules(
+        template=template,
+    )
+
+    # assert
+    assert result is None

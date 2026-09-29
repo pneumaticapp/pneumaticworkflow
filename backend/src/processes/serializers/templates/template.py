@@ -63,6 +63,12 @@ from src.processes.serializers.templates.task import (
     TaskTemplatePrivilegesSerializer,
     TaskTemplateSerializer,
 )
+from src.processes.services.exceptions import (
+    FieldTemplateRuleSetServiceException,
+)
+from src.processes.services.templates.field_template_rule import (
+    FieldTemplateRuleSetService,
+)
 from src.processes.services.templates.integrations import (
     TemplateIntegrationsService,
 )
@@ -743,6 +749,12 @@ class TemplateSerializer(
     def save(self, **kwargs):
         with transaction.atomic():
             instance = super().save(**kwargs)
+            try:
+                FieldTemplateRuleSetService.validate_template_rules(
+                    template=instance,
+                )
+            except FieldTemplateRuleSetServiceException as ex:
+                self.raise_validation_error(message=ex.message)
             self._update_draft(data=self.data)
             return instance
 

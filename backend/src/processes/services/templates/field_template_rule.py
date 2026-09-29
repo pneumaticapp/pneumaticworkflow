@@ -4,13 +4,14 @@ from django.db import transaction
 
 from src.generics.base.service import BaseModelService
 from src.processes.enums import FieldRuleOperator
-from src.processes.messages.template import MSG_PT_0078
+from src.processes.messages.template import MSG_PT_0076, MSG_PT_0078
 from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateRuleGroupAnd,
     FieldTemplateRuleGroupOr,
     FieldTemplateRuleSet,
 )
+from src.processes.models.templates.template import Template
 from src.processes.services.exceptions import \
     FieldTemplateRuleSetServiceException
 
@@ -51,6 +52,43 @@ class FieldTemplateRuleSetService(BaseModelService):
         if groups_or is not None:
             self._set_groups_or(groups_or_data=groups_or)
 
+    @classmethod
+    def validate_template_rules(cls, template: Template):
+
+        """ Run once the whole template is saved: by then every source
+            field exists, so a reference that still does not resolve is
+            a typo and not a field created later in the same request. """
+
+        group_and = (
+            FieldTemplateRuleGroupAnd.objects
+            .filter(group_or__ruleset__template=template)
+            .exclude(field__isnull=True)
+            .exclude(field='')
+            .exclude(
+                field__in=FieldTemplate.objects
+                .filter(template=template)
+                .values('api_name'),
+            )
+            .select_related(
+                'group_or__ruleset__field__task',
+                'group_or__ruleset__field__fieldset__task',
+            )
+            .first()
+        )
+        if group_and is None:
+            return
+        owner = group_and.group_or.ruleset.field
+        task = owner.task or (
+            owner.fieldset.task if owner.fieldset_id else None
+        )
+        raise FieldTemplateRuleSetServiceException(
+            message=MSG_PT_0076(
+                task_name=task.name if task else 'Kickoff',
+                field_name=owner.name,
+                api_name=group_and.field,
+            ),
+        )
+
     def _get_source_field(
         self,
         group_and: FieldTemplateRuleGroupAnd,
@@ -77,8 +115,8 @@ class FieldTemplateRuleSetService(BaseModelService):
         group_and: FieldTemplateRuleGroupAnd,
     ):
 
-        """ Called again on every save, so a condition whose source
-            field appears later in the same request is left alone. """
+        """ A condition whose source field appears later in the same
+            request is left to validate_template_rules. """
 
         field = self._get_source_field(group_and=group_and)
         if field is None:
