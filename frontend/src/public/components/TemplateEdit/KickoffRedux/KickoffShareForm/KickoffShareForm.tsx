@@ -94,8 +94,8 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
     editTemplate({
       isPublic: newIsShared,
       publicUrl: newIsShared ? '' : publicUrl,
+      isEmbedded: accessSharedForm && newIsShared,
       ...(accessSharedForm && {
-        isEmbedded: newIsShared,
         embedUrl: newIsShared ? '' : embedUrl,
       }),
     });
@@ -145,11 +145,7 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
               onChangeSuccessUrl={changeSuccessUrl}
             />
           ) : (
-            <EmbeddedFormTab
-              hasAccess={accessSharedForm}
-              embedUrl={embedUrl}
-              embedCode={embedCode}
-            />
+            <EmbeddedFormTab hasAccess={accessSharedForm} embedUrl={embedUrl} embedCode={embedCode} />
           )}
         </div>
       </>
