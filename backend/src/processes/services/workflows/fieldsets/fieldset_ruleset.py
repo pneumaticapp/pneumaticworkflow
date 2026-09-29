@@ -1,4 +1,4 @@
-from decimal import Decimal, DecimalException
+from decimal import Decimal, DecimalException, localcontext
 from typing import Dict, List, Optional
 
 from django.contrib.auth import get_user_model
@@ -29,6 +29,9 @@ class FieldSetRuleSetService(BaseModelService):
         against the values the user has entered. """
 
     NULL_VALUES = (None, '', [])
+    # Field values are unbounded text, and the default 28 digits
+    # would round the sum of long numbers.
+    SUM_PRECISION = 200
 
     def _create_instance(
         self,
@@ -105,16 +108,18 @@ class FieldSetRuleSetService(BaseModelService):
 
         total = Decimal(0)
         has_values = False
-        for field in self.instance.fields.all():
-            if field.value in self.NULL_VALUES:
-                if field.is_required:
-                    has_values = True
-                continue
-            try:
-                total += Decimal(field.value)
-            except (TypeError, ValueError, DecimalException):
-                continue
-            has_values = True
+        with localcontext() as context:
+            context.prec = self.SUM_PRECISION
+            for field in self.instance.fields.all():
+                if field.value in self.NULL_VALUES:
+                    if field.is_required:
+                        has_values = True
+                    continue
+                try:
+                    total += Decimal(field.value)
+                except (TypeError, ValueError, DecimalException):
+                    continue
+                has_values = True
         return total if has_values else None
 
     def _check_group_and(

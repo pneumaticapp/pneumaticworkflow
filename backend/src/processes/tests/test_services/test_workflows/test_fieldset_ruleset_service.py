@@ -2,6 +2,7 @@ import pytest
 
 from src.processes.enums import FieldSetRuleOperator, FieldType
 from src.processes.messages.fieldset import MSG_FS_0002, MSG_FS_0012
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.fieldset import (
     FieldSetRuleGroupAnd,
     FieldSetRuleGroupOr,
@@ -144,6 +145,39 @@ def test_validate__sum_equal_differs__raise():
 
     # assert
     assert ex.value.message == MSG_FS_0002('100')
+
+
+def test_validate__sum_of_long_numbers__not_rounded():
+
+    """ 29 significant digits do not fit the default decimal context """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user)
+    fieldset, ruleset = create_ruleset(
+        workflow,
+        FieldSetRuleOperator.SUM_EQUAL,
+        '10000000000000000000000000001',
+    )
+    fieldset.fields.update(value='10000000000000000000000000000')
+    field = TaskField.objects.create(
+        account=user.account,
+        workflow=workflow,
+        fieldset=fieldset,
+        name='Fieldset field 2',
+        type=FieldType.NUMBER,
+        order=2,
+        api_name=f'{fieldset.api_name}-field-2',
+        value='1',
+    )
+    ruleset.fields.add(field)
+    service = FieldSetRuleSetService(user=user, instance=ruleset)
+
+    # act
+    result = service.validate()
+
+    # assert
+    assert result is True
 
 
 def test_validate__sum_greater_than__ok():
