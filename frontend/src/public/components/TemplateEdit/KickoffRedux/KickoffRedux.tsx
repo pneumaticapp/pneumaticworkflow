@@ -1,13 +1,19 @@
 import React, { useContext, useMemo, useRef, useState } from 'react';
 import { IntlShape, useIntl } from 'react-intl';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { getEmptyField } from './utils/getEmptyField';
 import { KickoffShareForm } from './KickoffShareForm';
 import { isKickoffCleared } from './utils/isKickoffCleared';
 import { KickoffMenu } from './KickoffMenu';
 import { IntlMessages } from '../../IntlMessages';
-import { EExtraFieldType, ITemplateKickoffClient, IExtraField, ETemplateParts, ITemplateClient } from '../../../types/template';
+import {
+  EExtraFieldType,
+  ITemplateKickoffClient,
+  IExtraField,
+  ETemplateParts,
+  ITemplateClient,
+} from '../../../types/template';
 import { IFieldsetCatalogItem } from '../../../types/fieldset';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { ExtraFieldsMap } from '../ExtraFields/utils/ExtraFieldsMap';
@@ -34,6 +40,7 @@ import {
 import { InputWithVariables } from '../InputWithVariables';
 import { useDatasetOptions } from '../ExtraFields/utils/useDatasetOptions';
 import { TemplateFieldContext } from '../useTemplateForm/contexts';
+import { patchTemplate } from '../../../redux/template/actions';
 
 import styles from './KickoffRedux.css';
 
@@ -56,11 +63,17 @@ export function KickoffRedux(props: IKickoffReduxProps): React.ReactElement {
   return <KickoffReduxContent {...props} template={template} />;
 }
 
-function KickoffReduxContent({ template: propsTemplate, intl, accountId: propsAccountId, setKickoff }: IKickoffReduxProps) {
+function KickoffReduxContent({
+  template: propsTemplate,
+  intl,
+  accountId: propsAccountId,
+  setKickoff,
+}: IKickoffReduxProps) {
   const intlContext = useIntl();
   const { formatMessage } = intl ?? intlContext;
   const fieldContext = useContext(TemplateFieldContext);
   const accountIdFromState = useSelector((state: IApplicationState) => state.authUser?.account?.id ?? -1);
+  const dispatch = useDispatch();
   const accountId = propsAccountId ?? accountIdFromState;
   const fieldsetsCatalogLoading = useSelector(getFieldsetsCatalogIsLoading);
   const template = propsTemplate!;
@@ -161,7 +174,11 @@ function KickoffReduxContent({ template: propsTemplate, intl, accountId: propsAc
             showInsertButton
             value={wfNameTemplate || ''}
             onChange={(value: string) => {
-              fieldContext?.setFieldValue('wfNameTemplate', value, false);
+              if (fieldContext) {
+                fieldContext.setFieldValue('wfNameTemplate', value, false);
+              } else {
+                dispatch(patchTemplate({ changedFields: { wfNameTemplate: value } }));
+              }
 
               return Promise.resolve(value);
             }}
