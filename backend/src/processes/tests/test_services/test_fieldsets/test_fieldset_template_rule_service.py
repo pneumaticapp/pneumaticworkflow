@@ -17,7 +17,6 @@ from src.processes.models.templates.fieldset import (
     FieldSetTemplateRuleSet,
 )
 from src.processes.services.exceptions import (
-    FieldsetTemplateRuleSetServiceException,
     FieldsetTemplateRuleSumMaxFieldsNotNumber,
     FieldsetTemplateRuleSumMaxInvalidValue,
 )

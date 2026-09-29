@@ -1347,7 +1347,7 @@ def test_partial_update__type_without_rulesets__raise_exception():
         account=account,
         name='Fieldset',
     )
-    field, ruleset, group_or, group_and = _field_with_rule(
+    field, ruleset, _group_or, group_and = _field_with_rule(
         account=account,
         template=template,
         fieldset=fieldset,

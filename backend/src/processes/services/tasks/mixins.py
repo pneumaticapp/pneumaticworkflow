@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, Dict, List, Optional
 
 from django.contrib.auth import get_user_model
@@ -33,7 +31,7 @@ class RuleSetVersionMixin:
 
     def _update_fieldset_rulesets(
         self,
-        fieldset: FieldSet,
+        fieldset: 'FieldSet',
         version: int,
         rulesets_data: Optional[List[Dict]] = None,
     ):
@@ -59,7 +57,7 @@ class RuleSetVersionMixin:
 
     def _update_field_rulesets(
         self,
-        field: TaskField,
+        field: 'TaskField',
         rulesets_data: Optional[List[Dict]],
         version: int,
     ):

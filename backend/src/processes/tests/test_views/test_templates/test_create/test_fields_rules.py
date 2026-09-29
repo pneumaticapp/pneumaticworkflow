@@ -672,7 +672,7 @@ def test_create_task_field_rules__validator_types_with_selections__ok(
     assert group_and_data['value'] == value
 
 
-def test_create_task_field_rules__show_date_owner_string_source__validation_error(
+def test_create_task_field_rules__show_date_owner_string__validation_error(
     api_client,
 ):
 
