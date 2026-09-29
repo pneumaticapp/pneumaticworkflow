@@ -3,7 +3,6 @@ from datetime import timezone as tz
 from typing import Dict, Optional
 
 from django.contrib.auth import get_user_model
-from django.db.models import Q
 
 from src.notifications.tasks import send_due_date_changed
 from src.processes.enums import (
@@ -331,11 +330,9 @@ class TaskService(
                     if task:
                         start_date = task.date_completed
             elif rule in DueDateRule.FIELD_RULES:
+                # workflow_id alone also reaches fields of a fieldset,
+                # which have neither a task nor a kickoff of their own.
                 field = TaskField.objects.filter(
-                    (
-                        Q(task__workflow_id=self.instance.workflow_id) |
-                        Q(kickoff__workflow_id=self.instance.workflow_id)
-                    ),
                     workflow_id=self.instance.workflow_id,
                     api_name=raw_due_date.source_id,
                     type=FieldType.DATE,
