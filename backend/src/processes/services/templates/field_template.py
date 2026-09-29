@@ -94,7 +94,7 @@ class FieldTemplateService(BaseModelService):
             group_or__ruleset__template=self.instance.template,
         ).filter(
             Q(field=api_name)
-            | Q(field__isnull=True, group_or__ruleset__field=self.instance)
+            | Q(field__isnull=True, group_or__ruleset__field=self.instance),
         ).select_related('group_or__ruleset'):
             FieldTemplateRuleSetService(
                 user=self.user,

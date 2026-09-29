@@ -402,7 +402,7 @@ def test__validate__operator_not_allowed__raise_exception(
 
     # assert
     assert ex.value.message == pt_messages.MSG_PT_0078(
-        field=field,
+        field=field.name,
         operator=operator,
         field_type=field_type,
     )

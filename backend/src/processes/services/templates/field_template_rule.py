@@ -76,20 +76,23 @@ class FieldTemplateRuleSetService(BaseModelService):
         self,
         group_and: FieldTemplateRuleGroupAnd,
     ):
+
+        """ Called again on every save, so a condition whose source
+            field appears later in the same request is left alone. """
+
         field = self._get_source_field(group_and=group_and)
         if field is None:
-            # Source field is created later in the same request; the
-            # operator is re-checked when the rule is saved again.
             return
         allowed_operators = FieldRuleOperator.ALLOWED_OPERATORS[field.type]
-        if group_and.operator not in allowed_operators:
-            raise FieldTemplateRuleSetServiceException(
-                message=MSG_PT_0078(
-                    field=field,
-                    operator=group_and.operator,
-                    field_type=field.type,
-                ),
-            )
+        if group_and.operator in allowed_operators:
+            return
+        raise FieldTemplateRuleSetServiceException(
+            message=MSG_PT_0078(
+                field=field.name,
+                operator=group_and.operator,
+                field_type=field.type,
+            ),
+        )
 
     def _create_group_and(
         self,
