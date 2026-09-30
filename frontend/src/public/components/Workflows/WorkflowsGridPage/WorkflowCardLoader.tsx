@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
 import classnames from 'classnames';
@@ -12,7 +11,6 @@ export interface IWorkflowCardLoaderProps {
 }
 
 export function WorkflowCardLoader({ className }: IWorkflowCardLoaderProps) {
-
   return (
     <>
       <div className={styles['card-wrapper']}>

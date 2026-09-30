@@ -1,11 +1,11 @@
 /* stylelint-disable declaration-no-important */
 .buttons-wrapper {
-  margin: 0 8px 0 0;
   display: flex;
+  margin: 0 8px 0 0;
 
   @media (--mobile) {
-    margin: 0 0 8px;
     width: 100%;
+    margin: 0 0 8px;
 
     > * {
       flex-grow: 1;
@@ -15,13 +15,13 @@
 
 .navbar-left__content {
   display: flex;
-  justify-content: space-between;
   gap: 8px;
+  justify-content: space-between;
 
   @media (--mobile) {
-    width: 100%;
-    justify-content: center;
     flex-flow: column nowrap;
+    justify-content: center;
+    width: 100%;
   }
 }
 

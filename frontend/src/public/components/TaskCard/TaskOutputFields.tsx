@@ -22,7 +22,10 @@ export function TaskOutputFields({
 }: ITaskOutputFieldsProps) {
   const visibleOutputs = outputValues.filter((field) => !field.isHidden);
 
-  if ((!isArrayWithItems(visibleOutputs) && !isArrayWithItems(fieldsetOutputValues)) || status === ETaskStatus.Completed) {
+  if (
+    (!isArrayWithItems(visibleOutputs) && !isArrayWithItems(fieldsetOutputValues)) ||
+    status === ETaskStatus.Completed
+  ) {
     return null;
   }
 

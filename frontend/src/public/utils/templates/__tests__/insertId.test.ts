@@ -11,20 +11,12 @@ describe('insertId', () => {
         {
           apiName: 'a',
           e: 1,
-          f: [
-            { apiName: 'aa' },
-            { apiName: 'ab' },
-            { apiName: 'ac' },
-          ],
+          f: [{ apiName: 'aa' }, { apiName: 'ab' }, { apiName: 'ac' }],
         },
         {
           apiName: 'b',
           e: 2,
-          f: [
-            { predicateApiName: 'ba' },
-            { predicateApiName: 'bb' },
-            { predicateApiName: 'bc' },
-          ],
+          f: [{ predicateApiName: 'ba' }, { predicateApiName: 'bb' }, { predicateApiName: 'bc' }],
         },
       ],
       d: {
@@ -69,11 +61,7 @@ describe('insertId', () => {
 
   it('test 2', () => {
     const mockInit = {
-      arr: [
-        { apiName: 'a' },
-        { apiName: 'b' },
-        { apiName: 'c' },
-      ],
+      arr: [{ apiName: 'a' }, { apiName: 'b' }, { apiName: 'c' }],
     };
 
     const mockSaved = {
@@ -84,11 +72,7 @@ describe('insertId', () => {
     };
 
     expect(insertId(mockInit, mockSaved)).toStrictEqual({
-      arr: [
-        { apiName: 'a' },
-        { id: 1, apiName: 'b' },
-        { apiName: 'c' },
-      ],
+      arr: [{ apiName: 'a' }, { id: 1, apiName: 'b' }, { apiName: 'c' }],
     });
   });
 });

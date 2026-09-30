@@ -2,9 +2,9 @@
 /* stylelint-disable declaration-no-important */
 .container {
   position: relative;
-  margin: 0;
   display: block;
   width: 100%;
+  margin: 0;
 }
 
 .container_disabled {
@@ -18,9 +18,9 @@
 
 .title {
   position: absolute;
-  z-index: 0;
   top: 0;
   left: 12px;
+  z-index: 0;
   padding: 0 4px;
   font-size: 13px;
   line-height: 16px;
@@ -36,11 +36,11 @@
     font-size: 15px !important;
     line-height: 20px !important;
     color: var(--pneumatic-color-black100) !important;
+    outline: none !important;
     background: var(--pneumatic-color-beige) !important;
-    background-color: trasnparent;
+    background-color: transparent;
     border: 1px solid var(--pneumatic-color-black16) !important;
     border-radius: 8px !important;
-    outline: none !important;
     transition: 0.1s ease-in-out border-color !important;
 
     &:focus {
@@ -61,24 +61,24 @@
 
 .container_lg {
   :global .react-datepicker-wrapper input {
-    padding: 0 16px !important;
     height: 48px;
+    padding: 0 16px !important;
     border-radius: 8px;
   }
 }
 
 .container_md {
   :global .react-datepicker-wrapper input {
-    padding: 0 16px !important;
     height: 40px;
+    padding: 0 16px !important;
     border-radius: 8px;
   }
 }
 
 .container_sm {
   :global .react-datepicker-wrapper input {
-    padding: 0 16px !important;
     height: 32px;
+    padding: 0 16px !important;
     border-radius: 16px;
   }
 }
@@ -99,23 +99,23 @@
   right: 0;
   bottom: 0;
   display: flex;
-  width: 50px;
-  pointer-events: none;
-  color: var(--pneumatic-color-black16);
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  width: 50px;
+  color: var(--pneumatic-color-black16);
+  pointer-events: none;
 }
 
 .clear-button {
   all: unset;
   display: flex;
-  cursor: pointer;
-  pointer-events: all;
-  color: var(--pneumatic-color-black32);
-  border-radius: 50%;
-  transition: color 0.1s ease-in-out;
   align-items: center;
   justify-content: center;
+  color: var(--pneumatic-color-black32);
+  pointer-events: all;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: color 0.1s ease-in-out;
 }
 
 .clear-button:hover {

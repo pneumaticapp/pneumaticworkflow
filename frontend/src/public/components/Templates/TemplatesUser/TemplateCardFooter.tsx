@@ -8,20 +8,12 @@ import { PlayLogoIcon, WarningIcon } from '../../icons';
 import { Button, Tooltip } from '../../UI';
 import { TemplateIntegrationsIndicator, useTemplateIntegrationsList } from '../../TemplateIntegrationsStats';
 
-import {
-  hasTemplateCardIntegrations,
-  TEMPLATE_CARD_INTEGRATIONS_EXCLUDE,
-} from '../utils/templateIntegrations';
+import { hasTemplateCardIntegrations, TEMPLATE_CARD_INTEGRATIONS_EXCLUDE } from '../utils/templateIntegrations';
 
 import styles from '../Templates.css';
 import { ITemplateCardFooterProps } from './types';
 
-export function TemplateCardFooter({
-  templateId,
-  tasksCount,
-  isActive,
-  onRunWorkflow,
-}: ITemplateCardFooterProps) {
+export function TemplateCardFooter({ templateId, tasksCount, isActive, onRunWorkflow }: ITemplateCardFooterProps) {
   const { formatMessage } = useIntl();
   const templateIntegrations = useTemplateIntegrationsList(templateId);
   const hasIntegrations = hasTemplateCardIntegrations(templateIntegrations);
@@ -32,13 +24,13 @@ export function TemplateCardFooter({
     return (
       <Button
         icon={PlayLogoIcon}
-        size='md'
+        size="md"
         onClick={onRunWorkflow}
         buttonStyle="yellow"
         aria-label={formatMessage({ id: 'templates.run-workflow-hint' })}
       />
     );
-  }
+  };
 
   const renderDraftLabel = () => {
     if (isActive) {
@@ -72,9 +64,7 @@ export function TemplateCardFooter({
     return (
       <div className={styles['card-stats']}>
         <div>
-          <span className={styles['card-stats__amount']}>
-            {tasksCount}
-          </span>
+          <span className={styles['card-stats__amount']}>{tasksCount}</span>
           &nbsp;
           <span>
             {getPluralNoun({
@@ -86,7 +76,7 @@ export function TemplateCardFooter({
         </div>
       </div>
     );
-  }
+  };
 
   return (
     <div className={styles['card__footer']}>
@@ -95,24 +85,22 @@ export function TemplateCardFooter({
           <TemplateIntegrationsIndicator
             templateId={templateId}
             exlcude={TEMPLATE_CARD_INTEGRATIONS_EXCLUDE}
-            integratedIndicator={(
+            integratedIndicator={
               <div className={classnames(styles['card-integration'], styles['card-integration_integrated'])}>
                 {formatMessage({ id: 'templates.template-integrated' })}
               </div>
-            )}
-            disconnectedIndicator={(
+            }
+            disconnectedIndicator={
               <div className={classnames(styles['card-integration'], styles['card-integration_not-integrated'])}>
                 {formatMessage({ id: 'templates.template-not-integrated' })}
               </div>
-            )}
+            }
           />
         )}
 
         {renderCardStats()}
       </div>
-      <div className={styles['card-footer__right']}>
-        {isActive ? renderRunWorkflowButton() : renderDraftLabel()}
-      </div>
+      <div className={styles['card-footer__right']}>{isActive ? renderRunWorkflowButton() : renderDraftLabel()}</div>
     </div>
   );
 }

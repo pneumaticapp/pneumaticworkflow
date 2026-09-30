@@ -30,7 +30,7 @@ import accounts from './accounts/slice';
 import tasks from './tasks/slice';
 import datasets from './datasets/slice';
 import fieldsets from './fieldsets/slice';
-
+import permissions from './permissions/slice';
 
 export const reducers = combineReducers({
   general,
@@ -57,10 +57,10 @@ export const reducers = combineReducers({
   tenants,
   datasets,
   fieldsets,
+  permissions,
   pages,
 });
 
-// eslint-disable-next-line @typescript-eslint/default-param-last
 export const rootReducer: RootStateOrAny = (state: IApplicationState = initialState, action: any) => {
   if (action.type === EAuthActions.LogoutUserSuccess) {
     return reducers(initialState, action);

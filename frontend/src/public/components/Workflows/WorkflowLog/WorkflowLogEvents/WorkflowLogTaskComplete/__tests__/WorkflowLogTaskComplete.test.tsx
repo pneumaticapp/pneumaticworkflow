@@ -43,16 +43,18 @@ jest.mock('../../../../../../utils/helpers', () => {
   return { isArrayWithItems: actual.isArrayWithItems };
 });
 
-const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
-  value: 'val',
-  ...overrides,
-});
+const makeField = (overrides: Partial<IExtraField> = {}) =>
+  makeExtraField({
+    value: 'val',
+    ...overrides,
+  });
 
-const makeFieldset = (overrides: Partial<IFieldsetRuntime> = {}) => makeFieldsetRuntime({
-  name: 'Fieldset',
-  fields: [makeField()],
-  ...overrides,
-});
+const makeFieldset = (overrides: Partial<IFieldsetRuntime> = {}) =>
+  makeFieldsetRuntime({
+    name: 'Fieldset',
+    fields: [makeField()],
+    ...overrides,
+  });
 
 const makeTask = (overrides: Partial<IWorkflowLogTask> = {}): IWorkflowLogTask => ({
   id: 1,
@@ -68,9 +70,7 @@ const makeTask = (overrides: Partial<IWorkflowLogTask> = {}): IWorkflowLogTask =
 });
 
 const renderWithIntl = (ui: React.ReactElement) =>
-  render(
-    React.createElement(IntlProvider, { locale: 'en', messages: enMessages }, ui),
-  );
+  render(React.createElement(IntlProvider, { locale: 'en', messages: enMessages }, ui));
 
 describe('WorkflowLogTaskComplete', () => {
   beforeEach(() => {
@@ -150,12 +150,10 @@ describe('WorkflowLogTaskComplete', () => {
       const koMock = KickoffOutputs as unknown as jest.Mock;
       expect(koMock).toHaveBeenCalledTimes(1);
       const lastCallProps = koMock.mock.calls[koMock.mock.calls.length - 1][0];
-      expect(lastCallProps.outputs).toEqual(expect.arrayContaining([
-        expect.objectContaining({ apiName: 'out-1' }),
-      ]));
-      expect(lastCallProps.fieldsets).toEqual(expect.arrayContaining([
-        expect.objectContaining({ apiNameBinding: 'fs-data' }),
-      ]));
+      expect(lastCallProps.outputs).toEqual(expect.arrayContaining([expect.objectContaining({ apiName: 'out-1' })]));
+      expect(lastCallProps.fieldsets).toEqual(
+        expect.arrayContaining([expect.objectContaining({ apiNameBinding: 'fs-data' })]),
+      );
       expect(lastCallProps.viewMode).toBe('Short');
     });
   });

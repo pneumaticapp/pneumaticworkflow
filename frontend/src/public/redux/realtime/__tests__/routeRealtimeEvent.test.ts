@@ -24,10 +24,7 @@ jest.mock('../../../components/UI/Notifications', () => ({
   },
 }));
 
-const createDeletedEnvelope = (
-  id: number,
-  status: ETaskStatus,
-): IRealtimeWsEnvelope =>
+const createDeletedEnvelope = (id: number, status: ETaskStatus): IRealtimeWsEnvelope =>
   ({
     id: String(id),
     dateCreatedTsp: 0,
@@ -59,9 +56,9 @@ describe('routeRealtimeEvent — task_deleted list updates', () => {
     const gen = routeRealtimeEvent(createDeletedEnvelope(43, ETaskStatus.Completed));
 
     expect(gen.next().value).toEqual(select(getTasksSettings));
-    expect(
-      gen.next({ completionStatus: ETaskListCompletionStatus.Completed } as never).value,
-    ).toEqual(call(handleRemoveTask, 43, false));
+    expect(gen.next({ completionStatus: ETaskListCompletionStatus.Completed } as never).value).toEqual(
+      call(handleRemoveTask, 43, false),
+    );
     expect(gen.next().done).toBe(true);
   });
 
@@ -69,18 +66,16 @@ describe('routeRealtimeEvent — task_deleted list updates', () => {
     const gen = routeRealtimeEvent(createDeletedEnvelope(43, ETaskStatus.Completed));
 
     expect(gen.next().value).toEqual(select(getTasksSettings));
-    expect(
-      gen.next({ completionStatus: ETaskListCompletionStatus.Active } as never).done,
-    ).toBe(true);
+    expect(gen.next({ completionStatus: ETaskListCompletionStatus.Active } as never).done).toBe(true);
   });
 
   it('TASK_DELETED with snoozed status removes on Completed tab without decrement', () => {
     const gen = routeRealtimeEvent(createDeletedEnvelope(44, ETaskStatus.Snoozed));
 
     expect(gen.next().value).toEqual(select(getTasksSettings));
-    expect(
-      gen.next({ completionStatus: ETaskListCompletionStatus.Completed } as never).value,
-    ).toEqual(call(handleRemoveTask, 44, false));
+    expect(gen.next({ completionStatus: ETaskListCompletionStatus.Completed } as never).value).toEqual(
+      call(handleRemoveTask, 44, false),
+    );
     expect(gen.next().done).toBe(true);
   });
 
@@ -88,9 +83,7 @@ describe('routeRealtimeEvent — task_deleted list updates', () => {
     const gen = routeRealtimeEvent(createDeletedEnvelope(44, ETaskStatus.Snoozed));
 
     expect(gen.next().value).toEqual(select(getTasksSettings));
-    expect(
-      gen.next({ completionStatus: ETaskListCompletionStatus.Active } as never).done,
-    ).toBe(true);
+    expect(gen.next({ completionStatus: ETaskListCompletionStatus.Active } as never).done).toBe(true);
   });
 
   it('TASK_COMPLETED always removes and decrements', () => {

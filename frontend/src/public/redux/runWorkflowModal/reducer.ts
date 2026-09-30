@@ -20,6 +20,7 @@ export const reducer = (state = INIT_STATE, action: TRunWorkflowModalActions): I
     case ERunWorkflowModalActions.RunWorkflowFailed:
       return { ...state, isWorkflowStarting: false };
 
-    default: return { ...state };
+    default:
+      return { ...state };
   }
 };

@@ -1,15 +1,15 @@
 .comment-field {
   position: relative;
   display: flex;
-  width: 100%;
   flex-flow: row nowrap;
   align-items: center;
+  width: 100%;
 }
 
 .comment-field__workarea {
   display: flex;
-  flex-direction: column;
   flex-grow: 1;
+  flex-direction: column;
 
   @media (--mobile) {
     max-width: 100%;
@@ -17,9 +17,9 @@
 }
 
 .comment-field__avatar-container {
-  margin-right: 1.6rem;
-  align-self: flex-start;
   flex-shrink: 0;
+  align-self: flex-start;
+  margin-right: 1.6rem;
 
   @media (--mobile) {
     display: none;
@@ -29,8 +29,8 @@
 .comment-field__avatar {
   width: 4rem;
   height: 4rem;
-  border-radius: 50%;
   object-fit: cover;
+  border-radius: 50%;
 
   @media (--mobile) {
     width: 3.2rem;
@@ -39,16 +39,16 @@
 }
 
 .comment-field__icon {
-  margin-top: 1rem;
   align-self: flex-start;
+  margin-top: 1rem;
   cursor: pointer;
-  transition: 0.1s ease-in-out fill;
   transform: scale(0.67);
+  transition: 0.1s ease-in-out fill;
 }
 
 .comment-field__icon_disabled {
-  cursor: none;
   pointer-events: none;
+  cursor: none;
   fill: var(--pneumatic-color-black72);
 }
 

@@ -1,7 +1,4 @@
-import {
-  prepareChecklistsForAPI,
-  extractChecklistsFromMarkdown,
-} from '../prepareChecklistsForAPI';
+import { prepareChecklistsForAPI, extractChecklistsFromMarkdown } from '../prepareChecklistsForAPI';
 
 /**
  * Tests for prepareChecklistsForAPI and extractChecklistsFromMarkdown.
@@ -33,10 +30,7 @@ describe('prepareChecklistsForAPI', () => {
     });
 
     it('extracts multiple items from same list', () => {
-      const markdown = [
-        '[clist:list-a|item-1]First[/clist]',
-        '[clist:list-a|item-2]Second[/clist]',
-      ].join('\n');
+      const markdown = ['[clist:list-a|item-1]First[/clist]', '[clist:list-a|item-2]Second[/clist]'].join('\n');
       expect(extractChecklistsFromMarkdown(markdown)).toEqual([
         { listApiName: 'list-a', itemApiName: 'item-1', value: 'First' },
         { listApiName: 'list-a', itemApiName: 'item-2', value: 'Second' },
@@ -44,10 +38,7 @@ describe('prepareChecklistsForAPI', () => {
     });
 
     it('extracts items from different lists', () => {
-      const markdown = [
-        '[clist:list-1|sel-1]A[/clist]',
-        '[clist:list-2|sel-1]B[/clist]',
-      ].join('\n');
+      const markdown = ['[clist:list-1|sel-1]A[/clist]', '[clist:list-2|sel-1]B[/clist]'].join('\n');
       expect(extractChecklistsFromMarkdown(markdown)).toEqual([
         { listApiName: 'list-1', itemApiName: 'sel-1', value: 'A' },
         { listApiName: 'list-2', itemApiName: 'sel-1', value: 'B' },
@@ -80,10 +71,7 @@ describe('prepareChecklistsForAPI', () => {
     });
 
     it('groups items with same listApiName into one checklist', () => {
-      const markdown = [
-        '[clist:list-1|item-1]First[/clist]',
-        '[clist:list-1|item-2]Second[/clist]',
-      ].join('\n');
+      const markdown = ['[clist:list-1|item-1]First[/clist]', '[clist:list-1|item-2]Second[/clist]'].join('\n');
       expect(prepareChecklistsForAPI(markdown)).toEqual([
         {
           apiName: 'list-1',

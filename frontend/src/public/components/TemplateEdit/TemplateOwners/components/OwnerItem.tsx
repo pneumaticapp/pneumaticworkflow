@@ -27,9 +27,7 @@ const OwnerItem: FC<IOwnerItem> = ({ user, name, removeOwner }) => {
         </span>
         {user.type === ETemplateOwnerType.User && (
           <span className={styles['user-role']}>
-            {user.isAdmin
-              ? formatMessage({ id: 'template.user-admin' })
-              : formatMessage({ id: 'template.user-role' })}
+            {user.isAdmin ? formatMessage({ id: 'template.user-admin' }) : formatMessage({ id: 'template.user-role' })}
           </span>
         )}
       </div>

@@ -41,7 +41,7 @@ export function getHighlights({ limit = 12, offset = 0, filters = DEFAULT_FILTER
   const query = getHighlightsQueryString({ limit, offset, filters });
   const url = `${baseUrl}?${query}`;
 
-  return commonRequest<IGetHighlightsResponse>(url);
+  return commonRequest<IGetHighlightsResponse>(url, {}, { shouldThrow: true });
 }
 
 export function getHighlightsQueryString({ limit, offset, filters }: IGetHighlightsConfig) {

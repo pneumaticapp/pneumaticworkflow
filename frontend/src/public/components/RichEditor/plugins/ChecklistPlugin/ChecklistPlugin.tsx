@@ -22,19 +22,11 @@ export function ChecklistPlugin(): null {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
-    return editor.registerCommand(
-      KEY_ENTER_COMMAND,
-      createEnterKeyHandler(editor),
-      COMMAND_PRIORITY_HIGH,
-    );
+    return editor.registerCommand(KEY_ENTER_COMMAND, createEnterKeyHandler(editor), COMMAND_PRIORITY_HIGH);
   }, [editor]);
 
   useEffect(() => {
-    return editor.registerCommand(
-      INSERT_CHECKLIST_COMMAND,
-      createInsertChecklistHandler(editor),
-      COMMAND_PRIORITY_LOW,
-    );
+    return editor.registerCommand(INSERT_CHECKLIST_COMMAND, createInsertChecklistHandler(editor), COMMAND_PRIORITY_LOW);
   }, [editor]);
 
   useEffect(() => {
@@ -46,19 +38,11 @@ export function ChecklistPlugin(): null {
   }, [editor]);
 
   useEffect(() => {
-    return editor.registerCommand(
-      KEY_BACKSPACE_COMMAND,
-      createBackspaceHandler(editor),
-      COMMAND_PRIORITY_HIGH,
-    );
+    return editor.registerCommand(KEY_BACKSPACE_COMMAND, createBackspaceHandler(editor), COMMAND_PRIORITY_HIGH);
   }, [editor]);
 
   useEffect(() => {
-    return editor.registerCommand(
-      KEY_DELETE_COMMAND,
-      createDeleteHandler(editor),
-      COMMAND_PRIORITY_HIGH,
-    );
+    return editor.registerCommand(KEY_DELETE_COMMAND, createDeleteHandler(editor), COMMAND_PRIORITY_HIGH);
   }, [editor]);
 
   useEffect(() => {

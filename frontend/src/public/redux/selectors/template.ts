@@ -7,11 +7,8 @@ export const getTemplateData = (state: IApplicationState): ITemplateClient => {
 
 export const getTemplateStatus = (state: IApplicationState) => state.template.status;
 
-export const getKickoff = (state: IApplicationState): ITemplateKickoffClient =>
-  state.template.data.kickoff;
+export const getKickoff = (state: IApplicationState): ITemplateKickoffClient => state.template.data.kickoff;
 
-export const getKickoffFields = (state: IApplicationState): IExtraField[] =>
-  state.template.data.kickoff.fields;
+export const getKickoffFields = (state: IApplicationState): IExtraField[] => state.template.data.kickoff.fields;
 
-export const getTemplateTasks = (state: IApplicationState): ITemplateTaskClient[] =>
-  state.template.data.tasks;
+export const getTemplateTasks = (state: IApplicationState): ITemplateTaskClient[] => state.template.data.tasks;

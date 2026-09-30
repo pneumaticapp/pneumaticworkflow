@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import React, { SVGAttributes } from 'react';
 
 export function CircleWithArrowRightIcon({ fill = 'currentColor', ...rest }: SVGAttributes<SVGElement>) {

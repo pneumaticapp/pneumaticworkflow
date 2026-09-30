@@ -2,9 +2,9 @@
 /* stylelint-disable selector-max-specificity */
 
 .checkbox {
-  margin: 0;
-  padding: 0;
   display: flex;
+  padding: 0;
+  margin: 0;
   cursor: pointer;
 
   &__input {
@@ -14,12 +14,12 @@
   &__box {
     position: relative;
     box-sizing: border-box;
+    flex-shrink: 0;
     width: 2rem;
     height: 2rem;
     background-color: transparent;
     border: 0.1rem solid var(--pneumatic-color-black16);
     border-radius: 0.4rem;
-    flex-shrink: 0;
     transition: all 0.1s ease;
 
     &--has-margin {
@@ -37,8 +37,7 @@
     &::before {
       width: 2rem;
       height: 2rem;
-      background:
-        url("data:image/svg+xml,%0A%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.81818 10.7166L2.95455 7.79121L2 8.76633L5.81818 12.6668L14 4.30862L13.0455 3.3335L5.81818 10.7166Z' fill='%23262522'/%3E%3C/svg%3E%0A")
+      background: url("data:image/svg+xml,%0A%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.81818 10.7166L2.95455 7.79121L2 8.76633L5.81818 12.6668L14 4.30862L13.0455 3.3335L5.81818 10.7166Z' fill='%23262522'/%3E%3C/svg%3E%0A")
         no-repeat center center / 1.6rem;
     }
 
@@ -60,7 +59,7 @@
   }
 
   &:hover {
-    .checkbox__input:not(:disabled):not(:checked):not(:indeterminate) + .checkbox__box,
+    .checkbox__input:not(:disabled, :checked, :indeterminate) + .checkbox__box,
     .checkbox__input:focus-visible + .checkbox__box {
       border-color: var(--pneumatic-color-black48);
     }

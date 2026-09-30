@@ -52,9 +52,7 @@ describe('RichEditor', () => {
   });
 
   it('applies custom className to root', () => {
-    render(
-      <RichEditor {...defaultProps} className="custom-editor-class" />,
-    );
+    render(<RichEditor {...defaultProps} className="custom-editor-class" />);
     const root = screen.getByTestId('rich-editor-root');
     expect(root).toHaveClass('custom-editor-class');
   });
@@ -105,13 +103,7 @@ describe('RichEditor', () => {
   });
 
   it('accepts withToolbar and withChecklists props', () => {
-    render(
-      <RichEditor
-        {...defaultProps}
-        withToolbar
-        withChecklists
-      />,
-    );
+    render(<RichEditor {...defaultProps} withToolbar withChecklists />);
     expect(screen.getByTestId('rich-editor-root')).toBeInTheDocument();
   });
 

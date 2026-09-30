@@ -7,21 +7,22 @@ export const enum EProfileSettingsActions {
   SetProfileSettingsActiveTab = 'SET_PROFILE_SETTINGS_ACTIVE_TAB',
 }
 
-export type TChangeProfileSettingsActiveTab =
-  ITypedReduxAction<EProfileSettingsActions.ChangeProfileSettingsActiveTab, ESettingsTabs>;
-export const changeProfileSettingsActiveTab: (payload: ESettingsTabs) =>
-TChangeProfileSettingsActiveTab =
-  actionGenerator<EProfileSettingsActions.ChangeProfileSettingsActiveTab, ESettingsTabs>
-  (EProfileSettingsActions.ChangeProfileSettingsActiveTab);
+export type TChangeProfileSettingsActiveTab = ITypedReduxAction<
+  EProfileSettingsActions.ChangeProfileSettingsActiveTab,
+  ESettingsTabs
+>;
+export const changeProfileSettingsActiveTab: (payload: ESettingsTabs) => TChangeProfileSettingsActiveTab =
+  actionGenerator<EProfileSettingsActions.ChangeProfileSettingsActiveTab, ESettingsTabs>(
+    EProfileSettingsActions.ChangeProfileSettingsActiveTab,
+  );
 
-export type TSetProfileSettingsActiveTab =
-  ITypedReduxAction<EProfileSettingsActions.SetProfileSettingsActiveTab, ESettingsTabs>;
-export const setProfileSettingsActiveTab: (payload: ESettingsTabs) =>
-TSetProfileSettingsActiveTab =
-  actionGenerator<EProfileSettingsActions.SetProfileSettingsActiveTab, ESettingsTabs>
-  (EProfileSettingsActions.SetProfileSettingsActiveTab);
+export type TSetProfileSettingsActiveTab = ITypedReduxAction<
+  EProfileSettingsActions.SetProfileSettingsActiveTab,
+  ESettingsTabs
+>;
+export const setProfileSettingsActiveTab: (payload: ESettingsTabs) => TSetProfileSettingsActiveTab = actionGenerator<
+  EProfileSettingsActions.SetProfileSettingsActiveTab,
+  ESettingsTabs
+>(EProfileSettingsActions.SetProfileSettingsActiveTab);
 
-export type TProfileSettingsActions =
-  TChangeProfileSettingsActiveTab
-  | TSetProfileSettingsActiveTab
-;
+export type TProfileSettingsActions = TChangeProfileSettingsActiveTab | TSetProfileSettingsActiveTab;

@@ -12,8 +12,6 @@ import type { TLinkFormMode } from '../types';
 
 import styles from './LinkUrlForm.css';
 
-
-
 const FORM_OFFSET_PX = 8;
 
 export interface ILinkUrlFormProps {
@@ -86,7 +84,7 @@ export function LinkUrlForm({
       setLinkTextError(formatMessage({ id: 'editor.link-name-invalid' }));
       return;
     }
-    
+
     onSubmit(normalized, formMode === 'create-link-from-scratch' ? linkText.trim() : undefined);
     onClose();
   }, [url, linkText, formMode, onSubmit, onClose, formatMessage]);
@@ -106,22 +104,24 @@ export function LinkUrlForm({
     onClose();
   }, [onClose]);
 
-
-
   if (!isVisible) {
     return null;
   }
 
   const formJSX = (
     <OutsideClickHandler onOutsideClick={handleOutsideClick}>
-      <div ref={formRef} className={styles['add-url-form']} style={{
-        position: positionMode,
-        zIndex: 2,
-        transform: 'translateX(-50%)',
-        left: position ? position.left : 0,
-        top: position ? position.top : -9999,
-        visibility: position ? 'visible' : 'hidden',
-      }}>
+      <div
+        ref={formRef}
+        className={styles['add-url-form']}
+        style={{
+          position: positionMode,
+          zIndex: 2,
+          transform: 'translateX(-50%)',
+          left: position ? position.left : 0,
+          top: position ? position.top : -9999,
+          visibility: position ? 'visible' : 'hidden',
+        }}
+      >
         {formMode === 'create-link-from-scratch' && (
           <>
             <InputField
@@ -155,12 +155,7 @@ export function LinkUrlForm({
             errorMessage={urlError}
           />
           <div className={styles['add-url-form__actions']}>
-            <button 
-              type="button" 
-              onClick={onClose} 
-              className={styles['add-url-form__button']} 
-              aria-label="Close"
-            >
+            <button type="button" onClick={onClose} className={styles['add-url-form__button']} aria-label="Close">
               <SquaredCrossButtonIcon />
             </button>
             <button

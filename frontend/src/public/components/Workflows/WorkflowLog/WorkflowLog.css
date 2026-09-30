@@ -4,14 +4,14 @@
   font-size: 2rem;
   font-weight: 800;
   line-height: 2.4rem;
-  text-align: center;
   color: var(--pneumatic-color-black32);
+  text-align: center;
 }
 
 .popup-body__close-button {
+  padding: 0;
   margin-bottom: 3.2rem;
   margin-left: auto;
-  padding: 0;
   background: none;
   border: none;
 }
@@ -30,27 +30,27 @@
 }
 
 .popup-body-controls__inner {
-  margin: -0.8rem 0;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  margin: -0.8rem 0;
 
   @media (--mobile) {
-    align-items: flex-start;
     flex-direction: column;
+    align-items: flex-start;
   }
 }
 
 .popup-body-controls-general {
-  margin-right: 0.8rem;
   display: flex;
   flex-wrap: wrap;
+  margin-right: 0.8rem;
 
   @media (--mobile) {
-    margin: 0;
     flex-direction: column;
     width: 100%;
+    margin: 0;
   }
 }
 
@@ -85,10 +85,10 @@
 }
 
 .switch-container {
-  margin: 0.8rem 0;
   display: flex;
   flex-flow: row;
   align-items: center;
+  margin: 0.8rem 0;
 
   @media (--mobile) {
     width: 100%;
@@ -101,10 +101,10 @@
   font-size: 1.1rem;
   font-weight: 800;
   line-height: 1.5rem;
-  text-align: right;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   color: var(--pneumatic-color-black100);
+  text-align: right;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .switch-container__button {
@@ -131,13 +131,12 @@
 }
 
 .comment-field {
-  margin-bottom: 3.2rem;
   padding: 0;
+  margin-bottom: 3.2rem;
 }
 
 @media print {
   :global(body.workflow-modal-print-mode) .process-log-item {
     break-inside: avoid;
-    page-break-inside: avoid;
   }
 }

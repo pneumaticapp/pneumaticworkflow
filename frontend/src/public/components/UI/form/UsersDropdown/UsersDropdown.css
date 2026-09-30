@@ -10,25 +10,25 @@
 }
 
 .user-option {
-  overflow: hidden;
   width: 100%;
   min-width: 0;
+  overflow: hidden;
 
   &__content {
     display: flex;
-    overflow: hidden;
     align-items: center;
     width: 100%;
     min-width: 0;
+    overflow: hidden;
   }
 
   &__label {
-    margin: 0;
-    overflow: hidden;
     min-width: 0;
     max-width: 24rem;
-    white-space: nowrap;
+    margin: 0;
+    overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
 
     &_invited {
       color: var(--pneumatic-color-link-hover);
@@ -36,15 +36,15 @@
   }
 
   &__avatar {
-    margin-right: 0.8rem;
     flex-shrink: 0;
+    margin-right: 0.8rem;
   }
 
   &__checkbox,
   &__checkbox-label,
   &__checkbox-title {
-    overflow: hidden;
     width: 100%;
     min-width: 0;
+    overflow: hidden;
   }
 }

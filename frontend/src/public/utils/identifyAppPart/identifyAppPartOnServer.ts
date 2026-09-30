@@ -11,12 +11,11 @@ export const identifyAppPartOnServer = (req: Request): EAppPart => {
     {
       // Forms: path-based (domain.com/forms/*), subdomain (form.domain.com/*),
       // or Express-mounted sub-app at /forms
-      check: () => req.baseUrl === FORMS_PATH_PREFIX
-        || isFormPath(req.hostname, req.path, formSubdomain),
+      check: () => req.baseUrl === FORMS_PATH_PREFIX || isFormPath(req.hostname, req.path, formSubdomain),
       appPart: EAppPart.PublicFormApp,
     },
     {
-      check: () => GUEST_URLS.some(url => req.url.includes(url)),
+      check: () => GUEST_URLS.some((url) => req.url.includes(url)),
       appPart: EAppPart.GuestTaskApp,
     },
     {

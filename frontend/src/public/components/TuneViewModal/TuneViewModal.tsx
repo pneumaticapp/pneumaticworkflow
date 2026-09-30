@@ -173,57 +173,59 @@ export function TuneViewModal() {
       </SideModal.Header>
 
       <SideModal.Body className={STYLES.body}>
-        {templateTasks?.map(({ apiName: taskApiname, name: taskName, needSteName, mergedOutputs }: TTransformedTask) => (
-          <div key={taskApiname}>
-            <div
-              className={STYLES.taskBoxTitle}
-              onClick={() => toggleTask(taskApiname)}
-              onKeyDown={(e) => e.key === 'Enter' && toggleTask(taskApiname)}
-              role="button"
-              tabIndex={0}
-            >
-              <div className={STYLES.taskTitle}>
-                <Tooltip
-                  interactive={false}
-                  content={
-                    <TooltipRichContent title={taskName} subtitle={taskName} variables={variables || []} hideTitle />
-                  }
-                >
-                  {needSteName ? (
-                    <div>
-                      <StepName initialStepName={taskName} templateId={templateId} />
-                    </div>
-                  ) : (
-                    <span>{taskName}</span>
-                  )}
-                </Tooltip>
-              </div>
-
-              <div className={`${STYLES.taskArrow} ${openedTasks.has(taskApiname) && STYLES.taskArrowRotated}`}>
-                <ShortArrowIcon />
-              </div>
-            </div>
-
-            <div>
-              {openedTasks.has(taskApiname) && (
-                <div className={mergedOutputs.length > 0 ? STYLES.fieldsContainer : ''}>
-                  {mergedOutputs.map((output) => {
-                    if (output.kind === 'fieldset') {
-                      return (
-                        <div key={output.data.apiNameBinding} className={STYLES.fieldsetGroup}>
-                          <div className={STYLES.fieldsetTitle}>{output.data.title}</div>
-                          {output.data.fields.map(renderFieldCheckbox)}
-                        </div>
-                      );
+        {templateTasks?.map(
+          ({ apiName: taskApiname, name: taskName, needSteName, mergedOutputs }: TTransformedTask) => (
+            <div key={taskApiname}>
+              <div
+                className={STYLES.taskBoxTitle}
+                onClick={() => toggleTask(taskApiname)}
+                onKeyDown={(e) => e.key === 'Enter' && toggleTask(taskApiname)}
+                role="button"
+                tabIndex={0}
+              >
+                <div className={STYLES.taskTitle}>
+                  <Tooltip
+                    interactive={false}
+                    content={
+                      <TooltipRichContent title={taskName} subtitle={taskName} variables={variables || []} hideTitle />
                     }
-
-                    return renderFieldCheckbox(output.field);
-                  })}
+                  >
+                    {needSteName ? (
+                      <div>
+                        <StepName initialStepName={taskName} templateId={templateId} />
+                      </div>
+                    ) : (
+                      <span>{taskName}</span>
+                    )}
+                  </Tooltip>
                 </div>
-              )}
+
+                <div className={`${STYLES.taskArrow} ${openedTasks.has(taskApiname) && STYLES.taskArrowRotated}`}>
+                  <ShortArrowIcon />
+                </div>
+              </div>
+
+              <div>
+                {openedTasks.has(taskApiname) && (
+                  <div className={mergedOutputs.length > 0 ? STYLES.fieldsContainer : ''}>
+                    {mergedOutputs.map((output) => {
+                      if (output.kind === 'fieldset') {
+                        return (
+                          <div key={output.data.apiNameBinding} className={STYLES.fieldsetGroup}>
+                            <div className={STYLES.fieldsetTitle}>{output.data.title}</div>
+                            {output.data.fields.map(renderFieldCheckbox)}
+                          </div>
+                        );
+                      }
+
+                      return renderFieldCheckbox(output.field);
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ),
+        )}
       </SideModal.Body>
 
       <SideModal.Footer className={STYLES.footer}>

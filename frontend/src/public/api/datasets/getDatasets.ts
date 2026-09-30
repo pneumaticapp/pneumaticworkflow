@@ -31,5 +31,7 @@ function getDatasetsQueryString({ ordering, limit, offset }: IGetDatasetsParams)
     backendOrdering && `ordering=${backendOrdering}`,
     limit !== undefined && `limit=${limit}`,
     offset !== undefined && `offset=${offset}`,
-  ].filter(Boolean).join('&');
+  ]
+    .filter(Boolean)
+    .join('&');
 }

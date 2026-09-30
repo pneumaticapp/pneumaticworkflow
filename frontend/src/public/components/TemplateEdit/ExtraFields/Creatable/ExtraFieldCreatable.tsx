@@ -65,16 +65,20 @@ export function ExtraFieldCreatable({
   const selectionValues = field.selections as string[];
 
   const dropdownSelections: IDropdownSelection[] = useMemo(
-    () => (selectionValues || []).map((selectionValue) => ({
-      value: selectionValue,
-      label: selectionValue,
-    } as IDropdownSelection)),
+    () =>
+      (selectionValues || []).map(
+        (selectionValue) =>
+          ({
+            value: selectionValue,
+            label: selectionValue,
+          }) as IDropdownSelection,
+      ),
     [selectionValues],
   );
 
   const [activeOptionIndex, setActiveOptionIndex] = useState<number | null>(null);
-  const [duplicateErrors, setDuplicateErrors] = useState<Record<string, string>>(
-    () => recalculateDuplicateErrors(selectionItems || []),
+  const [duplicateErrors, setDuplicateErrors] = useState<Record<string, string>>(() =>
+    recalculateDuplicateErrors(selectionItems || []),
   );
 
   const handleSelectableChange = (inputValue: IDropdownSelection) => {

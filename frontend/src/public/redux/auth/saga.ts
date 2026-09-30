@@ -243,7 +243,6 @@ export const registerInviteAsync = (id: string, body: TUserInvited) =>
 
 export function* registerWithInvite({ payload }: TRegisterUserInvited) {
   const {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     invitedUser: { id },
   }: ReturnType<typeof getInvitedUser> = yield select(getInvitedUser);
   if (!id) {
@@ -316,8 +315,7 @@ export function* logout(action: TLogoutUser) {
   }
 }
 
-export const updateUserAsync = (body: IUpdateUserRequest) =>
-  editProfile(body);
+export const updateUserAsync = (body: IUpdateUserRequest) => editProfile(body);
 
 export function* editCurrentProfile({ payload }: TEditUser) {
   const { onSuccess, onError, ...body } = payload;
@@ -377,6 +375,11 @@ export function* sendPasswordReset({ payload }: TSendForgotPassword) {
     });
     yield put(sendForgotPasswordSuccess());
   } catch (error) {
+    if (error?.data?.details?.name === 'captcha') {
+      yield put(sendForgotPasswordFail(true));
+      return;
+    }
+
     const message = getErrorMessage(error);
     logger.error(message, error);
     NotificationManager.notifyApiError(error, { message });
@@ -599,9 +602,11 @@ export function* handleVacationActivate({ payload }: TVacationActivate) {
   try {
     const result: IUserResponse = yield call(activateVacation, payload);
     if (result) {
-      yield put(vacationSuccess({
-        vacation: result.vacation || null,
-      }));
+      yield put(
+        vacationSuccess({
+          vacation: result.vacation || null,
+        }),
+      );
       NotificationManager.success({ message: 'user-info.vacation.activated-success' });
     }
   } catch (error) {
@@ -614,9 +619,11 @@ export function* handleVacationDeactivate() {
   try {
     const result: IUserResponse = yield call(deactivateVacation);
     if (result) {
-      yield put(vacationSuccess({
-        vacation: result.vacation || null,
-      }));
+      yield put(
+        vacationSuccess({
+          vacation: result.vacation || null,
+        }),
+      );
       NotificationManager.success({ message: 'user-info.vacation.deactivated-success' });
     }
   } catch (error) {

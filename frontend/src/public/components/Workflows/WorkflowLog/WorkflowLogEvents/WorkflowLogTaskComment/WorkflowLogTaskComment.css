@@ -17,8 +17,8 @@
 
   &__info {
     display: flex;
-    align-items: baseline;
     flex-wrap: wrap;
+    align-items: baseline;
 
     svg {
       display: inline-block;
@@ -63,8 +63,8 @@
     align-items: baseline;
 
     button {
-      padding: 0;
       display: block;
+      padding: 0;
       background-color: transparent;
       border: none;
       transition: color 0.2s;
@@ -83,9 +83,9 @@
   }
 
   &__delete-sure p {
-    margin: 0;
     display: flex;
     align-items: baseline;
+    margin: 0;
     font-size: 1.3rem;
     line-height: 1.6rem;
     color: var(--pneumatic-color-black32);
@@ -113,27 +113,27 @@
   }
 
   &__footer {
-    margin: 0.8rem -0.2rem -0.2rem;
     display: flex;
     flex-wrap: wrap;
+    margin: 0.8rem -0.2rem -0.2rem;
 
     button {
-      margin: 0;
       padding: 0;
+      margin: 0;
       background: transparent;
       border: none;
     }
   }
 
   &__footer-item {
-    margin: 0.2rem;
-    padding: 0.6rem 0.8rem;
     display: flex;
-    justify-content: center;
     flex-wrap: nowrap;
+    justify-content: center;
+    padding: 0.6rem 0.8rem;
+    margin: 0.2rem;
     font-size: 1.3rem;
-    cursor: pointer;
     color: var(--pneumatic-color-black72);
+    cursor: pointer;
     background-color: var(--pneumatic-color-beige);
     border-radius: 1.6rem;
 
@@ -143,8 +143,8 @@
 
     > div {
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
     }
 
     svg,
@@ -159,8 +159,8 @@
     }
 
     &.is-add-emoji {
-      margin: 0;
       padding: 0;
+      margin: 0;
       background-color: transparent;
 
       button {
@@ -175,11 +175,11 @@
   }
 
   &__watch-list {
-    margin: 0;
     padding: 0;
-    list-style: none;
+    margin: 0;
     font-size: 1.3rem;
     line-height: 1.6rem;
     text-align: center;
+    list-style: none;
   }
 }

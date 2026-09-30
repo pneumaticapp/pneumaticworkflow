@@ -11,6 +11,7 @@ from src.accounts.enums import (
     LeaseLevel,
     UserDateFormat,
     UserFirstDayWeek,
+    UserGroupType,
     UserInviteStatus,
     UserStatus,
 )
@@ -683,6 +684,7 @@ def create_test_group(
     name: str = 'Group_test',
     photo: Optional[str] = None,
     users: Optional[List[UserModel]] = None,
+    type_: str = UserGroupType.REGULAR,
 ) -> UserGroup:
 
     """Creating user groups."""
@@ -691,6 +693,7 @@ def create_test_group(
         name=name,
         photo=photo,
         account=account,
+        type=type_,
     )
     if users:
         group.users.set(users)

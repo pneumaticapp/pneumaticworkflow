@@ -4,8 +4,6 @@ import { prepareChecklistsForRendering } from '../../../utils/checklists/prepare
 import { createMarkdownTransformers } from './transformers';
 import type { TTaskVariable } from '../../TemplateEdit/types';
 
-
-
 export function applyMarkdownToEditor(
   editor: LexicalEditor,
   markdown: string,

@@ -41,7 +41,6 @@ describe('KickoffOutputs', () => {
     jest.clearAllMocks();
   });
 
-
   const getAttachmentsProps = () => {
     const mock = Attachments as jest.Mock;
     const lastCall = mock.mock.calls[mock.mock.calls.length - 1];
@@ -54,11 +53,13 @@ describe('KickoffOutputs', () => {
   };
 
   it('does not render the block when there are neither plain fields nor fieldsets', () => {
-    const { container } = render(React.createElement(KickoffOutputs, {
-      viewMode: EKickoffOutputsViewModes.Detailed,
-      outputs: [],
-      fieldsets: [],
-    }));
+    const { container } = render(
+      React.createElement(KickoffOutputs, {
+        viewMode: EKickoffOutputsViewModes.Detailed,
+        outputs: [],
+        fieldsets: [],
+      }),
+    );
 
     expect(container).toBeEmptyDOMElement();
   });
@@ -77,11 +78,13 @@ describe('KickoffOutputs', () => {
       fields: [makeExtraField({ apiName: 'fs-n-1', value: 'nv' })],
     });
 
-    render(React.createElement(KickoffOutputs, {
-      viewMode: EKickoffOutputsViewModes.Short,
-      outputs: [fieldA, fieldB],
-      fieldsets: [fsM, fsN],
-    }));
+    render(
+      React.createElement(KickoffOutputs, {
+        viewMode: EKickoffOutputsViewModes.Short,
+        outputs: [fieldA, fieldB],
+        fieldsets: [fsM, fsN],
+      }),
+    );
 
     const rendered = screen.getAllByTestId(/^text-output-/);
     expect(rendered.map((el) => el.getAttribute('data-testid'))).toEqual([
@@ -105,11 +108,13 @@ describe('KickoffOutputs', () => {
       ],
     });
 
-    render(React.createElement(KickoffOutputs, {
-      viewMode: EKickoffOutputsViewModes.Short,
-      outputs: [],
-      fieldsets: [fieldset],
-    }));
+    render(
+      React.createElement(KickoffOutputs, {
+        viewMode: EKickoffOutputsViewModes.Short,
+        outputs: [],
+        fieldsets: [fieldset],
+      }),
+    );
 
     expect(screen.getByText('User Contacts Title')).toBeInTheDocument();
     expect(screen.queryByText('Tech Catalog Name')).not.toBeInTheDocument();
@@ -135,11 +140,13 @@ describe('KickoffOutputs', () => {
       fields: [fileField],
     });
 
-    render(React.createElement(KickoffOutputs, {
-      viewMode: EKickoffOutputsViewModes.Short,
-      outputs: [],
-      fieldsets: [fieldset],
-    }));
+    render(
+      React.createElement(KickoffOutputs, {
+        viewMode: EKickoffOutputsViewModes.Short,
+        outputs: [],
+        fieldsets: [fieldset],
+      }),
+    );
 
     expect(screen.getByTestId('file-output-doc')).toBeInTheDocument();
   });
@@ -156,12 +163,14 @@ describe('KickoffOutputs', () => {
       ],
     });
 
-    render(React.createElement(KickoffOutputs, {
-      viewMode: EKickoffOutputsViewModes.Short,
-      outputs: [],
-      fieldsets: [fieldset],
-      isTruncated: true,
-    }));
+    render(
+      React.createElement(KickoffOutputs, {
+        viewMode: EKickoffOutputsViewModes.Short,
+        outputs: [],
+        fieldsets: [fieldset],
+        isTruncated: true,
+      }),
+    );
 
     expect(screen.getByText('Profile')).toBeInTheDocument();
     expect(screen.getByTestId('text-output-first')).toBeInTheDocument();
@@ -176,12 +185,14 @@ describe('KickoffOutputs', () => {
     });
 
     expect(() =>
-      render(React.createElement(KickoffOutputs, {
-        viewMode: EKickoffOutputsViewModes.Short,
-        outputs: [],
-        fieldsets: [fieldset],
-        isTruncated: true,
-      })),
+      render(
+        React.createElement(KickoffOutputs, {
+          viewMode: EKickoffOutputsViewModes.Short,
+          outputs: [],
+          fieldsets: [fieldset],
+          isTruncated: true,
+        }),
+      ),
     ).not.toThrow();
 
     expect(screen.queryByTestId(/^text-output-/)).toBeNull();
@@ -213,11 +224,13 @@ describe('KickoffOutputs', () => {
         ],
       });
 
-      render(React.createElement(KickoffOutputs, {
-        ...baseProps,
-        outputs: [stringOutput, fileOutput],
-        fieldsets: [fieldset],
-      }));
+      render(
+        React.createElement(KickoffOutputs, {
+          ...baseProps,
+          outputs: [stringOutput, fileOutput],
+          fieldsets: [fieldset],
+        }),
+      );
 
       expect(Attachments as jest.Mock).toHaveBeenCalledTimes(1);
 
@@ -233,11 +246,13 @@ describe('KickoffOutputs', () => {
         markdownValue: '[report.pdf](https://files.example.com/rpt-1)',
       });
 
-      render(React.createElement(KickoffOutputs, {
-        ...baseProps,
-        outputs: [fileOutput],
-        fieldsets: [],
-      }));
+      render(
+        React.createElement(KickoffOutputs, {
+          ...baseProps,
+          outputs: [fileOutput],
+          fieldsets: [],
+        }),
+      );
 
       expect(Attachments as jest.Mock).toHaveBeenCalledTimes(1);
       expect(getAttachmentsProps()).toEqual([
@@ -261,11 +276,13 @@ describe('KickoffOutputs', () => {
         ],
       });
 
-      render(React.createElement(KickoffOutputs, {
-        ...baseProps,
-        outputs: [],
-        fieldsets: [fieldset],
-      }));
+      render(
+        React.createElement(KickoffOutputs, {
+          ...baseProps,
+          outputs: [],
+          fieldsets: [fieldset],
+        }),
+      );
 
       expect(Attachments as jest.Mock).toHaveBeenCalledTimes(1);
       expect(getAttachmentsProps()).toEqual([
@@ -292,11 +309,13 @@ describe('KickoffOutputs', () => {
         markdownValue: '[stale.pdf](https://files.example.com/stale)',
       });
 
-      render(React.createElement(KickoffOutputs, {
-        ...baseProps,
-        outputs: [fileOutput],
-        fieldsets: [],
-      }));
+      render(
+        React.createElement(KickoffOutputs, {
+          ...baseProps,
+          outputs: [fileOutput],
+          fieldsets: [],
+        }),
+      );
 
       expect(Attachments as jest.Mock).toHaveBeenCalledTimes(1);
       expect(getAttachmentsProps()).toEqual([attachment]);
@@ -327,11 +346,13 @@ describe('KickoffOutputs', () => {
         ],
       });
 
-      render(React.createElement(KickoffOutputs, {
-        ...baseProps,
-        outputs: [fileOutput],
-        fieldsets: [fieldset],
-      }));
+      render(
+        React.createElement(KickoffOutputs, {
+          ...baseProps,
+          outputs: [fileOutput],
+          fieldsets: [fieldset],
+        }),
+      );
 
       expect(Attachments as jest.Mock).toHaveBeenCalledTimes(1);
       expect(getAttachmentsProps()).toEqual([

@@ -1,4 +1,4 @@
-import { TTemplateWithTasksOnly } from "../types/template";
+import { TTemplateWithTasksOnly } from '../types/template';
 
 export const LANDING_TEMPLATE_STORAGE_KEY = 'landing-template';
 

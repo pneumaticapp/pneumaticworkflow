@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { useCallback } from 'react';
 import classnames from 'classnames';
@@ -29,9 +28,9 @@ export function WorkflowLogTaskSkipped({ task, theme }: IWorkflowLogTaskSkippedP
 
     return (
       <div className={styles['performers']}>
-        {task?.performers.slice(0, MAX_SHOW_USERS).map(({sourceId}) => (
+        {task?.performers.slice(0, MAX_SHOW_USERS).map(({ sourceId }) => (
           <UserData key={sourceId} userId={sourceId}>
-            {user => {
+            {(user) => {
               if (!user) {
                 return null;
               }
@@ -48,11 +47,7 @@ export function WorkflowLogTaskSkipped({ task, theme }: IWorkflowLogTaskSkippedP
             }}
           </UserData>
         ))}
-        {Boolean(usersLeft) && (
-          <span className={styles['performers__more']}>
-            +{usersLeft}
-          </span>
-        )}
+        {Boolean(usersLeft) && <span className={styles['performers__more']}>+{usersLeft}</span>}
       </div>
     );
   };
@@ -73,15 +68,11 @@ export function WorkflowLogTaskSkipped({ task, theme }: IWorkflowLogTaskSkippedP
           <Header tag="h3" size="6" className={styles['task-name']}>
             {task?.name}
           </Header>
-          <p className={styles['skipped']}>
-            {formatMessage({ id: 'workflows.log-task-skipped' })}
-          </p>
+          <p className={styles['skipped']}>{formatMessage({ id: 'workflows.log-task-skipped' })}</p>
         </div>
       </div>
 
-      <div className={styles['bottom-area']}>
-        {renderPerformers()}
-      </div>
+      <div className={styles['bottom-area']}>{renderPerformers()}</div>
     </div>
   );
 }

@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
 
@@ -6,12 +5,7 @@ import styles from './FeedItem.css';
 
 import { EWorkflowLogEvent } from '../../types/workflow';
 
-import {
-  UrgentColorIcon,
-  CommentIcon,
-  TaskCompleteIcon,
-  ProcessStartIcon
-} from '../icons';
+import { UrgentColorIcon, CommentIcon, TaskCompleteIcon, ProcessStartIcon } from '../icons';
 
 export const PerformerIcon = ({ type }: { type: EWorkflowLogEvent }) => {
   switch (type) {

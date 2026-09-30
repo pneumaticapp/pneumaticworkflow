@@ -58,9 +58,9 @@ export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDue
 
   const handleChange =
     <T extends TDueDateKeys>(field: T) =>
-      (value: ITemplateTaskClient['rawDueDate'][T]) => {
-        onChange({ ...dueDate, [field]: value });
-      };
+    (value: ITemplateTaskClient['rawDueDate'][T]) => {
+      onChange({ ...dueDate, [field]: value });
+    };
 
   const removeDueDate = () => {
     setIsDueDate(false);

@@ -27,7 +27,12 @@ if (typeof (global as unknown as { DOMRect?: unknown }).DOMRect === 'undefined')
 }
 
 function fakeRect(x: number, y: number, w: number, h: number): DOMRect {
-  return new (global as unknown as { DOMRect: new (x: number, y: number, w: number, h: number) => DOMRect }).DOMRect(x, y, w, h);
+  return new (global as unknown as { DOMRect: new (x: number, y: number, w: number, h: number) => DOMRect }).DOMRect(
+    x,
+    y,
+    w,
+    h,
+  );
 }
 
 function TestWrapper() {
@@ -37,14 +42,22 @@ function TestWrapper() {
     null,
     createElement('span', { 'data-testid': 'is-open' }, String(formState.isOpen)),
     createElement('span', { 'data-testid': 'form-mode' }, formState.formMode),
-    createElement('button', {
-      type: 'button',
-      onClick: () => openLinkForm(fakeRect(10, 10, 100, 20), 'create-link-at-selection', { current: null }),
-    }, 'Open'),
-    createElement('button', {
-      type: 'button',
-      onClick: () => openLinkForm(fakeRect(0, 0, 50, 20), 'create-link-from-scratch', { current: null }),
-    }, 'Open from scratch'),
+    createElement(
+      'button',
+      {
+        type: 'button',
+        onClick: () => openLinkForm(fakeRect(10, 10, 100, 20), 'create-link-at-selection', { current: null }),
+      },
+      'Open',
+    ),
+    createElement(
+      'button',
+      {
+        type: 'button',
+        onClick: () => openLinkForm(fakeRect(0, 0, 50, 20), 'create-link-from-scratch', { current: null }),
+      },
+      'Open from scratch',
+    ),
     createElement('button', { type: 'button', onClick: closeLinkForm }, 'Close'),
   );
 }

@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 export enum ETaskListStatus {
   WaitingForAction = 'waiting-for-action',

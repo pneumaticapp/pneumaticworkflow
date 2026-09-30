@@ -120,13 +120,7 @@ describe('ExtraFieldCheckbox', () => {
   });
 
   it('ProcessRun: renders Checkbox for each string selection', () => {
-    render(
-      <ExtraFieldCheckbox
-        {...baseKickoffProps}
-        field={processRunField}
-        mode={EExtraFieldMode.ProcessRun}
-      />,
-    );
+    render(<ExtraFieldCheckbox {...baseKickoffProps} field={processRunField} mode={EExtraFieldMode.ProcessRun} />);
 
     const mock = Checkbox as jest.Mock;
     expect(mock).toHaveBeenCalledTimes(3);

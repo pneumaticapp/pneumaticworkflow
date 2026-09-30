@@ -3,7 +3,6 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
-
 import { getEmptySelection } from '../../KickoffRedux/utils/getEmptySelection';
 import { validateCheckboxAndRadioField, validateKickoffFieldName } from '../../../../utils/validators';
 import { handleSelectionBlur, recalculateDuplicateErrors } from '../utils/handleSelectionBlur';
@@ -52,8 +51,8 @@ export function ExtraFieldCheckbox({
   }, [selectionItems]);
 
   const [activeOptionIndex, setActiveOptionIndex] = useState<number | null>(null);
-  const [duplicateErrors, setDuplicateErrors] = useState<Record<string, string>>(
-    () => recalculateDuplicateErrors(selectionItems || []),
+  const [duplicateErrors, setDuplicateErrors] = useState<Record<string, string>>(() =>
+    recalculateDuplicateErrors(selectionItems || []),
   );
 
   const fieldNameErrorMessage = validateKickoffFieldName(name) || '';
@@ -73,10 +72,12 @@ export function ExtraFieldCheckbox({
     );
 
     return (
-      <div className={classnames(
-        fieldStyles['kickoff-create-field-container'],
-        labelPosition === EFieldLabelPosition.Left && styles['kick-off-input__field_label-left'],
-      )}>
+      <div
+        className={classnames(
+          fieldStyles['kickoff-create-field-container'],
+          labelPosition === EFieldLabelPosition.Left && styles['kick-off-input__field_label-left'],
+        )}
+      >
         {labelPosition === EFieldLabelPosition.Left ? (
           <FieldLabel
             name={name}
@@ -133,7 +134,9 @@ export function ExtraFieldCheckbox({
           editField={editField}
           isDisabled={isDisabled}
           datasetName={datasetName}
-          {...(labelPosition === EFieldLabelPosition.Left && { className: styles['kick-off-input__options-content_label-left'] })}
+          {...(labelPosition === EFieldLabelPosition.Left && {
+            className: styles['kick-off-input__options-content_label-left'],
+          })}
         >
           {customOptionsList}
           {!isDisabled && addOptionButton}
@@ -249,7 +252,12 @@ export function ExtraFieldCheckbox({
 
     return (
       <li key={selectionValue} className={fieldStyles['kickoff-set-field-option']}>
-        <Checkbox id={selectionValue} title={selectionValue} onChange={handleToggleOption(selectionValue)} checked={isChecked} />
+        <Checkbox
+          id={selectionValue}
+          title={selectionValue}
+          onChange={handleToggleOption(selectionValue)}
+          checked={isChecked}
+        />
       </li>
     );
   };

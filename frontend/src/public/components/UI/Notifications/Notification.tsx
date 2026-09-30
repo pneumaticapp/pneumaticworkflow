@@ -1,7 +1,5 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable react/no-unused-class-component-methods */
-/* eslint-disable react/default-props-match-prop-types */
 import * as React from 'react';
 import classNames from 'classnames';
 import { IntlShape } from 'react-intl';

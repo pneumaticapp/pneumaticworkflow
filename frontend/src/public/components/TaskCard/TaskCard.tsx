@@ -55,13 +55,7 @@ export function TaskCard({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [uploadCounts, setUploadCounts] = useState<Map<string, number>>(() => new Map());
-  const {
-    outputValues,
-    fieldsetOutputValues,
-    editField,
-    editFieldsetField,
-    flushOutputs,
-  } = useTaskOutput(task);
+  const { outputValues, fieldsetOutputValues, editField, editFieldsetField, flushOutputs } = useTaskOutput(task);
   const helpTextLocal = helpText ?? workflow?.description ?? null;
   const isSubmitting = status === ETaskStatus.Completing || status === ETaskStatus.Returning;
   const handleUploadStateChange = useCallback((apiName: string, isUploading: boolean) => {
@@ -146,10 +140,7 @@ export function TaskCard({
             />
           )}
         </div>
-        <div className={classnames(
-          styles['complete-form'],
-          task.isReadOnlyViewer && styles['complete-form_readonly'],
-        )}>
+        <div className={classnames(styles['complete-form'], task.isReadOnlyViewer && styles['complete-form_readonly'])}>
           {helpTextLocal && (
             <button
               type="button"

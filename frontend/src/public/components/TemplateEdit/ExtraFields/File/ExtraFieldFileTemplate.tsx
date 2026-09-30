@@ -43,43 +43,43 @@ export function ExtraFieldFileTemplate({
           handleChangeName={(event) => editField({ name: event.target.value })}
         />
       ) : (
-      <div className={styles['extra-field-file__input--template']}>
-        <textarea
-          ref={fieldNameInputRef}
-          className={classnames(
-            styles['extra-field-file__input-name--template'],
-            fieldNameErrorMessage && styles['extra-field-file__input-name-error--template'],
-          )}
-          onChange={(event) => editField({ name: event.target.value.replace(/[\r\n]+/g, ' ') })}
-          placeholder={namePlaceholder}
-          value={field.name}
-          disabled={isDisabled}
-          rows={1}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              setIsFocused(false);
-              event.currentTarget.blur();
-            }
-          }}
-        />
-        {field.isRequired && <span className={kickoffStyles['kick-off-required-sign']} />}
-        {!isFocused && (
-          <button
-            type="button"
-            aria-label={namePlaceholder}
-            onClick={() => fieldNameInputRef.current?.focus()}
+        <div className={styles['extra-field-file__input--template']}>
+          <textarea
+            ref={fieldNameInputRef}
             className={classnames(
-              kickoffStyles['kick-off-edit-name'],
-              styles['extra-field-file__edit-name-button--template'],
+              styles['extra-field-file__input-name--template'],
+              fieldNameErrorMessage && styles['extra-field-file__input-name-error--template'],
             )}
-          >
-            <PencilSmallIcon />
-          </button>
-        )}
-      </div>
+            onChange={(event) => editField({ name: event.target.value.replace(/[\r\n]+/g, ' ') })}
+            placeholder={namePlaceholder}
+            value={field.name}
+            disabled={isDisabled}
+            rows={1}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                setIsFocused(false);
+                event.currentTarget.blur();
+              }
+            }}
+          />
+          {field.isRequired && <span className={kickoffStyles['kick-off-required-sign']} />}
+          {!isFocused && (
+            <button
+              type="button"
+              aria-label={namePlaceholder}
+              onClick={() => fieldNameInputRef.current?.focus()}
+              className={classnames(
+                kickoffStyles['kick-off-edit-name'],
+                styles['extra-field-file__edit-name-button--template'],
+              )}
+            >
+              <PencilSmallIcon />
+            </button>
+          )}
+        </div>
       )}
       {fieldNameErrorMessage && (
         <p className={styles['extra-field-file__error-message--template']}>

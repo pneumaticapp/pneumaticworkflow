@@ -91,8 +91,10 @@ export type TTaskChecklistsItem = {
   isSelected: boolean;
 };
 
-export interface ITaskAPI
-  extends Omit<ITask, 'checklists' | 'areChecklistsHandling' | 'dateStarted' | 'dateCompleted' | 'subWorkflows' | 'fieldsets'> {
+export interface ITaskAPI extends Omit<
+  ITask,
+  'checklists' | 'areChecklistsHandling' | 'dateStarted' | 'dateCompleted' | 'subWorkflows' | 'fieldsets'
+> {
   checklists: {
     id: number;
     apiName: string;

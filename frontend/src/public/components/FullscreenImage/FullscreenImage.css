@@ -1,25 +1,30 @@
 @keyframes brighten {
-  from { opacity: 0; }
-  to { opacity: 0.72; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 0.72;
+  }
 }
 
 .container {
   position: fixed;
-  z-index: 2000;
   top: 16px;
   right: 79px;
-  left: 79px;
   bottom: 16px;
+  left: 79px;
+  z-index: 2000;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   pointer-events: none;
 
   @media (--mobile) and (orientation: portrait) {
     top: 64px;
     right: 8px;
-    left: 8px;
     bottom: 8px;
+    left: 8px;
   }
 }
 
@@ -30,8 +35,8 @@
 }
 
 .image {
-  margin: 0 auto;
   max-height: 100%;
+  margin: 0 auto;
   pointer-events: all;
 }
 
@@ -41,18 +46,18 @@
 
 .close {
   position: fixed;
-  z-index: 2000;
   top: 16px;
   right: 16px;
+  z-index: 2000;
 }
 
 .backdrop {
   position: fixed;
-  z-index: 1990;
   top: 0;
   right: 0;
-  left: 0;
   bottom: 0;
+  left: 0;
+  z-index: 1990;
   background-color: var(--pneumatic-color-black72);
   opacity: 0.72;
   animation: brighten 150ms ease-out;

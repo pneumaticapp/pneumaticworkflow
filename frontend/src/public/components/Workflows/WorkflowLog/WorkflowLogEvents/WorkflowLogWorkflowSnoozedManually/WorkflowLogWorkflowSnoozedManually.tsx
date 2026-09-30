@@ -16,10 +16,7 @@ export type TWorkflowLogWorkflowSnoozedManuallyProps = Pick<IWorkflowLogItem, 'c
   delay: IWorkflowDelay;
 };
 
-export function WorkflowLogWorkflowSnoozedManually({
-  created,
-  delay,
-}: TWorkflowLogWorkflowSnoozedManuallyProps) {
+export function WorkflowLogWorkflowSnoozedManually({ created, delay }: TWorkflowLogWorkflowSnoozedManuallyProps) {
   const { formatMessage } = useIntl();
   const locale = useSelector(getLanguage);
 

@@ -35,8 +35,7 @@ import { validateProfilePhone } from './validators';
 
 import styles from './Profile.css';
 
-const arraysEqual = (a: number[], b: number[]) =>
-  a.length === b.length && a.every((v, i) => v === b[i]);
+const arraysEqual = (a: number[], b: number[]) => a.length === b.length && a.every((v, i) => v === b[i]);
 
 export interface IProfileProps {
   user: IAuthUser;
@@ -81,19 +80,19 @@ function ProfileManagerSection({
 }: {
   currentUserId: number;
   managerId: number | null;
-  editCurrentUser: (body: IUpdateUserRequest & {
-    onSuccess?: () => void;
-    onError?: () => void;
-  }) => void;
+  editCurrentUser: (
+    body: IUpdateUserRequest & {
+      onSuccess?: () => void;
+      onError?: () => void;
+    },
+  ) => void;
 }) {
   return (
     <fieldset className={styles['fields-group']}>
       <ProfileManager
         currentUserId={currentUserId}
         managerId={managerId}
-        onManagerChange={(newManagerId, callbacks) =>
-          editCurrentUser({ managerId: newManagerId, ...callbacks })
-        }
+        onManagerChange={(newManagerId, callbacks) => editCurrentUser({ managerId: newManagerId, ...callbacks })}
       />
     </fieldset>
   );
@@ -158,7 +157,7 @@ export function Profile({
     dateFdw: String(dateFdw),
     timeformat: timeFmt.trim(),
     dateformat: `${monthFmt},${yearFmt},`,
-    absenceStatus: isUserAbsent(user) ? (user.vacation?.absenceStatus || 'vacation') : 'active',
+    absenceStatus: isUserAbsent(user) ? user.vacation?.absenceStatus || 'vacation' : 'active',
     vacationStartDate: user.vacation?.startDate || null,
     vacationEndDate: user.vacation?.endDate || null,
     substituteUserIds: user.vacation?.substituteUserIds || [],
@@ -173,22 +172,29 @@ export function Profile({
     });
   };
 
-
   const handleSubmit: FormikConfig<TProfileFields>['onSubmit'] = (values) => {
-    const { dateformat, timeformat, absenceStatus, vacationStartDate, vacationEndDate, substituteUserIds, ...userData } = values;
+    const {
+      dateformat,
+      timeformat,
+      absenceStatus,
+      vacationStartDate,
+      vacationEndDate,
+      substituteUserIds,
+      ...userData
+    } = values;
     editCurrentUser({ ...userData, dateFmt: `${dateformat} ${timeformat}` });
 
     const prevIsAbsent = isUserAbsent(user);
     const nextIsAbsent = absenceStatus !== 'active';
-    
+
     // Determine if any vacation fields have changed
-    const prevAbsenceStatus = isUserAbsent(user) ? (user.vacation?.absenceStatus || 'vacation') : 'active';
+    const prevAbsenceStatus = isUserAbsent(user) ? user.vacation?.absenceStatus || 'vacation' : 'active';
     const vacationSettingsChanged =
       absenceStatus !== prevAbsenceStatus ||
       vacationStartDate !== (user.vacation?.startDate || null) ||
       vacationEndDate !== (user.vacation?.endDate || null) ||
       !arraysEqual(substituteUserIds, user.vacation?.substituteUserIds || []);
-      
+
     if (vacationSettingsChanged) {
       if (nextIsAbsent) {
         onVacationActivate({
@@ -222,7 +228,10 @@ export function Profile({
             phone: validateProfilePhone,
           });
 
-          if (values.absenceStatus !== 'active' && (!values.substituteUserIds || values.substituteUserIds.length === 0)) {
+          if (
+            values.absenceStatus !== 'active' &&
+            (!values.substituteUserIds || values.substituteUserIds.length === 0)
+          ) {
             errors.substituteUserIds = formatMessage({ id: 'validation.required' });
           }
 
@@ -288,11 +297,7 @@ export function Profile({
           />
 
           <fieldset className={styles['fields-group']}>
-            <ProfileReports 
-              currentUserId={id} 
-              reportIds={user.reportIds || []} 
-              editCurrentUser={editCurrentUser}
-            />
+            <ProfileReports currentUserId={id} reportIds={user.reportIds || []} editCurrentUser={editCurrentUser} />
           </fieldset>
 
           <ProfileVacationFields availableUsers={availableUsers} />

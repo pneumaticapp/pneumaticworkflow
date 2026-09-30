@@ -15,11 +15,7 @@ jest.mock('../../utils/getConfig', () => ({
 }));
 
 import { commonRequest } from '../commonRequest';
-import {
-  getTemplates,
-  getTemplatesByOwners,
-  getTemplatesQueryString,
-} from '../getTemplates';
+import { getTemplates, getTemplatesByOwners, getTemplatesQueryString } from '../getTemplates';
 
 jest.mock('../commonRequest');
 

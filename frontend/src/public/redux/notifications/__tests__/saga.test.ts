@@ -1,13 +1,5 @@
 import { channel as createChannel } from 'redux-saga';
-import {
-  ActionChannelEffect,
-  ActionPattern,
-  actionChannel,
-  call,
-  put,
-  select,
-  take,
-} from 'redux-saga/effects';
+import { ActionChannelEffect, ActionPattern, actionChannel, call, put, select, take } from 'redux-saga/effects';
 
 import { getNotifications, TGetNotificationsResponse } from '../../../api/getNotifications';
 import { removeNotificationItem as removeNotificationItemApi } from '../../../api/removeNotificationItem';
@@ -22,14 +14,13 @@ import {
 } from '../actions';
 import { handleRemoveNotification, watchRemoveNotification } from '../saga';
 
-const makeNotification = (id: number): TNotificationsListItem => ({
-  id,
-  status: 'read',
-} as TNotificationsListItem);
+const makeNotification = (id: number): TNotificationsListItem =>
+  ({
+    id,
+    status: 'read',
+  }) as TNotificationsListItem;
 
-const makeNotificationsStore = (
-  overrides: Partial<IStoreNotification> = {},
-): IStoreNotification => ({
+const makeNotificationsStore = (overrides: Partial<IStoreNotification> = {}): IStoreNotification => ({
   items: [],
   totalItemsCount: 0,
   unreadItemsCount: 0,
@@ -49,26 +40,44 @@ describe('notifications saga', () => {
     ) as unknown as Generator<unknown, void, IStoreNotification | TGetNotificationsResponse>;
 
     expect(saga.next().value).toEqual(select(getNotificationsStore));
-    expect(saga.next(makeNotificationsStore({
-      items: [notification],
-      totalItemsCount: 2,
-    })).value).toEqual(put(changeNotificationsList({ items: [], count: 1 })));
+    expect(
+      saga.next(
+        makeNotificationsStore({
+          items: [notification],
+          totalItemsCount: 2,
+        }),
+      ).value,
+    ).toEqual(put(changeNotificationsList({ items: [], count: 1 })));
     expect(saga.next().value).toEqual(call(removeNotificationItemApi, { notificationId: notification.id }));
     expect(saga.next().value).toEqual(select(getNotificationsStore));
-    expect(saga.next(makeNotificationsStore({
-      totalItemsCount: 1,
-    })).value).toEqual(call(getNotifications, { offset: 0, limit: 1 }));
-    expect(saga.next({
-      results: [olderNotification],
-      count: 1,
-    }).value).toEqual(select(getNotificationsStore));
-    expect(saga.next(makeNotificationsStore({
-      items: [realtimeNotification],
-      totalItemsCount: 2,
-    })).value).toEqual(put(changeNotificationsList({
-      items: [realtimeNotification, olderNotification],
-      count: 2,
-    })));
+    expect(
+      saga.next(
+        makeNotificationsStore({
+          totalItemsCount: 1,
+        }),
+      ).value,
+    ).toEqual(call(getNotifications, { offset: 0, limit: 1 }));
+    expect(
+      saga.next({
+        results: [olderNotification],
+        count: 1,
+      }).value,
+    ).toEqual(select(getNotificationsStore));
+    expect(
+      saga.next(
+        makeNotificationsStore({
+          items: [realtimeNotification],
+          totalItemsCount: 2,
+        }),
+      ).value,
+    ).toEqual(
+      put(
+        changeNotificationsList({
+          items: [realtimeNotification, olderNotification],
+          count: 2,
+        }),
+      ),
+    );
     expect(saga.next().done).toBe(true);
   });
 

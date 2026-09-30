@@ -5,15 +5,8 @@ import userEvent from '@testing-library/user-event';
 import { useDispatch, useSelector } from 'react-redux';
 import { intlMock } from '../../__stubs__/intlMock';
 import { IntegrationsCommon } from './IntegrationsCommon';
-import {
-  loadApiKeys,
-  createApiKey,
-  deleteApiKey,
-  clearNewlyCreatedKey,
-} from '../../redux/actions';
+import { loadApiKeys, createApiKey, deleteApiKey, clearNewlyCreatedKey } from '../../redux/actions';
 import { copyToClipboard } from '../../utils/helpers';
-
-
 
 jest.mock('../../utils/helpers', () => ({
   copyToClipboard: jest.fn(),
@@ -29,20 +22,12 @@ jest.mock('../UI/Buttons/Button', () => ({
 
 jest.mock('../UI/Fields/InputField', () => ({
   InputField: ({ value, onChange, placeholder, 'data-testid': testId, autoFocus }: any) => (
-    <input
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      data-testid={testId}
-      autoFocus={autoFocus}
-    />
+    <input value={value} onChange={onChange} placeholder={placeholder} data-testid={testId} autoFocus={autoFocus} />
   ),
 }));
 
 jest.mock('../UI/Typeography/Header', () => ({
-  Header: ({ children, className }: any) => (
-    <p className={className}>{children}</p>
-  ),
+  Header: ({ children, className }: any) => <p className={className}>{children}</p>,
 }));
 
 jest.mock('../PageTitle/PageTitle', () => ({
@@ -121,7 +106,7 @@ describe('IntegrationsCommon', () => {
     });
 
     render(<IntegrationsCommon />);
-    
+
     expect(screen.getByTestId('api-keys-list')).toBeInTheDocument();
     expect(screen.getByText('Key 1')).toBeInTheDocument();
     expect(screen.getByText('pn_live_111••••••••')).toBeInTheDocument();
@@ -134,7 +119,7 @@ describe('IntegrationsCommon', () => {
 
   it('handles create api key flow', () => {
     render(<IntegrationsCommon />);
-    
+
     userEvent.click(screen.getByRole('button', { name: TEXT.createBtn }));
     expect(screen.getByTestId('create-key-modal')).toBeInTheDocument();
 
@@ -177,7 +162,7 @@ describe('IntegrationsCommon', () => {
     });
 
     render(<IntegrationsCommon />);
-    
+
     expect(screen.getByTestId('new-key-modal')).toBeInTheDocument();
     expect(screen.getByTestId('raw-key-value')).toHaveTextContent('pn_live_secret_key_abc');
 

@@ -1,18 +1,18 @@
-/* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
 
 export type TMenuCounterType = 'alert' | 'info';
 
-export type TMenuItemId = 'dashboards'
-| 'tasks'
-| 'workflows'
-| 'templates'
-| 'highlights'
-| 'team'
-| 'integrations'
-| 'help-center'
-| 'tenants';
+export type TMenuItemId =
+  | 'dashboards'
+  | 'tasks'
+  | 'workflows'
+  | 'templates'
+  | 'highlights'
+  | 'team'
+  | 'integrations'
+  | 'help-center'
+  | 'tenants';
 
 export interface IMenuItem extends IMenuItemSub {
   counter?: number;

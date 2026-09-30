@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import classNames from 'classnames';
 import { IMenu, ITypedReduxAction } from '../../types/redux';

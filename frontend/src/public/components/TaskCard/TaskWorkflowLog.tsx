@@ -20,7 +20,9 @@ export function TaskWorkflowLog({
   changeTaskWorkflowLogViewSettings,
   toggleTaskSkippedTasksVisibility,
 }: TTaskWorkflowLogProps) {
-  if (isWorkflowLoading) return <WorkflowLogSkeleton />;
+  if (isWorkflowLoading) {
+    return <WorkflowLogSkeleton />;
+  }
 
   return (
     <WorkflowLog
@@ -42,10 +44,12 @@ export function TaskWorkflowLog({
       sendComment={sendTaskWorkflowLogComments}
       changeWorkflowLogViewSettings={changeTaskWorkflowLogViewSettings}
       toggleSkippedTasksVisibility={toggleTaskSkippedTasksVisibility}
-      onUnmount={() => changeTaskWorkflowLog({
-        isOnlyAttachmentsShown: false,
-        sorting: EWorkflowsLogSorting.New,
-      })}
+      onUnmount={() =>
+        changeTaskWorkflowLog({
+          isOnlyAttachmentsShown: false,
+          sorting: EWorkflowsLogSorting.New,
+        })
+      }
       isInTaskCard
       taskId={task.id}
       taskStatus={task.status}

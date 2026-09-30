@@ -1,5 +1,4 @@
-const ATTACHMENT_LINK_SUFFIX_RE =
-  /^\]\((.*?)\s*"(?:attachment_id:(\d*)\s*)?entityType:(image|video|file)[^"]*"\)/;
+const ATTACHMENT_LINK_SUFFIX_RE = /^\]\((.*?)\s*"(?:attachment_id:(\d*)\s*)?entityType:(image|video|file)[^"]*"\)/;
 
 const GENERAL_LINK_SUFFIX_RE =
   /^\]\((.*?)\s*(?:"(?:attachment_id:(\d*))?(?:\s+)?(?:entityType:([^"\s]*))?(?:[^"]*)?")?\s*\)/;
@@ -8,11 +7,7 @@ const MARKDOWN_LINK_PREFIX_RE = /^!?\[/;
 
 type TMarkdownLinkParser = (text: string) => RegExpMatchArray | null;
 
-function toRegExpMatchArray(
-  match: RegExpMatchArray,
-  index: number,
-  input: string,
-): RegExpMatchArray {
+function toRegExpMatchArray(match: RegExpMatchArray, index: number, input: string): RegExpMatchArray {
   const result = [...match] as RegExpMatchArray;
   result.index = index;
   result.input = input;
@@ -20,9 +15,7 @@ function toRegExpMatchArray(
   return result;
 }
 
-function createMarkdownLinkMatcher(
-  matchAt: (text: string) => RegExpMatchArray | null,
-): RegExp {
+function createMarkdownLinkMatcher(matchAt: (text: string) => RegExpMatchArray | null): RegExp {
   const matcher = {
     exec(text: string): RegExpMatchArray | null {
       const match = matchAt(text);
@@ -77,10 +70,7 @@ function buildMarkdownLinkMatch(
   return match;
 }
 
-function parseMarkdownLinkWithSuffix(
-  src: string,
-  suffixRegExp: RegExp,
-): RegExpMatchArray | null {
+function parseMarkdownLinkWithSuffix(src: string, suffixRegExp: RegExp): RegExpMatchArray | null {
   const prefixMatch = MARKDOWN_LINK_PREFIX_RE.exec(src);
 
   if (!prefixMatch) {
@@ -193,7 +183,11 @@ export function unescapeMarkdownLinkText(raw: string): string {
   return raw.replace(/\\(.)/g, (_, char: string) => char);
 }
 
-export function getMarkdownLinkMatchEndIndex(text: string, startIndex: number, parser: TMarkdownLinkParser): number | false {
+export function getMarkdownLinkMatchEndIndex(
+  text: string,
+  startIndex: number,
+  parser: TMarkdownLinkParser,
+): number | false {
   const match = parser(text.slice(startIndex));
 
   if (!match) {

@@ -1,10 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { createSlice, PayloadAction, createAction } from '@reduxjs/toolkit';
 
 import { IDatasetsStore, IDatasetsList } from '../../types/redux';
 import {
-  IDataset, ICreateDatasetParams, IDatasetListItem,
-  IUpdateDatasetParams, EDatasetsSorting, TDatasetItemsSortOrder,
+  IDataset,
+  ICreateDatasetParams,
+  IDatasetListItem,
+  IUpdateDatasetParams,
+  EDatasetsSorting,
+  TDatasetItemsSortOrder,
 } from '../../types/dataset';
 import { TDeleteDatasetPayload } from './types';
 
@@ -27,7 +30,7 @@ export const initialState: IDatasetsStore = {
   isCurrentDatasetLoading: false,
   currentSearchQuery: '',
   currentSortOrder: 'asc',
-  
+
   datasetsMap: {},
 };
 
@@ -96,7 +99,7 @@ const datasetsSlice = createSlice({
     loadCurrentDatasetSuccess: (state, action: PayloadAction<IDataset>) => {
       state.currentDataset = action.payload;
       state.isCurrentDatasetLoading = false;
-      
+
       if (state.datasetsMap[action.payload.id]) {
         state.datasetsMap[action.payload.id] = action.payload;
       }
@@ -120,14 +123,12 @@ const datasetsSlice = createSlice({
     setCurrentDataset: (state, action: PayloadAction<IDataset>) => {
       state.currentDataset = action.payload;
       state.isCurrentDatasetLoading = false;
-      
+
       if (state.datasetsMap[action.payload.id]) {
         state.datasetsMap[action.payload.id] = action.payload;
       }
 
-      const listIndex = state.datasetsList.items.findIndex(
-        (item) => item.id === action.payload.id
-      );
+      const listIndex = state.datasetsList.items.findIndex((item) => item.id === action.payload.id);
       if (listIndex !== -1) {
         state.datasetsList.items[listIndex].name = action.payload.name;
         state.datasetsList.items[listIndex].description = action.payload.description;
@@ -149,7 +150,7 @@ const datasetsSlice = createSlice({
     cloneDatasetAction: (state, _action: PayloadAction<{ id: number }>) => {
       state.isAllDatasetsLoaded = false;
     },
-    
+
     updateDatasetAction: (state, action: PayloadAction<IUpdateDatasetParams>) => {
       state.isAllDatasetsLoaded = false;
       if (state.currentDataset && state.currentDataset.id === action.payload.id) {
@@ -161,7 +162,7 @@ const datasetsSlice = createSlice({
             id: item.id || -(index + 1),
           })) as any;
         }
-        
+
         if (state.datasetsMap[action.payload.id]) {
           state.datasetsMap[action.payload.id] = state.currentDataset as IDataset;
         }

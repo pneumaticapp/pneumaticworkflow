@@ -21,24 +21,16 @@ export function getTaskComments({
   offset = 0,
   limit = DEFAULT_TASK_COMMENTS_LIMIT,
 }: Partial<IGetTaskCommentsConfig>) {
-  const { api: { urls }} = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
   const baseUrl = urls.tasksComments.replace(':id', String(id));
   const query = getTaskCommentsQueryString({ limit, offset });
   const url = `${baseUrl}?${query}`;
 
-  return commonRequest<IGetTaskCommentsResponse>(
-    url,
-    {},
-    { shouldThrow: true },
-  );
+  return commonRequest<IGetTaskCommentsResponse>(url, {}, { shouldThrow: true });
 }
 
-export function getTaskCommentsQueryString({
-  limit,
-  offset,
-}: Pick<IGetTaskCommentsConfig, 'limit' | 'offset'>) {
-  return [
-    `limit=${limit}`,
-    `offset=${offset}`,
-  ].filter(Boolean).join('&');
+export function getTaskCommentsQueryString({ limit, offset }: Pick<IGetTaskCommentsConfig, 'limit' | 'offset'>) {
+  return [`limit=${limit}`, `offset=${offset}`].filter(Boolean).join('&');
 }

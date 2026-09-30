@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
 import { Route, Switch, Redirect } from 'react-router-dom';
@@ -18,10 +17,7 @@ export const IntegrationDetailsView = () => {
     <IntegrationDetailsLayout>
       <React.Suspense fallback={<div className="loading" />}>
         <Switch>
-          <Route
-            path={ERoutes.IntegrationsDetail}
-            component={Integration}
-          />
+          <Route path={ERoutes.IntegrationsDetail} component={Integration} />
           <Redirect to={ERoutes.Error} />
         </Switch>
       </React.Suspense>

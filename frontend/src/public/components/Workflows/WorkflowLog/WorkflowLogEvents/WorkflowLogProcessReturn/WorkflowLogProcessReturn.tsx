@@ -11,8 +11,10 @@ import { RichText } from '../../../../RichText';
 
 import styles from './WorkflowLogProcessReturn.css';
 
-export interface IWorkflowLogProcessReturnProps
-  extends Pick<IWorkflowLogItem, 'created' | 'userId' | 'text' | 'task'> {}
+export interface IWorkflowLogProcessReturnProps extends Pick<
+  IWorkflowLogItem,
+  'created' | 'userId' | 'text' | 'task'
+> {}
 
 export function WorkflowLogProcessReturn({ userId, created, text, task }: IWorkflowLogProcessReturnProps) {
   const { formatMessage } = useIntl();

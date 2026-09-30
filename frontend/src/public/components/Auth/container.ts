@@ -14,7 +14,7 @@ const mapStateToProps = ({ authUser }: IApplicationState): TAuthUserStoreProps =
   return { email };
 };
 
-const mapDispatchToProps: TAuthUserDispatchProps = {logout: logoutUser};
+const mapDispatchToProps: TAuthUserDispatchProps = { logout: logoutUser };
 
 export const AuthContainer = withRouter(
   connect<TAuthUserStoreProps, TAuthUserDispatchProps>(mapStateToProps, mapDispatchToProps)(Auth),

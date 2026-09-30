@@ -1,10 +1,10 @@
 .container {
   position: relative;
   z-index: 1;
-  padding: 32px;
   display: flex;
   flex-direction: column;
   min-height: 132px;
+  padding: 32px;
   opacity: 0.32;
 
   @media (--mobile) {
@@ -13,11 +13,11 @@
 
   &::before {
     position: absolute;
-    z-index: -1;
     top: 0;
     right: 0;
-    left: 0;
     bottom: 0;
+    left: 0;
+    z-index: -1;
     content: '';
     border-radius: 24px;
 
@@ -50,17 +50,17 @@
 }
 
 .bottom-area {
-  margin-top: auto;
   display: flex;
   justify-content: space-between;
+  margin-top: auto;
 }
 
 .pre-title {
   margin: 0;
   font-size: 13px;
   line-height: 16px;
-  white-space: nowrap;
   color: var(--pneumatic-color-black48);
+  white-space: nowrap;
 }
 
 .date-started {
@@ -80,6 +80,6 @@
 }
 
 .task-name {
-  overflow-wrap: break-word;
   min-width: 0;
+  overflow-wrap: break-word;
 }

@@ -11,12 +11,7 @@ interface IRenderAttachmentHtmlOptions {
   hideIcon?: boolean;
 }
 
-export const renderAttachmentHtml = ({
-  url,
-  name,
-  entityType,
-  hideIcon,
-}: IRenderAttachmentHtmlOptions): string => {
+export const renderAttachmentHtml = ({ url, name, entityType, hideIcon }: IRenderAttachmentHtmlOptions): string => {
   const renderMap: Record<ECustomEditorEntities, string> = {
     [ECustomEditorEntities.Link]: `<a href="${url}" target="_blank">${name}</a>`,
     [ECustomEditorEntities.Image]: `<img src=${url} />`,

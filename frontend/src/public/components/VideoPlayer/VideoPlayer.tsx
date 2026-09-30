@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
 
@@ -15,14 +14,9 @@ export interface IVideoPlayerProps {
 }
 
 export class VideoPlayer extends React.Component<IVideoPlayerProps> {
-
   public render() {
     const { url, playerConfig, ...rest } = this.props;
 
-    return (
-      <ReactPlayer url={url} {...rest}
-        config={playerConfig}
-      />
-    );
+    return <ReactPlayer url={url} {...rest} config={playerConfig} />;
   }
 }

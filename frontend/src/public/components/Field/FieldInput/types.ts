@@ -13,10 +13,7 @@ type TInputAttrsOmit =
   | 'className'
   | 'style';
 
-export type TFieldInputRest = Omit<
-  React.InputHTMLAttributes<HTMLInputElement>,
-  TInputAttrsOmit
->;
+export type TFieldInputRest = Omit<React.InputHTMLAttributes<HTMLInputElement>, TInputAttrsOmit>;
 
 /** Rest props safe to spread onto NumericFormat (defaultValue excluded for type compatibility). */
 export type TNumericFormatRest = Omit<TFieldInputRest, 'defaultValue'>;

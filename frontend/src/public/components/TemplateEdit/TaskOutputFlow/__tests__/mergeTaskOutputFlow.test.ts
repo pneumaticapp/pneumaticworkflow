@@ -9,11 +9,9 @@ import {
   normalizeMergedTaskOutputOrders,
 } from '../mergeTaskOutputFlow';
 
-const field = (apiName: string, order: number) =>
-  makeExtraField({ apiName, name: apiName, order });
+const field = (apiName: string, order: number) => makeExtraField({ apiName, name: apiName, order });
 
-const fs = (id: number, order: number) =>
-  makeFieldsetRuntime({ apiNameBinding: `fs-${id}`, name: `FS ${id}`, order });
+const fs = (id: number, order: number) => makeFieldsetRuntime({ apiNameBinding: `fs-${id}`, name: `FS ${id}`, order });
 
 describe('mergeTaskOutputFlow', () => {
   it('buildMergedTaskOutputRows sorts by order descending with stable tie-break', () => {
@@ -24,14 +22,17 @@ describe('mergeTaskOutputFlow', () => {
         makeFieldsetBindingClient({ apiNameBinding: 'fs-20', order: 2 }),
       ],
     );
-    expect(rows.map((row) => (row.kind === 'field' ? row.field.apiName : row.apiNameBinding))).toEqual(['b', 'fs-20', 'fs-10', 'a']);
+    expect(rows.map((row) => (row.kind === 'field' ? row.field.apiName : row.apiNameBinding))).toEqual([
+      'b',
+      'fs-20',
+      'fs-10',
+      'a',
+    ]);
   });
 
   it('normalizeMergedTaskOutputOrders assigns contiguous orders', () => {
     const fields = [field('a', 10), field('b', 5)];
-    const rows = buildMergedTaskOutputRows(fields, [
-      makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 7 }),
-    ]);
+    const rows = buildMergedTaskOutputRows(fields, [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 7 })]);
     const { nextFields, nextFieldsets } = normalizeMergedTaskOutputOrders(rows, fields);
     const byApi = Object.fromEntries(nextFields.map((f) => [f.apiName, f.order]));
     expect(byApi.a).toBe(2);
@@ -40,10 +41,7 @@ describe('mergeTaskOutputFlow', () => {
   });
 
   it('moveMergedRow swaps adjacent items and does not mutate the input', () => {
-    const original = buildMergedTaskOutputRows(
-      [field('a', 4), field('b', 3), field('c', 2), field('d', 1)],
-      [],
-    );
+    const original = buildMergedTaskOutputRows([field('a', 4), field('b', 3), field('c', 2), field('d', 1)], []);
     const apiNamesOf = (rows: ReturnType<typeof buildMergedTaskOutputRows>) =>
       rows.map((row) => (row.kind === 'field' ? row.field.apiName : row.apiNameBinding));
     const snapshotBefore = apiNamesOf(original);
@@ -57,18 +55,14 @@ describe('mergeTaskOutputFlow', () => {
   });
 
   it('buildRuntimeMergedOutputParts interleaves fields and fieldsets', () => {
-    const parts = buildRuntimeMergedOutputParts(
-      [field('x', 1), field('y', 3)],
-      [fs(9, 2)],
-    );
-    expect(parts.map((output) => (output.kind === 'fieldset' ? output.data.apiNameBinding : output.field.apiName))).toEqual(['y', 'fs-9', 'x']);
+    const parts = buildRuntimeMergedOutputParts([field('x', 1), field('y', 3)], [fs(9, 2)]);
+    expect(
+      parts.map((output) => (output.kind === 'fieldset' ? output.data.apiNameBinding : output.field.apiName)),
+    ).toEqual(['y', 'fs-9', 'x']);
   });
 
   it('buildRuntimeMergedOutputParts returns only fields when fieldsets is undefined', () => {
-    const parts = buildRuntimeMergedOutputParts(
-      [field('x', 1), field('y', 3)],
-      undefined,
-    );
+    const parts = buildRuntimeMergedOutputParts([field('x', 1), field('y', 3)], undefined);
     expect(parts.every((p) => p.kind === 'field')).toBe(true);
     expect(parts.map((p) => (p.kind === 'field' ? p.field.apiName : ''))).toEqual(['y', 'x']);
   });

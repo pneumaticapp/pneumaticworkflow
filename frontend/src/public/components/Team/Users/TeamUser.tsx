@@ -22,8 +22,16 @@ export interface ITeamUserProps {
   isSubscribed?: boolean;
   resendInvite(): Promise<void>;
   handleToggleAdmin(user: TUserListItem): () => Promise<void>;
-  handleChangeUserManager(userId: number, managerId: number | null, callbacks?: { onSuccess?: () => void; onError?: () => void }): void;
-  handleChangeUserReports(userId: number, reportIds: number[], callbacks?: { onSuccess?: () => void; onError?: () => void }): void;
+  handleChangeUserManager(
+    userId: number,
+    managerId: number | null,
+    callbacks?: { onSuccess?: () => void; onError?: () => void },
+  ): void;
+  handleChangeUserReports(
+    userId: number,
+    reportIds: number[],
+    callbacks?: { onSuccess?: () => void; onError?: () => void },
+  ): void;
   openModal(): void;
   openVacationModal(): void;
 }

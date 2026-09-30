@@ -10,10 +10,7 @@ import { getTemplateSteps } from '../../../api/getTemplateSteps';
 import { getWorkflow } from '../../../api/getWorkflow';
 import { NotificationManager } from '../../../components/UI/Notifications';
 import { getClonedKickoff } from '../../../components/Workflows/WorkflowsGridPage/WorkflowCard/utils/getClonedKickoff';
-import {
-  getRunnableWorkflow,
-  loadDatasetsMap,
-} from '../../../components/TemplateEdit/utils/getRunnableWorkflow';
+import { getRunnableWorkflow, loadDatasetsMap } from '../../../components/TemplateEdit/utils/getRunnableWorkflow';
 import { ERoutes } from '../../../constants/routes';
 import { IKickoff } from '../../../types/template';
 import { history } from '../../../utils/history';
@@ -91,10 +88,12 @@ describe('workflows saga', () => {
   it('updates the workflow detail URL through router history', () => {
     const replaceHistory = jest.spyOn(history, 'replace').mockImplementation(() => undefined);
     const expectedUrl = ERoutes.WorkflowDetail.replace(':id', '42') + history.location.search;
-    const saga = handleOpenWorkflowLogPopup(openWorkflowLogPopup({
-      workflowId: 42,
-      shouldSetWorkflowDetailUrl: true,
-    }));
+    const saga = handleOpenWorkflowLogPopup(
+      openWorkflowLogPopup({
+        workflowId: 42,
+        shouldSetWorkflowDetailUrl: true,
+      }),
+    );
 
     saga.next();
 
@@ -134,14 +133,11 @@ describe('workflows saga', () => {
       [watchCloneWorkflow, cloneWorkflowAction.type, cloneWorkflowSaga],
       [watchDeleteWorfklow, deleteWorkflowAction.type, deleteWorkflowSaga],
       [watchReturnWorkflowToTask, returnWorkflowToTaskAction.type, returnWorkflowToTaskSaga],
-    ])(
-      'for the function %s, calls takeEvery with parameters %s and %s',
-      (testingFn, action, expectedFn) => {
-        const result = (testingFn as () => Generator)();
+    ])('for the function %s, calls takeEvery with parameters %s and %s', (testingFn, action, expectedFn) => {
+      const result = (testingFn as () => Generator)();
 
-        expect(result.next().value).toEqual(takeEvery(action, expectedFn));
-      },
-    );
+      expect(result.next().value).toEqual(takeEvery(action, expectedFn));
+    });
   });
 });
 
@@ -171,9 +167,7 @@ describe('cloneWorkflowSaga — fieldsets loading on clone', () => {
     status: 'running',
   };
 
-  const mockLoadedFieldsets = [
-    makeFieldsetRuntime({ apiNameBinding: 'fs-1', name: 'Fieldset 1' }),
-  ];
+  const mockLoadedFieldsets = [makeFieldsetRuntime({ apiNameBinding: 'fs-1', name: 'Fieldset 1' })];
 
   const mockDatasetsMap: Record<number, string[]> = {};
 
@@ -205,7 +199,9 @@ describe('cloneWorkflowSaga — fieldsets loading on clone', () => {
 
     await runSaga(
       {
-        dispatch: (a: IDispatchedAction) => { dispatched.push(a); },
+        dispatch: (a: IDispatchedAction) => {
+          dispatched.push(a);
+        },
         getState: () => ({}),
       },
       wrapper,
@@ -235,9 +231,7 @@ describe('fetchFilterSteps — fieldsets variables loading for filters', () => {
   it('calls handleLoadTemplateVariables with templateId', async () => {
     const TEMPLATE_ID = 42;
 
-    (getTemplateSteps as jest.Mock).mockResolvedValue([
-      { apiName: 'step-1', name: 'Step 1' },
-    ]);
+    (getTemplateSteps as jest.Mock).mockResolvedValue([{ apiName: 'step-1', name: 'Step 1' }]);
 
     const dispatched: IDispatchedAction[] = [];
 
@@ -251,7 +245,9 @@ describe('fetchFilterSteps — fieldsets variables loading for filters', () => {
 
     await runSaga(
       {
-        dispatch: (a: IDispatchedAction) => { dispatched.push(a); },
+        dispatch: (a: IDispatchedAction) => {
+          dispatched.push(a);
+        },
         getState: () => ({}),
       },
       wrapper,

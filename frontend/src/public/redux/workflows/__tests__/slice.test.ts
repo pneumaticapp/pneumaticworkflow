@@ -1,7 +1,4 @@
-import workflowsReducer, {
-  clearWorkflow,
-  openWorkflowLogPopup,
-} from '../slice';
+import workflowsReducer, { clearWorkflow, openWorkflowLogPopup } from '../slice';
 
 describe('workflows reducer', () => {
   it('closes the workflow modal when clearing workflow data', () => {

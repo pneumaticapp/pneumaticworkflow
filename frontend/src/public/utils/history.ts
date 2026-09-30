@@ -10,20 +10,17 @@ const getRoutesRegExps = (...routes: ERoutes[]) => {
   const routesRegExp = routes.map(getRegExpFromRoute);
 
   return routesRegExp;
-}
+};
 
 export const checkSomeRouteIsActive = (...routes: ERoutes[]) => {
-  return getRoutesRegExps(...routes).some(route => route.test(history.location.pathname));
+  return getRoutesRegExps(...routes).some((route) => route.test(history.location.pathname));
 };
 
 export const checkSomeRouteMatchesLocation = (location: string, routes: ERoutes[]) => {
-  return getRoutesRegExps(...routes).some(route => route.test(location));
+  return getRoutesRegExps(...routes).some((route) => route.test(location));
 };
 
-export const getRouteParamId = (
-  route: ERoutes,
-  pathname: string = history.location.pathname,
-): number | null => {
+export const getRouteParamId = (route: ERoutes, pathname: string = history.location.pathname): number | null => {
   const match = matchPath(pathname, { path: route, exact: true });
   const id = (match?.params as { id: string })?.id;
 
@@ -41,15 +38,12 @@ export const isAccountSettings = () => history.location.pathname.includes(ERoute
 
 export const getQueryStringParams = (query: string): { [key: string]: string } => {
   return query
-    ? (/^[?#]/.test(query) ? query.slice(1) : query)
-      .split('&')
-      .reduce((params: { [key: string]: string }, param) => {
+    ? (/^[?#]/.test(query) ? query.slice(1) : query).split('&').reduce((params: { [key: string]: string }, param) => {
         const [key, value] = param.split('=');
         params[key] = value ? decodeURIComponent(value.replace(/\+/g, ' ')) : '';
 
         return params;
-      }, {},
-      )
+      }, {})
     : {};
 };
 
@@ -59,9 +53,7 @@ export const getQueryStringByParams = (params: { [key: string]: string }) => {
     return '';
   }
 
-  const stringifiedParams = paramKeys
-    .map(paramName => `${paramName}=${params[paramName]}`)
-    .join('&');
+  const stringifiedParams = paramKeys.map((paramName) => `${paramName}=${params[paramName]}`).join('&');
 
   return `?${stringifiedParams}`;
 };

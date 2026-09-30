@@ -21,8 +21,10 @@ export type TDropdownOptionBase = {
   onClick?: () => void;
 };
 
-export interface IDropdownListProps<TOption extends TDropdownOptionBase>
-  extends Omit<React.ComponentProps<typeof Select>, 'options' | 'onChange'> {
+export interface IDropdownListProps<TOption extends TDropdownOptionBase> extends Omit<
+  React.ComponentProps<typeof Select>,
+  'options' | 'onChange'
+> {
   label?: string;
   options: TOption[];
   title?: string;
@@ -99,7 +101,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
             className={classnames(restProps.errorMessage && styles['has-error'])}
             {...restProps}
           />
-          
+
           {restProps.errorMessage && <p className={styles['error-text']}>{restProps.errorMessage}</p>}
         </div>
       </div>
@@ -218,7 +220,7 @@ const MenuListSM = ({ selectProps, ...props }: any) => {
               })
             }
             // When opening sm dropdown, set the autofocus on the search field
-            // eslint-disable-next-line jsx-a11y/no-autofocus
+
             autoFocus
             onMouseDown={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}

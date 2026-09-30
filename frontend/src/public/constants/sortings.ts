@@ -1,8 +1,4 @@
-import {
-  EWorkflowLogAttachmentsModes,
-  EWorkflowsLogSorting,
-  ETemplatesSorting,
-} from '../types/workflow';
+import { EWorkflowLogAttachmentsModes, EWorkflowsLogSorting, ETemplatesSorting } from '../types/workflow';
 import { ETaskListCompleteSorting, ETaskListSorting } from '../types/tasks';
 import { EGroupsListSorting, EUserListSorting } from '../types/user';
 import { EDatasetsSorting } from '../types/dataset';
@@ -31,4 +27,3 @@ export const fieldsetsOrderingMap: Record<string, string> = {
   [EFieldsetsSorting.DateAsc]: 'date',
   [EFieldsetsSorting.DateDesc]: '-date',
 };
-

@@ -10,10 +10,14 @@ export interface IUpdateAccountRequest {
 
 export interface IUpdateAccountResponse {
   name: string;
+  logoSm: string | null;
+  logoLg: string | null;
 }
 
 export interface IUpdatedAccount {
   name: string;
+  logoSm: string | null;
+  logoLg: string | null;
 }
 
 export function editAccount(settings: IUpdateAccountRequest, leaseLevel: TAccountLeaseLevel) {

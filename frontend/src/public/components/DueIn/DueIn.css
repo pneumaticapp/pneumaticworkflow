@@ -5,9 +5,9 @@
 }
 
 .due-date__inner {
-  margin: 0 -4px;
   display: inline-flex;
   align-items: center;
+  margin: 0 -4px;
   font-size: 13px;
   font-weight: 800;
   line-height: 16px;
@@ -76,8 +76,8 @@
     top: 0;
     right: 16px;
     display: flex;
-    height: 40px;
     align-items: center;
+    height: 40px;
     font-size: 15px;
     color: var(--pneumatic-color-black16);
   }

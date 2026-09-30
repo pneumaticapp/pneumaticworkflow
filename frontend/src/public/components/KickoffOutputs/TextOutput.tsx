@@ -10,7 +10,7 @@ export function TextOutput({ name, value }: IExtraField) {
   const renderValue = () => {
     return (
       <span className={styles['output__text']}>
-        <RichText text={value as string} />
+        <RichText text={value == null ? '' : String(value)} />
       </span>
     );
   };

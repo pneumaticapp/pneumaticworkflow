@@ -24,7 +24,11 @@ export function Fieldsets() {
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
 
-  const { items: fieldsetsList, count, offset } = useSelector(getFieldsetsListSelection) || { items: [], count: 0, offset: 0 };
+  const {
+    items: fieldsetsList,
+    count,
+    offset,
+  } = useSelector(getFieldsetsListSelection) || { items: [], count: 0, offset: 0 };
   const isLoading = useSelector(getFieldsetsIsLoading);
   const fieldsetsSorting = useSelector(getFieldsetsSorting);
 

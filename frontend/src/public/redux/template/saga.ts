@@ -91,7 +91,8 @@ export function* fetchTemplate({ payload: id }: TLoadTemplate) {
     yield setTemplateByTemplateResponse(template);
 
     const isCatalogLoaded: ReturnType<typeof getIsCatalogLoaded> = yield select(getIsCatalogLoaded);
-    const isCatalogLoading: ReturnType<typeof getFieldsetsCatalogIsLoading> = yield select(getFieldsetsCatalogIsLoading);
+    const isCatalogLoading: ReturnType<typeof getFieldsetsCatalogIsLoading> =
+      yield select(getFieldsetsCatalogIsLoading);
 
     if (!isCatalogLoaded && !isCatalogLoading) {
       yield put(loadFieldsetsCatalog());

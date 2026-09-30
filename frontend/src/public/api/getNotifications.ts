@@ -13,11 +13,10 @@ export interface IGetNotificationsConfig {
   limit?: number;
 }
 
-export function getNotifications({
-  offset,
-  limit = 20,
-}: IGetNotificationsConfig) {
-  const { api: { urls } } = getBrowserConfigEnv();
+export function getNotifications({ offset, limit = 20 }: IGetNotificationsConfig) {
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   return commonRequest<TGetNotificationsResponse>(
     `${urls.getNotifications}?${getNotificationsQueryString({ limit, offset })}`,
@@ -26,13 +25,6 @@ export function getNotifications({
   );
 }
 
-export function getNotificationsQueryString({
-  limit,
-  offset,
-}: IGetNotificationsConfig) {
-
-  return [
-    `limit=${limit}`,
-    `offset=${offset}`,
-  ].join('&');
+export function getNotificationsQueryString({ limit, offset }: IGetNotificationsConfig) {
+  return [`limit=${limit}`, `offset=${offset}`].join('&');
 }

@@ -37,11 +37,15 @@ export const uploadFiles = async (
   const uploadFile = async (file: Blob | File): Promise<TUploadedFile> => {
     const filename = file instanceof File ? file.name : createUniqueId('file-xxxyxx');
 
-
-
     if (file.size > MAX_FILE_SIZE) {
       NotificationManager.warning({ message: 'file-upload.max-file-size-error' });
-      return { id: createUniqueId('error-'), name: filename, url: '', size: file.size, error: UPLOAD_ERROR_FILE_TOO_LARGE };
+      return {
+        id: createUniqueId('error-'),
+        name: filename,
+        url: '',
+        size: file.size,
+        error: UPLOAD_ERROR_FILE_TOO_LARGE,
+      };
     }
 
     const errorMessages = await Promise.all(validators?.map((validate) => validate(file)) || []);
@@ -77,9 +81,8 @@ export const uploadFiles = async (
   const uploadedFiles: TUploadedFile[] = [];
   const filesArray = Array.from(files);
   const limit = UPLOAD_BATCH_LIMIT;
-  const chunks = Array.from(
-    { length: Math.ceil(filesArray.length / limit) },
-    (_, i) => filesArray.slice(i * limit, (i + 1) * limit),
+  const chunks = Array.from({ length: Math.ceil(filesArray.length / limit) }, (_, i) =>
+    filesArray.slice(i * limit, (i + 1) * limit),
   );
 
   await chunks.reduce(async (prev, chunk) => {

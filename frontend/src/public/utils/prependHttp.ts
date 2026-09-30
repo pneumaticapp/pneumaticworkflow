@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 type TPrependHttpConfig = {
   https?: boolean;

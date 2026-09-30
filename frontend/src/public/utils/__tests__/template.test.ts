@@ -9,8 +9,19 @@ import {
 import { ESubscriptionPlan } from '../../types/account';
 import { EFieldLabelPosition, IFieldsetBinding } from '../../types/fieldset';
 import { TUserListItem, EUserStatus } from '../../types/user';
-import { getNormalizedTemplate, mapTemplateRequest, getEmptyKickoff, cleanTemplateReferences, collectFieldApiNames } from '../template';
-import { EConditionAction, EConditionOperators, EConditionLogicOperations, TConditionRule } from '../../components/TemplateEdit/TaskForm/Conditions/types';
+import {
+  getNormalizedTemplate,
+  mapTemplateRequest,
+  getEmptyKickoff,
+  cleanTemplateReferences,
+  collectFieldApiNames,
+} from '../template';
+import {
+  EConditionAction,
+  EConditionOperators,
+  EConditionLogicOperations,
+  TConditionRule,
+} from '../../components/TemplateEdit/TaskForm/Conditions/types';
 import { makeExtraField } from '../../__stubs__/fields.factory';
 import { makeFieldsetBinding, makeFieldsetBindingClient, makeFieldsetField } from '../../__stubs__/fieldsets.factory';
 
@@ -28,9 +39,7 @@ const createMockUser = (overrides: Partial<TUserListItem> = {}): TUserListItem =
   ...overrides,
 });
 
-const createMockTemplateResponse = (
-  overrides: Partial<ITemplateResponse> = {},
-): ITemplateResponse => ({
+const createMockTemplateResponse = (overrides: Partial<ITemplateResponse> = {}): ITemplateResponse => ({
   id: 1,
   name: 'Test Template',
   description: 'Test description',
@@ -172,14 +181,9 @@ describe('template utilities', () => {
     it('normalizes template with only owners', () => {
       const templateResponse = createMockTemplateResponse();
 
-      const result = getNormalizedTemplate(
-        templateResponse,
-        true,
-        mockUsers,
-        ESubscriptionPlan.Premium,
-      );
+      const result = getNormalizedTemplate(templateResponse, true, mockUsers, ESubscriptionPlan.Premium);
 
-      const ownerRoles = result.owners.map(o => o.role);
+      const ownerRoles = result.owners.map((o) => o.role);
       expect(ownerRoles).toEqual([ETemplateOwnerRole.Owner]);
     });
 
@@ -206,15 +210,10 @@ describe('template utilities', () => {
       ];
       const templateResponse = createMockTemplateResponse({ owners });
 
-      const result = getNormalizedTemplate(
-        templateResponse,
-        true,
-        mockUsers,
-        ESubscriptionPlan.Premium,
-      );
+      const result = getNormalizedTemplate(templateResponse, true, mockUsers, ESubscriptionPlan.Premium);
 
       expect(result.owners).toEqual(owners);
-      const viewers = result.owners.filter(o => o.role === ETemplateOwnerRole.Viewer);
+      const viewers = result.owners.filter((o) => o.role === ETemplateOwnerRole.Viewer);
       expect(viewers).toHaveLength(2);
     });
 
@@ -241,14 +240,9 @@ describe('template utilities', () => {
       ];
       const templateResponse = createMockTemplateResponse({ owners });
 
-      const result = getNormalizedTemplate(
-        templateResponse,
-        true,
-        mockUsers,
-        ESubscriptionPlan.Premium,
-      );
+      const result = getNormalizedTemplate(templateResponse, true, mockUsers, ESubscriptionPlan.Premium);
 
-      const starters = result.owners.filter(o => o.role === ETemplateOwnerRole.Starter);
+      const starters = result.owners.filter((o) => o.role === ETemplateOwnerRole.Starter);
       expect(starters).toHaveLength(2);
     });
 
@@ -275,16 +269,11 @@ describe('template utilities', () => {
       ];
       const templateResponse = createMockTemplateResponse({ owners });
 
-      const result = getNormalizedTemplate(
-        templateResponse,
-        true,
-        mockUsers,
-        ESubscriptionPlan.Premium,
-      );
+      const result = getNormalizedTemplate(templateResponse, true, mockUsers, ESubscriptionPlan.Premium);
 
       expect(result.owners).toEqual(owners);
-      const viewers = result.owners.filter(o => o.role === ETemplateOwnerRole.Viewer);
-      const starters = result.owners.filter(o => o.role === ETemplateOwnerRole.Starter);
+      const viewers = result.owners.filter((o) => o.role === ETemplateOwnerRole.Viewer);
+      const starters = result.owners.filter((o) => o.role === ETemplateOwnerRole.Starter);
       expect(viewers).toHaveLength(1);
       expect(starters).toHaveLength(1);
     });
@@ -292,12 +281,7 @@ describe('template utilities', () => {
     it('calculates tasksCount correctly', () => {
       const templateResponse = createMockTemplateResponse();
 
-      const result = getNormalizedTemplate(
-        templateResponse,
-        true,
-        mockUsers,
-        ESubscriptionPlan.Premium,
-      );
+      const result = getNormalizedTemplate(templateResponse, true, mockUsers, ESubscriptionPlan.Premium);
 
       expect(result.tasksCount).toBe(1);
     });
@@ -305,12 +289,7 @@ describe('template utilities', () => {
     it('calculates performersCount correctly', () => {
       const templateResponse = createMockTemplateResponse();
 
-      const result = getNormalizedTemplate(
-        templateResponse,
-        true,
-        mockUsers,
-        ESubscriptionPlan.Premium,
-      );
+      const result = getNormalizedTemplate(templateResponse, true, mockUsers, ESubscriptionPlan.Premium);
 
       expect(result.performersCount).toBe(1);
     });
@@ -336,12 +315,7 @@ describe('template utilities', () => {
         },
       });
 
-      const result = getNormalizedTemplate(
-        templateResponse,
-        true,
-        mockUsers,
-        ESubscriptionPlan.Premium,
-      );
+      const result = getNormalizedTemplate(templateResponse, true, mockUsers, ESubscriptionPlan.Premium);
 
       expect(result.kickoff.fieldsets).toHaveLength(1);
       expect(result.kickoff.fieldsets[0].apiNameBinding).toBe('kickoff-fs-1');
@@ -369,12 +343,7 @@ describe('template utilities', () => {
         ],
       });
 
-      const result = getNormalizedTemplate(
-        templateResponse,
-        true,
-        mockUsers,
-        ESubscriptionPlan.Premium,
-      );
+      const result = getNormalizedTemplate(templateResponse, true, mockUsers, ESubscriptionPlan.Premium);
 
       expect(result.tasks[0].fieldsets).toHaveLength(1);
       expect(result.tasks[0].fieldsets[0].apiNameBinding).toBe('task-fs-1');
@@ -385,12 +354,7 @@ describe('template utilities', () => {
       const templateResponse = createMockTemplateResponse();
       Object.assign(templateResponse, { kickoff: null });
 
-      const result = getNormalizedTemplate(
-        templateResponse,
-        true,
-        mockUsers,
-        ESubscriptionPlan.Premium,
-      );
+      const result = getNormalizedTemplate(templateResponse, true, mockUsers, ESubscriptionPlan.Premium);
 
       expect(result.kickoff.fieldsets).toEqual([]);
     });
@@ -515,7 +479,9 @@ describe('template utilities', () => {
         wfNameTemplate: 'Name: {{valid-field}} and {{invalid-field}} and {{template-name}}',
         kickoff: {
           ...getEmptyKickoff(),
-          fields: [makeExtraField({ apiName: 'valid-field', type: EExtraFieldType.Text, name: 'Valid Field', order: 1 })],
+          fields: [
+            makeExtraField({ apiName: 'valid-field', type: EExtraFieldType.Text, name: 'Valid Field', order: 1 }),
+          ],
         },
         tasks: [
           {
@@ -523,7 +489,14 @@ describe('template utilities', () => {
             name: 'Task {{invalid-field}} and {{valid-field}}',
             description: 'Desc {{workflow-starter}} and {{invalid-field}}',
             number: 1,
-            fields: [makeExtraField({ apiName: 'valid-task-field', type: EExtraFieldType.Text, name: 'Valid Task Field', order: 1 })],
+            fields: [
+              makeExtraField({
+                apiName: 'valid-task-field',
+                type: EExtraFieldType.Text,
+                name: 'Valid Task Field',
+                order: 1,
+              }),
+            ],
           },
           {
             ...createMockTemplate().tasks[0],
@@ -547,23 +520,28 @@ describe('template utilities', () => {
 
     it('preserves kickoff fieldset field references in wfNameTemplate', () => {
       const template = createMockTemplate({
-        wfNameTemplate: 'Name: {{direct-field}} and {{fieldset-field-1}} and {{fieldset-field-2}} and {{invalid-field}} and {{date}}',
+        wfNameTemplate:
+          'Name: {{direct-field}} and {{fieldset-field-1}} and {{fieldset-field-2}} and {{invalid-field}} and {{date}}',
         kickoff: {
           ...getEmptyKickoff(),
           fields: [makeExtraField({ apiName: 'direct-field', type: EExtraFieldType.Text, name: 'Direct', order: 1 })],
-          fieldsets: [makeFieldsetBindingClient({
-            apiNameBinding: 'my-fieldset',
-            fields: [
-              makeFieldsetField({ apiName: 'fieldset-field-1', type: 'text', name: 'Fieldset Field 1', order: 1 }),
-              makeFieldsetField({ apiName: 'fieldset-field-2', type: 'text', name: 'Fieldset Field 2', order: 2 }),
-            ],
-          })],
+          fieldsets: [
+            makeFieldsetBindingClient({
+              apiNameBinding: 'my-fieldset',
+              fields: [
+                makeFieldsetField({ apiName: 'fieldset-field-1', type: 'text', name: 'Fieldset Field 1', order: 1 }),
+                makeFieldsetField({ apiName: 'fieldset-field-2', type: 'text', name: 'Fieldset Field 2', order: 2 }),
+              ],
+            }),
+          ],
         },
       });
 
       const cleaned = cleanTemplateReferences(template);
 
-      expect(cleaned.wfNameTemplate).toBe('Name: {{direct-field}} and {{fieldset-field-1}} and {{fieldset-field-2}} and  and {{date}}');
+      expect(cleaned.wfNameTemplate).toBe(
+        'Name: {{direct-field}} and {{fieldset-field-1}} and {{fieldset-field-2}} and  and {{date}}',
+      );
     });
 
     it('removes invalid field references from conditions', () => {
@@ -577,8 +555,18 @@ describe('template utilities', () => {
                 order: 1,
                 action: EConditionAction.StartTask,
                 rules: [
-                  { field: 'valid-field', operator: EConditionOperators.Equal, logicOperation: EConditionLogicOperations.And, predicateApiName: '1' } as unknown as TConditionRule,
-                  { field: 'invalid-field', operator: EConditionOperators.Equal, logicOperation: EConditionLogicOperations.And, predicateApiName: '2' } as unknown as TConditionRule,
+                  {
+                    field: 'valid-field',
+                    operator: EConditionOperators.Equal,
+                    logicOperation: EConditionLogicOperations.And,
+                    predicateApiName: '1',
+                  } as unknown as TConditionRule,
+                  {
+                    field: 'invalid-field',
+                    operator: EConditionOperators.Equal,
+                    logicOperation: EConditionLogicOperations.And,
+                    predicateApiName: '2',
+                  } as unknown as TConditionRule,
                 ],
               },
             ],
@@ -614,7 +602,9 @@ describe('template utilities', () => {
       const template = createMockTemplate({
         kickoff: {
           ...getEmptyKickoff(),
-          fields: [makeExtraField({ apiName: 'valid-user-field', type: EExtraFieldType.User, name: 'Valid User', order: 1 })],
+          fields: [
+            makeExtraField({ apiName: 'valid-user-field', type: EExtraFieldType.User, name: 'Valid User', order: 1 }),
+          ],
         },
         tasks: [
           {
@@ -636,24 +626,36 @@ describe('template utilities', () => {
       const template = createMockTemplate({
         kickoff: {
           ...getEmptyKickoff(),
-          fields: [makeExtraField({ apiName: 'valid-date-field', type: EExtraFieldType.Date, name: 'Valid Date', order: 1 })],
+          fields: [
+            makeExtraField({ apiName: 'valid-date-field', type: EExtraFieldType.Date, name: 'Valid Date', order: 1 }),
+          ],
         },
         tasks: [
           {
             ...createMockTemplate().tasks[0],
             number: 1,
             rawDueDate: {
-              apiName: 'due-1', duration: null, durationMonths: null, rulePreposition: 'after', ruleTarget: 'field', sourceId: 'valid-date-field',
+              apiName: 'due-1',
+              duration: null,
+              durationMonths: null,
+              rulePreposition: 'after',
+              ruleTarget: 'field',
+              sourceId: 'valid-date-field',
             },
           },
           {
             ...createMockTemplate().tasks[0],
             number: 2,
             rawDueDate: {
-              apiName: 'due-2', duration: null, durationMonths: null, rulePreposition: 'after', ruleTarget: 'field', sourceId: 'invalid-field',
+              apiName: 'due-2',
+              duration: null,
+              durationMonths: null,
+              rulePreposition: 'after',
+              ruleTarget: 'field',
+              sourceId: 'invalid-field',
             },
           },
-        ]
+        ],
       });
       const cleaned = cleanTemplateReferences(template);
       expect(cleaned.tasks[0].rawDueDate?.sourceId).toBe('valid-date-field');
@@ -674,11 +676,38 @@ describe('template utilities', () => {
                 order: 1,
                 action: EConditionAction.StartTask,
                 rules: [
-                  { field: 'task-123', fieldType: 'task', operator: EConditionOperators.Equal, logicOperation: EConditionLogicOperations.And, predicateApiName: '1' } as unknown as TConditionRule,
-                  { field: '', operator: EConditionOperators.Equal, logicOperation: EConditionLogicOperations.And, predicateApiName: '2' } as unknown as TConditionRule,
-                  { field: undefined, operator: EConditionOperators.Equal, logicOperation: EConditionLogicOperations.And, predicateApiName: '3' } as unknown as TConditionRule,
-                  { field: null, operator: EConditionOperators.Equal, logicOperation: EConditionLogicOperations.And, predicateApiName: '4' } as unknown as TConditionRule,
-                  { field: 'invalid-field', fieldType: 'field', operator: EConditionOperators.Equal, logicOperation: EConditionLogicOperations.And, predicateApiName: '5' } as unknown as TConditionRule,
+                  {
+                    field: 'task-123',
+                    fieldType: 'task',
+                    operator: EConditionOperators.Equal,
+                    logicOperation: EConditionLogicOperations.And,
+                    predicateApiName: '1',
+                  } as unknown as TConditionRule,
+                  {
+                    field: '',
+                    operator: EConditionOperators.Equal,
+                    logicOperation: EConditionLogicOperations.And,
+                    predicateApiName: '2',
+                  } as unknown as TConditionRule,
+                  {
+                    field: undefined,
+                    operator: EConditionOperators.Equal,
+                    logicOperation: EConditionLogicOperations.And,
+                    predicateApiName: '3',
+                  } as unknown as TConditionRule,
+                  {
+                    field: null,
+                    operator: EConditionOperators.Equal,
+                    logicOperation: EConditionLogicOperations.And,
+                    predicateApiName: '4',
+                  } as unknown as TConditionRule,
+                  {
+                    field: 'invalid-field',
+                    fieldType: 'field',
+                    operator: EConditionOperators.Equal,
+                    logicOperation: EConditionLogicOperations.And,
+                    predicateApiName: '5',
+                  } as unknown as TConditionRule,
                 ],
               },
             ],
@@ -687,7 +716,7 @@ describe('template utilities', () => {
       });
       const cleaned = cleanTemplateReferences(template);
       const rules = cleaned.tasks[0].conditions[0].rules;
-      
+
       expect(rules).toHaveLength(4);
       expect(rules[0].field).toBe('task-123');
       expect(rules[1].field).toBe('');
@@ -703,7 +732,12 @@ describe('template utilities', () => {
             apiName: 'task-1',
             number: 1,
             rawPerformers: [
-              { type: ETaskPerformerType.Manager, sourceId: 'task-deleted', label: 'Manager: Deleted', apiName: 'perf-mgr-1' },
+              {
+                type: ETaskPerformerType.Manager,
+                sourceId: 'task-deleted',
+                label: 'Manager: Deleted',
+                apiName: 'perf-mgr-1',
+              },
               { type: ETaskPerformerType.User, sourceId: '1', label: 'Regular User', apiName: 'perf-user-1' },
             ],
           },
@@ -768,16 +802,16 @@ describe('template utilities', () => {
     });
 
     it('collects apiNames from direct fields and embedded fieldset fields', () => {
-      const fields = [
-        makeExtraField({ apiName: 'direct-field', type: EExtraFieldType.Text, name: 'Direct' }),
+      const fields = [makeExtraField({ apiName: 'direct-field', type: EExtraFieldType.Text, name: 'Direct' })];
+      const fieldsets = [
+        makeFieldsetBindingClient({
+          apiNameBinding: 'my-fs',
+          fields: [
+            makeFieldsetField({ apiName: 'fs-field-1', name: 'F1' }),
+            makeFieldsetField({ apiName: 'fs-field-2', type: 'number', name: 'F2', order: 1 }),
+          ],
+        }),
       ];
-      const fieldsets = [makeFieldsetBindingClient({
-        apiNameBinding: 'my-fs',
-        fields: [
-          makeFieldsetField({ apiName: 'fs-field-1', name: 'F1' }),
-          makeFieldsetField({ apiName: 'fs-field-2', type: 'number', name: 'F2', order: 1 }),
-        ],
-      })];
       const validApiNames = new Set<string>();
 
       collectFieldApiNames(fields, fieldsets, validApiNames);

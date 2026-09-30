@@ -124,9 +124,9 @@ export const WorkflowsGridPage = function Workflows({
           {templatesFilter.length !== 1
             ? formatMessage({ id: 'workflows.run-workflow' })
             : `${formatMessage({ id: 'workflows.run-workflows' })} ${templatesFilter
-              .map((t) => t.name)
-              .join(', ')
-              .trim()}`}
+                .map((t) => t.name)
+                .join(', ')
+                .trim()}`}
         </Header>
         {templatesFilter.length !== 1 && (
           <div className={styles['run-workflow-card__extra-text']}>

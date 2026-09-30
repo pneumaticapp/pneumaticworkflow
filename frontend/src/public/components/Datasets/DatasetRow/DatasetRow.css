@@ -1,9 +1,9 @@
 .container {
   position: relative;
-  padding: 1.4rem 0;
   display: flex;
-  border-bottom: 1px solid var(--pneumatic-color-black16);
   align-items: center;
+  padding: 1.4rem 0;
+  border-bottom: 1px solid var(--pneumatic-color-black16);
 }
 
 .value {
@@ -14,19 +14,19 @@
 }
 
 .input {
+  flex: 1;
   padding: 0;
+  outline: none;
   background: transparent;
   border: none;
-  outline: none;
-  flex: 1;
 
   @mixin text-base;
 }
 
 .error-text {
   position: absolute;
-  left: 0;
   bottom: 0.2rem;
+  left: 0;
   margin: 0;
   font-size: 1.1rem;
   line-height: 1.4rem;
@@ -34,25 +34,25 @@
 }
 
 .actions {
-  margin-left: 0.8rem;
   display: flex;
-  align-items: center;
-  gap: 0.4rem;
   flex-shrink: 0;
+  gap: 0.4rem;
+  align-items: center;
+  margin-left: 0.8rem;
 }
 
 .action-button {
-  padding: 0;
   display: flex;
+  align-items: center;
+  justify-content: center;
   width: 2.4rem;
   height: 2.4rem;
+  padding: 0;
   cursor: pointer;
   background: transparent;
   border: none;
   border-radius: 0.4rem;
   transition: opacity 0.15s;
-  align-items: center;
-  justify-content: center;
 
   &:hover {
     opacity: 0.7;
@@ -60,8 +60,8 @@
 }
 
 .more-icon {
-  cursor: pointer;
   color: var(--pneumatic-color-black32);
+  cursor: pointer;
   transition: color 0.1s ease-in-out;
 
   &:hover {

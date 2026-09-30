@@ -14,12 +14,12 @@ const mockProps = {
 
 describe('GoogleProfile', () => {
   it('renders correctly with all the data', () => {
-    const wrapper = shallow(<GoogleProfile {...mockProps}/>);
+    const wrapper = shallow(<GoogleProfile {...mockProps} />);
 
     expect(wrapper).toMatchSnapshot();
   });
   it('returns null if there is no email', () => {
-    const wrapper = shallow(<GoogleProfile {...mockProps} email=""/>);
+    const wrapper = shallow(<GoogleProfile {...mockProps} email="" />);
 
     expect(wrapper.html()).toBeNull();
   });
