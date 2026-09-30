@@ -17,12 +17,16 @@ from src.ai.services.provider import AIProviderService
 from src.ai.services.response import TaskResponseService
 from src.ai.services.user_message import TaskUserMessageService
 from src.generics.base.service import BaseModelService
+from src.generics.exceptions import BaseServiceException
 from src.ai.enums import AIAgentActionType
 from src.processes.models.workflows.task import Task
 from src.processes.serializers.workflows.task import TaskCompleteSerializer
+from src.processes.services.events import CommentService
 from src.processes.services.exceptions import WorkflowActionServiceException, \
     FieldsetServiceException
 from src.processes.services.workflow_action import WorkflowActionService
+from src.storage.enums import AccessType, SourceType
+from src.storage.services import FileServiceClient
 
 UserModel = get_user_model()
 
@@ -121,7 +125,8 @@ class AIAgentService(BaseModelService):
     def _get_fields_values(
         self,
         task: Task,
-    ) -> Tuple[Dict[str, Union[str, List[str]]], str]:
+        errors_stack: Optional[List[dict, str]] = None,
+    ) -> Dict[str, Union[str, List[str]]]:
 
         message_service = TaskUserMessageService(task=task)
         user_message = message_service.get_user_message()
@@ -160,8 +165,7 @@ class AIAgentService(BaseModelService):
             text=raw_response,
             user=self.user,
         )
-        fields_values = response_parser.get_fields_values()
-        return fields_values, raw_response
+        return response_parser.get_fields_values()
 
     def _complete_task(self, task: Task, fields_values: dict):
         serializer = TaskCompleteSerializer(data=fields_values)
@@ -178,13 +182,134 @@ class AIAgentService(BaseModelService):
         )
         service.check_delay_workflow()
 
+    def _create_report_file(
+        self,
+        text: str,
+    ) -> str:
+
+        filename = 'report.md'
+        client = FileServiceClient(user=self.user)
+        public_url = client.upload_file_with_attachment(
+            file_content=text.encode('utf-8'),
+            filename=filename,
+            content_type='text/plain',
+            account=self.account,
+            source_type=SourceType.TASK,
+            access_type=AccessType.RESTRICTED,
+        )
+        return f'[{filename}]({public_url})'
+
+    def _create_comment(self, task: Task, text: str):
+
+        service = CommentService(
+            user=self.user,
+            auth_type=self.auth_type,
+            is_superuser=self.is_superuser,
+        )
+        service.create(
+            task=task,
+            text=text,
+        )
+
+    def _raise_attempt_error(
+        self,
+        errors_stack: Optional[List[dict, str]] = None,
+    ):
+
+        pass
+
+    def _convert_ex_to_markdown(
+        self,
+        ex: Union[BaseServiceException, ValidationError],
+    ) -> str:
+
+        """ Represent a task completion error as a markdown list:
+            "- `field`: message" for field errors and
+            "- message" for common errors
+
+            Service exception:
+              ex = CompleteDelayedWorkflow()
+              result = '- Resume the workflow to complete the task.'
+
+            Validation error for a nested field (api_name):
+              ex.detail = {
+                'code': 'validation_error',
+                'message': 'Value should be a string.',
+                'details': {
+                  'reason': 'Value should be a string.',
+                  'api_name': 'phone-1'
+                }
+              }
+              result = '- `phone-1`: Value should be a string.'
+
+            Validation error for a form field (name):
+              ex.detail = {
+                'code': 'validation_error',
+                'message': 'Expected a dictionary of items.',
+                'details': {
+                  'reason': 'Expected a dictionary of items.',
+                  'name': 'output'
+                }
+              }
+              result = '- `output`: Expected a dictionary of items.'
+
+            Common validation error:
+              ex.detail = {
+                'code': 'validation_error',
+                'message': 'Invalid output.',
+                'details': {}
+              }
+              result = '- Invalid output.'
+
+            Framework fields map:
+              ex.detail = {
+                'phone-1': ['Value should be a string.'],
+                'total-1': ['The value must be a number.']
+              }
+              result = (
+                '- `phone-1`: Value should be a string.\\n'
+                '- `total-1`: The value must be a number.'
+              ) """
+
+        if not isinstance(ex, ValidationError):
+            return f'- {ex}'
+
+        errors: List[Tuple[Optional[str], str]] = []
+        detail = ex.detail
+        if isinstance(detail, dict):
+            message = detail.get('message')
+            if isinstance(message, str):
+                details = detail.get('details') or {}
+                name = details.get('name') or details.get('api_name')
+                errors.append((name, message))
+            else:
+                for name, value in detail.items():
+                    values = (
+                        value if isinstance(value, (list, tuple))
+                        else [value]
+                    )
+                    for item in values:
+                        errors.append((name, str(item)))
+        elif isinstance(detail, (list, tuple)):
+            errors.extend((None, str(item)) for item in detail)
+        if not errors:
+            errors.append((None, 'Validation failed.'))
+        return '\n'.join(
+            f'- `{name}`: {message}' if name else f'- {message}'
+            for name, message in errors
+        )
+
     def _attempt_complete_task(
         self,
         task: Task,
-        errors_stack = None,
+        errors_stack: Optional[List[dict, str]] = None,
         attempt: int = 1,
-    ):
-        fields_values, raw_response = self._get_fields_values(task)
+    ) -> Optional[dict]:
+
+        fields_values = self._get_fields_values(
+            task=task,
+            errors_stack=errors_stack,
+        )
         try:
             self._complete_task(task=task, fields_values=fields_values)
         except (
@@ -192,16 +317,18 @@ class AIAgentService(BaseModelService):
             FieldsetServiceException,
             ValidationError,
         ) as ex:
-            # Создать AIAgentAction - ошибка валидации при попытке завершить задачу, вписать attempt, fields_values и ex в событие
+            error = self._convert_ex_to_markdown(ex)
+            errors_stack = errors_stack or []
+            errors_stack.append((fields_values, error))
             new_attempt = attempt + 1
             if new_attempt > 10:
-                # Создать AIAgentAction - превышен лимит попыток
-                # Создать комментарий СommentService.create(...) - превышен лимит попыток (создать отдельный метод, т.к он понадобится далее)
+                self._raise_attempt_error(errors_stack)
             self._attempt_complete_task(
                 task=task,
                 errors_stack=errors_stack,
                 attempt=new_attempt,
             )
+            return fields_values
 
     def complete_task(self, task_id: int):
         task = Task.objects.filter(id=task_id).first()
@@ -211,7 +338,7 @@ class AIAgentService(BaseModelService):
             task_id=task.id,
             action=AIAgentActionType.TASK_IN_PROGRESS,
         )
-        self._attempt_complete_task(task=task)
+        fields_values = self._attempt_complete_task(task=task)
         AIAgentAction.objects.create(
             account_id=self.instance.account_id,
             agent_id=self.instance.id,
