@@ -107,6 +107,7 @@ class WebHookEventViewSet(
             service = WebhookService(
                 user=request.user,
                 is_superuser=request.is_superuser,
+                auth_type=request.token_type,
             )
             service.subscribe_event(
                 event=event,
@@ -133,6 +134,7 @@ class WebHookEventViewSet(
             service = WebhookService(
                 user=request.user,
                 is_superuser=request.is_superuser,
+                auth_type=request.token_type,
             )
             service.unsubscribe_event(event=event)
         except exceptions.InvalidEventException as ex:

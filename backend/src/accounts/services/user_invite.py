@@ -35,6 +35,7 @@ from src.analysis.mixins import (
 )
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
+from src.logs.events import AuditEventService
 from src.notifications.tasks import (
     send_user_created_notification,
     send_user_updated_notification,
@@ -256,6 +257,12 @@ class UserInviteService(
             if groups:
                 current_account_user.user_groups.set(groups)
             self._user_create_actions(current_account_user)
+            AuditEventService.invite_created(
+                user=self.request_user,
+                auth_type=self.auth_type,
+                invited_user=current_account_user,
+                is_transfer=True,
+            )
             self._user_transfer_actions(
                 current_account_user=current_account_user,
                 another_account_user=another_account_user,
@@ -296,6 +303,12 @@ class UserInviteService(
             if groups:
                 user.user_groups.set(groups)
             self._user_create_actions(user)
+            AuditEventService.invite_created(
+                user=self.request_user,
+                auth_type=self.auth_type,
+                invited_user=user,
+                is_transfer=False,
+            )
             if self.send_email:
                 self._user_invite_actions(user)
 
@@ -368,6 +381,12 @@ class UserInviteService(
                 )
             else:
                 self._user_invite_actions(user)
+            AuditEventService.invite_resent(
+                user=self.request_user,
+                auth_type=self.auth_type,
+                invited_user=user,
+                is_transfer=another_account_user is not None,
+            )
 
     def accept(
         self,
@@ -406,6 +425,14 @@ class UserInviteService(
                 user=user,
             )
             account_service.update_users_counts()
+
+            # Published here and not in the view: the endpoint is not
+            # the only way in, an SSO callback accepts the invite of
+            # an invited person through the same method.
+            AuditEventService.invite_accepted(
+                invited_user=user,
+                invited_by_id=invite.invited_by_id,
+            )
         if (
             user.account.billing_sync
             and user.account.billing_plan == BillingPlanType.PREMIUM

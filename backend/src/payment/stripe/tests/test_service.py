@@ -4160,6 +4160,9 @@ def test_create_purchase__off_session__ok(mocker):
         'src.payment.stripe.service.'
         'StripeService._off_session_purchase',
     )
+    purchase_made_mock = mocker.patch(
+        'src.payment.stripe.service.AuditEventService.purchase_made',
+    )
 
     service = StripeService(user=user)
 
@@ -4173,6 +4176,11 @@ def test_create_purchase__off_session__ok(mocker):
     # assert
     assert result is None
     off_session_purchase_mock.assert_called_once_with(
+        products=products_mock,
+    )
+    purchase_made_mock.assert_called_once_with(
+        user=user,
+        auth_type=service.auth_type,
         products=products_mock,
     )
 
@@ -4216,6 +4224,9 @@ def test_create_purchase__off_session_exception__get_checkout_link(mocker):
         'src.payment.stripe.service.'
         'StripeService._log_stripe_error',
     )
+    purchase_made_mock = mocker.patch(
+        'src.payment.stripe.service.AuditEventService.purchase_made',
+    )
 
     service = StripeService(user=user)
 
@@ -4235,6 +4246,7 @@ def test_create_purchase__off_session_exception__get_checkout_link(mocker):
         success_url=success_url,
         cancel_url=cancel_url,
     )
+    purchase_made_mock.assert_not_called()
 
 
 def test_create_purchase__off_session_card_error__raise_exception(mocker):
@@ -4339,6 +4351,9 @@ def test_create_purchase__off_session_payment_error__raise_exception(mocker):
         'src.payment.stripe.service.'
         'StripeService._log_stripe_error',
     )
+    purchase_made_mock = mocker.patch(
+        'src.payment.stripe.service.AuditEventService.purchase_made',
+    )
 
     service = StripeService(user=user)
 
@@ -4355,6 +4370,7 @@ def test_create_purchase__off_session_payment_error__raise_exception(mocker):
     off_session_purchase_mock.assert_called_once_with(products=products_mock)
     log_stripe_error_mock.assert_called_once()
     get_checkout_link_mock.assert_not_called()
+    purchase_made_mock.assert_not_called()
 
 
 def test_create_purchase__not_card__return_checkout_link(mocker):
@@ -4389,6 +4405,9 @@ def test_create_purchase__not_card__return_checkout_link(mocker):
         'StripeService._get_checkout_link',
         return_value=link,
     )
+    purchase_made_mock = mocker.patch(
+        'src.payment.stripe.service.AuditEventService.purchase_made',
+    )
     service = StripeService(user=user)
 
     # act
@@ -4406,6 +4425,7 @@ def test_create_purchase__not_card__return_checkout_link(mocker):
         success_url=success_url,
         cancel_url=cancel_url,
     )
+    purchase_made_mock.assert_not_called()
 
 
 def test_get_payment_method_checkout_link__ok(mocker):
@@ -4560,6 +4580,9 @@ def test_confirm__activate_subscription__from_freemium__ok(mocker):
         max_users=quantity,
         trial_days=trial_days,
     )
+    payment_confirmed_mock = mocker.patch(
+        'src.payment.stripe.service.AuditEventService.payment_confirmed',
+    )
 
     is_superuser = True
     auth_type = AuthTokenType.API
@@ -4587,6 +4610,11 @@ def test_confirm__activate_subscription__from_freemium__ok(mocker):
         trial_end=now_datetime + timedelta(days=trial_days),
         tmp_subscription=True,
         force_save=True,
+    )
+    payment_confirmed_mock.assert_called_once_with(
+        user=user,
+        auth_type=auth_type,
+        subscription_data=subscription_data,
     )
 
 

@@ -11,6 +11,7 @@ from src.ai.models import (
 )
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
+from src.logs.events import AuditEventService
 from src.processes.consts import TEMPLATE_NAME_LENGTH
 from src.processes.enums import (
     ConditionAction,
@@ -370,6 +371,10 @@ class OpenAiService(BaseAiService):
             success = False
             raise
         else:
+            AuditEventService.template_generated_with_ai(
+                user=self.user,
+                auth_type=self.auth_type,
+            )
             return template_data
         finally:
             AnalyticService.template_generation_init(

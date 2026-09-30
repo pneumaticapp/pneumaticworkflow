@@ -1,4 +1,4 @@
-from typing_extensions import Literal
+from typing_extensions import Literal, get_args
 
 
 class AccountEventType:
@@ -42,3 +42,24 @@ class RequestDirection:
         (RECEIVED, RECEIVED),
         (SENT, SENT),
     )
+
+
+class LogsBackend:
+
+    """ Value of LOGS_BACKEND: where the collector sends the events.
+        Any other value, an unset one included, switches the whole
+        pipeline off, emit() writes nothing. """
+
+    OTLP = 'otlp'
+    ELASTICSEARCH = 'elasticsearch'
+
+    LITERALS = Literal[
+        OTLP,
+        ELASTICSEARCH,
+    ]
+    VALUES = set(get_args(LITERALS))
+
+
+SERVICE_NAME = 'pneumatic-backend'
+DEFAULT_CONSUMER_IDLE_MS = 60000
+CONSUMER_INTERVAL_SECONDS = 5
