@@ -140,6 +140,7 @@
 .kickoff-create-field-option__input {
   max-width: calc(100% - 2.4rem);
   border: none;
+
   @mixin text-truncate;
 
   &:focus {
