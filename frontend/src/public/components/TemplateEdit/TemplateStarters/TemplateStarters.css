@@ -3,9 +3,7 @@
 .dropdown {
   margin: 1rem 0;
 
-  :global .react-select__control {
-    min-height: 2.5rem !important;
-  }
+  --dropdown-list-control-min-height: 2.5rem;
 }
 
 .dropdown-user {

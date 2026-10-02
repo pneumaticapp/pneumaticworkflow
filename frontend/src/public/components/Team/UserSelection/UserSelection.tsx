@@ -44,8 +44,6 @@ export function UserSelection({ selectedUsers, onChange, onChangeSelected, onCli
       onClickAllUsers={(isSelectAll) => {
         onClickAllUsers(isSelectAll, isSelectAll ? [...users.map((user) => user.id)] : []);
       }}
-      menuIsOpen
-      closeMenuOnSelect={false}
     />
   );
 }

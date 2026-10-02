@@ -4,63 +4,7 @@
   width: 100%;
   min-width: 0;
 
-  /* stylelint-disable selector-pseudo-class-no-unknown, declaration-no-important  */
-  :global .react-select__control {
-    padding-top: 1.1rem !important;
-    padding-bottom: 1.1rem !important;
-    font-family: Nunito, sans-serif;
-    font-size: 1.5rem;
-    line-height: 2rem;
-    color: #262522;
-    outline: none;
-    border-color: #dcdcdb !important;
-    border-radius: 0.8rem !important;
-    transition: 0.15s ease-in border-color;
-
-    &:focus {
-      border-color: #979795 !important;
-    }
-
-    &:focus-within {
-      border-color: #979795 !important;
-      border-bottom-color: #b9b9b8 !important;
-    }
-
-    &:disabled {
-      color: #b9b9b8 !important;
-      cursor: text;
-      background-color: white;
-    }
-
-    &::placeholder {
-      color: var(--default-placeholder-color) !important;
-    }
-  }
-
-  :global .react-select__multi-value__label {
-    color: #262522 !important;
-  }
-
-  :global .react-select__placeholder {
-    display: block;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  :global .react-select__single-value {
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: #262522 !important;
-    white-space: nowrap;
-  }
-
-  [class*='react-select__option'] {
-    overflow-wrap: anywhere;
-  }
-  /* stylelint-enable */
+  --dropdown-list-control-padding: 1.1rem 1.6rem;
 }
 
 .dropdown-select-wrapper_label-left {
@@ -77,9 +21,7 @@
     top: -99999px;
     left: -99999px;
     font-family: Nunito, sans-serif;
-    /* stylelint-disable number-max-precision */
     font-size: 1.504rem;
-    /* stylelint-enable number-max-precision */
     line-height: 1.6rem;
     white-space: pre;
   }
@@ -87,7 +29,8 @@
 
 .kickoff-create-field-options-wrapper_label-left {
   min-width: 0;
-  margin-left: calc(40% + 3.2rem);
+  max-width: calc(55% - 3.2rem);
+  margin-left: calc(45% + 3.2rem);
 }
 
 .kickoff-create-field-name {
@@ -138,7 +81,7 @@
 }
 
 .kickoff-create-field-option__input {
-  max-width: calc(100% - 2.4rem);
+  max-width: 100%;
   border: none;
 
   @mixin text-truncate;
