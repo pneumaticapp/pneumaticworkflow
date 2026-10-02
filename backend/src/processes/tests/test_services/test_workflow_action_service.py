@@ -2,8 +2,10 @@ from datetime import timedelta
 
 import pytest
 from django.utils import timezone
+from pytest_mock import MockerFixture
 
-from src.accounts.enums import UserType
+from src.accounts.enums import AbsenceStatus, UserGroupType, UserType
+from src.accounts.models import UserVacation
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     ConditionAction,
@@ -9408,7 +9410,7 @@ def test_skip_delegated_task_for_starter__rcba_last_starter__complete_task(
     complete_task_mock.assert_called_once_with(task=task)
     send_task_deleted_mock.assert_not_called()
     task_skip_for_starter_mock.assert_not_called()
-    check_delay_workflow_mock.assert_not_called()
+    check_delay_workflow_mock.assert_called_once_with()
 
 
 def test_skip_delegated_task_for_starter__rcba_delayed__not_complete_task(
@@ -10591,3 +10593,2177 @@ def test__task_skip_no_performers__not_returned__start_next(mocker):
     task_skip_no_performers_event_mock.assert_called_once_with(task)
     start_next_tasks_mock.assert_called_once_with(parent_task=task)
     start_prev_tasks_mock.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    'performer_type, is_completed',
+    (
+        (PerformerType.USER, False),
+        (PerformerType.USER, True),
+        (PerformerType.GROUP, False),
+        (PerformerType.GROUP, True),
+    ),
+)
+def test_complete_task_for_user__assigned__share_completed(
+    performer_type: str,
+    is_completed: bool,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    performer = create_test_admin(account=account)
+    workflow = create_test_workflow(
+        user=owner,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.require_completion_by_all = True
+    task.save(update_fields=['require_completion_by_all'])
+    if performer_type == PerformerType.USER:
+        task_performer = TaskPerformer.objects.create(
+            task=task,
+            user=performer,
+            type=performer_type,
+            is_completed=is_completed,
+        )
+    else:
+        group = create_test_group(
+            account=account,
+            users=[performer, owner],
+        )
+        task_performer = TaskPerformer.objects.create(
+            task=task,
+            group=group,
+            type=performer_type,
+        )
+        if is_completed:
+            TaskPerformer.objects.create(
+                task=task,
+                user=performer,
+                type=PerformerType.GROUP_USER,
+                is_completed=True,
+            )
+    service = WorkflowActionService(
+        user=owner,
+        workflow=workflow,
+    )
+
+    # act
+    service._complete_task_for_user(
+        task=task,
+        user=performer,
+    )
+
+    # assert
+    task_performer.refresh_from_db()
+    if performer_type == PerformerType.USER:
+        assert task_performer.is_completed is True
+    else:
+        assert task_performer.is_completed is False
+        assert TaskPerformer.objects.get(
+            task=task,
+            user=performer,
+            type=PerformerType.GROUP_USER,
+        ).is_completed is True
+    assert TaskPerformer.objects.get(
+        task=task,
+        user=owner,
+        type=PerformerType.USER,
+    ).is_completed is False
+
+
+def test_complete_task_for_user__not_assigned__no_changes():
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    other_user = create_test_admin(account=account)
+    workflow = create_test_workflow(
+        user=owner,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    service = WorkflowActionService(
+        user=owner,
+        workflow=workflow,
+    )
+
+    # act
+    service._complete_task_for_user(
+        task=task,
+        user=other_user,
+    )
+
+    # assert
+    assert task.taskperformer_set.count() == 1
+    assert task.taskperformer_set.get().is_completed is False
+
+
+def test_complete_task_for_user__completion_error__propagated(
+    mocker: MockerFixture,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=owner,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task_performers = list(task.taskperformer_set.all())
+    complete_performers_for_user_mock = mocker.patch(
+        target=(
+            'src.processes.services.workflow_action.'
+            'WorkflowActionService._complete_performers_for_user'
+        ),
+        side_effect=exceptions.UserAlreadyCompleteTask,
+    )
+    service = WorkflowActionService(
+        user=owner,
+        workflow=workflow,
+    )
+
+    # act
+    with pytest.raises(exceptions.UserAlreadyCompleteTask) as ex:
+        service._complete_task_for_user(
+            task=task,
+            user=owner,
+        )
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0007
+    complete_performers_for_user_mock.assert_called_once_with(
+        task=task,
+        task_performers=task_performers,
+        user=owner,
+    )
+
+
+@pytest.mark.parametrize(
+    'absence_status, directly_status, is_deleted, starter_is_member',
+    (
+        (AbsenceStatus.ACTIVE, DirectlyStatus.CREATED, False, True),
+        (AbsenceStatus.VACATION, DirectlyStatus.DELETED, False, True),
+        (AbsenceStatus.VACATION, DirectlyStatus.CREATED, True, True),
+        (AbsenceStatus.VACATION, DirectlyStatus.CREATED, False, False),
+    ),
+)
+def test_complete_delegated_task_for_starter__inactive_delegate__not_waived(
+    absence_status: AbsenceStatus.LITERALS,
+    directly_status: int,
+    is_deleted: bool,
+    starter_is_member: bool,
+):
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    vacation_user = create_test_admin(account=account)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.require_completion_by_all = True
+    task.save(update_fields=['skip_for_starter', 'require_completion_by_all'])
+    vacation_performer = TaskPerformer.objects.create(
+        task=task,
+        user=vacation_user,
+        type=PerformerType.USER,
+    )
+    group = create_test_group(
+        account=account,
+        name='Substitutes',
+        users=[starter] if starter_is_member else [],
+        type_=UserGroupType.PERSONAL,
+    )
+    UserVacation.objects.create(
+        user=vacation_user,
+        account=account,
+        substitute_group=group,
+        absence_status=absence_status,
+        is_deleted=is_deleted,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        group=group,
+        type=PerformerType.GROUP,
+        directly_status=directly_status,
+    )
+    service = WorkflowActionService(
+        user=starter,
+        workflow=workflow,
+    )
+
+    # act
+    service._complete_delegated_task_for_starter(task=task)
+
+    # assert
+    vacation_performer.refresh_from_db()
+    assert vacation_performer.is_completed is False
+    assert TaskPerformer.objects.get(
+        task=task,
+        user=starter,
+        type=PerformerType.USER,
+    ).is_completed is False
+
+
+@pytest.mark.parametrize(
+    'skip_for_starter, require_all, is_external',
+    ((False, True, False), (True, False, False), (True, True, True)),
+)
+def test_complete_delegated_task_for_starter__rule_disabled__no_waiver(
+    skip_for_starter: bool,
+    require_all: bool,
+    is_external: bool,
+):
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    vacation_user = create_test_admin(account=account)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+        is_external=is_external,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = skip_for_starter
+    task.require_completion_by_all = require_all
+    task.save(update_fields=['skip_for_starter', 'require_completion_by_all'])
+    vacation_performer = TaskPerformer.objects.create(
+        task=task,
+        user=vacation_user,
+        type=PerformerType.USER,
+    )
+    group = create_test_group(
+        account=account,
+        name='Substitutes',
+        users=[starter],
+        type_=UserGroupType.PERSONAL,
+    )
+    UserVacation.objects.create(
+        user=vacation_user,
+        account=account,
+        substitute_group=group,
+        absence_status=AbsenceStatus.VACATION,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        group=group,
+        type=PerformerType.GROUP,
+    )
+    service = WorkflowActionService(
+        user=starter,
+        workflow=workflow,
+    )
+
+    # act
+    service._complete_delegated_task_for_starter(task=task)
+
+    # assert
+    vacation_performer.refresh_from_db()
+    assert vacation_performer.is_completed is False
+    assert not TaskPerformer.objects.filter(
+        task=task,
+        type=PerformerType.GROUP_USER,
+    ).exists()
+
+
+@pytest.mark.parametrize(
+    'task_status',
+    (TaskStatus.ACTIVE, TaskStatus.DELAYED),
+)
+@pytest.mark.parametrize('completed_user', ('', 'owner', 'starter'))
+def test_skip_delegated_task_for_starter__rcba_group__wait_for_other(
+    mocker: MockerFixture,
+    task_status: TaskStatus.LITERALS,
+    completed_user: str,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    starter = create_test_admin(account=account)
+    other_user = create_test_not_admin(account=account)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.require_completion_by_all = True
+    task.status = task_status
+    task.save(
+        update_fields=[
+            'skip_for_starter',
+            'require_completion_by_all',
+            'status',
+        ],
+    )
+    task.taskperformer_set.all().delete()
+    group = create_test_group(
+        account=account,
+        name='Approvers',
+        users=[owner, other_user],
+    )
+    substitute_group = create_test_group(
+        account=account,
+        name='Substitutes',
+        users=[starter],
+        type_=UserGroupType.PERSONAL,
+    )
+    group_performer = TaskPerformer.objects.create(
+        task=task,
+        group=group,
+        type=PerformerType.GROUP,
+    )
+    completed_user_id = None
+    if completed_user:
+        completed_user_id = (
+            owner.id if completed_user == 'owner' else starter.id
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            user_id=completed_user_id,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
+        )
+    TaskPerformer.objects.create(
+        task=task,
+        group=substitute_group,
+        type=PerformerType.GROUP,
+    )
+    send_task_completed_websocket_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_task_completed_websocket.delay',
+    )
+    complete_task_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'WorkflowActionService.complete_task',
+    )
+    task_skip_for_starter_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'WorkflowActionService._task_skip_for_starter',
+    )
+    service = WorkflowActionService(
+        user=owner,
+        workflow=workflow,
+    )
+
+    # act
+    result = service.skip_delegated_task_for_starter(
+        task=task,
+        delegated_user=owner,
+    )
+
+    # assert
+    task.refresh_from_db()
+    group_performer.refresh_from_db()
+    assert result is False
+    assert task.status == task_status
+    assert group_performer.is_completed is False
+    assert TaskPerformer.objects.get(
+        task=task,
+        user=owner,
+        type=PerformerType.GROUP_USER,
+    ).is_completed is True
+    assert TaskPerformer.objects.get(
+        task=task,
+        user=starter,
+        type=PerformerType.GROUP_USER,
+    ).is_completed is True
+    assert not TaskPerformer.objects.filter(
+        task=task,
+        user=other_user,
+        type=PerformerType.GROUP_USER,
+    ).exists()
+    assert task.can_be_completed(by_user=other_user) is True
+    send_task_completed_websocket_mock.assert_called_once_with(
+        task_id=task.id,
+        recipients=[
+            (user.id, user.email)
+            for user in (owner, starter)
+            if user.id != completed_user_id
+        ],
+        account_id=account.id,
+    )
+    complete_task_mock.assert_not_called()
+    task_skip_for_starter_mock.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    'performer_type',
+    (PerformerType.USER, PerformerType.GROUP),
+)
+def test_resume_task__rcba_delegated_to_starter__other_can_complete(
+    mocker: MockerFixture,
+    performer_type: str,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    starter = create_test_admin(account=account)
+    other_user = create_test_not_admin(account=account)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+        status=WorkflowStatus.DELAYED,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.require_completion_by_all = True
+    task.status = TaskStatus.DELAYED
+    task.save(
+        update_fields=[
+            'skip_for_starter',
+            'require_completion_by_all',
+            'status',
+        ],
+    )
+    task.taskperformer_set.all().delete()
+    if performer_type == PerformerType.USER:
+        TaskPerformer.objects.create(
+            task=task,
+            user=owner,
+            type=performer_type,
+            is_completed=True,
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            user=other_user,
+            type=performer_type,
+        )
+    else:
+        group = create_test_group(
+            account=account,
+            users=[owner, other_user],
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            group=group,
+            type=performer_type,
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            user=owner,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
+        )
+    substitute_group = create_test_group(
+        account=account,
+        name='Substitutes',
+        users=[starter],
+        type_=UserGroupType.PERSONAL,
+    )
+    UserVacation.objects.create(
+        user=owner,
+        account=account,
+        substitute_group=substitute_group,
+        absence_status=AbsenceStatus.VACATION,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        group=substitute_group,
+        type=PerformerType.GROUP,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        user=starter,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+    )
+    send_new_task_notification_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_new_task_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        target=(
+            'src.processes.services.workflow_action.'
+            'send_new_task_websocket.delay'
+        ),
+    )
+    send_task_completed_websocket_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_task_completed_websocket.delay',
+    )
+    send_task_completed_notification_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_task_completed_notification.delay',
+    )
+    task_completed_mock = mocker.patch(
+        target=(
+            'src.processes.services.workflow_action.'
+            'AnalyticService.task_completed'
+        ),
+    )
+    task_complete_event_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'WorkflowEventService.task_complete_event',
+    )
+    task_started_event_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'WorkflowEventService.task_started_event',
+    )
+    start_next_tasks_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'WorkflowActionService._start_next_tasks',
+    )
+    service = WorkflowActionService(
+        user=other_user,
+        workflow=workflow,
+    )
+
+    # act
+    service.resume_task(task=task)
+    service.complete_task_for_user(task=task)
+
+    # assert
+    task.refresh_from_db()
+    workflow.refresh_from_db()
+    assert workflow.status == WorkflowStatus.RUNNING
+    assert task.status == TaskStatus.COMPLETED
+    assert task.date_completed is not None
+    assert not TaskPerformer.objects.filter(
+        task=task,
+        is_completed=False,
+    ).exists()
+    send_new_task_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        recipients=[(other_user.id, other_user.email, True)],
+        task_id=task.id,
+        task_name=task.name,
+        task_data=mocker.ANY,
+        task_description=task.description,
+        workflow_name=workflow.name,
+        template_name=workflow.get_template_name(),
+        workflow_starter_name=starter.name,
+        workflow_starter_photo=starter.photo,
+        due_date_timestamp=None,
+        logo_lg=account.logo_lg,
+        is_returned=False,
+    )
+    send_new_task_websocket_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        task_id=task.id,
+        recipients=[(other_user.id, other_user.email, True)],
+        account_id=account.id,
+        task_data=mocker.ANY,
+    )
+    send_task_completed_websocket_mock.assert_called_once_with(
+        task_id=task.id,
+        recipients=[(other_user.id, other_user.email)],
+        account_id=account.id,
+    )
+    send_task_completed_notification_mock.assert_not_called()
+    task_completed_mock.assert_called_once_with(
+        user=other_user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        workflow=workflow,
+        task=task,
+    )
+    task_complete_event_mock.assert_called_once_with(
+        task=task,
+        user=other_user,
+    )
+    task_started_event_mock.assert_not_called()
+    assert start_next_tasks_mock.call_count == 2
+    start_next_tasks_mock.assert_has_calls(
+        [mocker.call(), mocker.call(parent_task=task)],
+    )
+
+
+def test_force_resume_workflow__skip_then_resume__running(
+    mocker: MockerFixture,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=owner,
+        tasks_count=2,
+        status=WorkflowStatus.DELAYED,
+    )
+    task_1 = workflow.tasks.get(number=1)
+    task_2 = workflow.tasks.get(number=2)
+    task_1.skip_for_starter = True
+    task_1.require_completion_by_all = True
+    task_1.status = TaskStatus.DELAYED
+    task_1.save(
+        update_fields=[
+            'skip_for_starter',
+            'require_completion_by_all',
+            'status',
+        ],
+    )
+    task_2.status = TaskStatus.DELAYED
+    task_2.save(update_fields=['status'])
+    delay_1 = Delay.objects.create(
+        task=task_1,
+        workflow=workflow,
+        duration=timedelta(hours=1),
+        start_date=timezone.now(),
+    )
+    delay_2 = Delay.objects.create(
+        task=task_2,
+        workflow=workflow,
+        duration=timedelta(hours=1),
+        start_date=timezone.now(),
+    )
+    after_create_actions_mock = mocker.patch(
+        target='src.processes.services.events.'
+        'WorkflowEventService._after_create_actions',
+    )
+    send_resumed_workflow_notification_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_resumed_workflow_notification.delay',
+    )
+    send_new_task_notification_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_new_task_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_new_task_websocket.delay',
+    )
+    service = WorkflowActionService(
+        user=owner,
+        workflow=workflow,
+    )
+
+    # act
+    service.force_resume_workflow()
+
+    # assert
+    task_1.refresh_from_db()
+    task_2.refresh_from_db()
+    delay_1.refresh_from_db()
+    delay_2.refresh_from_db()
+    workflow.refresh_from_db()
+    assert task_1.status == TaskStatus.SKIPPED
+    assert task_2.status == TaskStatus.ACTIVE
+    assert task_2.date_started is not None
+    assert delay_1.end_date is not None
+    assert delay_2.end_date is not None
+    assert workflow.status == WorkflowStatus.RUNNING
+    assert workflow.date_completed is None
+    force_resume_event = WorkflowEvent.objects.get(
+        workflow=workflow,
+        type=WorkflowEventType.FORCE_RESUME,
+    )
+    skip_event = WorkflowEvent.objects.get(
+        task=task_1,
+        type=WorkflowEventType.TASK_SKIP,
+    )
+    started_event = WorkflowEvent.objects.get(
+        task=task_2,
+        type=WorkflowEventType.TASK_START,
+    )
+    assert after_create_actions_mock.call_count == 3
+    after_create_actions_mock.assert_has_calls(
+        [
+            mocker.call(force_resume_event),
+            mocker.call(skip_event),
+            mocker.call(started_event),
+        ],
+    )
+    assert send_resumed_workflow_notification_mock.call_count == 2
+    send_resumed_workflow_notification_mock.assert_has_calls(
+        [
+            mocker.call(
+                logging=account.log_api_requests,
+                logo_lg=account.logo_lg,
+                author_id=owner.id,
+                account_id=account.id,
+                task_id=task_1.id,
+            ),
+            mocker.call(
+                logging=account.log_api_requests,
+                logo_lg=account.logo_lg,
+                author_id=owner.id,
+                account_id=account.id,
+                task_id=task_2.id,
+            ),
+        ],
+    )
+    send_new_task_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        recipients=[(owner.id, owner.email, True)],
+        task_id=task_2.id,
+        task_name=task_2.name,
+        task_data=task_2.get_data_for_list(),
+        task_description=task_2.description,
+        workflow_name=workflow.name,
+        template_name=workflow.get_template_name(),
+        workflow_starter_name=owner.name,
+        workflow_starter_photo=owner.photo,
+        due_date_timestamp=None,
+        logo_lg=account.logo_lg,
+        is_returned=False,
+    )
+    send_new_task_websocket_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        task_id=task_2.id,
+        recipients=[(owner.id, owner.email, True)],
+        account_id=account.id,
+        task_data=task_2.get_data_for_list(),
+    )
+
+
+def test_force_resume_workflow__end_condition__stop_resuming(
+    mocker: MockerFixture,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=owner,
+        tasks_count=3,
+        is_active=True,
+    )
+    template.tasks.get(number=2).conditions.update(
+        action=ConditionAction.END_WORKFLOW,
+    )
+    workflow = create_test_workflow(
+        user=owner,
+        template=template,
+        status=WorkflowStatus.DELAYED,
+    )
+    task_1 = workflow.tasks.get(number=1)
+    task_2 = workflow.tasks.get(number=2)
+    task_3 = workflow.tasks.get(number=3)
+    task_1.skip_for_starter = True
+    task_1.require_completion_by_all = True
+    task_1.status = TaskStatus.DELAYED
+    task_1.save(
+        update_fields=[
+            'skip_for_starter',
+            'require_completion_by_all',
+            'status',
+        ],
+    )
+    task_3.status = TaskStatus.DELAYED
+    task_3.save(update_fields=['status'])
+    Delay.objects.create(
+        task=task_1,
+        workflow=workflow,
+        duration=timedelta(hours=1),
+        start_date=timezone.now(),
+    )
+    delay_3 = Delay.objects.create(
+        task=task_3,
+        workflow=workflow,
+        duration=timedelta(hours=1),
+        start_date=timezone.now(),
+    )
+    after_create_actions_mock = mocker.patch(
+        target='src.processes.services.events.'
+        'WorkflowEventService._after_create_actions',
+    )
+    send_resumed_workflow_notification_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_resumed_workflow_notification.delay',
+    )
+    send_new_task_notification_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_new_task_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_new_task_websocket.delay',
+    )
+    deactivate_task_guest_cache_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'GuestJWTAuthService.deactivate_task_guest_cache',
+    )
+    service = WorkflowActionService(
+        user=owner,
+        workflow=workflow,
+    )
+
+    # act
+    service.force_resume_workflow()
+
+    # assert
+    task_1.refresh_from_db()
+    task_2.refresh_from_db()
+    task_3.refresh_from_db()
+    delay_3.refresh_from_db()
+    workflow.refresh_from_db()
+    assert task_1.status == TaskStatus.SKIPPED
+    assert task_2.status == TaskStatus.PENDING
+    assert task_3.status == TaskStatus.ACTIVE
+    assert task_3.date_started is None
+    assert delay_3.end_date is not None
+    assert workflow.status == WorkflowStatus.DONE
+    assert workflow.date_completed is not None
+    assert not WorkflowEvent.objects.filter(
+        task=task_3,
+        type=WorkflowEventType.TASK_START,
+    ).exists()
+    force_resume_event = WorkflowEvent.objects.get(
+        workflow=workflow,
+        type=WorkflowEventType.FORCE_RESUME,
+    )
+    skip_event = WorkflowEvent.objects.get(
+        task=task_1,
+        type=WorkflowEventType.TASK_SKIP,
+    )
+    ended_event = WorkflowEvent.objects.get(
+        task=task_2,
+        type=WorkflowEventType.ENDED_BY_CONDITION,
+    )
+    assert after_create_actions_mock.call_count == 3
+    after_create_actions_mock.assert_has_calls(
+        [
+            mocker.call(force_resume_event),
+            mocker.call(skip_event),
+            mocker.call(ended_event),
+        ],
+    )
+    send_resumed_workflow_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        logo_lg=account.logo_lg,
+        author_id=owner.id,
+        account_id=account.id,
+        task_id=task_1.id,
+    )
+    send_new_task_notification_mock.assert_not_called()
+    send_new_task_websocket_mock.assert_not_called()
+    assert deactivate_task_guest_cache_mock.call_count == 3
+    deactivate_task_guest_cache_mock.assert_has_calls(
+        [
+            mocker.call(task_id=task_1.id),
+            mocker.call(task_id=task_2.id),
+            mocker.call(task_id=task_3.id),
+        ],
+        any_order=True,
+    )
+
+
+def test_update_tasks_status__end_condition__stop_updating(
+    mocker: MockerFixture,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=owner,
+        tasks_count=3,
+        is_active=True,
+    )
+    template.tasks.get(number=2).conditions.update(
+        action=ConditionAction.END_WORKFLOW,
+    )
+    workflow = create_test_workflow(
+        user=owner,
+        template=template,
+        status=WorkflowStatus.DELAYED,
+    )
+    task_1 = workflow.tasks.get(number=1)
+    task_2 = workflow.tasks.get(number=2)
+    task_3 = workflow.tasks.get(number=3)
+    task_1.skip_for_starter = True
+    task_1.require_completion_by_all = True
+    task_1.status = TaskStatus.DELAYED
+    task_1.save(
+        update_fields=[
+            'skip_for_starter',
+            'require_completion_by_all',
+            'status',
+        ],
+    )
+    task_3.status = TaskStatus.DELAYED
+    task_3.save(update_fields=['status'])
+    Delay.objects.create(
+        task=task_1,
+        workflow=workflow,
+        duration=timedelta(seconds=-1),
+        start_date=timezone.now(),
+    )
+    delay_3 = Delay.objects.create(
+        task=task_3,
+        workflow=workflow,
+        duration=timedelta(seconds=-1),
+        start_date=timezone.now(),
+    )
+    after_create_actions_mock = mocker.patch(
+        target='src.processes.services.events.'
+        'WorkflowEventService._after_create_actions',
+    )
+    send_resumed_workflow_notification_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_resumed_workflow_notification.delay',
+    )
+    send_new_task_notification_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_new_task_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_new_task_websocket.delay',
+    )
+    deactivate_task_guest_cache_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'GuestJWTAuthService.deactivate_task_guest_cache',
+    )
+    service = WorkflowActionService(
+        user=owner,
+        workflow=workflow,
+    )
+
+    # act
+    service.update_tasks_status()
+
+    # assert
+    task_1.refresh_from_db()
+    task_2.refresh_from_db()
+    task_3.refresh_from_db()
+    delay_3.refresh_from_db()
+    workflow.refresh_from_db()
+    assert task_1.status == TaskStatus.SKIPPED
+    assert task_2.status == TaskStatus.PENDING
+    assert task_3.status == TaskStatus.ACTIVE
+    assert task_3.date_started is None
+    assert delay_3.end_date is not None
+    assert workflow.status == WorkflowStatus.DONE
+    assert workflow.date_completed is not None
+    assert not WorkflowEvent.objects.filter(
+        task=task_3,
+        type=WorkflowEventType.TASK_START,
+    ).exists()
+    skip_event = WorkflowEvent.objects.get(
+        task=task_1,
+        type=WorkflowEventType.TASK_SKIP,
+    )
+    ended_event = WorkflowEvent.objects.get(
+        task=task_2,
+        type=WorkflowEventType.ENDED_BY_CONDITION,
+    )
+    assert after_create_actions_mock.call_count == 2
+    after_create_actions_mock.assert_has_calls(
+        [
+            mocker.call(skip_event),
+            mocker.call(ended_event),
+        ],
+    )
+    send_resumed_workflow_notification_mock.assert_not_called()
+    send_new_task_notification_mock.assert_not_called()
+    send_new_task_websocket_mock.assert_not_called()
+    assert deactivate_task_guest_cache_mock.call_count == 3
+    deactivate_task_guest_cache_mock.assert_has_calls(
+        [
+            mocker.call(task_id=task_1.id),
+            mocker.call(task_id=task_2.id),
+            mocker.call(task_id=task_3.id),
+        ],
+        any_order=True,
+    )
+
+
+def test_update_tasks_status__restored_waivers__skip_last_task(
+    mocker: MockerFixture,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    starter = create_test_admin(account=account)
+    other_user = create_test_not_admin(account=account)
+    template = create_test_template(
+        user=owner,
+        tasks_count=1,
+        is_active=True,
+    )
+    workflow = create_test_workflow(
+        user=starter,
+        template=template,
+        status=WorkflowStatus.DELAYED,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.require_completion_by_all = True
+    task.status = TaskStatus.DELAYED
+    task.save(
+        update_fields=[
+            'skip_for_starter',
+            'require_completion_by_all',
+            'status',
+        ],
+    )
+    task.taskperformer_set.update(is_completed=True)
+    delay = Delay.objects.create(
+        task=task,
+        workflow=workflow,
+        duration=timedelta(seconds=-1),
+        start_date=timezone.now(),
+    )
+    group = create_test_group(
+        account=account,
+        users=[other_user],
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        group=group,
+        type=PerformerType.GROUP,
+    )
+    substitute_group = create_test_group(
+        account=account,
+        name='Substitutes',
+        users=[starter],
+        type_=UserGroupType.PERSONAL,
+    )
+    UserVacation.objects.create(
+        user=owner,
+        account=account,
+        substitute_group=substitute_group,
+        absence_status=AbsenceStatus.VACATION,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        group=substitute_group,
+        type=PerformerType.GROUP,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        user=starter,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+    )
+    group.users.remove(other_user)
+    after_create_actions_mock = mocker.patch(
+        target='src.processes.services.events.'
+        'WorkflowEventService._after_create_actions',
+    )
+    send_new_task_notification_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_new_task_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_new_task_websocket.delay',
+    )
+    send_task_completed_websocket_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_task_completed_websocket.delay',
+    )
+    deactivate_task_guest_cache_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'GuestJWTAuthService.deactivate_task_guest_cache',
+    )
+    service = WorkflowActionService(
+        user=owner,
+        workflow=workflow,
+    )
+
+    # act
+    service.update_tasks_status()
+
+    # assert
+    task.refresh_from_db()
+    workflow.refresh_from_db()
+    delay.refresh_from_db()
+    assert task.status == TaskStatus.SKIPPED
+    assert task.date_completed is None
+    assert workflow.status == WorkflowStatus.DONE
+    assert workflow.date_completed is not None
+    assert delay.end_date is not None
+    skip_event = WorkflowEvent.objects.get(
+        task=task,
+        type=WorkflowEventType.TASK_SKIP,
+    )
+    ended_event = WorkflowEvent.objects.get(
+        workflow=workflow,
+        type=WorkflowEventType.ENDED,
+    )
+    assert after_create_actions_mock.call_count == 2
+    after_create_actions_mock.assert_has_calls(
+        [mocker.call(skip_event), mocker.call(ended_event)],
+    )
+    send_new_task_notification_mock.assert_not_called()
+    send_new_task_websocket_mock.assert_not_called()
+    send_task_completed_websocket_mock.assert_not_called()
+    deactivate_task_guest_cache_mock.assert_called_once_with(task_id=task.id)
+
+
+@pytest.mark.parametrize(
+    'tasks_count, absence_status, with_delay',
+    (
+        (1, AbsenceStatus.VACATION, False),
+        (2, AbsenceStatus.SICK_LEAVE, False),
+        (2, AbsenceStatus.VACATION, True),
+    ),
+)
+def test_resume_task__last_group_member_left__skip_and_advance(
+    mocker: MockerFixture,
+    tasks_count: int,
+    absence_status: AbsenceStatus.LITERALS,
+    with_delay: bool,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    starter = create_test_admin(account=account)
+    other_user = create_test_not_admin(account=account)
+    group = create_test_group(
+        account=account,
+        users=[owner, other_user],
+    )
+    template = create_test_template(
+        user=owner,
+        tasks_count=tasks_count,
+        with_delay=with_delay,
+        is_active=True,
+    )
+    task_template = template.tasks.get(number=1)
+    task_template.delete_raw_performers()
+    task_template.add_raw_performer(
+        group=group,
+        performer_type=PerformerType.GROUP,
+    )
+    workflow = create_test_workflow(
+        user=starter,
+        template=template,
+        status=WorkflowStatus.DELAYED,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.require_completion_by_all = True
+    task.status = TaskStatus.DELAYED
+    task.save(
+        update_fields=[
+            'skip_for_starter',
+            'require_completion_by_all',
+            'status',
+        ],
+    )
+    delay = Delay.objects.create(
+        task=task,
+        workflow=workflow,
+        duration=timedelta(hours=1),
+        start_date=timezone.now(),
+    )
+    substitute_group = create_test_group(
+        account=account,
+        name='Substitutes',
+        users=[starter],
+        type_=UserGroupType.PERSONAL,
+    )
+    UserVacation.objects.create(
+        user=owner,
+        account=account,
+        substitute_group=substitute_group,
+        absence_status=absence_status,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        group=substitute_group,
+        type=PerformerType.GROUP,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        user=owner,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        user=starter,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+    )
+    group.users.remove(other_user)
+    after_create_actions_mock = mocker.patch(
+        target='src.processes.services.events.'
+        'WorkflowEventService._after_create_actions',
+    )
+    send_new_task_notification_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_new_task_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_new_task_websocket.delay',
+    )
+    deactivate_task_guest_cache_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'GuestJWTAuthService.deactivate_task_guest_cache',
+    )
+    schedule_sync_workflow_attachment_permissions_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'schedule_sync_workflow_attachment_permissions',
+    )
+    reassign_restricted_permissions_for_task_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'reassign_restricted_permissions_for_task',
+    )
+    service = WorkflowActionService(
+        user=owner,
+        workflow=workflow,
+    )
+
+    # act
+    service.resume_task(task=task)
+
+    # assert
+    task.refresh_from_db()
+    workflow.refresh_from_db()
+    delay.refresh_from_db()
+    assert task.status == TaskStatus.SKIPPED
+    assert delay.end_date is not None
+    assert TaskPerformer.objects.get(
+        task=task,
+        user=owner,
+        type=PerformerType.GROUP_USER,
+    ).is_completed is True
+    assert TaskPerformer.objects.get(
+        task=task,
+        user=starter,
+        type=PerformerType.GROUP_USER,
+    ).is_completed is True
+    assert not WorkflowEvent.objects.filter(
+        task=task,
+        type=WorkflowEventType.TASK_START,
+    ).exists()
+    skip_event = WorkflowEvent.objects.get(
+        task=task,
+        type=WorkflowEventType.TASK_SKIP,
+    )
+    if tasks_count == 1:
+        assert workflow.status == WorkflowStatus.DONE
+        assert workflow.date_completed is not None
+        ended_event = WorkflowEvent.objects.get(
+            workflow=workflow,
+            type=WorkflowEventType.ENDED,
+        )
+        assert after_create_actions_mock.call_count == 2
+        after_create_actions_mock.assert_has_calls(
+            [mocker.call(skip_event), mocker.call(ended_event)],
+        )
+        send_new_task_notification_mock.assert_not_called()
+        send_new_task_websocket_mock.assert_not_called()
+        deactivate_task_guest_cache_mock.assert_called_once_with(
+            task_id=task.id,
+        )
+        schedule_sync_workflow_attachment_permissions_mock.assert_not_called()
+        reassign_restricted_permissions_for_task_mock.assert_not_called()
+    else:
+        next_task = workflow.tasks.get(number=2)
+        if with_delay:
+            assert next_task.status == TaskStatus.DELAYED
+            assert next_task.date_started is None
+            assert next_task.get_active_delay().start_date is not None
+            assert workflow.status == WorkflowStatus.DELAYED
+        else:
+            assert next_task.status == TaskStatus.ACTIVE
+            assert next_task.date_started is not None
+            assert workflow.status == WorkflowStatus.RUNNING
+        assert workflow.date_completed is None
+        next_event = WorkflowEvent.objects.get(
+            task=next_task,
+            type=(
+                WorkflowEventType.TASK_DELAY if with_delay
+                else WorkflowEventType.TASK_START
+            ),
+        )
+        assert after_create_actions_mock.call_count == 2
+        after_create_actions_mock.assert_has_calls(
+            [mocker.call(skip_event), mocker.call(next_event)],
+        )
+        deactivate_task_guest_cache_mock.assert_not_called()
+        if with_delay:
+            send_new_task_notification_mock.assert_not_called()
+            send_new_task_websocket_mock.assert_not_called()
+            (
+                schedule_sync_workflow_attachment_permissions_mock
+                .assert_not_called()
+            )
+        else:
+            send_new_task_notification_mock.assert_called_once_with(
+                logging=account.log_api_requests,
+                account_id=account.id,
+                recipients=[(owner.id, owner.email, True)],
+                task_id=next_task.id,
+                task_name=next_task.name,
+                task_data=next_task.get_data_for_list(),
+                task_description=next_task.description,
+                workflow_name=workflow.name,
+                template_name=workflow.get_template_name(),
+                workflow_starter_name=starter.name,
+                workflow_starter_photo=starter.photo,
+                due_date_timestamp=None,
+                logo_lg=account.logo_lg,
+                is_returned=False,
+            )
+            send_new_task_websocket_mock.assert_called_once_with(
+                logging=account.log_api_requests,
+                task_id=next_task.id,
+                recipients=[(owner.id, owner.email, True)],
+                account_id=account.id,
+                task_data=next_task.get_data_for_list(),
+            )
+            (
+                schedule_sync_workflow_attachment_permissions_mock
+                .assert_called_once_with(workflow.id)
+            )
+        reassign_restricted_permissions_for_task_mock.assert_called_once_with(
+            task=next_task,
+            user=owner,
+        )
+
+
+def test_skip_delegated_task_for_starter__next_delay__workflow_delayed(
+    mocker: MockerFixture,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    starter = create_test_admin(account=account)
+    other_user = create_test_not_admin(account=account)
+    template = create_test_template(
+        user=owner,
+        tasks_count=2,
+        with_delay=True,
+        is_active=True,
+    )
+    workflow = create_test_workflow(
+        user=starter,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.require_completion_by_all = True
+    task.save(update_fields=['skip_for_starter', 'require_completion_by_all'])
+    TaskPerformer.objects.create(
+        task=task,
+        user=other_user,
+        type=PerformerType.USER,
+        is_completed=True,
+    )
+    substitute_group = create_test_group(
+        account=account,
+        users=[starter],
+        type_=UserGroupType.PERSONAL,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        group=substitute_group,
+        type=PerformerType.GROUP,
+    )
+    next_task = workflow.tasks.get(number=2)
+    current_date = timezone.now()
+    timezone_mock = mocker.patch(
+        target='src.processes.services.workflow_action.timezone',
+    )
+    timezone_mock.now.return_value = current_date
+    after_create_actions_mock = mocker.patch(
+        target='src.processes.services.events.'
+        'WorkflowEventService._after_create_actions',
+    )
+    send_task_completed_websocket_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_task_completed_websocket.delay',
+    )
+    send_task_completed_notification_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_task_completed_notification.delay',
+    )
+    send_new_task_notification_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_new_task_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_new_task_websocket.delay',
+    )
+    reassign_restricted_permissions_for_task_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'reassign_restricted_permissions_for_task',
+    )
+    service = WorkflowActionService(
+        user=owner,
+        workflow=workflow,
+    )
+
+    # act
+    result = service.skip_delegated_task_for_starter(
+        task=task,
+        delegated_user=owner,
+    )
+
+    # assert
+    task.refresh_from_db()
+    next_task.refresh_from_db()
+    workflow.refresh_from_db()
+    assert result is False
+    assert task.status == TaskStatus.COMPLETED
+    assert task.date_completed == current_date
+    assert next_task.status == TaskStatus.DELAYED
+    assert next_task.date_started is None
+    assert next_task.get_active_delay().start_date == current_date
+    assert workflow.status == WorkflowStatus.DELAYED
+    assert workflow.date_completed is None
+    assert not workflow.tasks.active().exists()
+    delay_event = WorkflowEvent.objects.get(
+        task=next_task,
+        type=WorkflowEventType.TASK_DELAY,
+    )
+    after_create_actions_mock.assert_called_once_with(delay_event)
+    assert send_task_completed_websocket_mock.call_count == 2
+    send_task_completed_websocket_mock.assert_has_calls(
+        [
+            mocker.call(
+                task_id=task.id,
+                recipients=[
+                    (owner.id, owner.email),
+                    (starter.id, starter.email),
+                ],
+                account_id=account.id,
+            ),
+            mocker.call(
+                task_id=task.id,
+                recipients=[],
+                account_id=account.id,
+            ),
+        ],
+    )
+    send_task_completed_notification_mock.assert_not_called()
+    send_new_task_notification_mock.assert_not_called()
+    send_new_task_websocket_mock.assert_not_called()
+    reassign_restricted_permissions_for_task_mock.assert_called_once_with(
+        task=next_task,
+        user=owner,
+    )
+    assert timezone_mock.now.call_count == 5
+    timezone_mock.now.assert_has_calls(
+        [
+            mocker.call(),
+            mocker.call(),
+            mocker.call(),
+            mocker.call(),
+            mocker.call(),
+        ],
+    )
+
+
+@pytest.mark.parametrize('performer_type', (
+    PerformerType.USER,
+    PerformerType.GROUP,
+))
+@pytest.mark.parametrize('absence_status', (
+    AbsenceStatus.VACATION,
+    AbsenceStatus.SICK_LEAVE,
+))
+def test_return_to__starter_substitute__delegation_restored(
+    mocker: MockerFixture,
+    performer_type: str,
+    absence_status: AbsenceStatus.LITERALS,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    starter = create_test_admin(account=account)
+    other_user = create_test_not_admin(account=account)
+    template = create_test_template(
+        user=owner,
+        tasks_count=1,
+        is_active=True,
+    )
+    task_template = template.tasks.get(number=1)
+    task_template.skip_for_starter = True
+    task_template.require_completion_by_all = True
+    task_template.save(
+        update_fields=['skip_for_starter', 'require_completion_by_all'],
+    )
+    if performer_type == PerformerType.USER:
+        task_template.add_raw_performer(user=other_user)
+    else:
+        task_template.delete_raw_performers()
+        group = create_test_group(
+            account=account,
+            users=[owner, other_user],
+        )
+        task_template.add_raw_performer(
+            group=group,
+            performer_type=performer_type,
+        )
+    workflow = create_test_workflow(
+        user=starter,
+        template=template,
+        active_task_number=2,
+        status=WorkflowStatus.DONE,
+    )
+    task = workflow.tasks.get(number=1)
+    substitute_group = create_test_group(
+        account=account,
+        name='Substitutes',
+        users=[starter],
+        type_=UserGroupType.PERSONAL,
+    )
+    UserVacation.objects.create(
+        account=account,
+        user=owner,
+        substitute_group=substitute_group,
+        absence_status=absence_status,
+    )
+    substitute_performer = TaskPerformer.objects.create(
+        task=task,
+        group=substitute_group,
+        type=PerformerType.GROUP,
+        is_completed=True,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        user=starter,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+    )
+    task_data = task.get_data_for_list()
+    current_date = timezone.now()
+    timezone_mock = mocker.patch(
+        target='src.processes.services.workflow_action.timezone',
+    )
+    timezone_mock.now.return_value = current_date
+    after_create_actions_mock = mocker.patch(
+        target='src.processes.services.events.'
+        'WorkflowEventService._after_create_actions',
+    )
+    workflow_returned_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'AnalyticService.workflow_returned',
+    )
+    send_task_deleted_notification_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_task_deleted_notification.delay',
+    )
+    send_new_task_notification_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_new_task_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_new_task_websocket.delay',
+    )
+    reassign_restricted_permissions_for_task_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'reassign_restricted_permissions_for_task',
+    )
+    schedule_sync_workflow_attachment_permissions_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'schedule_sync_workflow_attachment_permissions',
+    )
+    service = WorkflowActionService(
+        user=owner,
+        workflow=workflow,
+    )
+
+    # act
+    service.return_to(
+        revert_to_task=task,
+    )
+
+    # assert
+    task.refresh_from_db()
+    workflow.refresh_from_db()
+    substitute_performer.refresh_from_db()
+    assert task.status == TaskStatus.ACTIVE
+    assert task.date_completed is None
+    assert task.date_started == current_date
+    assert workflow.status == WorkflowStatus.RUNNING
+    assert workflow.date_completed is None
+    assert substitute_performer.is_deleted is False
+    assert substitute_performer.is_completed is False
+    assert TaskPerformer.objects.get(
+        task=task,
+        user=owner,
+        type=(
+            PerformerType.USER if performer_type == PerformerType.USER
+            else PerformerType.GROUP_USER
+        ),
+    ).is_completed is True
+    assert TaskPerformer.objects.get(
+        task=task,
+        user=starter,
+        type=PerformerType.GROUP_USER,
+    ).is_completed is True
+    assert task.can_be_completed(by_user=other_user) is True
+    assert WorkflowActionService._get_incompleted_performers_users(
+        task=task,
+    ) == [{
+        'id': other_user.id,
+        'email': other_user.email,
+        'type': UserType.USER,
+        'is_completed': False,
+        'is_new_tasks_subscriber': True,
+        'is_complete_tasks_subscriber': True,
+    }]
+    returned_event = WorkflowEvent.objects.get(
+        task=task,
+        type=WorkflowEventType.REVERT,
+    )
+    started_event = WorkflowEvent.objects.get(
+        task=task,
+        type=WorkflowEventType.TASK_START,
+    )
+    assert after_create_actions_mock.call_count == 2
+    after_create_actions_mock.assert_has_calls(
+        [mocker.call(returned_event), mocker.call(started_event)],
+    )
+    workflow_returned_mock.assert_called_once_with(
+        user=owner,
+        task=task,
+        workflow=workflow,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    send_task_deleted_notification_mock.assert_called_once_with(
+        task_id=task.id,
+        recipients=[
+            (owner.id, owner.email),
+            (starter.id, starter.email),
+            (other_user.id, other_user.email),
+        ],
+        account_id=account.id,
+        task_data=task_data,
+    )
+    send_new_task_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        recipients=[(other_user.id, other_user.email, True)],
+        task_id=task.id,
+        task_name=task.name,
+        task_data=task.get_data_for_list(),
+        task_description=task.description,
+        workflow_name=workflow.name,
+        template_name=workflow.get_template_name(),
+        workflow_starter_name=starter.name,
+        workflow_starter_photo=starter.photo,
+        due_date_timestamp=None,
+        logo_lg=account.logo_lg,
+        is_returned=True,
+    )
+    send_new_task_websocket_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        task_id=task.id,
+        recipients=[(other_user.id, other_user.email, True)],
+        account_id=account.id,
+        task_data=task.get_data_for_list(),
+    )
+    reassign_restricted_permissions_for_task_mock.assert_called_once_with(
+        task=task,
+        user=owner,
+    )
+    schedule_sync_workflow_attachment_permissions_mock.assert_called_once_with(
+        workflow.id,
+    )
+    assert timezone_mock.now.call_count == 3
+    timezone_mock.now.assert_has_calls(
+        [mocker.call(), mocker.call(), mocker.call()],
+    )
+
+
+@pytest.mark.parametrize('performer_type', (
+    PerformerType.USER,
+    PerformerType.GROUP,
+))
+@pytest.mark.parametrize('absence_status', (
+    AbsenceStatus.VACATION,
+    AbsenceStatus.SICK_LEAVE,
+))
+def test_revert__starter_substitute__delegation_restored(
+    mocker: MockerFixture,
+    performer_type: str,
+    absence_status: AbsenceStatus.LITERALS,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    starter = create_test_admin(account=account)
+    other_user = create_test_not_admin(account=account)
+    template = create_test_template(
+        user=owner,
+        tasks_count=2,
+        is_active=True,
+    )
+    task_template = template.tasks.get(number=1)
+    task_template.skip_for_starter = True
+    task_template.require_completion_by_all = True
+    task_template.save(
+        update_fields=['skip_for_starter', 'require_completion_by_all'],
+    )
+    if performer_type == PerformerType.USER:
+        task_template.add_raw_performer(user=other_user)
+    else:
+        task_template.delete_raw_performers()
+        group = create_test_group(
+            account=account,
+            users=[owner, other_user],
+        )
+        task_template.add_raw_performer(
+            group=group,
+            performer_type=performer_type,
+        )
+    next_task_template = template.tasks.get(number=2)
+    next_task_template.delete_raw_performers()
+    next_task_template.add_raw_performer(user=other_user)
+    workflow = create_test_workflow(
+        user=starter,
+        template=template,
+        active_task_number=2,
+        status=WorkflowStatus.RUNNING,
+    )
+    task = workflow.tasks.get(number=1)
+    next_task = workflow.tasks.get(number=2)
+    next_task_data = next_task.get_data_for_list()
+    comment = 'Please check again'
+    substitute_group = create_test_group(
+        account=account,
+        name='Substitutes',
+        users=[starter],
+        type_=UserGroupType.PERSONAL,
+    )
+    UserVacation.objects.create(
+        account=account,
+        user=owner,
+        substitute_group=substitute_group,
+        absence_status=absence_status,
+    )
+    substitute_performer = TaskPerformer.objects.create(
+        task=task,
+        group=substitute_group,
+        type=PerformerType.GROUP,
+        is_completed=True,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        user=starter,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+    )
+    task_data = task.get_data_for_list()
+    current_date = timezone.now()
+    timezone_mock = mocker.patch(
+        target='src.processes.services.workflow_action.timezone',
+    )
+    timezone_mock.now.return_value = current_date
+    after_create_actions_mock = mocker.patch(
+        target='src.processes.services.events.'
+        'WorkflowEventService._after_create_actions',
+    )
+    task_returned_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'AnalyticService.task_returned',
+    )
+    send_task_deleted_notification_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_task_deleted_notification.delay',
+    )
+    send_new_task_notification_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_new_task_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_new_task_websocket.delay',
+    )
+    reassign_restricted_permissions_for_task_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'reassign_restricted_permissions_for_task',
+    )
+    schedule_sync_workflow_attachment_permissions_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'schedule_sync_workflow_attachment_permissions',
+    )
+    delete_task_guest_cache_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'GuestJWTAuthService.delete_task_guest_cache',
+    )
+    service = WorkflowActionService(
+        user=other_user,
+        workflow=workflow,
+    )
+
+    # act
+    service.revert(
+        comment=comment,
+        revert_from_task=next_task,
+    )
+
+    # assert
+    task.refresh_from_db()
+    workflow.refresh_from_db()
+    substitute_performer.refresh_from_db()
+    assert task.status == TaskStatus.ACTIVE
+    assert task.date_completed is None
+    assert task.date_started == current_date
+    assert workflow.status == WorkflowStatus.RUNNING
+    assert workflow.date_completed is None
+    assert substitute_performer.is_deleted is False
+    assert substitute_performer.is_completed is False
+    assert TaskPerformer.objects.get(
+        task=task,
+        user=owner,
+        type=(
+            PerformerType.USER if performer_type == PerformerType.USER
+            else PerformerType.GROUP_USER
+        ),
+    ).is_completed is True
+    assert TaskPerformer.objects.get(
+        task=task,
+        user=starter,
+        type=PerformerType.GROUP_USER,
+    ).is_completed is True
+    assert task.can_be_completed(by_user=other_user) is True
+    assert WorkflowActionService._get_incompleted_performers_users(
+        task=task,
+    ) == [{
+        'id': other_user.id,
+        'email': other_user.email,
+        'type': UserType.USER,
+        'is_completed': False,
+        'is_new_tasks_subscriber': True,
+        'is_complete_tasks_subscriber': True,
+    }]
+    next_task.refresh_from_db()
+    assert next_task.status == TaskStatus.PENDING
+    assert next_task.date_started is None
+    delete_task_guest_cache_mock.assert_called_once_with(
+        task_id=next_task.id,
+    )
+    returned_event = WorkflowEvent.objects.get(
+        task=task,
+        type=WorkflowEventType.TASK_REVERT,
+    )
+    started_event = WorkflowEvent.objects.get(
+        task=task,
+        type=WorkflowEventType.TASK_START,
+    )
+    assert after_create_actions_mock.call_count == 2
+    after_create_actions_mock.assert_has_calls(
+        [mocker.call(returned_event), mocker.call(started_event)],
+    )
+    task_returned_mock.assert_called_once_with(
+        user=other_user,
+        task=next_task,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    assert send_task_deleted_notification_mock.call_count == 2
+    send_task_deleted_notification_mock.assert_has_calls(
+        [
+            mocker.call(
+                task_id=task.id,
+                recipients=[
+                    (owner.id, owner.email),
+                    (starter.id, starter.email),
+                    (other_user.id, other_user.email),
+                ],
+                account_id=account.id,
+                task_data=task_data,
+            ),
+            mocker.call(
+                task_id=next_task.id,
+                recipients=[(other_user.id, other_user.email)],
+                account_id=account.id,
+                task_data=next_task_data,
+            ),
+        ],
+    )
+    send_new_task_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        recipients=[(other_user.id, other_user.email, True)],
+        task_id=task.id,
+        task_name=task.name,
+        task_data=task.get_data_for_list(),
+        task_description=task.description,
+        workflow_name=workflow.name,
+        template_name=workflow.get_template_name(),
+        workflow_starter_name=starter.name,
+        workflow_starter_photo=starter.photo,
+        due_date_timestamp=None,
+        logo_lg=account.logo_lg,
+        is_returned=True,
+    )
+    send_new_task_websocket_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        task_id=task.id,
+        recipients=[(other_user.id, other_user.email, True)],
+        account_id=account.id,
+        task_data=task.get_data_for_list(),
+    )
+    reassign_restricted_permissions_for_task_mock.assert_called_once_with(
+        task=task,
+        user=other_user,
+    )
+    schedule_sync_workflow_attachment_permissions_mock.assert_called_once_with(
+        workflow.id,
+    )
+    assert timezone_mock.now.call_count == 3
+    timezone_mock.now.assert_has_calls(
+        [mocker.call(), mocker.call(), mocker.call()],
+    )
+
+
+@pytest.mark.parametrize(
+    'tasks_count, absence_status, with_delay',
+    (
+        (1, AbsenceStatus.VACATION, False),
+        (2, AbsenceStatus.SICK_LEAVE, False),
+        (2, AbsenceStatus.VACATION, True),
+    ),
+)
+def test_force_resume_workflow__last_member_left__skip_and_advance(
+    mocker: MockerFixture,
+    tasks_count: int,
+    absence_status: AbsenceStatus.LITERALS,
+    with_delay: bool,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    starter = create_test_admin(account=account)
+    other_user = create_test_not_admin(account=account)
+    group = create_test_group(
+        account=account,
+        users=[owner, other_user],
+    )
+    template = create_test_template(
+        user=owner,
+        tasks_count=tasks_count,
+        with_delay=with_delay,
+        is_active=True,
+    )
+    task_template = template.tasks.get(number=1)
+    task_template.delete_raw_performers()
+    task_template.add_raw_performer(
+        group=group,
+        performer_type=PerformerType.GROUP,
+    )
+    workflow = create_test_workflow(
+        user=starter,
+        template=template,
+        status=WorkflowStatus.DELAYED,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.require_completion_by_all = True
+    task.status = TaskStatus.DELAYED
+    task.save(
+        update_fields=[
+            'skip_for_starter',
+            'require_completion_by_all',
+            'status',
+        ],
+    )
+    delay = Delay.objects.create(
+        task=task,
+        workflow=workflow,
+        duration=timedelta(hours=1),
+        start_date=timezone.now(),
+    )
+    substitute_group = create_test_group(
+        account=account,
+        name='Substitutes',
+        users=[starter],
+        type_=UserGroupType.PERSONAL,
+    )
+    UserVacation.objects.create(
+        user=owner,
+        account=account,
+        substitute_group=substitute_group,
+        absence_status=absence_status,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        group=substitute_group,
+        type=PerformerType.GROUP,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        user=owner,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        user=starter,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+    )
+    group.users.remove(other_user)
+    after_create_actions_mock = mocker.patch(
+        target='src.processes.services.events.'
+        'WorkflowEventService._after_create_actions',
+    )
+    send_new_task_notification_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_new_task_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_new_task_websocket.delay',
+    )
+    deactivate_task_guest_cache_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'GuestJWTAuthService.deactivate_task_guest_cache',
+    )
+    schedule_sync_workflow_attachment_permissions_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'schedule_sync_workflow_attachment_permissions',
+    )
+    reassign_restricted_permissions_for_task_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'reassign_restricted_permissions_for_task',
+    )
+    send_resumed_workflow_notification_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_resumed_workflow_notification.delay',
+    )
+    service = WorkflowActionService(
+        user=owner,
+        workflow=workflow,
+    )
+
+    # act
+    service.force_resume_workflow()
+
+    # assert
+    task.refresh_from_db()
+    workflow.refresh_from_db()
+    delay.refresh_from_db()
+    assert task.status == TaskStatus.SKIPPED
+    assert delay.end_date is not None
+    assert TaskPerformer.objects.get(
+        task=task,
+        user=owner,
+        type=PerformerType.GROUP_USER,
+    ).is_completed is True
+    assert TaskPerformer.objects.get(
+        task=task,
+        user=starter,
+        type=PerformerType.GROUP_USER,
+    ).is_completed is True
+    assert not WorkflowEvent.objects.filter(
+        task=task,
+        type=WorkflowEventType.TASK_START,
+    ).exists()
+    skip_event = WorkflowEvent.objects.get(
+        task=task,
+        type=WorkflowEventType.TASK_SKIP,
+    )
+    force_resume_event = WorkflowEvent.objects.get(
+        workflow=workflow,
+        type=WorkflowEventType.FORCE_RESUME,
+    )
+    send_resumed_workflow_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        logo_lg=account.logo_lg,
+        author_id=owner.id,
+        account_id=account.id,
+        task_id=task.id,
+    )
+    if tasks_count == 1:
+        assert workflow.status == WorkflowStatus.DONE
+        assert workflow.date_completed is not None
+        ended_event = WorkflowEvent.objects.get(
+            workflow=workflow,
+            type=WorkflowEventType.ENDED,
+        )
+        assert after_create_actions_mock.call_count == 3
+        after_create_actions_mock.assert_has_calls(
+            [
+                mocker.call(force_resume_event),
+                mocker.call(skip_event),
+                mocker.call(ended_event),
+            ],
+        )
+        send_new_task_notification_mock.assert_not_called()
+        send_new_task_websocket_mock.assert_not_called()
+        deactivate_task_guest_cache_mock.assert_called_once_with(
+            task_id=task.id,
+        )
+        schedule_sync_workflow_attachment_permissions_mock.assert_not_called()
+        reassign_restricted_permissions_for_task_mock.assert_not_called()
+    else:
+        next_task = workflow.tasks.get(number=2)
+        if with_delay:
+            assert next_task.status == TaskStatus.DELAYED
+            assert next_task.date_started is None
+            assert next_task.get_active_delay().start_date is not None
+            assert workflow.status == WorkflowStatus.DELAYED
+        else:
+            assert next_task.status == TaskStatus.ACTIVE
+            assert next_task.date_started is not None
+            assert workflow.status == WorkflowStatus.RUNNING
+        assert workflow.date_completed is None
+        next_event = WorkflowEvent.objects.get(
+            task=next_task,
+            type=(
+                WorkflowEventType.TASK_DELAY if with_delay
+                else WorkflowEventType.TASK_START
+            ),
+        )
+        assert after_create_actions_mock.call_count == 3
+        after_create_actions_mock.assert_has_calls(
+            [
+                mocker.call(force_resume_event),
+                mocker.call(skip_event),
+                mocker.call(next_event),
+            ],
+        )
+        deactivate_task_guest_cache_mock.assert_not_called()
+        if with_delay:
+            send_new_task_notification_mock.assert_not_called()
+            send_new_task_websocket_mock.assert_not_called()
+            (
+                schedule_sync_workflow_attachment_permissions_mock
+                .assert_not_called()
+            )
+        else:
+            send_new_task_notification_mock.assert_called_once_with(
+                logging=account.log_api_requests,
+                account_id=account.id,
+                recipients=[(owner.id, owner.email, True)],
+                task_id=next_task.id,
+                task_name=next_task.name,
+                task_data=next_task.get_data_for_list(),
+                task_description=next_task.description,
+                workflow_name=workflow.name,
+                template_name=workflow.get_template_name(),
+                workflow_starter_name=starter.name,
+                workflow_starter_photo=starter.photo,
+                due_date_timestamp=None,
+                logo_lg=account.logo_lg,
+                is_returned=False,
+            )
+            send_new_task_websocket_mock.assert_called_once_with(
+                logging=account.log_api_requests,
+                task_id=next_task.id,
+                recipients=[(owner.id, owner.email, True)],
+                account_id=account.id,
+                task_data=next_task.get_data_for_list(),
+            )
+            (
+                schedule_sync_workflow_attachment_permissions_mock
+                .assert_called_once_with(workflow.id)
+            )
+        reassign_restricted_permissions_for_task_mock.assert_called_once_with(
+            task=next_task,
+            user=owner,
+        )
