@@ -563,12 +563,21 @@ class Task(
             .exclude(task_performer_id=None)
             .values_list('task_performer_id', flat=True),
         )
+        assigned_performers = (
+            TaskPerformer.objects
+            .filter(id__in=task_performer_ids)
+            .exclude_directly_deleted()
+        )
         performers_to_delete = (
             TaskPerformer.objects
             .by_task(self.id)
             .type_user_or_group()
             .exclude_ids(task_performer_ids)
             .exclude_directly_changed()
+            .exclude_active_substitute_groups(
+                account_id=self.account_id,
+                assigned_performers=assigned_performers,
+            )
         )
         deleted_user_ids = []
         deleted_group_ids = []
