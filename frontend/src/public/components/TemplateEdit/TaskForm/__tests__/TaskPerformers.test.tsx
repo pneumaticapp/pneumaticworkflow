@@ -1,11 +1,13 @@
-import * as React from 'react';
-import { render } from '@testing-library/react';
+/// <reference types="jest" />
+import React from 'react';
+import type { ReactNode } from 'react';
+import { act, render } from '@testing-library/react';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
-import { makeTemplateTaskClient } from '../../../../__stubs__/templates.factory';
 import { Checkbox } from '../../../UI/Fields/Checkbox';
-import { ITemplateTaskClient } from '../../../../types/template';
+import { ITemplateClient, ITemplateTaskClient } from '../../../../types/template';
 import { TaskPerformers } from '../TaskPerformers';
+import { TaskFormScopeProvider, TemplateFieldContext } from '../../useTemplateForm/contexts';
 
 jest.mock('../../../UI/Fields/Checkbox', () => ({
   Checkbox: jest.fn(() => null),
@@ -32,76 +34,98 @@ jest.mock('../../../../utils/users', () => ({
   getUserFullName: jest.fn(),
 }));
 
-jest.mock('../../../../utils/createId', () => ({
-  createPerformerApiName: jest.fn(() => 'perf-mock'),
-  createDueDateApiName: jest.fn(() => 'due-date-mock'),
-}));
+jest.mock('../../../../utils/createId', () => {
+  const actual = jest.requireActual('../../../../utils/createId') as typeof import('../../../../utils/createId');
+  return {
+    ...actual,
+    createPerformerApiName: jest.fn(() => 'perf-mock'),
+  };
+});
 
 describe('TaskPerformers', () => {
-  const formatMsg = (id: string) => intlMock.formatMessage({ id });
-  const SKIP_LABEL = formatMsg('templates.task-skip-for-starter');
+  const t = (id: string) => intlMock.formatMessage({ id });
+  const SKIP_LABEL = t('templates.task-skip-for-starter');
 
-  const mockSetCurrentTask = jest.fn();
+  const makeTask = (overrides: Partial<ITemplateTaskClient> = {}): ITemplateTaskClient => ({
+    apiName: 'task-1',
+    number: 1,
+    name: 'Test Task',
+    description: '',
+    delay: null,
+    rawDueDate: null as any,
+    requireCompletionByAll: false,
+    skipForStarter: false,
+    rawPerformers: [],
+    fields: [],
+    uuid: 'uuid-1',
+    conditions: [],
+    checklists: [],
+    revertTask: null,
+    ancestors: [],
+    ...overrides,
+    fieldsets: overrides.fieldsets ?? [],
+  });
 
-  const makeTask = (overrides: Partial<ITemplateTaskClient> = {}) =>
-    makeTemplateTaskClient({
-      name: 'Test Task',
-      ...overrides,
-    });
+  const makeTemplate = (tasks: ITemplateTaskClient[]): ITemplateClient =>
+    ({
+      id: 1,
+      name: 'Template',
+      description: '',
+      isActive: false,
+      finalizable: false,
+      completionNotification: false,
+      reminderNotification: false,
+      dateUpdated: null,
+      updatedBy: null,
+      owners: [],
+      kickoff: { description: '', fields: [] } as any,
+      tasks,
+      isPublic: false,
+      publicUrl: null,
+      publicSuccessUrl: null,
+      isEmbedded: false,
+      embedUrl: null,
+      wfNameTemplate: null,
+      tasksCount: tasks.length,
+      performersCount: 0,
+    }) as ITemplateClient;
 
-  const renderComponent = (taskOverrides: Partial<ITemplateTaskClient> = {}) => {
-    const task = makeTask(taskOverrides);
+  interface IFormikBag {
+    values: ITemplateClient;
+    setFieldValue: jest.Mock;
+  }
+
+  function TaskFormHarness({
+    bag,
+    taskUuid,
+    children,
+  }: {
+    bag: IFormikBag;
+    taskUuid: string;
+    children: ReactNode;
+  }) {
+    return (
+      <TemplateFieldContext.Provider
+        value={{ values: bag.values, setFieldValue: bag.setFieldValue, setValues: jest.fn() }}
+      >
+        <TaskFormScopeProvider taskUuid={taskUuid}>{children}</TaskFormScopeProvider>
+      </TemplateFieldContext.Provider>
+    );
+  }
+
+  const renderTaskPerformers = (task: ITemplateTaskClient, setFieldValue = jest.fn()) => {
+    const bag: IFormikBag = { values: makeTemplate([task]), setFieldValue };
+
     return render(
-      React.createElement(TaskPerformers, {
-        task,
-        tasks: [task],
-        users: [],
-        variables: [],
-        isTeamInvitesModalOpen: false,
-        setCurrentTask: mockSetCurrentTask,
-      }),
+      <TaskFormHarness bag={bag} taskUuid={task.uuid}>
+        <TaskPerformers
+          tasks={[task]}
+          users={[]}
+          variables={[]}
+          isTeamInvitesModalOpen={false}
+        />
+      </TaskFormHarness>,
     );
-  };
-
-  type TCheckboxProps = Record<string, unknown>;
-
-  const findCheckboxProps = (checkboxId: string): TCheckboxProps => {
-    const calls = (Checkbox as jest.Mock).mock.calls;
-    const match = calls.find((c: [TCheckboxProps, Record<string, never>]) => c[0].checkboxId === checkboxId);
-    if (!match) throw new Error(`Checkbox call with checkboxId="${checkboxId}" not found`);
-    return match[0];
-  };
-
-  const renderTwoTasks = () => {
-    const task1 = makeTask({ apiName: 'task-1' });
-    const task2 = makeTask({ apiName: 'task-2' });
-    const setCurrentTask1 = jest.fn();
-    const setCurrentTask2 = jest.fn();
-
-    render(
-      React.createElement(
-        'div',
-        null,
-        React.createElement(TaskPerformers, {
-          task: task1,
-          tasks: [task1, task2],
-          users: [],
-          variables: [],
-          isTeamInvitesModalOpen: false,
-          setCurrentTask: setCurrentTask1,
-        }),
-        React.createElement(TaskPerformers, {
-          task: task2,
-          tasks: [task1, task2],
-          users: [],
-          variables: [],
-          isTeamInvitesModalOpen: false,
-          setCurrentTask: setCurrentTask2,
-        }),
-      ),
-    );
-
-    return { setCurrentTask1, setCurrentTask2 };
   };
 
   beforeEach(() => {
@@ -110,42 +134,25 @@ describe('TaskPerformers', () => {
 
   describe('checkbox identifiers', () => {
     it('generates unique checkboxId using task.apiName to prevent HTML id collisions', () => {
-      renderComponent({ apiName: 'custom-task-123' });
+      renderTaskPerformers(makeTask({ apiName: 'custom-task-123' }));
 
       const calls = (Checkbox as jest.Mock).mock.calls;
-      const completeByAllCall = calls.find((c: [TCheckboxProps, Record<string, never>]) =>
-        (c[0].checkboxId as string)?.startsWith('completeByAll-'),
-      );
-      const skipForStarterCall = calls.find((c: [TCheckboxProps, Record<string, never>]) =>
-        (c[0].checkboxId as string)?.startsWith('skipForStarter-'),
-      );
+      const completeByAllCall = calls.find((c: any[]) => c[0].checkboxId?.startsWith('completeByAll-'));
+      const skipForStarterCall = calls.find((c: any[]) => c[0].checkboxId?.startsWith('skipForStarter-'));
 
-      if (!completeByAllCall) throw new Error('completeByAll checkbox call not found');
-      if (!skipForStarterCall) throw new Error('skipForStarter checkbox call not found');
+      expect(completeByAllCall).toBeDefined();
+      expect(skipForStarterCall).toBeDefined();
 
-      expect(completeByAllCall[0].checkboxId).toBe('completeByAll-custom-task-123');
-      expect(skipForStarterCall[0].checkboxId).toBe('skipForStarter-custom-task-123');
-    });
-
-    it('two tasks produce different checkboxIds (no DOM id collisions)', () => {
-      renderTwoTasks();
-
-      const calls = (Checkbox as jest.Mock).mock.calls;
-      const checkboxIds = calls.map((c: [TCheckboxProps, Record<string, never>]) => c[0].checkboxId as string);
-
-      const completeByAllIds = checkboxIds.filter((id) => id?.startsWith('completeByAll-'));
-      const skipForStarterIds = checkboxIds.filter((id) => id?.startsWith('skipForStarter-'));
-
-      expect(completeByAllIds).toEqual(['completeByAll-task-1', 'completeByAll-task-2']);
-      expect(skipForStarterIds).toEqual(['skipForStarter-task-1', 'skipForStarter-task-2']);
+      expect(completeByAllCall![0].checkboxId).toBe('completeByAll-custom-task-123');
+      expect(skipForStarterCall![0].checkboxId).toBe('skipForStarter-custom-task-123');
     });
 
     it('uses checkboxId prop (not id) to ensure proper label-input binding', () => {
-      renderComponent();
+      renderTaskPerformers(makeTask());
 
       const calls = (Checkbox as jest.Mock).mock.calls;
 
-      calls.forEach((c: [TCheckboxProps, Record<string, never>]) => {
+      calls.forEach((c: any[]) => {
         expect(c[0].checkboxId).toBeDefined();
         expect(c[0].id).toBeUndefined();
       });
@@ -154,83 +161,109 @@ describe('TaskPerformers', () => {
 
   describe('requireCompletionByAll checkbox', () => {
     it('passes title with correct localization text', () => {
-      renderComponent();
+      renderTaskPerformers(makeTask());
 
-      const props = findCheckboxProps('completeByAll-task-1');
+      const calls = (Checkbox as jest.Mock).mock.calls;
+      const call = calls.find((c: any[]) => c[0].checkboxId === 'completeByAll-task-1');
 
-      expect(props.title).toBe(formatMsg('templates.task-require-completion-by-all'));
+      expect(call).toBeDefined();
+      expect(call![0].title).toBe(t('templates.task-require-completion-by-all'));
     });
 
     it('passes checked=true when requireCompletionByAll=true', () => {
-      renderComponent({ requireCompletionByAll: true });
+      renderTaskPerformers(makeTask({ requireCompletionByAll: true }));
 
-      const props = findCheckboxProps('completeByAll-task-1');
+      const calls = (Checkbox as jest.Mock).mock.calls;
+      const call = calls.find((c: any[]) => c[0].checkboxId === 'completeByAll-task-1');
 
-      expect(props.checked).toBe(true);
+      expect(call![0].checked).toBe(true);
     });
 
     it('passes checked=false when requireCompletionByAll=false', () => {
-      renderComponent({ requireCompletionByAll: false });
+      renderTaskPerformers(makeTask({ requireCompletionByAll: false }));
 
-      const props = findCheckboxProps('completeByAll-task-1');
+      const calls = (Checkbox as jest.Mock).mock.calls;
+      const call = calls.find((c: any[]) => c[0].checkboxId === 'completeByAll-task-1');
 
-      expect(props.checked).toBe(false);
+      expect(call![0].checked).toBe(false);
     });
 
-    it('calls setCurrentTask with requireCompletionByAll on onChange', () => {
-      renderComponent({ requireCompletionByAll: false });
+    it('calls setFieldValue with tasks.0.requireCompletionByAll on onChange', () => {
+      const task = makeTask({ requireCompletionByAll: false });
+      const setFieldValue = jest.fn();
+      renderTaskPerformers(task, setFieldValue);
 
-      const props = findCheckboxProps('completeByAll-task-1');
-      const onChangeFn = props.onChange as (e: { currentTarget: { checked: boolean } }) => void;
-      onChangeFn({ currentTarget: { checked: true } });
+      const calls = (Checkbox as jest.Mock).mock.calls;
+      const call = calls.find((c: any[]) => c[0].checkboxId === 'completeByAll-task-1');
+      const onChangeFn = call![0].onChange;
 
-      expect(mockSetCurrentTask).toHaveBeenCalledWith({ requireCompletionByAll: true });
+      act(() => {
+        onChangeFn({ currentTarget: { checked: true } });
+      });
+
+      expect(setFieldValue).toHaveBeenCalledWith('tasks.0', { ...task, requireCompletionByAll: true }, false);
     });
   });
 
   describe('skipForStarter checkbox', () => {
     it('passes title with correct localization text', () => {
-      renderComponent();
+      renderTaskPerformers(makeTask());
 
-      const props = findCheckboxProps('skipForStarter-task-1');
+      const calls = (Checkbox as jest.Mock).mock.calls;
+      const skipCall = calls.find((c: any[]) => c[0].checkboxId === 'skipForStarter-task-1');
 
-      expect(props.title).toBe(SKIP_LABEL);
+      expect(skipCall).toBeDefined();
+      expect(skipCall![0].title).toBe(SKIP_LABEL);
     });
 
     it('passes checked=true when skipForStarter=true', () => {
-      renderComponent({ skipForStarter: true });
+      renderTaskPerformers(makeTask({ skipForStarter: true }));
 
-      const props = findCheckboxProps('skipForStarter-task-1');
+      const calls = (Checkbox as jest.Mock).mock.calls;
+      const skipCall = calls.find((c: any[]) => c[0].checkboxId === 'skipForStarter-task-1');
 
-      expect(props.checked).toBe(true);
+      expect(skipCall![0].checked).toBe(true);
     });
 
     it('passes checked=false when skipForStarter=false', () => {
-      renderComponent({ skipForStarter: false });
+      renderTaskPerformers(makeTask({ skipForStarter: false }));
 
-      const props = findCheckboxProps('skipForStarter-task-1');
+      const calls = (Checkbox as jest.Mock).mock.calls;
+      const skipCall = calls.find((c: any[]) => c[0].checkboxId === 'skipForStarter-task-1');
 
-      expect(props.checked).toBe(false);
+      expect(skipCall![0].checked).toBe(false);
     });
 
-    it('calls setCurrentTask with true on onChange', () => {
-      renderComponent({ skipForStarter: false });
+    it('calls setFieldValue with true on onChange', () => {
+      const task = makeTask({ skipForStarter: false });
+      const setFieldValue = jest.fn();
+      renderTaskPerformers(task, setFieldValue);
 
-      const props = findCheckboxProps('skipForStarter-task-1');
-      const onChangeFn = props.onChange as (e: { currentTarget: { checked: boolean } }) => void;
-      onChangeFn({ currentTarget: { checked: true } });
+      const calls = (Checkbox as jest.Mock).mock.calls;
+      const skipCall = calls.find((c: any[]) => c[0].checkboxId === 'skipForStarter-task-1');
+      const onChangeFn = skipCall![0].onChange;
 
-      expect(mockSetCurrentTask).toHaveBeenCalledWith({ skipForStarter: true });
+      act(() => {
+        onChangeFn({ currentTarget: { checked: true } });
+      });
+
+      expect(setFieldValue).toHaveBeenCalledWith('tasks.0', { ...task, skipForStarter: true }, false);
     });
 
-    it('calls setCurrentTask with false on checkbox uncheck', () => {
-      renderComponent({ skipForStarter: true });
+    it('calls setFieldValue with false on checkbox uncheck', () => {
+      const task = makeTask({ skipForStarter: true });
+      const setFieldValue = jest.fn();
+      renderTaskPerformers(task, setFieldValue);
 
-      const props = findCheckboxProps('skipForStarter-task-1');
-      const onChangeFn = props.onChange as (e: { currentTarget: { checked: boolean } }) => void;
-      onChangeFn({ currentTarget: { checked: false } });
+      const calls = (Checkbox as jest.Mock).mock.calls;
+      const skipCall = calls.find((c: any[]) => c[0].checkboxId === 'skipForStarter-task-1');
+      const onChangeFn = skipCall![0].onChange;
 
-      expect(mockSetCurrentTask).toHaveBeenCalledWith({ skipForStarter: false });
+      act(() => {
+        onChangeFn({ currentTarget: { checked: false } });
+      });
+
+      expect(setFieldValue).toHaveBeenCalledWith('tasks.0', { ...task, skipForStarter: false }, false);
     });
   });
 });

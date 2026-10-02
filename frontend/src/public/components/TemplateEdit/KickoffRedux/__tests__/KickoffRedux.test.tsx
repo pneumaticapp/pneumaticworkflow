@@ -134,7 +134,7 @@ jest.mock('../KickoffMenu', () => ({
 }));
 
 jest.mock('../KickoffShareForm', () => ({
-  KickoffShareForm: () => null,
+  KickoffShareForm: jest.fn(() => null),
 }));
 
 jest.mock('../../InputWithVariables', () => ({
@@ -146,6 +146,7 @@ jest.mock('../../../IntlMessages', () => ({
 }));
 
 import { KickoffRedux } from '../KickoffRedux';
+import { KickoffShareForm } from '../KickoffShareForm';
 import { getEmptyField } from '../utils/getEmptyField';
 import { useSelector } from 'react-redux';
 import { getFieldsetsCatalogIsLoading } from '../../../../redux/selectors/fieldsets';
@@ -286,6 +287,27 @@ describe('KickoffRedux', () => {
         }),
       );
     });
+  });
+
+  it('does not mount the share form outside the form provider', () => {
+    render(
+      <KickoffRedux template={makeTemplate(makeKickoff())} intl={intlMock} accountId={1} setKickoff={jest.fn()} />,
+    );
+
+    expect(KickoffShareForm).not.toHaveBeenCalled();
+  });
+
+  it('keeps hook order stable when the template becomes unavailable', () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const view = render(
+      <KickoffRedux template={makeTemplate(makeKickoff())} intl={intlMock} accountId={1} setKickoff={jest.fn()} />,
+    );
+
+    expect(() => view.rerender(<KickoffRedux />)).toThrow(
+      'KickoffRedux must receive a template prop or be used inside the Edit Template form provider',
+    );
+    expect(consoleError.mock.calls.flat().join(' ')).not.toContain('Rendered fewer hooks');
+    consoleError.mockRestore();
   });
 
   describe('clear kickoff', () => {

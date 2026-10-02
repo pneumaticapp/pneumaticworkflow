@@ -5,7 +5,10 @@ import userEvent from '@testing-library/user-event';
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { TemplateControlls, ITemplateControllsProps } from '../TemplateControlls';
 import { ETemplateStatus } from '../../../../types/redux';
-import { getRunnableWorkflow, loadDatasetsMap } from '../../utils/getRunnableWorkflow';
+import {
+  getRunnableWorkflow,
+  loadDatasetsMap,
+} from '../../utils/getRunnableWorkflow';
 import { mapFieldsetBindingClientToRuntime } from '../../../../utils/mapFieldsetBindingClientToRuntime';
 import { getTemplate } from '../../../../__stubs__/templates';
 import { makeFieldsetBindingClient, makeFieldsetRuntime } from '../../../../__stubs__/fieldsets.factory';
@@ -44,8 +47,13 @@ jest.mock('../../../UI/ShowMore', () => ({
 }));
 
 jest.mock('../../../UI/Buttons/Button', () => ({
-  Button: jest.fn((props: { label: string; onClick?: () => void; disabled?: boolean }) =>
-    React.createElement('button', { type: 'button', onClick: props.onClick, disabled: props.disabled }, props.label),
+  Button: jest.fn(
+    (props: { label: string; onClick?: () => void; disabled?: boolean }) =>
+      React.createElement(
+        'button',
+        { type: 'button', onClick: props.onClick, disabled: props.disabled },
+        props.label,
+      ),
   ),
 }));
 
@@ -58,6 +66,14 @@ jest.mock('../../../UI/Notifications', () => ({
 }));
 
 jest.mock('../../../UI', () => ({
+  Button: jest.fn(
+    (props: { label: string; onClick?: () => void; disabled?: boolean }) =>
+      React.createElement(
+        'button',
+        { type: 'button', onClick: props.onClick, disabled: props.disabled },
+        props.label,
+      ),
+  ),
   RouteLeavingGuard: jest.fn(
     (props: {
       onConfirm: (path: string) => void;
@@ -156,10 +172,50 @@ describe('TemplateControlls — fieldset logic', () => {
     await waitFor(() => expect(openRunWorkflowModal).toHaveBeenCalledTimes(1));
 
     expect(loadDatasetsMap).toHaveBeenCalledTimes(1);
-    expect(loadDatasetsMap).toHaveBeenCalledWith(template.kickoff, [mappedFieldset]);
+    expect(loadDatasetsMap).toHaveBeenCalledWith(
+      template.kickoff,
+      [mappedFieldset],
+    );
 
     expect(getRunnableWorkflow).toHaveBeenCalledTimes(1);
-    expect(getRunnableWorkflow).toHaveBeenCalledWith(template, {}, [mappedFieldset]);
+    expect(getRunnableWorkflow).toHaveBeenCalledWith(
+      template,
+      {},
+      [mappedFieldset],
+    );
     expect(openRunWorkflowModal).toHaveBeenCalledWith(runnableWorkflow);
+  });
+
+  it('keeps hook order stable when the template becomes unavailable', () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const view = render(React.createElement(TemplateControlls, makeProps()));
+
+    expect(() => view.rerender(
+      <TemplateControlls setInfoWarnings={jest.fn()} />,
+    )).toThrow(
+      'TemplateControlls must receive a template prop or be used inside the Edit Template form provider',
+    );
+    expect(consoleError.mock.calls.flat().join(' ')).not.toContain('Rendered fewer hooks');
+    consoleError.mockRestore();
+  });
+
+  it('does not run an active template before it has been persisted', () => {
+    const openRunWorkflowModal = jest.fn();
+    const template = getTemplate('5');
+    template.id = undefined;
+    template.isActive = true;
+
+    render(
+      React.createElement(
+        TemplateControlls,
+        makeProps({ template, openRunWorkflowModal, templateStatus: ETemplateStatus.Saved }),
+      ),
+    );
+
+    userEvent.click(screen.getByRole('button', { name: formatMsg('templates.run-workflow') }));
+
+    expect(loadDatasetsMap).not.toHaveBeenCalled();
+    expect(getRunnableWorkflow).not.toHaveBeenCalled();
+    expect(openRunWorkflowModal).not.toHaveBeenCalled();
   });
 });

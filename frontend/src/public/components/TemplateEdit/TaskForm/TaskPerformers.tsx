@@ -4,9 +4,8 @@ import { useSelector } from 'react-redux';
 import classNames from 'classnames';
 
 import { Checkbox } from '../../UI/Fields/Checkbox';
+import { ETaskPerformerType, ITemplateTaskPerformer } from '../../../types/template';
 import { TUserListItem } from '../../../types/user';
-import { ETaskPerformerType, ITemplateTaskClient, ITemplateTaskPerformer } from '../../../types/template';
-import { TTaskVariable } from '../types';
 import { trackInviteTeamInPage } from '../../../utils/analytics';
 import {
   EOptionTypes,
@@ -18,23 +17,17 @@ import { getUserFullName } from '../../../utils/users';
 import { getPerformersForDropdown } from './utils/getPerformersForDropdown';
 import { EBgColorTypes, UserPerformer } from '../../UI/UserPerformer';
 import { getRegularGroupsList } from '../../../redux/selectors/groups';
+import { useTaskForm } from './useTaskForm';
+import { ITaskPerformersProps } from './types';
 
 import styles from '../TemplateEdit.css';
 import stylesTaskForm from './TaskForm.css';
 import { createPerformerApiName } from '../../../utils/createId';
 
-export interface ITaskPerformersProps {
-  task: ITemplateTaskClient;
-  tasks: ITemplateTaskClient[];
-  users: TUserListItem[];
-  variables: TTaskVariable[];
-  isTeamInvitesModalOpen: boolean;
-  setCurrentTask(changedFields: Partial<ITemplateTaskClient>): void;
-}
-
-export function TaskPerformers({ task, tasks, users, variables, setCurrentTask }: ITaskPerformersProps) {
+export function TaskPerformers({ tasks, users, variables }: ITaskPerformersProps) {
   const { formatMessage } = useIntl();
   const groups = useSelector(getRegularGroupsList);
+  const { task, updateTask } = useTaskForm();
 
   const { rawPerformers = [] } = task;
 
@@ -88,13 +81,13 @@ export function TaskPerformers({ task, tasks, users, variables, setCurrentTask }
         apiName: createPerformerApiName(),
       }));
 
-    setCurrentTask({ rawPerformers: [...rawPerformers, ...invitedPeformers] });
+    updateTask({ rawPerformers: [...rawPerformers, ...invitedPeformers] });
   };
 
   const handleAddPerformer = (performer: ITemplateTaskPerformer) => {
     const normalizedPerformer = { ...performer, apiName: createPerformerApiName() };
     delete (normalizedPerformer as any).id;
-    setCurrentTask({ rawPerformers: [...rawPerformers, normalizedPerformer] as ITemplateTaskPerformer[] });
+    updateTask({ rawPerformers: [...rawPerformers, normalizedPerformer] as ITemplateTaskPerformer[] });
   };
 
   const handleRemovePerformer = (removingPerformer: ITemplateTaskPerformer) => {
@@ -105,11 +98,11 @@ export function TaskPerformers({ task, tasks, users, variables, setCurrentTask }
       ].every(Boolean);
     });
 
-    setCurrentTask({ rawPerformers: newPerformers });
+    updateTask({ rawPerformers: newPerformers });
   };
 
   const handleRequireCompletionByAllChange = (value: boolean) => {
-    setCurrentTask({ requireCompletionByAll: value });
+    updateTask({ requireCompletionByAll: value });
   };
 
   const renderPerformers = () => {
@@ -145,7 +138,7 @@ export function TaskPerformers({ task, tasks, users, variables, setCurrentTask }
           checkboxId={`skipForStarter-${task.apiName}`}
           title={formatMessage({ id: 'templates.task-skip-for-starter' })}
           checked={task.skipForStarter}
-          onChange={(e) => setCurrentTask({ skipForStarter: e.currentTarget.checked })}
+          onChange={(e) => updateTask({ skipForStarter: e.currentTarget.checked })}
         />
       </div>
       <div className="mb-3">
