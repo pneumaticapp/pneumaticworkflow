@@ -777,10 +777,137 @@ class FieldSetLayout:
 
 class FieldSetRuleType:
 
+    # TODO Deprecated
+
+    VALIDATOR = 'validator'
     SUM_EQUAL = 'sum_equal'
 
     CHOICES = (
-        (SUM_EQUAL, 'The sum is equal'),
+        (SUM_EQUAL, 'Sum equal'),
+        (VALIDATOR, 'Validator'),
     )
 
-    LITERALS = Literal[SUM_EQUAL]
+    LITERALS = Literal[SUM_EQUAL, VALIDATOR]
+
+
+class FieldRuleType:
+
+    SHOW = 'show'
+    VALIDATOR = 'validator'
+
+    CHOICES = (
+        (SHOW, 'Show field'),
+        (VALIDATOR, 'Validate field'),
+    )
+
+    LITERALS = Literal[SHOW, VALIDATOR]
+
+
+class FieldRuleOperator:
+
+    EQUAL = 'equal'
+    NOT_EQUAL = 'not_equals'
+    EXIST = 'exists'
+    NOT_EXIST = 'not_exists'
+    GREATER_THAN = 'greater_than'
+    LESS_THAN = 'less_than'
+    CONTAIN = 'contains'
+    NOT_CONTAIN = 'not_contains'
+
+    CHOICES = (
+        (EQUAL, 'Equal'),
+        (NOT_EQUAL, 'Not equal'),
+        (EXIST, 'Exists'),
+        (NOT_EXIST, 'Not exists'),
+        (GREATER_THAN, 'Greater than'),
+        (LESS_THAN, 'Less than'),
+        (CONTAIN, 'Contains'),
+        (NOT_CONTAIN, 'Not contains'),
+    )
+
+    LITERALS = Literal[
+        EQUAL,
+        NOT_EQUAL,
+        EXIST,
+        NOT_EXIST,
+        GREATER_THAN,
+        LESS_THAN,
+        CONTAIN,
+        NOT_CONTAIN,
+    ]
+
+    ALLOWED_OPERATORS = {
+        FieldType.STRING: {
+            EQUAL,
+            NOT_EQUAL,
+            CONTAIN,
+            NOT_CONTAIN,
+            EXIST,
+            NOT_EXIST,
+        },
+        FieldType.TEXT: {
+            EQUAL,
+            NOT_EQUAL,
+            CONTAIN,
+            NOT_CONTAIN,
+            EXIST,
+            NOT_EXIST,
+        },
+        FieldType.URL: {
+            EQUAL,
+            NOT_EQUAL,
+            CONTAIN,
+            NOT_CONTAIN,
+            EXIST,
+            NOT_EXIST,
+        },
+        FieldType.CHECKBOX: {
+            EQUAL,
+            NOT_EQUAL,
+            CONTAIN,
+            NOT_CONTAIN,
+            EXIST,
+            NOT_EXIST,
+        },
+        FieldType.RADIO: {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST},
+        FieldType.DROPDOWN: {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST},
+        FieldType.USER: {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST},
+        FieldType.DATE: {
+            EQUAL,
+            NOT_EQUAL,
+            GREATER_THAN,
+            LESS_THAN,
+            EXIST,
+            NOT_EXIST,
+        },
+        FieldType.NUMBER: {
+            EQUAL,
+            NOT_EQUAL,
+            GREATER_THAN,
+            LESS_THAN,
+            EXIST,
+            NOT_EXIST,
+        },
+        FieldType.FILE: {EXIST, NOT_EXIST},
+    }
+
+
+class FieldSetRuleOperator:
+
+    SUM_EQUAL = 'sum_equal'
+    SUM_GREATER_THAN = 'sum_greater_than'
+    SUM_LESS_THAN = 'sum_less_than'
+
+    SUM_OPERATORS = (
+        SUM_EQUAL,
+        SUM_GREATER_THAN,
+        SUM_LESS_THAN,
+    )
+
+    CHOICES = (
+        (SUM_EQUAL, 'Sum equal'),
+        (SUM_GREATER_THAN, 'Sum greater than'),
+        (SUM_LESS_THAN, 'Sum less than'),
+    )
+
+    LITERALS = Literal[SUM_EQUAL, SUM_GREATER_THAN, SUM_LESS_THAN]

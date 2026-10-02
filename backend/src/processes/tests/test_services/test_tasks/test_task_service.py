@@ -16,11 +16,12 @@ from src.processes.models.templates.checklist import (
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.raw_due_date import RawDueDateTemplate
 from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.fieldset import FieldSet
 from src.processes.models.workflows.raw_due_date import RawDueDate
 from src.processes.models.workflows.task import Delay
 from src.authentication.enums import AuthTokenType
 from src.processes.services.tasks.checklist import ChecklistService
-from src.processes.services.tasks.field import TaskFieldService
+from src.processes.services.tasks.fields.field import TaskFieldService
 from src.processes.services.tasks.task import TaskService
 from src.processes.services.workflows.fieldsets.fieldset import FieldSetService
 from src.processes.tests.fixtures import (
@@ -254,6 +255,54 @@ def test_get_task_due_date__rule_after_field__kickoff_field__ok():
     tsp_end_date = end_date.timestamp()
     field = TaskField.objects.create(
         kickoff=workflow.kickoff_instance,
+        name='date',
+        api_name='date-1',
+        type=FieldType.DATE,
+        value=tsp_end_date,
+        workflow=workflow,
+        account=user.account,
+    )
+    RawDueDate.objects.create(
+        task=task,
+        duration=duration,
+        rule=DueDateRule.AFTER_FIELD,
+        source_id=field.api_name,
+    )
+    service = TaskService(
+        user=user,
+        instance=task,
+    )
+
+    # act
+    due_date = service.get_task_due_date()
+
+    # assert
+    assert due_date == datetime.fromtimestamp(
+        tsp_end_date,
+        tz=tz.utc,
+    ) + duration
+
+
+def test_get_task_due_date__rule_after_field__fieldset_field__ok():
+
+    """ Date source lives in a fieldset and has no task of its own """
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    duration = timedelta(days=1)
+    end_date = timezone.now() + timedelta(days=3)
+    tsp_end_date = end_date.timestamp()
+    fieldset = FieldSet.objects.create(
+        account=user.account,
+        workflow=workflow,
+        task=task,
+        api_name='fieldset-1',
+        order=0,
+    )
+    field = TaskField.objects.create(
+        fieldset=fieldset,
         name='date',
         api_name='date-1',
         type=FieldType.DATE,
@@ -1551,7 +1600,7 @@ def test_create_fields_from_template__outside_fs__ok(mocker):
         return_value=None,
     )
     task_field_service_create_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService.create',
+        'src.processes.services.tasks.fields.field.TaskFieldService.create',
     )
     service = TaskService(user=user, instance=task)
 
@@ -2117,7 +2166,7 @@ def test_create_fields_from_template__deleted_fieldsets__skip(mocker):
         return_value=None,
     )
     task_field_service_create_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService.create',
+        'src.processes.services.tasks.fields.field.TaskFieldService.create',
     )
     service = TaskService(user=user, instance=task)
 

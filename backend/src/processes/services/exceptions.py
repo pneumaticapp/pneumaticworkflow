@@ -204,15 +204,20 @@ class FieldsetTemplateRuleServiceException(BaseServiceException):
     pass
 
 
+class FieldsetTemplateRuleSetServiceException(BaseServiceException):
+
+    pass
+
+
 class FieldsetTemplateRuleSumMaxFieldsNotNumber(
-    FieldsetTemplateRuleServiceException,
+    FieldsetTemplateRuleSetServiceException,
 ):
 
     default_message = fs_messages.MSG_FS_0003
 
 
 class FieldsetTemplateRuleSumMaxInvalidValue(
-    FieldsetTemplateRuleServiceException,
+    FieldsetTemplateRuleSetServiceException,
 ):
 
     default_message = fs_messages.MSG_FS_0004
@@ -266,3 +271,8 @@ class FieldsetServiceException(BaseServiceException):
 class SharedFieldsetNotFoundException(FieldsetServiceException):
 
     default_message = fs_messages.MSG_FS_0008
+
+
+class FieldTemplateRuleSetServiceException(BaseServiceException):
+
+    pass

@@ -265,10 +265,10 @@ class FieldsetMixin:
         """ Sync fieldsets for kickoff/task when activating a template.
 
             Existing fieldsets are matched by api_name and partially updated.
-            New ones with non-empty fields/rules are created as-is (preserves
-            draft api_names); compact shared_fieldset_id references are cloned
-            via create_from_shared. Fieldsets missing from the payload are
-            deleted. """
+            New ones with non-empty fields/rulesets are created as-is
+            (preserves draft api_names); compact shared_fieldset_id
+            references are cloned via create_from_shared. Fieldsets missing
+            from the payload are deleted. """
 
         instance = task or kickoff
         existing_fieldsets = {f.api_name: f for f in instance.fieldsets.all()}
@@ -277,24 +277,20 @@ class FieldsetMixin:
             fieldset_api_name = fieldset_data.get('api_name')
             if fieldset_api_name and fieldset_api_name in existing_fieldsets:
                 fieldset = existing_fieldsets[fieldset_api_name]
-                update_kwargs = {}
-                if fieldset.order != fieldset_data['order']:
-                    update_kwargs['order'] = fieldset_data['order']
-                if fieldset.title != fieldset_data['title']:
-                    update_kwargs['title'] = fieldset_data['title']
-                if fieldset.description != fieldset_data['description']:
-                    update_kwargs['description'] = fieldset_data['description']
-
-                if update_kwargs:
-                    service = FieldSetTemplateService(
-                        instance=fieldset,
-                        user=user,
-                    )
-                    service.partial_update_instance(
-                        order=fieldset_data['order'],
-                        title=fieldset_data.get('title'),
-                        description=fieldset_data.get('description'),
-                    )
+                update_kwargs = {
+                    'order': fieldset_data['order'],
+                    'title': fieldset_data.get('title'),
+                    'description': fieldset_data.get('description'),
+                }
+                if fieldset_data.get('fields'):
+                    update_kwargs['fields'] = fieldset_data['fields']
+                if fieldset_data.get('rulesets'):
+                    update_kwargs['rulesets'] = fieldset_data['rulesets']
+                service = FieldSetTemplateService(
+                    instance=fieldset,
+                    user=user,
+                )
+                service.partial_update(**update_kwargs)
                 fieldsets_api_names.add(fieldset.api_name)
             else:
                 shared_fieldset = fieldset_data['shared_fieldset_id']
@@ -303,12 +299,12 @@ class FieldsetMixin:
                 # — create as-is to preserve field/rule api_names.
                 # Otherwise clone from shared.
                 try:
-                    # validated_data always has fields/rules defaults ([]).
+                    # validated_data always has fields/rulesets defaults ([]).
                     # Non-empty means payload is expanded — create as-is.
                     # Otherwise clone from shared (compact reference).
                     if (
                         fieldset_data.get('fields')
-                        or fieldset_data.get('rules')
+                        or fieldset_data.get('rulesets')
                     ):
                         fieldset = service.create(
                             name=(
@@ -333,7 +329,7 @@ class FieldsetMixin:
                                 or shared_fieldset.layout
                             ),
                             fields=fieldset_data.get('fields') or [],
-                            rules=fieldset_data.get('rules') or [],
+                            rulesets=fieldset_data.get('rulesets') or [],
                             order=fieldset_data['order'],
                             is_shared=False,
                             shared_fieldset_id=shared_fieldset.id,

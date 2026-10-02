@@ -3,7 +3,6 @@ from datetime import timezone as tz
 from typing import Dict, Optional
 
 from django.contrib.auth import get_user_model
-from django.db.models import Q
 
 from src.notifications.tasks import send_due_date_changed
 from src.processes.enums import (
@@ -37,7 +36,7 @@ from src.processes.services.events import (
 from src.processes.services.tasks.checklist import (
     ChecklistService,
 )
-from src.processes.services.tasks.field import (
+from src.processes.services.tasks.fields.field import (
     TaskFieldService,
 )
 from src.processes.services.tasks.mixins import (
@@ -237,7 +236,11 @@ class TaskService(
         fieldsets = (
             FieldsetTemplate.objects
             .filter(task=instance_template)
-            .prefetch_related('rules', 'fields')
+            .prefetch_related(
+                'rulesets__groups_or__groups_and',
+                'rulesets__fields',
+                'fields__rulesets__groups_or__groups_and',
+            )
             .order_by('order')
         )
         for fieldset in fieldsets:
@@ -327,11 +330,9 @@ class TaskService(
                     if task:
                         start_date = task.date_completed
             elif rule in DueDateRule.FIELD_RULES:
+                # workflow_id alone also reaches fields of a fieldset,
+                # which have neither a task nor a kickoff of their own.
                 field = TaskField.objects.filter(
-                    (
-                        Q(task__workflow_id=self.instance.workflow_id) |
-                        Q(kickoff__workflow_id=self.instance.workflow_id)
-                    ),
                     workflow_id=self.instance.workflow_id,
                     api_name=raw_due_date.source_id,
                     type=FieldType.DATE,

@@ -26,9 +26,11 @@ from src.processes.models.templates.conditions import (
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_field_show_ruleset,
     create_test_template,
     create_test_user, create_test_owner, create_test_dataset,
 )
@@ -2199,3 +2201,82 @@ class TestRunEmbedTemplate:
         get_token_mock.assert_called_once()
         get_template_mock.assert_called_once_with(token)
         anonymous_user_workflow_exists_mock.assert_called_once()
+
+
+def test_public_run__show_rule_fails__hidden_in_db(mocker, api_client):
+
+    """ The public run answers with a redirect only, so the flag can
+        only be checked in the database and in later events. """
+
+    # arrange
+    user = create_test_owner()
+    account = user.account
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        is_public=True,
+        tasks_count=1,
+    )
+    FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        name='Source',
+        type=FieldType.STRING,
+        order=0,
+        api_name='source-field-1',
+    )
+    target_template = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        task=template.tasks.first(),
+        name='Target',
+        type=FieldType.STRING,
+        order=1,
+        api_name='target-field-1',
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=target_template,
+        source_field_api_name='source-field-1',
+        value='yes',
+    )
+    mocker.patch(
+        'src.processes.views.public.template.'
+        'PublicTemplateViewSet.get_user_ip',
+        return_value='127.0.0.1',
+    )
+    mocker.patch(
+        'src.authentication.services.public_auth.'
+        'PublicAuthService.get_token',
+        return_value=PublicToken(template.public_id),
+    )
+    mocker.patch(
+        'src.authentication.services.public_auth.'
+        'PublicAuthService.get_template',
+        return_value=template,
+    )
+    settings_mock = mocker.patch(
+        'src.processes.views.public.template.settings',
+    )
+    settings_mock.PROJECT_CONF = {'CAPTCHA': True}
+
+    # act
+    response = api_client.post(
+        path='/templates/public/run',
+        data={
+            'captcha': 'skip',
+            'fields': {'source-field-1': 'no'},
+        },
+        **{'X-Public-Authorization': f'Token {template.public_id}'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(template=template)
+    target_field = TaskField.objects.get(
+        workflow=workflow,
+        api_name='target-field-1',
+    )
+    assert target_field.is_hidden is True

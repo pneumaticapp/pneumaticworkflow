@@ -1,21 +1,16 @@
 import pytest
 
+from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
-    FieldSetLayout,
-    FieldSetRuleType,
     FieldType,
-    LabelPosition,
     OwnerRole,
     OwnerType,
-    PerformerType,
+    PerformerType, FieldSetRuleOperator,
 )
 from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.serializers.templates.template import TemplateSerializer
 from src.processes.messages.fieldset import (
     MSG_FS_0013,
-    MSG_FS_0014,
-    MSG_FS_0015,
-    MSG_FS_0016,
 )
 from src.processes.models.templates.fields import (
     FieldTemplate,
@@ -46,28 +41,11 @@ def test_update__create_kickoff_fieldset_only_required_data__ok(
     template = create_test_template(user, is_active=True, tasks_count=1)
     kickoff = template.kickoff_instance
     task = template.tasks.first()
-    fs_title = 'Some title'
-    fs_description = 'Some desc'
-    fs_name = 'Some name'
-    fs_order = 3
-    label_position = LabelPosition.LEFT
-    layout = FieldSetLayout.HORIZONTAL
-    rule_type = FieldSetRuleType.SUM_EQUAL
-    rule_value = '100'
     shared_fieldset = create_test_shared_fieldset(
         account=account,
-        title=fs_title,
-        description=fs_description,
-        name=fs_name,
-        order=fs_order,
-        label_position=label_position,
-        layout=layout,
-        rule_type=rule_type,
-        rule_value=rule_value,
     )
-    shared_field = shared_fieldset.fields.first()
-    shared_rule = shared_fieldset.rules.first()
-    shared_field.rules.add(shared_rule)
+    shared_fieldset.fields.all().delete()
+    shared_fieldset.rulesets.all().delete()
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
@@ -132,36 +110,20 @@ def test_update__create_kickoff_fieldset_only_required_data__ok(
         shared_fieldset=shared_fieldset,
         is_shared=False,
     )
-    field = fieldset.fields.first()
-    rule = fieldset.rules.first()
 
     fieldsets = response.data['kickoff']['fieldsets']
     assert len(fieldsets) == 1
     fieldset_data = fieldsets[0]
     assert fieldset_data['shared_fieldset_id'] == shared_fieldset.id
     assert fieldset_data['order'] == 0
-    assert fieldset_data['name'] == fs_name
-    assert fieldset_data['title'] == fs_title
-    assert fieldset_data['description'] == fs_description
-    assert fieldset_data['label_position'] == label_position
-    assert fieldset_data['layout'] == layout
+    assert fieldset_data['name'] == shared_fieldset.name
+    assert fieldset_data['title'] == shared_fieldset.name
+    assert fieldset_data['description'] == shared_fieldset.description
+    assert fieldset_data['label_position'] == shared_fieldset.label_position
+    assert fieldset_data['layout'] == shared_fieldset.layout
     assert fieldset_data['api_name'] == fieldset.api_name
-    assert len(fieldset_data['fields']) == 1
-    field_data = fieldset_data['fields'][0]
-    assert field_data['name'] == shared_field.name
-    assert field_data['description'] == ''
-    assert field_data['type'] == shared_field.type
-    assert field_data['is_required'] == shared_field.is_required
-    assert field_data['is_hidden'] == shared_field.is_hidden
-    assert field_data['order'] == shared_field.order
-    assert field_data['default'] == shared_field.default
-    assert field_data['api_name'] == field.api_name
-    assert len(fieldset_data['rules']) == 1
-    rule_data = fieldset_data['rules'][0]
-    assert rule_data['type'] == rule_type
-    assert rule_data['value'] == rule_value
-    assert rule_data['api_name'] == rule.api_name
-    assert rule_data['fields'] == [field.api_name]
+    assert fieldset_data['rulesets'] == []
+    assert fieldset_data['fields'] == []
 
 
 def test_update__create_kickoff_fieldset_all_fieldset_data__ok(
@@ -179,8 +141,17 @@ def test_update__create_kickoff_fieldset_all_fieldset_data__ok(
     fs_description = 'Some desc'
     fs_order = 3
     fs_api_name = 'fs-some-api-name'
-    shared_fieldset = create_test_shared_fieldset(account=account)
-    shared_fieldset.fields.all().delete()
+    shared_fieldset = create_test_shared_fieldset(
+        account=account,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='100',
+    )
+    shared_field = shared_fieldset.fields.first()
+    shared_ruleset = shared_fieldset.rulesets.first()
+    shared_group_or = shared_ruleset.groups_or.first()
+    shared_group_and = shared_group_or.groups_and.first()
+    shared_ruleset.fields.add(shared_field)
+
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
@@ -244,26 +215,50 @@ def test_update__create_kickoff_fieldset_all_fieldset_data__ok(
 
     # assert
     assert response.status_code == 200
-    assert FieldsetTemplate.objects.get(
+    fieldset = FieldsetTemplate.objects.get(
         kickoff=kickoff,
         shared_fieldset=shared_fieldset,
         is_shared=False,
-        api_name=fs_api_name,
     )
+    field = fieldset.fields.first()
+    ruleset = fieldset.rulesets.first()
+    group_or = ruleset.groups_or.first()
+    group_and = group_or.groups_and.first()
 
-    fieldsets = response.data['kickoff']['fieldsets']
-    assert len(fieldsets) == 1
-    fieldset_data = fieldsets[0]
+    assert len(response.data['kickoff']['fieldsets']) == 1
+    fieldset_data = response.data['kickoff']['fieldsets'][0]
     assert fieldset_data['shared_fieldset_id'] == shared_fieldset.id
     assert fieldset_data['order'] == fs_order
+    assert fieldset_data['name'] == shared_fieldset.name
     assert fieldset_data['title'] == fs_title
     assert fieldset_data['description'] == fs_description
-    assert fieldset_data['name'] == shared_fieldset.name
-    assert fieldset_data['api_name'] == fs_api_name
     assert fieldset_data['label_position'] == shared_fieldset.label_position
     assert fieldset_data['layout'] == shared_fieldset.layout
-    assert fieldset_data['rules'] == []
-    assert fieldset_data['fields'] == []
+    assert fieldset_data['api_name'] == fieldset.api_name
+    assert len(fieldset_data['fields']) == 1
+    field_data = fieldset_data['fields'][0]
+    assert field_data['name'] == shared_field.name
+    assert field_data['description'] == ''
+    assert field_data['type'] == shared_field.type
+    assert field_data['is_required'] == shared_field.is_required
+    assert field_data['is_hidden'] == shared_field.is_hidden
+    assert field_data['order'] == shared_field.order
+    assert field_data['default'] == shared_field.default
+    assert field_data['api_name'] == field.api_name
+    assert len(fieldset_data['rulesets']) == 1
+
+    ruleset_data = fieldset_data['rulesets'][0]
+    assert ruleset_data['api_name'] == ruleset.api_name
+
+    assert len(ruleset_data['groups_or']) == 1
+    group_or_data = ruleset_data['groups_or'][0]
+    assert group_or_data['api_name'] == group_or.api_name
+
+    assert len(group_or_data['groups_and']) == 1
+    group_and_data = group_or_data['groups_and'][0]
+    assert group_and_data['api_name'] == group_and.api_name
+    assert group_and_data['operator'] == shared_group_and.operator
+    assert group_and_data['value'] == shared_group_and.value
 
 
 def test_update__create_kickoff_two_different_fieldsets__ok(
@@ -734,10 +729,14 @@ def test_update__update_kickoff__fieldset_all_fields__ok(
         assert fieldset.label_position == shared_fieldset.label_position
 
 
-def test_update_kickoff_update_active_template__not_change_fieldset(
+def test_update__kickoff_active_keep_fs_api_names__ok(
     mocker,
     api_client,
 ):
+
+    """
+    Active template update keeps fieldset api_names
+    """
 
     # arrange
     account = create_test_account()
@@ -747,16 +746,8 @@ def test_update_kickoff_update_active_template__not_change_fieldset(
     task = template.tasks.first()
     shared_fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
-    )
-    shared_field = shared_fieldset.fields.first()
-    shared_field.type = FieldType.RADIO
-    shared_field.save(update_fields=['type'])
-    FieldTemplateSelection.objects.create(
-        value='Option 1',
-        field_template=shared_field,
-        template=template,
-        api_name=f'{shared_field.api_name}-shared-selection-1',
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='10',
     )
     fieldset = create_test_fieldset_template(
         account=account,
@@ -767,24 +758,25 @@ def test_update_kickoff_update_active_template__not_change_fieldset(
         title='Old title',
         api_name='fs-kickoff-fields',
     )
-    rule = fieldset.rules.first()
+    ruleset = fieldset.rulesets.first()
+    group_or = ruleset.groups_or.first()
+    group_and = group_or.groups_and.first()
     field = fieldset.fields.first()
-    selection = field.selections.all().first()
 
     new_title = 'New title'
-    mocker.patch(
+    create_integrations_for_template_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         'create_integrations_for_template',
     )
-    mocker.patch(
+    template_updated_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.template_updated',
     )
-    mocker.patch(
+    templates_updated_mock = mocker.patch(
         'src.processes.views.template.AnalyticService.templates_updated',
     )
-    mocker.patch(
+    templates_kickoff_updated_mock = mocker.patch(
         'src.processes.views.template.'
         'AnalyticService.templates_kickoff_updated',
     )
@@ -819,20 +811,26 @@ def test_update_kickoff_update_active_template__not_change_fieldset(
                                 'api_name': field.api_name,
                                 'type': field.type,
                                 'order': field.order,
-                                'selections': [
-                                    {
-                                        'value': selection.value,
-                                        'api_name': selection.api_name,
-                                    },
-                                ],
                             },
                         ],
-                        'rules': [
+                        'rulesets': [
                             {
-                                'type': rule.type,
-                                'value': rule.value,
-                                'api_name': rule.api_name,
+                                'api_name': ruleset.api_name,
                                 'fields': [field.api_name],
+                                'groups_or': [
+                                    {
+                                        'api_name': group_or.api_name,
+                                        'groups_and': [
+                                            {
+                                                'api_name': group_and.api_name,
+                                                'operator': (
+                                                    group_and.operator
+                                                ),
+                                                'value': group_and.value,
+                                            },
+                                        ],
+                                    },
+                                ],
                             },
                         ],
                     },
@@ -864,21 +862,45 @@ def test_update_kickoff_update_active_template__not_change_fieldset(
     assert kickoff_fieldset['api_name'] == fieldset.api_name
     assert kickoff_fieldset['title'] == new_title
 
-    rule_data = kickoff_fieldset['rules'][0]
-    assert rule_data['api_name'] == rule.api_name
+    ruleset_data = kickoff_fieldset['rulesets'][0]
+    assert ruleset_data['api_name'] == ruleset.api_name
 
-    fields = kickoff_fieldset['fields']
-    assert len(fields) == 1
-    field_1 = fields[0]
-    assert field_1['api_name'] == field.api_name
+    assert len(ruleset_data['groups_or']) == 1
+    group_or_data = ruleset_data['groups_or'][0]
+    assert group_or_data['api_name'] == group_or.api_name
 
-    selections = field_1['selections']
-    assert len(selections) == 1
-    selection_1 = selections[0]
-    assert selection_1['api_name'] == selection.api_name
+    assert len(group_or_data['groups_and']) == 1
+    group_and_data = group_or_data['groups_and'][0]
+    assert group_and_data['api_name'] == group_and.api_name
+
+    assert len(kickoff_fieldset['fields']) == 1
+    field_data = kickoff_fieldset['fields'][0]
+    assert field_data['api_name'] == field.api_name
+    create_integrations_for_template_mock.assert_not_called()
+    template_updated_mock.assert_called_once_with(
+        template=template,
+    )
+    templates_kickoff_updated_mock.assert_called_once_with(
+        user=user,
+        template=template,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    templates_updated_mock.assert_called_once_with(
+        user=user,
+        template=template,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        kickoff_fields_count=0,
+        tasks_count=1,
+        tasks_fields_count=0,
+        delays_count=0,
+        due_in_count=0,
+        conditions_count=0,
+    )
 
 
-def test_update_kickoff_update_inactive_template__not_change_fieldset(
+def test_update__kickoff_update_inactive_template__not_change_fs_api_names(
     mocker,
     api_client,
 ):
@@ -891,7 +913,7 @@ def test_update_kickoff_update_inactive_template__not_change_fieldset(
     task = template.tasks.first()
     shared_fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
     shared_field = shared_fieldset.fields.first()
     shared_field.type = FieldType.RADIO
@@ -911,7 +933,9 @@ def test_update_kickoff_update_inactive_template__not_change_fieldset(
         title='Old title',
         api_name='fs-kickoff-fields',
     )
-    rule = fieldset.rules.first()
+    ruleset = fieldset.rulesets.first()
+    group_or = ruleset.groups_or.first()
+    group_and = group_or.groups_and.first()
     field = fieldset.fields.first()
     selection = field.selections.all().first()
 
@@ -982,12 +1006,24 @@ def test_update_kickoff_update_inactive_template__not_change_fieldset(
                                 ],
                             },
                         ],
-                        'rules': [
+                        'rulesets': [
                             {
-                                'type': rule.type,
-                                'value': rule.value,
-                                'api_name': rule.api_name,
+                                'api_name': ruleset.api_name,
                                 'fields': [field.api_name],
+                                'groups_or': [
+                                    {
+                                        'api_name': group_or.api_name,
+                                        'groups_and': [
+                                            {
+                                                'api_name': group_and.api_name,
+                                                'operator': (
+                                                    group_and.operator
+                                                ),
+                                                'value': group_and.value,
+                                            },
+                                        ],
+                                    },
+                                ],
                             },
                         ],
                     },
@@ -1019,19 +1055,24 @@ def test_update_kickoff_update_inactive_template__not_change_fieldset(
     assert kickoff_fieldset['api_name'] == fieldset.api_name
     assert kickoff_fieldset['title'] == new_title
 
-    rule_data = kickoff_fieldset['rules'][0]
-    assert rule_data['api_name'] == rule.api_name
+    ruleset_data = kickoff_fieldset['rulesets'][0]
+    assert ruleset_data['api_name'] == ruleset.api_name
 
-    fields = kickoff_fieldset['fields']
-    assert len(fields) == 1
-    field_1 = fields[0]
-    assert field_1['api_name'] == field.api_name
+    assert len(ruleset_data['groups_or']) == 1
+    group_or_data = ruleset_data['groups_or'][0]
+    assert group_or_data['api_name'] == group_or.api_name
 
-    selections = field_1['selections']
-    assert len(selections) == 1
-    selection_1 = selections[0]
-    assert selection_1['api_name'] == selection.api_name
+    assert len(group_or_data['groups_and']) == 1
+    group_and_data = group_or_data['groups_and'][0]
+    assert group_and_data['api_name'] == group_and.api_name
 
+    assert len(kickoff_fieldset['fields']) == 1
+    field_data = kickoff_fieldset['fields'][0]
+    assert field_data['api_name'] == field.api_name
+
+    assert len(field_data['selections']) == 1
+    selection_data = field_data['selections'][0]
+    assert selection_data['api_name'] == selection.api_name
 
 # Task fieldsets
 
@@ -1047,28 +1088,15 @@ def test_update__create_task_fieldset_only_required_data__ok(
     template = create_test_template(user, is_active=True, tasks_count=1)
     kickoff = template.kickoff_instance
     task = template.tasks.first()
-    fs_title = 'Some title'
-    fs_description = 'Some desc'
-    fs_name = 'Some name'
-    fs_order = 3
-    label_position = LabelPosition.LEFT
-    layout = FieldSetLayout.HORIZONTAL
-    rule_type = FieldSetRuleType.SUM_EQUAL
+    rule_operator = FieldSetRuleOperator.SUM_EQUAL
     rule_value = '200'
     shared_fieldset = create_test_shared_fieldset(
         account=account,
-        title=fs_title,
-        description=fs_description,
-        name=fs_name,
-        order=fs_order,
-        label_position=label_position,
-        layout=layout,
-        rule_type=rule_type,
+        rule_operator=rule_operator,
         rule_value=rule_value,
     )
-    shared_field = shared_fieldset.fields.first()
-    shared_rule = shared_fieldset.rules.first()
-    shared_field.rules.add(shared_rule)
+    shared_fieldset.fields.all().delete()
+    shared_fieldset.rulesets.all().delete()
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
@@ -1133,36 +1161,20 @@ def test_update__create_task_fieldset_only_required_data__ok(
         shared_fieldset=shared_fieldset,
         is_shared=False,
     )
-    field = fieldset.fields.first()
-    rule = fieldset.rules.first()
 
     fieldsets = response.data['tasks'][0]['fieldsets']
     assert len(fieldsets) == 1
     fieldset_data = fieldsets[0]
     assert fieldset_data['shared_fieldset_id'] == shared_fieldset.id
     assert fieldset_data['order'] == 0
-    assert fieldset_data['name'] == fs_name
-    assert fieldset_data['title'] == fs_title
-    assert fieldset_data['description'] == fs_description
-    assert fieldset_data['label_position'] == label_position
-    assert fieldset_data['layout'] == layout
+    assert fieldset_data['name'] == shared_fieldset.name
+    assert fieldset_data['title'] == shared_fieldset.name
+    assert fieldset_data['description'] == shared_fieldset.description
+    assert fieldset_data['label_position'] == shared_fieldset.label_position
+    assert fieldset_data['layout'] == shared_fieldset.layout
     assert fieldset_data['api_name'] == fieldset.api_name
-    assert len(fieldset_data['fields']) == 1
-    field_data = fieldset_data['fields'][0]
-    assert field_data['name'] == shared_field.name
-    assert field_data['description'] == ''
-    assert field_data['type'] == shared_field.type
-    assert field_data['is_required'] == shared_field.is_required
-    assert field_data['is_hidden'] == shared_field.is_hidden
-    assert field_data['order'] == shared_field.order
-    assert field_data['default'] == shared_field.default
-    assert field_data['api_name'] == field.api_name
-    assert len(fieldset_data['rules']) == 1
-    rule_data = fieldset_data['rules'][0]
-    assert rule_data['type'] == rule_type
-    assert rule_data['value'] == rule_value
-    assert rule_data['api_name'] == rule.api_name
-    assert rule_data['fields'] == [field.api_name]
+    assert fieldset_data['rulesets'] == []
+    assert fieldset_data['fields'] == []
 
 
 def test_update__create_task_fieldset_all_fieldset_data__ok(
@@ -1180,8 +1192,17 @@ def test_update__create_task_fieldset_all_fieldset_data__ok(
     fs_description = 'Some desc'
     fs_order = 3
     fs_api_name = 'fs-some-api-name'
-    shared_fieldset = create_test_shared_fieldset(account=account)
-    shared_fieldset.fields.all().delete()
+    shared_fieldset = create_test_shared_fieldset(
+        account=account,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='100',
+    )
+    shared_field = shared_fieldset.fields.first()
+    shared_ruleset = shared_fieldset.rulesets.first()
+    shared_group_or = shared_ruleset.groups_or.first()
+    shared_group_and = shared_group_or.groups_and.first()
+    shared_ruleset.fields.add(shared_field)
+
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
@@ -1245,26 +1266,52 @@ def test_update__create_task_fieldset_all_fieldset_data__ok(
 
     # assert
     assert response.status_code == 200
-    assert FieldsetTemplate.objects.get(
+    fieldset = FieldsetTemplate.objects.get(
         task=task,
         shared_fieldset=shared_fieldset,
         is_shared=False,
         api_name=fs_api_name,
     )
+    field = fieldset.fields.first()
+    ruleset = fieldset.rulesets.first()
+    group_or = ruleset.groups_or.first()
+    group_and = group_or.groups_and.first()
 
     task_data = response.data['tasks'][0]
     assert len(task_data['fieldsets']) == 1
     fieldset_data = task_data['fieldsets'][0]
     assert fieldset_data['shared_fieldset_id'] == shared_fieldset.id
     assert fieldset_data['order'] == fs_order
+    assert fieldset_data['name'] == shared_fieldset.name
     assert fieldset_data['title'] == fs_title
     assert fieldset_data['description'] == fs_description
-    assert fieldset_data['name'] == shared_fieldset.name
-    assert fieldset_data['api_name'] == fs_api_name
     assert fieldset_data['label_position'] == shared_fieldset.label_position
     assert fieldset_data['layout'] == shared_fieldset.layout
-    assert fieldset_data['rules'] == []
-    assert fieldset_data['fields'] == []
+    assert fieldset_data['api_name'] == fieldset.api_name
+    assert len(fieldset_data['fields']) == 1
+    field_data = fieldset_data['fields'][0]
+    assert field_data['name'] == shared_field.name
+    assert field_data['description'] == ''
+    assert field_data['type'] == shared_field.type
+    assert field_data['is_required'] == shared_field.is_required
+    assert field_data['is_hidden'] == shared_field.is_hidden
+    assert field_data['order'] == shared_field.order
+    assert field_data['default'] == shared_field.default
+    assert field_data['api_name'] == field.api_name
+    assert len(fieldset_data['rulesets']) == 1
+
+    ruleset_data = fieldset_data['rulesets'][0]
+    assert ruleset_data['api_name'] == ruleset.api_name
+
+    assert len(ruleset_data['groups_or']) == 1
+    group_or_data = ruleset_data['groups_or'][0]
+    assert group_or_data['api_name'] == group_or.api_name
+
+    assert len(group_or_data['groups_and']) == 1
+    group_and_data = group_or_data['groups_and'][0]
+    assert group_and_data['api_name'] == group_and.api_name
+    assert group_and_data['operator'] == shared_group_and.operator
+    assert group_and_data['value'] == shared_group_and.value
 
 
 def test_update__create_task_two_fieldsets__ok(
@@ -1807,132 +1854,22 @@ def test_update__update_task__fieldset_all_fields__ok(
         assert fieldset.label_position == shared_fieldset.label_position
 
 
-@pytest.mark.parametrize('is_active', (True, False))
-def test_update__update_task_fieldset_all_fields__ok(
+def test_update_task_update_template_inactive__not_change_fs_api_names(
     mocker,
-    is_active,
     api_client,
 ):
+
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(user, is_active=is_active, tasks_count=1)
+    template = create_test_template(user, tasks_count=1)
     kickoff = template.kickoff_instance
     task = template.tasks.get(number=1)
-    shared_fieldset = create_test_shared_fieldset(account=account)
-    fieldset = create_test_fieldset_template(
+    shared_fieldset = create_test_shared_fieldset(
         account=account,
-        template=template,
-        task=task,
-        shared_fieldset=shared_fieldset,
-        order=0,
-        title='Old title',
-        description='Old desc',
-        api_name='fs-task-update',
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='10',
     )
-    fieldset_id = fieldset.id
-    new_order = 2
-    new_title = 'New title'
-    new_description = 'New desc'
-    mocker.patch(
-        'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template',
-    )
-    mocker.patch(
-        'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.template_updated',
-    )
-    mocker.patch(
-        'src.processes.views.template.AnalyticService.templates_updated',
-    )
-    mocker.patch(
-        'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_updated',
-    )
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.put(
-        path=f'/templates/{template.id}',
-        data={
-            'id': template.id,
-            'is_active': is_active,
-            'name': 'Updated template',
-            'owners': [
-                {
-                    'type': OwnerType.USER,
-                    'source_id': user.id,
-                    'role': OwnerRole.OWNER,
-                },
-            ],
-            'kickoff': {
-                'id': kickoff.id,
-            },
-            'tasks': [
-                {
-                    'id': task.id,
-                    'api_name': task.api_name,
-                    'number': task.number,
-                    'name': task.name,
-                    'raw_performers': [
-                        {
-                            'type': PerformerType.USER,
-                            'source_id': user.id,
-                        },
-                    ],
-                    'fieldsets': [
-                        {
-                            'shared_fieldset_id': shared_fieldset.id,
-                            'api_name': fieldset.api_name,
-                            'order': new_order,
-                            'title': new_title,
-                            'description': new_description,
-                        },
-                    ],
-                },
-            ],
-        },
-    )
-
-    # assert
-    assert response.status_code == 200
-    fieldsets = response.data['tasks'][0]['fieldsets']
-    assert len(fieldsets) == 1
-    task_fieldset_1 = fieldsets[0]
-    assert task_fieldset_1['api_name'] == fieldset.api_name
-    assert task_fieldset_1['order'] == new_order
-    assert task_fieldset_1['title'] == new_title
-    assert task_fieldset_1['description'] == new_description
-    assert task_fieldset_1['name'] == fieldset.name
-    assert task_fieldset_1['layout'] == fieldset.layout
-    assert task_fieldset_1['label_position'] == fieldset.label_position
-    if is_active:
-        fieldset.refresh_from_db()
-        assert fieldset.id == fieldset_id
-        assert fieldset.api_name == 'fs-task-update'
-        assert fieldset.order == new_order
-        assert fieldset.title == new_title
-        assert fieldset.description == new_description
-        assert fieldset.name == shared_fieldset.name
-        assert fieldset.layout == shared_fieldset.layout
-        assert fieldset.label_position == shared_fieldset.label_position
-
-
-@pytest.mark.parametrize('is_active', (True, False))
-def test_update_task_update_template__not_change_fieldset(
-    mocker,
-    is_active,
-    api_client,
-):
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(user, is_active=is_active, tasks_count=1)
-    kickoff = template.kickoff_instance
-    task = template.tasks.get(number=1)
-    shared_fieldset = create_test_shared_fieldset(account=account)
     shared_field = shared_fieldset.fields.first()
     shared_field.type = FieldType.RADIO
     shared_field.save(update_fields=['type'])
@@ -1951,6 +1888,9 @@ def test_update_task_update_template__not_change_fieldset(
         title='Old title',
         api_name='fieldset-1',
     )
+    ruleset = fieldset.rulesets.first()
+    group_or = ruleset.groups_or.first()
+    group_and = group_or.groups_and.first()
     field = fieldset.fields.first()
     selection = field.selections.all().first()
 
@@ -2032,14 +1972,28 @@ def test_update_task_update_template__not_change_fieldset(
                                     ],
                                 },
                             ],
-                        },
-                    ],
-                    'fields': [
-                        {
-                            'name': 'New field',
-                            'api_name': 'field-123',
-                            'type': FieldType.NUMBER,
-                            'order': 2,
+                            'rulesets': [
+                                {
+                                    'api_name': ruleset.api_name,
+                                    'fields': [field.api_name],
+                                    'groups_or': [
+                                        {
+                                            'api_name': group_or.api_name,
+                                            'groups_and': [
+                                                {
+                                                    'api_name': (
+                                                        group_and.api_name
+                                                    ),
+                                                    'operator': (
+                                                        group_and.operator
+                                                    ),
+                                                    'value': group_and.value,
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
                         },
                     ],
                 },
@@ -2052,20 +2006,28 @@ def test_update_task_update_template__not_change_fieldset(
     fieldsets = response.data['tasks'][0]['fieldsets']
     assert len(fieldsets) == 1
 
-    task_fieldset_1 = fieldsets[0]
-    assert task_fieldset_1['api_name'] == fieldset.api_name
-    assert task_fieldset_1['title'] == fieldset.title
+    task_fieldset = fieldsets[0]
+    assert task_fieldset['api_name'] == fieldset.api_name
+    assert task_fieldset['title'] == fieldset.title
 
-    fields = task_fieldset_1['fields']
-    assert len(fields) == 1
-    field_1 = fields[0]
-    assert field_1['api_name'] == field.api_name
+    ruleset_data = task_fieldset['rulesets'][0]
+    assert ruleset_data['api_name'] == ruleset.api_name
 
-    selections = field_1['selections']
-    assert len(selections) == 1
-    selection_1 = selections[0]
-    assert selection_1['api_name'] == selection.api_name
+    assert len(ruleset_data['groups_or']) == 1
+    group_or_data = ruleset_data['groups_or'][0]
+    assert group_or_data['api_name'] == group_or.api_name
 
+    assert len(group_or_data['groups_and']) == 1
+    group_and_data = group_or_data['groups_and'][0]
+    assert group_and_data['api_name'] == group_and.api_name
+
+    assert len(task_fieldset['fields']) == 1
+    field_data = task_fieldset['fields'][0]
+    assert field_data['api_name'] == field.api_name
+
+    assert len(field_data['selections']) == 1
+    selection_data = field_data['selections'][0]
+    assert selection_data['api_name'] == selection.api_name
 
 # Mixed task and kickoff
 
@@ -2151,10 +2113,10 @@ def test_update__create_kickoff_and_task_different_fieldsets__ok(
     task_fieldsets = response.data['tasks'][0]['fieldsets']
     assert len(kickoff_fieldsets) == 1
     assert len(task_fieldsets) == 1
-    kickoff_fieldset_1 = kickoff_fieldsets[0]
-    task_fieldset_1 = task_fieldsets[0]
-    assert kickoff_fieldset_1['shared_fieldset_id'] == shared_1.id
-    assert task_fieldset_1['shared_fieldset_id'] == shared_2.id
+    kickoff_fieldset = kickoff_fieldsets[0]
+    task_fieldset = task_fieldsets[0]
+    assert kickoff_fieldset['shared_fieldset_id'] == shared_1.id
+    assert task_fieldset['shared_fieldset_id'] == shared_2.id
     assert kickoff.fieldsets.filter(
         shared_fieldset_id=shared_1.id,
     ).count() == 1
@@ -2554,7 +2516,7 @@ def test_update__activate_draft_preserves_kickoff_fieldset_rule_api_names__ok(
     api_client,
 ):
 
-    """ Draft kickoff fieldset rule/field/selection api_names must be
+    """ Draft kickoff fieldset ruleset/field/selection api_names must be
         preserved on activate. """
 
     # arrange
@@ -2562,11 +2524,11 @@ def test_update__activate_draft_preserves_kickoff_fieldset_rule_api_names__ok(
     user = create_test_owner(account=account)
     shared_fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
     shared_number_field = shared_fieldset.fields.first()
-    shared_rule = shared_fieldset.rules.first()
+    shared_rule = shared_fieldset.rulesets.first()
     shared_rule.fields.add(shared_number_field)
     shared_dropdown_field = FieldTemplate.objects.create(
         fieldset=shared_fieldset,
@@ -2649,8 +2611,8 @@ def test_update__activate_draft_preserves_kickoff_fieldset_rule_api_names__ok(
     draft_number_api_name = draft_number_data['api_name']
     draft_dropdown_api_name = draft_dropdown_data['api_name']
     draft_selection_api_name = draft_selection_data['api_name']
-    draft_rule_api_name = draft_fieldset['rules'][0]['api_name']
-    assert draft_fieldset['rules'][0]['fields'] == [draft_number_api_name]
+    draft_rule_api_name = draft_fieldset['rulesets'][0]['api_name']
+    assert draft_fieldset['rulesets'][0]['fields'] == [draft_number_api_name]
 
     # act
     response = api_client.put(
@@ -2701,22 +2663,22 @@ def test_update__activate_draft_preserves_kickoff_fieldset_rule_api_names__ok(
     selection = dropdown_field.selections.get(
         api_name=draft_selection_api_name,
     )
-    rule = fieldset.rules.get(api_name=draft_rule_api_name)
-    rule_field = rule.fields.get(api_name=draft_number_api_name)
+    ruleset = fieldset.rulesets.get(api_name=draft_rule_api_name)
+    rule_field = ruleset.fields.get(api_name=draft_number_api_name)
     assert selection.value == 'Option A'
-    assert rule.api_name == draft_rule_api_name
+    assert ruleset.api_name == draft_rule_api_name
     assert rule_field == number_field
 
     fieldset_data = response.data['kickoff']['fieldsets'][0]
     field_1_data = fieldset_data['fields'][0]
     field_2_data = fieldset_data['fields'][1]
     selection_data = field_1_data['selections'][0]
-    rule_data = fieldset_data['rules'][0]
+    ruleset_data = fieldset_data['rulesets'][0]
     assert field_1_data['api_name'] == draft_dropdown_api_name
     assert field_2_data['api_name'] == draft_number_api_name
     assert selection_data['api_name'] == draft_selection_api_name
-    assert rule_data['api_name'] == draft_rule_api_name
-    assert rule_data['fields'] == [draft_number_api_name]
+    assert ruleset_data['api_name'] == draft_rule_api_name
+    assert ruleset_data['fields'] == [draft_number_api_name]
 
 
 def test_update__duplicate_fieldset_api_name__validation_error(
@@ -2811,360 +2773,6 @@ def test_update__duplicate_fieldset_api_name__validation_error(
     assert response.data['details']['api_name'] == fs_api_name
 
 
-def test_update__duplicate_fieldset_rule_api_name__validation_error(
-    mocker,
-    api_client,
-):
-
-    """ Duplicate rule api_name across kickoff and task fieldsets
-        must fail validation. """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(user, is_active=True, tasks_count=1)
-    kickoff = template.kickoff_instance
-    task = template.tasks.first()
-    shared_fieldset = create_test_shared_fieldset(
-        account=account,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
-        rule_value='100',
-    )
-    fs_rule_api_name = 'fs-rule'
-    mocker.patch(
-        'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template',
-    )
-    mocker.patch(
-        'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.template_updated',
-    )
-    mocker.patch(
-        'src.processes.views.template.AnalyticService.templates_updated',
-    )
-    mocker.patch(
-        'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_updated',
-    )
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.put(
-        path=f'/templates/{template.id}',
-        data={
-            'id': template.id,
-            'name': template.name,
-            'is_active': True,
-            'owners': [
-                {
-                    'type': OwnerType.USER,
-                    'source_id': user.id,
-                    'role': OwnerRole.OWNER,
-                },
-            ],
-            'kickoff': {
-                'id': kickoff.id,
-                'fieldsets': [
-                    {
-                        'shared_fieldset_id': shared_fieldset.id,
-                        'rules': [
-                            {
-                                'type': FieldSetRuleType.SUM_EQUAL,
-                                'value': '100',
-                                'api_name': fs_rule_api_name,
-                            },
-                        ],
-                    },
-                ],
-            },
-            'tasks': [
-                {
-                    'id': task.id,
-                    'api_name': task.api_name,
-                    'number': task.number,
-                    'name': task.name,
-                    'raw_performers': [
-                        {
-                            'type': PerformerType.USER,
-                            'source_id': user.id,
-                        },
-                    ],
-                    'fieldsets': [
-                        {
-                            'shared_fieldset_id': shared_fieldset.id,
-                            'rules': [
-                                {
-                                    'type': FieldSetRuleType.SUM_EQUAL,
-                                    'value': '100',
-                                    'api_name': fs_rule_api_name,
-                                },
-                            ],
-                        },
-                    ],
-                },
-            ],
-        },
-    )
-
-    # assert
-    assert response.status_code == 400
-    message = MSG_FS_0014(
-        name=task.name,
-        api_name=fs_rule_api_name,
-    )
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == message
-    assert response.data['details']['reason'] == message
-    assert response.data['details']['api_name'] == fs_rule_api_name
-
-
-def test_update__duplicate_fieldset_field_api_name__validation_error(
-    mocker,
-    api_client,
-):
-
-    """ Duplicate field api_name across kickoff and task fieldsets
-        must fail validation. """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(user, is_active=True, tasks_count=1)
-    kickoff = template.kickoff_instance
-    task = template.tasks.first()
-    shared_fieldset = create_test_shared_fieldset(account=account)
-    kickoff_fieldset = create_test_fieldset_template(
-        account=account,
-        template=template,
-        kickoff=kickoff,
-        shared_fieldset=shared_fieldset,
-        api_name='fs-kickoff',
-    )
-    kickoff_field = kickoff_fieldset.fields.first()
-    field_api_name = 'field-api-name'
-    mocker.patch(
-        'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template',
-    )
-    mocker.patch(
-        'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.template_updated',
-    )
-    mocker.patch(
-        'src.processes.views.template.AnalyticService.templates_updated',
-    )
-    mocker.patch(
-        'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_updated',
-    )
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.put(
-        path=f'/templates/{template.id}',
-        data={
-            'id': template.id,
-            'name': template.name,
-            'is_active': True,
-            'owners': [
-                {
-                    'type': OwnerType.USER,
-                    'source_id': user.id,
-                    'role': OwnerRole.OWNER,
-                },
-            ],
-            'kickoff': {
-                'id': kickoff.id,
-                'fieldsets': [
-                    {
-                        'shared_fieldset_id': shared_fieldset.id,
-                        'fields': [
-                            {
-                                'name': kickoff_field.name,
-                                'type': kickoff_field.type,
-                                'order': kickoff_field.order,
-                                'api_name': field_api_name,
-                            },
-                        ],
-                    },
-                ],
-            },
-            'tasks': [
-                {
-                    'id': task.id,
-                    'api_name': task.api_name,
-                    'number': task.number,
-                    'name': task.name,
-                    'raw_performers': [
-                        {
-                            'type': PerformerType.USER,
-                            'source_id': user.id,
-                        },
-                    ],
-                    'fieldsets': [
-                        {
-                            'shared_fieldset_id': shared_fieldset.id,
-                            'fields': [
-                                {
-                                    'name': kickoff_field.name,
-                                    'type': kickoff_field.type,
-                                    'order': kickoff_field.order,
-                                    'api_name': field_api_name,
-                                },
-                            ],
-                        },
-                    ],
-                },
-            ],
-        },
-    )
-
-    # assert
-    assert response.status_code == 400
-    message = MSG_FS_0015(
-        name=task.name,
-        field_name=kickoff_field.name,
-        api_name=field_api_name,
-    )
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == message
-    assert response.data['details']['reason'] == message
-    assert response.data['details']['api_name'] == field_api_name
-
-
-def test_update__duplicate_fieldset_selection_api_name__validation_error(
-    mocker,
-    api_client,
-):
-
-    """ Duplicate selection api_name across kickoff and task fieldsets
-        must fail validation. """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(user, is_active=True, tasks_count=1)
-    kickoff = template.kickoff_instance
-    task = template.tasks.first()
-    shared_fieldset = create_test_shared_fieldset(account=account)
-    shared_fieldset.fields.all().delete()
-    shared_dropdown_field = FieldTemplate.objects.create(
-        fieldset=shared_fieldset,
-        account=account,
-        name='Dropdown field',
-        type=FieldType.DROPDOWN,
-        order=1,
-        api_name=f'{shared_fieldset.api_name}-field-dropdown',
-    )
-    FieldTemplateSelection.objects.create(
-        field_template=shared_dropdown_field,
-        value='Option A',
-        api_name=f'{shared_fieldset.api_name}-selection-1',
-    )
-    selection_api_name = 'selection-1'
-
-    mocker.patch(
-        'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template',
-    )
-    mocker.patch(
-        'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.template_updated',
-    )
-    mocker.patch(
-        'src.processes.views.template.AnalyticService.templates_updated',
-    )
-    mocker.patch(
-        'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_updated',
-    )
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.put(
-        path=f'/templates/{template.id}',
-        data={
-            'id': template.id,
-            'name': template.name,
-            'is_active': True,
-            'owners': [
-                {
-                    'type': OwnerType.USER,
-                    'source_id': user.id,
-                    'role': OwnerRole.OWNER,
-                },
-            ],
-            'kickoff': {
-                'id': kickoff.id,
-                'fieldsets': [
-                    {
-                        'shared_fieldset_id': shared_fieldset.id,
-                        'fields': [
-                            {
-                                'name': shared_dropdown_field.name,
-                                'type': shared_dropdown_field.type,
-                                'order': 1,
-                                'selections': [
-                                    {
-                                        'value': 'Option B',
-                                        'api_name': selection_api_name,
-                                    },
-                                ],
-                            },
-                        ],
-                    },
-                ],
-            },
-            'tasks': [
-                {
-                    'id': task.id,
-                    'api_name': task.api_name,
-                    'number': task.number,
-                    'name': task.name,
-                    'raw_performers': [
-                        {
-                            'type': PerformerType.USER,
-                            'source_id': user.id,
-                        },
-                    ],
-                    'fieldsets': [
-                        {
-                            'shared_fieldset_id': shared_fieldset.id,
-                            'fields': [
-                                {
-                                    'name': shared_dropdown_field.name,
-                                    'order': 1,
-                                    'type': shared_dropdown_field.type,
-                                    'selections': [
-                                        {
-                                            'value': 'Option B',
-                                            'api_name': selection_api_name,
-                                        },
-                                    ],
-                                },
-                            ],
-                        },
-                    ],
-                },
-            ],
-        },
-    )
-
-    # assert
-    assert response.status_code == 400
-    message = MSG_FS_0016(
-        name=task.name,
-        api_name=selection_api_name,
-    )
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == message
-    assert response.data['details']['reason'] == message
-    assert response.data['details']['api_name'] == selection_api_name
-
-
 def test_update__add_fieldset_with_expanded_fields__preserves_api_names(
     mocker,
     api_client,
@@ -3243,7 +2851,7 @@ def test_update__add_fieldset_with_expanded_fields__preserves_api_names(
                                 ],
                             },
                         ],
-                        'rules': [],
+                        'rulesets': [],
                     },
                 ],
             },
@@ -3284,13 +2892,13 @@ def test_update__add_fieldset_with_expanded_fields__preserves_api_names(
     assert selection_data['api_name'] == selection_api_name
 
 
-def test_update__existing_fieldset_ignores_fields_in_payload__ok(
+def test_update__existing_fieldset_syncs_fields_in_payload__ok(
     mocker,
     api_client,
 ):
 
-    """ Updating an existing fieldset by api_name must ignore fields
-        from payload and only apply order/title/description changes. """
+    """ Updating an existing fieldset by api_name applies fields
+        from the payload together with order, title and description. """
 
     # arrange
     account = create_test_account()
@@ -3309,21 +2917,20 @@ def test_update__existing_fieldset_ignores_fields_in_payload__ok(
         order=1,
         api_name='existing-fs',
     )
-    original_field = fieldset.fields.get()
-    original_field_api_name = original_field.api_name
-    mocker.patch(
+    original_field_api_name = fieldset.fields.get().api_name
+    create_integrations_for_template_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         'create_integrations_for_template',
     )
-    mocker.patch(
+    template_updated_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.template_updated',
     )
-    mocker.patch(
+    templates_updated_mock = mocker.patch(
         'src.processes.views.template.AnalyticService.templates_updated',
     )
-    mocker.patch(
+    templates_kickoff_updated_mock = mocker.patch(
         'src.processes.views.template.'
         'AnalyticService.templates_kickoff_updated',
     )
@@ -3367,7 +2974,7 @@ def test_update__existing_fieldset_ignores_fields_in_payload__ok(
                                 'default': '',
                             },
                         ],
-                        'rules': [],
+                        'rulesets': [],
                     },
                 ],
             },
@@ -3398,9 +3005,33 @@ def test_update__existing_fieldset_ignores_fields_in_payload__ok(
     fieldset_data = response.data['kickoff']['fieldsets'][0]
     field_data = fieldset_data['fields'][0]
     assert fieldset.fields.count() == 1
-    assert field.api_name == original_field_api_name
-    assert field_data['api_name'] == original_field_api_name
-    assert field.api_name != 'tampered-field-api-name'
+    assert field.api_name == 'tampered-field-api-name'
+    assert field_data['api_name'] == 'tampered-field-api-name'
+    assert not fieldset.fields.filter(
+        api_name=original_field_api_name,
+    ).exists()
+    create_integrations_for_template_mock.assert_not_called()
+    template_updated_mock.assert_called_once_with(
+        template=template,
+    )
+    templates_kickoff_updated_mock.assert_called_once_with(
+        user=user,
+        template=template,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    templates_updated_mock.assert_called_once_with(
+        user=user,
+        template=template,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        kickoff_fields_count=0,
+        tasks_count=1,
+        tasks_fields_count=0,
+        delays_count=0,
+        due_in_count=0,
+        conditions_count=0,
+    )
 
 
 def test_update__create_fieldset_with_shared_api_names__preserved_in_response(
@@ -3416,11 +3047,13 @@ def test_update__create_fieldset_with_shared_api_names__preserved_in_response(
     user = create_test_owner(account=account)
     shared_fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
     shared_number_field = shared_fieldset.fields.first()
-    shared_rule = shared_fieldset.rules.first()
+    shared_rule = shared_fieldset.rulesets.first()
+    shared_group_or = shared_rule.groups_or.first()
+    shared_group_and = shared_group_or.groups_and.first()
     shared_dropdown_field = FieldTemplate.objects.create(
         fieldset=shared_fieldset,
         account=account,
@@ -3507,12 +3140,28 @@ def test_update__create_fieldset_with_shared_api_names__preserved_in_response(
                                 ],
                             },
                         ],
-                        'rules': [
+                        'rulesets': [
                             {
-                                'type': shared_rule.type,
-                                'value': shared_rule.value,
                                 'api_name': shared_rule.api_name,
                                 'fields': [shared_number_field.api_name],
+                                'groups_or': [
+                                    {
+                                        'api_name': shared_group_or.api_name,
+                                        'groups_and': [
+                                            {
+                                                'api_name': (
+                                                    shared_group_and.api_name
+                                                ),
+                                                'operator': (
+                                                    shared_group_and.operator
+                                                ),
+                                                'value': (
+                                                    shared_group_and.value
+                                                ),
+                                            },
+                                        ],
+                                    },
+                                ],
                             },
                         ],
                     },
@@ -3542,11 +3191,11 @@ def test_update__create_fieldset_with_shared_api_names__preserved_in_response(
     dropdown_data = fieldset_data['fields'][0]
     number_data = fieldset_data['fields'][1]
     selection_data = dropdown_data['selections'][0]
-    rule_data = fieldset_data['rules'][0]
+    ruleset_data = fieldset_data['rulesets'][0]
 
     assert fieldset_data['api_name'] == shared_fieldset.api_name
     assert number_data['api_name'] != shared_number_field.api_name
     assert dropdown_data['api_name'] != shared_dropdown_field.api_name
     assert selection_data['api_name'] != shared_selection.api_name
-    assert rule_data['api_name'] != shared_rule.api_name
-    assert rule_data['fields'] != [shared_number_field.api_name]
+    assert ruleset_data['api_name'] != shared_rule.api_name
+    assert ruleset_data['fields'] != [shared_number_field.api_name]
