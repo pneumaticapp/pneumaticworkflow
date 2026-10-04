@@ -1,6 +1,7 @@
 import json
 from urllib.parse import parse_qs
 
+from channels.db import database_sync_to_async
 from django.contrib.auth.middleware import AuthenticationMiddleware
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ObjectDoesNotExist
@@ -32,7 +33,9 @@ class WebsocketAuthMiddleware:
         if b'auth_token' in query_string:
             token = query_string[b'auth_token'][0]
             try:
-                user = PneumaticToken.get_user_from_token(token.decode())
+                user = await database_sync_to_async(
+                    PneumaticToken.get_user_from_token,
+                )(token.decode())
             except ObjectDoesNotExist:
                 pass
             else:

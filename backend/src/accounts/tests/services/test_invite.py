@@ -1,5 +1,5 @@
 import pytest
-import pytz
+from zoneinfo import ZoneInfo
 from django.contrib.auth import get_user_model
 
 from src.accounts.entities import InviteData
@@ -121,7 +121,7 @@ def test_create_invited_user__ok(mocker):
     # arrange
     account = create_test_account()
     language = Language.de
-    timezone = pytz.timezone('Atlantic/Faeroe')
+    timezone = ZoneInfo('Atlantic/Faeroe')
     date_fmt = UserDateFormat.PY_EUROPE_24
     date_fdw = UserFirstDayWeek.SATURDAY
     account_owner = create_test_user(
@@ -186,7 +186,7 @@ def test_create_invited_user__transfer__ok():
     # arrange
     account = create_test_account()
     language = Language.fr
-    timezone = pytz.timezone('UTC')
+    timezone = ZoneInfo('UTC')
     date_fmt = UserDateFormat.PY_EUROPE_24
     date_fdw = UserFirstDayWeek.SATURDAY
     account_owner = create_test_user(

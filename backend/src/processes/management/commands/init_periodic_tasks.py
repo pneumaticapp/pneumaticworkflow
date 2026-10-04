@@ -4,7 +4,7 @@ from django_celery_beat.models import (
     IntervalSchedule,
     CrontabSchedule,
 )
-import pytz
+from zoneinfo import ZoneInfo
 
 
 class Command(BaseCommand):
@@ -92,7 +92,7 @@ class Command(BaseCommand):
             minute="0",
             hour="8",
             day_of_week="5",
-            timezone=pytz.timezone("US/Central"),
+            timezone=ZoneInfo("US/Central"),
         )
         self._create_or_skip_task(
             name="My tasks digest",
@@ -128,7 +128,7 @@ class Command(BaseCommand):
             minute="0",
             hour="11",
             day_of_week="1",
-            timezone=pytz.timezone("US/Central"),
+            timezone=ZoneInfo("US/Central"),
         )
         self._create_or_skip_task(
             name="Weekly Digest",
@@ -140,7 +140,7 @@ class Command(BaseCommand):
     def _ensure_continue_delayed_processes(self):
         schedule, _ = CrontabSchedule.objects.get_or_create(
             minute="*/1",
-            timezone=pytz.timezone("UTC"),
+            timezone=ZoneInfo("UTC"),
         )
         self._create_or_skip_task(
             name="continue_delayed_processes",
@@ -165,7 +165,7 @@ class Command(BaseCommand):
     def _ensure_process_vacations(self):
         schedule, _ = CrontabSchedule.objects.get_or_create(
             minute="*/15",
-            timezone=pytz.timezone("UTC"),
+            timezone=ZoneInfo("UTC"),
         )
         self._create_or_skip_task(
             name="Process vacation schedules",
@@ -179,7 +179,7 @@ class Command(BaseCommand):
     def _ensure_delegate_vacation_tasks(self):
         schedule, _ = CrontabSchedule.objects.get_or_create(
             minute="*/5",
-            timezone=pytz.timezone("UTC"),
+            timezone=ZoneInfo("UTC"),
         )
         self._create_or_skip_task(
             name="Delegate vacation tasks",

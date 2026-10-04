@@ -3,10 +3,10 @@
 Django settings for src project.
 
 For more information on this file, see
-https://docs.djangoproject.com/en/2.2/topics/settings/
+https://docs.djangoproject.com/en/5.2/topics/settings/
 
 For the full list of settings and their values, see
-https://docs.djangoproject.com/en/2.2/ref/settings/
+https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import datetime
 import os
@@ -30,7 +30,6 @@ class Common(Configuration):
     # The separator is a dash.
 
     USE_I18N = True  # Enable translation system
-    USE_L10N = True  # Enable will display numbers and dates using locale
     LANGUAGE_CODE = env.get('LANGUAGE_CODE', 'en')
     from src.accounts.enums import Language
     if Language.ru == LANGUAGE_CODE:
@@ -39,6 +38,7 @@ class Common(Configuration):
         LANGUAGES = Language.EURO_CHOICES
     TIME_ZONE = 'UTC'
     USE_TZ = True
+    DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
     BASE_DIR = os.path.dirname(os.path.dirname(__file__))
     PROJECT_DIR = os.path.dirname(__file__)
@@ -247,9 +247,16 @@ class Common(Configuration):
 
     STATIC_URL = '/static/'
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-    STATICFILES_STORAGE = (
-        'whitenoise.storage.CompressedManifestStaticFilesStorage'
-    )
+    STORAGES = {
+        'default': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        },
+        'staticfiles': {
+            'BACKEND': (
+                'whitenoise.storage.CompressedManifestStaticFilesStorage'
+            ),
+        },
+    }
 
     REST_FRAMEWORK = {
         'DEFAULT_RENDERER_CLASSES': [

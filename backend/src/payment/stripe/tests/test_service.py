@@ -1729,7 +1729,7 @@ def test_create_invoice__ok(mocker):
         collection_method='charge_automatically',
     )
     assert invoice_item_create_mock.call_count == 2
-    invoice_item_create_mock.has_calls([
+    invoice_item_create_mock.assert_has_calls([
         mocker.call(
             invoice=invoice_mock,
             customer=customer_mock,

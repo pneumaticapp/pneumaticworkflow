@@ -1,6 +1,6 @@
 # ruff: noqa: UP031
 import pytest
-import pytz
+from zoneinfo import ZoneInfo
 from django.utils import timezone
 
 from src.accounts.enums import BillingPlanType
@@ -108,7 +108,7 @@ class TestRunPublicTemplate:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC'),
+            tzinfo=ZoneInfo('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -444,7 +444,7 @@ class TestRunPublicTemplate:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC'),
+            tzinfo=ZoneInfo('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -689,7 +689,7 @@ class TestRunPublicTemplate:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC'),
+            tzinfo=ZoneInfo('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -806,7 +806,7 @@ class TestRunPublicTemplate:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC'),
+            tzinfo=ZoneInfo('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -1182,7 +1182,7 @@ class TestRunPublicTemplate:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC'),
+            tzinfo=ZoneInfo('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -1266,7 +1266,7 @@ class TestRunPublicTemplate:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC'),
+            tzinfo=ZoneInfo('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -1431,7 +1431,7 @@ class TestRunPublicTemplate:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC'),
+            tzinfo=ZoneInfo('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
         formatted_date = 'Aug 28, 2024, 10:41AM'
@@ -1812,7 +1812,7 @@ class TestRunEmbedTemplate:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC'),
+            tzinfo=ZoneInfo('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -1897,7 +1897,7 @@ class TestRunEmbedTemplate:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC'),
+            tzinfo=ZoneInfo('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -2090,7 +2090,7 @@ class TestRunEmbedTemplate:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC'),
+            tzinfo=ZoneInfo('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
         formatted_date = 'Aug 28, 2024, 10:41AM'
