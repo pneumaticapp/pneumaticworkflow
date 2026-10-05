@@ -32,7 +32,6 @@ uvloop = [{version = "0.22.1", platform = 'darwin'}, {version = "0.22.1", platfo
 httptools = "0.7.1"
 uvicorn = "0.38.0"
 uvicorn-worker = "0.4.0"
-tzdata = "2025.2"
 channels-redis = "4.3.0"
 pyjwt = "2.10.1"
 drf-recaptcha = "3.0.0"
