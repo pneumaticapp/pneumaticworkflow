@@ -1,4 +1,5 @@
 import pytest
+from pytest_mock import MockerFixture
 
 from src.accounts.enums import (
     AbsenceStatus,
@@ -21,6 +22,7 @@ from src.processes.tasks.tasks import delegate_vacation_tasks
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
+    create_test_group,
     create_test_owner,
     create_test_template,
     create_test_workflow,
@@ -655,7 +657,11 @@ def test_delegate__skips_soft_deleted_vacation__ok(mocker):
     event_mock.assert_not_called()
 
 
-def test_delegate_vacation_tasks__substitute_is_wf_starter__skip(mocker):
+@pytest.mark.parametrize('require_all', (False, True))
+def test_delegate_vacation_tasks__substitute_is_wf_starter__skip(
+    mocker: MockerFixture,
+    require_all: bool,
+):
 
     """
     The task started after the vacation start and has
@@ -667,12 +673,12 @@ def test_delegate_vacation_tasks__substitute_is_wf_starter__skip(mocker):
     account = create_test_account()
     owner = create_test_owner(account=account)
     starter = create_test_admin(account=account)
-    group = UserGroup.objects.create(
+    group = create_test_group(
         name='Substitutes',
-        type=UserGroupType.PERSONAL,
+        type_=UserGroupType.PERSONAL,
         account=account,
+        users=[starter],
     )
-    group.users.add(starter)
     UserVacation.objects.create(
         user=owner,
         account=account,
@@ -690,18 +696,31 @@ def test_delegate_vacation_tasks__substitute_is_wf_starter__skip(mocker):
     )
     task = workflow.tasks.get(number=1)
     task.skip_for_starter = True
-    task.save(update_fields=['skip_for_starter'])
+    task.require_completion_by_all = require_all
+    task.save(update_fields=['skip_for_starter', 'require_completion_by_all'])
     task_data = task.get_data_for_list()
     task_delegation_event_mock = mocker.patch(
-        'src.processes.services.events.'
+        target='src.processes.services.events.'
         'WorkflowEventService.task_delegation_event',
     )
     after_create_actions_mock = mocker.patch(
-        'src.processes.services.events.'
+        target='src.processes.services.events.'
         'WorkflowEventService._after_create_actions',
     )
     send_task_deleted_notification_mock = mocker.patch(
-        'src.notifications.tasks.send_task_deleted_notification.delay',
+        target='src.notifications.tasks.send_task_deleted_notification.delay',
+    )
+    deactivate_task_guest_cache_mock = mocker.patch(
+        target=(
+            'src.processes.services.workflow_action.'
+            'GuestJWTAuthService.deactivate_task_guest_cache'
+        ),
+    )
+    sync_members_mock = mocker.patch(
+        target=(
+            'src.accounts.services.vacation.'
+            'VacationDelegationService.sync_members'
+        ),
     )
 
     # act
@@ -745,4 +764,10 @@ def test_delegate_vacation_tasks__substitute_is_wf_starter__skip(mocker):
         ],
         account_id=account.id,
         task_data=task_data,
+    )
+    deactivate_task_guest_cache_mock.assert_called_once_with(task_id=task.id)
+    sync_members_mock.assert_called_once_with(
+        wf_ids={workflow.id},
+        substitute_user_ids=[starter.id],
+        user_id=owner.id,
     )
