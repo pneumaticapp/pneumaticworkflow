@@ -88,6 +88,7 @@ class TaskService(
                 instance_template.require_completion_by_all
             ),
             skip_for_starter=instance_template.skip_for_starter,
+            skip_on_return=instance_template.skip_on_return,
             is_urgent=workflow.is_urgent,
             checklists_total=ChecklistTemplateSelection.objects.filter(
                 checklist__task=instance_template,
