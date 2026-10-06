@@ -22,6 +22,7 @@ from src.processes.models.workflows.fieldset import (
     FieldSetRuleGroupOr,
     FieldSetRuleSet,
 )
+from src.processes.services.base import BaseUpdateVersionService
 from src.processes.services.exceptions import FieldsetServiceException
 
 UserModel = get_user_model()
@@ -252,3 +253,84 @@ class FieldSetRuleSetService(BaseModelService):
         raise FieldsetServiceException(
             message=self._get_error_message(all_ands),
         )
+
+
+class FieldSetRuleSetVersionService(BaseUpdateVersionService):
+
+    """ Version update reads a snapshot, so it works with dicts while
+        FieldSetRuleSetService works with template objects. Same split
+        as ChecklistService and ChecklistUpdateVersionService. """
+
+    def _set_fields(self, api_names: List[str]):
+        if not api_names:
+            self.instance.fields.clear()
+            return
+        self.instance.fields.set(
+            TaskField.objects.filter(
+                fieldset_id=self.instance.fieldset_id,
+                api_name__in=api_names,
+            ),
+        )
+
+    def _update_groups_and(
+        self,
+        group_or: FieldSetRuleGroupOr,
+        groups_and_data: List[Dict],
+    ):
+        api_names = set()
+        for group_and_data in groups_and_data:
+            FieldSetRuleGroupAnd.objects.update_or_create(
+                group_or=group_or,
+                api_name=group_and_data['api_name'],
+                defaults={
+                    'account_id': group_or.account_id,
+                    'workflow_id': group_or.workflow_id,
+                    'operator': group_and_data['operator'],
+                    'value': group_and_data.get('value'),
+                },
+            )
+            api_names.add(group_and_data['api_name'])
+        group_or.groups_and.exclude(api_name__in=api_names).delete()
+
+    def _update_groups_or(self, groups_or_data: List[Dict]):
+        api_names = set()
+        for group_or_data in groups_or_data:
+            group_or, _ = FieldSetRuleGroupOr.objects.update_or_create(
+                fieldset_rule=self.instance,
+                api_name=group_or_data['api_name'],
+                defaults={
+                    'account_id': self.instance.account_id,
+                    'workflow_id': self.instance.workflow_id,
+                },
+            )
+            self._update_groups_and(
+                group_or=group_or,
+                groups_and_data=group_or_data.get('groups_and') or [],
+            )
+            api_names.add(group_or_data['api_name'])
+        self.instance.groups_or.exclude(api_name__in=api_names).delete()
+
+    def update_from_version(
+        self,
+        data: Dict,
+        version: int,
+        **kwargs,
+    ) -> FieldSetRuleSet:
+
+        """ Call after the fieldset fields are updated: the fields m2m
+            resolves api_names to rows that must already exist. """
+
+        fieldset = kwargs['fieldset']
+        self.instance, _ = FieldSetRuleSet.objects.update_or_create(
+            fieldset=fieldset,
+            api_name=data['api_name'],
+            defaults={
+                'account_id': fieldset.account_id,
+                'workflow_id': fieldset.workflow_id,
+                'message': data.get('message'),
+                'order': data.get('order', 0),
+            },
+        )
+        self._update_groups_or(data.get('groups_or') or [])
+        self._set_fields(data.get('fields') or [])
+        return self.instance
