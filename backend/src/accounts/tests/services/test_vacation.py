@@ -1999,6 +1999,73 @@ def test_skip_tasks_for_starter__substitute_is_starter__skipped(mocker):
     )
 
 
+def test_skip_tasks_for_starter__already_completed__no_calculations(mocker):
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    absent_user = create_test_admin(account=account)
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group.users.add(starter)
+    workflow = create_test_workflow(user=starter, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.status = TaskStatus.COMPLETED
+    task.save(update_fields=['skip_for_starter', 'status'])
+    action_service_mock = mocker.patch(
+        'src.accounts.services.vacation.WorkflowActionService',
+    )
+    service = VacationDelegationService(user=absent_user)
+
+    # act
+    result = service._skip_tasks_for_starter(group=group, task_ids={task.id})
+
+    # assert
+    assert result == {task.id}
+    action_service_mock.assert_not_called()
+
+
+def test_skip_tasks_for_starter__completed_during_delegation__returned(mocker):
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    absent_user = create_test_admin(account=account)
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group.users.add(starter)
+    workflow = create_test_workflow(user=starter, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.save(update_fields=['skip_for_starter'])
+
+    def complete_without_skip(task, absent_user):
+        task.status = TaskStatus.COMPLETED
+        task.save(update_fields=['status'])
+        return False
+
+    skip_mock = mocker.patch.object(
+        WorkflowActionService,
+        'skip_delegated_task_for_starter',
+        side_effect=complete_without_skip,
+    )
+    service = VacationDelegationService(user=absent_user)
+
+    # act
+    result = service._skip_tasks_for_starter(group=group, task_ids={task.id})
+
+    # assert
+    assert result == {task.id}
+    skip_mock.assert_called_once_with(task=task, absent_user=absent_user)
+
+
 def test_skip_tasks_for_starter__task_not_skipped__empty(mocker):
 
     """

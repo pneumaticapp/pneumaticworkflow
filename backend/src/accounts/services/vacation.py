@@ -288,6 +288,9 @@ class VacationDelegationService:
         finished_task_ids: Set[int] = set()
         account_owner = self.user.account.get_owner()
         for task in tasks:
+            if task.is_completed:
+                finished_task_ids.add(task.id)
+                continue
             # The workflow is loaded here, not by select_related:
             # the skip of the previous task of the same workflow
             # may delay the workflow or complete it by a condition
@@ -297,10 +300,12 @@ class VacationDelegationService:
                 user=account_owner,
                 workflow=task.workflow,
             )
-            if service.skip_delegated_task_for_starter(
+            is_skipped = service.skip_delegated_task_for_starter(
                 task=task,
                 absent_user=self.user,
-            ) or task.is_completed:
+            )
+            # Delegation may complete an RCBA task without skipping it.
+            if is_skipped or task.is_completed:
                 finished_task_ids.add(task.id)
         return finished_task_ids
 

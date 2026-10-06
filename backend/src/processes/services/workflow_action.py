@@ -6,7 +6,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.db.models import Q
 
-from src.accounts.enums import AbsenceStatus, UserType
+from src.accounts.enums import UserGroupType, UserType
 from src.accounts.models import UserVacation
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
@@ -755,23 +755,14 @@ class WorkflowActionService:
 
         waived_users = self._get_starter_completion_users(task=task)
 
+        # The starter may have completed their share before delegation.
         for user in waived_users:
-            self._complete_task_for_user(
-                task=task,
-                user=user,
-            )
+            self._complete_performers_for_user(task=task, user=user)
         return waived_users
 
     def _get_starter_completion_users(self, task: Task) -> Set[UserModel]:
 
-        """Get the starter and absent users whose shares are waived.
-
-        Vacation delegation assigns a substitute group to the task.
-        If that group includes the starter, the absent user's share
-        must also be completed under the "skip for starter" rule.
-        Recompute these users after resume/return resets completion.
-        Load absent users together with their vacations.
-        """
+        """Get notification recipients before completing waived shares."""
 
         starter_id = self.workflow.workflow_starter_id
         substitute_group_ids = (
@@ -781,44 +772,21 @@ class WorkflowActionService:
             .exclude_directly_deleted()
             .filter(
                 group__users=starter_id,
+                group__type=UserGroupType.PERSONAL,
                 group__is_deleted=False,
             )
             .values_list('group_id', flat=True)
         )
         vacations = (
             UserVacation.objects
-            .filter(
-                substitute_group_id__in=substitute_group_ids,
-                absence_status__in=(
-                    AbsenceStatus.VACATION,
-                    AbsenceStatus.SICK_LEAVE,
-                ),
-            )
+            .sick_leave_or_vacation()
+            .filter(substitute_group_id__in=substitute_group_ids)
             .select_related('user')
         )
         return {
             self.workflow.workflow_starter,
             *(vacation.user for vacation in vacations),
         }
-
-    def _complete_task_for_user(
-        self,
-        task: Task,
-        user: UserModel,
-    ):
-        try:
-            task_performers = self._get_performers_for_user(
-                task=task,
-                user=user,
-            )
-        except exceptions.UserAlreadyCompleteTask:
-            return
-        if task_performers:
-            self._complete_performers_for_user(
-                task=task,
-                task_performers=task_performers,
-                user=user,
-            )
 
     def _is_task_skipped_for_starter(
         self,
@@ -873,7 +841,7 @@ class WorkflowActionService:
         ):
             waived_users = self._complete_task_for_starter(task=task)
             if absent_user and absent_user not in waived_users:
-                self._complete_task_for_user(
+                self._complete_performers_for_user(
                     task=task,
                     user=absent_user,
                 )
@@ -1048,7 +1016,8 @@ class WorkflowActionService:
             TaskPerformer.objects
             .by_task(task.id)
             .by_user_or_group(user.id)
-            .exclude_directly_deleted(),
+            .exclude_directly_deleted()
+            .select_related('group'),
         )
         task_performers = []
         for performer in performers:
@@ -1062,10 +1031,21 @@ class WorkflowActionService:
     def _complete_performers_for_user(
         self,
         task: Task,
-        task_performers: Iterable[TaskPerformer],
+        task_performers: Optional[Iterable[TaskPerformer]] = None,
         user: Optional[UserModel] = None,
     ):
         user = user or self.user
+        if task_performers is None:
+            try:
+                task_performers = self._get_performers_for_user(
+                    task=task,
+                    user=user,
+                )
+            except exceptions.UserAlreadyCompleteTask:
+                return
+        if not task_performers:
+            return
+        task_performers = list(task_performers)
         now = timezone.now()
         for performer in task_performers:
             if performer.type_group:
@@ -1091,6 +1071,25 @@ class WorkflowActionService:
                 performer.save(
                     update_fields=('date_completed', 'is_completed'),
                 )
+
+        # Complete this user's shares before following delegation links:
+        # completed performers also stop circular substitutions.
+        for performer in task_performers:
+            if (
+                performer.type_group
+                and performer.group.type == UserGroupType.PERSONAL
+                and not performer.group.is_deleted
+            ):
+                vacations = (
+                    performer.group.vacation_owners
+                    .sick_leave_or_vacation()
+                    .select_related('user')
+                )
+                for vacation in vacations:
+                    self._complete_performers_for_user(
+                        task=task,
+                        user=vacation.user,
+                    )
 
     def complete_task_for_user(
         self,
@@ -1174,6 +1173,9 @@ class WorkflowActionService:
                             recipients=[(self.user.id, self.user.email)],
                             account_id=task.account_id,
                         )
+                    # A substitute may also complete the absent user's share.
+                    if task.can_be_completed():
+                        self.complete_task(task=task)
             elif self.user.is_account_owner:
                 # account owner force completion
                 # not complete performers, but send ws remove task
