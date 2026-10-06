@@ -35,6 +35,11 @@ SUBSTITUTE_GROUP_PREFIX = 'Substitutes'
 
 class VacationDelegationService:
 
+    """Manage delegation for self.user, the absent employee.
+
+    Task substitutes are the users in that employee's substitute group.
+    """
+
     def __init__(self, user: 'UserModel') -> None:
         self.user = user
 
@@ -294,7 +299,7 @@ class VacationDelegationService:
             )
             if service.skip_delegated_task_for_starter(
                 task=task,
-                delegated_user=self.user,
+                absent_user=self.user,
             ) or task.is_completed:
                 finished_task_ids.add(task.id)
         return finished_task_ids

@@ -1995,7 +1995,7 @@ def test_skip_tasks_for_starter__substitute_is_starter__skipped(mocker):
     )
     skip_delegated_task_for_starter_mock.assert_called_once_with(
         task=task,
-        delegated_user=vacation_user,
+        absent_user=vacation_user,
     )
 
 
@@ -2050,7 +2050,7 @@ def test_skip_tasks_for_starter__task_not_skipped__empty(mocker):
     )
     skip_delegated_task_for_starter_mock.assert_called_once_with(
         task=task,
-        delegated_user=vacation_user,
+        absent_user=vacation_user,
     )
 
 
@@ -2124,11 +2124,11 @@ def test_skip_tasks_for_starter__several_tasks__only_skipped_ids(mocker):
         [
             mocker.call(
                 task=task_1,
-                delegated_user=vacation_user,
+                absent_user=vacation_user,
             ),
             mocker.call(
                 task=task_2,
-                delegated_user=vacation_user,
+                absent_user=vacation_user,
             ),
         ],
     )

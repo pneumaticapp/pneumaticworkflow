@@ -536,7 +536,6 @@ class WorkflowActionService:
         performers_qst.type_group_user().delete()
         if task.skip_for_starter:
             self._complete_task_for_starter(task=task)
-            self._complete_delegated_task_for_starter(task=task)
             if (
                 not self.workflow.is_external
                 and task.require_completion_by_all
@@ -743,54 +742,64 @@ class WorkflowActionService:
     def _complete_task_for_starter(
         self,
         task: Task,
-    ):
-        if (
+    ) -> Set[UserModel]:
+
+        """Complete waived shares and return their users."""
+
+        if not (
             task.skip_for_starter
             and not self.workflow.is_external
             and task.require_completion_by_all
         ):
+            return set()
+
+        waived_users = self._get_starter_completion_users(task=task)
+
+        for user in waived_users:
             self._complete_task_for_user(
                 task=task,
-                user=self.workflow.workflow_starter,
+                user=user,
             )
+        return waived_users
 
-    def _complete_delegated_task_for_starter(self, task: Task):
+    def _get_starter_completion_users(self, task: Task) -> Set[UserModel]:
 
-        # continue_task resets all shares when a delay ends or a task
-        # is returned. Restore waivers for the vacation users whose
-        # assigned substitute group still includes the starter.
-        if (
-            task.skip_for_starter
-            and not self.workflow.is_external
-            and task.require_completion_by_all
-        ):
-            substitute_group_ids = (
-                TaskPerformer.objects
-                .by_task(task_id=task.id)
-                .type_group()
-                .exclude_directly_deleted()
-                .filter(
-                    group__users=self.workflow.workflow_starter,
-                    group__is_deleted=False,
-                )
-                .values_list('group_id', flat=True)
+        """Get the starter and absent users whose shares are waived.
+
+        Vacation delegation assigns a substitute group to the task.
+        If that group includes the starter, the absent user's share
+        must also be completed under the "skip for starter" rule.
+        Recompute these users after resume/return resets completion.
+        Load absent users together with their vacations.
+        """
+
+        starter_id = self.workflow.workflow_starter_id
+        substitute_group_ids = (
+            TaskPerformer.objects
+            .by_task(task_id=task.id)
+            .type_group()
+            .exclude_directly_deleted()
+            .filter(
+                group__users=starter_id,
+                group__is_deleted=False,
             )
-            vacations = (
-                UserVacation.objects
-                .filter(
-                    substitute_group_id__in=substitute_group_ids,
-                    absence_status__in=(
-                        AbsenceStatus.VACATION,
-                        AbsenceStatus.SICK_LEAVE,
-                    ),
-                )
-                .select_related('user')
+            .values_list('group_id', flat=True)
+        )
+        vacations = (
+            UserVacation.objects
+            .filter(
+                substitute_group_id__in=substitute_group_ids,
+                absence_status__in=(
+                    AbsenceStatus.VACATION,
+                    AbsenceStatus.SICK_LEAVE,
+                ),
             )
-            for vacation in vacations:
-                self._complete_task_for_user(
-                    task=task,
-                    user=vacation.user,
-                )
+            .select_related('user')
+        )
+        return {
+            self.workflow.workflow_starter,
+            *(vacation.user for vacation in vacations),
+        }
 
     def _complete_task_for_user(
         self,
@@ -819,8 +828,9 @@ class WorkflowActionService:
 
         """ The starter is a performer and there is nobody else
             to wait for: "skip for starter" skips the whole task.
-            With RCBA and other performers the task is completed
-            only for the starter (see "_complete_task_for_starter") """
+            With RCBA and other performers, complete only the shares
+            waived for the starter and the employees they substitute for
+            (see "_complete_task_for_starter"). """
 
         starter_id = self.workflow.workflow_starter_id
         if starter_id not in performers_user_ids:
@@ -833,14 +843,18 @@ class WorkflowActionService:
     def skip_delegated_task_for_starter(
         self,
         task: Task,
-        delegated_user: Optional[UserModel] = None,
+        absent_user: Optional[UserModel] = None,
     ) -> bool:
 
         """ Apply "skip for starter" to an active or delayed task
             that the workflow starter got after the task start,
-            e.g. as a vacation substitute. The delegated user is
-            replaced by the starter and therefore is not an independent
-            performer for the RCBA skip decision.
+            e.g. as a vacation substitute. absent_user is the employee
+            who is absent, not the substitute receiving the task.
+
+            Example: Ivan is absent and starter Peter substitutes for
+            him. With "require completion by all", waive Ivan's and
+            Peter's shares, but keep waiting for independent Anna.
+            If only Peter remains after excluding Ivan, skip the task.
 
             Returns True if the task is skipped """
 
@@ -851,34 +865,24 @@ class WorkflowActionService:
         starter_id = self.workflow.workflow_starter_id
         if starter_id not in performers_user_ids:
             return False
-        if delegated_user:
-            performers_user_ids.discard(delegated_user.id)
+        if absent_user:
+            performers_user_ids.discard(absent_user.id)
         if not self._is_task_skipped_for_starter(
             task=task,
             performers_user_ids=performers_user_ids,
         ):
-            ws_recipients = []
-            if delegated_user:
-                completed_user_ids = {starter_id, delegated_user.id}
-                ws_recipients = [
-                    (user['id'], user['email'])
-                    for user in performers_users
-                    if user['id'] in completed_user_ids
-                    and user['type'] == UserType.USER
-                    and not user['is_completed']
-                ]
-            self._complete_task_for_starter(task=task)
-            if delegated_user:
+            waived_users = self._complete_task_for_starter(task=task)
+            if absent_user and absent_user not in waived_users:
                 self._complete_task_for_user(
                     task=task,
-                    user=delegated_user,
+                    user=absent_user,
                 )
-            if ws_recipients:
-                send_task_completed_websocket.delay(
-                    task_id=task.id,
-                    recipients=ws_recipients,
-                    account_id=task.account_id,
-                )
+                waived_users.add(absent_user)
+            self._send_waived_task_websocket(
+                task=task,
+                performers_users=performers_users,
+                waived_user_ids={user.id for user in waived_users},
+            )
             if task.is_active and task.can_be_completed():
                 self.complete_task(task=task)
                 self.check_delay_workflow()
@@ -892,6 +896,32 @@ class WorkflowActionService:
         self._task_skip_for_starter(task=task, is_returned=False)
         self.check_delay_workflow()
         return True
+
+    @staticmethod
+    def _send_waived_task_websocket(
+        task: Task,
+        performers_users: List[dict],
+        waived_user_ids: Set[int],
+    ):
+        """Remove auto-completed shares from users' task lists/counters.
+
+        Use the performer snapshot taken before completion to avoid
+        notifying users whose shares were already completed.
+        """
+
+        recipients = [
+            (user['id'], user['email'])
+            for user in performers_users
+            if user['id'] in waived_user_ids
+            and user['type'] == UserType.USER
+            and not user['is_completed']
+        ]
+        if recipients:
+            send_task_completed_websocket.delay(
+                task_id=task.id,
+                recipients=recipients,
+                account_id=task.account_id,
+            )
 
     def start_task(
         self,
