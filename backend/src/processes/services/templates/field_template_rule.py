@@ -65,6 +65,11 @@ class FieldTemplateRuleSetService(BaseModelService):
                 ),
             )
 
+    def validate(self):
+        for group_or in self.instance.groups_or.all():
+            for group_and in group_or.groups_and.all():
+                self._validate(group_and=group_and)
+
     def _create_group_and(
         self,
         group_or: FieldTemplateRuleGroupOr,

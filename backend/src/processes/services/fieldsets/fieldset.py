@@ -29,10 +29,14 @@ from src.processes.services.exceptions import (
     FieldsetTemplateServiceException,
     FieldsetTemplateRuleSetServiceException,
 )
-from src.processes.services.fieldsets.fieldset_rule import \
-    FieldsetTemplateRuleSetService
+from src.processes.services.fieldsets.fieldset_rule import (
+    FieldsetTemplateRuleSetService,
+)
 from src.processes.services.templates.field_template import (
     FieldTemplateService,
+)
+from src.processes.services.templates.field_template_rule import (
+    FieldTemplateRuleSetService,
 )
 from src.processes.utils.common import create_api_name
 
@@ -149,6 +153,28 @@ class FieldSetTemplateService(BaseModelService):
             self._create_fields(fields_data=fields)
         if rulesets:
             self.create_rulesets(rulesets_data=rulesets)
+        self._validate_rulesets()
+
+    def _validate_rulesets(self):
+        if self.instance is None:
+            return
+        for ruleset in self.instance.rulesets.all():
+            service = FieldsetTemplateRuleSetService(
+                user=self.user,
+                is_superuser=self.is_superuser,
+                auth_type=self.auth_type,
+                instance=ruleset,
+            )
+            service.validate()
+        for field in self.instance.fields.all():
+            for ruleset in field.rulesets.all():
+                service = FieldTemplateRuleSetService(
+                    user=self.user,
+                    is_superuser=self.is_superuser,
+                    auth_type=self.auth_type,
+                    instance=ruleset,
+                )
+                service.validate()
 
     def _get_step_name(self) -> str:
         if self.instance.kickoff_id:
@@ -163,7 +189,6 @@ class FieldSetTemplateService(BaseModelService):
     ):
         for field_data in fields_data:
             field_data_dict = dict(field_data)
-            # Field-level rulesets are not created here yet.
             field_data_dict.pop('id', None)
             service = FieldTemplateService(
                 user=self.user,
@@ -241,6 +266,7 @@ class FieldSetTemplateService(BaseModelService):
                 self._update_fields(fields_data=fields_data)
             if rulesets_data is not None:
                 self.update_rulesets(rulesets_data=rulesets_data)
+            self._validate_rulesets()
             return self.instance
 
     def delete(self) -> None:

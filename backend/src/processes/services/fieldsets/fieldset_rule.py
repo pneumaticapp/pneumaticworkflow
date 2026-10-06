@@ -84,6 +84,11 @@ class FieldsetTemplateRuleSetService(BaseModelService):
         if group_and.operator in FieldSetRuleOperator.SUM_OPERATORS:
             self._validate_sum(group_and=group_and)
 
+    def validate(self):
+        for group_or in self.instance.groups_or.all():
+            for group_and in group_or.groups_and.all():
+                self._validate(group_and=group_and)
+
     def _get_valid_fields(
         self,
         fields_api_names: List[str],

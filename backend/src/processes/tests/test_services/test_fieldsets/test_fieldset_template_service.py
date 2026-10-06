@@ -19,6 +19,7 @@ from src.processes.models.templates.fields import (
 )
 from src.processes.services.exceptions import (
     FieldsetTemplateInUseException,
+    FieldsetTemplateRuleSumMaxFieldsNotNumber,
     FieldsetTemplateSharedIdMissing,
     FieldsetTemplateTemplateIdMissing,
 )
@@ -533,6 +534,100 @@ def test__create_related__both_provided__ok(mocker):
     # assert
     create_rules_mock.assert_called_once_with(rulesets_data=rulesets)
     create_fields_mock.assert_called_once_with(fields_data=fields)
+
+
+def test__validate_rulesets__invalid_sum_rule__raises():
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+    )
+    field = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        fieldset=fieldset,
+        name='Field',
+        type=FieldType.TEXT,
+        order=1,
+    )
+    ruleset = FieldSetTemplateRuleSet.objects.create(
+        fieldset=fieldset,
+        account=account,
+        template=template,
+    )
+    ruleset.fields.add(field)
+    group_or = FieldSetTemplateRuleGroupOr.objects.create(
+        fieldset_rule=ruleset,
+        account=account,
+        template=template,
+    )
+    FieldSetTemplateRuleGroupAnd.objects.create(
+        group_or=group_or,
+        account=account,
+        template=template,
+        operator=FieldSetRuleOperator.SUM_EQUAL,
+        value='10',
+    )
+    service = FieldSetTemplateService(user=user, instance=fieldset)
+
+    with pytest.raises(FieldsetTemplateRuleSumMaxFieldsNotNumber):
+        service._validate_rulesets()
+
+
+def test_partial_update__field_type_changed_to_text_with_sum_rule__raises():
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+    )
+    field = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        fieldset=fieldset,
+        name='Field',
+        type=FieldType.NUMBER,
+        order=1,
+        api_name='field-1',
+    )
+    ruleset = FieldSetTemplateRuleSet.objects.create(
+        fieldset=fieldset,
+        account=account,
+        template=template,
+        api_name='ruleset-1',
+    )
+    ruleset.fields.add(field)
+    group_or = FieldSetTemplateRuleGroupOr.objects.create(
+        fieldset_rule=ruleset,
+        account=account,
+        template=template,
+        api_name='or-1',
+    )
+    FieldSetTemplateRuleGroupAnd.objects.create(
+        group_or=group_or,
+        account=account,
+        template=template,
+        operator=FieldSetRuleOperator.SUM_EQUAL,
+        value='10',
+        api_name='and-1',
+    )
+    service = FieldSetTemplateService(user=user, instance=fieldset)
+
+    with pytest.raises(FieldsetTemplateRuleSumMaxFieldsNotNumber):
+        service.partial_update(
+            fields=[
+                {
+                    'api_name': 'field-1',
+                    'name': 'Field',
+                    'type': FieldType.TEXT,
+                },
+            ],
+        )
 
 
 def test__update_fields__existing_field_with_rulesets__ok():

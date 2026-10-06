@@ -284,6 +284,99 @@ def test__validate_sum__all_fields_are_number__ok():
     assert result == Decimal('0.3')
 
 
+def test_validate__all_valid__ok():
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user)
+    fieldset = FieldsetTemplate.objects.create(
+        account=account,
+        template=template,
+        name='Fieldset',
+    )
+    ruleset = FieldSetTemplateRuleSet.objects.create(
+        fieldset=fieldset,
+        account=account,
+        template=template,
+    )
+    field_1 = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        fieldset=fieldset,
+        name='Field 1',
+        type=FieldType.NUMBER,
+        order=1,
+    )
+    ruleset.fields.add(field_1)
+    group_or = FieldSetTemplateRuleGroupOr.objects.create(
+        fieldset_rule=ruleset,
+        account=account,
+        template=template,
+    )
+    FieldSetTemplateRuleGroupAnd.objects.create(
+        group_or=group_or,
+        account=account,
+        template=template,
+        operator=FieldSetRuleOperator.SUM_EQUAL,
+        value='10',
+    )
+    service = FieldsetTemplateRuleSetService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=ruleset,
+    )
+
+    # act & assert - should not raise
+    service.validate()
+
+
+def test_validate__sum_rule_field_not_number__raises():
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user)
+    fieldset = FieldsetTemplate.objects.create(
+        account=account,
+        template=template,
+        name='Fieldset',
+    )
+    ruleset = FieldSetTemplateRuleSet.objects.create(
+        fieldset=fieldset,
+        account=account,
+        template=template,
+    )
+    field_1 = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        fieldset=fieldset,
+        name='Field 1',
+        type=FieldType.TEXT,
+        order=1,
+    )
+    ruleset.fields.add(field_1)
+    group_or = FieldSetTemplateRuleGroupOr.objects.create(
+        fieldset_rule=ruleset,
+        account=account,
+        template=template,
+    )
+    FieldSetTemplateRuleGroupAnd.objects.create(
+        group_or=group_or,
+        account=account,
+        template=template,
+        operator=FieldSetRuleOperator.SUM_EQUAL,
+        value='10',
+    )
+    service = FieldsetTemplateRuleSetService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=ruleset,
+    )
+
+    # act & assert
+    with pytest.raises(FieldsetTemplateRuleSumMaxFieldsNotNumber):
+        service.validate()
+
+
 def test__get_valid_fields__default_params__ok():
 
     """

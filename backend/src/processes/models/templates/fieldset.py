@@ -150,7 +150,7 @@ class FieldSetTemplateRuleSet(
     )
 
     def __str__(self):
-        return f'{self.type} / {self.api_name}'
+        return self.api_name
 
 
 class FieldSetTemplateRuleGroupOr(
