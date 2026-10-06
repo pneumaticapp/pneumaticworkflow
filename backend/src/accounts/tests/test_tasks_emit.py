@@ -35,9 +35,12 @@ def test_process_vacations__start_date_reached__audit_no_user(mocker):
         'src.accounts.services.vacation.'
         'send_vacation_delegation_notification.delay',
     )
+    captured_substitutes = []
     vacation_activated_mock = mocker.patch(
-        'src.accounts.services.vacation.AuditEventService.'
-        'vacation_activated',
+        'src.accounts.services.vacation.AuditEventService.vacation_activated',
+        side_effect=lambda **kwargs: captured_substitutes.append(
+            kwargs['substitute_users'],
+        ),
     )
 
     # act
@@ -48,13 +51,14 @@ def test_process_vacations__start_date_reached__audit_no_user(mocker):
         user=None,
         auth_type=AuthTokenType.USER,
         target=owner,
-        substitute_user_ids=[substitute.id],
+        substitute_users=captured_substitutes[0],
         absence_status=AbsenceStatus.VACATION,
         start_date=date(2020, 1, 1),
         end_date=None,
         delegated_tasks_count=0,
         is_update=True,
     )
+    assert list(captured_substitutes[0].order_by('id')) == [substitute]
     send_user_updated_mock.assert_called_once_with(
         logging=account.log_api_requests,
         account_id=account.id,

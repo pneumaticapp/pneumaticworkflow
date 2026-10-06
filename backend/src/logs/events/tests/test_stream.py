@@ -5,28 +5,72 @@ import pytest
 import redis
 from django.core.serializers.json import DjangoJSONEncoder
 
+from src.logs.events.entities import ParsedEntries
 from src.logs.events.stream import (
     AUTOCLAIM_START,
     DEAD_MAXLEN,
     MALFORMED_REASON,
     NEW_ENTRIES,
     PENDING_ENTRIES,
-    ParsedEntries,
-    _to_event,
 )
 from src.logs.events.tests.fixtures import make_event, make_unit_stream
 
 
-def test_dead_key__any_stream__suffixed_key():
+def test_autoclaim__nonzero_cursor__next_call_resumes(mocker):
+    """Resume even when Redis returned no eligible records in the page."""
 
     # arrange
+    client_mock = mocker.Mock()
+    client_mock.xautoclaim.side_effect = [['2-0', []], ['0-0', []]]
+    from_url_mock = mocker.patch(
+        'src.logs.events.stream.redis.Redis.from_url',
+        return_value=client_mock,
+    )
     stream = make_unit_stream()
 
     # act
-    result = stream.dead_key
+    first = stream.autoclaim(
+        consumer='consumer-1',
+        min_idle_ms=1000,
+        count=5,
+    )
+    last = stream.autoclaim(
+        consumer='consumer-1',
+        min_idle_ms=1000,
+        count=5,
+    )
 
     # assert
-    assert result == 'pneumatic:events-unit:dead'
+    assert first.events == []
+    assert first.next_cursor == '2-0'
+    assert last.next_cursor == AUTOCLAIM_START
+    assert client_mock.xautoclaim.call_count == 2
+    client_mock.xautoclaim.assert_has_calls(
+        [
+            mocker.call(
+                name='pneumatic:events-unit',
+                groupname='otlp',
+                consumername='consumer-1',
+                min_idle_time=1000,
+                start_id=AUTOCLAIM_START,
+                count=5,
+            ),
+            mocker.call(
+                name='pneumatic:events-unit',
+                groupname='otlp',
+                consumername='consumer-1',
+                min_idle_time=1000,
+                start_id='2-0',
+                count=5,
+            ),
+        ],
+    )
+    from_url_mock.assert_called_once_with(
+        'redis://localhost:6379/4',
+        decode_responses=True,
+        socket_connect_timeout=1,
+        socket_timeout=2,
+    )
 
 
 def test_client__first_call__built_from_the_url(mocker):
@@ -61,9 +105,9 @@ def test_client__called_twice__one_connection(mocker):
         return_value=client_mock,
     )
     stream = make_unit_stream()
+    first = stream.client
 
     # act
-    first = stream.client
     second = stream.client
 
     # assert
@@ -171,9 +215,8 @@ def test_ensure_group__group_exists__error_swallowed(mocker):
 
 
 def test_ensure_group__other_response_error__raised(mocker):
-
-    """ Only the "already exists" answer is expected; anything else
-        is a broken stream and must not be hidden. """
+    """Only the "already exists" answer is expected; anything else
+    is a broken stream and must not be hidden."""
 
     # arrange
     client_mock = mocker.Mock()
@@ -206,21 +249,28 @@ def test_ensure_group__other_response_error__raised(mocker):
     )
 
 
-def test_read_new__entries__events_with_their_ids(mocker):
+def test_read__new_entries__events_with_their_ids(mocker):
 
     # arrange
     event = make_event()
     client_mock = mocker.Mock()
-    client_mock.xreadgroup.return_value = [(
-        'pneumatic:events-unit',
-        [(
-            '1-0',
-            {
-                'type': 'workflow.run',
-                'data': json.dumps(event.to_dict(), cls=DjangoJSONEncoder),
-            },
-        )],
-    )]
+    client_mock.xreadgroup.return_value = [
+        (
+            'pneumatic:events-unit',
+            [
+                (
+                    '1-0',
+                    {
+                        'type': 'workflow.run',
+                        'data': json.dumps(
+                            event.to_dict(),
+                            cls=DjangoJSONEncoder,
+                        ),
+                    },
+                ),
+            ],
+        ),
+    ]
     from_url_mock = mocker.patch(
         'src.logs.events.stream.redis.Redis.from_url',
         return_value=client_mock,
@@ -228,7 +278,7 @@ def test_read_new__entries__events_with_their_ids(mocker):
     stream = make_unit_stream()
 
     # act
-    result = stream.read_new(consumer='consumer-1', count=5)
+    result = stream.read(consumer='consumer-1', count=5, start_id=NEW_ENTRIES)
 
     # assert
     assert len(result.events) == 1
@@ -251,7 +301,7 @@ def test_read_new__entries__events_with_their_ids(mocker):
     )
 
 
-def test_read_pending__entries__read_from_the_start(mocker):
+def test_read__pending_entries__read_from_the_start(mocker):
 
     # arrange
     client_mock = mocker.Mock()
@@ -263,7 +313,11 @@ def test_read_pending__entries__read_from_the_start(mocker):
     stream = make_unit_stream()
 
     # act
-    result = stream.read_pending(consumer='consumer-1', count=5)
+    result = stream.read(
+        consumer='consumer-1',
+        count=5,
+        start_id=PENDING_ENTRIES,
+    )
 
     # assert
     assert result == ParsedEntries()
@@ -281,7 +335,7 @@ def test_read_pending__entries__read_from_the_start(mocker):
     )
 
 
-def test_read_new__no_answer__no_events(mocker):
+def test_read__no_answer__no_events(mocker):
 
     # arrange
     client_mock = mocker.Mock()
@@ -293,7 +347,7 @@ def test_read_new__no_answer__no_events(mocker):
     stream = make_unit_stream()
 
     # act
-    result = stream.read_new(consumer='consumer-1', count=5)
+    result = stream.read(consumer='consumer-1', count=5, start_id=NEW_ENTRIES)
 
     # assert
     assert result == ParsedEntries()
@@ -312,11 +366,10 @@ def test_read_new__no_answer__no_events(mocker):
     )
 
 
-def test_read_new__entry_without_fields__acked_and_dropped(mocker, caplog):
-
-    """ A record trimmed away while it was pending comes back with
-        no fields: nothing can be delivered, the id is acked. The log
-        says how many, not which: an answer holds up to count ids. """
+def test_read__entry_without_fields__acked_and_dropped(mocker, caplog):
+    """A record trimmed away while it was pending comes back with
+    no fields: nothing can be delivered, the id is acked. The log
+    says how many, not which: an answer holds up to count ids."""
 
     # arrange
     caplog.set_level(logging.WARNING, logger='pneumatic.events')
@@ -332,13 +385,15 @@ def test_read_new__entry_without_fields__acked_and_dropped(mocker, caplog):
     stream = make_unit_stream()
 
     # act
-    result = stream.read_new(consumer='consumer-1', count=5)
+    result = stream.read(consumer='consumer-1', count=5, start_id=NEW_ENTRIES)
 
     # assert
     assert result == ParsedEntries(vanished=['1-0'])
     assert caplog.messages == ['Trimmed pending events acked: 1']
     client_mock.xack.assert_called_once_with(
-        'pneumatic:events-unit', 'otlp', '1-0',
+        'pneumatic:events-unit',
+        'otlp',
+        '1-0',
     )
     client_mock.pipeline.assert_not_called()
     from_url_mock.assert_called_once_with(
@@ -349,10 +404,7 @@ def test_read_new__entry_without_fields__acked_and_dropped(mocker, caplog):
     )
 
 
-def test_read_new__unparsable_entry__parked_in_the_dead_letter(
-    mocker,
-    caplog,
-):
+def test_read__unparsable_entry__parked_in_the_dead_letter(mocker, caplog):
 
     # arrange
     caplog.set_level(logging.WARNING, logger='pneumatic.events')
@@ -370,7 +422,7 @@ def test_read_new__unparsable_entry__parked_in_the_dead_letter(
     stream = make_unit_stream()
 
     # act
-    result = stream.read_new(consumer='consumer-1', count=5)
+    result = stream.read(consumer='consumer-1', count=5, start_id=NEW_ENTRIES)
 
     # assert
     assert result == ParsedEntries(malformed=[('1-0', {'data': 'not json'})])
@@ -388,7 +440,9 @@ def test_read_new__unparsable_entry__parked_in_the_dead_letter(
         approximate=True,
     )
     pipeline_mock.xack.assert_called_once_with(
-        'pneumatic:events-unit', 'otlp', '1-0',
+        'pneumatic:events-unit',
+        'otlp',
+        '1-0',
     )
     pipeline_mock.execute.assert_called_once_with()
     client_mock.xack.assert_not_called()
@@ -407,13 +461,15 @@ def test_autoclaim__redis_62_answer__entries_taken_over(mocker):
     client_mock = mocker.Mock()
     client_mock.xautoclaim.return_value = [
         '0-0',
-        [(
-            '1-0',
-            {
-                'type': 'workflow.run',
-                'data': json.dumps(event.to_dict(), cls=DjangoJSONEncoder),
-            },
-        )],
+        [
+            (
+                '1-0',
+                {
+                    'type': 'workflow.run',
+                    'data': json.dumps(event.to_dict(), cls=DjangoJSONEncoder),
+                },
+            ),
+        ],
     ]
     from_url_mock = mocker.patch(
         'src.logs.events.stream.redis.Redis.from_url',
@@ -422,11 +478,7 @@ def test_autoclaim__redis_62_answer__entries_taken_over(mocker):
     stream = make_unit_stream()
 
     # act
-    result = stream.autoclaim(
-        consumer='consumer-1',
-        min_idle_ms=1000,
-        count=5,
-    )
+    result = stream.autoclaim(consumer='consumer-1', min_idle_ms=1000, count=5)
 
     # assert
     assert len(result.events) == 1
@@ -448,23 +500,24 @@ def test_autoclaim__redis_62_answer__entries_taken_over(mocker):
 
 
 def test_autoclaim__redis_70_answer__deleted_ids_ignored(mocker):
-
-    """ Redis 7.0 answers [next_id, entries, deleted_ids] and removes
-        the deleted ids from the pending list itself: there is nothing
-        to ack or to park for them. """
+    """Redis 7.0 answers [next_id, entries, deleted_ids] and removes
+    the deleted ids from the pending list itself: there is nothing
+    to ack or to park for them."""
 
     # arrange
     event = make_event()
     client_mock = mocker.Mock()
     client_mock.xautoclaim.return_value = [
         '0-0',
-        [(
-            '1-0',
-            {
-                'type': 'workflow.run',
-                'data': json.dumps(event.to_dict(), cls=DjangoJSONEncoder),
-            },
-        )],
+        [
+            (
+                '1-0',
+                {
+                    'type': 'workflow.run',
+                    'data': json.dumps(event.to_dict(), cls=DjangoJSONEncoder),
+                },
+            ),
+        ],
         ['2-0'],
     ]
     from_url_mock = mocker.patch(
@@ -474,11 +527,7 @@ def test_autoclaim__redis_70_answer__deleted_ids_ignored(mocker):
     stream = make_unit_stream()
 
     # act
-    result = stream.autoclaim(
-        consumer='consumer-1',
-        min_idle_ms=1000,
-        count=5,
-    )
+    result = stream.autoclaim(consumer='consumer-1', min_idle_ms=1000, count=5)
 
     # assert
     assert len(result.events) == 1
@@ -504,9 +553,8 @@ def test_autoclaim__redis_70_answer__deleted_ids_ignored(mocker):
 
 
 def test_autoclaim__deleted_record_pair__dropped(mocker):
-
-    """ Redis 6.2 answers a claimed record the stream no longer holds
-        as a (None, None) pair. """
+    """Redis 6.2 answers a claimed record the stream no longer holds
+    as a (None, None) pair."""
 
     # arrange
     client_mock = mocker.Mock()
@@ -518,11 +566,7 @@ def test_autoclaim__deleted_record_pair__dropped(mocker):
     stream = make_unit_stream()
 
     # act
-    result = stream.autoclaim(
-        consumer='consumer-1',
-        min_idle_ms=1000,
-        count=5,
-    )
+    result = stream.autoclaim(consumer='consumer-1', min_idle_ms=1000, count=5)
 
     # assert
     assert result == ParsedEntries()
@@ -555,11 +599,7 @@ def test_autoclaim__answer_without_entries__no_events(mocker):
     stream = make_unit_stream()
 
     # act
-    result = stream.autoclaim(
-        consumer='consumer-1',
-        min_idle_ms=1000,
-        count=5,
-    )
+    result = stream.autoclaim(consumer='consumer-1', min_idle_ms=1000, count=5)
 
     # assert
     assert result == ParsedEntries()
@@ -597,7 +637,10 @@ def test_ack__ids__acked_in_one_call(mocker):
     # assert
     assert result == 2
     client_mock.xack.assert_called_once_with(
-        'pneumatic:events-unit', 'otlp', '1-0', '2-0',
+        'pneumatic:events-unit',
+        'otlp',
+        '1-0',
+        '2-0',
     )
     from_url_mock.assert_called_once_with(
         'redis://localhost:6379/4',
@@ -610,9 +653,7 @@ def test_ack__ids__acked_in_one_call(mocker):
 def test_ack__no_ids__redis_not_called(mocker):
 
     # arrange
-    from_url_mock = mocker.patch(
-        'src.logs.events.stream.redis.Redis.from_url',
-    )
+    from_url_mock = mocker.patch('src.logs.events.stream.redis.Redis.from_url')
     stream = make_unit_stream()
     ids = []
 
@@ -656,7 +697,9 @@ def test_dead_letter__event__parked_with_its_type(mocker):
         approximate=True,
     )
     pipeline_mock.xack.assert_called_once_with(
-        'pneumatic:events-unit', 'otlp', '1-0',
+        'pneumatic:events-unit',
+        'otlp',
+        '1-0',
     )
     pipeline_mock.execute.assert_called_once_with()
     from_url_mock.assert_called_once_with(
@@ -699,7 +742,9 @@ def test_dead_letter__raw_fields__parked_as_they_are(mocker):
         approximate=True,
     )
     pipeline_mock.xack.assert_called_once_with(
-        'pneumatic:events-unit', 'otlp', '1-0',
+        'pneumatic:events-unit',
+        'otlp',
+        '1-0',
     )
     pipeline_mock.execute.assert_called_once_with()
     from_url_mock.assert_called_once_with(
@@ -711,9 +756,8 @@ def test_dead_letter__raw_fields__parked_as_they_are(mocker):
 
 
 def test_dead_letter__two_entries__one_pipeline(mocker):
-
-    """ A rejected batch is as long as a delivered one: one round
-        trip for all of it, the ack in the same transaction. """
+    """A rejected batch is as long as a delivered one: one round
+    trip for all of it, the ack in the same transaction."""
 
     # arrange
     first = make_event()
@@ -738,32 +782,37 @@ def test_dead_letter__two_entries__one_pipeline(mocker):
     assert result == 2
     client_mock.pipeline.assert_called_once_with(transaction=True)
     assert pipeline_mock.xadd.call_count == 2
-    pipeline_mock.xadd.assert_has_calls([
-        mocker.call(
-            name='pneumatic:events-unit:dead',
-            fields={
-                'type': 'workflow.run',
-                'reason': 'rejected',
-                'source_id': '1-0',
-                'data': json.dumps(first.to_dict()),
-            },
-            maxlen=DEAD_MAXLEN,
-            approximate=True,
-        ),
-        mocker.call(
-            name='pneumatic:events-unit:dead',
-            fields={
-                'type': 'user.login',
-                'reason': 'rejected',
-                'source_id': '2-0',
-                'data': json.dumps(second.to_dict()),
-            },
-            maxlen=DEAD_MAXLEN,
-            approximate=True,
-        ),
-    ])
+    pipeline_mock.xadd.assert_has_calls(
+        [
+            mocker.call(
+                name='pneumatic:events-unit:dead',
+                fields={
+                    'type': 'workflow.run',
+                    'reason': 'rejected',
+                    'source_id': '1-0',
+                    'data': json.dumps(first.to_dict()),
+                },
+                maxlen=DEAD_MAXLEN,
+                approximate=True,
+            ),
+            mocker.call(
+                name='pneumatic:events-unit:dead',
+                fields={
+                    'type': 'user.login',
+                    'reason': 'rejected',
+                    'source_id': '2-0',
+                    'data': json.dumps(second.to_dict()),
+                },
+                maxlen=DEAD_MAXLEN,
+                approximate=True,
+            ),
+        ],
+    )
     pipeline_mock.xack.assert_called_once_with(
-        'pneumatic:events-unit', 'otlp', '1-0', '2-0',
+        'pneumatic:events-unit',
+        'otlp',
+        '1-0',
+        '2-0',
     )
     pipeline_mock.execute.assert_called_once_with()
     from_url_mock.assert_called_once_with(
@@ -777,9 +826,7 @@ def test_dead_letter__two_entries__one_pipeline(mocker):
 def test_dead_letter__no_entries__redis_not_called(mocker):
 
     # arrange
-    from_url_mock = mocker.patch(
-        'src.logs.events.stream.redis.Redis.from_url',
-    )
+    from_url_mock = mocker.patch('src.logs.events.stream.redis.Redis.from_url')
     stream = make_unit_stream()
     entries = []
 
@@ -791,10 +838,9 @@ def test_dead_letter__no_entries__redis_not_called(mocker):
     from_url_mock.assert_not_called()
 
 
-def test_read_new__entry_without_data_field__parked_as_malformed(mocker):
-
-    """ A record somebody wrote by hand without the data field is
-        not an event: KeyError, parked with its raw fields. """
+def test_read__entry_without_data_field__parked_as_malformed(mocker):
+    """A record somebody wrote by hand without the data field is
+    not an event: KeyError, parked with its raw fields."""
 
     # arrange
     client_mock = mocker.Mock()
@@ -811,12 +857,10 @@ def test_read_new__entry_without_data_field__parked_as_malformed(mocker):
     stream = make_unit_stream()
 
     # act
-    result = stream.read_new(consumer='consumer-1', count=5)
+    result = stream.read(consumer='consumer-1', count=5, start_id=NEW_ENTRIES)
 
     # assert
-    assert result == ParsedEntries(
-        malformed=[('1-0', {'type': 'user.login'})],
-    )
+    assert result == ParsedEntries(malformed=[('1-0', {'type': 'user.login'})])
     client_mock.xreadgroup.assert_called_once_with(
         groupname='otlp',
         consumername='consumer-1',
@@ -836,7 +880,9 @@ def test_read_new__entry_without_data_field__parked_as_malformed(mocker):
         approximate=True,
     )
     pipeline_mock.xack.assert_called_once_with(
-        'pneumatic:events-unit', 'otlp', '1-0',
+        'pneumatic:events-unit',
+        'otlp',
+        '1-0',
     )
     pipeline_mock.execute.assert_called_once_with()
     from_url_mock.assert_called_once_with(
@@ -847,12 +893,9 @@ def test_read_new__entry_without_data_field__parked_as_malformed(mocker):
     )
 
 
-def test_read_new__data_that_is_not_an_object__parked_as_malformed(
-    mocker,
-):
-
-    """ Valid JSON that is not a mapping: Event.from_dict raises
-        TypeError on a list, and the record is parked. """
+def test_read__data_that_is_not_an_object__parked_as_malformed(mocker):
+    """Valid JSON that is not a mapping: Event.from_dict raises
+    TypeError on a list, and the record is parked."""
 
     # arrange
     client_mock = mocker.Mock()
@@ -869,7 +912,7 @@ def test_read_new__data_that_is_not_an_object__parked_as_malformed(
     stream = make_unit_stream()
 
     # act
-    result = stream.read_new(consumer='consumer-1', count=5)
+    result = stream.read(consumer='consumer-1', count=5, start_id=NEW_ENTRIES)
 
     # assert
     assert result == ParsedEntries(malformed=[('1-0', {'data': '[]'})])
@@ -892,7 +935,9 @@ def test_read_new__data_that_is_not_an_object__parked_as_malformed(
         approximate=True,
     )
     pipeline_mock.xack.assert_called_once_with(
-        'pneumatic:events-unit', 'otlp', '1-0',
+        'pneumatic:events-unit',
+        'otlp',
+        '1-0',
     )
     pipeline_mock.execute.assert_called_once_with()
     from_url_mock.assert_called_once_with(
@@ -903,33 +948,32 @@ def test_read_new__data_that_is_not_an_object__parked_as_malformed(
     )
 
 
-def test_read_new__vanished_and_malformed_in_one_answer__both_cleared(
-    mocker,
-):
-
-    """ The trimmed record is acked, the broken one parked, the good
-        one delivered: three kinds in one answer. """
+def test_read__vanished_and_malformed_in_one_answer__both_cleared(mocker):
+    """The trimmed record is acked, the broken one parked, the good
+    one delivered: three kinds in one answer."""
 
     # arrange
     event = make_event()
     client_mock = mocker.Mock()
-    client_mock.xreadgroup.return_value = [(
-        'pneumatic:events-unit',
-        [
-            ('1-0', {}),
-            ('2-0', {'data': 'not json'}),
-            (
-                '3-0',
-                {
-                    'type': 'workflow.run',
-                    'data': json.dumps(
-                        event.to_dict(),
-                        cls=DjangoJSONEncoder,
-                    ),
-                },
-            ),
-        ],
-    )]
+    client_mock.xreadgroup.return_value = [
+        (
+            'pneumatic:events-unit',
+            [
+                ('1-0', {}),
+                ('2-0', {'data': 'not json'}),
+                (
+                    '3-0',
+                    {
+                        'type': 'workflow.run',
+                        'data': json.dumps(
+                            event.to_dict(),
+                            cls=DjangoJSONEncoder,
+                        ),
+                    },
+                ),
+            ],
+        ),
+    ]
     client_mock.xack.return_value = 1
     pipeline_mock = mocker.Mock()
     pipeline_mock.execute.return_value = [1]
@@ -941,7 +985,7 @@ def test_read_new__vanished_and_malformed_in_one_answer__both_cleared(
     stream = make_unit_stream()
 
     # act
-    result = stream.read_new(consumer='consumer-1', count=5)
+    result = stream.read(consumer='consumer-1', count=5, start_id=NEW_ENTRIES)
 
     # assert
     assert len(result.events) == 1
@@ -949,7 +993,9 @@ def test_read_new__vanished_and_malformed_in_one_answer__both_cleared(
     assert result.vanished == ['1-0']
     assert result.malformed == [('2-0', {'data': 'not json'})]
     client_mock.xack.assert_called_once_with(
-        'pneumatic:events-unit', 'otlp', '1-0',
+        'pneumatic:events-unit',
+        'otlp',
+        '1-0',
     )
     client_mock.pipeline.assert_called_once_with(transaction=True)
     pipeline_mock.xadd.assert_called_once_with(
@@ -964,7 +1010,9 @@ def test_read_new__vanished_and_malformed_in_one_answer__both_cleared(
         approximate=True,
     )
     pipeline_mock.xack.assert_called_once_with(
-        'pneumatic:events-unit', 'otlp', '2-0',
+        'pneumatic:events-unit',
+        'otlp',
+        '2-0',
     )
     pipeline_mock.execute.assert_called_once_with()
     from_url_mock.assert_called_once_with(
@@ -975,33 +1023,34 @@ def test_read_new__vanished_and_malformed_in_one_answer__both_cleared(
     )
 
 
-def test_read_new__type_not_string__only_that_entry_parked(mocker):
-
-    """ A record with a number for the type passes Event.from_dict:
-        it has to be parked alone instead of breaking the whole batch
-        in the sink. """
+def test_read__type_not_string__only_that_entry_parked(mocker):
+    """A record with a number for the type passes Event.from_dict:
+    it has to be parked alone instead of breaking the whole batch
+    in the sink."""
 
     # arrange
     good = make_event()
     broken = make_event().to_dict()
     broken['type'] = 5
     client_mock = mocker.Mock()
-    client_mock.xreadgroup.return_value = [(
-        'pneumatic:events-unit',
-        [
-            ('1-0', {'data': json.dumps(broken)}),
-            (
-                '2-0',
-                {
-                    'type': 'workflow.run',
-                    'data': json.dumps(
-                        good.to_dict(),
-                        cls=DjangoJSONEncoder,
-                    ),
-                },
-            ),
-        ],
-    )]
+    client_mock.xreadgroup.return_value = [
+        (
+            'pneumatic:events-unit',
+            [
+                ('1-0', {'data': json.dumps(broken)}),
+                (
+                    '2-0',
+                    {
+                        'type': 'workflow.run',
+                        'data': json.dumps(
+                            good.to_dict(),
+                            cls=DjangoJSONEncoder,
+                        ),
+                    },
+                ),
+            ],
+        ),
+    ]
     pipeline_mock = mocker.Mock()
     pipeline_mock.execute.return_value = [1]
     client_mock.pipeline.return_value = pipeline_mock
@@ -1012,7 +1061,7 @@ def test_read_new__type_not_string__only_that_entry_parked(mocker):
     stream = make_unit_stream()
 
     # act
-    result = stream.read_new(consumer='consumer-1', count=5)
+    result = stream.read(consumer='consumer-1', count=5, start_id=NEW_ENTRIES)
 
     # assert
     assert len(result.events) == 1
@@ -1031,7 +1080,9 @@ def test_read_new__type_not_string__only_that_entry_parked(mocker):
         approximate=True,
     )
     pipeline_mock.xack.assert_called_once_with(
-        'pneumatic:events-unit', 'otlp', '1-0',
+        'pneumatic:events-unit',
+        'otlp',
+        '1-0',
     )
     pipeline_mock.execute.assert_called_once_with()
     client_mock.xack.assert_not_called()
@@ -1043,86 +1094,91 @@ def test_read_new__type_not_string__only_that_entry_parked(mocker):
     )
 
 
-def test_to_event__valid_record__event_with_the_stream_id():
-
-    # arrange
-    event = make_event()
-    fields = {'data': json.dumps(event.to_dict(), cls=DjangoJSONEncoder)}
-
-    # act
-    result = _to_event(entry_id='1-0', fields=fields)
-
-    # assert
-    assert result.id == '1-0'
-    assert result.type == 'workflow.run'
-    assert result.account_id == 42
-
-
-def test_to_event__type_not_string__none():
-
-    # arrange
-    data = make_event().to_dict()
-    data['type'] = 5
-    fields = {'data': json.dumps(data)}
-
-    # act
-    result = _to_event(entry_id='1-0', fields=fields)
-
-    # assert
-    assert result is None
-
-
-def test_to_event__category_not_string__none():
+@pytest.mark.parametrize(
+    ('field', 'value'),
+    [
+        ('type', 5),
+        ('category', ['users']),
+        ('service', None),
+        ('account_id', '42'),
+        ('payload', ['template_id']),
+    ],
+)
+def test_read__field_of_a_wrong_type__parked_as_malformed(
+    mocker,
+    field,
+    value,
+):
 
     # arrange
     data = make_event().to_dict()
-    data['category'] = ['users']
+    data[field] = value
     fields = {'data': json.dumps(data)}
+    client_mock = mocker.Mock()
+    client_mock.xreadgroup.return_value = [
+        ('pneumatic:events-unit', [('1-0', fields)]),
+    ]
+    pipeline_mock = mocker.Mock()
+    pipeline_mock.execute.return_value = [1]
+    client_mock.pipeline.return_value = pipeline_mock
+    mocker.patch(
+        'src.logs.events.stream.redis.Redis.from_url',
+        return_value=client_mock,
+    )
+    stream = make_unit_stream()
 
     # act
-    result = _to_event(entry_id='1-0', fields=fields)
+    result = stream.read(consumer='consumer-1', count=5, start_id=NEW_ENTRIES)
 
     # assert
-    assert result is None
+    assert result == ParsedEntries(malformed=[('1-0', fields)])
+    pipeline_mock.xack.assert_called_once_with(
+        'pneumatic:events-unit',
+        'otlp',
+        '1-0',
+    )
 
 
-def test_to_event__service_not_string__none():
+@pytest.mark.parametrize('field', ['actor', 'object'])
+@pytest.mark.parametrize('value', [['invalid'], 'invalid', True, 17, []])
+def test_read__invalid_relation__only_bad_record_rejected(
+    mocker,
+    field,
+    value,
+):
+    """A malformed relation must not prevent delivery of a valid neighbour."""
 
     # arrange
-    data = make_event().to_dict()
-    data['service'] = None
-    fields = {'data': json.dumps(data)}
+    bad = make_event().to_dict()
+    bad[field] = value
+    bad_fields = {'data': json.dumps(bad)}
+    good = make_event()
+    good_fields = {'data': json.dumps(good.to_dict())}
+    client_mock = mocker.Mock()
+    client_mock.xreadgroup.return_value = [
+        (
+            'pneumatic:events-unit',
+            [('1-0', bad_fields), ('2-0', good_fields)],
+        ),
+    ]
+    pipeline_mock = mocker.Mock()
+    pipeline_mock.execute.return_value = [1]
+    client_mock.pipeline.return_value = pipeline_mock
+    mocker.patch(
+        'src.logs.events.stream.redis.Redis.from_url',
+        return_value=client_mock,
+    )
+    stream = make_unit_stream()
 
     # act
-    result = _to_event(entry_id='1-0', fields=fields)
+    result = stream.read(consumer='consumer-1', count=5, start_id=NEW_ENTRIES)
 
     # assert
-    assert result is None
-
-
-def test_to_event__account_id_not_integer__none():
-
-    # arrange
-    data = make_event().to_dict()
-    data['account_id'] = '42'
-    fields = {'data': json.dumps(data)}
-
-    # act
-    result = _to_event(entry_id='1-0', fields=fields)
-
-    # assert
-    assert result is None
-
-
-def test_to_event__payload_not_object__none():
-
-    # arrange
-    data = make_event().to_dict()
-    data['payload'] = ['template_id']
-    fields = {'data': json.dumps(data)}
-
-    # act
-    result = _to_event(entry_id='1-0', fields=fields)
-
-    # assert
-    assert result is None
+    assert result.malformed == [('1-0', bad_fields)]
+    assert result.vanished == []
+    assert len(result.events) == 1
+    assert result.events[0][0] == '2-0'
+    assert result.events[0][1].to_dict() == {
+        **good.to_dict(),
+        'id': '2-0',
+    }

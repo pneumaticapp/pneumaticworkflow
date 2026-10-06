@@ -2,14 +2,10 @@ from typing_extensions import Literal, get_args
 
 
 class EventCategory:
-
-    """ What an event is about, the way the analytics module groups
-        its events: one value per kind of thing a user acts on. The
-        category is an index label of the log backend, so a dashboard
-        filters by it before it reads a single record.
-
-        OTHER is the category of a type nobody declared: the pipeline
-        health dashboard counts them there. """
+    """What an event is about, the way the analytics module groups
+    its events: one value per kind of thing a user acts on. The
+    category is an index label of the log backend, so a dashboard
+    filters by it before it reads a single record."""
 
     WORKFLOWS = 'workflows'
     TASKS = 'tasks'
@@ -23,7 +19,6 @@ class EventCategory:
     WEBHOOKS = 'webhooks'
     FILES = 'files'
     ADMIN = 'admin'
-    OTHER = 'other'
 
     LITERALS = Literal[
         WORKFLOWS,
@@ -38,31 +33,27 @@ class EventCategory:
         WEBHOOKS,
         FILES,
         ADMIN,
-        OTHER,
     ]
     VALUES = set(get_args(LITERALS))
 
 
 class TemplateSource:
-
-    """ How a template came to be, when not through the editor. """
+    """How a template came to be, when not through the editor."""
 
     BY_STEPS = 'by_steps'
     LIBRARY = 'library'
 
 
 class LogoutReason:
-
-    """ Why a session ended, when not by the user asking for it. """
+    """Why a session ended, when not by the user asking for it."""
 
     IDENTITY_PROVIDER = 'identity_provider'
 
 
 class LoginFailedReason:
-
-    """ Why a sign in was refused, the reason of a user.login_failed
-        event. One value per refusing branch, so that an alert can
-        tell a brute force burst from a deactivated account. """
+    """Why a sign in was refused, the reason of a user.login_failed
+    event. One value per refusing branch, so that an alert can
+    tell a brute force burst from a deactivated account."""
 
     BAD_CREDENTIALS = 'bad_credentials'
     VERIFICATION_EXPIRED = 'verification_expired'
@@ -77,64 +68,7 @@ class LoginFailedReason:
     ]
 
 
-class EventObjectType:
-
-    """ What an event is about: the object.type of the record. """
-
-    ACCOUNT = 'account'
-    USER = 'user'
-    INVITE = 'invite'
-    GROUP = 'group'
-    API_KEY = 'api_key'
-    TEMPLATE = 'template'
-    WORKFLOW = 'workflow'
-    TASK = 'task'
-    COMMENT = 'comment'
-    CHECKLIST = 'checklist'
-    TEMPLATE_PRESET = 'template_preset'
-    SYSTEM_TEMPLATE = 'system_template'
-    FIELDSET = 'fieldset'
-    DATASET = 'dataset'
-    DATASET_ITEM = 'dataset_item'
-    WEBHOOK = 'webhook'
-    FILE = 'file'
-    # A row of the admin site that is none of the above: its model is
-    # named in the payload of the event.
-    OTHER = 'other'
-
-    LITERALS = Literal[
-        ACCOUNT,
-        USER,
-        INVITE,
-        GROUP,
-        API_KEY,
-        TEMPLATE,
-        WORKFLOW,
-        TASK,
-        COMMENT,
-        CHECKLIST,
-        TEMPLATE_PRESET,
-        SYSTEM_TEMPLATE,
-        FIELDSET,
-        DATASET,
-        DATASET_ITEM,
-        WEBHOOK,
-        FILE,
-        OTHER,
-    ]
-
-
-# Names of the event types, one class per category. The value is the
-# "domain.action" name of the record; the registry (registry.py)
-# declares a description for each of them, and a name that is not
-# declared there fails the tests through LOGS_STRICT. A new event goes
-# into the class of its category and into the table of the registry.
-
-
 class WorkflowEvents:
-
-    CATEGORY = EventCategory.WORKFLOWS
-
     # Written next to the WorkflowEvent of the same action
     RUN = 'workflow.run'
     COMPLETE = 'workflow.complete'
@@ -152,9 +86,6 @@ class WorkflowEvents:
 
 
 class TaskEvents:
-
-    CATEGORY = EventCategory.TASKS
-
     # Written next to the WorkflowEvent of the same action
     START = 'task.start'
     COMPLETE = 'task.complete'
@@ -179,9 +110,6 @@ class TaskEvents:
 
 
 class UserEvents:
-
-    CATEGORY = EventCategory.USERS
-
     # Authentication
     LOGIN = 'user.login'
     LOGOUT = 'user.logout'
@@ -209,9 +137,6 @@ class UserEvents:
 
 
 class AccountEvents:
-
-    CATEGORY = EventCategory.ACCOUNTS
-
     UPDATE = 'account.update'
     VERIFY = 'account.verify'
     VERIFICATION_RESEND = 'account.verification_resend'
@@ -222,26 +147,17 @@ class AccountEvents:
 
 
 class GroupEvents:
-
-    CATEGORY = EventCategory.GROUPS
-
     CREATE = 'group.create'
     UPDATE = 'group.update'
     DELETE = 'group.delete'
 
 
 class ApiKeyEvents:
-
-    CATEGORY = EventCategory.API_KEYS
-
     CREATE = 'api_key.create'
     REVOKE = 'api_key.revoke'
 
 
 class TemplateEvents:
-
-    CATEGORY = EventCategory.TEMPLATES
-
     CREATE = 'template.create'
     UPDATE = 'template.update'
     CLONE = 'template.clone'
@@ -263,9 +179,6 @@ class TemplateEvents:
 
 
 class DatasetEvents:
-
-    CATEGORY = EventCategory.DATASETS
-
     CREATE = 'dataset.create'
     UPDATE = 'dataset.update'
     DELETE = 'dataset.delete'
@@ -275,30 +188,21 @@ class DatasetEvents:
 
 
 class BillingEvents:
-
-    CATEGORY = EventCategory.BILLING
-
     PURCHASE = 'billing.purchase'
     SUBSCRIPTION_CANCEL = 'billing.subscription_cancel'
     PAYMENT_CONFIRM = 'billing.payment_confirm'
 
 
 class WebhookEvents:
-
-    CATEGORY = EventCategory.WEBHOOKS
-
     SUBSCRIBE = 'webhook.subscribe'
     UNSUBSCRIBE = 'webhook.unsubscribe'
 
 
 class FileEvents:
-
-    """ Written by the file service into the same stream, the backend
-        only declares them. The record it writes is built in
-        storage/src/shared_kernel/events/schema.py, and the shape both
-        sides agree on is checked by tests/test_file_service_contract.py """
-
-    CATEGORY = EventCategory.FILES
+    """Written by the file service into the same stream, the backend
+    only declares them. The record it writes is built in
+    storage/src/shared_kernel/events/schema.py, and the shape both
+    sides agree on is checked by tests/test_file_service_contract.py"""
 
     UPLOAD = 'file.upload'
     DOWNLOAD = 'file.download'
@@ -306,38 +210,8 @@ class FileEvents:
 
 
 class AdminEvents:
-
-    """ Django admin site: a superuser editing the rows directly. """
-
-    CATEGORY = EventCategory.ADMIN
+    """Django admin site: a superuser editing the rows directly."""
 
     CREATE = 'admin.create'
     UPDATE = 'admin.update'
     DELETE = 'admin.delete'
-
-
-EVENT_CLASSES = (
-    WorkflowEvents,
-    TaskEvents,
-    UserEvents,
-    AccountEvents,
-    GroupEvents,
-    ApiKeyEvents,
-    TemplateEvents,
-    DatasetEvents,
-    BillingEvents,
-    WebhookEvents,
-    FileEvents,
-    AdminEvents,
-)
-
-
-def event_names_of(events_class: type) -> tuple:
-
-    """ The type names a class of events declares: its public
-        constants, CATEGORY aside. """
-
-    return tuple(
-        value for key, value in vars(events_class).items()
-        if key.isupper() and key != 'CATEGORY'
-    )

@@ -1,12 +1,13 @@
 # ruff: noqa: PLC0415
 from copy import deepcopy
 from typing import Dict, List, Optional
+
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 
 from src.generics.base.service import BaseModelService
 from src.logs.events import AuditEventService
-from src.processes.enums import LabelPosition, FieldSetLayout
+from src.processes.enums import FieldSetLayout, LabelPosition
 from src.processes.messages.fieldset import (
     MSG_FS_0014,
     MSG_FS_0015,
@@ -26,15 +27,14 @@ from src.processes.services.exceptions import (
     FieldsetTemplateSharedIdMissing,
     FieldsetTemplateTemplateIdMissing,
 )
-from src.processes.services.templates.field_template import (
-    FieldTemplateService,
-)
 from src.processes.services.fieldsets.fieldset_rule import (
     FieldsetTemplateRuleService,
 )
+from src.processes.services.templates.field_template import (
+    FieldTemplateService,
+)
 from src.processes.utils.common import create_api_name
 from src.utils.validation import raise_validation_error
-
 
 UserModel = get_user_model()
 
@@ -479,12 +479,12 @@ class FieldSetTemplateService(BaseModelService):
             shared_fieldset_data=instance_data,
         )
         clone_data['name'] = clone_data['name'] + ' - clone'
-        source_fieldset_id = self.instance.id
+        source_fieldset = self.instance
         clone = self._create_shared_fieldset(**clone_data)
         AuditEventService.fieldset_cloned(
             user=self.user,
             auth_type=self.auth_type,
             clone=clone,
-            source_fieldset_id=source_fieldset_id,
+            source_fieldset=source_fieldset,
         )
         return clone

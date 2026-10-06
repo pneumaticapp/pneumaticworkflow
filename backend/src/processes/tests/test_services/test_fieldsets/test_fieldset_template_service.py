@@ -1,4 +1,5 @@
 import pytest
+
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     FieldSetLayout,
@@ -7,13 +8,13 @@ from src.processes.enums import (
     LabelPosition,
 )
 from src.processes.messages import fieldset as fs_messages
-from src.processes.models.templates.fieldset import (
-    FieldsetTemplate,
-    FieldsetTemplateRule,
-)
 from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
+)
+from src.processes.models.templates.fieldset import (
+    FieldsetTemplate,
+    FieldsetTemplateRule,
 )
 from src.processes.services.exceptions import (
     FieldsetTemplateInUseException,
@@ -21,21 +22,19 @@ from src.processes.services.exceptions import (
     FieldsetTemplateSharedIdMissing,
     FieldsetTemplateTemplateIdMissing,
 )
-from src.processes.services.templates.field_template import (
-    FieldTemplateService,
-)
-from src.processes.services.fieldsets.fieldset import (
-    FieldSetTemplateService,
-)
+from src.processes.services.fieldsets.fieldset import FieldSetTemplateService
 from src.processes.services.fieldsets.fieldset_rule import (
     FieldsetTemplateRuleService,
 )
+from src.processes.services.templates.field_template import (
+    FieldTemplateService,
+)
 from src.processes.tests.fixtures import (
     create_test_account,
-    create_test_owner,
-    create_test_template,
     create_test_fieldset_template,
+    create_test_owner,
     create_test_shared_fieldset,
+    create_test_template,
 )
 
 pytestmark = pytest.mark.django_db
@@ -2486,6 +2485,6 @@ def test_get_clone__shared__emit_fieldset_cloned_only(mocker):
         user=user,
         auth_type=AuthTokenType.API,
         clone=clone,
-        source_fieldset_id=fieldset.id,
+        source_fieldset=fieldset,
     )
     fieldset_created_mock.assert_not_called()

@@ -13,10 +13,7 @@ from src.accounts.enums import (
     UserInviteStatus,
     UserStatus,
 )
-from src.accounts.models import (
-    Contact,
-    UserInvite,
-)
+from src.accounts.models import Contact, UserInvite
 from src.accounts.serializers.user import UserWebsocketSerializer
 from src.accounts.services.account import AccountService
 from src.accounts.services.exceptions import (
@@ -26,26 +23,19 @@ from src.accounts.services.exceptions import (
     UsersLimitInvitesException,
 )
 from src.accounts.services.user import UserService
-from src.accounts.tokens import (
-    InviteToken,
-    TransferToken,
-)
-from src.analysis.mixins import (
-    BaseIdentifyMixin,
-)
+from src.accounts.tokens import InviteToken, TransferToken
+from src.analysis.mixins import BaseIdentifyMixin
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.logs.events import AuditEventService
 from src.notifications.tasks import (
-    send_user_created_notification,
-    send_user_updated_notification,
     send_invite_notification,
+    send_user_created_notification,
+    send_user_transfer_notification,
+    send_user_updated_notification,
 )
 from src.payment.tasks import increase_plan_users
-from src.processes.services.system_workflows import (
-    SystemWorkflowService,
-)
-from src.notifications.tasks import send_user_transfer_notification
+from src.processes.services.system_workflows import SystemWorkflowService
 from src.storage.utils import sync_account_file_fields
 
 UserModel = get_user_model()
@@ -431,7 +421,7 @@ class UserInviteService(
             # an invited person through the same method.
             AuditEventService.invite_accepted(
                 invited_user=user,
-                invited_by_id=invite.invited_by_id,
+                invited_by=invite.invited_by,
             )
         if (
             user.account.billing_sync

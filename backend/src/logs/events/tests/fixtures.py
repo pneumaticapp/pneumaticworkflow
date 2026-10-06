@@ -5,38 +5,58 @@ from datetime import datetime, timezone
 from time import monotonic
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
+from django.conf import settings
+
 from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
+from src.logs.events.entities import Actor, Event, EventObject, ParsedEntries
 from src.logs.events.enums import (
-    EVENT_CLASSES,
+    AccountEvents,
+    AdminEvents,
+    ApiKeyEvents,
+    BillingEvents,
+    DatasetEvents,
     EventCategory,
-    event_names_of,
+    FileEvents,
+    GroupEvents,
+    TaskEvents,
+    TemplateEvents,
+    UserEvents,
+    WebhookEvents,
+    WorkflowEvents,
 )
-from src.logs.events.exceptions import SinkTemporaryError
-from src.logs.events.schema import Actor, Event, EventObject
-from src.logs.events.sinks.base import BaseSink
 from src.logs.events.stream import (
     AUTOCLAIM_START,
     DEAD_MAXLEN,
-    DEAD_SUFFIX,
+    NEW_ENTRIES,
     EventStream,
-    ParsedEntries,
 )
 
 Entries = List[Tuple[str, Event]]
-
 EVENT_TS = datetime(2026, 9, 8, 10, 15, 30, 123456, tzinfo=timezone.utc)
-SERVICE_NAME = 'pneumatic-backend'
 SMOKE_ACCOUNT_ID = 7
 UNIT_STREAM_URL = 'redis://localhost:6379/4'
 UNIT_STREAM_KEY = 'pneumatic:events-unit'
 FIXTURES_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')
+EVENT_CLASSES = (
+    WorkflowEvents,
+    TaskEvents,
+    UserEvents,
+    AccountEvents,
+    GroupEvents,
+    ApiKeyEvents,
+    TemplateEvents,
+    DatasetEvents,
+    BillingEvents,
+    WebhookEvents,
+    FileEvents,
+    AdminEvents,
+)
 
 
 @dataclass
 class PendingEntry:
-
-    """ One record of the pending entries list of the group. """
+    """One record of the pending entries list of the group."""
 
     entry_id: str
     event: Event
@@ -48,10 +68,9 @@ class PendingEntry:
 
 
 class FakeEventStream:
-
-    """ In memory EventStream for unit tests: same interface, same
-        delivery semantics (a group with a per consumer pending list),
-        no Redis. Time is monotonic, so idle is set by delivered_at. """
+    """In memory EventStream for unit tests: same interface, same
+    delivery semantics (a group with a per consumer pending list),
+    no Redis. Time is monotonic, so idle is set by delivered_at."""
 
     def __init__(
         self,
@@ -68,10 +87,7 @@ class FakeEventStream:
         self.group_created = False
         self._delivered = 0
         self._sequence = 0
-
-    @property
-    def dead_key(self) -> str:
-        return f'{self.key}{DEAD_SUFFIX}'
+        self._claim_cursors: Dict[str, str] = {}
 
     def xadd(self, event: Event) -> str:
         self._sequence += 1
@@ -85,17 +101,14 @@ class FakeEventStream:
     def ensure_group(self):
         self.group_created = True
 
-    def read_pending(self, consumer: str, count: int) -> ParsedEntries:
-        now = monotonic()
-        entries = []
-        for entry in self._pending_of(consumer)[:count]:
-
-            # Reading own pending list resets idle, as XREADGROUP does.
-            entry.delivered_at = now
-            entries.append((entry.entry_id, entry.event))
-        return ParsedEntries(events=entries)
-
-    def read_new(self, consumer: str, count: int) -> ParsedEntries:
+    def read(self, consumer: str, count: int, start_id: str) -> ParsedEntries:
+        if start_id != NEW_ENTRIES:
+            now = monotonic()
+            entries = []
+            for entry in self._pending_of(consumer)[:count]:
+                entry.delivered_at = now
+                entries.append((entry.entry_id, entry.event))
+            return ParsedEntries(events=entries)
         entries = self.events[self._delivered:self._delivered + count]
         self._delivered += len(entries)
         for entry_id, event in entries:
@@ -107,19 +120,34 @@ class FakeEventStream:
         consumer: str,
         min_idle_ms: int,
         count: int,
-        start_id: str = AUTOCLAIM_START,
+        start_id: Optional[str] = None,
     ) -> ParsedEntries:
         now = monotonic()
+        if start_id is None:
+            start_id = self._claim_cursors.get(consumer, AUTOCLAIM_START)
+        pending = [
+            entry
+            for entry in self._sorted_pending()
+            if int(entry.entry_id.split('-')[0]) >= int(start_id.split('-')[0])
+        ]
         claimed = []
-        for entry in self._sorted_pending():
-            if len(claimed) >= count:
-                break
+        scanned = 0
+        for entry in pending[: count * 10]:
+            scanned += 1
             if entry.idle_ms(now) < min_idle_ms:
                 continue
             entry.consumer = consumer
             entry.delivered_at = now
             claimed.append((entry.entry_id, entry.event))
-        return ParsedEntries(events=claimed)
+            if len(claimed) >= count:
+                break
+        cursor = (
+            pending[scanned].entry_id
+            if scanned < len(pending)
+            else AUTOCLAIM_START
+        )
+        self._claim_cursors[consumer] = cursor
+        return ParsedEntries(events=claimed, next_cursor=cursor)
 
     def ack(self, ids: Iterable[str]) -> int:
         acked = 0
@@ -128,20 +156,14 @@ class FakeEventStream:
                 acked += 1
         return acked
 
-    def dead_letter(
-        self,
-        entries: List[Tuple[str, Any]],
-        reason: str,
-    ) -> int:
+    def dead_letter(self, entries: List[Tuple[str, Any]], reason: str) -> int:
         for entry_id, event in entries:
             self.dead.append((entry_id, event, reason))
         del self.dead[:-DEAD_MAXLEN]
         return self.ack([entry_id for entry_id, _ in entries])
 
     def last_event(self) -> Optional[Event]:
-
-        """ Test helper: the event of the last xadd. """
-
+        """Test helper: the event of the last xadd."""
         return self.events[-1][1] if self.events else None
 
     def _trim(self):
@@ -152,7 +174,8 @@ class FakeEventStream:
 
     def _pending_of(self, consumer: str) -> List[PendingEntry]:
         return [
-            entry for entry in self._sorted_pending()
+            entry
+            for entry in self._sorted_pending()
             if entry.consumer == consumer
         ]
 
@@ -167,14 +190,12 @@ class FakeEventStream:
 
 
 def make_event(**kwargs) -> Event:
-
-    """ Filled event of the 5.1 sample. Override only the fields the
-        test is about, so an assertion reads as the difference. """
-
+    """Filled event of the 5.1 sample. Override only the fields the
+    test is about, so an assertion reads as the difference."""
     fields: Dict[str, Any] = {
         'type': 'workflow.run',
         'category': EventCategory.WORKFLOWS,
-        'service': SERVICE_NAME,
+        'service': settings.LOGS_SERVICE_NAME,
         'ts': EVENT_TS,
         'account_id': 42,
         'actor': Actor(
@@ -198,36 +219,30 @@ def make_event(**kwargs) -> Event:
 def load_file_service_record(
     name: str = 'file_service_record.json',
 ) -> Dict[str, Any]:
+    """A contract record as the consumer reads it off the stream.
 
-    """ A contract record as the consumer reads it off the stream.
-
-        One file per event type the file service writes: the tests of
-        the other writer compare what they build with the same file,
-        so a rename on either side breaks both. """
-
+    One file per event type the file service writes: the tests of
+    the other writer compare what they build with the same file,
+    so a rename on either side breaks both."""
     path = os.path.join(FIXTURES_DIR, name)
     with open(path, encoding='utf-8') as fixture:
         return json.load(fixture)
 
 
 def load_file_service_contract() -> Dict[str, Any]:
-
-    """ The names the two writers have to agree on besides the shape
-        of a record: the stream both write into and the actor types
-        the file service may put into a record. """
-
+    """The names the two writers have to agree on besides the shape
+    of a record: the stream both write into and the actor types
+    the file service may put into a record."""
     path = os.path.join(FIXTURES_DIR, 'file_service_contract.json')
     with open(path, encoding='utf-8') as fixture:
         return json.load(fixture)
 
 
 def make_smoke_event(number: int = 0) -> Event:
-
-    """ Smallest event the pipeline accepts. """
-
+    """Smallest event the pipeline accepts."""
     return Event(
         type='system.smoke',
-        category=EventCategory.OTHER,
+        category=EventCategory.ACCOUNTS,
         ts=EVENT_TS,
         account_id=SMOKE_ACCOUNT_ID,
         object=EventObject(type='account', id=SMOKE_ACCOUNT_ID),
@@ -236,19 +251,15 @@ def make_smoke_event(number: int = 0) -> Event:
 
 
 def fill_stream(stream, count: int = 3):
-
-    """ Append count smoke events and make sure the group exists. """
-
+    """Append count smoke events and make sure the group exists."""
     for number in range(count):
-        stream.xadd(make_smoke_event(number))
+        stream.xadd(event=make_smoke_event(number=number))
     stream.ensure_group()
 
 
 def make_unit_stream() -> EventStream:
-
-    """ EventStream of the unit tests: never connects, the tests
-        replace its _client by a mock. """
-
+    """EventStream of the unit tests: never connects, the tests
+    replace its _client by a mock."""
     return EventStream(
         url=UNIT_STREAM_URL,
         key=UNIT_STREAM_KEY,
@@ -257,44 +268,18 @@ def make_unit_stream() -> EventStream:
     )
 
 
+def event_names_of(events_class: type) -> tuple:
+    """The type names a class of events declares: its public
+    constants."""
+    return tuple(
+        value for key, value in vars(events_class).items() if key.isupper()
+    )
+
+
 def event_name_values() -> Set[str]:
-
-    """ Every event type name of every events class. """
-
+    """Every event type name of every events class."""
     return {
         name
         for events_class in EVENT_CLASSES
-        for name in event_names_of(events_class)
+        for name in event_names_of(events_class=events_class)
     }
-
-
-class FakeSink(BaseSink):
-
-    """ Concrete BaseSink for the tests of its template method.
-
-        error is what _send raises; raises is what _handle_error
-        answers it with, a temporary error of the same text unless
-        given. classify=False makes _handle_error return instead of
-        raising, which is the contract every sink has to keep. """
-
-    def __init__(
-        self,
-        error: Optional[Exception] = None,
-        classify: bool = True,
-        raises: Optional[Exception] = None,
-    ):
-        self.error = error
-        self.classify = classify
-        self.raises = raises
-        self.handled: List[Exception] = []
-
-    def _send(self, records: Entries):
-        if self.error is not None:
-            raise self.error
-
-    def _handle_error(self, exc: Exception, records: Entries):
-        self.handled.append(exc)
-        if self.raises is not None:
-            raise self.raises
-        if self.classify:
-            raise SinkTemporaryError(str(exc))

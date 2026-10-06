@@ -1,19 +1,16 @@
-import pytest
-
 from src.logs.events.enums import (
-    EVENT_CLASSES,
     AccountEvents,
     EventCategory,
     TaskEvents,
     TemplateEvents,
     UserEvents,
     WorkflowEvents,
-    event_names_of,
 )
+from src.logs.events.tests.fixtures import event_names_of
 from src.processes.enums import WorkflowEventType
 
 
-def test_event_names_of__events_class__constants_without_category():
+def test_event_names_of__events_class__public_constants():
 
     # arrange
     events_class = AccountEvents
@@ -47,9 +44,8 @@ def test_event_names_of__invites_class__invites_among_user_events():
 
 
 def test_event_names_of__workflow_events__no_workflow_delay():
-
-    """ A delay of the workflow is written as the delay of its task:
-        the workflows category has no delay of its own. """
+    """A delay of the workflow is written as the delay of its task:
+    the workflows category has no delay of its own."""
 
     # arrange
     events_class = WorkflowEvents
@@ -88,9 +84,8 @@ def test_event_names_of__task_events__reactions_declared():
 
 
 def test_event_names_of__template_events__create_and_update():
-
-    """ A template is created or updated whatever its state: no
-        separate type for a published template and a draft. """
+    """A template is created or updated whatever its state: no
+    separate type for a published template and a draft."""
 
     # arrange
     events_class = TemplateEvents
@@ -120,35 +115,19 @@ def test_event_names_of__template_events__create_and_update():
     )
 
 
-@pytest.mark.parametrize('events_class', EVENT_CLASSES)
-def test_event_classes__every_class__category_is_declared(events_class):
-
-    # arrange
-    declared = EventCategory.VALUES
-
-    # act
-    category = events_class.CATEGORY
-
-    # assert
-    assert category in declared
-    assert category != EventCategory.OTHER
-
-
 def test_workflow_event_type__every_constant__has_a_journal_type():
-
-    """ Every WorkflowEvent of the feed is written next to a record of
-        the journal (AuditEventService is called beside
-        WorkflowEventService), so a new constant of WorkflowEventType
-        needs a row here and a type of the journal. The test fails on
-        a constant without a row: the row is where the decision is
-        made. """
+    """Every WorkflowEvent of the feed is written next to a record of
+    the journal (AuditEventService is called beside
+    WorkflowEventService), so a new constant of WorkflowEventType
+    needs a row here and a type of the journal. The test fails on
+    a constant without a row: the row is where the decision is
+    made."""
 
     # arrange
     journal_type_by_workflow_event_type = {
         WorkflowEventType.RUN: WorkflowEvents.RUN,
         WorkflowEventType.COMPLETE: WorkflowEvents.COMPLETE,
         WorkflowEventType.ENDED: WorkflowEvents.ENDED,
-
         # A delay from the template is written as the delay of its task
         # (TASK_DELAY); workflow_delay_event has no caller.
         WorkflowEventType.DELAY: None,
@@ -192,7 +171,8 @@ def test_workflow_event_type__every_constant__has_a_journal_type():
 
     # act
     declared_workflow_event_types = {
-        value for name, value in vars(WorkflowEventType).items()
+        value
+        for name, value in vars(WorkflowEventType).items()
         if name.isupper() and isinstance(value, int)
     }
     mapped_journal_types = {

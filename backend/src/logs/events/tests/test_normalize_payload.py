@@ -101,10 +101,9 @@ def test_normalize_payload__secret_key__value_redacted(key):
     ),
 )
 def test_normalize_payload__lookalike_key__value_kept(key):
-
-    """ A secret word inside a longer name is not a secret: a flag
-        named is_private and a counter of sessions reach the journal
-        as they are. """
+    """A secret word inside a longer name is not a secret: a flag
+    named is_private and a counter of sessions reach the journal
+    as they are."""
 
     # arrange
     payload = {key: 'plain-value'}
@@ -149,8 +148,7 @@ def test_normalize_payload__secret_in_a_nested_dict__value_redacted():
 
 
 def test_normalize_payload__url_with_query__query_dropped():
-
-    """ An access token or a signature rides in the query string. """
+    """An access token or a signature rides in the query string."""
 
     # arrange
     payload = {'url': 'https://api.test/v1/hook?access_token=abc&x=1'}
@@ -175,9 +173,8 @@ def test_normalize_payload__url_with_fragment__fragment_kept():
 
 
 def test_normalize_payload__url_with_userinfo__credential_dropped():
-
-    """ A password rides in the authority of a webhook url as often
-        as a token rides in its query. """
+    """A password rides in the authority of a webhook url as often
+    as a token rides in its query."""
 
     # arrange
     payload = {'url': 'https://user:pass@hooks.test/hook'}
@@ -238,8 +235,7 @@ def test_normalize_payload__at_sign_in_url_path__kept_as_is():
 
 
 def test_normalize_payload__email_address__kept_as_is():
-
-    """ An address is not a url: its at sign is no credential. """
+    """An address is not a url: its at sign is no credential."""
 
     # arrange
     payload = {'email': 'ann@test.test'}
@@ -264,9 +260,8 @@ def test_normalize_payload__question_mark_in_plain_text__kept():
 
 
 def test_normalize_payload__unparsable_url__kept_as_is():
-
-    """ urlsplit raises for a broken IPv6 host: a value that cannot be
-        parsed is left alone instead of breaking the whole event. """
+    """urlsplit raises for a broken IPv6 host: a value that cannot be
+    parsed is left alone instead of breaking the whole event."""
 
     # arrange
     payload = {'url': 'http://[oops?token=abc'}
@@ -338,9 +333,8 @@ def test_normalize_payload__too_deep_value__json_string():
 
 
 def test_normalize_payload__unknown_type__string():
-
-    """ A range is neither a JSON type nor one of the Django ones the
-        encoder knows: it is stored as its text. """
+    """A range is neither a JSON type nor one of the Django ones the
+    encoder knows: it is stored as its text."""
 
     # arrange
     payload = {'obj': range(3)}
@@ -353,11 +347,10 @@ def test_normalize_payload__unknown_type__string():
 
 
 def test_normalize_payload__unencodable_value_too_deep__string():
-
-    """ A value the encoder cannot handle becomes its text, so one
-        odd value never breaks the whole batch of the sink. The
-        container around it keeps its shape: the collapsed string is
-        built from the normalized value, not from the raw one. """
+    """A value the encoder cannot handle becomes its text, so one
+    odd value never breaks the whole batch of the sink. The
+    container around it keeps its shape: the collapsed string is
+    built from the normalized value, not from the raw one."""
 
     # arrange
     payload = {'a': {'b': {'obj': range(3)}}}
@@ -370,10 +363,9 @@ def test_normalize_payload__unencodable_value_too_deep__string():
 
 
 def test_normalize_payload__nesting_below_the_limit__collapsed_whole():
-
-    """ The subtree of a collapsed container goes into that one
-        string however deep it is: the collapse is where the depth
-        limit stops mattering. """
+    """The subtree of a collapsed container goes into that one
+    string however deep it is: the collapse is where the depth
+    limit stops mattering."""
 
     # arrange
     payload = {'a': {'b': {'c': {'d': 1}}}, 'list': {'x': [[1, 2]]}}
@@ -389,9 +381,8 @@ def test_normalize_payload__nesting_below_the_limit__collapsed_whole():
 
 
 def test_normalize_payload__secret_below_the_limit__value_redacted():
-
-    """ Depth is no way past the redaction: the keys of the whole
-        collapsed subtree are checked, not only its first level. """
+    """Depth is no way past the redaction: the keys of the whole
+    collapsed subtree are checked, not only its first level."""
 
     # arrange
     payload = {'a': {'b': {'auth': {'token': 'secret-value'}}}}
@@ -404,10 +395,9 @@ def test_normalize_payload__secret_below_the_limit__value_redacted():
 
 
 def test_normalize_payload__too_deep_long_string__string_cut():
-
-    """ A long string inside a collapsed container is cut before
-        the container is dumped, so the attribute stays valid
-        JSON instead of ending mid-escape. """
+    """A long string inside a collapsed container is cut before
+    the container is dumped, so the attribute stays valid
+    JSON instead of ending mid-escape."""
 
     # arrange
     payload = {'a': {'b': {'text': 'y' * (PAYLOAD_STR_MAX + 100)}}}
@@ -422,17 +412,16 @@ def test_normalize_payload__too_deep_long_string__string_cut():
 
 
 def test_normalize_payload__oversized__replaced_by_size_marker(mocker):
-
-    """ A single event must not be able to fill up the stream: the
-        payload is replaced by its size marker, and the loss of an
-        audit payload is reported (throttled, an emitter loop would
-        flood Sentry). 70 keys of 1000 bytes plus the JSON syntax
-        make 70970 bytes. """
+    """A single event must not be able to fill up the stream: the
+    payload is replaced by its size marker, and the loss of an
+    audit payload is reported (throttled, a loop of events would
+    flood Sentry). 70 keys of 1000 bytes plus the JSON syntax
+    make 70970 bytes."""
 
     # arrange
     payload = {f'key_{num}': 'x' * 1000 for num in range(70)}
-    report_error_mock = mocker.patch(
-        'src.logs.events.schema.report_error',
+    capture_sentry_mock = mocker.patch(
+        'src.logs.events.schema.capture_sentry_message_throttled',
     )
 
     # act
@@ -440,7 +429,7 @@ def test_normalize_payload__oversized__replaced_by_size_marker(mocker):
 
     # assert
     assert result == {'_truncated': True, '_size': 70970}
-    report_error_mock.assert_called_once_with(
+    capture_sentry_mock.assert_called_once_with(
         message='Event payload dropped: over the size limit',
         data={'size': 70970, 'limit': PAYLOAD_MAX_BYTES},
         level=SentryLogLevel.WARNING,
@@ -448,15 +437,14 @@ def test_normalize_payload__oversized__replaced_by_size_marker(mocker):
 
 
 def test_normalize_payload__whole_template_size__kept(mocker):
-
-    """ A whole template goes into the record of its save: 40 keys of
-        1000 bytes, 40550 bytes with the JSON syntax, are well below
-        the limit of 64 KiB. """
+    """A whole template goes into the record of its save: 40 keys of
+    1000 bytes, 40550 bytes with the JSON syntax, are well below
+    the limit of 64 KiB."""
 
     # arrange
     payload = {f'key_{num}': 'x' * 1000 for num in range(40)}
-    report_error_mock = mocker.patch(
-        'src.logs.events.schema.report_error',
+    capture_sentry_mock = mocker.patch(
+        'src.logs.events.schema.capture_sentry_message_throttled',
     )
 
     # act
@@ -464,21 +452,20 @@ def test_normalize_payload__whole_template_size__kept(mocker):
 
     # assert
     assert result == payload
-    report_error_mock.assert_not_called()
+    capture_sentry_mock.assert_not_called()
 
 
 def test_normalize_payload__at_the_size_limit__kept(mocker):
-
-    """ The limit is the largest payload that is still stored whole:
-        the marker replaces only a bigger one. 32 keys of 2000 bytes
-        make 64448 bytes with the JSON syntax, the pad key of 1077
-        bytes brings the total to exactly PAYLOAD_MAX_BYTES. """
+    """The limit is the largest payload that is still stored whole:
+    the marker replaces only a bigger one. 32 keys of 2000 bytes
+    make 64448 bytes with the JSON syntax, the pad key of 1077
+    bytes brings the total to exactly PAYLOAD_MAX_BYTES."""
 
     # arrange
     payload = {f'key_{num:02d}': 'x' * 2000 for num in range(32)}
     payload['pad'] = 'y' * 1077
-    report_error_mock = mocker.patch(
-        'src.logs.events.schema.report_error',
+    capture_sentry_mock = mocker.patch(
+        'src.logs.events.schema.capture_sentry_message_throttled',
     )
 
     # act
@@ -487,7 +474,7 @@ def test_normalize_payload__at_the_size_limit__kept(mocker):
     # assert
     assert result == payload
     assert result is not payload
-    report_error_mock.assert_not_called()
+    capture_sentry_mock.assert_not_called()
 
 
 def test_normalize_payload__one_byte_over_the_limit__size_marker(mocker):
@@ -495,8 +482,8 @@ def test_normalize_payload__one_byte_over_the_limit__size_marker(mocker):
     # arrange
     payload = {f'key_{num:02d}': 'x' * 2000 for num in range(32)}
     payload['pad'] = 'y' * 1078
-    report_error_mock = mocker.patch(
-        'src.logs.events.schema.report_error',
+    capture_sentry_mock = mocker.patch(
+        'src.logs.events.schema.capture_sentry_message_throttled',
     )
 
     # act
@@ -504,7 +491,7 @@ def test_normalize_payload__one_byte_over_the_limit__size_marker(mocker):
 
     # assert
     assert result == {'_truncated': True, '_size': 65537}
-    report_error_mock.assert_called_once_with(
+    capture_sentry_mock.assert_called_once_with(
         message='Event payload dropped: over the size limit',
         data={'size': 65537, 'limit': PAYLOAD_MAX_BYTES},
         level=SentryLogLevel.WARNING,
@@ -514,11 +501,10 @@ def test_normalize_payload__one_byte_over_the_limit__size_marker(mocker):
 def test_normalize_payload__oversized_list__top_level_scalars_kept(
     mocker,
 ):
-
-    """ The tasks of a template make its payload big, while the
-        dashboards filter the events by its name and is_active: the
-        scalars of the top level stay next to the size marker, the
-        list goes. 40 tasks of 2000 bytes make 80265 bytes. """
+    """The tasks of a template make its payload big, while the
+    dashboards filter the events by its name and is_active: the
+    scalars of the top level stay next to the size marker, the
+    list goes. 40 tasks of 2000 bytes make 80265 bytes."""
 
     # arrange
     payload = {
@@ -529,8 +515,8 @@ def test_normalize_payload__oversized_list__top_level_scalars_kept(
         'description': None,
         'tasks': ['x' * 2000 for _ in range(40)],
     }
-    report_error_mock = mocker.patch(
-        'src.logs.events.schema.report_error',
+    capture_sentry_mock = mocker.patch(
+        'src.logs.events.schema.capture_sentry_message_throttled',
     )
 
     # act
@@ -546,7 +532,7 @@ def test_normalize_payload__oversized_list__top_level_scalars_kept(
         '_truncated': True,
         '_size': 80265,
     }
-    report_error_mock.assert_called_once_with(
+    capture_sentry_mock.assert_called_once_with(
         message='Event payload dropped: over the size limit',
         data={'size': 80265, 'limit': PAYLOAD_MAX_BYTES},
         level=SentryLogLevel.WARNING,
@@ -556,17 +542,16 @@ def test_normalize_payload__oversized_list__top_level_scalars_kept(
 def test_normalize_payload__oversized_dict__top_level_scalars_kept(
     mocker,
 ):
-
-    """ A dict of the top level goes the same way as a list. 40 fields
-        of 2000 bytes make 80675 bytes. """
+    """A dict of the top level goes the same way as a list. 40 fields
+    of 2000 bytes make 80675 bytes."""
 
     # arrange
     payload = {
         'name': 'Onboarding',
         'kickoff': {f'field_{num:02d}': 'x' * 2000 for num in range(40)},
     }
-    report_error_mock = mocker.patch(
-        'src.logs.events.schema.report_error',
+    capture_sentry_mock = mocker.patch(
+        'src.logs.events.schema.capture_sentry_message_throttled',
     )
 
     # act
@@ -578,7 +563,7 @@ def test_normalize_payload__oversized_dict__top_level_scalars_kept(
         '_truncated': True,
         '_size': 80675,
     }
-    report_error_mock.assert_called_once_with(
+    capture_sentry_mock.assert_called_once_with(
         message='Event payload dropped: over the size limit',
         data={'size': 80675, 'limit': PAYLOAD_MAX_BYTES},
         level=SentryLogLevel.WARNING,
@@ -588,16 +573,15 @@ def test_normalize_payload__oversized_dict__top_level_scalars_kept(
 def test_normalize_payload__oversized_scalars_and_list__marker_only(
     mocker,
 ):
-
-    """ The scalars of the top level are over the limit on their own:
-        keeping them would not bound the event, so only the marker is
-        left. 33 strings of 2000 bytes and a list make 67477 bytes. """
+    """The scalars of the top level are over the limit on their own:
+    keeping them would not bound the event, so only the marker is
+    left. 33 strings of 2000 bytes and a list make 67477 bytes."""
 
     # arrange
     payload = {f'key_{num:02d}': 'x' * 2000 for num in range(33)}
     payload['tasks'] = ['y' * 1000]
-    report_error_mock = mocker.patch(
-        'src.logs.events.schema.report_error',
+    capture_sentry_mock = mocker.patch(
+        'src.logs.events.schema.capture_sentry_message_throttled',
     )
 
     # act
@@ -605,7 +589,7 @@ def test_normalize_payload__oversized_scalars_and_list__marker_only(
 
     # assert
     assert result == {'_truncated': True, '_size': 67477}
-    report_error_mock.assert_called_once_with(
+    capture_sentry_mock.assert_called_once_with(
         message='Event payload dropped: over the size limit',
         data={'size': 67477, 'limit': PAYLOAD_MAX_BYTES},
         level=SentryLogLevel.WARNING,
@@ -614,9 +598,8 @@ def test_normalize_payload__oversized_scalars_and_list__marker_only(
 
 @pytest.mark.django_db
 def test_normalize_payload__model_instance__primary_key():
-
-    """ The kwargs of an update carry the manager of a user as a row
-        of the database: the journal gets its id, not its text. """
+    """The kwargs of an update carry the manager of a user as a row
+    of the database: the journal gets its id, not its text."""
 
     # arrange
     manager = create_test_owner()
@@ -626,7 +609,7 @@ def test_normalize_payload__model_instance__primary_key():
     result = normalize_payload(payload=payload)
 
     # assert
-    assert result == {'manager': manager.id}
+    assert result == {'manager': {'id': manager.id, 'name': str(manager)}}
 
 
 @pytest.mark.django_db
@@ -634,15 +617,26 @@ def test_normalize_payload__list_of_model_instances__primary_keys():
 
     # arrange
     account = create_test_account()
-    first_group = create_test_group(account=account, name='Sales')
-    second_group = create_test_group(account=account, name='Support')
+    first_group = create_test_group(
+        account=account,
+        name='Sales',
+    )
+    second_group = create_test_group(
+        account=account,
+        name='Support',
+    )
     payload = {'user_groups': [first_group, second_group]}
 
     # act
     result = normalize_payload(payload=payload)
 
     # assert
-    assert result == {'user_groups': [first_group.id, second_group.id]}
+    assert result == {
+        'user_groups': [
+            {'id': first_group.id, 'name': 'Sales'},
+            {'id': second_group.id, 'name': 'Support'},
+        ],
+    }
 
 
 @pytest.mark.django_db
@@ -656,14 +650,15 @@ def test_normalize_payload__model_instance_too_deep__id_in_the_string():
     result = normalize_payload(payload=payload)
 
     # assert
-    assert result == {'a': {'b': f'{{"manager": {manager.id}}}'}}
+    assert json.loads(result['a']['b']) == {
+        'manager': {'id': manager.id, 'name': str(manager)},
+    }
 
 
 def test_without_url_secrets__relative_url__kept_as_it_is():
-
-    """ Only an absolute url is a url: a path with a query string is
-        a plain string to the normalizer, and a caller that puts a
-        token there has to cut it itself. """
+    """Only an absolute url is a url: a path with a query string is
+    a plain string to the normalizer, and a caller that puts a
+    token there has to cut it itself."""
 
     # arrange
     value = '/hook?token=x'

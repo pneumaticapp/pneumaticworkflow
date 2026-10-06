@@ -23,9 +23,11 @@ class Auth0ViewSet(BaseSSOViewSet):
             data=self.request.GET,
             level=SentryLogLevel.INFO,
         )
-        user = self.request.user
+        target = None
+        if self.request.user.is_authenticated:
+            target = self.request.user
         AuditEventService.user_logged_out_by_provider(
-            target=user if user.is_authenticated else None,
+            target=target,
             source=SourceType.AUTH0,
         )
         return self.response_ok()

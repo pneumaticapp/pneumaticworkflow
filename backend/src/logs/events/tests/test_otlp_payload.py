@@ -6,21 +6,52 @@ import pytest
 
 from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
+from src.logs.events.entities import Actor, EventObject
 from src.logs.events.enums import EventCategory
-from src.logs.events.schema import Actor, EventObject
-from src.logs.events.sinks.otlp_payload import (
+from src.logs.events.sink import (
     MAX_ATTRIBUTES,
-    _fit_limit,
-    _payload_values,
     build_otlp_payload,
 )
 from src.logs.events.tests.fixtures import EVENT_TS, make_event
 
 
-def test_build__two_accounts__two_resource_logs():
+def test_build__human_names__visible_in_record_body_and_attributes():
 
-    """ Loki takes index labels from resource attributes only, so a
-        batch is split by (account_id, category) before it is sent. """
+    # arrange
+    event = make_event(
+        account_name='Operations',
+        object=EventObject(
+            type='workflow',
+            id=9001,
+            name='Purchase request',
+        ),
+        payload={'template_id': 12, 'template_name': 'Purchasing'},
+    )
+
+    # act
+    payload = build_otlp_payload(
+        records=[('1-0', event)],
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
+
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    attributes = {item['key']: item['value'] for item in record['attributes']}
+
+    # assert
+    assert record['body'] == {
+        'stringValue': 'workflow.run workflow:9001 Purchase request',
+    }
+    assert attributes['object.name'] == {'stringValue': 'Purchase request'}
+    assert attributes['account_name'] == {'stringValue': 'Operations'}
+    assert attributes['payload.template_name'] == {'stringValue': 'Purchasing'}
+
+
+def test_build__two_accounts__two_resource_logs():
+    """Loki takes index labels from resource attributes only, so a
+    batch is split by (account_id, category) before it is sent."""
 
     # arrange
     records = [
@@ -38,8 +69,9 @@ def test_build__two_accounts__two_resource_logs():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     first, second = payload['resourceLogs']
+
+    # assert
     assert first['resource']['attributes'][3] == {
         'key': 'account_id',
         'value': {'stringValue': '42'},
@@ -69,8 +101,9 @@ def test_build__one_account_two_categories__two_resource_logs():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     first, second = payload['resourceLogs']
+
+    # assert
     assert first['resource']['attributes'][4] == {
         'key': 'event_category',
         'value': {'stringValue': 'workflows'},
@@ -82,9 +115,8 @@ def test_build__one_account_two_categories__two_resource_logs():
 
 
 def test_build__two_services__two_resource_logs():
-
-    """ The stream is shared with the file service: its records
-        must not leave under the service name of the backend. """
+    """The stream is shared with the file service: its records
+    must not leave under the service name of the backend."""
 
     # arrange
     records = [
@@ -102,8 +134,9 @@ def test_build__two_services__two_resource_logs():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     first, second = payload['resourceLogs']
+
+    # assert
     assert first['resource']['attributes'][0] == {
         'key': 'service.name',
         'value': {'stringValue': 'pneumatic-backend'},
@@ -162,10 +195,9 @@ def test_build__any_record__expected_resource_attributes():
 
 
 def test_build__record_of_another_service__no_version():
-
-    """ The version of the process is the version of its own
-        service only: a file service record would otherwise show the
-        backend release in Grafana. """
+    """The version of the process is the version of its own
+    service only: a file service record would otherwise show the
+    backend release in Grafana."""
 
     # arrange
     records = [('1-0', make_event(service='pneumatic-file-service'))]
@@ -208,12 +240,10 @@ def test_build__any_record__expected_scope():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     scope_log = payload['resourceLogs'][0]['scopeLogs'][0]
-    assert scope_log['scope'] == {
-        'name': 'pneumatic.events',
-        'version': '1',
-    }
+
+    # assert
+    assert scope_log['scope'] == {'name': 'pneumatic.events', 'version': '1'}
 
 
 def test_build__known_ts__expected_time_unix_nano():
@@ -230,8 +260,9 @@ def test_build__known_ts__expected_time_unix_nano():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['timeUnixNano'] == '1788862530123456000'
     assert record['observedTimeUnixNano'] == '1788862535000000000'
 
@@ -251,8 +282,9 @@ def test_build__non_utc_ts__converted_to_utc():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['timeUnixNano'] == '1788862530123456000'
 
 
@@ -270,20 +302,20 @@ def test_build__naive_ts__treated_as_utc():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['timeUnixNano'] == '1788862530123456000'
 
 
 @pytest.mark.parametrize(
     'category',
-    [EventCategory.WORKFLOWS, EventCategory.OTHER, 'loud'],
+    [EventCategory.WORKFLOWS, EventCategory.ADMIN, 'loud'],
 )
 def test_build__any_category__info_severity(category):
-
-    """ Every record of the journal is a fact, not a problem: one
-        level for all of them, a category nobody declared included,
-        rather than failing the batch. """
+    """Every record of the journal is a fact, not a problem: one
+    level for all of them, a category nobody declared included,
+    rather than failing the batch."""
 
     # arrange
     records = [('1-0', make_event(category=category))]
@@ -297,8 +329,9 @@ def test_build__any_category__info_severity(category):
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['severityNumber'] == 9
     assert record['severityText'] == 'INFO'
 
@@ -317,8 +350,9 @@ def test_build__event_with_object__body_holds_type_and_object():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['body'] == {'stringValue': 'workflow.run workflow:9001'}
 
 
@@ -336,8 +370,9 @@ def test_build__object_without_id__body_holds_object_type():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['body'] == {'stringValue': 'workflow.run workflow'}
 
 
@@ -355,15 +390,15 @@ def test_build__event_without_object__body_is_the_type_only():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['body'] == {'stringValue': 'workflow.run'}
 
 
 def test_build__event_body__free_of_the_payload():
-
-    """ The body is the short line of the record: the type and the
-        object, never the payload with a name in it. """
+    """The body is the short line of the record: the type and the
+    object, never the payload with a name in it."""
 
     # arrange
     event = make_event(payload={'workflow_name': 'Onboarding: Ann'})
@@ -378,15 +413,15 @@ def test_build__event_body__free_of_the_payload():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['body'] == {'stringValue': 'workflow.run workflow:9001'}
 
 
 def test_build__stream_id__used_as_the_event_id():
-
-    """ The id of the record wins over the one the event carries: it
-        is the key of idempotency for a repeated delivery. """
+    """The id of the record wins over the one the event carries: it
+    is the key of idempotency for a repeated delivery."""
 
     # arrange
     records = [('1788830100123-0', make_event(id='stale-value'))]
@@ -400,8 +435,9 @@ def test_build__stream_id__used_as_the_event_id():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['attributes'][0] == {
         'key': 'event.id',
         'value': {'stringValue': '1788830100123-0'},
@@ -409,9 +445,8 @@ def test_build__stream_id__used_as_the_event_id():
 
 
 def test_build__filled_event__expected_attributes():
-
-    """ The account and the category are resource attributes (index
-        labels) and are not repeated on the record. """
+    """The account and the category are resource attributes (index
+    labels) and are not repeated on the record."""
 
     # arrange
     event = make_event(
@@ -429,8 +464,9 @@ def test_build__filled_event__expected_attributes():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['attributes'] == [
         {'key': 'event.id', 'value': {'stringValue': '1-0'}},
         {'key': 'event.type', 'value': {'stringValue': 'workflow.run'}},
@@ -467,8 +503,9 @@ def test_build__event_without_actor__no_actor_attributes():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['attributes'] == [
         {'key': 'event.id', 'value': {'stringValue': '1-0'}},
         {'key': 'event.type', 'value': {'stringValue': 'workflow.run'}},
@@ -487,13 +524,16 @@ def test_build__event_without_actor__no_actor_attributes():
 
 
 def test_build__guest_actor__user_type_and_auth_type_attributes():
-
-    """ Who acted and how they were authenticated are two attributes:
-        a guest of one task behind a guest link. """
+    """Who acted and how they were authenticated are two attributes:
+    a guest of one task behind a guest link."""
 
     # arrange
     event = make_event(
-        actor=Actor(id=3, email='guest@test.test', user_type=UserType.GUEST),
+        actor=Actor(
+            id=3,
+            email='guest@test.test',
+            user_type=UserType.GUEST,
+        ),
         auth_type=AuthTokenType.GUEST,
         payload={},
     )
@@ -508,8 +548,9 @@ def test_build__guest_actor__user_type_and_auth_type_attributes():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['attributes'][2:6] == [
         {'key': 'actor.id', 'value': {'stringValue': '3'}},
         {'key': 'actor.email', 'value': {'stringValue': 'guest@test.test'}},
@@ -519,8 +560,7 @@ def test_build__guest_actor__user_type_and_auth_type_attributes():
 
 
 def test_build__no_auth_type__attribute_dropped():
-
-    """ The system and an anonymous request carry no credential. """
+    """The system and an anonymous request carry no credential."""
 
     # arrange
     records = [('1-0', make_event(auth_type=None, payload={}))]
@@ -534,8 +574,9 @@ def test_build__no_auth_type__attribute_dropped():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['attributes'][4] == {
         'key': 'actor.user_type',
         'value': {'stringValue': 'user'},
@@ -547,9 +588,8 @@ def test_build__no_auth_type__attribute_dropped():
 
 
 def test_build__empty_values__attributes_dropped():
-
-    """ An absent attribute is cheaper than an empty one both in Loki
-        and in Elasticsearch. """
+    """An absent attribute is cheaper than an empty one both in Loki
+    and in Elasticsearch."""
 
     # arrange
     event = make_event(
@@ -573,8 +613,9 @@ def test_build__empty_values__attributes_dropped():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['attributes'] == [
         {'key': 'event.id', 'value': {'stringValue': '1-0'}},
         {'key': 'event.type', 'value': {'stringValue': 'workflow.run'}},
@@ -595,8 +636,9 @@ def test_build__empty_payload__no_payload_attributes():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['attributes'] == [
         {'key': 'event.id', 'value': {'stringValue': '1-0'}},
         {'key': 'event.type', 'value': {'stringValue': 'workflow.run'}},
@@ -617,10 +659,9 @@ def test_build__empty_payload__no_payload_attributes():
 
 
 def test_build__payload_that_is_a_list__kept_under_one_key():
-
-    """ A record written by hand into the stream may carry anything
-        as its payload: it is sent whole rather than failing the
-        batch. """
+    """A record written by hand into the stream may carry anything
+    as its payload: it is sent whole rather than failing the
+    batch."""
 
     # arrange
     records = [('1-0', make_event(payload=[1, 'two']))]
@@ -634,42 +675,18 @@ def test_build__payload_that_is_a_list__kept_under_one_key():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['attributes'][12] == {
         'key': 'payload.value',
         'value': {'stringValue': '[1, "two"]'},
     }
 
 
-def test_payload_values__string_payload__kept_under_one_key():
-
-    # arrange
-    payload = 'plain text'
-
-    # act
-    values = _payload_values(payload=payload)
-
-    # assert
-    assert values == {'payload.value': 'plain text'}
-
-
-def test_payload_values__empty_list__no_values():
-
-    # arrange
-    payload = []
-
-    # act
-    values = _payload_values(payload=payload)
-
-    # assert
-    assert values == {}
-
-
 def test_build__ids__sent_as_strings():
-
-    """ An id sent as a number in one place and as a string in another
-        gives Loki labels of different types. """
+    """An id sent as a number in one place and as a string in another
+    gives Loki labels of different types."""
 
     # arrange
     records = [('1-0', make_event(task_id=7002))]
@@ -682,10 +699,11 @@ def test_build__ids__sent_as_strings():
         environment='Production',
         observed_ns=1788862535000000000,
     )
+    resource_log = payload['resourceLogs'][0]
+
+    record = resource_log['scopeLogs'][0]['logRecords'][0]
 
     # assert
-    resource_log = payload['resourceLogs'][0]
-    record = resource_log['scopeLogs'][0]['logRecords'][0]
     assert record['attributes'][2] == {
         'key': 'actor.id',
         'value': {'stringValue': '17'},
@@ -722,8 +740,9 @@ def test_build__bool_in_the_payload__bool_value():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['attributes'][12] == {
         'key': 'payload.with_attachments',
         'value': {'boolValue': True},
@@ -747,8 +766,9 @@ def test_build__nested_payload__json_string():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['attributes'][12] == {
         'key': 'payload.fields',
         'value': {'stringValue': '{"name": "Ann"}'},
@@ -760,9 +780,8 @@ def test_build__nested_payload__json_string():
 
 
 def test_build__time_string_in_the_payload__kept_as_is():
-
-    """ 9.30: the payload holds milliseconds, ts holds microseconds.
-        The builder formats its own ts and never parses a payload. """
+    """9.30: the payload holds milliseconds, ts holds microseconds.
+    The builder formats its own ts and never parses a payload."""
 
     # arrange
     event = make_event(payload={'created': '2026-09-08T10:15:30.123Z'})
@@ -777,8 +796,9 @@ def test_build__time_string_in_the_payload__kept_as_is():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['attributes'][12] == {
         'key': 'payload.created',
         'value': {'stringValue': '2026-09-08T10:15:30.123Z'},
@@ -800,8 +820,9 @@ def test_build__datetime_in_the_payload__rfc3339_string():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['attributes'][12] == {
         'key': 'payload.created',
         'value': {'stringValue': '2026-09-08T10:15:30.123456Z'},
@@ -809,11 +830,10 @@ def test_build__datetime_in_the_payload__rfc3339_string():
 
 
 def test_build__too_many_payload_keys__collapsed_into_extra():
-
-    """ Loki keeps 128 structured metadata entries per line, so the
-        tail of the payload travels as one JSON string. The sample
-        event has 12 plain attributes, which leaves 47 keys and
-        payload.extra for 80 payload keys. """
+    """Loki keeps 128 structured metadata entries per line, so the
+    tail of the payload travels as one JSON string. The sample
+    event has 12 plain attributes, which leaves 47 keys and
+    payload.extra for 80 payload keys."""
 
     # arrange
     event = make_event(
@@ -830,10 +850,11 @@ def test_build__too_many_payload_keys__collapsed_into_extra():
         environment='Production',
         observed_ns=1788862535000000000,
     )
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    attributes = record['attributes']
 
     # assert
-    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
-    attributes = record['attributes']
     assert len(attributes) == MAX_ATTRIBUTES
     assert attributes[12] == {
         'key': 'payload.key_00',
@@ -847,58 +868,51 @@ def test_build__too_many_payload_keys__collapsed_into_extra():
     assert json.loads(attributes[59]['value']['stringValue']) == extra
 
 
-def test_fit_limit__within_the_limit__payload_untouched():
+@pytest.mark.parametrize('extra_first', [True, False])
+@pytest.mark.parametrize(
+    'original',
+    ['original metadata', {'id': 7}, 0, False],
+)
+def test_build__overflow_with_original_extra__metadata_preserved(
+    extra_first,
+    original,
+):
+    """The user's extra key survives on either side of the attribute cap."""
 
     # arrange
-    payload = {'payload.a': 1, 'payload.b': 2}
-    reserved = MAX_ATTRIBUTES - 2
+    fields = {f'key_{index:02d}': index for index in range(80)}
+    source = (
+        {'extra': original, **fields}
+        if extra_first
+        else {**fields, 'extra': original}
+    )
+    event = make_event(payload=source)
+    records = [('1-0', event)]
 
     # act
-    kept, extra = _fit_limit(reserved=reserved, payload=payload)
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version=None,
+        environment='Testing',
+        observed_ns=1,
+    )
+    attributes = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0][
+        'attributes'
+    ]
+    overflow = json.loads(attributes[59]['value']['stringValue'])
 
     # assert
-    assert kept == {'payload.a': 1, 'payload.b': 2}
-    assert extra is None
-
-
-def test_fit_limit__reserved_over_the_limit__whole_payload_in_extra():
-
-    """ Nothing is left for the payload keys: they all go into
-        payload.extra, and the count never goes negative. """
-
-    # arrange
-    payload = {'payload.a': 1, 'payload.b': 2}
-    reserved = MAX_ATTRIBUTES
-
-    # act
-    kept, extra = _fit_limit(reserved=reserved, payload=payload)
-
-    # assert
-    assert kept == {}
-    assert extra == {'a': 1, 'b': 2}
-
-
-def test_fit_limit__one_slot_left__extra_takes_it():
-
-    """ The last slot goes to payload.extra rather than to one of
-        the two keys: the count stays at MAX_ATTRIBUTES. """
-
-    # arrange
-    payload = {'payload.a': 1, 'payload.b': 2}
-    reserved = MAX_ATTRIBUTES - 1
-
-    # act
-    kept, extra = _fit_limit(reserved=reserved, payload=payload)
-
-    # assert
-    assert kept == {}
-    assert extra == {'a': 1, 'b': 2}
+    assert len(attributes) == MAX_ATTRIBUTES
+    assert attributes[59]['key'] == 'payload.extra'
+    assert overflow['extra'] == original
+    assert overflow['key_47'] == 47
+    assert overflow['key_79'] == 79
 
 
 def test_build__nested_and_numeric_values__otlp_scalars():
-
-    """ OTLP JSON wants 64 bit numbers as strings, so nothing but a
-        boolean leaves the builder as a native JSON type. """
+    """OTLP JSON wants 64 bit numbers as strings, so nothing but a
+    boolean leaves the builder as a native JSON type."""
 
     # arrange
     records = [
@@ -915,8 +929,9 @@ def test_build__nested_and_numeric_values__otlp_scalars():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     second = payload['resourceLogs'][1]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert second['timeUnixNano'] == '1788862530123456000'
     assert second['attributes'] == [
         {'key': 'event.id', 'value': {'stringValue': '2-0'}},
@@ -940,14 +955,15 @@ def test_build__nested_and_numeric_values__otlp_scalars():
 
 
 def test_build__sample_events__matches_the_collector_fixture():
-
-    """ The fixture is the body a live collector accepted (P3-T1),
-        read at its own moment: the moment of reading is the one
-        field the builder takes from the caller. """
+    """The fixture is the body a live collector accepted (P3-T1),
+    read at its own moment: the moment of reading is the one
+    field the builder takes from the caller."""
 
     # arrange
     fixture_path = os.path.join(
-        os.path.dirname(__file__), 'fixtures', 'otlp_sample.json',
+        os.path.dirname(__file__),
+        'fixtures',
+        'otlp_sample.json',
     )
     with open(fixture_path, encoding='utf-8') as fixture:
         sample = json.load(fixture)
@@ -960,8 +976,15 @@ def test_build__sample_events__matches_the_collector_fixture():
         category=EventCategory.WORKFLOWS,
         ts=EVENT_TS.replace(hour=1, minute=15, second=0),
         account_id=42,
-        actor=Actor(id=17, email='ann@example.com', user_type=UserType.USER),
-        object=EventObject(type='workflow', id=9001),
+        actor=Actor(
+            id=17,
+            email='ann@example.com',
+            user_type=UserType.USER,
+        ),
+        object=EventObject(
+            type='workflow',
+            id=9001,
+        ),
         payload={
             'workflow_event_id': 555,
             'workflow_name': 'Onboarding: Ann',
@@ -977,8 +1000,15 @@ def test_build__sample_events__matches_the_collector_fixture():
         category=EventCategory.TASKS,
         ts=EVENT_TS.replace(hour=1, minute=15, second=10, microsecond=654321),
         account_id=77,
-        actor=Actor(id=31, email='bob@example.com', user_type=UserType.USER),
-        object=EventObject(type='task', id=7002),
+        actor=Actor(
+            id=31,
+            email='bob@example.com',
+            user_type=UserType.USER,
+        ),
+        object=EventObject(
+            type='task',
+            id=7002,
+        ),
         payload={
             'workflow_event_id': 901,
             'task_number': 2,

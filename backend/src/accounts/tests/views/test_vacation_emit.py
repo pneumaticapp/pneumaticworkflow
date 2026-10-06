@@ -34,9 +34,12 @@ def test_user_activate_vacation__self__audit_user_is_the_target(
         'src.accounts.services.vacation.'
         'send_vacation_delegation_notification.delay',
     )
+    captured_substitutes = []
     vacation_activated_mock = mocker.patch(
-        'src.accounts.services.vacation.AuditEventService.'
-        'vacation_activated',
+        'src.accounts.services.vacation.AuditEventService.vacation_activated',
+        side_effect=lambda **kwargs: captured_substitutes.append(
+            kwargs['substitute_users'],
+        ),
     )
     api_client.token_authenticate(user)
 
@@ -53,13 +56,14 @@ def test_user_activate_vacation__self__audit_user_is_the_target(
         user=user,
         auth_type=AuthTokenType.USER,
         target=user,
-        substitute_user_ids=[substitute.id],
+        substitute_users=captured_substitutes[0],
         absence_status=AbsenceStatus.VACATION,
         start_date=None,
         end_date=None,
         delegated_tasks_count=0,
         is_update=False,
     )
+    assert list(captured_substitutes[0].order_by('id')) == [substitute]
     send_user_updated_mock.assert_called_once_with(
         logging=account.log_api_requests,
         account_id=account.id,
@@ -85,9 +89,12 @@ def test_users_activate_vacation__admin_for_user__audit_user_is_admin(
         'src.accounts.services.vacation.'
         'send_vacation_delegation_notification.delay',
     )
+    captured_substitutes = []
     vacation_activated_mock = mocker.patch(
-        'src.accounts.services.vacation.AuditEventService.'
-        'vacation_activated',
+        'src.accounts.services.vacation.AuditEventService.vacation_activated',
+        side_effect=lambda **kwargs: captured_substitutes.append(
+            kwargs['substitute_users'],
+        ),
     )
     api_client.token_authenticate(owner)
 
@@ -109,13 +116,14 @@ def test_users_activate_vacation__admin_for_user__audit_user_is_admin(
         user=owner,
         auth_type=AuthTokenType.USER,
         target=user,
-        substitute_user_ids=[substitute.id],
+        substitute_users=captured_substitutes[0],
         absence_status=AbsenceStatus.SICK_LEAVE,
         start_date=date(2026, 9, 1),
         end_date=date(2026, 9, 20),
         delegated_tasks_count=0,
         is_update=False,
     )
+    assert list(captured_substitutes[0].order_by('id')) == [substitute]
     send_user_updated_mock.assert_called_once_with(
         logging=account.log_api_requests,
         account_id=account.id,
@@ -141,8 +149,7 @@ def test_user_activate_vacation__self_as_substitute__audit_not_called(
         'send_vacation_delegation_notification.delay',
     )
     vacation_activated_mock = mocker.patch(
-        'src.accounts.services.vacation.AuditEventService.'
-        'vacation_activated',
+        'src.accounts.services.vacation.AuditEventService.vacation_activated',
     )
     api_client.token_authenticate(user)
 

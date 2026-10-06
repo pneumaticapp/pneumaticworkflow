@@ -4,25 +4,13 @@ import pytest
 import stripe
 from django.utils import timezone
 
-from src.accounts.enums import (
-    BillingPlanType,
-    LeaseLevel,
-)
+from src.accounts.enums import BillingPlanType, LeaseLevel
 from src.accounts.services.account import AccountService
-from src.authentication.enums import (
-    AuthTokenType,
-)
+from src.authentication.enums import AuthTokenType
 from src.payment import messages
-from src.payment.enums import (
-    PriceStatus,
-)
-from src.payment.services.account import (
-    AccountSubscriptionService,
-)
-from src.payment.stripe.entities import (
-    PurchaseItem,
-    TokenSubscriptionData,
-)
+from src.payment.enums import PriceStatus
+from src.payment.services.account import AccountSubscriptionService
+from src.payment.stripe.entities import PurchaseItem, TokenSubscriptionData
 from src.payment.stripe.exceptions import (
     CardError,
     ChangeCurrencyDisallowed,
@@ -46,6 +34,7 @@ from src.payment.tests.fixtures import (
 )
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_owner,
     create_test_user,
 )
 
@@ -4131,6 +4120,46 @@ def test_update_customer__specified__ok(mocker):
     )
 
 
+@pytest.mark.parametrize('backend', [None, ''])
+def test_create_purchase__logs_disabled__no_queries(
+    mocker,
+    settings,
+    django_assert_num_queries,
+    backend,
+):
+    """Confirmed purchases do not query product names for disabled audit."""
+
+    # arrange
+    user = create_test_owner()
+    stripe_service_init_mock = mocker.patch.object(
+        StripeService,
+        '__init__',
+        return_value=None,
+    )
+    off_session_purchase_mock = mocker.patch(
+        'src.payment.stripe.service.StripeService._off_session_purchase',
+    )
+    service = StripeService(user=user)
+    service.user = user
+    service.auth_type = AuthTokenType.USER
+    service.payment_method = object()
+    products = [{'code': 'price_invoice', 'quantity': 1}]
+    settings.LOGS_BACKEND = backend
+
+    # act
+    with django_assert_num_queries(0):
+        result = service.create_purchase(
+            products=products,
+            success_url='http://localhost/success',
+            cancel_url='http://localhost/cancel',
+        )
+
+    # assert
+    assert result is None
+    stripe_service_init_mock.assert_called_once_with(user=user)
+    off_session_purchase_mock.assert_called_once_with(products=products)
+
+
 def test_create_purchase__off_session__ok(mocker):
 
     # arrange
@@ -4153,7 +4182,8 @@ def test_create_purchase__off_session__ok(mocker):
     )
     # end mock init
     user = create_test_user()
-    products_mock = mocker.Mock()
+    price = create_test_invoice_price()
+    products = [{'code': price.code, 'quantity': 1}]
     cancel_url = 'http://pneumatic.com/some-cancel'
     success_url = 'http://pneumatic.com/some-success'
     off_session_purchase_mock = mocker.patch(
@@ -4168,7 +4198,7 @@ def test_create_purchase__off_session__ok(mocker):
 
     # act
     result = service.create_purchase(
-        products=products_mock,
+        products=products,
         success_url=success_url,
         cancel_url=cancel_url,
     )
@@ -4176,12 +4206,13 @@ def test_create_purchase__off_session__ok(mocker):
     # assert
     assert result is None
     off_session_purchase_mock.assert_called_once_with(
-        products=products_mock,
+        products=products,
     )
     purchase_made_mock.assert_called_once_with(
         user=user,
         auth_type=service.auth_type,
-        products=products_mock,
+        products=products,
+        product_names={price.code: price.name},
     )
 
 

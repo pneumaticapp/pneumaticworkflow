@@ -4,13 +4,9 @@ import pytest
 from django import forms
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
-from django.contrib.admin.models import (
-    ADDITION,
-    CHANGE,
-    DELETION,
-    LogEntry,
-)
+from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.forms import MultiWidget, inlineformset_factory, modelform_factory
 from django.urls import reverse
@@ -22,21 +18,11 @@ from src.accounts.admin import (
     SystemMessageAdmin,
     UsersAdmin,
 )
-from src.accounts.models import (
-    Account,
-    SystemMessage,
-    UserGroup,
-    UserInvite,
-)
 from src.accounts.enums import UserType
+from src.accounts.models import Account, SystemMessage, UserGroup, UserInvite
 from src.logs.events.admin_site import JournaledAdminMixin
-from src.logs.events.enums import (
-    AdminEvents,
-    EventCategory,
-    EventObjectType,
-    UserEvents,
-)
-from src.logs.events.schema import Actor, EventObject
+from src.logs.events.entities import Actor, EventObject
+from src.logs.events.enums import AdminEvents, EventCategory, UserEvents
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
@@ -53,9 +39,8 @@ def test_log_change__form_data__admin_update_event(
     fake_stream,
     request_factory,
 ):
-
-    """ The admin site builds its message from the form right before
-        the hook: the record carries what the form cleaned. """
+    """The admin site builds its message from the form right before
+    the hook: the record carries what the form cleaned."""
 
     # arrange
     staff = create_test_owner()
@@ -92,8 +77,9 @@ def test_log_change__form_data__admin_update_event(
         user_type=UserType.USER,
     )
     assert event.object == EventObject(
-        type=EventObjectType.USER,
+        type=EventCategory.ADMIN,
         id=user.id,
+        name=str(user),
     )
     assert event.payload == {
         'model': 'accounts.user',
@@ -102,10 +88,7 @@ def test_log_change__form_data__admin_update_event(
     assert event.auth_type is None
 
 
-def test_log_change__many_to_many_field__ids(
-    fake_stream,
-    request_factory,
-):
+def test_log_change__many_to_many_field__ids(fake_stream, request_factory):
 
     # arrange
     staff = create_test_owner()
@@ -124,30 +107,27 @@ def test_log_change__many_to_many_field__ids(
     message = group_admin.construct_change_message(request, form, None)
 
     # act
-    group_admin.log_change(
-        request=request,
-        instance=group,
-        message=message,
-    )
+    group_admin.log_change(request=request, instance=group, message=message)
 
     # assert
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
     assert event.type == AdminEvents.UPDATE
     assert event.object == EventObject(
-        type=EventObjectType.GROUP,
+        type=EventCategory.ADMIN,
         id=group.id,
+        name=str(group),
     )
     assert event.payload == {
         'model': 'accounts.usergroup',
-        'data': {'name': 'Sales', 'users': f'[{user.id}]'},
+        'data': {
+            'name': 'Sales',
+            'users': json.dumps([{'id': user.id, 'name': str(user)}]),
+        },
     }
 
 
-def test_log_change__uploaded_file__file_name(
-    fake_stream,
-    request_factory,
-):
+def test_log_change__uploaded_file__file_name(fake_stream, request_factory):
 
     # arrange
     staff = create_test_owner()
@@ -169,11 +149,7 @@ def test_log_change__uploaded_file__file_name(
     message = users_admin.construct_change_message(request, form, None)
 
     # act
-    users_admin.log_change(
-        request=request,
-        instance=user,
-        message=message,
-    )
+    users_admin.log_change(request=request, instance=user, message=message)
 
     # assert
     assert len(fake_stream.events) == 1
@@ -188,9 +164,8 @@ def test_log_change__inline_rows__only_written_rows(
     fake_stream,
     request_factory,
 ):
-
-    """ The admin site saves an inline row only when its form has
-        changed: the rows left as they were are not in the record. """
+    """The admin site saves an inline row only when its form has
+    changed: the rows left as they were are not in the record."""
 
     # arrange
     staff = create_test_owner()
@@ -231,11 +206,7 @@ def test_log_change__inline_rows__only_written_rows(
     )
     formset.is_valid()
     formset.save()
-    message = account_admin.construct_change_message(
-        request,
-        form,
-        [formset],
-    )
+    message = account_admin.construct_change_message(request, form, [formset])
 
     # act
     account_admin.log_change(
@@ -255,8 +226,8 @@ def test_log_change__inline_rows__only_written_rows(
     assert json.loads(event.payload['inlines']['accounts.user']) == [
         {
             'first_name': 'Renamed',
-            'id': user_1.id,
-            'account': client_account.id,
+            'id': {'id': user_1.id, 'name': str(user_1)},
+            'account': {'id': client_account.id, 'name': str(client_account)},
             'DELETE': False,
         },
     ]
@@ -266,9 +237,8 @@ def test_log_change__inline_rows_unchanged__no_inlines_key(
     fake_stream,
     request_factory,
 ):
-
-    """ No inline row was written: the record has no inlines at all
-        rather than an empty list per inline. """
+    """No inline row was written: the record has no inlines at all
+    rather than an empty list per inline."""
 
     # arrange
     staff = create_test_owner()
@@ -298,11 +268,7 @@ def test_log_change__inline_rows_unchanged__no_inlines_key(
     )
     formset.is_valid()
     formset.save()
-    message = account_admin.construct_change_message(
-        request,
-        form,
-        [formset],
-    )
+    message = account_admin.construct_change_message(request, form, [formset])
 
     # act
     account_admin.log_change(
@@ -321,14 +287,11 @@ def test_log_change__inline_rows_unchanged__no_inlines_key(
     }
 
 
-def test_log_change__logs_disabled__form_data_not_collected(
-    mocker,
+def test_log_change__logs_disabled__form_data_not_emitted(
+    fake_stream,
+    settings,
     request_factory,
 ):
-
-    """ With the journal off the form is not read: the ids of a
-        many-to-many field and the inline rows would cost a query
-        each, for a payload nobody writes. """
 
     # arrange
     staff = create_test_owner()
@@ -345,29 +308,18 @@ def test_log_change__logs_disabled__form_data_not_collected(
     )
     form.is_valid()
     message = group_admin.construct_change_message(request, form, None)
-    admin_updated_mock = mocker.patch(
-        'src.logs.events.admin_site.AuditEventService.admin_updated',
-    )
+    settings.LOGS_BACKEND = None
 
     # act
-    group_admin.log_change(
-        request=request,
-        instance=group,
-        message=message,
-    )
+    group_admin.log_change(request=request, instance=group, message=message)
 
     # assert
-    admin_updated_mock.assert_called_once_with(
-        user=staff,
-        target=group,
-        model='accounts.usergroup',
-        form_data=None,
-        is_password_set=False,
-    )
+    assert fake_stream.events == []
 
 
-def test_log_addition__logs_disabled__form_data_not_collected(
-    mocker,
+def test_log_addition__logs_disabled__nothing_emitted(
+    fake_stream,
+    settings,
     request_factory,
 ):
 
@@ -387,33 +339,18 @@ def test_log_addition__logs_disabled__form_data_not_collected(
         None,
         add=True,
     )
-    admin_created_mock = mocker.patch(
-        'src.logs.events.admin_site.AuditEventService.admin_created',
-    )
+    settings.LOGS_BACKEND = None
 
     # act
-    group_admin.log_addition(
-        request=request,
-        instance=group,
-        message=message,
-    )
+    group_admin.log_addition(request=request, instance=group, message=message)
 
     # assert
-    admin_created_mock.assert_called_once_with(
-        user=staff,
-        target=group,
-        model='accounts.usergroup',
-        form_data=None,
-    )
+    assert fake_stream.events == []
 
 
-def test_log_change__no_form__model_only(
-    fake_stream,
-    request_factory,
-):
-
-    """ A hook the admin site calls without building a message from a
-        form (a custom action) has nothing but the row to name. """
+def test_log_change__no_form__model_only(fake_stream, request_factory):
+    """A hook the admin site calls without building a message from a
+    form (a custom action) has nothing but the row to name."""
 
     # arrange
     staff = create_test_owner()
@@ -435,8 +372,9 @@ def test_log_change__no_form__model_only(
     event = fake_stream.last_event()
     assert event.type == AdminEvents.UPDATE
     assert event.object == EventObject(
-        type=EventObjectType.USER,
+        type=EventCategory.ADMIN,
         id=user.id,
+        name=str(user),
     )
     assert event.payload == {'model': 'accounts.user'}
 
@@ -445,9 +383,8 @@ def test_log_change__next_row_without_form__data_not_carried_over(
     fake_stream,
     request_factory,
 ):
-
-    """ The rows of the changelist are saved on one request: the data
-        of a form goes into the record of its own row only. """
+    """The rows of the changelist are saved on one request: the data
+    of a form goes into the record of its own row only."""
 
     # arrange
     staff = create_test_owner()
@@ -467,13 +404,9 @@ def test_log_change__next_row_without_form__data_not_carried_over(
     form = form_class(instance=user_1, data={'first_name': 'Ann'})
     form.is_valid()
     message = users_admin.construct_change_message(request, form, None)
-    users_admin.log_change(
-        request=request,
-        instance=user_1,
-        message=message,
-    )
 
     # act
+    users_admin.log_change(request=request, instance=user_1, message=message)
     users_admin.log_change(
         request=request,
         instance=user_2,
@@ -521,8 +454,9 @@ def test_log_addition__account_added__own_account_id(
         user_type=UserType.USER,
     )
     assert event.object == EventObject(
-        type=EventObjectType.ACCOUNT,
+        type=EventCategory.ADMIN,
         id=client_account.id,
+        name=str(client_account),
     )
     assert event.payload == {'model': 'accounts.account'}
 
@@ -560,8 +494,9 @@ def test_log_deletion__group_deleted__account_of_the_group(
         user_type=UserType.USER,
     )
     assert event.object == EventObject(
-        type=EventObjectType.GROUP,
+        type=EventCategory.ADMIN,
         id=group.id,
+        name=str(group),
     )
     assert event.payload == {'model': 'accounts.usergroup'}
 
@@ -570,9 +505,8 @@ def test_log_addition__model_without_account__superuser_account(
     fake_stream,
     request_factory,
 ):
-
-    """ A row of no account is journaled into the account of the
-        superuser, typed as any other object. """
+    """A row of no account is journaled into the account of the
+    superuser, typed as any other object."""
 
     # arrange
     staff = create_test_owner()
@@ -608,19 +542,16 @@ def test_log_addition__model_without_account__superuser_account(
         user_type=UserType.USER,
     )
     assert event.object == EventObject(
-        type=EventObjectType.OTHER,
+        type=EventCategory.ADMIN,
         id=system_message.id,
+        name=str(system_message),
     )
     assert event.payload == {'model': 'accounts.systemmessage'}
 
 
-def test_log_change__user_invite__no_object_id(
-    fake_stream,
-    request_factory,
-):
-
-    """ The id of an invite is the key that accepts it: anybody who
-        reads the journal could join the account with it. """
+def test_log_change__user_invite__no_object_id(fake_stream, request_factory):
+    """The id of an invite is the key that accepts it: anybody who
+    reads the journal could join the account with it."""
 
     # arrange
     staff = create_test_owner()
@@ -658,40 +589,44 @@ def test_log_change__user_invite__no_object_id(
         user_type=UserType.USER,
     )
     assert event.object == EventObject(
-        type=EventObjectType.INVITE,
+        type=EventCategory.ADMIN,
         id=None,
+        name=str(invite),
     )
     assert event.payload == {'model': 'accounts.userinvite'}
 
 
-def test_log_change__logs_disabled__entry_written_no_event(
-    mocker,
+@pytest.mark.parametrize('backend', [None, ''])
+def test_log_change__logs_disabled__nothing_emitted(
+    fake_stream,
+    settings,
     request_factory,
-    run_on_commit,
+    django_assert_num_queries,
+    backend,
 ):
 
-    """ LOGS_BACKEND is not set in tests: the admin site still keeps
-        its own history, the journal is not reached. """
-
     # arrange
-    get_stream_mock = mocker.patch('src.logs.events.emitter.get_stream')
+    settings.LOGS_BACKEND = backend
     staff = create_test_owner()
     client_account = create_test_account(name='Client')
     user = create_test_admin(account=client_account)
+    user = UserModel.objects.get(id=user.id)
+    ContentType.objects.get_for_model(UserModel)
     request = request_factory.get('/')
     request.user = staff
     users_admin = UsersAdmin(UserModel, admin.site)
 
     # act
-    entry = users_admin.log_change(
-        request=request,
-        instance=user,
-        message=[{'changed': {'fields': ['is_admin']}}],
-    )
+    with django_assert_num_queries(1):
+        entry = users_admin.log_change(
+            request=request,
+            instance=user,
+            message=[{'changed': {'fields': ['is_admin']}}],
+        )
 
     # assert
     assert LogEntry.objects.get(id=entry.id).action_flag == CHANGE
-    get_stream_mock.assert_not_called()
+    assert fake_stream.events == []
 
 
 def test_log_change__admin_without_mixin__no_event(
@@ -726,10 +661,9 @@ def test_log_change__admin_change_form__form_data_without_password(
     fake_stream,
     client,
 ):
-
-    """ The admin site writes the row itself: the change form of a
-        user reaches the hook with the data it cleaned, the hash of
-        the password left out. """
+    """The admin site writes the row itself: the change form of a
+    user reaches the hook with the data it cleaned, the hash of
+    the password left out."""
 
     # arrange
     staff = create_test_owner()
@@ -737,28 +671,15 @@ def test_log_change__admin_change_form__form_data_without_password(
     staff.save(update_fields=['is_superuser'])
     client_account = create_test_account(name='Client')
     user = create_test_admin(account=client_account)
-
-    # The change form requires both digest times, a new user has none;
-    # the split widgets drop microseconds and would report a change.
     moment = timezone.now().replace(microsecond=0)
     user.last_digest_send_time = moment
     user.last_tasks_digest_send_time = moment
     user.save(
-        update_fields=[
-            'last_digest_send_time',
-            'last_tasks_digest_send_time',
-        ],
+        update_fields=['last_digest_send_time', 'last_tasks_digest_send_time'],
     )
     client.force_login(user=staff)
-    url = reverse(
-        viewname='admin:accounts_user_change',
-        args=[user.id],
-    )
+    url = reverse(viewname='admin:accounts_user_change', args=[user.id])
     page = client.get(path=url)
-
-    # What a browser posts back without touching a field: every
-    # initial value in the format of its widget, the hidden initial
-    # inputs of date_joined and the management forms of the inlines.
     form = page.context['adminform'].form
     data = {}
     for name, form_field in form.fields.items():
@@ -797,8 +718,9 @@ def test_log_change__admin_change_form__form_data_without_password(
         user_type=UserType.USER,
     )
     assert event.object == EventObject(
-        type=EventObjectType.USER,
+        type=EventCategory.ADMIN,
         id=user.id,
+        name=str(user),
     )
     assert set(event.payload) == {'model', 'data'}
     assert event.payload['model'] == 'accounts.user'
@@ -811,11 +733,10 @@ def test_log_addition__admin_add_user_form__created_user_named(
     fake_stream,
     client,
 ):
-
-    """ The add form of a user signs up a new account: the addition
-        names the owner the sign up created, in the account of that
-        owner, not an unsaved row in the account of the superuser. The
-        password typed into the form is not in the record. """
+    """The add form of a user signs up a new account: the addition
+    names the owner the sign up created, in the account of that
+    owner, not an unsaved row in the account of the superuser. The
+    password typed into the form is not in the record."""
 
     # arrange
     staff = create_test_owner()
@@ -840,9 +761,9 @@ def test_log_addition__admin_add_user_form__created_user_named(
 
     # act
     response = client.post(path=url, data=data)
+    owner = UserModel.objects.get(email='new@client.test')
 
     # assert
-    owner = UserModel.objects.get(email='new@client.test')
     assert response.status_code == 302
     assert response['Location'] == reverse(
         viewname='admin:accounts_user_change',
@@ -863,8 +784,9 @@ def test_log_addition__admin_add_user_form__created_user_named(
         user_type=UserType.USER,
     )
     assert event.object == EventObject(
-        type=EventObjectType.USER,
+        type=EventCategory.ADMIN,
         id=owner.id,
+        name=str(owner),
     )
     assert set(event.payload) == {'model', 'data'}
     assert event.payload['model'] == 'accounts.user'
@@ -879,10 +801,9 @@ def test_log_deletion__delete_selected_action__event_per_row(
     fake_stream,
     client,
 ):
-
-    """ The "delete selected" action of the changelist reports every
-        row to the hook before it deletes them: one event per user,
-        in the order of the changelist (newest first). """
+    """The "delete selected" action of the changelist reports every
+    row to the hook before it deletes them: one event per user,
+    in the order of the changelist (newest first)."""
 
     # arrange
     staff = create_test_owner()
@@ -923,15 +844,17 @@ def test_log_deletion__delete_selected_action__event_per_row(
         user_type=UserType.USER,
     )
     assert event_1.object == EventObject(
-        type=EventObjectType.USER,
+        type=EventCategory.ADMIN,
         id=user_2.id,
+        name=str(user_2),
     )
     assert event_1.payload == {'model': 'accounts.user'}
     event_2 = fake_stream.events[1][1]
     assert event_2.type == AdminEvents.DELETE
     assert event_2.object == EventObject(
-        type=EventObjectType.USER,
+        type=EventCategory.ADMIN,
         id=user_1.id,
+        name=str(user_1),
     )
     assert event_2.payload == {'model': 'accounts.user'}
 
@@ -940,10 +863,9 @@ def test_log_change__admin_password_form__password_set_event(
     fake_stream,
     client,
 ):
-
-    """ The password form of a user leaves the change of the row and
-        user.password_set, the record an alert watches; the password
-        itself is in neither. """
+    """The password form of a user leaves the change of the row and
+    user.password_set, the record an alert watches; the password
+    itself is in neither."""
 
     # arrange
     staff = create_test_owner()
@@ -952,14 +874,8 @@ def test_log_change__admin_password_form__password_set_event(
     client_account = create_test_account(name='Client')
     user = create_test_admin(account=client_account)
     client.force_login(user=staff)
-    url = reverse(
-        viewname='admin:auth_user_password_change',
-        args=[user.id],
-    )
-    data = {
-        'password1': 'Qwerty-12345!',
-        'password2': 'Qwerty-12345!',
-    }
+    url = reverse(viewname='admin:auth_user_password_change', args=[user.id])
+    data = {'password1': 'Qwerty-12345!', 'password2': 'Qwerty-12345!'}
 
     # act
     response = client.post(path=url, data=data)
@@ -973,8 +889,9 @@ def test_log_change__admin_password_form__password_set_event(
     assert admin_event.type == AdminEvents.UPDATE
     assert admin_event.account_id == client_account.id
     assert admin_event.object == EventObject(
-        type=EventObjectType.USER,
+        type=EventCategory.ADMIN,
         id=user.id,
+        name=str(user),
     )
     assert admin_event.payload == {'model': 'accounts.user', 'data': {}}
     password_event = fake_stream.events[1][1]
@@ -987,8 +904,9 @@ def test_log_change__admin_password_form__password_set_event(
     )
     assert password_event.auth_type is None
     assert password_event.object == EventObject(
-        type=EventObjectType.USER,
+        type=EventCategory.USERS,
         id=user.id,
+        name=user.email,
     )
     assert password_event.payload == {'target_email': user.email}
     assert 'Qwerty-12345!' not in json.dumps(admin_event.to_dict())

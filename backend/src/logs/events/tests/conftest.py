@@ -1,15 +1,15 @@
+# ruff: noqa: F401
 from unittest.mock import Mock
 
 import guardian.management
 import pytest
 
+from src.authentication.enums import AuthTokenType
 from src.generics.tests.clients import PneumaticApiClient
-from src.logs.events.context import (
-    RequestContext,
-    reset_context,
-    set_context,
-)
-from src.logs.events.tests.plugin import (  # noqa: F401
+from src.logs.events.entities import RequestContext
+from src.logs.events.entities import request_context as current_request_context
+from src.logs.events.enums import EventCategory, UserEvents
+from src.logs.events.tests.plugin import (
     events_enabled,
     fake_stream,
     request_factory,
@@ -20,6 +20,7 @@ from src.logs.events.tests.plugin import (  # noqa: F401
     run_on_commit,
     scheduled_stream,
 )
+from src.processes.tests.fixtures import create_test_account, create_test_owner
 
 
 def pytest_configure(config):
@@ -33,10 +34,8 @@ def api_client():
 
 @pytest.fixture
 def request_context():
-
-    """ Context of an HTTP request, as the middleware publishes it. """
-
-    token = set_context(
+    """Context of an HTTP request, as the middleware publishes it."""
+    token = current_request_context.set(
         RequestContext(
             request_id='ctx-request',
             ip='9.9.9.9',
@@ -44,4 +43,22 @@ def request_context():
         ),
     )
     yield
-    reset_context(token)
+    current_request_context.reset(token)
+
+
+@pytest.fixture
+def event_kwargs():
+    """A real actor and a separate tenant selected by the caller."""
+    user = create_test_owner(email='actor@test.test')
+    account = create_test_account(name='Operations')
+    return {
+        'event_category': EventCategory.USERS,
+        'event_type': UserEvents.LOGIN,
+        'user': user,
+        'auth_type': AuthTokenType.USER,
+        'object_id': user.id,
+        'object_name': user.email,
+        'account_id': account.id,
+        'account_name': account.name,
+        'payload': {'source': 'email', 'password': 'sensitive'},
+    }

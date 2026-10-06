@@ -113,8 +113,7 @@ def test_invite_user__person_of_another_account__audit_transfer(mocker):
 
 
 def test_invite_user__already_invited__audit_not_called(mocker):
-
-    """ Inviting a person who has a pending invite creates nothing. """
+    """Inviting a person who has a pending invite creates nothing."""
 
     # arrange
     account = create_test_account()
@@ -281,10 +280,9 @@ def test_resend_invite__already_accepted__audit_not_called(mocker):
 
 
 def test_accept__invited_user__audit_invite_accepted(mocker):
-
-    """ An invite accepted through an SSO callback never touches the
-        endpoint: the record has to come from the service, which is
-        the one thing both ways in have in common. """
+    """An invite accepted through an SSO callback never touches the
+    endpoint: the record has to come from the service, which is
+    the one thing both ways in have in common."""
 
     # arrange
     account = create_test_account()
@@ -322,8 +320,7 @@ def test_accept__invited_user__audit_invite_accepted(mocker):
         attribute='group',
     )
     invite_accepted_mock = mocker.patch(
-        'src.accounts.services.user_invite.AuditEventService.'
-        'invite_accepted',
+        'src.accounts.services.user_invite.AuditEventService.invite_accepted',
     )
     service = UserInviteService(
         request_user=invited,
@@ -341,7 +338,7 @@ def test_accept__invited_user__audit_invite_accepted(mocker):
     # assert
     invite_accepted_mock.assert_called_once_with(
         invited_user=invited,
-        invited_by_id=owner.id,
+        invited_by=owner,
     )
     create_onboarding_workflows_mock.assert_called_once_with()
     create_activated_workflows_mock.assert_called_once_with()
@@ -363,9 +360,8 @@ def test_accept__invited_user__audit_invite_accepted(mocker):
 
 
 def test_accept__email_already_registered__audit_not_called(mocker):
-
-    """ The e-mail belongs to an active user of another account: the
-        save fails inside accept, and nothing was accepted. """
+    """The e-mail belongs to an active user of another account: the
+    save fails inside accept, and nothing was accepted."""
 
     # arrange
     account = create_test_account()
@@ -394,8 +390,7 @@ def test_accept__email_already_registered__audit_not_called(mocker):
         'src.accounts.services.user_invite.AnalyticService.users_joined',
     )
     invite_accepted_mock = mocker.patch(
-        'src.accounts.services.user_invite.AuditEventService.'
-        'invite_accepted',
+        'src.accounts.services.user_invite.AuditEventService.invite_accepted',
     )
     service = UserInviteService(
         request_user=invited,

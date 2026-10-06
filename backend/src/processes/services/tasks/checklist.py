@@ -4,16 +4,12 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 
 from src.logs.events import AuditEventService
-from src.processes.models.templates.checklist import (
-    ChecklistTemplate,
-)
+from src.processes.models.templates.checklist import ChecklistTemplate
 from src.processes.models.workflows.checklist import (
     Checklist,
     ChecklistSelection,
 )
-from src.processes.services.base import (
-    BaseWorkflowService,
-)
+from src.processes.services.base import BaseWorkflowService
 from src.processes.services.tasks import exceptions
 from src.processes.services.tasks.checklist_selection import (
     ChecklistSelectionService,
@@ -85,8 +81,7 @@ class ChecklistService(BaseWorkflowService):
         AuditEventService.checklist_item_marked(
             user=self.user,
             auth_type=self.auth_type,
-            checklist=selection.checklist,
-            selection_id=selection_id,
+            selection=selection,
         )
 
     def unmark(
@@ -102,6 +97,5 @@ class ChecklistService(BaseWorkflowService):
         AuditEventService.checklist_item_unmarked(
             user=self.user,
             auth_type=self.auth_type,
-            checklist=selection.checklist,
-            selection_id=selection_id,
+            selection=selection,
         )

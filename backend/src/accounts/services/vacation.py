@@ -13,21 +13,15 @@ from src.notifications.tasks import (
     send_user_updated_notification,
     send_vacation_delegation_notification,
 )
-from src.processes.enums import (
-    PerformerType,
-    TaskStatus,
-    WorkflowStatus,
-)
+from src.permissions.enums import PermissionSource
+from src.processes.enums import PerformerType, TaskStatus, WorkflowStatus
 from src.processes.models.workflows.task import Task, TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
-from src.permissions.enums import PermissionSource
 from src.processes.services.events import WorkflowEventService
 from src.processes.services.workflow_permissions import (
     WorkflowPermissionService,
 )
-from src.storage.tasks import (
-    schedule_sync_workflow_attachment_permissions,
-)
+from src.storage.tasks import schedule_sync_workflow_attachment_permissions
 
 UserModel = get_user_model()
 
@@ -145,7 +139,10 @@ class VacationDelegationService:
                 user=self.request_user,
                 auth_type=self.auth_type,
                 target=self.user,
-                substitute_user_ids=substitute_user_ids,
+                substitute_users=UserModel.objects.filter(
+                    account_id=self.user.account_id,
+                    id__in=substitute_user_ids,
+                ),
                 absence_status=absence_status,
                 start_date=vacation_start_date,
                 end_date=vacation_end_date,

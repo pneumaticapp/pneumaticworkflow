@@ -52,8 +52,7 @@ def test_accept__invited_user__audit_invite_accepted(
         attribute='group',
     )
     invite_accepted_mock = mocker.patch(
-        'src.accounts.services.user_invite.AuditEventService.'
-        'invite_accepted',
+        'src.accounts.services.user_invite.AuditEventService.invite_accepted',
     )
 
     # act
@@ -70,7 +69,7 @@ def test_accept__invited_user__audit_invite_accepted(
     assert response.status_code == 200
     invite_accepted_mock.assert_called_once_with(
         invited_user=invited,
-        invited_by_id=owner.id,
+        invited_by=owner,
     )
     create_onboarding_workflows_mock.assert_called_once_with()
     create_activated_workflows_mock.assert_called_once_with()

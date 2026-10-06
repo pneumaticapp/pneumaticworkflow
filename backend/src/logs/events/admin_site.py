@@ -1,166 +1,175 @@
-""" Audit events of the Django admin site.
+"""Audit Django admin hooks with cleaned form data and readable relations."""
 
-    A superuser changes users, accounts and groups there directly, past
-    every service that publishes an event. The admin site reports each
-    addition, change and deletion it makes to the log_* hooks of the
-    ModelAdmin - the change form, the password form, the inlines and
-    the "delete selected" action all go through them - so the hooks
-    are where the journal is written from. JournaledAdminMixin adds
-    that to the ModelAdmin of a model worth journaling.
+from typing import Any, Dict, Iterable, List, Optional, Union
 
-    save_model and delete_model are not enough: the user admin signs
-    up a new account in save_model instead of saving the row, and the
-    password form of a user and "delete selected" bypass both. """
-
-from typing import Any, Dict, Iterable, Optional, Tuple
-
+from django.contrib.admin.models import LogEntry
 from django.core.files import File
-from django.db.models import QuerySet
+from django.db.models import Model, QuerySet
 from django.forms import BaseForm
+from django.http import HttpRequest
+from django.utils.functional import SimpleLazyObject
 
-from src.logs.events.emitter import logs_enabled
 from src.logs.events.services import AuditEventService
 
-# The inputs of a password: the two of the creation form and of the
-# password form of a user, and the hash the change form shows. None of
-# them goes into the journal.
 PASSWORD_FIELDS = ('password', 'password1', 'password2')
-# The input a new password is typed into.
 NEW_PASSWORD_FIELD = 'password1'
-# The request attribute that carries the form from
-# construct_change_message to the log_* hook the admin site calls next.
 FORM_ATTR = '_journal_form'
+ADMIN_ACCOUNT_MODEL = 'accounts.account'
+ADMIN_INVITE_MODEL = 'accounts.userinvite'
+ChangeMessage = Union[str, List[Dict[str, Any]]]
 
 
 class JournaledAdminMixin:
+    """Keep the admin history and publish the same action to the journal.
 
-    """ Publish an audit event for every row the admin site writes.
+    request.user: accounts.User
+    """
 
-        The three hooks keep writing the LogEntry the admin site shows
-        in its history, then publish the same fact to the journal with
-        the data of the form. The deletion hook runs before the
-        delete, so the row and its account are still there. """
+    def get_journal_target(
+        self,
+        request: HttpRequest,
+        instance: Model,
+    ) -> Dict[str, Any]:
+        """Model, object and account of the row for the journal.
 
-    def construct_change_message(self, request, form, formsets, add=False):
+        An invite id is its acceptance key, so it is never written.
+        A row without an account belongs to the account of the admin.
+        """
+        model = instance._meta.label_lower
+        target = {
+            'model': model,
+            'object_id': instance.pk,
+        }
+        if model == ADMIN_INVITE_MODEL:
+            target['object_id'] = None
+        if model == ADMIN_ACCOUNT_MODEL:
+            target['account_id'] = instance.pk
+            target['account_name'] = instance.name
+        elif getattr(instance, 'account_id', None) is not None:
+            target['account_id'] = instance.account_id
+            target['account_name'] = lambda: instance.account.name
+        else:
+            target['account_id'] = request.user.account_id
+            target['account_name'] = lambda: request.user.account.name
+        return target
 
-        """ Every path of the admin site that writes a row - the change
-            form, the rows of the changelist, the password form of a
-            user - builds the message of its own log from the form
-            right before it calls log_addition or log_change with the
-            message alone. The form waits on the request for that
-            hook. """
-
+    def construct_change_message(
+        self,
+        request: HttpRequest,
+        form: BaseForm,
+        formsets: Optional[Iterable[Any]],
+        add: bool = False,
+    ) -> ChangeMessage:
         setattr(request, FORM_ATTR, (form, formsets))
         return super().construct_change_message(
-            request,
-            form,
-            formsets,
-            add,
+            request=request,
+            form=form,
+            formsets=formsets,
+            add=add,
         )
 
-    # The hooks are called positionally by the admin site, so the
-    # second argument is named after what it is, not "object".
-
-    def log_addition(self, request, instance, message):
-        entry = super().log_addition(request, instance, message)
-        form, formsets = _pop_form(request)
+    def log_addition(
+        self,
+        request: HttpRequest,
+        instance: Model,
+        message: ChangeMessage,
+    ) -> LogEntry:
+        entry = super().log_addition(
+            request=request,
+            object=instance,
+            message=message,
+        )
+        form, formsets = getattr(request, FORM_ATTR, None) or (None, None)
+        setattr(request, FORM_ATTR, None)
         AuditEventService.admin_created(
             user=request.user,
             target=instance,
-            model=_model_label(instance),
-            form_data=_form_data(form, formsets),
+            form_data=SimpleLazyObject(
+                lambda: _form_data(form=form, formsets=formsets),
+            ),
+            **self.get_journal_target(request=request, instance=instance),
         )
         return entry
 
-    def log_change(self, request, instance, message):
-        entry = super().log_change(request, instance, message)
-        form, formsets = _pop_form(request)
+    def log_change(
+        self,
+        request: HttpRequest,
+        instance: Model,
+        message: ChangeMessage,
+    ) -> LogEntry:
+        entry = super().log_change(
+            request=request,
+            object=instance,
+            message=message,
+        )
+        form, formsets = getattr(request, FORM_ATTR, None) or (None, None)
+        setattr(request, FORM_ATTR, None)
+        is_password_set = (
+            form is not None and NEW_PASSWORD_FIELD in form.cleaned_data
+        )
         AuditEventService.admin_updated(
             user=request.user,
             target=instance,
-            model=_model_label(instance),
-            form_data=_form_data(form, formsets),
-            is_password_set=(
-                form is not None
-                and NEW_PASSWORD_FIELD in form.cleaned_data
+            form_data=SimpleLazyObject(
+                lambda: _form_data(form=form, formsets=formsets),
             ),
+            is_password_set=is_password_set,
+            **self.get_journal_target(request=request, instance=instance),
         )
         return entry
 
-    def log_deletion(self, request, instance, object_repr):
-        entry = super().log_deletion(request, instance, object_repr)
+    def log_deletion(
+        self,
+        request: HttpRequest,
+        instance: Model,
+        object_repr: str,
+    ) -> LogEntry:
+        entry = super().log_deletion(
+            request=request,
+            object=instance,
+            object_repr=object_repr,
+        )
         AuditEventService.admin_deleted(
             user=request.user,
             target=instance,
-            model=_model_label(instance),
+            **self.get_journal_target(request=request, instance=instance),
         )
         return entry
-
-
-def _model_label(instance: Any) -> str:
-    opts = instance._meta
-    return f'{opts.app_label}.{opts.model_name}'
-
-
-def _pop_form(request) -> Tuple[Optional[BaseForm], Optional[Iterable]]:
-
-    """ The form of this write, once: the rows of the changelist are
-        saved one after another on the same request. A hook called
-        without a form before it (a custom action) gets none. """
-
-    form, formsets = getattr(request, FORM_ATTR, None) or (None, None)
-    setattr(request, FORM_ATTR, None)
-    return form, formsets
 
 
 def _form_data(
     form: Optional[BaseForm],
     formsets: Optional[Iterable[Any]],
 ) -> Optional[Dict[str, Any]]:
-
-    """ What the superuser submitted, as the form cleaned it: the
-        fields of the row and the inline rows the admin site wrote. An
-        inline row is saved only when its form has changed - the rest
-        of them were not written, and an account has as many of them
-        as it has users. A password is left out.
-
-        Nothing is collected with the journal off: the ids of every
-        many-to-many field are a query, and the service would drop
-        the result unread. """
-
-    if form is None or not logs_enabled():
+    """Collect submitted rows, excluding passwords and naming relations."""
+    if form is None:
         return None
-    form_data: Dict[str, Any] = {'data': _cleaned_data(form)}
-    inlines = {}
+    rows = [(None, form)]
     for formset in formsets or ():
-        rows = [
-            _cleaned_data(inline_form)
+        rows.extend(
+            (formset.model._meta.label_lower, inline_form)
             for inline_form in formset.forms
             if inline_form.has_changed()
-        ]
-        if rows:
-            inlines[_model_label(formset.model)] = rows
+        )
+    form_data = {}
+    inlines = {}
+    for model, row_form in rows:
+        cleaned = {}
+        for name, form_value in row_form.cleaned_data.items():
+            if name in PASSWORD_FIELDS:
+                continue
+            value = form_value
+            if isinstance(value, QuerySet):
+                value = [{'id': item.pk, 'name': str(item)} for item in value]
+            elif isinstance(value, Model):
+                value = {'id': value.pk, 'name': str(value)}
+            elif isinstance(value, File):
+                value = value.name
+            cleaned[name] = value
+        if model is None:
+            form_data['data'] = cleaned
+        else:
+            inlines.setdefault(model, []).append(cleaned)
     if inlines:
         form_data['inlines'] = inlines
     return form_data
-
-
-def _cleaned_data(form: BaseForm) -> Dict[str, Any]:
-    return {
-        name: _form_value(value)
-        for name, value in form.cleaned_data.items()
-        if name not in PASSWORD_FIELDS
-    }
-
-
-def _form_value(value: Any) -> Any:
-
-    """ A value of the form the way a payload holds it: a set of rows
-        of a many-to-many field is their ids, an uploaded file its
-        name. normalize_payload turns a single row into its id. """
-
-    if isinstance(value, QuerySet):
-        return list(value.values_list('pk', flat=True))
-    if isinstance(value, File):
-        return value.name
-    return value

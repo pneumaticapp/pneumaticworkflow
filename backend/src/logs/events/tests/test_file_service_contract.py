@@ -1,24 +1,20 @@
-""" The record the file service writes into the shared stream.
+"""The record the file service writes into the shared stream.
 
-    fixtures/file_service_*_record.json are the contract between the
-    two writers: the file service tests build their records and compare
-    them with these files, the tests below read them back the way the
-    consumer does. fixtures/file_service_contract.json adds the names
-    both sides keep as constants of their own: the stream, the user
-    types and the auth types. A change on either side breaks the other
-    side's test instead of the dead letter of a running deployment. """
+fixtures/file_service_*_record.json are the contract between the
+two writers: the file service tests build their records and compare
+them with these files, the tests below read them back the way the
+consumer does. fixtures/file_service_contract.json adds the names
+both sides keep as constants of their own: the stream, the user
+types and the auth types. A change on either side breaks the other
+side's test instead of the dead letter of a running deployment."""
 
 from typing_extensions import get_args
 
 from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import (
-    EventCategory,
-    FileEvents,
-)
-from src.logs.events.registry import resolve_event_type
-from src.logs.events.schema import Event
-from src.logs.events.sinks.otlp_payload import build_otlp_payload
+from src.logs.events.entities import Event
+from src.logs.events.enums import EventCategory, FileEvents
+from src.logs.events.sink import build_otlp_payload
 from src.logs.events.stream import STREAM_KEY
 from src.logs.events.tests.fixtures import (
     load_file_service_contract,
@@ -61,9 +57,8 @@ def test_to_dict__file_service_record__round_trip():
 
 
 def test_to_dict__upload_record__round_trip():
-
-    """ Every record the file service writes has to survive the trip
-        through the consumer unchanged, not just the download one. """
+    """Every record the file service writes has to survive the trip
+    through the consumer unchanged, not just the download one."""
 
     # arrange
     data = load_file_service_record(name='file_service_upload_record.json')
@@ -85,22 +80,6 @@ def test_to_dict__denied_record__round_trip():
 
     # assert
     assert restored == data
-
-
-def test_resolve__file_service_record__category_of_the_registry():
-
-    """ The sink groups by the category of the record, the registry
-        declares the type: the two must agree. """
-
-    # arrange
-    event = Event.from_dict(data=load_file_service_record())
-
-    # act
-    declared = resolve_event_type(name=event.type)
-
-    # assert
-    assert declared.category == EventCategory.FILES
-    assert declared.category == event.category
 
 
 def test_build__file_service_record__own_service_name():
@@ -146,8 +125,9 @@ def test_build__file_service_record__record_attributes():
         observed_ns=1788862535000000000,
     )
 
-    # assert
     record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+
+    # assert
     assert record['body'] == {
         'stringValue': (
             'file.download file:0f8fad5b-d9cb-469f-a165-70867728950e'
@@ -162,9 +142,7 @@ def test_build__file_service_record__record_attributes():
         {'key': 'object.type', 'value': {'stringValue': 'file'}},
         {
             'key': 'object.id',
-            'value': {
-                'stringValue': '0f8fad5b-d9cb-469f-a165-70867728950e',
-            },
+            'value': {'stringValue': '0f8fad5b-d9cb-469f-a165-70867728950e'},
         },
         {'key': 'ip', 'value': {'stringValue': '203.0.113.7'}},
         {
@@ -208,27 +186,9 @@ def test_from_dict__upload_record__parsed():
     }
 
 
-def test_resolve__upload_record__category_of_the_registry():
-
-    # arrange
-    event = Event.from_dict(
-        data=load_file_service_record(
-            name='file_service_upload_record.json',
-        ),
-    )
-
-    # act
-    declared = resolve_event_type(name=event.type)
-
-    # assert
-    assert declared.category == EventCategory.FILES
-    assert declared.category == event.category
-
-
 def test_from_dict__denied_record__parsed():
-
-    """ A refusal names the account of the file when it is not the
-        account of the person reaching for it. """
+    """A refusal names the account of the file when it is not the
+    account of the person reaching for it."""
 
     # arrange
     data = load_file_service_record(name='file_service_denied_record.json')
@@ -242,28 +202,10 @@ def test_from_dict__denied_record__parsed():
     assert event.payload['file_account_id'] == 99
 
 
-def test_resolve__denied_record__category_of_the_registry():
-
-    # arrange
-    event = Event.from_dict(
-        data=load_file_service_record(
-            name='file_service_denied_record.json',
-        ),
-    )
-
-    # act
-    declared = resolve_event_type(name=event.type)
-
-    # assert
-    assert declared.category == EventCategory.FILES
-    assert declared.category == event.category
-
-
 def test_stream_key__file_service_contract__backend_reads_that_stream():
-
-    """ Both writers name the stream as a constant of their own. A
-        rename on one side would send its records into a stream the
-        consumer never reads, with every other test still green. """
+    """Both writers name the stream as a constant of their own. A
+    rename on one side would send its records into a stream the
+    consumer never reads, with every other test still green."""
 
     # arrange
     contract = load_file_service_contract()
@@ -276,9 +218,8 @@ def test_stream_key__file_service_contract__backend_reads_that_stream():
 
 
 def test_user_types__file_service_contract__known_to_the_backend():
-
-    """ Every user type the file service may put into an actor is one
-        the backend declares. """
+    """Every user type the file service may put into an actor is one
+    the backend declares."""
 
     # arrange
     contract = load_file_service_contract()
@@ -291,16 +232,15 @@ def test_user_types__file_service_contract__known_to_the_backend():
 
 
 def test_auth_types__file_service_contract__known_to_the_backend():
-
-    """ Every auth type the file service may write is one the backend
-        declares. The backend has one more of its own, the webhook. """
+    """Every auth type the file service may write is one the backend
+    declares. The backend has one more of its own, the webhook."""
 
     # arrange
     contract = load_file_service_contract()
 
     # act
-    unknown = (
-        set(contract['auth_types']) - set(get_args(AuthTokenType.LITERALS))
+    unknown = set(contract['auth_types']) - set(
+        get_args(AuthTokenType.LITERALS),
     )
 
     # assert

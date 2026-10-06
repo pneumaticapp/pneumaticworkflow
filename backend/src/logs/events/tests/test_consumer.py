@@ -1,15 +1,9 @@
 import logging
 
-from src.logs.events.consumer import (
-    LOCK_EXPIRE,
-    EventsConsumer,
-    tick_budget,
-)
-from src.logs.events.exceptions import (
-    SinkPermanentError,
-    SinkTemporaryError,
-)
-from src.logs.events.stream import ParsedEntries
+from src.logs.events.consumer import EventsConsumer
+from src.logs.events.entities import ParsedEntries
+from src.logs.events.exceptions import SinkPermanentError, SinkTemporaryError
+from src.logs.events.stream import NEW_ENTRIES, PENDING_ENTRIES
 from src.logs.events.tests.fixtures import (
     FakeEventStream,
     fill_stream,
@@ -17,75 +11,74 @@ from src.logs.events.tests.fixtures import (
 )
 
 
-def test_tick_budget__otlp_timeouts__lock_minus_the_worst_batch():
-
-    """ Three sends of 13.05 s with two pauses of the longest
-        Retry-After between them: 120 - 59.15 s. """
+def test_run_once__empty_claim_page__eligible_tail_delivered(mocker):
+    """An empty scan page is not the end of the pending list."""
 
     # arrange
-    send_seconds = 13.05
-    max_retry_after = 10
-
-    # act
-    budget = tick_budget(
-        send_seconds=send_seconds,
-        max_retry_after=max_retry_after,
+    stream = FakeEventStream()
+    fill_stream(stream=stream, count=11)
+    stream.read(consumer='former-worker', count=11, start_id=NEW_ENTRIES)
+    stream.pending['11-0'].delivered_at -= 120
+    sink_mock = mocker.Mock()
+    sleep_mock = mocker.Mock()
+    consumer = EventsConsumer(
+        stream=stream,
+        sink=sink_mock,
+        batch_size=1,
+        consumer='new-worker',
+        sleep=sleep_mock,
     )
 
+    # act
+    stats = consumer.run_once()
+
     # assert
-    assert round(budget, 2) == 60.85
-    assert budget < LOCK_EXPIRE
+    assert stats.claimed == 1
+    assert stats.delivered == 1
+    assert stats.acked == 1
+    assert len(stream.pending) == 10
+    sink_mock.send.assert_called_once_with([stream.events[10]])
+    sleep_mock.assert_not_called()
 
 
-def test_tick_budget__short_retry_after__backoff_pause_used():
-
-    """ The receiver cannot shorten the pause below the fixed
-        backoff: the worst pause is the longer of the two. """
+def test_run_once__claim_budget_exhausted__next_tick_resumes(mocker):
+    """A new consumer instance resumes the cached stream scan cursor."""
 
     # arrange
-    send_seconds = 1
-    max_retry_after = 0
-
-    # act
-    budget = tick_budget(
-        send_seconds=send_seconds,
-        max_retry_after=max_retry_after,
+    stream = FakeEventStream()
+    fill_stream(stream=stream, count=11)
+    stream.read(consumer='former-worker', count=11, start_id=NEW_ENTRIES)
+    stream.pending['11-0'].delivered_at -= 120
+    sink_mock = mocker.Mock()
+    sleep_mock = mocker.Mock()
+    consumer = EventsConsumer(
+        stream=stream,
+        sink=sink_mock,
+        batch_size=1,
+        max_batches=1,
+        consumer='new-worker',
+        sleep=sleep_mock,
+    )
+    next_consumer = EventsConsumer(
+        stream=stream,
+        sink=sink_mock,
+        batch_size=1,
+        max_batches=1,
+        consumer='new-worker',
+        sleep=sleep_mock,
     )
 
-    # assert
-    assert budget == 115.0
-
-
-def test_tick_budget__batch_longer_than_the_lock__zero():
-
-    # arrange
-    send_seconds = 100
-    max_retry_after = 10
-
     # act
-    budget = tick_budget(
-        send_seconds=send_seconds,
-        max_retry_after=max_retry_after,
-    )
+    first_tick = consumer.run_once()
+    next_tick = next_consumer.run_once()
 
     # assert
-    assert budget == 0.0
-
-
-def test_tick_budget__given_lock_expire__used():
-
-    # arrange
-    lock_expire = 10
-
-    # act
-    budget = tick_budget(
-        send_seconds=1,
-        max_retry_after=0,
-        lock_expire=lock_expire,
-    )
-
-    # assert
-    assert budget == 5.0
+    assert first_tick.delivered == 0
+    assert next_tick.delivered == 1
+    assert next_tick.claimed == 1
+    assert len(stream.pending) == 10
+    sink_mock.send.assert_called_once_with([stream.events[10]])
+    sleep_mock.assert_not_called()
 
 
 def test_run_once__new_entries__delivered_and_acked(mocker):
@@ -166,11 +159,13 @@ def test_run_once__more_than_one_batch__batches_of_the_count(mocker):
 
     # assert
     assert sink_mock.send.call_count == 3
-    sink_mock.send.assert_has_calls([
-        mocker.call(stream.events[:1000]),
-        mocker.call(stream.events[1000:2000]),
-        mocker.call(stream.events[2000:]),
-    ])
+    sink_mock.send.assert_has_calls(
+        [
+            mocker.call(stream.events[:1000]),
+            mocker.call(stream.events[1000:2000]),
+            mocker.call(stream.events[2000:]),
+        ],
+    )
     assert stats.delivered == 2500
     assert stats.acked == 2500
     assert stats.failed is False
@@ -201,18 +196,19 @@ def test_run_once__max_batches__rest_of_the_stream_untouched(mocker):
     assert stats.delivered == 200
     assert stats.acked == 200
     assert sink_mock.send.call_count == 2
-    sink_mock.send.assert_has_calls([
-        mocker.call(stream.events[:100]),
-        mocker.call(stream.events[100:200]),
-    ])
+    sink_mock.send.assert_has_calls(
+        [
+            mocker.call(stream.events[:100]),
+            mocker.call(stream.events[100:200]),
+        ],
+    )
     assert stream.pending == {}
     sleep_mock.assert_not_called()
 
 
 def test_run_once__deadline_reached__nothing_delivered(mocker):
-
-    """ The tick has to be over before the periodic lock expires, or
-        beat starts a second tick next to this one. """
+    """The tick has to be over before the periodic lock expires, or
+    beat starts a second tick next to this one."""
 
     # arrange
     stream = FakeEventStream()
@@ -259,11 +255,13 @@ def test_run_once__temporary_error__attempts_and_entries_pending(mocker):
 
     # assert
     assert sink_mock.send.call_count == 3
-    sink_mock.send.assert_has_calls([
-        mocker.call(stream.events),
-        mocker.call(stream.events),
-        mocker.call(stream.events),
-    ])
+    sink_mock.send.assert_has_calls(
+        [
+            mocker.call(stream.events),
+            mocker.call(stream.events),
+            mocker.call(stream.events),
+        ],
+    )
     assert sleep_mock.call_count == 2
     sleep_mock.assert_has_calls([mocker.call(0.5), mocker.call(1.0)])
     assert stats.delivered == 0
@@ -297,11 +295,13 @@ def test_run_once__retry_after__pause_of_the_receiver_is_used(mocker):
     assert sleep_mock.call_count == 2
     sleep_mock.assert_has_calls([mocker.call(3), mocker.call(3)])
     assert sink_mock.send.call_count == 3
-    sink_mock.send.assert_has_calls([
-        mocker.call(stream.events),
-        mocker.call(stream.events),
-        mocker.call(stream.events),
-    ])
+    sink_mock.send.assert_has_calls(
+        [
+            mocker.call(stream.events),
+            mocker.call(stream.events),
+            mocker.call(stream.events),
+        ],
+    )
     assert stats.failed is True
     assert len(stream.pending) == 1
 
@@ -321,10 +321,10 @@ def test_run_once__healthy_sink_after_failure__pending_delivered(mocker):
         consumer='consumer-1',
         sleep=sleep_mock,
     )
-    failed_stats = consumer.run_once()
-    sink_mock.send.side_effect = None
 
     # act
+    failed_stats = consumer.run_once()
+    sink_mock.send.side_effect = None
     stats = consumer.run_once()
 
     # assert
@@ -334,12 +334,14 @@ def test_run_once__healthy_sink_after_failure__pending_delivered(mocker):
     assert stats.claimed == 0
     assert stats.failed is False
     assert sink_mock.send.call_count == 4
-    sink_mock.send.assert_has_calls([
-        mocker.call(stream.events),
-        mocker.call(stream.events),
-        mocker.call(stream.events),
-        mocker.call(stream.events),
-    ])
+    sink_mock.send.assert_has_calls(
+        [
+            mocker.call(stream.events),
+            mocker.call(stream.events),
+            mocker.call(stream.events),
+            mocker.call(stream.events),
+        ],
+    )
     assert sleep_mock.call_count == 2
     sleep_mock.assert_has_calls([mocker.call(0.5), mocker.call(1.0)])
     assert stream.pending == {}
@@ -379,12 +381,9 @@ def test_run_once__permanent_error__batch_dead_lettered(mocker):
     sleep_mock.assert_not_called()
 
 
-def test_run_once__permanent_error__next_batches_left_in_the_stream(
-    mocker,
-):
-
-    """ The reason is usually the receiver, not the batch: carrying
-        the rest into the dead letter at full speed would lose it. """
+def test_run_once__permanent_error__next_batches_left_in_the_stream(mocker):
+    """The reason is usually the receiver, not the batch: carrying
+    the rest into the dead letter at full speed would lose it."""
 
     # arrange
     stream = FakeEventStream()
@@ -415,7 +414,11 @@ def test_run_once__idle_entries_of_a_dead_consumer__claimed(mocker):
     # arrange
     stream = FakeEventStream()
     fill_stream(stream, count=3)
-    abandoned = stream.read_new(consumer='dead-consumer', count=1000)
+    abandoned = stream.read(
+        consumer='dead-consumer',
+        count=1000,
+        start_id=NEW_ENTRIES,
+    )
     stream.pending['1-0'].delivered_at -= 120
     stream.pending['2-0'].delivered_at -= 120
     stream.pending['3-0'].delivered_at -= 120
@@ -445,14 +448,17 @@ def test_run_once__idle_entries_of_a_dead_consumer__claimed(mocker):
 
 
 def test_run_once__fresh_entries_of_another_consumer__not_claimed(mocker):
-
-    """ The idle timeout is longer than the longest tick, so a living
-        consumer never loses its entries to another one. """
+    """The idle timeout is longer than the longest tick, so a living
+    consumer never loses its entries to another one."""
 
     # arrange
     stream = FakeEventStream()
     fill_stream(stream, count=1)
-    stream.read_new(consumer='consumer-2', count=1000)
+    stream.read(
+        consumer='consumer-2',
+        count=1000,
+        start_id=NEW_ENTRIES,
+    )
     sink_mock = mocker.Mock()
     sleep_mock = mocker.Mock()
     consumer = EventsConsumer(
@@ -477,18 +483,17 @@ def test_run_once__fresh_entries_of_another_consumer__not_claimed(mocker):
 
 
 def test_run_once__vanished_entries__counted_in_stats(mocker):
-
-    """ Records trimmed off the stream while pending are acked by the
-        stream; the tick counts them for the report of the beat task
-        and moves on to the next phase. """
+    """Records trimmed off the stream while pending are acked by the
+    stream; the tick counts them for the report of the beat task
+    and moves on to the next phase."""
 
     # arrange
     stream_mock = mocker.Mock()
-    stream_mock.read_pending.return_value = ParsedEntries(
-        vanished=['1-0', '2-0'],
-    )
+    stream_mock.read.side_effect = [
+        ParsedEntries(vanished=['1-0', '2-0']),
+        ParsedEntries(),
+    ]
     stream_mock.autoclaim.return_value = ParsedEntries()
-    stream_mock.read_new.return_value = ParsedEntries()
     sink_mock = mocker.Mock()
     sleep_mock = mocker.Mock()
     consumer = EventsConsumer(
@@ -509,17 +514,24 @@ def test_run_once__vanished_entries__counted_in_stats(mocker):
     assert stats.delivered == 0
     assert stats.acked == 0
     stream_mock.ensure_group.assert_called_once_with()
-    stream_mock.read_pending.assert_called_once_with(
-        consumer='consumer-1',
-        count=5,
+    assert stream_mock.read.call_count == 2
+    stream_mock.read.assert_has_calls(
+        [
+            mocker.call(
+                consumer='consumer-1',
+                count=5,
+                start_id=PENDING_ENTRIES,
+            ),
+            mocker.call(
+                consumer='consumer-1',
+                count=5,
+                start_id=NEW_ENTRIES,
+            ),
+        ],
     )
     stream_mock.autoclaim.assert_called_once_with(
         consumer='consumer-1',
         min_idle_ms=1000,
-        count=5,
-    )
-    stream_mock.read_new.assert_called_once_with(
-        consumer='consumer-1',
         count=5,
     )
     stream_mock.ack.assert_not_called()
@@ -528,22 +540,21 @@ def test_run_once__vanished_entries__counted_in_stats(mocker):
 
 
 def test_run_once__malformed_entries__counted_in_stats(mocker):
-
-    """ A broken record in the answer is parked by the stream; the
-        good one of the same answer is still delivered. """
+    """A broken record in the answer is parked by the stream; the
+    good one of the same answer is still delivered."""
 
     # arrange
     event = make_smoke_event()
     stream_mock = mocker.Mock()
-    stream_mock.read_pending.return_value = ParsedEntries()
-    stream_mock.autoclaim.return_value = ParsedEntries()
-    stream_mock.read_new.side_effect = [
+    stream_mock.read.side_effect = [
+        ParsedEntries(),
         ParsedEntries(
             events=[('2-0', event)],
             malformed=[('1-0', {'data': 'not json'})],
         ),
         ParsedEntries(),
     ]
+    stream_mock.autoclaim.return_value = ParsedEntries()
     stream_mock.ack.return_value = 1
     sink_mock = mocker.Mock()
     sleep_mock = mocker.Mock()
@@ -565,20 +576,31 @@ def test_run_once__malformed_entries__counted_in_stats(mocker):
     assert stats.delivered == 1
     assert stats.acked == 1
     stream_mock.ensure_group.assert_called_once_with()
-    stream_mock.read_pending.assert_called_once_with(
-        consumer='consumer-1',
-        count=5,
+    assert stream_mock.read.call_count == 3
+    stream_mock.read.assert_has_calls(
+        [
+            mocker.call(
+                consumer='consumer-1',
+                count=5,
+                start_id=PENDING_ENTRIES,
+            ),
+            mocker.call(
+                consumer='consumer-1',
+                count=5,
+                start_id=NEW_ENTRIES,
+            ),
+            mocker.call(
+                consumer='consumer-1',
+                count=5,
+                start_id=NEW_ENTRIES,
+            ),
+        ],
     )
     stream_mock.autoclaim.assert_called_once_with(
         consumer='consumer-1',
         min_idle_ms=1000,
         count=5,
     )
-    assert stream_mock.read_new.call_count == 2
-    stream_mock.read_new.assert_has_calls([
-        mocker.call(consumer='consumer-1', count=5),
-        mocker.call(consumer='consumer-1', count=5),
-    ])
     stream_mock.ack.assert_called_once_with(['2-0'])
     sink_mock.send.assert_called_once_with([('2-0', event)])
     sleep_mock.assert_not_called()
@@ -615,18 +637,14 @@ def test_init__no_consumer_name__host_name(mocker):
 
     # arrange
     consumer_name_mock = mocker.patch(
-        'src.logs.events.consumer.consumer_name',
+        'src.logs.events.consumer.socket.gethostname',
         return_value='worker-1',
     )
     stream = FakeEventStream()
     sink_mock = mocker.Mock()
 
     # act
-    consumer = EventsConsumer(
-        stream=stream,
-        sink=sink_mock,
-        batch_size=1000,
-    )
+    consumer = EventsConsumer(stream=stream, sink=sink_mock, batch_size=1000)
 
     # assert
     assert consumer.consumer == 'worker-1'
@@ -635,10 +653,9 @@ def test_init__no_consumer_name__host_name(mocker):
 
 
 def test_run_once__temporary_error_with_more_batches__tick_ends(mocker):
-
-    """ A batch given up on ends the tick: the batches behind it wait
-        for the next one instead of being sent to a receiver that has
-        just refused three times. """
+    """A batch given up on ends the tick: the batches behind it wait
+    for the next one instead of being sent to a receiver that has
+    just refused three times."""
 
     # arrange
     stream = FakeEventStream()
@@ -659,11 +676,13 @@ def test_run_once__temporary_error_with_more_batches__tick_ends(mocker):
 
     # assert
     assert sink_mock.send.call_count == 3
-    sink_mock.send.assert_has_calls([
-        mocker.call(stream.events[:1]),
-        mocker.call(stream.events[:1]),
-        mocker.call(stream.events[:1]),
-    ])
+    sink_mock.send.assert_has_calls(
+        [
+            mocker.call(stream.events[:1]),
+            mocker.call(stream.events[:1]),
+            mocker.call(stream.events[:1]),
+        ],
+    )
     assert sleep_mock.call_count == 2
     sleep_mock.assert_has_calls([mocker.call(0.5), mocker.call(1.0)])
     assert stats.delivered == 0
@@ -671,23 +690,16 @@ def test_run_once__temporary_error_with_more_batches__tick_ends(mocker):
     assert len(stream.pending) == 1
 
 
-def test_run_once__deadline_between_batches__rest_left_for_next_tick(
-    mocker,
-):
-
-    """ The deadline is checked before every batch, not only before
-        the first one: a slow receiver ends the tick after the batch
-        in flight. """
+def test_run_once__deadline_between_batches__rest_left_for_next_tick(mocker):
+    """The deadline is checked before every batch, not only before
+    the first one: a slow receiver ends the tick after the batch
+    in flight."""
 
     # arrange
     stream = FakeEventStream()
     fill_stream(stream, count=3)
     sink_mock = mocker.Mock()
     sleep_mock = mocker.Mock()
-
-    # started, the check of the pending phase, of the claim phase, of
-    # the first new batch, then late: the check of the second batch
-    # and the end.
     monotonic_mock = mocker.patch(
         'src.logs.events.consumer.time.monotonic',
         side_effect=[0.0, 0.0, 0.0, 0.0, 100.0, 100.0],
@@ -712,11 +724,13 @@ def test_run_once__deadline_between_batches__rest_left_for_next_tick(
     assert stats.duration_ms == 100000
     sleep_mock.assert_not_called()
     assert monotonic_mock.call_count == 6
-    monotonic_mock.assert_has_calls([
-        mocker.call(),
-        mocker.call(),
-        mocker.call(),
-        mocker.call(),
-        mocker.call(),
-        mocker.call(),
-    ])
+    monotonic_mock.assert_has_calls(
+        [
+            mocker.call(),
+            mocker.call(),
+            mocker.call(),
+            mocker.call(),
+            mocker.call(),
+            mocker.call(),
+        ],
+    )

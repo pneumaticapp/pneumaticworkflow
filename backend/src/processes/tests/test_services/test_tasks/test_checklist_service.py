@@ -70,8 +70,7 @@ def test_mark__not_marked__emit_checklist_item_marked(mocker):
     checklist_item_marked_mock.assert_called_once_with(
         user=owner,
         auth_type=AuthTokenType.USER,
-        checklist=checklist,
-        selection_id=selection.id,
+        selection=selection,
     )
 
 
@@ -172,8 +171,7 @@ def test_unmark__marked__emit_checklist_item_unmarked(mocker):
     checklist_item_unmarked_mock.assert_called_once_with(
         user=owner,
         auth_type=AuthTokenType.USER,
-        checklist=checklist,
-        selection_id=selection.id,
+        selection=selection,
     )
 
 
