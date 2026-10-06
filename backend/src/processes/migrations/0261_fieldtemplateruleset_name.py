@@ -14,6 +14,12 @@ class Migration(migrations.Migration):
             field=models.CharField(default='', max_length=200),
             preserve_default=False,
         ),
+        migrations.AddField(
+            model_name='fieldruleset',
+            name='name',
+            field=models.CharField(default='', max_length=200),
+            preserve_default=False,
+        ),
         migrations.RenameField(
             model_name='fieldrulegroupor',
             old_name='field_rule',
@@ -29,6 +35,7 @@ class Migration(migrations.Migration):
             name='operator',
             field=models.CharField(
                 choices=[('equal', 'Equal'), ('not_equals', 'Not equal'),
+                         ('exists', 'Exists'), ('not_exists', 'Not exists'),
                          ('greater_than', 'Greater than'),
                          ('less_than', 'Less than'), ('contains', 'Contains'),
                          ('not_contains', 'Not contains')], max_length=50),
@@ -52,6 +59,7 @@ class Migration(migrations.Migration):
             name='operator',
             field=models.CharField(
                 choices=[('equal', 'Equal'), ('not_equals', 'Not equal'),
+                         ('exists', 'Exists'), ('not_exists', 'Not exists'),
                          ('greater_than', 'Greater than'),
                          ('less_than', 'Less than'), ('contains', 'Contains'),
                          ('not_contains', 'Not contains')], max_length=50),
