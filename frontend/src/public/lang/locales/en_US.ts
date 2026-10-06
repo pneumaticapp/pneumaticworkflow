@@ -605,6 +605,7 @@ export const enMessages = {
   'templates.title-system.tooltip': 'Pick a template from our Template Library',
   'templates.task-require-completion-by-all': 'Require completion by all',
   'templates.task-skip-for-starter': 'Skip if assigned to starter',
+  'templates.task-skip-on-return': 'Skip on return',
   'templates.assign-perfomers-to-the-following-steps': 'Please assign users to the following steps:',
   'template.no-run-allowers': 'Please add at least one template owner',
   'template.no-tasks': 'Please add at least one task',

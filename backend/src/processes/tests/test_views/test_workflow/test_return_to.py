@@ -350,6 +350,38 @@ def test_return_to__ok(mocker, api_client):
     start_workflow_event_mock.assert_called_once_with(task_1)
 
 
+def test_return_to__task_skip_on_return__start_prev_task(api_client):
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=3,
+        active_task_number=3,
+    )
+    task_1 = workflow.tasks.get(number=1)
+    task_2 = workflow.tasks.get(number=2)
+    task_2.skip_on_return = True
+    task_2.save(update_fields=['skip_on_return'])
+    task_3 = workflow.tasks.get(number=3)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/return-to',
+        data={'task_api_name': task_2.api_name},
+    )
+
+    # assert
+    assert response.status_code == 204
+    task_1.refresh_from_db()
+    assert task_1.is_active
+    task_2.refresh_from_db()
+    assert task_2.is_pending
+    task_3.refresh_from_db()
+    assert task_3.is_pending
+
+
 def test_return_to__task_with_delay__reset_delay(
     mocker,
     api_client,

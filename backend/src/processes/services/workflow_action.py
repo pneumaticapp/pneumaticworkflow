@@ -798,6 +798,10 @@ class WorkflowActionService:
         **kwargs,
     ):
 
+        if is_returned and task.skip_on_return and task.parents:
+            self.skip_task(task=task, is_returned=True)
+            return
+
         task_service = TaskService(
             instance=task,
             user=self.user or self.workflow.account.get_owner(),

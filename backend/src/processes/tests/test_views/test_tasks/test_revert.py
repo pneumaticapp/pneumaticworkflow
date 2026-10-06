@@ -628,3 +628,122 @@ def test_revert__all_tasks_skipped__validation_error(api_client):
     assert task_2.status == TaskStatus.SKIPPED
     task_1.refresh_from_db()
     assert task_1.status == TaskStatus.SKIPPED
+
+
+def test_revert__revert_task_skip_on_return__start_prev_task(api_client):
+
+    # arrange
+    owner = create_test_owner()
+    workflow = create_test_workflow(
+        user=owner,
+        tasks_count=3,
+        active_task_number=3,
+    )
+    task_1 = workflow.tasks.get(number=1)
+    task_2 = workflow.tasks.get(number=2)
+    task_2.skip_on_return = True
+    task_2.save(update_fields=['skip_on_return'])
+    task_3 = workflow.tasks.get(number=3)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/v2/tasks/{task_3.id}/revert',
+        data={'comment': 'text_comment'},
+    )
+
+    # assert
+    assert response.status_code == 204
+    task_1.refresh_from_db()
+    assert task_1.status == TaskStatus.ACTIVE
+    task_2.refresh_from_db()
+    assert task_2.status == TaskStatus.PENDING
+    task_3.refresh_from_db()
+    assert task_3.status == TaskStatus.PENDING
+
+
+def test_revert__chain_skip_on_return__start_first_not_skipped_task(
+    api_client,
+):
+
+    # arrange
+    owner = create_test_owner()
+    workflow = create_test_workflow(
+        user=owner,
+        tasks_count=4,
+        active_task_number=4,
+    )
+    task_1 = workflow.tasks.get(number=1)
+    task_2 = workflow.tasks.get(number=2)
+    task_3 = workflow.tasks.get(number=3)
+    workflow.tasks.filter(id__in=[task_2.id, task_3.id]).update(
+        skip_on_return=True,
+    )
+    task_4 = workflow.tasks.get(number=4)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/v2/tasks/{task_4.id}/revert',
+        data={'comment': 'text_comment'},
+    )
+
+    # assert
+    assert response.status_code == 204
+    task_1.refresh_from_db()
+    assert task_1.status == TaskStatus.ACTIVE
+    task_2.refresh_from_db()
+    assert task_2.status == TaskStatus.PENDING
+    task_3.refresh_from_db()
+    assert task_3.status == TaskStatus.PENDING
+    task_4.refresh_from_db()
+    assert task_4.status == TaskStatus.PENDING
+
+
+def test_revert__first_task_skip_on_return__start_first_task(api_client):
+
+    # arrange
+    owner = create_test_owner()
+    workflow = create_test_workflow(
+        user=owner,
+        tasks_count=2,
+        active_task_number=2,
+    )
+    task_1 = workflow.tasks.get(number=1)
+    task_1.skip_on_return = True
+    task_1.save(update_fields=['skip_on_return'])
+    task_2 = workflow.tasks.get(number=2)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/v2/tasks/{task_2.id}/revert',
+        data={'comment': 'text_comment'},
+    )
+
+    # assert
+    assert response.status_code == 204
+    task_1.refresh_from_db()
+    assert task_1.status == TaskStatus.ACTIVE
+    task_2.refresh_from_db()
+    assert task_2.status == TaskStatus.PENDING
+
+
+def test_complete__next_task_skip_on_return__start_next_task(api_client):
+
+    # arrange
+    owner = create_test_owner()
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task_1 = workflow.tasks.get(number=1)
+    task_2 = workflow.tasks.get(number=2)
+    task_2.skip_on_return = True
+    task_2.save(update_fields=['skip_on_return'])
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(f'/v2/tasks/{task_1.id}/complete')
+
+    # assert
+    assert response.status_code == 200
+    task_2.refresh_from_db()
+    assert task_2.status == TaskStatus.ACTIVE
