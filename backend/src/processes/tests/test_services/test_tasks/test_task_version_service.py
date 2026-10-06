@@ -77,6 +77,7 @@ class TestTaskUpdateVersionService:
         template_task = template.tasks.get(number=1)
         template_task.api_name = api_name
         template_task.name = name
+        template_task.skip_on_return = True
         template_task.revert_task = revert_task
         template_task.name_template = name
         template_task.description = description
@@ -106,6 +107,7 @@ class TestTaskUpdateVersionService:
         assert task.account == user.account
         assert task.workflow == workflow
         assert task.name == name
+        assert task.skip_on_return is True
         assert task.revert_task == revert_task
         assert task.name_template == name
         assert task.description == description

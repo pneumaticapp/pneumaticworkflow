@@ -369,6 +369,7 @@ class TaskUpdateVersionService(
                 'require_completion_by_all'
             ],
             'skip_for_starter': data['skip_for_starter'],
+            'skip_on_return': data['skip_on_return'],
             'name_template': data['name'],
             'name': insert_fields_values_to_text(
                 text=data['name'],
