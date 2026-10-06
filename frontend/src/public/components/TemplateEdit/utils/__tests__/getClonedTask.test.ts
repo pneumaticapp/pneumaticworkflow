@@ -15,6 +15,7 @@ describe('getClonedTask', () => {
       number: 1,
       requireCompletionByAll: true,
       skipForStarter: false,
+      skipOnReturn: false,
       fields: [
         {
           name: 'Large Text Field',
@@ -120,6 +121,7 @@ describe('getClonedTask', () => {
       number: 1,
       requireCompletionByAll: false,
       skipForStarter: false,
+      skipOnReturn: false,
       fields: [],
       rawPerformers: [],
       delay: null,
