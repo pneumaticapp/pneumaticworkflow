@@ -96,7 +96,8 @@ export function KickoffOutputs({
     const OutputComponent = outputsMap[output.type];
     const value = output.type === EExtraFieldType.User ? output.userId || output.groupId : output.value;
     const hasValue = Array.isArray(value) ? value.length > 0 : Boolean(value);
-    const isEmpty = !(hasValue || output.attachments?.length);
+    const hasFileValue = output.type === EExtraFieldType.File && Boolean(output.markdownValue);
+    const isEmpty = !(hasValue || output.attachments?.length || hasFileValue);
     return !isEmpty ? <OutputComponent key={key} {...output} /> : null;
   };
 

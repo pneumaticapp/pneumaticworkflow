@@ -1009,6 +1009,37 @@ def test_update__groups_non_list_type__validation_error(api_client, mocker):
     partial_update_mock.assert_not_called()
 
 
+def test_update__groups_another_account__validation_error(
+    api_client,
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    target_user = create_test_not_admin(account=account)
+    another_account = create_test_account()
+    another_group = create_test_group(account=another_account)
+    partial_update_mock = mocker.patch(
+        'src.accounts.views.users.UserService.partial_update',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.put(
+        path=f'/accounts/users/{target_user.id}',
+        data={'groups': [another_group.id]},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_A_0040
+    assert response.data['details']['name'] == 'groups'
+    assert response.data['details']['reason'] == messages.MSG_A_0040
+    partial_update_mock.assert_not_called()
+
+
 def test_update__first_name_exceeds_max__validation_error(
     api_client,
     mocker,
@@ -1316,6 +1347,37 @@ def test_partial_update__only_required_fields__ok(api_client, mocker):
         email=email,
         force_save=True,
     )
+
+
+def test_partial_update__groups_another_account__validation_error(
+    api_client,
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    target_user = create_test_not_admin(account=account)
+    another_account = create_test_account()
+    another_group = create_test_group(account=another_account)
+    partial_update_mock = mocker.patch(
+        'src.accounts.views.users.UserService.partial_update',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.patch(
+        path=f'/accounts/users/{target_user.id}',
+        data={'groups': [another_group.id]},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_A_0040
+    assert response.data['details']['name'] == 'groups'
+    assert response.data['details']['reason'] == messages.MSG_A_0040
+    partial_update_mock.assert_not_called()
 
 
 def test_update__remove_manager_id__ok(api_client, mocker):
