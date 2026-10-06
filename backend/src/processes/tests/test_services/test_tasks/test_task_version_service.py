@@ -3398,6 +3398,7 @@ def test_update_from_version__completed_task__adds_performer__ok():
         'number': task.number,
         'require_completion_by_all': False,
         'skip_for_starter': False,
+        'skip_on_return': False,
         'revert_task': None,
         'parents': [],
         'raw_performers': [
@@ -3479,6 +3480,7 @@ def test_update_from_version__completed_task__removes_performer__ok():
         'number': task.number,
         'require_completion_by_all': False,
         'skip_for_starter': False,
+        'skip_on_return': False,
         'revert_task': None,
         'parents': [],
         'raw_performers': [
