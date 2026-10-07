@@ -53,10 +53,12 @@ function* fetchAIProviders() {
   try {
     const providers: IAIProvider[] = yield getAIProvidersApi();
     yield put(loadAIProvidersSuccess(providers));
+    return true;
   } catch (error) {
     yield put(loadAIProvidersFailed());
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to load AI providers', error);
+    return false;
   }
 }
 
@@ -66,10 +68,12 @@ function* fetchAIAgents() {
   try {
     const agents: IAIAgent[] = yield getAIAgentsApi();
     yield put(loadAIAgentsSuccess(agents));
+    return true;
   } catch (error) {
     yield put(loadAIAgentsFailed());
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to load AI agents', error);
+    return false;
   }
 }
 
@@ -91,8 +95,10 @@ function* createAIProviderSaga({ payload }: PayloadAction<ICreateAIProviderReque
 
   try {
     yield createAIProviderApi(payload);
-    yield fetchAIProviders();
-    NotificationManager.success({ message: 'ai-providers.created' });
+    const isRefreshed: boolean = yield fetchAIProviders();
+    if (isRefreshed) {
+      NotificationManager.success({ message: 'ai-providers.created' });
+    }
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to create AI provider', error);
@@ -106,8 +112,10 @@ function* createAIProviderByVendorSaga({ payload }: PayloadAction<ICreateAIProvi
 
   try {
     yield createAIProviderByVendorApi(payload);
-    yield fetchAIProviders();
-    NotificationManager.success({ message: 'ai-providers.created' });
+    const isRefreshed: boolean = yield fetchAIProviders();
+    if (isRefreshed) {
+      NotificationManager.success({ message: 'ai-providers.created' });
+    }
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to create AI provider by vendor', error);
@@ -121,8 +129,10 @@ function* deleteAIProviderSaga({ payload: id }: PayloadAction<number>) {
 
   try {
     yield deleteAIProviderApi(id);
-    yield fetchAIProviders();
-    NotificationManager.success({ message: 'ai-providers.deleted' });
+    const isRefreshed: boolean = yield fetchAIProviders();
+    if (isRefreshed) {
+      NotificationManager.success({ message: 'ai-providers.deleted' });
+    }
   } catch (error) {
     // The API refuses to delete a provider still referenced by an agent (MSG_AI_0005).
     NotificationManager.warning({ message: getErrorMessage(error) });
@@ -138,8 +148,13 @@ function* createAIAgentSaga({ payload }: PayloadAction<ICreateAIAgentRequest>) {
   try {
     yield createAIAgentApi(payload);
     // Providers carry a usage list, which the new agent has just changed.
-    yield all([fetchAIAgents(), fetchAIProviders()]);
-    NotificationManager.success({ message: 'team.ai-agents.created' });
+    const [areAgentsRefreshed, areProvidersRefreshed]: [boolean, boolean] = yield all([
+      fetchAIAgents(),
+      fetchAIProviders(),
+    ]);
+    if (areAgentsRefreshed && areProvidersRefreshed) {
+      NotificationManager.success({ message: 'team.ai-agents.created' });
+    }
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to create AI agent', error);
@@ -155,8 +170,13 @@ function* updateAIAgentSaga({
 
   try {
     yield updateAIAgentApi(id, data);
-    yield all([fetchAIAgents(), fetchAIProviders()]);
-    NotificationManager.success({ message: 'team.ai-agents.updated' });
+    const [areAgentsRefreshed, areProvidersRefreshed]: [boolean, boolean] = yield all([
+      fetchAIAgents(),
+      fetchAIProviders(),
+    ]);
+    if (areAgentsRefreshed && areProvidersRefreshed) {
+      NotificationManager.success({ message: 'team.ai-agents.updated' });
+    }
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to update AI agent', error);
@@ -170,8 +190,13 @@ function* deleteAIAgentSaga({ payload: id }: PayloadAction<number>) {
 
   try {
     yield deleteAIAgentApi(id);
-    yield all([fetchAIAgents(), fetchAIProviders()]);
-    NotificationManager.success({ message: 'team.ai-agents.deleted' });
+    const [areAgentsRefreshed, areProvidersRefreshed]: [boolean, boolean] = yield all([
+      fetchAIAgents(),
+      fetchAIProviders(),
+    ]);
+    if (areAgentsRefreshed && areProvidersRefreshed) {
+      NotificationManager.success({ message: 'team.ai-agents.deleted' });
+    }
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to delete AI agent', error);
