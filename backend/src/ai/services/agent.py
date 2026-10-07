@@ -10,8 +10,10 @@ from src.accounts.enums import NotificationStatus
 from src.accounts.models import Notification
 from src.accounts.services.user import UserService
 from src.ai.exceptions import (
+    AIAgentAttemptsExceededException,
     AIAgentNameNotUniqueException,
 )
+from src.ai.messages import MSG_AI_0009, MSG_AI_0010
 from src.ai.models import AIAgent, AIAgentAction
 from src.ai.services.provider import AIProviderService
 from src.ai.services.response import TaskResponseService
@@ -34,6 +36,13 @@ UserModel = get_user_model()
 class AIAgentService(BaseModelService):
 
     def _get_agent_email(self) -> str:
+
+        """ Unique email for the user the agent runs on,
+            in the domain of the account owner.
+
+            the owner email 'owner@pizza.com'
+            -> 'ai-agent-Hq3kZr9TbVn2Lm7sXy1p@pizza.com' """
+
         domain = self.account.get_owner().email.split('@')[1]
         salt = get_random_string(
             length=20,
@@ -54,6 +63,16 @@ class AIAgentService(BaseModelService):
         provider_id: Optional[int] = None,
         **kwargs,
     ):
+
+        """ Creates the agent along with the user it acts on behalf of.
+            The user is an admin with all the subscriptions disabled.
+
+            name 'Operator', model 'gpt-4o', provider_id 3
+            -> AIAgent 'Operator' with a user 'Operator' (is_ai=True)
+
+            the account already has an agent 'Operator'
+            -> AIAgentNameNotUniqueException """
+
         user_service = UserService(
             user=self.user,
             is_superuser=self.is_superuser,
@@ -95,6 +114,13 @@ class AIAgentService(BaseModelService):
         force_save=True,
         **update_kwargs,
     ) -> AIAgent:
+
+        """ Updates the agent and keeps the name and the photo
+            of its user in sync.
+
+            name 'Courier'
+            -> AIAgent 'Courier', its user gets first_name 'Courier' """
+
         user_update = {}
         if 'name' in update_kwargs:
             user_update['first_name'] = update_kwargs['name']
@@ -118,6 +144,11 @@ class AIAgentService(BaseModelService):
         return result
 
     def delete(self) -> None:
+
+        """ Deletes the agent together with the user it runs on.
+
+            an agent 'Operator' -> the agent and its user are deleted """
+
         with transaction.atomic():
             self.instance.user.delete()
             self.instance.delete()
@@ -125,7 +156,7 @@ class AIAgentService(BaseModelService):
     def _get_fields_values(
         self,
         task: Task,
-        errors_stack: Optional[List[dict, str]] = None,
+        errors_stack: Optional[List[Tuple[dict, str]]] = None,
     ) -> Dict[str, Union[str, List[str]]]:
 
         message_service = TaskUserMessageService(task=task)
@@ -168,6 +199,16 @@ class AIAgentService(BaseModelService):
         return response_parser.get_fields_values()
 
     def _complete_task(self, task: Task, fields_values: dict):
+
+        """ Completes the task with the values the agent returned
+            and snoozes the workflow if the next task is delayed.
+
+            fields_values {'phone-1': '+1 202 555 0147'}
+            -> the task is completed on behalf of the agent user
+
+            a value the task fields do not accept
+            -> ValidationError or WorkflowActionServiceException """
+
         serializer = TaskCompleteSerializer(data=fields_values)
         serializer.is_valid(raise_exception=True)
         service = WorkflowActionService(
@@ -185,11 +226,17 @@ class AIAgentService(BaseModelService):
     def _create_report_file(
         self,
         text: str,
+        filename: str,
     ) -> str:
 
-        filename = 'report.md'
+        """ Uploads the text to the file service as a file
+            available to the account only.
+
+            text '# Report', filename 'report.md'
+            -> 'https://storage.pneumatic.app/report.md' """
+
         client = FileServiceClient(user=self.user)
-        public_url = client.upload_file_with_attachment(
+        return client.upload_file_with_attachment(
             file_content=text.encode('utf-8'),
             filename=filename,
             content_type='text/plain',
@@ -197,9 +244,13 @@ class AIAgentService(BaseModelService):
             source_type=SourceType.TASK,
             access_type=AccessType.RESTRICTED,
         )
-        return f'[{filename}]({public_url})'
 
     def _create_comment(self, task: Task, text: str):
+
+        """ Writes a comment to the task on behalf of the agent user.
+
+            text 'The order is unclear.'
+            -> a comment event on the task, its performers are notified """
 
         service = CommentService(
             user=self.user,
@@ -211,12 +262,84 @@ class AIAgentService(BaseModelService):
             text=text,
         )
 
+    def _get_report_text(
+        self,
+        errors_stack: List[Tuple[dict, str]],
+    ) -> str:
+
+        """ Markdown report on the attempts to complete the task,
+            the values the agent answered with and the error each
+            of them failed with.
+
+            a single attempt with the values {'phone-1': 'call me'}
+            and the error '- `phone-1`: Value should be a string.'
+            ->
+            # Complete task attempts
+
+            ## Attempt № 1
+
+            ### Output fields
+
+            - `phone-1`: call me
+
+            ### Validation error
+
+            - `phone-1`: Value should be a string. """
+
+        parts = []
+        for number, (fields_values, error) in enumerate(errors_stack, 1):
+            fields = '\n'.join(
+                f'- `{api_name}`: '
+                + (
+                    ', '.join(str(item) for item in value)
+                    if isinstance(value, (list, tuple)) else str(value)
+                )
+                for api_name, value in fields_values.items()
+            )
+            parts.append(
+                f'## Attempt № {number}\n\n'
+                f'### Output fields\n\n{fields}\n\n'
+                f'### Validation error\n\n{error}',
+            )
+        return '# Complete task attempts\n\n' + '\n\n-------\n\n'.join(parts)
+
     def _raise_attempt_error(
         self,
-        errors_stack: Optional[List[dict, str]] = None,
+        task: Task,
+        errors_stack: List[Tuple[dict, str]],
     ):
 
-        pass
+        """ Reports the failed attempts to complete the task
+            and interrupts the agent run.
+
+            errors_stack with the values {'phone-1': 'call me'} and
+            the error '- `phone-1`: Value should be a string.'
+            -> a report file, a comment with a link to it,
+               the action 'error' and
+               AIAgentAttemptsExceededException """
+
+        text = self._get_report_text(errors_stack=errors_stack)
+        filename = 'report.md'
+        url = self._create_report_file(text=text, filename=filename)
+        attempts = len(errors_stack)
+        self._create_comment(
+            task=task,
+            text=str(
+                MSG_AI_0009(
+                    attempts=attempts,
+                    report=f'[{filename}]({url})',
+                ),
+            ),
+        )
+        message = MSG_AI_0010(attempts=attempts)
+        AIAgentAction.objects.create(
+            account_id=self.instance.account_id,
+            agent_id=self.instance.id,
+            task_id=task.id,
+            action=AIAgentActionType.ERROR,
+            text=f'{message}\n{url}',
+        )
+        raise AIAgentAttemptsExceededException(message=message)
 
     def _convert_ex_to_markdown(
         self,
@@ -302,7 +425,7 @@ class AIAgentService(BaseModelService):
     def _attempt_complete_task(
         self,
         task: Task,
-        errors_stack: Optional[List[dict, str]] = None,
+        errors_stack: Optional[List[Tuple[dict, str]]] = None,
         attempt: int = 1,
     ) -> Optional[dict]:
 
@@ -322,7 +445,10 @@ class AIAgentService(BaseModelService):
             errors_stack.append((fields_values, error))
             new_attempt = attempt + 1
             if new_attempt > 10:
-                self._raise_attempt_error(errors_stack)
+                self._raise_attempt_error(
+                    task=task,
+                    errors_stack=errors_stack,
+                )
             self._attempt_complete_task(
                 task=task,
                 errors_stack=errors_stack,
@@ -331,6 +457,15 @@ class AIAgentService(BaseModelService):
             return fields_values
 
     def complete_task(self, task_id: int):
+
+        """ Fills in the task output with an agent answer, completes
+            the task and logs the agent actions.
+
+            task_id 42
+            -> the task is completed, the actions 'task_in_progress' and
+               'task_completed' with the text '{"phone-1": "+1 202..."}'
+               are created """
+
         task = Task.objects.filter(id=task_id).first()
         AIAgentAction.objects.create(
             account_id=self.instance.account_id,
@@ -348,6 +483,13 @@ class AIAgentService(BaseModelService):
         )
 
     def reply_to_comment(self, notification_id: int):
+
+        """ Replies to the comment the agent was mentioned in.
+            The reply itself is not implemented yet.
+
+            notification_id 7
+            -> the notification is read, the action
+               'mention_in_progress' is created """
 
         notification = Notification.objects.filter(id=notification_id).first()
         if notification:
