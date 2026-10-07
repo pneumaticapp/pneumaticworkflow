@@ -51,3 +51,8 @@ class AIAgentNameNotUniqueException(AIAgentException):
 class AIProviderInUseException(AIProviderException):
 
     default_message = MSG_AI_0005
+
+
+class AIAgentAttemptsExceededException(AIAgentException):
+
+    pass
