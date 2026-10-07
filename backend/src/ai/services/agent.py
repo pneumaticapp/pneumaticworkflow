@@ -19,13 +19,14 @@ from src.ai.services.provider import AIProviderService
 from src.ai.services.response import TaskResponseService
 from src.ai.services.user_message import TaskUserMessageService
 from src.generics.base.service import BaseModelService
-from src.generics.exceptions import BaseServiceException
+from src.generics.exceptions import BaseApiNameException, BaseServiceException
 from src.ai.enums import AIAgentActionType
 from src.processes.models.workflows.task import Task
 from src.processes.serializers.workflows.task import TaskCompleteSerializer
 from src.processes.services.events import CommentService
 from src.processes.services.exceptions import WorkflowActionServiceException, \
     FieldsetServiceException
+from src.processes.services.tasks.exceptions import TaskFieldException
 from src.processes.services.workflow_action import WorkflowActionService
 from src.storage.enums import AccessType, SourceType
 from src.storage.services import FileServiceClient
@@ -161,6 +162,11 @@ class AIAgentService(BaseModelService):
 
         message_service = TaskUserMessageService(task=task)
         user_message = message_service.get_user_message()
+        if errors_stack:
+            errors_message = message_service.get_errors_message(
+                errors_stack=errors_stack,
+            )
+            user_message = f'{user_message}\n\n{errors_message}'
         system_message = message_service.get_system_message(
             system_prompt=self.instance.system_prompt,
         )
@@ -354,6 +360,16 @@ class AIAgentService(BaseModelService):
               ex = CompleteDelayedWorkflow()
               result = '- Resume the workflow to complete the task.'
 
+            Field exception:
+              ex = TaskFieldException(
+                api_name='extras-1',
+                message='Checkbox value contains non existent selections.',
+              )
+              result = (
+                '- `extras-1`: Checkbox value contains non existent '
+                'selections.'
+              )
+
             Validation error for a nested field (api_name):
               ex.detail = {
                 'code': 'validation_error',
@@ -394,6 +410,8 @@ class AIAgentService(BaseModelService):
                 '- `total-1`: The value must be a number.'
               ) """
 
+        if isinstance(ex, BaseApiNameException):
+            return f'- `{ex.api_name}`: {ex}'
         if not isinstance(ex, ValidationError):
             return f'- {ex}'
 
@@ -438,6 +456,7 @@ class AIAgentService(BaseModelService):
         except (
             WorkflowActionServiceException,
             FieldsetServiceException,
+            TaskFieldException,
             ValidationError,
         ) as ex:
             error = self._convert_ex_to_markdown(ex)

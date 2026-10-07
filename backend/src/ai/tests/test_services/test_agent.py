@@ -31,6 +31,7 @@ from src.processes.services.exceptions import (
     FieldsetServiceException,
     WorkflowActionServiceException,
 )
+from src.processes.services.tasks.exceptions import TaskFieldException
 from src.processes.services.workflow_action import WorkflowActionService
 from src.processes.tests.fixtures import (
     create_test_account,
@@ -166,6 +167,9 @@ def test_get_fields_values__default_errors_stack__ok(mocker):
         'src.ai.services.agent.TaskUserMessageService.get_user_message',
         return_value=user_message,
     )
+    get_errors_message_mock = mocker.patch(
+        'src.ai.services.agent.TaskUserMessageService.get_errors_message',
+    )
     get_system_message_mock = mocker.patch(
         'src.ai.services.agent.TaskUserMessageService.get_system_message',
         return_value=system_message,
@@ -211,6 +215,7 @@ def test_get_fields_values__default_errors_stack__ok(mocker):
     assert response_action.text == raw_response
     task_user_message_service_init_mock.assert_called_once_with(task=task)
     get_user_message_mock.assert_called_once_with()
+    get_errors_message_mock.assert_not_called()
     get_system_message_mock.assert_called_once_with(
         system_prompt=agent.system_prompt,
     )
@@ -249,6 +254,7 @@ def test_get_fields_values__errors_stack_passed__ok(mocker):
         ({'phone-1': 'call me'}, '- `phone-1`: Value should be a string.'),
     ]
     user_message = '<task_name>Take the order</task_name>'
+    errors_message = '<previous_attempts>Fix it</previous_attempts>'
     system_message = 'You are helpful.'
     raw_response = '<field api_name="phone-1">+1 202 555 0147</field>'
     fields_values = {'phone-1': '+1 202 555 0147'}
@@ -260,6 +266,10 @@ def test_get_fields_values__errors_stack_passed__ok(mocker):
     get_user_message_mock = mocker.patch(
         'src.ai.services.agent.TaskUserMessageService.get_user_message',
         return_value=user_message,
+    )
+    get_errors_message_mock = mocker.patch(
+        'src.ai.services.agent.TaskUserMessageService.get_errors_message',
+        return_value=errors_message,
     )
     get_system_message_mock = mocker.patch(
         'src.ai.services.agent.TaskUserMessageService.get_system_message',
@@ -296,13 +306,14 @@ def test_get_fields_values__errors_stack_passed__ok(mocker):
     request_action = AIAgentAction.objects.get(
         action=AIAgentActionType.AI_REQUEST,
     )
-    assert request_action.text == user_message
+    assert request_action.text == f'{user_message}\n\n{errors_message}'
     response_action = AIAgentAction.objects.get(
         action=AIAgentActionType.AI_RESPONSE,
     )
     assert response_action.text == raw_response
     task_user_message_service_init_mock.assert_called_once_with(task=task)
     get_user_message_mock.assert_called_once_with()
+    get_errors_message_mock.assert_called_once_with(errors_stack=errors_stack)
     get_system_message_mock.assert_called_once_with(
         system_prompt=agent.system_prompt,
     )
@@ -314,7 +325,7 @@ def test_get_fields_values__errors_stack_passed__ok(mocker):
     )
     get_completion_mock.assert_called_once_with(
         system_message=system_message,
-        user_message=user_message,
+        user_message=f'{user_message}\n\n{errors_message}',
         model=agent.model,
         agent=agent,
         task=task,
@@ -394,6 +405,26 @@ def test_convert_ex_to_markdown__service_exception__ok():
 
     # assert
     assert result == f'- {MSG_PW_0004}'
+
+
+def test_convert_ex_to_markdown__task_field_exception__ok():
+
+    """ Task field exception """
+
+    # arrange
+    ex = TaskFieldException(
+        api_name='extras-1',
+        message='Checkbox value contains non existent selections.',
+    )
+    service = AIAgentService()
+
+    # act
+    result = service._convert_ex_to_markdown(ex=ex)
+
+    # assert
+    assert result == (
+        '- `extras-1`: Checkbox value contains non existent selections.'
+    )
 
 
 def test_convert_ex_to_markdown__api_name__ok():
@@ -1179,6 +1210,68 @@ def test_attempt_complete_task__fieldset_service_exception__retry(mocker):
         any_order=True,
     )
     convert_ex_to_markdown_mock.assert_called_once_with(service_exception)
+    raise_attempt_error_mock.assert_not_called()
+
+
+def test_attempt_complete_task__task_field_exception__retry(mocker):
+
+    """ Retry on TaskFieldException """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    fields_values_1 = {'extras-1': ['Ketchup']}
+    fields_values_2 = {'extras-1': ['Napkins']}
+    error = '- `extras-1`: Checkbox value contains non existent selections.'
+    field_exception = TaskFieldException(
+        api_name='extras-1',
+        message='Checkbox value contains non existent selections.',
+    )
+    get_fields_values_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._get_fields_values',
+        side_effect=[fields_values_1, fields_values_2],
+    )
+    complete_task_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._complete_task',
+        side_effect=[field_exception, None],
+    )
+    convert_ex_to_markdown_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._convert_ex_to_markdown',
+        return_value=error,
+    )
+    raise_attempt_error_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._raise_attempt_error',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    result = service._attempt_complete_task(task=task)
+
+    # assert
+    assert result == fields_values_2
+    assert get_fields_values_mock.call_count == 2
+    get_fields_values_mock.assert_has_calls(
+        [
+            mocker.call(task=task, errors_stack=None),
+            mocker.call(
+                task=task,
+                errors_stack=[(fields_values_1, error)],
+            ),
+        ],
+        any_order=True,
+    )
+    assert complete_task_mock.call_count == 2
+    complete_task_mock.assert_has_calls(
+        [
+            mocker.call(task=task, fields_values=fields_values_1),
+            mocker.call(task=task, fields_values=fields_values_2),
+        ],
+        any_order=True,
+    )
+    convert_ex_to_markdown_mock.assert_called_once_with(field_exception)
     raise_attempt_error_mock.assert_not_called()
 
 

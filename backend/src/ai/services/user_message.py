@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import Task
@@ -415,6 +415,64 @@ class TaskUserMessageService:
             self._get_fields_message(),
         )
         return '\n\n'.join(part for part in parts if part)
+
+    def _get_attempt_value(self, value) -> str:
+
+        """ Value of the field the agent answered with in a failed attempt.
+
+            ['Card', 'Cash'] -> 'Card, Cash'
+            4 -> '4' """
+
+        if isinstance(value, (list, tuple)):
+            return ', '.join(str(item) for item in value)
+        return str(value)
+
+    def get_errors_message(
+        self,
+        errors_stack: List[Tuple[dict, str]],
+    ) -> str:
+
+        """ The answers the task could not be completed with and the errors
+            they failed with, so that the agent fixes them in a new answer.
+
+            a single attempt with the values {'phone-1': 'call me'}
+            and the error '- `phone-1`: Value should be a string.'
+            ->
+            <previous_attempts>
+            The task could not be completed with your previous answers.
+            Answer again and fix the errors.
+
+            <attempt number="1">
+            <answer>
+            - `phone-1`: call me
+            </answer>
+            <errors>
+            - `phone-1`: Value should be a string.
+            </errors>
+            </attempt>
+            </previous_attempts> """
+
+        attempts = []
+        for number, (fields_values, error) in enumerate(errors_stack, 1):
+            answer = '\n'.join(
+                f'- `{api_name}`: {self._get_attempt_value(value)}'
+                for api_name, value in fields_values.items()
+            )
+            content = '\n'.join((
+                as_tag(tag='answer', content=escape_closing_tags(answer)),
+                as_tag(tag='errors', content=escape_closing_tags(error)),
+            ))
+            attempts.append(
+                as_tag(tag='attempt', content=content, number=number),
+            )
+        return as_tag(
+            tag='previous_attempts',
+            content=(
+                'The task could not be completed with your previous '
+                'answers. Answer again and fix the errors.\n\n'
+                + '\n\n'.join(attempts)
+            ),
+        )
 
     def get_system_message(self, system_prompt: str) -> str:
 
