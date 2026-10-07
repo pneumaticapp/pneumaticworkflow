@@ -343,7 +343,8 @@ class TaskViewSet(
                     queryset=DatasetItem.objects.order_by('order'),
                     to_attr='dataset_values',
                 ),
-                'fieldsets__rulesets__groups_or',
+                'fieldsets__rulesets__groups_or__groups_and',
+                'fieldsets__rulesets__fields',
                 'fieldsets__fields__rulesets__groups_or__groups_and',
             ).select_related(
                 'workflow',
