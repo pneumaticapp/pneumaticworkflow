@@ -390,8 +390,7 @@ describe('CreateUserModal', () => {
       await openAIAgentTab();
 
       const submitButton = getAgentSubmitButton();
-      // The single provider is auto-preselected, which makes the form dirty before
-      // validation settles — wait for the disabled state instead of asserting a race.
+      // The sole provider is auto-preselected; wait for validation to settle instead of asserting a race.
       await waitFor(() => expect(getAgentSubmitButton()).toBeDisabled());
 
       await userEvent.type(getNameInput(), 'Research assistant');

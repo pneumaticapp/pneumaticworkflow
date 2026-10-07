@@ -50,7 +50,6 @@ export function CreateUserModal({ isOpen, onClose, initialTab = ECreateUserModal
   useEffect(() => {
     if (isOpen) {
       setActiveTab(initialTab);
-      // The agent form needs the providers for its dropdown and for the "register one first" hint.
       dispatch(loadAIProviders());
     }
   }, [isOpen, initialTab]);

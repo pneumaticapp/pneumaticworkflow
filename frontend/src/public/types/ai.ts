@@ -1,4 +1,3 @@
-/** Vendor codes the backend detects from the provider host (see AIVendor.CODE_BY_HOST). */
 export enum EAIVendor {
   OpenAI = 'openai',
   OpenRouter = 'openrouter',
@@ -19,7 +18,6 @@ export enum EAIVendor {
   OpenAICompatible = 'openai_compatible',
 }
 
-/** An agent that references the provider. Returned in AIProvider.usage, blocks deletion when non-empty. */
 export interface IAIProviderUsageItem {
   id: number;
   name: string;
@@ -27,12 +25,9 @@ export interface IAIProviderUsageItem {
 
 export interface IAIProvider {
   id: number;
-  /** Read-only: derived by the backend from the base URL host. */
   name: string;
   baseUrl: string;
-  /** Read-only masked prefix; the key itself is write-only and never returned. */
   apiKeyPrefix: string;
-  /** Read-only: detected by the backend. */
   vendor: EAIVendor;
   isActive: boolean;
   usage: IAIProviderUsageItem[];
@@ -68,7 +63,6 @@ export interface IAIAgent {
   photo: string | null;
   isActive: boolean;
   providerId: number;
-  /** OpenRouter-style slug, taken from IAIModel.slug. */
   model: string;
   systemPrompt: string;
 }

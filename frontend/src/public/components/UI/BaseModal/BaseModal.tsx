@@ -38,8 +38,7 @@ export function BaseModal({
   useEffect(() => {
     if (isOpen) {
       setIsVisible(true);
-      // Locking the page hides its scrollbar, which widens the layout and shifts everything
-      // sideways. Padding the body by the width that disappeared keeps it still.
+      // Locking the page hides its scrollbar and shifts the layout; padding the body compensates.
       const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
       document.body.style.overflow = 'hidden';
       if (scrollbarWidth > 0) {

@@ -10,7 +10,6 @@ export type TResponseUser = TUserListItem[];
 export interface IGetUsersConfig {
   type?: TUserListItem['type'];
   status?: (EUserStatus.Active | EUserStatus.Inactive | EUserStatus.Invited)[];
-  /** Pass false to keep AI agents out of the list; omit to leave them in. */
   isAi?: boolean;
 }
 

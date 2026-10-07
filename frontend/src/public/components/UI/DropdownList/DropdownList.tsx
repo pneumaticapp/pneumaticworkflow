@@ -278,8 +278,7 @@ export function FormikDropdownList(props: IDropdownListProps<TDropdownOptionBase
       {...props}
       onChange={onChange}
       onBlur={onBlur}
-      // null, not undefined: with undefined react-select keeps its previous
-      // internal selection, so a cleared Formik value would still be displayed.
+      // null, not undefined: with undefined react-select keeps displaying its previous internal selection.
       value={options.find((option) => option.value === field.value) ?? null}
       {...(meta.touched && meta.error && type !== 'hidden' && { errorMessage: meta.error })}
     />

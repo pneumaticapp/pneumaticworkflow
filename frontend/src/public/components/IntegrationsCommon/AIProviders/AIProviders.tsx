@@ -132,10 +132,8 @@ export function AIProviders() {
         </div>
       )}
 
-      {/* Create AI provider modal */}
       <CreateAIProviderModal isOpen={isCreateModalOpen} onClose={closeCreateModal} />
 
-      {/* Delete confirmation modal */}
       <Modal isOpen={confirmDeleteId !== null} onClose={() => setConfirmDeleteId(null)} width="sm">
         <div data-testid="delete-ai-provider-modal">
           <Header tag="p" size="6" className={styles['create-modal__title']}>

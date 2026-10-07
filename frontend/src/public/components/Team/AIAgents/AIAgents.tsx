@@ -38,7 +38,6 @@ export function AIAgents() {
   useEffect(() => {
     document.title = TITLES.Team;
     dispatch(loadAIAgents());
-    // Providers gate the create button and give the cards their provider names.
     dispatch(loadAIProviders());
   }, []);
 
@@ -160,7 +159,6 @@ export function AIAgents() {
 
       <div className={styles['cards']}>{agents.map(renderAgentCard)}</div>
 
-      {/* Delete confirmation */}
       <Modal isOpen={agentToDelete !== null} onClose={() => setAgentToDelete(null)} width="sm">
         <div data-testid="delete-ai-agent-modal">
           <Header tag="p" size="6" className={styles['delete-modal__title']}>

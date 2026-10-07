@@ -14,9 +14,6 @@ export const getAIProviderModelsState = (state: IApplicationState) => state.ai.m
 
 export const getIsAISaving = (state: IApplicationState) => state.ai.isSaving;
 
-/**
- * Agents can only be created once a provider exists, and the answer must not be "no" merely because
- * the list has not been fetched yet.
- */
+// Must not answer "no" merely because the provider list has not been fetched yet.
 export const getCanCreateAIAgent = (state: IApplicationState) =>
   state.ai.providers.isLoaded && state.ai.providers.list.length > 0;

@@ -48,11 +48,7 @@ function ResetFormOnReopen({
   return null;
 }
 
-/**
- * Keeps the model list in sync with the picked provider: loads models when a provider is
- * selected, clears the picked model when the provider changes (a slug belongs to one provider),
- * and preselects the provider when the account has exactly one.
- */
+// Syncs the model dropdown with the picked provider: loads its models, clears a stale model, preselects a sole provider.
 function ProviderModelsSync({ initialProviderId }: { initialProviderId: string }) {
   const dispatch = useDispatch();
   const providers = useSelector(getAIProviders);
@@ -87,8 +83,7 @@ function SystemPromptField() {
 
   return (
     <label className={styles['modal__textarea-field']} htmlFor="ai-agent-system-prompt">
-      {/* The field is required by the API, and the marker comes from the same style the other
-          fields get through their isRequired prop. */}
+      {/* Required by the API; the marker reuses the style other fields get via isRequired. */}
       <span className={fieldStyles['title_required']}>
         {formatMessage({ id: 'team.create-ai-agent-modal.system-prompt' })}
       </span>

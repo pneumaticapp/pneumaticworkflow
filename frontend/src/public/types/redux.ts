@@ -358,7 +358,6 @@ export type ITeamStore = {
 export interface IAIStore {
   providers: {
     isLoading: boolean;
-    /** Distinguishes "no providers yet" from "not fetched yet" — the Create AI Agent gate needs that. */
     isLoaded: boolean;
     list: IAIProvider[];
   };
@@ -369,7 +368,6 @@ export interface IAIStore {
   };
   models: {
     isLoading: boolean;
-    /** Provider the loaded models belong to; guards against a stale response landing. */
     providerId: number | null;
     list: IAIModel[];
   };
