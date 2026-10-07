@@ -12,8 +12,10 @@ from src.processes.enums import (
     DirectlyStatus,
     PerformerType,
     TaskStatus,
+    WorkflowEventType,
     WorkflowStatus,
 )
+from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tasks.tasks import delegate_vacation_tasks
 from src.processes.tests.fixtures import (
@@ -651,3 +653,96 @@ def test_delegate__skips_soft_deleted_vacation__ok(mocker):
 
     # assert
     event_mock.assert_not_called()
+
+
+def test_delegate_vacation_tasks__substitute_is_wf_starter__skip(mocker):
+
+    """
+    The task started after the vacation start and has
+    "skip for starter". The workflow starter is the substitute:
+    the task is delegated and skipped.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    starter = create_test_admin(account=account)
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group.users.add(starter)
+    UserVacation.objects.create(
+        user=owner,
+        account=account,
+        substitute_group=group,
+        absence_status=AbsenceStatus.VACATION,
+    )
+    template = create_test_template(
+        user=owner,
+        tasks_count=1,
+        is_active=True,
+    )
+    workflow = create_test_workflow(
+        user=starter,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.save(update_fields=['skip_for_starter'])
+    task_data = task.get_data_for_list()
+    task_delegation_event_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+    after_create_actions_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService._after_create_actions',
+    )
+    send_task_deleted_notification_mock = mocker.patch(
+        'src.notifications.tasks.send_task_deleted_notification.delay',
+    )
+
+    # act
+    delegate_vacation_tasks()
+
+    # assert
+    task.refresh_from_db()
+    workflow.refresh_from_db()
+    assert task.status == TaskStatus.SKIPPED
+    assert workflow.status == WorkflowStatus.DONE
+    assert TaskPerformer.objects.filter(
+        task=task,
+        group=group,
+        type=PerformerType.GROUP,
+    ).exists()
+    task_delegation_event_mock.assert_called_once_with(
+        task=task,
+        user=owner,
+        substitute_group=group,
+    )
+    skip_event = WorkflowEvent.objects.get(
+        task=task,
+        type=WorkflowEventType.TASK_SKIP,
+    )
+    ended_event = WorkflowEvent.objects.get(
+        workflow=workflow,
+        type=WorkflowEventType.ENDED,
+    )
+    assert after_create_actions_mock.call_count == 2
+    after_create_actions_mock.assert_has_calls(
+        [
+            mocker.call(skip_event),
+            mocker.call(ended_event),
+        ],
+    )
+    send_task_deleted_notification_mock.assert_called_once_with(
+        task_id=task.id,
+        recipients=[
+            (owner.id, owner.email),
+            (starter.id, starter.email),
+        ],
+        account_id=account.id,
+        task_data=task_data,
+    )
