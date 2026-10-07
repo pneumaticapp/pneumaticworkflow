@@ -35,7 +35,7 @@ class Command(BaseCommand):
             self._ensure_process_vacations,
             self._ensure_delegate_vacation_tasks,
             self._ensure_dispatch_ai_agent_tasks,
-            self._ensure_dispatch_ai_agent_mentions,
+            self._ensure_dispatch_ai_agent_new_notifications,
         )
 
         for task_func in tasks:
@@ -199,17 +199,17 @@ class Command(BaseCommand):
         )
         self._create_or_skip_task(
             name="Dispatch AI agent tasks",
-            task_path="src.ai.tasks.dispatch_ai_agent_tasks",
+            task_path="src.ai.tasks.dispatch_ai_agent_new_tasks",
             schedule_obj=schedule,
         )
 
-    def _ensure_dispatch_ai_agent_mentions(self):
+    def _ensure_dispatch_ai_agent_new_notifications(self):
         schedule, _ = IntervalSchedule.objects.get_or_create(
             every=10,
             period=IntervalSchedule.SECONDS,
         )
         self._create_or_skip_task(
             name="Dispatch AI agent mentions",
-            task_path="src.ai.tasks.dispatch_ai_agent_mentions",
+            task_path="src.ai.tasks.dispatch_ai_agent_new_notifications",
             schedule_obj=schedule,
         )

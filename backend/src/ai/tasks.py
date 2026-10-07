@@ -51,7 +51,7 @@ def dispatch_ai_agent_new_tasks() -> None:
         )
         for performer in performers:
             task_id = performer.task_id
-            agent_id = performer.user.ai_agent_id
+            agent_id = performer.user.ai_agent.id
             complete_ai_agent_task.delay(task_id=task_id, agent_id=agent_id)
 
 
@@ -72,7 +72,7 @@ def dispatch_ai_agent_new_notifications() -> None:
 
     """ Dispatch unread mention notifications to AI agents """
 
-    with periodic_lock('dispatch_ai_agent_mentions') as acquired:
+    with periodic_lock('dispatch_ai_agent_new_notifications') as acquired:
         if not acquired:
             return
         notifications = (
@@ -86,7 +86,7 @@ def dispatch_ai_agent_new_notifications() -> None:
             .select_related('user__ai_agent')
         )
         for notification in notifications:
-            agent_id = notification.user.ai_agent_id
+            agent_id = notification.user.ai_agent.id
             execute_ai_agent_reply.delay(
                 notification_id=notification.id,
                 agent_id=agent_id,
