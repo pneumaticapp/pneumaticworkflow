@@ -452,6 +452,7 @@ class User(AbstractUser, SoftDeleteModel):
     )
     is_admin = models.BooleanField(default=True)
     is_account_owner = models.BooleanField(default=False)
+    is_ai = models.BooleanField(default=False)
     manager = models.ForeignKey(
         'self',
         on_delete=models.SET_NULL,

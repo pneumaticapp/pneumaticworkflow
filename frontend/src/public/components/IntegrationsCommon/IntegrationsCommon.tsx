@@ -14,6 +14,8 @@ import { EPageTitle } from '../../constants/defaultValues';
 import { PageTitle } from '../PageTitle/PageTitle';
 import { loadApiKeys, createApiKey, deleteApiKey, clearNewlyCreatedKey } from '../../redux/actions';
 
+import { AIProviders } from './AIProviders';
+
 import styles from './IntegrationsCommon.css';
 
 const KEY_MASK = '••••••••';
@@ -175,6 +177,8 @@ export function IntegrationsCommon() {
           </div>
         )}
       </div>
+
+      <AIProviders />
 
       {/* Newly created key modal */}
       <Modal isOpen={!!newlyCreatedKey} onClose={handleCloseNewKeyModal} width="sm">

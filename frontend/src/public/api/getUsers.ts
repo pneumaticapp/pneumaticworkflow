@@ -10,6 +10,7 @@ export type TResponseUser = TUserListItem[];
 export interface IGetUsersConfig {
   type?: TUserListItem['type'];
   status?: (EUserStatus.Active | EUserStatus.Inactive | EUserStatus.Invited)[];
+  isAi?: boolean;
 }
 
 const getUrl = () => {
@@ -33,9 +34,14 @@ export function getUsersQueryString(config?: IGetUsersConfig) {
     return '';
   }
 
-  const { type, status } = config;
+  const { type, status, isAi } = config;
 
-  const queryString = [type && `type=${type}`, isArrayWithItems(status) && `status=${status.join(',')}`]
+  const queryString = [
+    type && `type=${type}`,
+    isArrayWithItems(status) && `status=${status.join(',')}`,
+    // Compared against undefined: false is a meaningful value here and must still be sent.
+    isAi !== undefined && `is_ai=${isAi}`,
+  ]
     .filter(Boolean)
     .join('&');
 
