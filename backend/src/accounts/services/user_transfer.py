@@ -23,6 +23,7 @@ from src.accounts.tokens import TransferToken
 from src.analysis.mixins import BaseIdentifyMixin
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
+from src.logs.events import AuditEventService
 from src.notifications.tasks import send_user_updated_notification
 from src.payment.stripe.service import StripeService
 from src.payment.tasks import increase_plan_users
@@ -124,6 +125,7 @@ class UserTransferService(
             service = ReassignService(
                 old_user=self.prev_user,
                 new_user=new_user,
+                request_user=self.prev_user,
             )
             service.reassign_everywhere()
         remove_user_from_draft(
@@ -189,6 +191,13 @@ class UserTransferService(
             self._deactivate_prev_user()
             self._activate_user()
             self._after_transfer_actions()
+            # The person follows the link of the transfer e-mail: a
+            # user session, whatever the request was authenticated with.
+            AuditEventService.user_transferred(
+                user=self.user,
+                auth_type=AuthTokenType.USER,
+                prev_user=self.prev_user,
+            )
 
     def get_account(self):
         return self.user.account

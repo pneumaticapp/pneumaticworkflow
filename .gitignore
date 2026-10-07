@@ -26,3 +26,4 @@ frontend/test-results
 .agent/
 .antigravity/
 .plans/
+.claude/

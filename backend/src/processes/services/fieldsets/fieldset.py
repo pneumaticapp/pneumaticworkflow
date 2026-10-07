@@ -1,11 +1,13 @@
 # ruff: noqa: PLC0415
 from copy import deepcopy
 from typing import Dict, List, Optional
+
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 
 from src.generics.base.service import BaseModelService
-from src.processes.enums import LabelPosition, FieldSetLayout
+from src.logs.events import AuditEventService
+from src.processes.enums import FieldSetLayout, LabelPosition
 from src.processes.messages.fieldset import (
     MSG_FS_0014,
     MSG_FS_0015,
@@ -25,15 +27,14 @@ from src.processes.services.exceptions import (
     FieldsetTemplateSharedIdMissing,
     FieldsetTemplateTemplateIdMissing,
 )
-from src.processes.services.templates.field_template import (
-    FieldTemplateService,
-)
 from src.processes.services.fieldsets.fieldset_rule import (
     FieldsetTemplateRuleService,
 )
+from src.processes.services.templates.field_template import (
+    FieldTemplateService,
+)
 from src.processes.utils.common import create_api_name
 from src.utils.validation import raise_validation_error
-
 
 UserModel = get_user_model()
 
@@ -82,7 +83,7 @@ class FieldSetTemplateService(BaseModelService):
         self.instance = FieldsetTemplate.objects.create(**create_kwargs)
         return self.instance
 
-    def create_shared_fieldset(
+    def _create_shared_fieldset(
         self,
         name: str,
         title: str = '',
@@ -106,6 +107,15 @@ class FieldSetTemplateService(BaseModelService):
             is_shared=True,
             **kwargs,
         )
+
+    def create_shared_fieldset(self, **kwargs) -> FieldsetTemplate:
+        fieldset = self._create_shared_fieldset(**kwargs)
+        AuditEventService.fieldset_created(
+            user=self.user,
+            auth_type=self.auth_type,
+            fieldset=fieldset,
+        )
+        return fieldset
 
     def create_from_shared(
         self,
@@ -280,6 +290,14 @@ class FieldSetTemplateService(BaseModelService):
             if rules_data is not None:
                 self.update_rules(rules_data=rules_data)
             self._validate_rules()
+            AuditEventService.fieldset_updated(
+                user=self.user,
+                auth_type=self.auth_type,
+                fieldset=self.instance,
+                update_kwargs=update_kwargs,
+                fields=fields_data,
+                rules=rules_data,
+            )
             return self.instance
 
     def partial_update_instance(
@@ -301,6 +319,11 @@ class FieldSetTemplateService(BaseModelService):
         if self.instance.kickoff_id or self.instance.task_id:
             raise FieldsetTemplateInUseException
         self.instance.delete()
+        AuditEventService.fieldset_deleted(
+            user=self.user,
+            auth_type=self.auth_type,
+            fieldset=self.instance,
+        )
 
     @staticmethod
     def _replace_api_names(shared_fieldset_data: dict) -> dict:
@@ -456,4 +479,12 @@ class FieldSetTemplateService(BaseModelService):
             shared_fieldset_data=instance_data,
         )
         clone_data['name'] = clone_data['name'] + ' - clone'
-        return self.create_shared_fieldset(**clone_data)
+        source_fieldset = self.instance
+        clone = self._create_shared_fieldset(**clone_data)
+        AuditEventService.fieldset_cloned(
+            user=self.user,
+            auth_type=self.auth_type,
+            clone=clone,
+            source_fieldset=source_fieldset,
+        )
+        return clone
