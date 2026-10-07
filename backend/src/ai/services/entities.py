@@ -11,7 +11,6 @@ class ProviderConfig(TypedDict):
     endpoints: Dict[str, str]
 
 
-
 class FieldTag(NamedTuple):
 
     """ A <field> tag of the agent answer """
