@@ -449,12 +449,13 @@ class AIAgentService(BaseModelService):
                     task=task,
                     errors_stack=errors_stack,
                 )
-            self._attempt_complete_task(
+            fields_values = self._attempt_complete_task(
                 task=task,
                 errors_stack=errors_stack,
                 attempt=new_attempt,
             )
-            return fields_values
+
+        return fields_values
 
     def complete_task(self, task_id: int):
 

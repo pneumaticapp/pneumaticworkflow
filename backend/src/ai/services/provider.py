@@ -73,7 +73,7 @@ class AIProviderService(
     def delete(self) -> None:
         if self.instance.ai_agents.exists():
             raise AIProviderInUseException
-        self._delete_cache(key=self.instance.name)
+        self._delete_cache(key=f'{self.user.id}_{self.instance.name}')
         super().delete()
 
     def _get_vendor(self):
