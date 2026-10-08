@@ -15,6 +15,7 @@ from urllib.parse import urlparse
 
 from configurations import Configuration, values
 from corsheaders.defaults import default_headers
+
 from src.notifications.enums import EmailProvider
 
 
@@ -212,6 +213,7 @@ class Common(Configuration):
         'django.middleware.csrf.CsrfViewMiddleware',
         'src.authentication.middleware.UserAgentMiddleware',
         'src.authentication.middleware.AuthMiddleware',
+        'src.logs.events.middleware.EventContextMiddleware',
         'src.authentication.middleware.UserLocaleMiddleware',
         'src.storage.middleware.FileServiceAuthMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
@@ -527,6 +529,7 @@ class Common(Configuration):
         'src.accounts.tasks',
         'src.analysis.tasks',
         'src.authentication.tasks',
+        'src.logs.events.tasks',
         'src.notifications.tasks',
         'src.payment.tasks',
         'src.processes.tasks.delay',
@@ -536,6 +539,20 @@ class Common(Configuration):
         'src.reports.tasks',
         'src.storage.tasks',
     ]
+
+    # An unset backend disables the journal. An enabled backend requires
+    # valid URLs and positive stream/batch sizes (LogsConfig.ready).
+    LOGS_SERVICE_NAME = 'pneumatic-backend'
+    LOGS_DEFAULT_CONSUMER_IDLE_MS = 60000
+    LOGS_CONSUMER_INTERVAL_SECONDS = 5
+
+    LOGS_BACKEND = env.get('LOGS_BACKEND')
+    LOGS_REDIS_URL = env.get('LOGS_REDIS_URL')
+    LOGS_OTLP_ENDPOINT = env.get('LOGS_OTLP_ENDPOINT')
+    LOGS_STREAM_MAXLEN = int(env.get('LOGS_STREAM_MAXLEN') or 0)
+    LOGS_CONSUMER_BATCH_SIZE = int(env.get('LOGS_CONSUMER_BATCH_SIZE') or 0)
+
+    LOGS_SERVICE_VERSION = env.get('RELEASE')
 
     # reCaptcha
     DRF_RECAPTCHA_SITE_KEY = env.get('RECAPTCHA_SITE_KEY') or 'key'
@@ -633,6 +650,10 @@ class Common(Configuration):
 
 
 class Testing(Common):
+
+    # No event reaches Redis unless a test asks for it
+    # (fixture events_enabled of src/logs/events/tests).
+    LOGS_BACKEND = None
 
     # CELERY_ALWAYS_EAGER mean that Celery will not schedule tasks
     # to run as it would regularly do, via sending a message to the broker.

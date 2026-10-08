@@ -18,6 +18,7 @@ from src.authentication.enums import (
 )
 from src.authentication.models import AccessToken
 from src.authentication.tokens import PneumaticToken
+from src.logs.events import AuditEventService
 from src.utils.logging import SentryLogLevel, capture_sentry_message
 
 UserModel = get_user_model()
@@ -231,6 +232,10 @@ class OktaLogoutService:
 
         self.cache.delete(f'{self.CACHE_KEY_PREFIX}_{sub}')
         PneumaticToken.expire_all_tokens(user)
+        AuditEventService.user_logged_out_by_provider(
+            target=user,
+            source=self.SOURCE,
+        )
 
     def process_logout(
         self,
