@@ -276,3 +276,10 @@ class FieldsetTemplateRuleSetServiceException(BaseServiceException):
 class FieldTemplateRuleSetServiceException(BaseServiceException):
 
     pass
+
+
+class FieldRuleCheckServiceException(BaseServiceException):
+
+    def __init__(self, field_api_name: str, message: str):
+        self.field_api_name = field_api_name
+        super().__init__(message=message)

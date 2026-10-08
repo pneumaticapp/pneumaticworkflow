@@ -35,7 +35,7 @@ from src.processes.models.workflows.task import (
     Task,
     TaskPerformer,
 )
-from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.fields import FieldRuleSet, TaskField
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.queries import GetTaskPerformersQuery
 from src.storage.utils import reassign_restricted_permissions_for_task
@@ -48,6 +48,9 @@ from src.processes.services.events import (
 )
 from src.processes.services.tasks.field import (
     TaskFieldService,
+)
+from src.processes.services.tasks.field_ruleset_check import (
+    FieldRuleCheckService,
 )
 from src.processes.services.tasks.task import TaskService
 from src.processes.services.workflows.fieldsets.fieldset import FieldSetService
@@ -968,6 +971,19 @@ class WorkflowActionService:
                         auth_type=self.auth_type,
                     )
                     service.validate_rules()
+
+            FieldRuleCheckService(
+                workflow_id=self.workflow.id,
+            ).apply_rulesets(
+                FieldRuleSet.objects
+                .filter(
+                    Q(field__task=task) | Q(field__fieldset__task=task),
+                    field__is_deleted=False,
+                )
+                .select_related('field')
+                .prefetch_related('groups_or__groups_and'),
+            )
+
             AnalyticService.task_completed(
                 user=self.user,
                 is_superuser=self.is_superuser,
