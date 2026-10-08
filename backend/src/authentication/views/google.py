@@ -4,9 +4,11 @@ from django.db.models import ObjectDoesNotExist
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
     AuthenticationFailed,
+    ValidationError,
 )
 from rest_framework.viewsets import GenericViewSet
 
+from src.accounts.enums import SourceType
 from src.analysis.mixins import BaseIdentifyMixin
 from src.authentication.messages import (
     MSG_AU_0003,
@@ -32,6 +34,8 @@ from src.authentication.views.mixins import (
 from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
+from src.logs.events import AuditEventService
+from src.logs.events.enums import LoginFailedReason
 from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
@@ -51,6 +55,7 @@ class GoogleAuthViewSet(
     permission_classes = (
         GoogleAuthPermission,
     )
+    audit_source = SourceType.GOOGLE
     serializer_class = GoogleTokenSerializer
 
     @property
@@ -77,6 +82,7 @@ class GoogleAuthViewSet(
         except AuthException as ex:
             raise_validation_error(message=ex.message)
         else:
+            is_signup = False
             try:
                 user = UserModel.objects.active().get(email=user_data['email'])
                 self.check_sso_restrictions(user)
@@ -99,11 +105,27 @@ class GoogleAuthViewSet(
                         utm_content=slz.validated_data.get('utm_content'),
                         gclid=slz.validated_data.get('gclid'),
                     )
+                    is_signup = True
                 else:
+                    AuditEventService.login_failed(
+                        reason=LoginFailedReason.SIGNUP_DISABLED,
+                        email=user_data['email'],
+                    )
                     raise AuthenticationFailed(MSG_AU_0003) from err
+            except ValidationError:
+                AuditEventService.login_failed(
+                    reason=LoginFailedReason.SSO_REQUIRED,
+                    email=user.email,
+                )
+                raise
 
             service.save_tokens_for_user(user)
             update_google_contacts.delay(user.id)
+            if not is_signup:
+                AuditEventService.user_logged_in(
+                    user=user,
+                    source=self.audit_source,
+                )
             return self.response_ok({'token': token})
 
     @action(methods=('GET',), detail=False, url_path='auth-uri')

@@ -38,6 +38,7 @@ from src.accounts.services.convert_account import (
     AccountLLConverter,
 )
 from src.authentication.views.mixins import SignUpMixin
+from src.logs.events.admin_site import JournaledAdminMixin
 from src.payment.enums import BillingPeriod
 from src.reports.tasks import (
     send_digest,
@@ -171,7 +172,7 @@ class UserAdminChangeForm(UserChangeForm):
         return super().save(commit=commit)
 
 
-class GroupAdmin(ModelAdmin):
+class GroupAdmin(JournaledAdminMixin, ModelAdmin):
     model = UserGroup
     list_display = (
         'name',
@@ -261,7 +262,7 @@ class APIKeyInline(StackedInline):
         return False
 
 
-class UsersAdmin(UserAdmin, SignUpMixin):
+class UsersAdmin(JournaledAdminMixin, UserAdmin, SignUpMixin):
 
     add_fieldsets = (
         (None, {
@@ -409,7 +410,7 @@ class UsersAdmin(UserAdmin, SignUpMixin):
             service = AccountService(instance=obj.account, user=obj)
             service.update_users_counts()
         else:
-            self.signup(
+            account_owner, _ = self.signup(
                 email=obj.email,
                 first_name=obj.first_name,
                 last_name=obj.last_name,
@@ -417,6 +418,8 @@ class UsersAdmin(UserAdmin, SignUpMixin):
                 billing_sync=False,
                 request=request,
             )
+            obj.id = account_owner.id
+            obj.account_id = account_owner.account_id
 
     def send_digest(self, request, queryset):
         names = []
@@ -637,7 +640,7 @@ class AccountAdminForm(forms.ModelForm):
         return None if value == '' else value
 
 
-class AccountAdmin(ModelAdmin):
+class AccountAdmin(JournaledAdminMixin, ModelAdmin):
 
     def active_subscription(self, obj):
         return bool(obj.is_subscribed)

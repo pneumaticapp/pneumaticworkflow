@@ -1,4 +1,5 @@
-from typing import Optional, Tuple, Type
+from time import monotonic
+from typing import Dict, Optional, Tuple, Type
 
 from django.conf import settings
 from django.core.exceptions import DisallowedHost, PermissionDenied
@@ -16,6 +17,8 @@ _SENTRY_IGNORE_EXCEPTIONS: Tuple[Type[BaseException], ...] = (
     PermissionDenied,
     DisallowedHost,
 )
+SENTRY_THROTTLE_SECONDS = 60
+_sentry_last_messages: Dict[str, float] = {}
 
 
 def sentry_before_send(event: dict, hint: dict) -> Optional[dict]:
@@ -61,6 +64,29 @@ def capture_sentry_message(
                 message=message,
                 level=level,
             )
+
+
+def capture_sentry_message_throttled(
+    message: str,
+    data: dict,
+    level: SentryLogLevel.LITERALS = SentryLogLevel.ERROR,
+    key: Optional[str] = None,
+):
+    """Send a message at most once per SENTRY_THROTTLE_SECONDS for the
+    same key, the message itself by default: a repeated failure of a
+    periodic job must not flood Sentry. Callers keep their own log
+    line, which shows every occurrence."""
+    now = monotonic()
+    throttle_key = key or message
+    last_sent = _sentry_last_messages.get(throttle_key)
+    if last_sent is not None and now - last_sent < SENTRY_THROTTLE_SECONDS:
+        return
+    _sentry_last_messages[throttle_key] = now
+    capture_sentry_message(
+        message=message,
+        data=data,
+        level=level,
+    )
 
 
 def capture_sentry_exception(

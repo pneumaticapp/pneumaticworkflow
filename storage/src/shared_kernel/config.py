@@ -6,8 +6,11 @@ from functools import lru_cache
 from typing import Literal
 from urllib.parse import urlparse
 
-from pydantic import field_validator, model_validator
+from pydantic import ValidationInfo, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+LOGS_BACKENDS = ('otlp', 'elasticsearch')
+REDIS_URL_SCHEMES = ('redis', 'rediss')
 
 
 class BaseAppSettings(BaseSettings):
@@ -45,11 +48,40 @@ class BaseAppSettings(BaseSettings):
         """Strip trailing slash from URLs."""
         return v.rstrip('/')
 
-    @field_validator('SENTRY_DSN', 'SENTRY_ENVIRONMENT', mode='before')
+    @field_validator(
+        'SENTRY_DSN',
+        'SENTRY_ENVIRONMENT',
+        'LOGS_BACKEND',
+        'LOGS_REDIS_URL',
+        'LOGS_STREAM_MAXLEN',
+        mode='before',
+    )
     @classmethod
     def empty_str_to_none(cls, v: str | None) -> str | None:
         """Treat empty env values (docker-compose defaults) as unset."""
         return v or None
+
+    @field_validator('LOGS_REDIS_URL', mode='after')
+    @classmethod
+    def require_redis_url(
+        cls,
+        v: str | None,
+        info: ValidationInfo,
+    ) -> str | None:
+        """Refuse a URL the emitter cannot dial while the pipeline is on.
+
+        redis.from_url raises ValueError on any other scheme, and it
+        does so on the first write, not at start: better to fail here.
+        Reads LOGS_BACKEND, which is declared above LOGS_REDIS_URL and
+        so is already validated when this runs. No URL at all is not
+        an error: logs_enabled keeps the journal off without it.
+        """
+        if v is None or info.data.get('LOGS_BACKEND') not in LOGS_BACKENDS:
+            return v
+        if urlparse(v).scheme not in REDIS_URL_SCHEMES:
+            msg = 'LOGS_REDIS_URL must be a redis:// or rediss:// URL'
+            raise ValueError(msg)
+        return v
 
     @field_validator('ALLOWED_ORIGINS', mode='before')
     @classmethod
@@ -117,6 +149,15 @@ class BaseAppSettings(BaseSettings):
     AUTH_REDIS_URL: str = 'redis://:redis_password@redis:6379/1'
     KEY_PREFIX_REDIS: str = ':1:'
 
+    # ── Event pipeline ───────────────────────────────────────
+    # The audit journal: records go into the Redis Stream of the backend.
+    # Same variables as the backend reads, so one .env configures both writers.
+    # No defaults here: compose passes them, and the journal stays off while
+    # any of them is missing.
+    LOGS_BACKEND: str | None = None
+    LOGS_REDIS_URL: str | None = None
+    LOGS_STREAM_MAXLEN: int | None = None
+
     # ── Auth ─────────────────────────────────────────────────
     DJANGO_SECRET_KEY: str  # Required, no default (security)
     # AUTH_TOKEN_ITERATIONS = 1 is a trade-off.
@@ -128,6 +169,15 @@ class BaseAppSettings(BaseSettings):
     BACKEND_PRIVATE_URL: str = 'http://localhost:8001'
 
     # ── Computed properties ──────────────────────────────────
+
+    @property
+    def logs_enabled(self) -> bool:
+        """Whether records are written at all: a known store and a buffer."""
+        return (
+            self.LOGS_BACKEND in LOGS_BACKENDS
+            and bool(self.LOGS_REDIS_URL)
+            and bool(self.LOGS_STREAM_MAXLEN)
+        )
 
     @property
     def root_path(self) -> str:
