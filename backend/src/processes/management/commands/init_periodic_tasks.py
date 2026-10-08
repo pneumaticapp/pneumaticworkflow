@@ -1,10 +1,12 @@
+from zoneinfo import ZoneInfo
+
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django_celery_beat.models import (
-    PeriodicTask,
-    IntervalSchedule,
     CrontabSchedule,
+    IntervalSchedule,
+    PeriodicTask,
 )
-import pytz
 
 
 class Command(BaseCommand):
@@ -34,6 +36,7 @@ class Command(BaseCommand):
             self._ensure_reminder_task_notification,
             self._ensure_process_vacations,
             self._ensure_delegate_vacation_tasks,
+            self._ensure_events_consumer,
         )
 
         for task_func in tasks:
@@ -92,7 +95,7 @@ class Command(BaseCommand):
             minute="0",
             hour="8",
             day_of_week="5",
-            timezone=pytz.timezone("US/Central"),
+            timezone=ZoneInfo("US/Central"),
         )
         self._create_or_skip_task(
             name="My tasks digest",
@@ -128,7 +131,7 @@ class Command(BaseCommand):
             minute="0",
             hour="11",
             day_of_week="1",
-            timezone=pytz.timezone("US/Central"),
+            timezone=ZoneInfo("US/Central"),
         )
         self._create_or_skip_task(
             name="Weekly Digest",
@@ -140,7 +143,7 @@ class Command(BaseCommand):
     def _ensure_continue_delayed_processes(self):
         schedule, _ = CrontabSchedule.objects.get_or_create(
             minute="*/1",
-            timezone=pytz.timezone("UTC"),
+            timezone=ZoneInfo("UTC"),
         )
         self._create_or_skip_task(
             name="continue_delayed_processes",
@@ -165,7 +168,7 @@ class Command(BaseCommand):
     def _ensure_process_vacations(self):
         schedule, _ = CrontabSchedule.objects.get_or_create(
             minute="*/15",
-            timezone=pytz.timezone("UTC"),
+            timezone=ZoneInfo("UTC"),
         )
         self._create_or_skip_task(
             name="Process vacation schedules",
@@ -179,7 +182,7 @@ class Command(BaseCommand):
     def _ensure_delegate_vacation_tasks(self):
         schedule, _ = CrontabSchedule.objects.get_or_create(
             minute="*/5",
-            timezone=pytz.timezone("UTC"),
+            timezone=ZoneInfo("UTC"),
         )
         self._create_or_skip_task(
             name="Delegate vacation tasks",
@@ -188,4 +191,15 @@ class Command(BaseCommand):
             ),
             schedule_obj=schedule,
             schedule_field="crontab",
+        )
+
+    def _ensure_events_consumer(self):
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=settings.LOGS_CONSUMER_INTERVAL_SECONDS,
+            period=IntervalSchedule.SECONDS,
+        )
+        self._create_or_skip_task(
+            name="Deliver events to log backend",
+            task_path="src.logs.events.tasks.consume_events",
+            schedule_obj=schedule,
         )

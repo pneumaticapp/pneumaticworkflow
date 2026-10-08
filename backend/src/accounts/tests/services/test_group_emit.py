@@ -1,0 +1,473 @@
+import pytest
+
+from src.accounts.enums import BillingPlanType
+from src.accounts.services.group import UserGroupService
+from src.analysis.events import GroupsAnalyticsEvent
+from src.authentication.enums import AuthTokenType
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_admin,
+    create_test_group,
+    create_test_owner,
+)
+
+pytestmark = pytest.mark.django_db
+
+
+def test_create__group__audit_group_created(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    member = create_test_admin(account=account)
+    track_group_analytics_mock = mocker.patch(
+        'src.analysis.tasks.track_group_analytics.delay',
+    )
+    send_group_created_notification_mock = mocker.patch(
+        'src.notifications.tasks.send_group_created_notification.delay',
+    )
+    sync_account_file_fields_mock = mocker.patch(
+        'src.accounts.services.group.sync_account_file_fields',
+    )
+    group_created_mock = mocker.patch(
+        'src.accounts.services.group.AuditEventService.group_created',
+    )
+    service = UserGroupService(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    group = service.create(
+        name='Sales',
+        users=[member.id],
+    )
+
+    # assert
+    group_created_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        group=group,
+        users_ids=[member.id],
+    )
+    track_group_analytics_mock.assert_called_once_with(
+        event=GroupsAnalyticsEvent.created,
+        user_id=owner.id,
+        user_email=owner.email,
+        user_first_name=owner.first_name,
+        user_last_name=owner.last_name,
+        group_photo=group.photo,
+        group_users=[member.id],
+        account_id=account.id,
+        group_id=group.id,
+        group_name='Sales',
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        new_users_ids=[member.id],
+        new_photo=None,
+    )
+    send_group_created_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        group_data=mocker.ANY,
+    )
+    sync_account_file_fields_mock.assert_called_once_with(
+        account=account,
+        user=owner,
+        old_values=[None],
+        new_values=[group.photo],
+    )
+
+
+def test_create__no_users__audit_users_ids_none(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    track_group_analytics_mock = mocker.patch(
+        'src.analysis.tasks.track_group_analytics.delay',
+    )
+    send_group_created_notification_mock = mocker.patch(
+        'src.notifications.tasks.send_group_created_notification.delay',
+    )
+    sync_account_file_fields_mock = mocker.patch(
+        'src.accounts.services.group.sync_account_file_fields',
+    )
+    group_created_mock = mocker.patch(
+        'src.accounts.services.group.AuditEventService.group_created',
+    )
+    service = UserGroupService(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    group = service.create(name='Sales')
+
+    # assert
+    group_created_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        group=group,
+        users_ids=None,
+    )
+    track_group_analytics_mock.assert_called_once_with(
+        event=GroupsAnalyticsEvent.created,
+        user_id=owner.id,
+        user_email=owner.email,
+        user_first_name=owner.first_name,
+        user_last_name=owner.last_name,
+        group_photo=group.photo,
+        group_users=None,
+        account_id=account.id,
+        group_id=group.id,
+        group_name='Sales',
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        new_users_ids=None,
+        new_photo=None,
+    )
+    send_group_created_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        group_data=mocker.ANY,
+    )
+    sync_account_file_fields_mock.assert_called_once_with(
+        account=account,
+        user=owner,
+        old_values=[None],
+        new_values=[group.photo],
+    )
+
+
+def test_partial_update__name_and_users__audit_group_updated(mocker):
+
+    # arrange
+    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    owner = create_test_owner(account=account)
+    member = create_test_admin(account=account)
+    group = create_test_group(
+        account=account,
+        name='Sales',
+    )
+    track_group_analytics_mock = mocker.patch(
+        'src.analysis.tasks.track_group_analytics.delay',
+    )
+    send_group_updated_mock = mocker.patch(
+        'src.notifications.tasks.send_group_updated_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        'src.notifications.tasks.send_new_task_websocket.delay',
+    )
+    send_task_deleted_mock = mocker.patch(
+        'src.notifications.tasks.send_task_deleted_notification.delay',
+    )
+    group_updated_mock = mocker.patch(
+        'src.accounts.services.group.AuditEventService.group_updated',
+    )
+    service = UserGroupService(
+        user=owner,
+        instance=group,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service.partial_update(
+        name='Support',
+        users=[member.id],
+        force_save=True,
+    )
+
+    # assert
+    group_updated_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        group=group,
+        update_kwargs={'name': 'Support'},
+        users_ids=[member.id],
+    )
+    track_group_analytics_mock.assert_called_once_with(
+        event=GroupsAnalyticsEvent.updated,
+        user_id=owner.id,
+        user_email=owner.email,
+        user_first_name=owner.first_name,
+        user_last_name=owner.last_name,
+        group_photo=None,
+        group_users=[member.id],
+        account_id=account.id,
+        group_id=group.id,
+        group_name='Support',
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        new_users_ids=[member.id],
+        removed_users_ids=[],
+        new_name='Support',
+        new_photo=None,
+    )
+    send_group_updated_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        group_data=mocker.ANY,
+    )
+
+    # The group performs no task: nobody to tell about the membership.
+    send_new_task_websocket_mock.assert_not_called()
+    send_task_deleted_mock.assert_not_called()
+
+
+def test_partial_update__removed_users__audit_empty_users(mocker):
+
+    # arrange
+    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    owner = create_test_owner(account=account)
+    member = create_test_admin(account=account)
+    group = create_test_group(
+        account=account,
+        name='Sales',
+        users=[member],
+    )
+    track_group_analytics_mock = mocker.patch(
+        'src.analysis.tasks.track_group_analytics.delay',
+    )
+    send_group_updated_mock = mocker.patch(
+        'src.notifications.tasks.send_group_updated_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        'src.notifications.tasks.send_new_task_websocket.delay',
+    )
+    send_task_deleted_mock = mocker.patch(
+        'src.notifications.tasks.send_task_deleted_notification.delay',
+    )
+    group_updated_mock = mocker.patch(
+        'src.accounts.services.group.AuditEventService.group_updated',
+    )
+    service = UserGroupService(
+        user=owner,
+        instance=group,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service.partial_update(
+        users=[],
+        force_save=True,
+    )
+
+    # assert
+    group_updated_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        group=group,
+        update_kwargs={},
+        users_ids=[],
+    )
+    track_group_analytics_mock.assert_called_once_with(
+        event=GroupsAnalyticsEvent.updated,
+        user_id=owner.id,
+        user_email=owner.email,
+        user_first_name=owner.first_name,
+        user_last_name=owner.last_name,
+        group_photo=None,
+        group_users=[],
+        account_id=account.id,
+        group_id=group.id,
+        group_name=None,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        new_users_ids=[],
+        removed_users_ids=[member.id],
+        new_name=None,
+        new_photo=None,
+    )
+    send_group_updated_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        group_data=mocker.ANY,
+    )
+    send_new_task_websocket_mock.assert_not_called()
+    send_task_deleted_mock.assert_not_called()
+
+
+def test_partial_update__users_not_sent__audit_users_none(mocker):
+
+    # arrange
+    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    owner = create_test_owner(account=account)
+    member = create_test_admin(account=account)
+    group = create_test_group(
+        account=account,
+        name='Sales',
+        users=[member],
+    )
+    track_group_analytics_mock = mocker.patch(
+        'src.analysis.tasks.track_group_analytics.delay',
+    )
+    send_group_updated_mock = mocker.patch(
+        'src.notifications.tasks.send_group_updated_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        'src.notifications.tasks.send_new_task_websocket.delay',
+    )
+    send_task_deleted_mock = mocker.patch(
+        'src.notifications.tasks.send_task_deleted_notification.delay',
+    )
+    group_updated_mock = mocker.patch(
+        'src.accounts.services.group.AuditEventService.group_updated',
+    )
+    service = UserGroupService(
+        user=owner,
+        instance=group,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service.partial_update(
+        name='Support',
+        force_save=True,
+    )
+
+    # assert
+    group_updated_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        group=group,
+        update_kwargs={'name': 'Support'},
+        users_ids=None,
+    )
+    track_group_analytics_mock.assert_called_once_with(
+        event=GroupsAnalyticsEvent.updated,
+        user_id=owner.id,
+        user_email=owner.email,
+        user_first_name=owner.first_name,
+        user_last_name=owner.last_name,
+        group_photo=None,
+        group_users=[member.id],
+        account_id=account.id,
+        group_id=group.id,
+        group_name='Support',
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        new_users_ids=None,
+        removed_users_ids=None,
+        new_name='Support',
+        new_photo=None,
+    )
+    send_group_updated_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        group_data=mocker.ANY,
+    )
+    send_new_task_websocket_mock.assert_not_called()
+    send_task_deleted_mock.assert_not_called()
+
+
+def test_partial_update__nothing_changed__audit_group_updated(mocker):
+
+    """ A request that arrived is an update, whatever it sent. """
+
+    # arrange
+    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    owner = create_test_owner(account=account)
+    member = create_test_admin(account=account)
+    group = create_test_group(
+        account=account,
+        name='Sales',
+        users=[member],
+    )
+    track_group_analytics_mock = mocker.patch(
+        'src.analysis.tasks.track_group_analytics.delay',
+    )
+    send_group_updated_mock = mocker.patch(
+        'src.notifications.tasks.send_group_updated_notification.delay',
+    )
+    group_updated_mock = mocker.patch(
+        'src.accounts.services.group.AuditEventService.group_updated',
+    )
+    service = UserGroupService(
+        user=owner,
+        instance=group,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service.partial_update(
+        name='Sales',
+        users=[member.id],
+        force_save=True,
+    )
+
+    # assert
+    group_updated_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        group=group,
+        update_kwargs={'name': 'Sales'},
+        users_ids=[member.id],
+    )
+    track_group_analytics_mock.assert_not_called()
+    send_group_updated_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        group_data=mocker.ANY,
+    )
+
+
+def test_delete__group__audit_group_deleted(mocker):
+
+    # arrange
+    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    owner = create_test_owner(account=account)
+    member = create_test_admin(account=account)
+    group = create_test_group(
+        account=account,
+        name='Sales',
+        users=[member],
+    )
+    track_group_analytics_mock = mocker.patch(
+        'src.analysis.tasks.track_group_analytics.delay',
+    )
+    send_group_deleted_mock = mocker.patch(
+        'src.notifications.tasks.send_group_deleted_notification.delay',
+    )
+    send_task_deleted_mock = mocker.patch(
+        'src.notifications.tasks.send_task_deleted_notification.delay',
+    )
+    group_deleted_mock = mocker.patch(
+        'src.accounts.services.group.AuditEventService.group_deleted',
+    )
+    service = UserGroupService(
+        user=owner,
+        instance=group,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service.delete()
+
+    # assert
+    group_deleted_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        group=group,
+        users_ids=[member.id],
+    )
+    track_group_analytics_mock.assert_called_once_with(
+        event=GroupsAnalyticsEvent.deleted,
+        user_id=owner.id,
+        user_email=owner.email,
+        user_first_name=owner.first_name,
+        user_last_name=owner.last_name,
+        group_photo=None,
+        group_users=[member.id],
+        account_id=account.id,
+        group_id=group.id,
+        group_name='Sales',
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    send_group_deleted_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        group_data=mocker.ANY,
+    )
+    send_task_deleted_mock.assert_not_called()

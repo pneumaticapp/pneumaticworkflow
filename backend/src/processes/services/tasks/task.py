@@ -5,6 +5,7 @@ from typing import Dict, Optional
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 
+from src.logs.events import AuditEventService
 from src.notifications.tasks import send_due_date_changed
 from src.processes.enums import (
     DueDateRule,
@@ -385,4 +386,9 @@ class TaskService(
         WorkflowEventService.due_date_changed_event(
             task=self.instance,
             user=self.user,
+        )
+        AuditEventService.task_due_date_changed(
+            user=self.user,
+            auth_type=self.auth_type,
+            task=self.instance,
         )

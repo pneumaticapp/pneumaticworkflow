@@ -1253,7 +1253,11 @@ def test_private_deactivate__activate_contacts__ok(mocker):
     )
     update_users_counts_mock.assert_called_once_with()
     identify_mock.assert_called_once_with(invited_user)
-    clear_substitute_groups_mock.assert_called_once_with(invited_user)
+    clear_substitute_groups_mock.assert_called_once_with(
+        invited_user,
+        request_user=owner,
+        auth_type=AuthTokenType.USER,
+    )
 
 
 def test_deactivate_actions__ok(mocker):
@@ -3078,7 +3082,11 @@ def test_deactivate__clears_own_manager__ok(mocker):
     )
     update_users_counts_mock.assert_called_once_with()
     identify_mock.assert_called_once_with(user)
-    clear_substitute_groups_mock.assert_called_once_with(user)
+    clear_substitute_groups_mock.assert_called_once_with(
+        user,
+        request_user=owner,
+        auth_type=AuthTokenType.USER,
+    )
     send_updated_mock.assert_called_once_with(
         logging=False,
         account_id=account.id,
@@ -3134,7 +3142,11 @@ def test_deactivate__clears_subordinates__ok(mocker):
     )
     update_users_counts_mock.assert_called_once_with()
     identify_mock.assert_called_once_with(user)
-    clear_substitute_groups_mock.assert_called_once_with(user)
+    clear_substitute_groups_mock.assert_called_once_with(
+        user,
+        request_user=owner,
+        auth_type=AuthTokenType.USER,
+    )
     send_updated_mock.assert_called_once_with(
         logging=False,
         account_id=account.id,

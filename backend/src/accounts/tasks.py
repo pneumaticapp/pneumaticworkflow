@@ -1,5 +1,5 @@
-from pytz import timezone as pytz_tz
-from pytz.exceptions import UnknownTimeZoneError
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
 from celery import shared_task
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -67,8 +67,8 @@ def process_vacations():
     )
     for user in auto_start_users:
         try:
-            user_now = now.astimezone(pytz_tz(user.timezone))
-        except UnknownTimeZoneError:
+            user_now = now.astimezone(ZoneInfo(user.timezone))
+        except ZoneInfoNotFoundError:
             continue
         vacation = user.vacation
         if not vacation:
@@ -109,8 +109,8 @@ def process_vacations():
     )
     for user in auto_stop_users:
         try:
-            user_now = now.astimezone(pytz_tz(user.timezone))
-        except UnknownTimeZoneError:
+            user_now = now.astimezone(ZoneInfo(user.timezone))
+        except ZoneInfoNotFoundError:
             continue
         vacation = user.vacation
         if vacation and user_now.date() > vacation.end_date:

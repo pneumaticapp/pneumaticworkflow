@@ -2,7 +2,7 @@ import os
 
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
-from django.forms import CharField, ModelForm, forms
+from django.forms import CharField, FileField, ModelForm
 from django.utils.safestring import mark_safe
 from tinymce.widgets import TinyMCE
 
@@ -29,7 +29,7 @@ class IntegrationCreateForm(ModelForm):
             'order',
         )
 
-    image_file = forms.FileField(
+    image_file = FileField(
         required=False,
         help_text='Logo of service we integrated with. '
                   'Only svg files are supported!',

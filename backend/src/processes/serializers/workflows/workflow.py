@@ -300,6 +300,7 @@ class WorkflowUpdateSerializer(
                 UrgentService.resolve(
                     workflow=self.instance,
                     user=self.context['user'],
+                    auth_type=self.context['auth_type'],
                 )
         return self.instance
 
