@@ -716,3 +716,323 @@ class TestFieldRuleActionIntegration:
         # assert
         field_2.refresh_from_db()
         assert field_2.is_hidden is False
+
+    def test_complete_task__show_rules_applied_to_subsequent_tasks(
+        self,
+        mocker,
+    ):
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=2)
+        task_1 = workflow.tasks.get(number=1)
+        task_2 = workflow.tasks.get(number=2)
+
+        mocker.patch(
+            'src.processes.services.workflow_action.WorkflowEventService'
+            '.task_complete_event',
+        )
+        mocker.patch(
+            'src.processes.services.workflow_action.AnalyticService'
+            '.task_completed',
+        )
+        mocker.patch(
+            'src.processes.services.workflow_action'
+            '.send_task_completed_websocket.delay',
+        )
+
+        field_1 = TaskField.objects.create(
+            name='Choice on Task 1',
+            api_name='choice-field-1',
+            type=FieldType.STRING,
+            value='',
+            workflow=workflow,
+            task=task_1,
+            account=account,
+        )
+        field_2 = TaskField.objects.create(
+            name='Dependent on Task 2',
+            api_name='dep-field-2',
+            type=FieldType.STRING,
+            workflow=workflow,
+            task=task_2,
+            account=account,
+            is_hidden=True,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=field_2,
+            name='Show task 2 field when task 1 choice is yes',
+            type=FieldRuleType.SHOW,
+            order=1,
+            api_name='ruleset-show-task2-dep',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-task2-dep',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=group_or,
+            field=field_1.api_name,
+            operator=FieldRuleOperator.EQUAL,
+            value='yes',
+            api_name='group-and-task2-dep',
+        )
+
+        service = WorkflowActionService(
+            workflow=workflow,
+            user=user,
+        )
+
+        # act
+        service.complete_task_for_user(
+            task=task_1,
+            fields_values={'choice-field-1': 'yes'},
+        )
+
+        # assert
+        field_2.refresh_from_db()
+        assert field_2.is_hidden is False
+
+    def test_show_rule__checkbox_comma_space__contain_second_option(self):
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+
+        source_field = TaskField.objects.create(
+            name='Checkbox Source',
+            api_name='checkbox-source',
+            type=FieldType.CHECKBOX,
+            value='first option, second option',
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        target_field = TaskField.objects.create(
+            name='Target Field',
+            api_name='target-field',
+            type=FieldType.STRING,
+            workflow=workflow,
+            task=task,
+            account=account,
+            is_hidden=True,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=target_field,
+            name='Show when contains second option',
+            type=FieldRuleType.SHOW,
+            order=1,
+            api_name='ruleset-chk-contain',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-chk',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=group_or,
+            field=source_field.api_name,
+            operator=FieldRuleOperator.CONTAIN,
+            value='second option',
+            api_name='group-and-chk',
+        )
+
+        # act
+        FieldRuleCheckService(
+            workflow_id=workflow.id,
+        ).apply_rulesets([ruleset])
+
+        # assert
+        target_field.refresh_from_db()
+        assert target_field.is_hidden is False
+
+    def test_show_rule__checkbox_comma_space__equal_all_options(self):
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+
+        source_field = TaskField.objects.create(
+            name='Checkbox Source',
+            api_name='checkbox-source',
+            type=FieldType.CHECKBOX,
+            value='first option, second option',
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        target_field = TaskField.objects.create(
+            name='Target Field',
+            api_name='target-field',
+            type=FieldType.STRING,
+            workflow=workflow,
+            task=task,
+            account=account,
+            is_hidden=True,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=target_field,
+            name='Show when equals all options',
+            type=FieldRuleType.SHOW,
+            order=1,
+            api_name='ruleset-chk-equal',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-chk-eq',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=group_or,
+            field=source_field.api_name,
+            operator=FieldRuleOperator.EQUAL,
+            value='second option, first option',
+            api_name='group-and-chk-eq',
+        )
+
+        # act
+        FieldRuleCheckService(
+            workflow_id=workflow.id,
+        ).apply_rulesets([ruleset])
+
+        # assert
+        target_field.refresh_from_db()
+        assert target_field.is_hidden is False
+
+    def test_show_rule__user_field_with_group_id__equal(self):
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+
+        source_field = TaskField.objects.create(
+            name='User Source',
+            api_name='user-source',
+            type=FieldType.USER,
+            group_id=42,
+            user_id=None,
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        target_field = TaskField.objects.create(
+            name='Target Field',
+            api_name='target-field',
+            type=FieldType.STRING,
+            workflow=workflow,
+            task=task,
+            account=account,
+            is_hidden=True,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=target_field,
+            name='Show when group is 42',
+            type=FieldRuleType.SHOW,
+            order=1,
+            api_name='ruleset-usr-grp',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-usr',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=group_or,
+            field=source_field.api_name,
+            operator=FieldRuleOperator.EQUAL,
+            value='42',
+            api_name='group-and-usr',
+        )
+
+        # act
+        FieldRuleCheckService(
+            workflow_id=workflow.id,
+        ).apply_rulesets([ruleset])
+
+        # assert
+        target_field.refresh_from_db()
+        assert target_field.is_hidden is False
+
+    def test_show_rule__user_field_with_group_id__not_equal(self):
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+
+        source_field = TaskField.objects.create(
+            name='User Source',
+            api_name='user-source',
+            type=FieldType.USER,
+            group_id=42,
+            user_id=None,
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        target_field = TaskField.objects.create(
+            name='Target Field',
+            api_name='target-field',
+            type=FieldType.STRING,
+            workflow=workflow,
+            task=task,
+            account=account,
+            is_hidden=True,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=target_field,
+            name='Show when group is not 99',
+            type=FieldRuleType.SHOW,
+            order=1,
+            api_name='ruleset-usr-grp-neq',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-usr-neq',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=group_or,
+            field=source_field.api_name,
+            operator=FieldRuleOperator.NOT_EQUAL,
+            value='99',
+            api_name='group-and-usr-neq',
+        )
+
+        # act
+        FieldRuleCheckService(
+            workflow_id=workflow.id,
+        ).apply_rulesets([ruleset])
+
+        # assert
+        target_field.refresh_from_db()
+        assert target_field.is_hidden is False

@@ -24,6 +24,7 @@ from src.notifications.tasks import (
 from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
+    FieldRuleType,
     PerformerType,
     TaskStatus,
     WorkflowStatus,
@@ -35,7 +36,7 @@ from src.processes.models.workflows.task import (
     Task,
     TaskPerformer,
 )
-from src.processes.models.workflows.fields import FieldRuleSet, TaskField
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.queries import GetTaskPerformersQuery
 from src.storage.utils import reassign_restricted_permissions_for_task
@@ -975,9 +976,11 @@ class WorkflowActionService:
             FieldRuleCheckService(
                 workflow_id=self.workflow.id,
             ).apply_rulesets(
-                FieldRuleSet.objects
+                self.workflow.field_rulesets
                 .filter(
-                    Q(field__task=task) | Q(field__fieldset__task=task),
+                    Q(type=FieldRuleType.SHOW)
+                    | Q(field__task=task)
+                    | Q(field__fieldset__task=task),
                     field__is_deleted=False,
                 )
                 .select_related('field')

@@ -176,20 +176,27 @@ class FieldRuleCheckService:
             return _parse_date(source.value), _parse_date(raw_value)
 
         if source.type == FieldType.CHECKBOX:
-            field_val = source.value.split(',') if source.value else []
+            field_val = {
+                v.strip() for v in source.value.split(',') if v.strip()
+            } if source.value else set()
             if operator in self.EQUALITY_OPERATORS:
-                rule_val = [raw_value] if raw_value is not None else []
+                rule_val = {
+                    v.strip() for v in raw_value.split(',') if v.strip()
+                } if raw_value else set()
+            elif operator in self.UNARY_OPERATORS:
+                rule_val = None
             else:
-                rule_val = raw_value
+                rule_val = (
+                    raw_value.strip()
+                    if isinstance(raw_value, str)
+                    else raw_value
+                )
             return field_val, rule_val
 
         if source.type == FieldType.USER:
+            field_val = source.user_id or source.group_id or None
             if operator in self.UNARY_OPERATORS:
-                field_val = (
-                    source.user_id or source.group_id or None
-                )
                 return field_val, None
-            field_val = source.user_id or None
             try:
                 rule_val = int(raw_value) if raw_value else None
             except (ValueError, TypeError):
