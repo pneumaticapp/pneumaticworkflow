@@ -22,12 +22,25 @@ backend, file service -> Redis stream -> collector --OTLP/HTTP--> Loki <- Grafan
 The files of the `logging` directory are deployed to a separate server, the
 storage machine, not to the machine that runs Pneumatic. Each stack has its own
 compose file and its own `.env`, and neither is connected to the root
-`docker-compose.yml` / `docker-compose.src.yml`: they are started by hand on
-the storage machine with `docker compose` from their own directory.
+`docker-compose.yml` / `docker-compose.src.yml`. Run them on the storage
+machine with `docker compose` from their own directory, manually or through
+the deployment automation described below.
 
 Put the `logging` directory on the storage machine (a checkout of the
 repository or a copy of the directory). `logging/grafana` mounts
 `../loki/loki-config.yaml`, so keep `grafana` and `loki` side by side.
+
+## Staging and production deployment
+
+See [the deployment guide](PRODUCTION.md) for environment selection, the
+Loki/Grafana and Elasticsearch/Kibana variants, deploy-config changes,
+deployment order, manual delivery checks and rollback. Keep actual addresses,
+keys and passwords in deployment settings.
+
+The current Ansible logging role deploys Loki/Grafana; Elasticsearch needs
+the manual setup below and additional Ansible support described in the guide.
+Check application readiness and event delivery manually after deployment;
+backend deployment has no storage or collector readiness gate.
 
 ## Stacks
 
