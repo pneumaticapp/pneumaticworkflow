@@ -37,7 +37,7 @@ from src.processes.services.events import (
 from src.processes.services.tasks.checklist import (
     ChecklistService,
 )
-from src.processes.services.tasks.field import (
+from src.processes.services.tasks.fields.field import (
     TaskFieldService,
 )
 from src.processes.services.tasks.mixins import (

@@ -27,7 +27,7 @@ from src.processes.models.workflows.fields import (
 from src.processes.services.tasks.exceptions import (
     TaskFieldException,
 )
-from src.processes.services.tasks.field import (
+from src.processes.services.tasks.fields.field import (
     FieldData,
     TaskFieldService,
 )
@@ -217,7 +217,7 @@ def test_create_instance__task_field__ok(mocker):
     user_id = 123
     group_id = 321
     get_valid_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_value',
         return_value=FieldData(
             value=value,
@@ -278,7 +278,7 @@ def test_create_instance__kickoff_field__ok(mocker):
     value = 'https://john.cena/john.cena'
     markdown_value = '[john.cena](https://john.cena/john.cena)'
     get_valid_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_value',
         return_value=FieldData(
             value=value,
@@ -326,7 +326,7 @@ def test_create_instance__skip_value__ok(mocker):
     user_id = 123
     group_id = 321
     get_valid_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_value',
         return_value=FieldData(
             value=value,
@@ -404,7 +404,7 @@ def test_create_selections__ok(
         return_value=None,
     )
     create_selection_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'SelectionService.create',
     )
 
@@ -465,7 +465,7 @@ def test_create_selections__not_selection_template__skip(mocker):
         return_value=None,
     )
     create_selection_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'SelectionService.create',
     )
 
@@ -870,15 +870,15 @@ def test__create_related__file_type_not_skip__ok(mocker):
         account=account,
     )
     link_new_attachments_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
     create_selections_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._create_selections',
     )
     link_rules_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_rules',
     )
     service = TaskFieldService(instance=task_field, user=user)
@@ -923,15 +923,15 @@ def test__create_related__file_type_skip__skip(mocker):
         account=account,
     )
     link_new_attachments_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
     create_selections_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._create_selections',
     )
     link_rules_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_rules',
     )
     service = TaskFieldService(instance=task_field, user=user)
@@ -975,15 +975,15 @@ def test__create_related__selection_type__ok(mocker):
         account=account,
     )
     link_new_attachments_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
     create_selections_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._create_selections',
     )
     link_rules_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_rules',
     )
     service = TaskFieldService(instance=task_field, user=user)
@@ -1025,15 +1025,15 @@ def test__create_related__other_type__skip(mocker):
         account=account,
     )
     link_new_attachments_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
     create_selections_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._create_selections',
     )
     link_rules_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_rules',
     )
     service = TaskFieldService(instance=task_field, user=user)
@@ -1075,15 +1075,15 @@ def test__create_related__with_rules__ok(mocker):
         account=account,
     )
     link_new_attachments_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
     create_selections_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._create_selections',
     )
     link_rules_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_rules',
     )
     service = TaskFieldService(instance=task_field, user=user)
@@ -1121,7 +1121,7 @@ def test_partial_update__ok(mocker):
     user_id = 123
     group_id = 321
     get_valid_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_value',
         return_value=FieldData(
             value=value,
@@ -1132,7 +1132,7 @@ def test_partial_update__ok(mocker):
         ),
     )
     link_new_attachments_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
     service = TaskFieldService(
@@ -1184,7 +1184,7 @@ def test_partial_update__type_file__ok(mocker):
     clear_value = 'new_file_456.jpg'
     markdown_value = 'File: new_file_456.jpg'
     get_valid_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_value',
         return_value=FieldData(
             value=value,
@@ -1193,7 +1193,7 @@ def test_partial_update__type_file__ok(mocker):
         ),
     )
     link_new_attachments_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
 
@@ -1253,7 +1253,7 @@ def test_partial_update__type_file_null_value__ok(mocker):
     raw_value = None
 
     get_valid_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_value',
         return_value=FieldData(
             value=value,
@@ -1263,7 +1263,7 @@ def test_partial_update__type_file_null_value__ok(mocker):
     )
 
     link_new_attachments_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
 
@@ -1322,7 +1322,7 @@ def test_remove_unused_attachments__event_linked_attachment_preserved(
         event=comment_event,
     )
     get_valid_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_value',
         return_value=FieldData(
             value='',
@@ -1331,11 +1331,11 @@ def test_remove_unused_attachments__event_linked_attachment_preserved(
         ),
     )
     link_new_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
     create_selections_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._create_selections',
     )
     service = TaskFieldService(
@@ -1384,7 +1384,7 @@ def test_remove_unused_attachments__field_only_attachment_deleted(mocker):
         event=None,
     )
     get_valid_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_value',
         return_value=FieldData(
             value='',
@@ -1393,11 +1393,11 @@ def test_remove_unused_attachments__field_only_attachment_deleted(mocker):
         ),
     )
     link_new_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
     create_selections_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._create_selections',
     )
     service = TaskFieldService(
@@ -1451,7 +1451,7 @@ def test_remove_unused_attachments__comment_attachment_unchanged(mocker):
         event=comment_event,
     )
     get_valid_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_value',
         return_value=FieldData(
             value='',
@@ -1460,7 +1460,7 @@ def test_remove_unused_attachments__comment_attachment_unchanged(mocker):
         ),
     )
     link_new_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
     service = TaskFieldService(
@@ -1494,16 +1494,16 @@ def test__partial_update__no_value_kwarg__ok(mocker):
         account=account,
     )
     get_valid_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_value',
         return_value=FieldData(),
     )
     remove_unused_attachments_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._remove_unused_attachments',
     )
     link_new_attachments_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
     service = TaskFieldService(instance=task_field, user=user)
@@ -1570,7 +1570,7 @@ def test_get_valid_string_value__ok(mocker):
     raw_value = 'text 123'
     clear_value = 'clear value'
     clear_markdown_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'MarkdownService.clear',
         return_value=clear_value,
     )
@@ -1605,7 +1605,7 @@ def test_get_valid_string_value__invalid_value__raise_exception(
     )
     service = TaskFieldService(instance=task_field)
     clear_markdown_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'MarkdownService.clear',
     )
 
@@ -1655,7 +1655,7 @@ def test_get_valid_text_value__ok(mocker):
     raw_value = 'text 123'
     clear_value = 'clear value'
     clear_markdown_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'MarkdownService.clear',
         return_value=clear_value,
     )
@@ -1690,7 +1690,7 @@ def test_get_valid_text_value__invalid_value__raise_exception(
     )
     service = TaskFieldService(instance=task_field)
     clear_markdown_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'MarkdownService.clear',
     )
 
@@ -1711,7 +1711,7 @@ def test_get_valid_dropdown_value__ok(mocker):
     raw_value = 'api_name'
     result_mock = mocker.Mock()
     get_valid_radio_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_radio_value',
         return_value=result_mock,
     )
@@ -1742,13 +1742,13 @@ def test_get_valid_radio_value__ok(mocker):
     raw_value = value_1
     allowed_values = {value_1, value_2}
     get_selections_valid_values_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_selections_values',
         return_value=allowed_values,
     )
     clear_value = 'clear value'
     clear_markdown_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'MarkdownService.clear',
         return_value=clear_value,
     )
@@ -1781,7 +1781,7 @@ def test_get_valid_radio_value__not_string__raise_exception(raw_value, mocker):
         account=user.account,
     )
     get_selections_valid_values_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_selections_values',
     )
     service = TaskFieldService(instance=task_field)
@@ -1814,7 +1814,7 @@ def test_get_valid_radio_value__not_exists_selection__raise_exception(mocker):
     value_2 = 'first option'
     allowed_values = {value_1, value_2}
     get_selections_valid_values_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_selections_values',
         return_value=allowed_values,
     )
@@ -1848,13 +1848,13 @@ def test_get_valid_checkbox_value__one_value__ok(mocker):
     raw_value = [value_1]
     allowed_values = {value_1, value_2}
     get_selections_valid_values_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_selections_values',
         return_value=allowed_values,
     )
     clear_value = 'clear value'
     clear_markdown_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'MarkdownService.clear',
         return_value=clear_value,
     )
@@ -1890,13 +1890,13 @@ def test_get_valid_checkbox_value__many_values__ok(mocker):
     value = f'{value_1}, {value_2}'
     allowed_values = {value_1, value_2}
     get_selections_valid_values_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_selections_values',
         return_value=allowed_values,
     )
     clear_value = 'clear value'
     clear_markdown_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'MarkdownService.clear',
         return_value=clear_value,
     )
@@ -1931,7 +1931,7 @@ def test__get_valid_checkbox_value__not_list__raise_exception(mocker):
         account=account,
     )
     get_selections_values_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_selections_values',
     )
     service = TaskFieldService(instance=task_field, user=user)
@@ -1964,7 +1964,7 @@ def test__get_valid_checkbox_value__element_not_str__raise_exception(mocker):
         account=account,
     )
     get_selections_values_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_selections_values',
     )
     service = TaskFieldService(instance=task_field, user=user)
@@ -1998,7 +1998,7 @@ def test__get_valid_checkbox_value__not_in_allowed__raise_exception(mocker):
     )
     allowed_values = {'allowed_1', 'allowed_2'}
     get_selections_values_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_selections_values',
         return_value=allowed_values,
     )
@@ -2596,7 +2596,7 @@ def test__get_valid_value__required_and_null_value__raise_exception(
         account=account,
     )
     get_valid_string_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_string_value',
     )
     service = TaskFieldService(instance=task_field, user=user)
@@ -2632,7 +2632,7 @@ def test__get_valid_value__not_required_and_null_value__ok(
         account=account,
     )
     get_valid_string_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_string_value',
     )
     service = TaskFieldService(instance=task_field, user=user)

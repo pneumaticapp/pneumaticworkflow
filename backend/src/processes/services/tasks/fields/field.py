@@ -18,7 +18,7 @@ from src.processes.models.templates.fields import (
 from src.processes.models.workflows.fields import TaskField
 from src.processes.services.base import BaseWorkflowService
 from src.processes.services.tasks.exceptions import TaskFieldException
-from src.processes.services.tasks.field_ruleset import (
+from src.processes.services.tasks.fields.field_ruleset import (
     FieldRuleSetService,
 )
 from src.processes.services.tasks.selection import SelectionService

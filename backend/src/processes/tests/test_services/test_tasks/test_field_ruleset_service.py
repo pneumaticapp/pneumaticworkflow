@@ -16,8 +16,8 @@ from src.processes.models.templates.fields import (
 from src.processes.models.workflows.fields import (
     TaskField,
 )
-from src.processes.services.tasks.field import TaskFieldService
-from src.processes.services.tasks.field_ruleset import (
+from src.processes.services.tasks.fields.field import TaskFieldService
+from src.processes.services.tasks.fields.field_ruleset import (
     FieldRuleSetService,
 )
 from src.processes.tests.fixtures import (
@@ -216,7 +216,7 @@ def test_task_field_service__create__calls_field_ruleset_service(mocker):
         return_value=None,
     )
     field_ruleset_service_create_mock = mocker.patch(
-        'src.processes.services.tasks.field_ruleset.'
+        'src.processes.services.tasks.fields.field_ruleset.'
         'FieldRuleSetService.create',
     )
     service = TaskFieldService(user=user)

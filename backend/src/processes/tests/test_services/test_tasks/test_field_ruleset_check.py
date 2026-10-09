@@ -19,7 +19,7 @@ from src.processes.models.workflows.fields import (
 from src.processes.services.exceptions import (
     FieldRuleCheckServiceException,
 )
-from src.processes.services.tasks.field_ruleset_check import (
+from src.processes.services.tasks.fields.field_ruleset_check import (
     FieldRuleCheckService,
     FieldRuleOperations,
 )

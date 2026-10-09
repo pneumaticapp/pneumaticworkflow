@@ -7,7 +7,7 @@ from src.processes.messages.fieldset import MSG_FS_0007, MSG_FS_0012
 from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.models.workflows.fieldset import FieldSet
 from src.processes.services.exceptions import FieldsetServiceException
-from src.processes.services.tasks.field import TaskFieldService
+from src.processes.services.tasks.fields.field import TaskFieldService
 from src.processes.services.workflows.fieldsets.fieldset_rule import (
     FieldSetRuleService,
 )

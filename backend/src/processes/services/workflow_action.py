@@ -47,10 +47,10 @@ from src.processes.services.condition_check.service import (
 from src.processes.services.events import (
     WorkflowEventService,
 )
-from src.processes.services.tasks.field import (
+from src.processes.services.tasks.fields.field import (
     TaskFieldService,
 )
-from src.processes.services.tasks.field_ruleset_check import (
+from src.processes.services.tasks.fields.field_ruleset_check import (
     FieldRuleCheckService,
 )
 from src.processes.services.tasks.task import TaskService

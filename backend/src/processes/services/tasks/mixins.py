@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional
 
 from django.contrib.auth import get_user_model
 
-from src.processes.services.tasks.field_ruleset import (
+from src.processes.services.tasks.fields.field_ruleset import (
     FieldRuleSetVersionService,
 )
 from src.processes.services.workflows.fieldsets.fieldset_ruleset import (

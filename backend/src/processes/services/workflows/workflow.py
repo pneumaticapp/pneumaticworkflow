@@ -21,7 +21,7 @@ from src.processes.serializers.workflows.kickoff_value import (
 from src.processes.services.base import (
     BaseWorkflowService,
 )
-from src.processes.services.tasks.field_ruleset_check import (
+from src.processes.services.tasks.fields.field_ruleset_check import (
     FieldRuleCheckService,
 )
 from src.processes.services.tasks.task import TaskService

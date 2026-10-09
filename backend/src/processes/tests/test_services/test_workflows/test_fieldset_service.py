@@ -21,7 +21,7 @@ from src.processes.models.workflows.fieldset import (
     FieldSetRuleGroupOr,
 )
 from src.processes.services.exceptions import FieldsetServiceException
-from src.processes.services.tasks.field import TaskFieldService
+from src.processes.services.tasks.fields.field import TaskFieldService
 from src.processes.services.workflows.fieldsets.fieldset import (
     FieldSetService,
 )
@@ -204,7 +204,7 @@ def test__create_fields__default_params__ok(mocker):
         return_value=None,
     )
     task_field_service_create_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService.create',
     )
 
@@ -267,7 +267,7 @@ def test__create_fields__with_fields_data__ok(mocker):
         return_value=None,
     )
     task_field_service_create_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService.create',
     )
 
@@ -330,7 +330,7 @@ def test__create_fields__skip_value_true__ok(mocker):
         return_value=None,
     )
     task_field_service_create_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService.create',
     )
 
