@@ -119,7 +119,6 @@ class WorkflowService(
             description=instance_template.description,
             account_id=instance_template.account_id,
             finalizable=instance_template.finalizable,
-            status_updated=timezone.now(),
             version=instance_template.version,
             reminder_notification=instance_template.reminder_notification,
             completion_notification=instance_template.completion_notification,

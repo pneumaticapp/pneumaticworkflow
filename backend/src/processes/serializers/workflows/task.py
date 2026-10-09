@@ -111,7 +111,7 @@ class TaskSerializer(serializers.ModelSerializer):
             'date_started_tsp',
             'date_completed_tsp',
             'due_date_tsp',
-            'is_completed',     # TODO deprecated
+            'is_completed',
             'performers',
             'is_urgent',
             'checklists_marked',
@@ -130,7 +130,6 @@ class TaskSerializer(serializers.ModelSerializer):
     workflow = serializers.SerializerMethodField()
     output = TaskFieldSerializer(many=True)
     delay = serializers.SerializerMethodField(required=False, allow_null=True)
-    #  TODO Remove in 41258
     is_completed = serializers.SerializerMethodField(read_only=True)
     is_urgent = serializers.BooleanField(read_only=True)
     checklists_marked = serializers.IntegerField(read_only=True)
@@ -146,7 +145,8 @@ class TaskSerializer(serializers.ModelSerializer):
         return get_performers_for_task(instance)
 
     def get_is_completed(self, instance):
-        #  TODO Remove in 41258
+        # Cannot be derived from `performers`: a group member completion is
+        # stored in a hidden GROUP_USER row, which is not serialized there.
         if instance.is_completed:
             return True
         if self.context.get('user'):
