@@ -411,7 +411,6 @@ class TaskUpdateVersionService(
             .by_task(self.instance.id)
             .get_user_ids_set()
         )
-        self.instance.update_raw_performers_from_task_template(data)
         (
             created_user_ids,
             created_group_ids,
@@ -564,15 +563,16 @@ class TaskUpdateVersionService(
             fields_values=tasks_fields_values,
         )
         self._update_delay(new_duration=data.get('delay'))
-        # Don't snooze active tasks if delay created
+        # Sync raw performers and due date for all task statuses.
+        # After a workflow returns, conditions may change and skipped tasks
+        # can be launched, so raw data must be current regardless of status.
+        self.instance.update_raw_performers_from_task_template(data)
+        self._update_raw_due_date(data=data.get('raw_due_date'))
         if self.instance.is_active:
             self._update_performers(data)
-            self._update_raw_due_date(data=data.get('raw_due_date'))
             service = TaskService(instance=self.instance, user=self.user)
             service.set_due_date_from_template()
         elif self.instance.is_pending:
-            self.instance.update_raw_performers_from_task_template(data)
-            self._update_raw_due_date(data=data.get('raw_due_date'))
             self.instance.taskperformer_set.exclude_directly_deleted(
                 ).update(
                     is_completed=False,
