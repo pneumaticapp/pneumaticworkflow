@@ -2,7 +2,7 @@ import pytest
 
 from src.accounts.enums import BillingPlanType
 from src.processes.enums import OwnerRole, OwnerType, FieldType, \
-    FieldSetRuleType
+    FieldSetRuleOperator
 from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
@@ -468,12 +468,13 @@ def test_titles_by_owners__kickoff_fieldset__ok(api_client):
         description='Enter your personal information',
         api_name='fieldset-personal',
         order=5,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='1',
     )
     fieldset_field = fieldset.fields.first()
-    rule = fieldset.rules.all().first()
-    rule.fields.add(fieldset_field)
+    ruleset = fieldset.rulesets.first()
+    ruleset.fields.add(fieldset_field)
+    group_and = ruleset.groups_or.first().groups_and.first()
     api_client.token_authenticate(user)
 
     # act
@@ -491,13 +492,18 @@ def test_titles_by_owners__kickoff_fieldset__ok(api_client):
     assert fieldset_data['api_name'] == fieldset.api_name
     assert fieldset_data['label_position'] == fieldset.label_position
     assert fieldset_data['layout'] == fieldset.layout
-    assert len(fieldset_data['rules']) == 1
+    assert len(fieldset_data['rulesets']) == 1
 
-    rule_data = fieldset_data['rules'][0]
-    assert rule_data['type'] == rule.type
-    assert rule_data['value'] == rule.value
-    assert rule_data['api_name'] == rule.api_name
+    rule_data = fieldset_data['rulesets'][0]
+    assert rule_data['type'] == ruleset.type
+    assert rule_data['api_name'] == ruleset.api_name
     assert rule_data['fields'] == [fieldset_field.api_name]
+    assert rule_data['groups_or'][0]['groups_and'][0]['operator'] == (
+        group_and.operator
+    )
+    assert rule_data['groups_or'][0]['groups_and'][0]['value'] == (
+        group_and.value
+    )
 
     assert len(fieldset_data['fields']) == 1
     field_data = fieldset_data['fields'][0]

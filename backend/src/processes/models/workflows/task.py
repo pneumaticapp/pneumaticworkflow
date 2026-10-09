@@ -31,7 +31,9 @@ from src.processes.models.mixins import (
     TaskRawPerformersMixin,
 )
 from src.processes.models.workflows.workflow import Workflow
-from src.processes.queries import GetTaskPerformersQuery
+from src.processes.queries import (
+    GetTaskPerformersQuery,
+)
 from src.processes.querysets import (
     DelayBaseQuerySet,
     TaskPerformerQuerySet,

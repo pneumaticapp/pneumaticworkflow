@@ -96,6 +96,7 @@ from src.processes.services.events import (
 )
 from src.processes.services.exceptions import (
     CommentServiceException,
+    FieldRuleCheckServiceException,
     WorkflowActionServiceException,
     FieldsetServiceException,
 )
@@ -319,6 +320,7 @@ class TaskViewSet(
                         fieldset__isnull=True,
                     ).prefetch_related(
                         'storage_attachments',
+                        'rulesets__groups_or__groups_and',
                         Prefetch(
                             'selections',
                             queryset=FieldSelection.objects.order_by('id'),
@@ -341,6 +343,9 @@ class TaskViewSet(
                     queryset=DatasetItem.objects.order_by('order'),
                     to_attr='dataset_values',
                 ),
+                'fieldsets__rulesets__groups_or__groups_and',
+                'fieldsets__rulesets__fields',
+                'fieldsets__fields__rulesets__groups_or__groups_and',
             ).select_related(
                 'workflow',
             )
@@ -709,6 +714,11 @@ class TaskViewSet(
                 fields_values=serializer.validated_data.get('output'),
             )
             service.check_delay_workflow()
+        except FieldRuleCheckServiceException as ex:
+            raise_validation_error(
+                message=ex.message,
+                api_name=ex.field_api_name,
+            )
         except (
             WorkflowActionServiceException,
             FieldsetServiceException,
@@ -737,6 +747,7 @@ class TaskViewSet(
                             to_attr='dataset_values',
                         ),
                         'storage_attachments',
+                        'rulesets__groups_or__groups_and',
                     ),
                 ),
                 Prefetch(
@@ -749,6 +760,9 @@ class TaskViewSet(
                     queryset=DatasetItem.objects.order_by('order'),
                     to_attr='dataset_values',
                 ),
+                'fieldsets__rulesets__groups_or__groups_and',
+                'fieldsets__rulesets__fields',
+                'fieldsets__fields__rulesets__groups_or__groups_and',
             ).get(pk=task.pk),
             context={'user': request.user},
         )

@@ -52,12 +52,16 @@ from src.processes.serializers.workflows.mixins import (
 from src.processes.serializers.workflows.task import (
     WorkflowCurrentTaskSerializer,
 )
+from src.processes.services.exceptions import (
+    FieldRuleCheckServiceException,
+)
 from src.processes.services.urgent import (
     UrgentService,
 )
 from src.processes.services.workflow_permissions import (
     WorkflowPermissionService,
 )
+from src.processes.services.workflows.workflow import WorkflowService
 from src.processes.utils.common import (
     contains_fields_vars,
     insert_fields_values_to_text,
@@ -283,6 +287,16 @@ class WorkflowUpdateSerializer(
                 self._update_kickoff_value(
                     **update_kickoff_kwargs,
                 )
+                try:
+                    WorkflowService(
+                        instance=self.instance,
+                        user=self.context['user'],
+                    ).apply_field_rulesets()
+                except FieldRuleCheckServiceException as ex:
+                    self.raise_validation_error(
+                        message=ex.message,
+                        api_name=ex.field_api_name,
+                    )
                 if contains_fields_vars(self.instance.name_template):
                     fields_values = self.instance.get_kickoff_fields_values()
                     self.instance.name = insert_fields_values_to_text(
@@ -403,6 +417,7 @@ class WorkflowDetailsSerializer(
                 queryset=DatasetItem.objects.order_by('order'),
                 to_attr='dataset_values',
             ),
+            'rulesets__groups_or__groups_and',
         ]
         kickoff = (
             KickoffValue.objects
@@ -420,6 +435,8 @@ class WorkflowDetailsSerializer(
                         *field_prefetches,
                     ),
                 ),
+                'fieldsets__rulesets__groups_or__groups_and',
+                'fieldsets__rulesets__fields',
             ).first()
         )
         if kickoff:

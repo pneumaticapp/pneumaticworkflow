@@ -24,6 +24,7 @@ from src.notifications.tasks import (
 from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
+    FieldRuleType,
     PerformerType,
     TaskStatus,
     WorkflowStatus,
@@ -46,8 +47,11 @@ from src.processes.services.condition_check.service import (
 from src.processes.services.events import (
     WorkflowEventService,
 )
-from src.processes.services.tasks.field import (
+from src.processes.services.tasks.fields.field import (
     TaskFieldService,
+)
+from src.processes.services.tasks.fields.field_ruleset_check import (
+    FieldRuleCheckService,
 )
 from src.processes.services.tasks.task import TaskService
 from src.processes.services.workflows.fieldsets.fieldset import FieldSetService
@@ -1014,6 +1018,21 @@ class WorkflowActionService:
                         auth_type=self.auth_type,
                     )
                     service.validate_rules()
+
+            FieldRuleCheckService(
+                workflow_id=self.workflow.id,
+            ).apply_rulesets(
+                self.workflow.field_rulesets
+                .filter(
+                    Q(type=FieldRuleType.SHOW)
+                    | Q(field__task=task)
+                    | Q(field__fieldset__task=task),
+                    field__is_deleted=False,
+                )
+                .select_related('field')
+                .prefetch_related('groups_or__groups_and'),
+            )
+
             AnalyticService.task_completed(
                 user=self.user,
                 is_superuser=self.is_superuser,
