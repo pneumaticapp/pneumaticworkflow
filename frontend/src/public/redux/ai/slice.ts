@@ -1,24 +1,28 @@
-import { createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAction, createSlice } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 
-import { IAIStore } from '../../types/redux';
-import {
+import type { IAIStore } from '../../types/redux';
+import type {
   IAIAgent,
   IAIModel,
   IAIProvider,
   ICreateAIAgentRequest,
   ICreateAIProviderByVendorRequest,
   ICreateAIProviderRequest,
+  IAIVendor,
 } from '../../types/ai';
 
 const initialState: IAIStore = {
   providers: {
-    isLoading: false,
-    isLoaded: false,
+    isLoading: true,
     list: [],
   },
   agents: {
+    isLoading: true,
+    list: [],
+  },
+  vendors: {
     isLoading: false,
-    isLoaded: false,
     list: [],
   },
   models: {
@@ -34,6 +38,7 @@ export const createAIProvider = createAction<ICreateAIProviderRequest>('ai/creat
 export const createAIProviderByVendor = createAction<ICreateAIProviderByVendorRequest>('ai/createAIProviderByVendor');
 export const deleteAIProvider = createAction<number>('ai/deleteAIProvider');
 export const loadAIProviderModels = createAction<number>('ai/loadAIProviderModels');
+export const loadAIVendors = createAction<void>('ai/loadAIVendors');
 
 export const loadAIAgents = createAction<void>('ai/loadAIAgents');
 export const createAIAgent = createAction<ICreateAIAgentRequest>('ai/createAIAgent');
@@ -48,7 +53,7 @@ const aiSlice = createSlice({
       state.providers.isLoading = true;
     },
     loadAIProvidersSuccess: (state, action: PayloadAction<IAIProvider[]>) => {
-      state.providers = { isLoading: false, isLoaded: true, list: action.payload };
+      state.providers = { isLoading: false, list: action.payload };
     },
     loadAIProvidersFailed: (state) => {
       state.providers.isLoading = false;
@@ -58,10 +63,20 @@ const aiSlice = createSlice({
       state.agents.isLoading = true;
     },
     loadAIAgentsSuccess: (state, action: PayloadAction<IAIAgent[]>) => {
-      state.agents = { isLoading: false, isLoaded: true, list: action.payload };
+      state.agents = { isLoading: false, list: action.payload };
     },
     loadAIAgentsFailed: (state) => {
       state.agents.isLoading = false;
+    },
+
+    loadAIVendorsStarted: (state) => {
+      state.vendors.isLoading = true;
+    },
+    loadAIVendorsSuccess: (state, action: PayloadAction<IAIVendor[]>) => {
+      state.vendors = { isLoading: false, list: action.payload };
+    },
+    loadAIVendorsFailed: (state) => {
+      state.vendors.isLoading = false;
     },
 
     loadAIProviderModelsStarted: (state, action: PayloadAction<number>) => {
@@ -100,6 +115,9 @@ export const {
   loadAIAgentsStarted,
   loadAIAgentsSuccess,
   loadAIAgentsFailed,
+  loadAIVendorsStarted,
+  loadAIVendorsSuccess,
+  loadAIVendorsFailed,
   loadAIProviderModelsStarted,
   loadAIProviderModelsSuccess,
   loadAIProviderModelsFailed,

@@ -39,8 +39,7 @@ export function getUsersQueryString(config?: IGetUsersConfig) {
   const queryString = [
     type && `type=${type}`,
     isArrayWithItems(status) && `status=${status.join(',')}`,
-    // Compared against undefined: false is a meaningful value here and must still be sent.
-    isAi !== undefined && `is_ai=${isAi}`,
+    typeof isAi === 'boolean' && `is_ai=${isAi}`,
   ]
     .filter(Boolean)
     .join('&');

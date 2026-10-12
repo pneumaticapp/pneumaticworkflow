@@ -27,7 +27,7 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
 
   useEffect(() => {
     const getActiveTabByRoute = () => {
-      if (checkSomeRouteIsActive(ERoutes.Groups) || checkSomeRouteIsActive(ERoutes.GroupDetails)) {
+      if (checkSomeRouteIsActive(ERoutes.Groups, ERoutes.GroupDetails)) {
         return TeamPages.Groups;
       }
       if (checkSomeRouteIsActive(ERoutes.TeamAIAgents)) {
