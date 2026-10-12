@@ -1289,7 +1289,7 @@ export const ruMessages = {
   'file-service.download-failed': 'Не удалось скачать файл',
   'ai-providers.title': 'AI-провайдеры',
   'ai-providers.add': 'Добавить AI-провайдера',
-  'ai-providers.loading': 'Загрузка AI-провайдеров…',
+  'ai-providers.validation-required': 'Обязательное поле',
   'ai-providers.empty': 'AI-провайдеров пока нет. Добавьте провайдера, чтобы создавать AI-агентов.',
   'ai-providers.delete': 'Удалить',
   'ai-providers.usage': 'Используется: {agents}',

@@ -1396,7 +1396,7 @@ export const enMessages = {
 
   'ai-providers.title': 'AI providers',
   'ai-providers.add': 'Add AI provider',
-  'ai-providers.loading': 'Loading AI providers…',
+  'ai-providers.validation-required': 'This field is required',
   'ai-providers.empty': 'No AI providers yet. Add one to start creating AI agents.',
   'ai-providers.delete': 'Delete',
   'ai-providers.usage': 'Used by: {agents}',

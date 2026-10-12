@@ -8,8 +8,8 @@ import { AIProviders } from '../AIProviders';
 import { deleteAIProvider, loadAIProviders } from '../../../../redux/ai/slice';
 import { EAIVendor, IAIProvider } from '../../../../types/ai';
 
-jest.mock('../../../../api/ai', () => ({
-  getAIVendors: jest.fn().mockResolvedValue([]),
+jest.mock('../AIProvidersSkeleton', () => ({
+  AIProvidersSkeleton: () => <div data-testid="ai-providers-skeleton" />,
 }));
 
 jest.mock('../../../UI', () => ({
@@ -28,11 +28,29 @@ jest.mock('../../../UI/Buttons/Button', () => ({
   ),
 }));
 
-jest.mock('../../../UI/Fields/InputField', () => ({
-  InputField: ({ value, onChange, placeholder, 'data-testid': testId }: any) => (
-    <input value={value} onChange={onChange} placeholder={placeholder} data-testid={testId} />
-  ),
-}));
+jest.mock('../../../UI/Fields/InputField', () => {
+  const { useField } = jest.requireActual('formik');
+
+  return {
+    FormikInputField: ({ name, 'data-testid': testId }: { name: string; 'data-testid'?: string }) => {
+      const [field] = useField(name);
+
+      return <input {...field} data-testid={testId} />;
+    },
+  };
+});
+
+jest.mock('../../../UI/DropdownList', () => {
+  const { useField } = jest.requireActual('formik');
+
+  return {
+    FormikDropdownList: ({ name }: { name: string }) => {
+      const [field] = useField(name);
+
+      return <input {...field} data-testid="ai-provider-vendor-select" />;
+    },
+  };
+});
 
 jest.mock('../../../UI/Typeography/Header', () => ({
   Header: ({ children, className }: any) => <p className={className}>{children}</p>,
@@ -55,14 +73,14 @@ const buildProvider = (overrides: Partial<IAIProvider> = {}): IAIProvider => ({
 
 describe('AIProviders', () => {
   const mockDispatch = jest.fn();
-  const t = (id: string) => intlMock.formatMessage({ id });
 
   const mockAIState = (providers: IAIProvider[], extra: object = {}) => {
     (useSelector as unknown as jest.Mock).mockImplementation((selectorFn) =>
       selectorFn({
         ai: {
-          providers: { isLoading: false, isLoaded: true, list: providers },
-          agents: { isLoading: false, isLoaded: false, list: [] },
+          providers: { isLoading: false, list: providers },
+          agents: { isLoading: false, list: [] },
+          vendors: { isLoading: false, list: [] },
           models: { isLoading: false, providerId: null, list: [] },
           isSaving: false,
           ...extra,
@@ -145,8 +163,9 @@ describe('AIProviders', () => {
     (useSelector as unknown as jest.Mock).mockImplementation((selectorFn) =>
       selectorFn({
         ai: {
-          providers: { isLoading: true, isLoaded: false, list: [] },
-          agents: { isLoading: false, isLoaded: false, list: [] },
+          providers: { isLoading: true, list: [] },
+          agents: { isLoading: false, list: [] },
+          vendors: { isLoading: false, list: [] },
           models: { isLoading: false, providerId: null, list: [] },
           isSaving: false,
         },
@@ -155,7 +174,7 @@ describe('AIProviders', () => {
 
     render(<AIProviders />);
 
-    expect(screen.getByText(t('ai-providers.loading'))).toBeInTheDocument();
+    expect(screen.getByTestId('ai-providers-skeleton')).toBeInTheDocument();
     expect(screen.queryByTestId('empty-ai-providers-message')).not.toBeInTheDocument();
   });
 });

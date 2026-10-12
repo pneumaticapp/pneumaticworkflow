@@ -11,6 +11,7 @@ import { deleteAIProvider, loadAIProviders } from '../../../redux/ai/slice';
 import { getAIProvidersState } from '../../../redux/selectors/ai';
 
 import { CreateAIProviderModal } from './CreateAIProviderModal';
+import { AIProvidersSkeleton } from './AIProvidersSkeleton';
 import styles from './AIProviders.css';
 
 const KEY_MASK = '••••••••';
@@ -31,6 +32,7 @@ const AIProviderListItem = React.memo(({ provider, onDelete }: IAIProviderListIt
   const deleteButton = (
     <Button
       type="button"
+      className={styles['providers__delete-btn']}
       onClick={handleDelete}
       size="sm"
       buttonStyle="transparent-black"
@@ -63,7 +65,6 @@ const AIProviderListItem = React.memo(({ provider, onDelete }: IAIProviderListIt
               { agents: provider.usage.map(({ name }) => name).join(', ') },
             )}
           >
-            {/* A disabled button swallows pointer events, so the tooltip hangs on the wrapper. */}
             <div data-testid={`delete-ai-provider-guard-${provider.id}`}>{deleteButton}</div>
           </Tooltip>
         ) : (
@@ -79,7 +80,7 @@ export function AIProviders() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
-  const { list: providers, isLoading, isLoaded } = useSelector(getAIProvidersState);
+  const { list: providers, isLoading } = useSelector(getAIProvidersState);
 
   const [confirmDeleteId, setConfirmDeleteId] = React.useState<number | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
@@ -114,11 +115,9 @@ export function AIProviders() {
         />
       </div>
 
-      {isLoading && !isLoaded && (
-        <p className={styles['providers__loading']}>{formatMessage({ id: 'ai-providers.loading' })}</p>
-      )}
+      {isLoading && <AIProvidersSkeleton />}
 
-      {isLoaded && providers.length === 0 && (
+      {!isLoading && providers.length === 0 && (
         <p className={styles['providers__empty']} data-testid="empty-ai-providers-message">
           {formatMessage({ id: 'ai-providers.empty' })}
         </p>
