@@ -132,7 +132,10 @@
 
   &__tabs {
     margin-bottom: 1.6rem;
-    background-color: var(--pneumatic-color-orange);
+  }
+
+  &__tabs &__tab_active {
+    background: var(--pneumatic-color-orange);
   }
 
   &__fields {

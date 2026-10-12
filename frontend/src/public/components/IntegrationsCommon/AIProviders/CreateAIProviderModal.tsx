@@ -83,6 +83,7 @@ export function CreateAIProviderModal({ isOpen, onClose }: ICreateAIProviderModa
             { id: 'custom', label: formatMessage({ id: 'ai-providers.tab-custom' }) },
           ]}
           containerClassName={styles['create-modal__tabs']}
+          activeTabClassName={styles['create-modal__tab_active']}
           onChange={(tabId) => setActiveTab(tabId as TCreateTab)}
         />
         <Formik
