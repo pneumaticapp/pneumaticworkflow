@@ -20,6 +20,7 @@ from src.processes.messages.template import (
     MSG_PT_0080,
 )
 from src.processes.models.templates.fields import (
+    FieldTemplate,
     FieldTemplateRuleGroupAnd,
     FieldTemplateRuleGroupOr,
     FieldTemplateRuleSet,
@@ -105,8 +106,20 @@ class FieldTemplateRuleGroupAndSerializer(
         return attrs
 
     def additional_validate_value(self, value, data: Dict[str, Any]):
-        field = self.context.get('field')
-        if field and field.type == FieldType.DATE and value:
+        if not value:
+            return
+        source_api_name = data.get('field')
+        if source_api_name:
+            template = self.context.get('template')
+            if not template:
+                return
+            source_field = FieldTemplate.objects.filter(
+                template=template,
+                api_name=source_api_name,
+            ).first()
+        else:
+            source_field = self.context.get('field')
+        if source_field and source_field.type == FieldType.DATE:
             try:
                 datetime.fromtimestamp(int(value), tz=tz.utc)
             except (TypeError, ValueError):

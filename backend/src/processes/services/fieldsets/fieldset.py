@@ -12,6 +12,8 @@ from src.processes.models.templates.fields import (
     FieldTemplateSelection,
 )
 from src.processes.models.templates.fields import (
+    FieldTemplateRuleGroupAnd,
+    FieldTemplateRuleGroupOr,
     FieldTemplateRuleSet,
 )
 from src.processes.models.templates.fieldset import (
@@ -301,11 +303,11 @@ class FieldSetTemplateService(BaseModelService):
                 )
                 for group_or_data in ruleset_data.get('groups_or', []):
                     group_or_data['api_name'] = create_api_name(
-                        FieldSetTemplateRuleGroupOr.api_name_prefix,
+                        FieldTemplateRuleGroupOr.api_name_prefix,
                     )
                     for group_and_data in group_or_data.get('groups_and', []):
                         group_and_data['api_name'] = create_api_name(
-                            FieldSetTemplateRuleGroupAnd.api_name_prefix,
+                            FieldTemplateRuleGroupAnd.api_name_prefix,
                         )
                         old_api_name = group_and_data['field']
                         if old_api_name:

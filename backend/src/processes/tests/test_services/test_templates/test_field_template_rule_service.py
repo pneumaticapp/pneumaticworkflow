@@ -149,12 +149,14 @@ def test__create_instance__explicit_template_id__ok():
     result = service._create_instance(
         field_id=field.id,
         type=FieldRuleType.VALIDATOR,
+        name='Ruleset',
         template_id=template.id,
     )
 
     # assert
     assert result.template_id == template.id
     assert result.field_id == field.id
+    assert result.name == 'Ruleset'
     assert result.type == FieldRuleType.VALIDATOR
 
 
@@ -186,6 +188,7 @@ def test__create_instance__api_name_provided__ok():
     result = service._create_instance(
         field_id=field.id,
         type=FieldRuleType.SHOW,
+        name='Ruleset',
         api_name=api_name,
     )
 
@@ -220,6 +223,7 @@ def test__create_instance__api_name_omitted__ok():
     result = service._create_instance(
         field_id=field.id,
         type=FieldRuleType.SHOW,
+        name='Ruleset',
         api_name='',
     )
 
@@ -256,6 +260,7 @@ def test__create_instance__message_and_order__ok():
     result = service._create_instance(
         field_id=field.id,
         type=FieldRuleType.VALIDATOR,
+        name='Ruleset',
         template_id=template.id,
         message=message,
         order=order,
@@ -398,7 +403,7 @@ def test__validate__operator_not_allowed__raise_exception(
 
     # assert
     assert ex.value.message == pt_messages.MSG_PT_0078(
-        field=field,
+        field=field.name,
         operator=operator,
         field_type=field_type,
     )
@@ -1267,7 +1272,7 @@ def test__create_group_or__default_params__ok(mocker):
     result = service._create_group_or(group_or_data=group_or_data)
 
     # assert
-    assert result.field_rule_id == ruleset.id
+    assert result.ruleset_id == ruleset.id
     assert result.account_id == account.id
     assert result.template_id == template.id
     assert result.api_name.startswith('field-rule-group-or')

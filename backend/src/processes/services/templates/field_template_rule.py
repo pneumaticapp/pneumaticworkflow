@@ -6,6 +6,7 @@ from src.generics.base.service import BaseModelService
 from src.processes.enums import FieldRuleOperator
 from src.processes.messages.template import MSG_PT_0078
 from src.processes.models.templates.fields import (
+    FieldTemplate,
     FieldTemplateRuleGroupAnd,
     FieldTemplateRuleGroupOr,
     FieldTemplateRuleSet,
@@ -54,14 +55,24 @@ class FieldTemplateRuleSetService(BaseModelService):
         self,
         group_and: FieldTemplateRuleGroupAnd,
     ):
-        field = self.instance.field
-        allowed_operators = FieldRuleOperator.ALLOWED_OPERATORS[field.type]
-        if group_and.operator not in allowed_operators:
+        if group_and.field:
+            source_field = FieldTemplate.objects.filter(
+                template_id=self.instance.template_id,
+                api_name=group_and.field,
+            ).first()
+            if source_field is None:
+                return
+        else:
+            source_field = self.instance.field
+        allowed = FieldRuleOperator.ALLOWED_OPERATORS[
+            source_field.type
+        ]
+        if group_and.operator not in allowed:
             raise FieldTemplateRuleSetServiceException(
                 message=MSG_PT_0078(
-                    field=field,
+                    field=source_field.name,
                     operator=group_and.operator,
-                    field_type=field.type,
+                    field_type=source_field.type,
                 ),
             )
 
