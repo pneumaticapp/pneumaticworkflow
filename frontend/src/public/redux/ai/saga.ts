@@ -53,16 +53,24 @@ import {
   updateAIAgent,
 } from './slice';
 
+let latestProvidersRequestId = 0;
+
 function* fetchAIProviders() {
+  const requestId = ++latestProvidersRequestId;
   yield put(loadAIProvidersStarted());
 
   try {
     const providers: IAIProvider[] = yield getAIProvidersApi();
+    if (requestId !== latestProvidersRequestId) {
+      return false;
+    }
     yield put(loadAIProvidersSuccess(providers));
     return true;
   } catch (error) {
-    yield put(loadAIProvidersFailed());
-    NotificationManager.warning({ message: getErrorMessage(error) });
+    if (requestId === latestProvidersRequestId) {
+      yield put(loadAIProvidersFailed());
+      NotificationManager.warning({ message: getErrorMessage(error) });
+    }
     logger.error('failed to load AI providers', error);
     return false;
   }
@@ -83,21 +91,28 @@ function* fetchAIVendors() {
   }
 }
 
+let latestAgentsRequestId = 0;
+
 function* fetchAIAgents() {
+  const requestId = ++latestAgentsRequestId;
   yield put(loadAIAgentsStarted());
 
   try {
     const agents: IAIAgent[] = yield getAIAgentsApi();
+    if (requestId !== latestAgentsRequestId) {
+      return false;
+    }
     yield put(loadAIAgentsSuccess(agents));
     return true;
   } catch (error) {
-    yield put(loadAIAgentsFailed());
-    NotificationManager.warning({ message: getErrorMessage(error) });
+    if (requestId === latestAgentsRequestId) {
+      yield put(loadAIAgentsFailed());
+      NotificationManager.warning({ message: getErrorMessage(error) });
+    }
     logger.error('failed to load AI agents', error);
     return false;
   }
 }
-
 function* fetchAIProviderModels({ payload: providerId }: PayloadAction<number>) {
   yield put(loadAIProviderModelsStarted(providerId));
 
