@@ -41,11 +41,11 @@ function ResetFormOnReopen({
 }
 
 // Syncs the model dropdown with the picked provider: loads its models, clears a stale model, preselects a sole provider.
-function ProviderModelsSync({ initialProviderId }: { initialProviderId: string }) {
+function ProviderModelsSync() {
   const dispatch = useDispatch();
   const providers = useSelector(getAIProviders);
   const { values, setFieldValue } = useFormikContext<IAIAgentFormValues>();
-  const prevProviderIdRef = useRef(initialProviderId);
+  const prevProviderIdRef = useRef(values.providerId);
 
   useEffect(() => {
     if (!values.providerId && providers.length === 1) {
@@ -145,7 +145,7 @@ export function CreateAIAgentForm({
         return (
           <form onSubmit={handleSubmit}>
             {resetFormOnReopen}
-            <ProviderModelsSync initialProviderId={initialValues.providerId} />
+            <ProviderModelsSync />
             <ModalBody className={styles['modal__body']}>
               <div className={styles['modal__agent-avatar']}>
                 <div className={styles['modal__avatar-preview']}>
