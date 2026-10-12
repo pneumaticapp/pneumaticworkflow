@@ -38,12 +38,7 @@ export function BaseModal({
   useEffect(() => {
     if (isOpen) {
       setIsVisible(true);
-      // Locking the page hides its scrollbar and shifts the layout; padding the body compensates.
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
       document.body.style.overflow = 'hidden';
-      if (scrollbarWidth > 0) {
-        document.body.style.paddingRight = `${scrollbarWidth}px`;
-      }
       const timer = setTimeout(() => {
         setShowClass(true);
       }, 10);
@@ -54,7 +49,6 @@ export function BaseModal({
     const timer = setTimeout(() => {
       setIsVisible(false);
       document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
     }, 150);
     return () => clearTimeout(timer);
   }, [isOpen]);
