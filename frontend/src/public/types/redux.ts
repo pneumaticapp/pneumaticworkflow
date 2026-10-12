@@ -89,6 +89,7 @@ export interface IAuthUser extends IUnsavedUser {
   id: number;
   status: EUserStatus;
   loading: boolean;
+  isResetPasswordCaptchaRequired?: boolean;
   invitedUser: IInvitedUser;
   isAccountOwner: boolean;
   isDigestSubscriber: boolean;
