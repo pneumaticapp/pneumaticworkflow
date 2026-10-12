@@ -58,8 +58,8 @@ jest.mock('../../TeamUserSkeleton', () => ({
   TeamUserSkeleton: () => <div data-testid="agent-skeleton" />,
 }));
 
-jest.mock('../../Users/CreateUserModal', () => ({
-  CreateUserModal: ({ isOpen, initialTab }: any) =>
+jest.mock('../../Users/CreatePerformerModal', () => ({
+  CreatePerformerModal: ({ isOpen, initialTab }: any) =>
     isOpen ? <div data-testid="create-user-modal" data-initial-tab={initialTab} /> : null,
 }));
 
@@ -103,8 +103,8 @@ describe('AIAgents', () => {
     (useSelector as unknown as jest.Mock).mockImplementation((selector) =>
       selector({
         ai: {
-          providers: { isLoading: false, isLoaded: providersLoaded, list: providers },
-          agents: { isLoading: !agentsLoaded, isLoaded: agentsLoaded, list: agents },
+          providers: { isLoading: !providersLoaded, list: providers },
+          agents: { isLoading: !agentsLoaded, list: agents },
           models: { isLoading: false, providerId: null, list: [] },
           isSaving: false,
         },

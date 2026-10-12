@@ -6,7 +6,7 @@ exports[`Team rendered correctly 1`] = `
 >
   <[object Object] />
   <AddGuestsBanner />
-  <CreateUserModal
+  <CreatePerformerModal
     isOpen={false}
     onClose={[Function]}
   />
@@ -326,7 +326,7 @@ exports[`Team rendered correctly with descending sorting 1`] = `
 >
   <[object Object] />
   <AddGuestsBanner />
-  <CreateUserModal
+  <CreatePerformerModal
     isOpen={false}
     onClose={[Function]}
   />

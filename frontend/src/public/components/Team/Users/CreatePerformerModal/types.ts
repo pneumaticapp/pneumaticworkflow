@@ -1,12 +1,12 @@
 import { ICreateUserRequest } from '../../../../types/user';
 
-export interface ICreateUserModalProps {
+export interface ICreatePerformerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialTab?: ECreateUserModalTab;
+  initialTab?: ECreatePerformerModalTab;
 }
 
-export enum ECreateUserModalTab {
+export enum ECreatePerformerModalTab {
   User = 'user',
   AIAgent = 'ai-agent',
 }
@@ -27,6 +27,11 @@ export interface ICreateUserFormValues extends Required<
   role: EUserRole;
 }
 
+export interface ICreateUserFormProps {
+  isActive: boolean;
+  isOpen: boolean;
+}
+
 export interface IAIAgentFormValues {
   name: string;
   providerId: string;
@@ -34,6 +39,14 @@ export interface IAIAgentFormValues {
   systemPrompt: string;
   photo: string;
 }
+
+export const EMPTY_AI_AGENT_FORM_VALUES: IAIAgentFormValues = {
+  name: '',
+  providerId: '',
+  model: '',
+  systemPrompt: '',
+  photo: '',
+};
 
 export interface IAIAgentFormProps {
   isActive: boolean;

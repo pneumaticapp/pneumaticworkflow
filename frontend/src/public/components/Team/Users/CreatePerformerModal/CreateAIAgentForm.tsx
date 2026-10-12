@@ -1,31 +1,23 @@
 import React, { useEffect, useRef } from 'react';
-import { Formik, useField, useFormikContext } from 'formik';
+import { Formik, useFormikContext } from 'formik';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { Button } from '../../../UI/Buttons/Button';
 import { FormikDropdownList } from '../../../UI/DropdownList';
 import { FormikInputField } from '../../../UI/Fields/InputField';
+import { FormikTextareaField } from '../../../UI/Fields/TextareaField';
 import { ModalBody, ModalFooter } from '../../../UI/BaseModal';
 import { isEmpty } from '../../../../utils/validators';
 import { uploadUserAvatar } from '../../../../utils/uploadFiles';
 import { loadAIProviderModels } from '../../../../redux/ai/slice';
 import { getAIProviderModelsState, getAIProviders } from '../../../../redux/selectors/ai';
-import { IAIAgentFormProps, IAIAgentFormValues } from './types';
+import { EMPTY_AI_AGENT_FORM_VALUES, IAIAgentFormProps, IAIAgentFormValues } from './types';
 
-import fieldStyles from '../../../UI/Fields/common/styles.css';
-import styles from './CreateUserModal.css';
+import styles from './CreatePerformerModal.css';
 
 const REQUIRED_ERROR = 'team.create-ai-agent-modal.validation-required';
 const validateRequired = (value: string) => (isEmpty(value) ? REQUIRED_ERROR : '');
-
-export const EMPTY_AI_AGENT_FORM_VALUES: IAIAgentFormValues = {
-  name: '',
-  providerId: '',
-  model: '',
-  systemPrompt: '',
-  photo: '',
-};
 
 function ResetFormOnReopen({
   isOpen,
@@ -75,24 +67,6 @@ function ProviderModelsSync({ initialProviderId }: { initialProviderId: string }
   }, [values.providerId, dispatch, setFieldValue]);
 
   return null;
-}
-
-function SystemPromptField() {
-  const { formatMessage } = useIntl();
-  const [field, meta] = useField<string>('systemPrompt');
-
-  return (
-    <label className={styles['modal__textarea-field']} htmlFor="ai-agent-system-prompt">
-      {/* Required by the API; the marker reuses the style other fields get via isRequired. */}
-      <span className={fieldStyles['title_required']}>
-        {formatMessage({ id: 'team.create-ai-agent-modal.system-prompt' })}
-      </span>
-      <textarea {...field} id="ai-agent-system-prompt" rows={5} />
-      {meta.touched && meta.error && (
-        <span className={styles['modal__error']}>{formatMessage({ id: meta.error })}</span>
-      )}
-    </label>
-  );
 }
 
 export function CreateAIAgentForm({
@@ -225,7 +199,12 @@ export function CreateAIAgentForm({
                     `${option.label} ${option.value}`.toLowerCase().includes(input.toLowerCase())
                   }
                 />
-                <SystemPromptField />
+                <FormikTextareaField
+                  name="systemPrompt"
+                  title={formatMessage({ id: 'team.create-ai-agent-modal.system-prompt' })}
+                  isRequired
+                  rows={5}
+                />
               </div>
             </ModalBody>
             <ModalFooter className={styles['modal__footer']}>

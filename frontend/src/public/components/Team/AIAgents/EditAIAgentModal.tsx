@@ -5,10 +5,10 @@ import { useDispatch } from 'react-redux';
 import { IAIAgent } from '../../../types/ai';
 import { BaseModal, ModalHeader } from '../../UI/BaseModal';
 import { updateAIAgent } from '../../../redux/ai/slice';
-import { CreateAIAgentForm } from '../Users/CreateUserModal/CreateAIAgentForm';
-import { IAIAgentFormValues } from '../Users/CreateUserModal/types';
+import { CreateAIAgentForm } from '../Users/CreatePerformerModal/CreateAIAgentForm';
+import { IAIAgentFormValues } from '../Users/CreatePerformerModal/types';
 
-import modalStyles from '../Users/CreateUserModal/CreateUserModal.css';
+import modalStyles from '../Users/CreatePerformerModal/CreatePerformerModal.css';
 
 export interface IEditAIAgentModalProps {
   agent: IAIAgent | null;

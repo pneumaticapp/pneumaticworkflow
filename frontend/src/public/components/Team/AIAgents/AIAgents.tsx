@@ -14,8 +14,8 @@ import { Header } from '../../UI/Typeography/Header';
 import { Modal } from '../../UI/Modal/Modal';
 import { Tooltip } from '../../UI';
 import { TeamUserSkeleton } from '../TeamUserSkeleton';
-import { CreateUserModal } from '../Users/CreateUserModal';
-import { ECreateUserModalTab } from '../Users/CreateUserModal/types';
+import { CreatePerformerModal } from '../Users/CreatePerformerModal';
+import { ECreatePerformerModalTab } from '../Users/CreatePerformerModal/types';
 import { deleteAIAgent, loadAIAgents, loadAIProviders, updateAIAgent } from '../../../redux/ai/slice';
 import { getAIAgentsState, getAIProviders, getCanCreateAIAgent, getIsAISaving } from '../../../redux/selectors/ai';
 
@@ -26,7 +26,7 @@ export function AIAgents() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
-  const { list: agents, isLoading, isLoaded } = useSelector(getAIAgentsState);
+  const { list: agents, isLoading } = useSelector(getAIAgentsState);
   const providers = useSelector(getAIProviders);
   const canCreateAgent = useSelector(getCanCreateAIAgent);
   const isSaving = useSelector(getIsAISaving);
@@ -129,10 +129,10 @@ export function AIAgents() {
 
   return (
     <div className={styles['container']}>
-      <CreateUserModal
+      <CreatePerformerModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        initialTab={ECreateUserModalTab.AIAgent}
+        initialTab={ECreatePerformerModalTab.AIAgent}
       />
       <EditAIAgentModal agent={agentToEdit} onClose={() => setAgentToEdit(null)} />
 
@@ -149,9 +149,9 @@ export function AIAgents() {
         )}
       </div>
 
-      {isLoading && !isLoaded && Array.from([1, 2, 3], (key) => <TeamUserSkeleton key={key} />)}
+      {isLoading && Array.from([1, 2, 3], (key) => <TeamUserSkeleton key={key} />)}
 
-      {isLoaded && agents.length === 0 && (
+      {!isLoading && agents.length === 0 && (
         <p className={styles['empty']} data-testid="empty-ai-agents-message">
           {formatMessage({ id: 'team.ai-agents.empty' })}
         </p>

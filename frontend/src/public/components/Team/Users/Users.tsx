@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { TeamUser } from './TeamUser';
 import { DeleteTeamUserPopupContainer } from './DeleteTeamUserPopup';
 import { AddGuestsBanner } from './AddGuestsBanner';
-import { CreateUserModal } from './CreateUserModal';
+import { CreatePerformerModal } from './CreatePerformerModal';
 import { VacationSettingsModal } from './VacationSettingsModal';
 
 import { resendInvite } from '../../../api/resendInvite';
@@ -179,7 +179,7 @@ export function Users({
     <div className={styles['container']}>
       <DeleteTeamUserPopupContainer />
       <AddGuestsBanner />
-      <CreateUserModal isOpen={isCreateUserModalOpen} onClose={handleCloseCreateUserModal} />
+      <CreatePerformerModal isOpen={isCreateUserModalOpen} onClose={handleCloseCreateUserModal} />
       <VacationSettingsModal
         isOpen={!!vacationModalUser}
         onClose={() => setVacationModalUser(null)}

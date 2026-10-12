@@ -3,7 +3,7 @@ import { act, render, screen, fireEvent, waitFor, within, cleanup } from '@testi
 import userEvent from '@testing-library/user-event';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { CreateUserModal } from '../CreateUserModal';
+import { CreatePerformerModal } from '../CreatePerformerModal';
 import { createUser } from '../../../../../redux/accounts/slice';
 import { createAIAgent, loadAIProviderModels } from '../../../../../redux/ai/slice';
 import { uploadUserAvatar } from '../../../../../utils/uploadFiles';
@@ -59,7 +59,7 @@ jest.mock('react-perfect-scrollbar', () => {
   };
 });
 
-describe('CreateUserModal', () => {
+describe('CreatePerformerModal', () => {
   const mockDispatch = jest.fn();
   const mockOnClose = jest.fn();
 
@@ -119,8 +119,8 @@ describe('CreateUserModal', () => {
     (useSelector as unknown as jest.Mock).mockImplementation((selector) =>
       selector({
         ai: {
-          providers: { isLoading: false, isLoaded: true, list: providers },
-          agents: { isLoading: false, isLoaded: false, list: [] },
+          providers: { isLoading: false, list: providers },
+          agents: { isLoading: false, list: [] },
           models,
           isSaving: false,
         },
@@ -142,7 +142,7 @@ describe('CreateUserModal', () => {
   };
 
   const openModal = async () => {
-    render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+    render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
     await screen.findByTestId('create-user-modal-header');
   };
 
@@ -163,7 +163,7 @@ describe('CreateUserModal', () => {
 
   describe('Rendering', () => {
     it('does not render when isOpen=false', () => {
-      render(<CreateUserModal isOpen={false} onClose={mockOnClose} />);
+      render(<CreatePerformerModal isOpen={false} onClose={mockOnClose} />);
 
       expect(screen.queryByTestId('create-user-modal-header')).not.toBeInTheDocument();
     });
@@ -214,7 +214,7 @@ describe('CreateUserModal', () => {
       screen.getByRole('button', { name: getTranslatedText('team.create-ai-agent-modal.submit') });
 
     it('renders the agent fields once a provider exists', async () => {
-      render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+      render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
 
       expect(getNameInput()).toBeInTheDocument();
@@ -225,7 +225,7 @@ describe('CreateUserModal', () => {
 
     it('shows the register-a-provider hint instead of the form when there are no providers', async () => {
       mockAIState({ providers: [] });
-      render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+      render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
 
       expect(screen.getByTestId('ai-agent-no-providers-hint')).toBeInTheDocument();
@@ -233,7 +233,7 @@ describe('CreateUserModal', () => {
     });
 
     it('preselects the provider and loads its models when the account has exactly one', async () => {
-      render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+      render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
 
       await waitFor(() => {
@@ -243,7 +243,7 @@ describe('CreateUserModal', () => {
     });
 
     it('clears the avatar input after upload so the same file can be selected again', async () => {
-      render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+      render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
 
       const avatarInput = screen.getByLabelText(
@@ -265,7 +265,7 @@ describe('CreateUserModal', () => {
         }),
       );
 
-      render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+      render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
       await userEvent.type(getNameInput(), 'Ada Agent');
 
@@ -288,7 +288,7 @@ describe('CreateUserModal', () => {
     });
 
     it('preserves both forms while switching tabs', async () => {
-      render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+      render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
 
       const userFirstName = screen.getByLabelText(getTranslatedText('team.create-user-modal.first-name'));
       const generatedPassword = screen
@@ -310,7 +310,7 @@ describe('CreateUserModal', () => {
     });
 
     it('localizes the required model error', async () => {
-      render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+      render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
 
       const modelDropdown = screen
@@ -326,10 +326,10 @@ describe('CreateUserModal', () => {
     });
 
     it('keeps the AI agent form visible during the close animation', async () => {
-      const { rerender } = render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+      const { rerender } = render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
 
-      rerender(<CreateUserModal isOpen={false} onClose={mockOnClose} />);
+      rerender(<CreatePerformerModal isOpen={false} onClose={mockOnClose} />);
 
       expect(getNameInput()).toBeInTheDocument();
     });
@@ -342,7 +342,7 @@ describe('CreateUserModal', () => {
         }),
       );
 
-      const { rerender } = render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+      const { rerender } = render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
       await userEvent.type(getNameInput(), 'Draft agent');
       await userEvent.upload(
@@ -350,8 +350,8 @@ describe('CreateUserModal', () => {
         new File(['old-avatar'], 'old.png', { type: 'image/png' }),
       );
 
-      rerender(<CreateUserModal isOpen={false} onClose={mockOnClose} />);
-      rerender(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+      rerender(<CreatePerformerModal isOpen={false} onClose={mockOnClose} />);
+      rerender(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
       await waitFor(() =>
         expect(screen.getByLabelText(getTranslatedText('team.create-user-modal.email'))).toBeInTheDocument(),
       );
@@ -367,7 +367,7 @@ describe('CreateUserModal', () => {
 
     it('clears the picked model and reloads the list when the provider changes', async () => {
       mockAIState({ providers: [OPENROUTER_PROVIDER, INTERNAL_PROVIDER] });
-      render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+      render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
 
       await userEvent.click(getDropdownControl('team.create-ai-agent-modal.provider'));
@@ -386,7 +386,7 @@ describe('CreateUserModal', () => {
     });
 
     it('submits the agent to the API contract and closes the modal', async () => {
-      render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+      render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
 
       const submitButton = getAgentSubmitButton();
@@ -600,7 +600,7 @@ describe('CreateUserModal', () => {
 
   describe('Form reinitialization', () => {
     it('form resets and password is regenerated on reopen', async () => {
-      const { unmount } = render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+      const { unmount } = render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
       await screen.findByTestId('create-user-modal-header');
 
       const { firstNameInput, lastNameInput, emailInput } = getFormFields();
