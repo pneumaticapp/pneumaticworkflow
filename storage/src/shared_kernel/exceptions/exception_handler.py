@@ -2,12 +2,16 @@
 
 import logging
 
+import sentry_sdk
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from starlette.responses import Response
-from starlette.status import HTTP_401_UNAUTHORIZED
+from starlette.status import (
+    HTTP_401_UNAUTHORIZED,
+    HTTP_500_INTERNAL_SERVER_ERROR,
+)
 
 from src.shared_kernel.browser_utils import (
     is_browser_navigation,
@@ -60,6 +64,10 @@ def register_exception_handlers(app: FastAPI) -> None:
                 'request_method': request.method,
             },
         )
+        # Handled here, so Starlette never re-raises it towards Sentry;
+        # report server-side failures (5xx) explicitly.
+        if exc.http_status >= HTTP_500_INTERNAL_SERVER_ERROR:
+            sentry_sdk.capture_exception(exc)
 
         # Browser navigation gets redirect instead of JSON
         if is_browser_navigation(request):
