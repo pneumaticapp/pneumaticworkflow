@@ -4,6 +4,8 @@ jest.mock('../sentryCapture', () => ({
 
 import { logger } from '../logger';
 import { captureException } from '../sentryCapture';
+import { InterceptorError } from '../../api/InterceptorError';
+import { ApiError } from '../../api/commonRequest';
 
 const mockCaptureException = captureException as jest.Mock;
 
@@ -82,6 +84,37 @@ describe('logger', () => {
       expect(console.info).toHaveBeenCalledTimes(1);
       expect(console.info).toHaveBeenCalledWith('debug message');
       expect(mockCaptureException).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('logError filters InterceptorError (deduplication)', () => {
+    it('does not send InterceptorError to Sentry (already reported by interceptor)', () => {
+      const error = new InterceptorError('already logged');
+
+      logger.error(error);
+
+      expect(console.error).toHaveBeenCalledTimes(1);
+      expect(console.error).toHaveBeenCalledWith(error);
+      expect(mockCaptureException).not.toHaveBeenCalled();
+    });
+
+    it('does not send ApiError to Sentry (inherits InterceptorError)', () => {
+      const error = new ApiError('', { detail: 'not found' }, 404);
+
+      logger.error(error);
+
+      expect(console.error).toHaveBeenCalledTimes(1);
+      expect(console.error).toHaveBeenCalledWith(error);
+      expect(mockCaptureException).not.toHaveBeenCalled();
+    });
+
+    it('still sends regular Error to Sentry', () => {
+      const error = new TypeError('Cannot read properties of undefined');
+
+      logger.error(error);
+
+      expect(mockCaptureException).toHaveBeenCalledTimes(1);
+      expect(mockCaptureException).toHaveBeenCalledWith(error);
     });
   });
 });

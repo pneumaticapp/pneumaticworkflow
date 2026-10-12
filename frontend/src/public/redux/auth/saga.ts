@@ -375,6 +375,11 @@ export function* sendPasswordReset({ payload }: TSendForgotPassword) {
     });
     yield put(sendForgotPasswordSuccess());
   } catch (error) {
+    if (error?.data?.details?.name === 'captcha') {
+      yield put(sendForgotPasswordFail(true));
+      return;
+    }
+
     const message = getErrorMessage(error);
     logger.error(message, error);
     NotificationManager.notifyApiError(error, { message });

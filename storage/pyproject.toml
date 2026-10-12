@@ -18,6 +18,7 @@ httpx = "0.28.1"
 redis = "6.2.0"
 alembic = "1.16.4"
 PyJWT = "2.10.0"
+sentry-sdk = "2.35.0"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "1.18.2"
@@ -27,7 +28,6 @@ pytest = "8.4.2"
 pytest-asyncio = "^1.2.0"
 pytest-mock = "^3.15.1"
 aiosqlite = "^0.21.0"
-types-redis = "^4.6.0.20241004"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
