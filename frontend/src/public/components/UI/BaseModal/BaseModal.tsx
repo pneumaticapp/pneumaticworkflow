@@ -125,7 +125,7 @@ export function ModalHeader({
   className = '',
   toggle,
   tag: Tag = 'div',
-  titleTag: TitleTag = 'p',
+  titleTag: TitleTag = 'h2',
 }: IModalPartProps) {
   return (
     <Tag className={classnames(styles['modal-header'], className)}>
