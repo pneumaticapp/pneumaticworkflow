@@ -24,6 +24,7 @@ function ProviderModelsSync() {
   const modelsState = useSelector(getAIProviderModelsState);
   const { values, setFieldValue } = useFormikContext<IAIAgentFormValues>();
   const prevProviderIdRef = useRef(values.providerId);
+  const modelsRequestedForRef = useRef('');
 
   useEffect(() => {
     if (!values.providerId && providers.length === 1) {
@@ -41,7 +42,8 @@ function ProviderModelsSync() {
     }
     prevProviderIdRef.current = values.providerId;
 
-    if (modelsState.providerId !== Number(values.providerId)) {
+    if (modelsState.providerId !== Number(values.providerId) && modelsRequestedForRef.current !== values.providerId) {
+      modelsRequestedForRef.current = values.providerId;
       dispatch(loadAIProviderModels(Number(values.providerId)));
     }
   }, [values.providerId, modelsState.providerId, dispatch, setFieldValue]);
