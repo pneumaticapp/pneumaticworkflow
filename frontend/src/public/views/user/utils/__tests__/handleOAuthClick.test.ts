@@ -19,8 +19,8 @@ type FormatMessageFn = IntlShape['formatMessage'];
 
 describe('handleOAuthClick', () => {
   const originalLocation = window.location;
-  const mockFormatMessageFn = jest.fn(
-    ({ id }: { id: string }, values?: Record<string, string>) => `translated:${id}:${values?.type}`,
+  const mockFormatMessageFn = jest.fn(({ id }: { id: string }, values?: Record<string, string>) =>
+    values?.type ? `translated:${id}:${values.type}` : `translated:${id}`,
   );
   const mockFormatMessage = mockFormatMessageFn as FormatMessageFn;
   const createMockEvent = (): MouseEvent =>
@@ -92,9 +92,15 @@ describe('handleOAuthClick', () => {
 
     expect(window.location.assign).not.toHaveBeenCalled();
     expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
-    expect(mockFormatMessageFn).toHaveBeenCalledWith({ id: 'user.oauth-unavailable' }, { type: 'SSO' });
+    expect(mockFormatMessageFn).toHaveBeenCalledTimes(2);
+    expect(mockFormatMessageFn).toHaveBeenNthCalledWith(1, { id: 'user.oauth-unavailable-sso' });
+    expect(mockFormatMessageFn).toHaveBeenNthCalledWith(
+      2,
+      { id: 'user.oauth-unavailable' },
+      { type: 'translated:user.oauth-unavailable-sso' },
+    );
     expect(NotificationManager.warning).toHaveBeenCalledWith({
-      message: 'translated:user.oauth-unavailable:SSO',
+      message: 'translated:user.oauth-unavailable:translated:user.oauth-unavailable-sso',
     });
   });
 
@@ -140,5 +146,43 @@ describe('handleOAuthClick', () => {
 
     expect(window.location.assign).not.toHaveBeenCalled();
     expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call assign and shows warning when redirectUri has no host ("https://")', async () => {
+    (getOAuthUrl as jest.Mock).mockResolvedValue({ redirectUri: 'https://' });
+    const mockEvent = createMockEvent();
+
+    await handleOAuthClick(EOAuthType.Google, mockFormatMessage)(mockEvent);
+
+    expect(window.location.assign).not.toHaveBeenCalled();
+    expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses SSO label from user.oauth-unavailable-sso translation for SSOOkta', async () => {
+    (getOAuthUrl as jest.Mock).mockResolvedValue(undefined);
+    const mockEvent = createMockEvent();
+
+    await handleOAuthClick(EOAuthType.SSOOkta, mockFormatMessage)(mockEvent);
+
+    expect(mockFormatMessageFn).toHaveBeenCalledTimes(2);
+    expect(mockFormatMessageFn).toHaveBeenNthCalledWith(1, { id: 'user.oauth-unavailable-sso' });
+    expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
+    expect(NotificationManager.warning).toHaveBeenCalledWith({
+      message: 'translated:user.oauth-unavailable:translated:user.oauth-unavailable-sso',
+    });
+  });
+
+  it('shows warning when getOAuthUrl rejects with an error', async () => {
+    (getOAuthUrl as jest.Mock).mockRejectedValue(new Error('Network error'));
+    const mockEvent = createMockEvent();
+
+    await handleOAuthClick(EOAuthType.Google, mockFormatMessage)(mockEvent);
+
+    expect(window.location.assign).not.toHaveBeenCalled();
+    expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
+    expect(mockFormatMessageFn).toHaveBeenCalledWith({ id: 'user.oauth-unavailable' }, { type: EOAuthType.Google });
+    expect(NotificationManager.warning).toHaveBeenCalledWith({
+      message: 'translated:user.oauth-unavailable:Google',
+    });
   });
 });

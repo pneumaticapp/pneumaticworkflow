@@ -101,7 +101,9 @@ export const enMessages = {
   'user.sign-in-sso': 'SSO',
   'user.sign-up-google': 'Google',
   'user.sign-in-google': 'Google',
-  'user.oauth-unavailable': 'Sign in with {type} is temporarily unavailable. Please use email and password.',
+  'user.oauth-unavailable':
+    '{type} sign-in is temporarily unavailable. Please try again later or log in using your email.',
+  'user.oauth-unavailable-sso': 'SSO',
   'user.id': 'ID',
   'user.email': 'Email',
   'user.email-work': 'Work email',
