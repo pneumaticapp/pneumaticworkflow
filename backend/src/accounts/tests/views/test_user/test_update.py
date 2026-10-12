@@ -10,6 +10,7 @@ from src.accounts.enums import (
     Language,
     UserDateFormat,
     UserFirstDayWeek,
+    UserGroupType,
 )
 from src.accounts.services.exceptions import UserServiceException
 from src.accounts.services.user import UserService
@@ -25,6 +26,7 @@ from src.processes.tests.fixtures import (
     create_test_workflow,
     create_test_not_admin,
     create_test_group,
+    create_test_admin,
 )
 from src.payment.stripe.service import StripeService
 from src.utils.validation import ErrorCode
@@ -1033,6 +1035,300 @@ def test_put__groups_non_list_type__validation_error(api_client, mocker):
     # assert
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    partial_update_mock.assert_not_called()
+
+
+def test_put__groups_another_account__validation_error(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    another_account = create_test_account()
+    another_group = create_test_group(account=another_account)
+    partial_update_mock = mocker.patch(
+        'src.accounts.views.user.UserService.partial_update',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.put(
+        path='/accounts/user',
+        data={'groups': [another_group.id]},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_A_0040
+    assert response.data['details']['name'] == 'groups'
+    assert response.data['details']['reason'] == messages.MSG_A_0040
+    partial_update_mock.assert_not_called()
+
+
+def test_put__groups_own_and_another_account__validation_error(
+    api_client,
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    group = create_test_group(account=account)
+    another_account = create_test_account()
+    another_group = create_test_group(account=another_account)
+    partial_update_mock = mocker.patch(
+        'src.accounts.views.user.UserService.partial_update',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.put(
+        path='/accounts/user',
+        data={'groups': [group.id, another_group.id]},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_A_0040
+    assert response.data['details']['name'] == 'groups'
+    assert response.data['details']['reason'] == messages.MSG_A_0040
+    partial_update_mock.assert_not_called()
+
+
+def test_put__groups_personal__validation_error(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    group = create_test_group(
+        account=account,
+        type_=UserGroupType.PERSONAL,
+    )
+    partial_update_mock = mocker.patch(
+        'src.accounts.views.user.UserService.partial_update',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.put(
+        path='/accounts/user',
+        data={'groups': [group.id]},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_A_0040
+    assert response.data['details']['name'] == 'groups'
+    assert response.data['details']['reason'] == messages.MSG_A_0040
+    partial_update_mock.assert_not_called()
+
+
+def test_put__groups_deleted__validation_error(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    group = create_test_group(account=account)
+    group.delete()
+    partial_update_mock = mocker.patch(
+        'src.accounts.views.user.UserService.partial_update',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.put(
+        path='/accounts/user',
+        data={'groups': [group.id]},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_A_0040
+    assert response.data['details']['name'] == 'groups'
+    assert response.data['details']['reason'] == messages.MSG_A_0040
+    partial_update_mock.assert_not_called()
+
+
+def test_put__groups_duplicate_ids__validation_error(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    group = create_test_group(account=account)
+    partial_update_mock = mocker.patch(
+        'src.accounts.views.user.UserService.partial_update',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.put(
+        path='/accounts/user',
+        data={'groups': [group.id, group.id]},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_A_0040
+    assert response.data['details']['name'] == 'groups'
+    assert response.data['details']['reason'] == messages.MSG_A_0040
+    partial_update_mock.assert_not_called()
+
+
+def test_put__empty_groups__ok(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user_service_init_mock = mocker.patch.object(
+        UserService,
+        attribute='__init__',
+        return_value=None,
+    )
+    partial_update_mock = mocker.patch(
+        'src.accounts.views.user.UserService.partial_update',
+        return_value=owner,
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.put(
+        path='/accounts/user',
+        data={'groups': []},
+    )
+
+    # assert
+    assert response.status_code == 200
+    user_service_init_mock.assert_called_once_with(
+        user=owner,
+        instance=owner,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    partial_update_mock.assert_called_once_with(
+        user_groups=[],
+        force_save=True,
+    )
+
+
+def test_put__admin_groups__ok(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    admin = create_test_admin(account=account)
+    group = create_test_group(account=account)
+    user_service_init_mock = mocker.patch.object(
+        UserService,
+        attribute='__init__',
+        return_value=None,
+    )
+    partial_update_mock = mocker.patch(
+        'src.accounts.views.user.UserService.partial_update',
+        return_value=admin,
+    )
+    api_client.token_authenticate(admin)
+
+    # act
+    response = api_client.put(
+        path='/accounts/user',
+        data={'groups': [group.id]},
+    )
+
+    # assert
+    assert response.status_code == 200
+    user_service_init_mock.assert_called_once_with(
+        user=admin,
+        instance=admin,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    partial_update_mock.assert_called_once_with(
+        user_groups=[group.id],
+        force_save=True,
+    )
+
+
+def test_put__not_admin_groups__validation_error(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_not_admin(account=account)
+    group = create_test_group(account=account)
+    partial_update_mock = mocker.patch(
+        'src.accounts.views.user.UserService.partial_update',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path='/accounts/user',
+        data={'groups': [group.id]},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_A_0057
+    assert response.data['details']['name'] == 'groups'
+    assert response.data['details']['reason'] == messages.MSG_A_0057
+    partial_update_mock.assert_not_called()
+
+
+def test_put__not_admin_groups_another_account__validation_error(
+    api_client,
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_not_admin(account=account)
+    another_account = create_test_account()
+    another_group = create_test_group(account=another_account)
+    partial_update_mock = mocker.patch(
+        'src.accounts.views.user.UserService.partial_update',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path='/accounts/user',
+        data={'groups': [another_group.id]},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_A_0057
+    assert response.data['details']['name'] == 'groups'
+    assert response.data['details']['reason'] == messages.MSG_A_0057
+    partial_update_mock.assert_not_called()
+
+
+def test_put__not_admin_empty_groups__validation_error(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_not_admin(account=account)
+    partial_update_mock = mocker.patch(
+        'src.accounts.views.user.UserService.partial_update',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path='/accounts/user',
+        data={'groups': []},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_A_0057
+    assert response.data['details']['name'] == 'groups'
+    assert response.data['details']['reason'] == messages.MSG_A_0057
     partial_update_mock.assert_not_called()
 
 
