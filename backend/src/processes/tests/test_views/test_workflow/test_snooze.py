@@ -7,17 +7,22 @@ from django.utils import timezone
 from src.accounts.enums import BillingPlanType
 from src.generics.messages import MSG_GE_0007
 from src.processes.enums import (
+    FieldRuleType,
+    FieldType,
     OwnerRole,
     OwnerType,
     TaskStatus,
     WorkflowStatus,
 )
+from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.services.exceptions import (
     WorkflowActionServiceException,
 )
 from src.processes.tests.fixtures import (
+    create_test_account,
     create_test_admin,
+    create_test_field_show_ruleset,
     create_test_not_admin,
     create_test_owner,
     create_test_template,
@@ -426,3 +431,46 @@ def test_snooze__missing_date__validation_error(api_client):
     # assert
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+
+
+def test_snooze__kickoff_field_rulesets__present(api_client):
+
+    """ Snooze answers with WorkflowDetailsSerializer, so the kickoff
+        fields keep their rulesets """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+    template = create_test_template(user=user, is_active=True, tasks_count=1)
+    field_template = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        name='Target',
+        type=FieldType.STRING,
+        order=0,
+        api_name='target-field-1',
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=field_template,
+        source_field_api_name='source-field-1',
+        value='yes',
+    )
+    run_response = api_client.post(f'/templates/{template.id}/run')
+    workflow_id = run_response.data['id']
+    date = timezone.now() + timedelta(days=1)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow_id}/snooze',
+        data={'date': date.timestamp()},
+    )
+
+    # assert
+    assert response.status_code == 200
+    field_data = response.data['kickoff']['output'][0]
+    assert len(field_data['rulesets']) == 1
+    assert field_data['rulesets'][0]['type'] == FieldRuleType.SHOW

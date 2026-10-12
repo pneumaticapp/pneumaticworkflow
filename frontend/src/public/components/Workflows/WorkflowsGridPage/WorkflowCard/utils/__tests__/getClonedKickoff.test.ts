@@ -121,6 +121,7 @@ const mockWorkflowDetailKickoff: IWorkflowDetailsKickoff = {
       groupId: null,
     },
   ],
+  fieldsets: [],
 };
 
 const templateKickoffMock: ITemplateKickoffClient = {
@@ -367,6 +368,7 @@ describe('getClonedKickoff', () => {
             groupId: null,
           },
         ],
+        fieldsets: [],
       };
 
       const templateKickoff: ITemplateKickoffClient = {
@@ -407,6 +409,7 @@ describe('getClonedKickoff', () => {
             groupId: null,
           },
         ],
+        fieldsets: [],
       };
 
       const templateKickoff: ITemplateKickoffClient = {
@@ -514,25 +517,24 @@ describe('getClonedKickoff', () => {
       expect(result.fieldsets).toEqual([]);
     });
 
-    it('correctly maps raw backend fieldsets containing apiName and id', () => {
-      const workflowWithRawBackendFieldset: IWorkflowDetailsKickoff = {
+    it('matches fieldsets by apiNameBinding and preserves field values', () => {
+      const workflowKickoff: IWorkflowDetailsKickoff = {
         id: 7,
         description: '',
         output: [],
         fieldsets: [
-          {
-            id: 100,
-            apiName: 'raw-backend-fs',
-            name: 'Raw Backend Fieldset',
+          makeFieldsetRuntime({
+            apiNameBinding: 'fieldset-mapped',
+            name: 'Mapped Fieldset',
             fields: [
               makeExtraField({
-                apiName: 'raw-field-1',
+                apiName: 'mapped-field-1',
                 name: 'Field 1',
                 type: EExtraFieldType.String,
-                value: 'backend value',
+                value: 'mapped value',
               }),
             ],
-          } as unknown as IFieldsetRuntime,
+          }),
         ],
       };
 
@@ -541,11 +543,11 @@ describe('getClonedKickoff', () => {
         fields: [],
         fieldsets: [
           makeFieldsetBindingClient({
-            apiNameBinding: 'raw-backend-fs',
+            apiNameBinding: 'fieldset-mapped',
             name: 'Template Fieldset',
             fields: [
               makeFieldsetField({
-                apiName: 'raw-field-1',
+                apiName: 'mapped-field-1',
                 name: 'Field 1',
                 type: EExtraFieldType.String,
               }),
@@ -554,11 +556,10 @@ describe('getClonedKickoff', () => {
         ],
       };
 
-      const result = getClonedKickoff(workflowWithRawBackendFieldset, templateKickoff);
+      const result = getClonedKickoff(workflowKickoff, templateKickoff);
 
       expect(result.fieldsets).toHaveLength(1);
-      const clonedFieldset = result.fieldsets[0] as unknown as IFieldsetRuntime;
-      expect(clonedFieldset.fields[0].value).toBe('backend value');
+      expect(result.fieldsets[0].fields[0].value).toBe('mapped value');
     });
   });
 });

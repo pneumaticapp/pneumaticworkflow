@@ -1,8 +1,10 @@
 import { runSaga } from 'redux-saga';
 import { call, takeEvery } from 'redux-saga/effects';
 
-import { makeFieldsetRuntime } from '../../../__stubs__/fieldsets.factory';
+import { makeExtraField } from '../../../__stubs__/fields.factory';
+import { makeFieldsetRuntime, makeFieldsetTaskAPI } from '../../../__stubs__/fieldsets.factory';
 import { makeTemplateResponse } from '../../../__stubs__/templates.factory';
+import { makeWorkflowResponse } from '../../../__stubs__/workflows.factory';
 import * as deleteApi from '../../../api/deleteWorkflow';
 import * as finishWorkflowApi from '../../../api/finishWorkflow';
 import { getTemplate } from '../../../api/getTemplate';
@@ -12,7 +14,7 @@ import { NotificationManager } from '../../../components/UI/Notifications';
 import { getClonedKickoff } from '../../../components/Workflows/WorkflowsGridPage/WorkflowCard/utils/getClonedKickoff';
 import { getRunnableWorkflow, loadDatasetsMap } from '../../../components/TemplateEdit/utils/getRunnableWorkflow';
 import { ERoutes } from '../../../constants/routes';
-import { IKickoff } from '../../../types/template';
+import { EExtraFieldType, IKickoff } from '../../../types/template';
 import { history } from '../../../utils/history';
 import { mapTemplateFieldsetsToRuntime } from '../../../utils/mapTemplateFieldsetsToRuntime';
 import { handleLoadTemplateVariables } from '../../templates/saga';
@@ -68,7 +70,6 @@ jest.mock('../../templates/saga', () => ({
 }));
 
 jest.mock('../../../utils/dateTime', () => ({
-  formatDateToISOInWorkflow: jest.fn((x) => x),
   toTspDate: jest.fn(),
 }));
 
@@ -159,13 +160,13 @@ describe('cloneWorkflowSaga — fieldsets loading on clone', () => {
     kickoff: mockKickoff,
   });
 
-  const mockWorkflow = {
+  const mockWorkflowKickoff = { id: 1, description: '', output: [], fieldsets: [] };
+
+  const mockWorkflow = makeWorkflowResponse({
     id: 1,
     name: 'Test WF',
-    kickoff: mockKickoff,
-    tasks: [],
-    status: 'running',
-  };
+    kickoff: mockWorkflowKickoff,
+  });
 
   const mockLoadedFieldsets = [makeFieldsetRuntime({ apiNameBinding: 'fs-1', name: 'Fieldset 1' })];
 
@@ -202,7 +203,7 @@ describe('cloneWorkflowSaga — fieldsets loading on clone', () => {
         dispatch: (a: IDispatchedAction) => {
           dispatched.push(a);
         },
-        getState: () => ({}),
+        getState: () => ({ authUser: { timezone: 'UTC' } }),
       },
       wrapper,
     ).toPromise();
@@ -215,6 +216,72 @@ describe('cloneWorkflowSaga — fieldsets loading on clone', () => {
 
     expect(getRunnableWorkflow).toHaveBeenCalledTimes(1);
     expect(getRunnableWorkflow).toHaveBeenCalledWith(mockTemplate, mockDatasetsMap, mockLoadedFieldsets);
+  });
+
+  it('passes kickoff with mapped runtime fieldsets to getClonedKickoff', async () => {
+    const backendKickoff = {
+      id: 1,
+      description: '',
+      output: [makeExtraField({ apiName: 'date-f1', type: EExtraFieldType.Date, value: 1725134400 })],
+      fieldsets: [
+        makeFieldsetTaskAPI({
+          id: 99,
+          apiName: 'backend-fieldset-1',
+          fields: [makeExtraField({ apiName: 'date-f2', type: EExtraFieldType.Date, value: 1725134400 })],
+        }),
+      ],
+    };
+
+    const workflowWithBackendFieldsets = makeWorkflowResponse({
+      id: 1,
+      name: 'Test WF',
+      kickoff: backendKickoff,
+    });
+
+    (getWorkflow as jest.Mock).mockResolvedValue(workflowWithBackendFieldsets);
+    (getTemplate as jest.Mock).mockResolvedValue(mockTemplate);
+    (mapTemplateFieldsetsToRuntime as jest.Mock).mockReturnValue({
+      normalizedTemplate: mockTemplate,
+      loadedFieldsets: mockLoadedFieldsets,
+    });
+    (loadDatasetsMap as jest.Mock).mockResolvedValue(mockDatasetsMap);
+    (getRunnableWorkflow as jest.Mock).mockReturnValue({
+      templateId: 10,
+      kickoff: mockKickoff,
+    });
+    (getClonedKickoff as jest.Mock).mockReturnValue(mockKickoff);
+
+    const dispatched: IDispatchedAction[] = [];
+
+    const action = cloneWorkflowAction({
+      workflowId: 1,
+      workflowName: 'Test WF',
+      templateId: 10,
+    });
+
+    function* wrapper() {
+      yield call(cloneWorkflowSaga, action);
+    }
+
+    await runSaga(
+      {
+        dispatch: (dispatcedAction: IDispatchedAction) => {
+          dispatched.push(dispatcedAction);
+        },
+        getState: () => ({ authUser: { timezone: 'UTC' } }),
+      },
+      wrapper,
+    ).toPromise();
+
+    const clonedKickoffCall = (getClonedKickoff as jest.Mock).mock.calls[0];
+    const mappedKickoff = clonedKickoffCall[0];
+
+    expect(mappedKickoff.fieldsets).toHaveLength(1);
+    expect(mappedKickoff.fieldsets[0].apiNameBinding).toBe('backend-fieldset-1');
+    expect('id' in mappedKickoff.fieldsets[0]).toBe(false);
+
+    expect(mappedKickoff.output[0].value).toBe(1725134400);
+    expect(mappedKickoff.fieldsets[0].fields[0].value).toBe(1725134400);
   });
 });
 

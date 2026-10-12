@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getEmptyField } from './utils/getEmptyField';
 import { KickoffShareForm } from './KickoffShareForm';
 import { isKickoffCleared } from './utils/isKickoffCleared';
+import { getFieldsWithFilteredRulesets } from '../../Fieldsets/FieldsetDetails/utils';
 import { FieldsetIconPicker } from '../TaskOutputFlow/FieldsetIconPicker';
 import {
   buildMergedTaskOutputRows,
@@ -44,6 +45,8 @@ import styles from './KickoffRedux.css';
 import { patchTemplate } from '../../../redux/actions';
 import { InputWithVariables } from '../InputWithVariables';
 import { useDatasetOptions } from '../ExtraFields/utils/useDatasetOptions';
+import { useFieldRuleModal } from '../../Fieldsets/FieldsetDetails/useFieldRuleModal';
+import { FieldRuleModal } from '../../Fieldsets/FieldsetDetails/FieldRuleModal';
 
 export interface IKickoffReduxProps {
   template: ITemplateClient;
@@ -69,6 +72,15 @@ export function KickoffRedux({
   const mergedRows = useMemo(
     () => buildMergedTaskOutputRows(kickoff.fields || [], kickoff.fieldsets || []),
     [kickoff.fields, kickoff.fieldsets],
+  );
+
+  const handleFieldsUpdate = (newFields: IExtraField[]) => {
+    handleChangeKickoff({ ...kickoff, fields: newFields });
+  };
+
+  const { openFieldRule, handleDeleteFieldRuleset, fieldRuleModalProps } = useFieldRuleModal(
+    kickoff.fields,
+    handleFieldsUpdate,
   );
 
   const editTemplate = (templateFields: Partial<ITemplateClient>) => {
@@ -126,7 +138,8 @@ export function KickoffRedux({
     saveOutputOrders(rows);
   };
   const handleDeleteField = (apiName: string) => {
-    const nextFields = (kickoff.fields || []).filter((f) => f.apiName !== apiName);
+    const filteredFields = (kickoff.fields || []).filter((f) => f.apiName !== apiName);
+    const nextFields = getFieldsWithFilteredRulesets(filteredFields, apiName);
     const rows = buildMergedTaskOutputRows(nextFields, kickoff.fieldsets || []);
     saveOutputOrders(rows, nextFields);
   };
@@ -193,6 +206,8 @@ export function KickoffRedux({
               accountId={accountId}
               formatMessage={formatMessage}
               onEditFieldsetTitle={handleEditFieldsetTitle}
+              onOpenFieldRules={openFieldRule}
+              onDeleteFieldRuleset={handleDeleteFieldRuleset}
             />
           </div>
         )}
@@ -255,6 +270,13 @@ export function KickoffRedux({
       </div>
 
       {isOpen ? renderKickoffForm() : renderKickoffLabels()}
+
+      {fieldRuleModalProps.fieldType && (
+        <FieldRuleModal
+          {...fieldRuleModalProps}
+          fieldType={fieldRuleModalProps.fieldType}
+        />
+      )}
     </div>
   );
 }

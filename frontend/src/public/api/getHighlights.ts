@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { IHighlightsItem } from '../types/highlights';
+import { THighlightsItemResponse } from '../types/highlights';
 import { isArrayWithItems } from '../utils/helpers';
 import { toTspDate } from '../utils/dateTime';
 
@@ -8,7 +8,7 @@ export interface IGetHighlightsResponse {
   count: number;
   next?: string;
   previous?: string;
-  results: IHighlightsItem[];
+  results: THighlightsItemResponse[];
 }
 
 export interface IGetHighlightsConfig {

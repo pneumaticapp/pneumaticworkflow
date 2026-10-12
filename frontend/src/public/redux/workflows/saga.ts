@@ -142,6 +142,7 @@ import { IWatchedComment, watchedComment } from '../../api/workflows/watchedComm
 import {
   mapBackandworkflowLogToRedux,
   mapBackendWorkflowToRedux,
+  mapBackendKickoffToRuntime,
   formatDueDateToEditWorkflow,
   mapWorkflowsToISOStringToRedux,
   mapWorkflowsAddComputedPropsToRedux,
@@ -625,17 +626,14 @@ export function* cloneWorkflowSaga({
       throw new Error('no template id');
     }
 
-    // TODO (Technical Debt): Backend fieldsets in TWorkflowDetailsResponse contain raw backend properties (id, apiName),
-    // which do not match the declared client runtime model IFieldsetRuntime (which expects apiNameBinding
-    // instead of apiName, and lacks id).
     const [workflowDetails, template]: [TWorkflowDetailsResponse, ITemplateResponse] = yield all([
       getWorkflow(workflowId),
       getTemplate(templateId),
     ]);
-    const formattedworkflowDetails = formatDateToISOInWorkflow(workflowDetails);
-    if (!formattedworkflowDetails || !template) {
+    if (!workflowDetails || !template) {
       throw new Error('failed to prepare runnable workflow object');
     }
+    const mappedKickoff = mapBackendKickoffToRuntime(workflowDetails.kickoff);
 
     const { normalizedTemplate, loadedFieldsets } = mapTemplateFieldsetsToRuntime(template);
     const datasetsMap: Record<number, string[]> = yield call(
@@ -648,11 +646,11 @@ export function* cloneWorkflowSaga({
     if (!runnableWorkflow) {
       return;
     }
+    if (!mappedKickoff) {
+      throw new Error('kickoff is required for cloning');
+    }
 
-    const kickoff: IRuntimeKickoffClient = yield getClonedKickoff(
-      formattedworkflowDetails.kickoff,
-      normalizedTemplate.kickoff,
-    );
+    const kickoff: IRuntimeKickoffClient = yield getClonedKickoff(mappedKickoff, normalizedTemplate.kickoff);
 
     yield put(
       openRunWorkflowModal({

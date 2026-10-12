@@ -9,9 +9,14 @@ import { runPublicForm } from '../../../../../api/runPublicForm';
 import { MergedOutputList } from '../../../../MergedOutputList';
 import { NotificationManager } from '../../../../UI/Notifications';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
-import { makeFieldsetRuntime } from '../../../../../__stubs__/fieldsets.factory';
+import {
+  makeFieldsetRuntime,
+  makeFieldRuleShowGroupAnd,
+  makeFieldRuleGroupOr,
+  makeFieldRuleSet,
+} from '../../../../../__stubs__/fieldsets.factory';
 import { IExtraField } from '../../../../../types/template';
-import { IFieldsetRuntime } from '../../../../../types/fieldset';
+import { IFieldsetRuntime, EFieldRuleOperator, EFieldRuleType } from '../../../../../types/fieldset';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 
 jest.mock('../../../../../api/getPublicForm', () => ({
@@ -380,6 +385,55 @@ describe('PublicForm', () => {
           message: 'The sum of the fields in this field set must equal "6"',
         }),
       );
+    });
+  });
+
+  describe('Field show rulesets: dynamic visibility in public form', () => {
+    it('dynamically shows hidden field when dependent form field is filled', async () => {
+      const triggerField = makeExtraField({ apiName: 'pub-trigger', value: 'no' });
+      const showRuleset = makeFieldRuleSet({
+        type: EFieldRuleType.Show,
+        groupsOr: [
+          makeFieldRuleGroupOr({
+            groupsAnd: [
+              makeFieldRuleShowGroupAnd({
+                field: 'pub-trigger',
+                operator: EFieldRuleOperator.Equal,
+                value: 'yes',
+              }),
+            ],
+          }),
+        ],
+      });
+      const conditionalField = makeExtraField({
+        apiName: 'pub-details',
+        isHidden: true,
+        rulesets: [showRuleset],
+      });
+
+      (getPublicForm as jest.Mock).mockResolvedValue(
+        makePublicFormResponse({
+          fields: [triggerField, conditionalField],
+        }),
+      );
+
+      render(React.createElement(PublicForm, { type: 'shared' }));
+
+      await screen.findByRole('button', { name: SUBMIT_LABEL });
+
+      const mergedMock = MergedOutputList as jest.Mock;
+      let lastCallProps = mergedMock.mock.calls[mergedMock.mock.calls.length - 1][0];
+
+      expect(lastCallProps.fields).toHaveLength(1);
+      expect(lastCallProps.fields[0].apiName).toBe('pub-trigger');
+
+      act(() => {
+        lastCallProps.onEditField('pub-trigger')({ value: 'yes' });
+      });
+
+      lastCallProps = mergedMock.mock.calls[mergedMock.mock.calls.length - 1][0];
+      expect(lastCallProps.fields).toHaveLength(2);
+      expect(lastCallProps.fields.map((f: IExtraField) => f.apiName)).toEqual(['pub-trigger', 'pub-details']);
     });
   });
 });

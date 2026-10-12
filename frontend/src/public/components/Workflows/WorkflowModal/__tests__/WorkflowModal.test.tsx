@@ -258,7 +258,7 @@ describe('WorkflowModal', () => {
 
     it('view mode without fieldsets: KickoffOutputs receives fieldsets=[]', () => {
       const workflow = makeWorkflow({
-        kickoff: { id: 1, description: '', output: [] },
+        kickoff: { id: 1, description: '', output: [], fieldsets: [] },
       });
 
       renderWithIntl(

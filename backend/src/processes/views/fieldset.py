@@ -93,6 +93,13 @@ class SharedFieldsetTemplateViewSet(
         queryset,
         extra_fields: Optional[List[str]] = None,
     ):
+        if self.action in ('list', 'retrieve'):
+            queryset = queryset.prefetch_related(
+                'rulesets__groups_or__groups_and',
+                'rulesets__fields',
+                'fields__selections',
+                'fields__rulesets__groups_or__groups_and',
+            )
         if self.action == 'list':
             queryset = queryset.prefetch_related(
                 Prefetch(

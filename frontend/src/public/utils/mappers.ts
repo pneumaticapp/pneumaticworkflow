@@ -13,15 +13,20 @@ import {
 } from './dateTime';
 import {
   IWorkflow,
+  IWorkflowDetails,
   IWorkflowDetailsKickoff,
   IWorkflowLogItem,
+  TWorkflowDetailsKickoffResponse,
+  TWorkflowDetailsResponse,
   WorkflowWithDateFields,
+  WorkflowWithTsp,
   WorkflowWithTspFields,
 } from '../types/workflow';
-import { IHighlightsItem } from '../types/highlights';
+import { IHighlightsItem, THighlightsItemResponse } from '../types/highlights';
 import { TaskWithDateFields, TaskWithTspFields, TFormatTaskDates } from '../types/tasks';
 import { getWorkflowAddComputedPropsToRedux } from '../components/Workflows/utils/getWorfkflowClientProperties';
 import { IStartWorkflowPayload, TEditWorkflowPayload } from '../redux/workflows/types';
+import { mapFieldsetTaskAPIToRuntime } from './mapFieldsetsAPIToClient';
 
 interface OptionsMapRequestBody {
   ignorePropertyMapToSnakeCase?: string[];
@@ -197,37 +202,60 @@ export const mapWorkflowsToISOStringToRedux = <T extends WorkflowWithTspFields>(
   });
 };
 
-export const mapWorkflowsForSetHighlights = (resultsFromGetHighlights: Array<IHighlightsItem>, timezone: string) => {
+export const mapWorkflowsForSetHighlights = (
+  resultsFromGetHighlights: Array<THighlightsItemResponse>,
+  timezone: string,
+): IHighlightsItem[] => {
   return resultsFromGetHighlights.map((result) => ({
     ...result,
-    workflow: mapBackendWorkflowToRedux(result.workflow, timezone),
+    workflow: {
+      ...result.workflow,
+      kickoff: mapBackendKickoffToRedux(result.workflow.kickoff, timezone),
+    },
     task: result.task ? formatTaskDatesForRedux(result.task, timezone) : null,
   }));
 };
 
-export const mapBackendWorkflowToRedux = <Workflow extends { kickoff: IWorkflowDetailsKickoff | null }>(
-  workflow: Workflow,
+export const mapBackendKickoffToRuntime = (
+  kickoff: TWorkflowDetailsKickoffResponse | null,
+): IWorkflowDetailsKickoff | null => {
+  if (!kickoff) return null;
+
+  return {
+    ...kickoff,
+    fieldsets: mapFieldsetTaskAPIToRuntime(kickoff.fieldsets),
+  };
+};
+
+export const mapBackendKickoffToRedux = (
+  kickoff: TWorkflowDetailsKickoffResponse | null,
   timezone: string,
-): Workflow => {
-  if (!workflow.kickoff) return workflow;
+): IWorkflowDetailsKickoff | null => {
+  const runtimeKickoff = mapBackendKickoffToRuntime(kickoff);
+  if (!runtimeKickoff) return null;
 
-  const hasOutput = workflow.kickoff.output?.length;
-  const hasFieldsets = workflow.kickoff.fieldsets?.length;
+  return {
+    ...runtimeKickoff,
+    output: mapTspToString(runtimeKickoff.output, timezone),
+    fieldsets: runtimeKickoff.fieldsets.map((fieldset) => ({
+      ...fieldset,
+      fields: mapTspToString(fieldset.fields, timezone),
+    })),
+  };
+};
 
-  if (!hasOutput && !hasFieldsets) return workflow;
+export const mapBackendWorkflowToRedux = (
+  workflow: TWorkflowDetailsResponse,
+  timezone: string,
+): WorkflowWithTsp<IWorkflowDetails> => {
+  const kickoff = mapBackendKickoffToRedux(workflow.kickoff, timezone);
+  if (!kickoff) {
+    throw new Error('kickoff is required in workflow details');
+  }
 
   return {
     ...workflow,
-    kickoff: {
-      ...workflow.kickoff,
-      ...(hasOutput && { output: mapTspToString(workflow.kickoff.output, timezone) }),
-      ...(hasFieldsets && {
-        fieldsets: workflow.kickoff.fieldsets!.map((fieldset) => ({
-          ...fieldset,
-          fields: mapTspToString(fieldset.fields, timezone),
-        })),
-      }),
-    },
+    kickoff,
   };
 };
 

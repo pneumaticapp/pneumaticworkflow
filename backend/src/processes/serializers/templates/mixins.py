@@ -265,10 +265,10 @@ class FieldsetMixin:
         """ Sync fieldsets for kickoff/task when activating a template.
 
             Existing fieldsets are matched by api_name and partially updated.
-            New ones with non-empty fields/rules are created as-is (preserves
-            draft api_names); compact shared_fieldset_id references are cloned
-            via create_from_shared. Fieldsets missing from the payload are
-            deleted. """
+            New ones with non-empty fields/rulesets are created as-is
+            (preserves draft api_names); compact shared_fieldset_id
+            references are cloned via create_from_shared. Fieldsets missing
+            from the payload are deleted. """
 
         instance = task or kickoff
         existing_fieldsets = {f.api_name: f for f in instance.fieldsets.all()}
@@ -290,7 +290,7 @@ class FieldsetMixin:
                         instance=fieldset,
                         user=user,
                     )
-                    service.partial_update_instance(
+                    service.partial_update(
                         order=fieldset_data['order'],
                         title=fieldset_data.get('title'),
                         description=fieldset_data.get('description'),
@@ -303,12 +303,12 @@ class FieldsetMixin:
                 # — create as-is to preserve field/rule api_names.
                 # Otherwise clone from shared.
                 try:
-                    # validated_data always has fields/rules defaults ([]).
+                    # validated_data always has fields/rulesets defaults ([]).
                     # Non-empty means payload is expanded — create as-is.
                     # Otherwise clone from shared (compact reference).
                     if (
                         fieldset_data.get('fields')
-                        or fieldset_data.get('rules')
+                        or fieldset_data.get('rulesets')
                     ):
                         fieldset = service.create(
                             name=(
@@ -333,7 +333,7 @@ class FieldsetMixin:
                                 or shared_fieldset.layout
                             ),
                             fields=fieldset_data.get('fields') or [],
-                            rules=fieldset_data.get('rules') or [],
+                            rulesets=fieldset_data.get('rulesets') or [],
                             order=fieldset_data['order'],
                             is_shared=False,
                             shared_fieldset_id=shared_fieldset.id,

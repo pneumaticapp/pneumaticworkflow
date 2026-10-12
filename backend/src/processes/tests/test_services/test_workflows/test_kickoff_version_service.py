@@ -2,18 +2,20 @@ import pytest
 
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
+    FieldRuleOperator,
+    FieldRuleType,
     FieldSetLayout,
-    FieldSetRuleType,
     FieldType,
-    LabelPosition,
+    LabelPosition, FieldSetRuleOperator,
 )
 from src.processes.models.workflows.fields import (
+    FieldRuleSet,
     FieldSelection,
     TaskField,
 )
 from src.processes.models.workflows.fieldset import (
     FieldSet,
-    FieldSetRule,
+    FieldSetRuleSet,
 )
 from src.processes.services.workflows.kickoff_version import (
     KickoffUpdateVersionService,
@@ -138,7 +140,7 @@ def test__update_field__fieldset__ok():
 
     # assert
     assert created is True
-    assert field.kickoff == kickoff
+    assert field.kickoff_id is None
     assert field.fieldset == fieldset
     assert field.api_name == 'field-1'
     assert field.name == 'Number field'
@@ -274,34 +276,25 @@ def test__update_field_selections__empty__skip():
     ).exists() is True
 
 
-def test__update_fieldset_rules__rules_data_is_none__delete_all():
+def test__update_fieldset_rulesets__no_key__keep():
 
-    """
-    rules_data is None — defaults to empty, deletes all
-    """
+    """ A snapshot taken before rulesets carries no such key """
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        is_active=True,
-        tasks_count=1,
-    )
-    workflow = create_test_workflow(
-        user=user,
-        template=template,
-    )
+    template = create_test_template(user=user, is_active=True, tasks_count=1)
+    workflow = create_test_workflow(user=user, template=template)
     kickoff = workflow.kickoff_instance
     fieldset = create_test_fieldset(
         workflow=workflow,
         kickoff=kickoff,
         name='FS',
         api_name='fs-1',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
-    existing_rule = fieldset.rules.first()
+    existing_ruleset = fieldset.rulesets.get()
     service = KickoffUpdateVersionService(
         user=user,
         auth_type=AuthTokenType.USER,
@@ -310,108 +303,67 @@ def test__update_fieldset_rules__rules_data_is_none__delete_all():
     )
 
     # act
-    service._update_fieldset_rules(
-        fieldset=fieldset,
-        rules_data=None,
-    )
+    service._update_fieldset_rulesets(fieldset=fieldset, version=1)
 
     # assert
-    assert fieldset.rules.count() == 0
-    assert FieldSetRule.objects.filter(
-        id=existing_rule.id,
-    ).exists() is False
+    assert fieldset.rulesets.get().id == existing_ruleset.id
 
 
-def test__update_fieldset_rules__provided__ok():
+def test__update_fieldset_rulesets__empty_list__delete_all():
 
-    """
-    rules_data provided — creates and deletes stale
-    """
+    """ An empty list means the fieldset has no rulesets any more """
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        is_active=True,
-        tasks_count=1,
-    )
-    workflow = create_test_workflow(
-        user=user,
-        template=template,
-    )
+    template = create_test_template(user=user, is_active=True, tasks_count=1)
+    workflow = create_test_workflow(user=user, template=template)
     kickoff = workflow.kickoff_instance
     fieldset = create_test_fieldset(
         workflow=workflow,
         kickoff=kickoff,
         name='FS',
         api_name='fs-1',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='100',
+    )
+    service = KickoffUpdateVersionService(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        instance=kickoff,
+    )
+
+    # act
+    service._update_fieldset_rulesets(
+        fieldset=fieldset,
+        version=1,
+        rulesets_data=[],
+    )
+
+    # assert
+    assert fieldset.rulesets.count() == 0
+
+
+def test__update_fieldset_rulesets__provided__ok():
+
+    """ Rulesets from the snapshot are created, stale ones removed """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, is_active=True, tasks_count=1)
+    workflow = create_test_workflow(user=user, template=template)
+    kickoff = workflow.kickoff_instance
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        kickoff=kickoff,
+        name='FS',
+        api_name='fs-1',
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='50',
     )
-
-    # stale rule to be deleted
-    stale_rule = fieldset.rules.first()
-    service = KickoffUpdateVersionService(
-        user=user,
-        auth_type=AuthTokenType.USER,
-        is_superuser=False,
-        instance=kickoff,
-    )
-    rules_data = [
-        {
-            'api_name': 'rule-1',
-            'type': FieldSetRuleType.SUM_EQUAL,
-            'value': '100',
-        },
-    ]
-
-    # act
-    service._update_fieldset_rules(
-        fieldset=fieldset,
-        rules_data=rules_data,
-    )
-
-    # assert
-    rules = fieldset.rules.all()
-    assert rules.count() == 1
-    assert rules[0].api_name == 'rule-1'
-    assert rules[0].type == FieldSetRuleType.SUM_EQUAL
-    assert rules[0].value == '100'
-    assert rules[0].account_id == account.id
-    assert FieldSetRule.objects.filter(
-        id=stale_rule.id,
-    ).exists() is False
-
-
-def test__update_field_rules__provided__ok():
-
-    """
-    rules provided — links rules
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        is_active=True,
-        tasks_count=1,
-    )
-    workflow = create_test_workflow(
-        user=user,
-        template=template,
-    )
-    kickoff = workflow.kickoff_instance
-    fieldset = create_test_fieldset(
-        workflow=workflow,
-        kickoff=kickoff,
-        name='FS',
-        api_name='fs-1',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
-        rule_value='100',
-    )
-    rule_1 = fieldset.rules.first()
+    stale_ruleset = fieldset.rulesets.get()
     field = TaskField.objects.create(
         kickoff=kickoff,
         workflow=workflow,
@@ -420,6 +372,74 @@ def test__update_field_rules__provided__ok():
         api_name='field-1',
         name='Number field',
         type=FieldType.NUMBER,
+        order=1,
+    )
+    service = KickoffUpdateVersionService(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        instance=kickoff,
+    )
+    rulesets_data = [
+        {
+            'api_name': 'ruleset-1',
+            'message': 'Must be 100',
+            'order': 3,
+            'fields': ['field-1'],
+            'groups_or': [
+                {
+                    'api_name': 'group-or-1',
+                    'groups_and': [
+                        {
+                            'api_name': 'group-and-1',
+                            'operator': FieldSetRuleOperator.SUM_EQUAL,
+                            'value': '100',
+                        },
+                    ],
+                },
+            ],
+        },
+    ]
+
+    # act
+    service._update_fieldset_rulesets(
+        fieldset=fieldset,
+        version=1,
+        rulesets_data=rulesets_data,
+    )
+
+    # assert
+    ruleset = fieldset.rulesets.get()
+    assert ruleset.api_name == 'ruleset-1'
+    assert ruleset.message == 'Must be 100'
+    assert ruleset.order == 3
+    assert ruleset.account_id == account.id
+    assert list(ruleset.fields.values_list('id', flat=True)) == [field.id]
+    group_and = ruleset.groups_or.get().groups_and.get()
+    assert group_and.operator == FieldSetRuleOperator.SUM_EQUAL
+    assert group_and.value == '100'
+    assert FieldSetRuleSet.objects.filter(
+        id=stale_ruleset.id,
+    ).exists() is False
+
+
+def test__update_field_rulesets__provided__ok():
+
+    """ Field rulesets from the snapshot are created """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, is_active=True, tasks_count=1)
+    workflow = create_test_workflow(user=user, template=template)
+    kickoff = workflow.kickoff_instance
+    field = TaskField.objects.create(
+        kickoff=kickoff,
+        workflow=workflow,
+        account=account,
+        api_name='field-1',
+        name='String field',
+        type=FieldType.STRING,
         order=1,
     )
     service = KickoffUpdateVersionService(
@@ -429,79 +449,92 @@ def test__update_field_rules__provided__ok():
         instance=kickoff,
     )
     field_data = {
-        'rules': [
-            {'api_name': rule_1.api_name},
+        'rulesets': [
+            {
+                'api_name': 'ruleset-1',
+                'name': 'Show when yes',
+                'type': FieldRuleType.SHOW,
+                'message': None,
+                'order': 0,
+                'groups_or': [
+                    {
+                        'api_name': 'group-or-1',
+                        'groups_and': [
+                            {
+                                'api_name': 'group-and-1',
+                                'field': 'field-1',
+                                'operator': FieldRuleOperator.EQUAL,
+                                'value': 'yes',
+                            },
+                        ],
+                    },
+                ],
+            },
         ],
     }
 
     # act
-    service._update_field_rules(
+    service._update_field_rulesets(
         field=field,
         field_data=field_data,
-        fieldset=fieldset,
+        version=1,
     )
 
     # assert
-    assert field.rules.count() == 1
-    assert field.rules.filter(id=rule_1.id).exists() is True
+    ruleset = field.rulesets.get()
+    assert ruleset.api_name == 'ruleset-1'
+    assert ruleset.name == 'Show when yes'
+    assert ruleset.type == FieldRuleType.SHOW
+    group_and = ruleset.groups_or.get().groups_and.get()
+    assert group_and.field == 'field-1'
+    assert group_and.operator == FieldRuleOperator.EQUAL
+    assert group_and.value == 'yes'
 
 
-def test__update_field_rules__empty__clear():
+def test__update_field_rulesets__empty_list__delete_all():
 
-    """
-    no rules — clears rules
-    """
+    """ An empty list means the field has no rulesets any more """
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        is_active=True,
-        tasks_count=1,
-    )
-    workflow = create_test_workflow(
-        user=user,
-        template=template,
-    )
+    template = create_test_template(user=user, is_active=True, tasks_count=1)
+    workflow = create_test_workflow(user=user, template=template)
     kickoff = workflow.kickoff_instance
-    fieldset = create_test_fieldset(
-        workflow=workflow,
-        kickoff=kickoff,
-        name='FS',
-        api_name='fs-1',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
-        rule_value='100',
-    )
-    rule_1 = fieldset.rules.first()
     field = TaskField.objects.create(
         kickoff=kickoff,
         workflow=workflow,
         account=account,
-        fieldset=fieldset,
         api_name='field-1',
-        name='Number field',
-        type=FieldType.NUMBER,
+        name='String field',
+        type=FieldType.STRING,
         order=1,
     )
-    field.rules.add(rule_1)
+    FieldRuleSet.objects.create(
+        account=account,
+        workflow=workflow,
+        field=field,
+        api_name='ruleset-1',
+        name='Show',
+        type=FieldRuleType.SHOW,
+        order=0,
+    )
     service = KickoffUpdateVersionService(
         user=user,
         auth_type=AuthTokenType.USER,
         is_superuser=False,
         instance=kickoff,
     )
-    field_data = {}
 
     # act
-    service._update_field_rules(
+    service._update_field_rulesets(
         field=field,
-        field_data=field_data,
-        fieldset=fieldset,
+        field_data={'rulesets': []},
+        version=1,
     )
 
     # assert
-    assert field.rules.count() == 0
+    assert field.rulesets.count() == 0
 
 
 def test__update_fields__provided__ok(mocker):
@@ -589,6 +622,79 @@ def test__update_fields__provided__ok(mocker):
     ).exists() is False
 
 
+def test__update_fields__rulesets_provided__created():
+
+    """ Top-level kickoff fields must get FieldRuleSet on version update. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    workflow = create_test_workflow(user=user, template=template)
+    kickoff = workflow.kickoff_instance
+    field = TaskField.objects.create(
+        kickoff=kickoff,
+        workflow=workflow,
+        account=account,
+        api_name='comment',
+        name='Comment',
+        type=FieldType.STRING,
+        order=1,
+    )
+    service = KickoffUpdateVersionService(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        instance=kickoff,
+    )
+    field_data = {
+        'api_name': 'comment',
+        'name': 'Comment',
+        'description': '',
+        'type': FieldType.STRING,
+        'is_required': False,
+        'is_hidden': False,
+        'order': 1,
+        'dataset_id': None,
+        'rulesets': [
+            {
+                'api_name': 'show-comment',
+                'name': 'Show when status is yes',
+                'type': FieldRuleType.SHOW,
+                'message': None,
+                'order': 0,
+                'groups_or': [
+                    {
+                        'api_name': 'group-or-1',
+                        'groups_and': [
+                            {
+                                'api_name': 'group-and-1',
+                                'field': 'status',
+                                'operator': FieldRuleOperator.EQUAL,
+                                'value': 'yes',
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+
+    # act
+    service._update_fields(data=[field_data], version=2)
+
+    # assert
+    ruleset = FieldRuleSet.objects.get(field=field, api_name='show-comment')
+    assert ruleset.type == FieldRuleType.SHOW
+    group_and = ruleset.groups_or.get().groups_and.get()
+    assert group_and.field == 'status'
+    assert group_and.value == 'yes'
+
+
 def test__update_fs_fields__none__delete_all(mocker):
 
     """
@@ -641,21 +747,22 @@ def test__update_fs_fields__none__delete_all(mocker):
         'src.processes.services.workflows.kickoff_version.'
         'KickoffUpdateVersionService._update_field_selections',
     )
-    update_field_rules_mock = mocker.patch(
+    update_field_rulesets_mock = mocker.patch(
         'src.processes.services.workflows.kickoff_version.'
-        'KickoffUpdateVersionService._update_field_rules',
+        'KickoffUpdateVersionService._update_field_rulesets',
     )
 
     # act
     service._update_fieldset_fields(
         fieldset=fieldset,
         fields_data=None,
+        version=1,
     )
 
     # assert
     update_field_mock.assert_not_called()
     update_field_selections_mock.assert_not_called()
-    update_field_rules_mock.assert_not_called()
+    update_field_rulesets_mock.assert_not_called()
     assert TaskField.objects.filter(
         id=existing_field.id,
     ).exists() is False
@@ -726,15 +833,16 @@ def test__update_fs_fields__provided__ok(mocker):
         'src.processes.services.workflows.kickoff_version.'
         'KickoffUpdateVersionService._update_field_selections',
     )
-    update_field_rules_mock = mocker.patch(
+    update_field_rulesets_mock = mocker.patch(
         'src.processes.services.workflows.kickoff_version.'
-        'KickoffUpdateVersionService._update_field_rules',
+        'KickoffUpdateVersionService._update_field_rulesets',
     )
 
     # act
     service._update_fieldset_fields(
         fieldset=fieldset,
         fields_data=fields_data,
+        version=1,
     )
 
     # assert
@@ -744,8 +852,8 @@ def test__update_fs_fields__provided__ok(mocker):
     update_field_selections_mock.assert_called_once_with(
         field_1, field_data_1,
     )
-    update_field_rules_mock.assert_called_once_with(
-        field_1, field_data_1, fieldset,
+    update_field_rulesets_mock.assert_called_once_with(
+        field_1, field_data_1, 1,
     )
     assert TaskField.objects.filter(
         id=field_1.id,
@@ -789,9 +897,9 @@ def test__update_fieldsets__none__delete_all(mocker):
         instance=kickoff,
     )
 
-    update_fieldset_rules_mock = mocker.patch(
+    update_fieldset_rulesets_mock = mocker.patch(
         'src.processes.services.workflows.kickoff_version.'
-        'KickoffUpdateVersionService._update_fieldset_rules',
+        'KickoffUpdateVersionService._update_fieldset_rulesets',
     )
     update_fieldset_fields_mock = mocker.patch(
         'src.processes.services.workflows.kickoff_version.'
@@ -799,10 +907,10 @@ def test__update_fieldsets__none__delete_all(mocker):
     )
 
     # act
-    service._update_fieldsets(data=None)
+    service._update_fieldsets(data=None, version=1)
 
     # assert
-    update_fieldset_rules_mock.assert_not_called()
+    update_fieldset_rulesets_mock.assert_not_called()
     update_fieldset_fields_mock.assert_not_called()
     assert FieldSet.objects.filter(
         id=existing_fieldset.id,
@@ -843,11 +951,13 @@ def test__update_fieldsets__provided__ok(mocker):
         is_superuser=False,
         instance=kickoff,
     )
-    rules_data_1 = [
+    rulesets_data_1 = [
         {
-            'api_name': 'rule-1',
-            'type': FieldSetRuleType.SUM_EQUAL,
-            'value': '100',
+            'api_name': 'ruleset-1',
+            'message': None,
+            'order': 0,
+            'fields': [],
+            'groups_or': [],
         },
     ]
     fields_data_1 = [
@@ -862,14 +972,14 @@ def test__update_fieldsets__provided__ok(mocker):
             'order': 11,
             'label_position': LabelPosition.TOP,
             'layout': FieldSetLayout.VERTICAL,
-            'rules': rules_data_1,
+            'rulesets': rulesets_data_1,
             'fields': fields_data_1,
         },
     ]
 
-    update_fieldset_rules_mock = mocker.patch(
+    update_fieldset_rulesets_mock = mocker.patch(
         'src.processes.services.workflows.kickoff_version.'
-        'KickoffUpdateVersionService._update_fieldset_rules',
+        'KickoffUpdateVersionService._update_fieldset_rulesets',
     )
     update_fieldset_fields_mock = mocker.patch(
         'src.processes.services.workflows.kickoff_version.'
@@ -877,7 +987,7 @@ def test__update_fieldsets__provided__ok(mocker):
     )
 
     # act
-    service._update_fieldsets(data=data)
+    service._update_fieldsets(data=data, version=1)
 
     # assert
     fieldset = FieldSet.objects.get(
@@ -891,13 +1001,15 @@ def test__update_fieldsets__provided__ok(mocker):
     assert fieldset.label_position == LabelPosition.TOP
     assert fieldset.layout == FieldSetLayout.VERTICAL
     assert fieldset.account_id == account.id
-    update_fieldset_rules_mock.assert_called_once_with(
+    update_fieldset_rulesets_mock.assert_called_once_with(
         fieldset=fieldset,
-        rules_data=rules_data_1,
+        version=1,
+        rulesets_data=rulesets_data_1,
     )
     update_fieldset_fields_mock.assert_called_once_with(
         fieldset=fieldset,
         fields_data=fields_data_1,
+        version=1,
     )
     assert FieldSet.objects.filter(
         id=stale_fieldset.id,
@@ -1003,6 +1115,7 @@ def test__update_from_version__no_fields__skip(mocker):
     update_fields_mock.assert_not_called()
     update_fieldsets_mock.assert_called_once_with(
         data=fieldsets_data,
+        version=version,
     )
 
 
@@ -1054,6 +1167,7 @@ def test__update_from_version__fieldsets__ok(mocker):
     update_fields_mock.assert_not_called()
     update_fieldsets_mock.assert_called_once_with(
         data=fieldsets_data,
+        version=version,
     )
 
 

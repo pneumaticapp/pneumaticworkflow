@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from src.processes.enums import PredicateType
 from src.processes.models.workflows.conditions import (
@@ -6,6 +6,7 @@ from src.processes.models.workflows.conditions import (
     Predicate,
     Rule,
 )
+from src.processes.models.workflows.fields import TaskField
 from src.processes.services.condition_check.resolvers.checkbox import (
     CheckboxResolver,
 )
@@ -51,8 +52,21 @@ class ConditionCheckService:
     }
 
     @classmethod
-    def _check_predicate(cls, predicate: Predicate, workflow_id: int) -> bool:
-        resolver = cls.RESOLVERS[predicate.field_type](predicate, workflow_id)
+    def check_predicate(
+        cls,
+        predicate: Predicate,
+        workflow_id: int,
+        field: Optional[TaskField] = None,
+    ) -> bool:
+
+        """ Also used for field rulesets, which describe a condition
+            with the same shape but their own operator names. """
+
+        resolver = cls.RESOLVERS[predicate.field_type](
+            predicate,
+            workflow_id,
+            field=field,
+        )
         return resolver.resolve()
 
     @classmethod
@@ -62,7 +76,7 @@ class ConditionCheckService:
         workflow_id: int,
     ) -> bool:
         for predicate in predicates:
-            if not cls._check_predicate(predicate, workflow_id):
+            if not cls.check_predicate(predicate, workflow_id):
                 return False
         return True
 

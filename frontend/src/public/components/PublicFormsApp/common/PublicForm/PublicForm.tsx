@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import ReCAPTCHA from 'react-google-recaptcha';
 import produce from 'immer';
@@ -19,6 +19,7 @@ import { MergedOutputList } from '../../../MergedOutputList';
 
 import { runPublicForm } from '../../../../api/runPublicForm';
 import { checkExtraFieldsAreValid } from '../../../WorkflowEditPopup/utils/areKickoffFieldsValid';
+import { getVisibleFieldsByShowRules } from '../../../../utils/fieldShowVisibility';
 import { ExtraFieldsHelper } from '../../../TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
 import { getNormalizedKickoff } from '../../../../utils/mappers';
 import { Header } from '../../../UI/Typeography/Header';
@@ -137,6 +138,11 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
     });
   };
 
+  const { visibleFields: visibleKickoffFields, visibleFieldsets } = useMemo(
+    () => getVisibleFieldsByShowRules(publicForm?.kickoff.fields || [], publicForm?.kickoff.fieldsets || []),
+    [publicForm?.kickoff.fields, publicForm?.kickoff.fieldsets],
+  );
+
   const renderOutputFields = () => {
     if (!publicForm) {
       return null;
@@ -149,11 +155,8 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
     return (
       <>
         <MergedOutputList
-          fields={publicForm.kickoff.fields.filter((field) => !field.isHidden)}
-          fieldsets={publicForm.kickoff.fieldsets.map((fieldset) => ({
-            ...fieldset,
-            fields: fieldset.fields.filter((field) => !field.isHidden),
-          }))}
+          fields={visibleKickoffFields}
+          fieldsets={visibleFieldsets}
           onEditField={handleEditField}
           onEditFieldsetField={handleEditFieldsetField}
           labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
@@ -228,8 +231,8 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
 
   const isCompleteDisabled = [
     formState !== EPublicFormState.WaitingForAction,
-    !checkExtraFieldsAreValid(publicForm?.kickoff.fields),
-    publicForm?.kickoff.fieldsets?.some((fieldset) => !checkExtraFieldsAreValid(fieldset.fields)),
+    !checkExtraFieldsAreValid(visibleKickoffFields),
+    visibleFieldsets.some((fieldset) => !checkExtraFieldsAreValid(fieldset.fields)),
     publicForm?.showCaptcha && !captcha,
   ].some(Boolean);
 

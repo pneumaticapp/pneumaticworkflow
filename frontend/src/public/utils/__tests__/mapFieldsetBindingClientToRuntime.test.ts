@@ -1,5 +1,5 @@
 import { mapFieldsToExtraFields, mapFieldsetBindingClientToRuntime } from '../mapFieldsetBindingClientToRuntime';
-import { makeFieldsetField, makeFieldsetBindingClient } from '../../__stubs__/fieldsets.factory';
+import { makeFieldsetField, makeFieldsetBindingClient, makeFieldRuleSet } from '../../__stubs__/fieldsets.factory';
 import { EFieldLabelPosition } from '../../types/fieldset';
 import { EExtraFieldType } from '../../types/template';
 
@@ -86,6 +86,18 @@ describe('mapFieldsToExtraFields', () => {
     const [result] = mapFieldsToExtraFields([field]);
     expect(result.order).toBe(0);
   });
+
+  it('preserves rulesets on extra field when provided', () => {
+    const ruleset = makeFieldRuleSet({ apiName: 'rule-test-1' });
+    const field = makeFieldsetField({
+      apiName: 'field-with-rules',
+      rulesets: [ruleset],
+    });
+
+    const [result] = mapFieldsToExtraFields([field]);
+
+    expect(result.rulesets).toEqual([ruleset]);
+  });
 });
 
 describe('mapFieldsetBindingClientToRuntime', () => {
@@ -144,5 +156,16 @@ describe('mapFieldsetBindingClientToRuntime', () => {
     const binding = makeFieldsetBindingClient({ fields: [] });
     const result = mapFieldsetBindingClientToRuntime(binding);
     expect(result.fields).toEqual([]);
+  });
+
+  it('preserves field rulesets when mapping fieldset binding to runtime', () => {
+    const ruleset = makeFieldRuleSet({ apiName: 'rule-test-2' });
+    const binding = makeFieldsetBindingClient({
+      fields: [makeFieldsetField({ apiName: 'fs-f1', rulesets: [ruleset] })],
+    });
+
+    const result = mapFieldsetBindingClientToRuntime(binding);
+
+    expect(result.fields[0].rulesets).toEqual([ruleset]);
   });
 });

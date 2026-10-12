@@ -54,7 +54,9 @@ jest.mock('../../../../IntlMessages', () => ({
 jest.mock('../../utils/FieldWithName', () => {
   const React = require('react');
   return {
-    FieldWithName: jest.fn(() => React.createElement('div', { 'data-testid': 'field-with-name' })),
+    FieldWithName: jest.fn(({ children }: { children?: React.ReactNode }) =>
+      React.createElement('div', { 'data-testid': 'field-with-name' }, children),
+    ),
   };
 });
 
