@@ -50,7 +50,7 @@ const aiSlice = createSlice({
   initialState,
   reducers: {
     loadAIProvidersStarted: (state) => {
-      state.providers.isLoading = true;
+      state.providers.isLoading = state.providers.list.length === 0;
     },
     loadAIProvidersSuccess: (state, action: PayloadAction<IAIProvider[]>) => {
       state.providers = { isLoading: false, list: action.payload };
@@ -60,7 +60,7 @@ const aiSlice = createSlice({
     },
 
     loadAIAgentsStarted: (state) => {
-      state.agents.isLoading = true;
+      state.agents.isLoading = state.agents.list.length === 0;
     },
     loadAIAgentsSuccess: (state, action: PayloadAction<IAIAgent[]>) => {
       state.agents = { isLoading: false, list: action.payload };
