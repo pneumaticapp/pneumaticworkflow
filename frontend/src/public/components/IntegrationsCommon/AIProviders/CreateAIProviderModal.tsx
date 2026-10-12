@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { createAIProvider, createAIProviderByVendor, loadAIVendors } from '../../../redux/ai/slice';
 import { getAIVendorsState, getIsAISaving } from '../../../redux/selectors/ai';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
-import { isEmpty } from '../../../utils/validators';
+import { validateRequired } from '../../../utils/validators';
 import { Button } from '../../UI/Buttons/Button';
 import { FormikInputField } from '../../UI/Fields/InputField';
 import { Header } from '../../UI/Typeography/Header';
@@ -29,9 +29,6 @@ interface ICreateAIProviderFormValues {
   baseUrl: string;
   apiKey: string;
 }
-
-const REQUIRED_ERROR = 'ai-providers.validation-required';
-const validateRequired = (value: string) => (isEmpty(value) ? REQUIRED_ERROR : '');
 
 const INITIAL_VALUES: ICreateAIProviderFormValues = {
   vendor: '',
