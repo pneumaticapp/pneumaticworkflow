@@ -233,6 +233,7 @@ describe('CreatePerformerModal', () => {
     });
 
     it('preselects the provider and loads its models when the account has exactly one', async () => {
+      mockAIState({ models: { isLoading: false, providerId: null, list: [] } });
       render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
 
@@ -319,10 +320,10 @@ describe('CreatePerformerModal', () => {
       await userEvent.click(modelDropdown.querySelector('.react-select__control') as HTMLElement);
       await userEvent.tab();
       expect(
-        await within(modelDropdown).findByText(getTranslatedText('team.create-ai-agent-modal.validation-required')),
+        await within(modelDropdown).findByText(getTranslatedText('validation.field-required')),
       ).toBeInTheDocument();
       expect(within(modelDropdown).getAllByText('*')).toHaveLength(1);
-      expect(screen.queryByText('team.create-ai-agent-modal.validation-required')).not.toBeInTheDocument();
+      expect(screen.queryByText('validation.field-required')).not.toBeInTheDocument();
     });
 
     it('keeps the AI agent form visible during the close animation', async () => {
@@ -366,14 +367,22 @@ describe('CreatePerformerModal', () => {
     });
 
     it('clears the picked model and reloads the list when the provider changes', async () => {
-      mockAIState({ providers: [OPENROUTER_PROVIDER, INTERNAL_PROVIDER] });
-      render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+      mockAIState({
+        providers: [OPENROUTER_PROVIDER, INTERNAL_PROVIDER],
+        models: { isLoading: false, providerId: null, list: [] },
+      });
+      const { rerender } = render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
 
       await userEvent.click(getDropdownControl('team.create-ai-agent-modal.provider'));
       await userEvent.click(screen.getByText('OpenRouter — sk-or-v1-01234'));
       await waitFor(() => expect(mockDispatch).toHaveBeenCalledWith(loadAIProviderModels(1)));
 
+      mockAIState({
+        providers: [OPENROUTER_PROVIDER, INTERNAL_PROVIDER],
+        models: { isLoading: false, providerId: 1, list: DEFAULT_MODELS },
+      });
+      rerender(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
       await userEvent.click(getDropdownControl('team.create-ai-agent-modal.model'));
       await userEvent.click(screen.getByText('GPT-4o'));
       expect(screen.getByText('GPT-4o')).toBeInTheDocument();

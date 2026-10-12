@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Formik, useFormikContext } from 'formik';
+import type { FormikProps } from 'formik';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -8,7 +9,7 @@ import { FormikDropdownList } from '../../../UI/DropdownList';
 import { FormikInputField } from '../../../UI/Fields/InputField';
 import { FormikTextareaField } from '../../../UI/Fields/TextareaField';
 import { ModalBody, ModalFooter } from '../../../UI/BaseModal';
-import { isEmpty } from '../../../../utils/validators';
+import { validateRequired } from '../../../../utils/validators';
 import { uploadUserAvatar } from '../../../../utils/uploadFiles';
 import { loadAIProviderModels } from '../../../../redux/ai/slice';
 import { getAIProviderModelsState, getAIProviders } from '../../../../redux/selectors/ai';
@@ -16,34 +17,11 @@ import { EMPTY_AI_AGENT_FORM_VALUES, IAIAgentFormProps, IAIAgentFormValues } fro
 
 import styles from './CreatePerformerModal.css';
 
-const REQUIRED_ERROR = 'team.create-ai-agent-modal.validation-required';
-const validateRequired = (value: string) => (isEmpty(value) ? REQUIRED_ERROR : '');
-
-function ResetFormOnReopen({
-  isOpen,
-  latestAvatarActionRef,
-}: {
-  isOpen: boolean;
-  latestAvatarActionRef: React.MutableRefObject<number>;
-}) {
-  const { resetForm } = useFormikContext<IAIAgentFormValues>();
-  const wasOpenRef = useRef(isOpen);
-
-  useEffect(() => {
-    if (isOpen && !wasOpenRef.current) {
-      latestAvatarActionRef.current += 1;
-      resetForm();
-    }
-    wasOpenRef.current = isOpen;
-  }, [isOpen, latestAvatarActionRef, resetForm]);
-
-  return null;
-}
-
 // Syncs the model dropdown with the picked provider: loads its models, clears a stale model, preselects a sole provider.
 function ProviderModelsSync() {
   const dispatch = useDispatch();
   const providers = useSelector(getAIProviders);
+  const modelsState = useSelector(getAIProviderModelsState);
   const { values, setFieldValue } = useFormikContext<IAIAgentFormValues>();
   const prevProviderIdRef = useRef(values.providerId);
 
@@ -63,8 +41,10 @@ function ProviderModelsSync() {
     }
     prevProviderIdRef.current = values.providerId;
 
-    dispatch(loadAIProviderModels(Number(values.providerId)));
-  }, [values.providerId, dispatch, setFieldValue]);
+    if (modelsState.providerId !== Number(values.providerId)) {
+      dispatch(loadAIProviderModels(Number(values.providerId)));
+    }
+  }, [values.providerId, modelsState.providerId, dispatch, setFieldValue]);
 
   return null;
 }
@@ -80,6 +60,16 @@ export function CreateAIAgentForm({
   const latestAvatarActionRef = useRef(0);
   const providers = useSelector(getAIProviders);
   const modelsState = useSelector(getAIProviderModelsState);
+  const formikRef = useRef<FormikProps<IAIAgentFormValues> | null>(null);
+  const wasOpenRef = useRef(isOpen);
+
+  useEffect(() => {
+    if (isOpen && !wasOpenRef.current) {
+      latestAvatarActionRef.current += 1;
+      formikRef.current?.resetForm();
+    }
+    wasOpenRef.current = isOpen;
+  }, [isOpen]);
 
   const providerOptions = providers.map((provider) => ({
     label: `${provider.name} — ${provider.apiKeyPrefix}`,
@@ -88,6 +78,7 @@ export function CreateAIAgentForm({
 
   return (
     <Formik
+      innerRef={formikRef}
       initialValues={initialValues}
       validateOnMount
       validate={(values) => {
@@ -120,7 +111,6 @@ export function CreateAIAgentForm({
           const actionId = latestAvatarActionRef.current;
           event.currentTarget.value = '';
 
-          // The API stores a hosted URL, so the file goes to the file service right away.
           const [uploaded] = await uploadUserAvatar(file);
           if (actionId === latestAvatarActionRef.current && uploaded && !uploaded.error) {
             setFieldValue('photo', uploaded.url);
@@ -138,13 +128,10 @@ export function CreateAIAgentForm({
           return undefined;
         })();
 
-        const resetFormOnReopen = <ResetFormOnReopen isOpen={isOpen} latestAvatarActionRef={latestAvatarActionRef} />;
-
-        if (!isActive) return resetFormOnReopen;
+        if (!isActive) return null;
 
         return (
           <form onSubmit={handleSubmit}>
-            {resetFormOnReopen}
             <ProviderModelsSync />
             <ModalBody className={styles['modal__body']}>
               <div className={styles['modal__agent-avatar']}>
