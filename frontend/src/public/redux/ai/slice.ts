@@ -94,6 +94,7 @@ const aiSlice = createSlice({
         return;
       }
       state.models.isLoading = false;
+      state.models.providerId = null;
     },
     resetAIProviderModels: (state) => {
       state.models = { isLoading: false, providerId: null, list: [] };
