@@ -366,8 +366,8 @@ export const enMessages = {
   'team.ai-agents.empty': 'No AI agents yet. Create one to delegate work to it.',
   'team.ai-agents.unknown-provider': 'Unknown provider',
   'team.ai-agents.inactive': 'Inactive',
-  'team.ai-agents.activate': 'Activate the agent',
-  'team.ai-agents.deactivate': 'Deactivate the agent',
+  'team.ai-agents.active-toggle': 'Active',
+  'team.ai-agents.go-to-providers': 'Go to Integrations',
   'team.ai-agents.edit': 'Edit',
   'team.ai-agents.delete': 'Delete',
   'team.ai-agents.edit-modal-title': 'Edit AI Agent',
@@ -389,7 +389,6 @@ export const enMessages = {
   'team.create-ai-agent-modal.upload': 'Upload',
   'team.create-ai-agent-modal.generate': 'Generate',
   'team.create-ai-agent-modal.submit': 'Create AI agent',
-  'team.create-ai-agent-modal.validation-required': 'This field is required',
 
   'team.users': 'Users',
 
@@ -504,6 +503,7 @@ export const enMessages = {
   'validation.kickoff-form-field-name-too-long': 'Field\xA0name\xA0exceeds 120 characters',
   'validation.checkbox-and-radio-value-too-long': 'Field\xA0name\xA0exceeds 200 characters',
   'validation.checkbox-and-radio-value-duplicate': 'Option with this value already exists',
+  'validation.field-required': 'This field is required',
   'validation.used-nonexistent-kickoff-fields':
     "Some fields in steps' descriptions don't exist or are used before assignment",
   'validation.change-password-field-too-short': 'The passowrd must be at least 6 characters long',
@@ -1396,7 +1396,6 @@ export const enMessages = {
 
   'ai-providers.title': 'AI providers',
   'ai-providers.add': 'Add AI provider',
-  'ai-providers.validation-required': 'This field is required',
   'ai-providers.empty': 'No AI providers yet. Add one to start creating AI agents.',
   'ai-providers.delete': 'Delete',
   'ai-providers.usage': 'Used by: {agents}',

@@ -6,14 +6,28 @@ import { useDispatch, useSelector } from 'react-redux';
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { AIAgents } from '../AIAgents';
 import { deleteAIAgent, loadAIAgents, loadAIProviders, updateAIAgent } from '../../../../redux/ai/slice';
+import { history } from '../../../../utils/history';
+import { ERoutes } from '../../../../constants/routes';
 import { EAIVendor, IAIAgent, IAIProvider } from '../../../../types/ai';
 
 jest.mock('../../../UI', () => ({
-  Tooltip: ({ children, content }: any) => (
-    <div data-testid="tooltip" data-content={content}>
-      {children}
-    </div>
-  ),
+  Dropdown: ({ renderToggle, options, toggleProps }: any) => {
+    const [isOpen, setIsOpen] = React.useState(false);
+
+    return (
+      <div>
+        <button type="button" data-testid={toggleProps?.['data-testid']} onClick={() => setIsOpen(!isOpen)}>
+          {renderToggle(isOpen)}
+        </button>
+        {isOpen &&
+          options.map(({ label, onClick }: any) => (
+            <button key={label} type="button" onClick={() => onClick(() => {})}>
+              {label}
+            </button>
+          ))}
+      </div>
+    );
+  },
 }));
 
 jest.mock('../../../UI/Buttons/Button', () => ({
@@ -66,6 +80,10 @@ jest.mock('../../Users/CreatePerformerModal', () => ({
 jest.mock('../EditAIAgentModal', () => ({
   EditAIAgentModal: ({ agent }: any) =>
     agent ? <div data-testid="edit-ai-agent-modal" data-agent-id={agent.id} /> : null,
+}));
+
+jest.mock('../../../../utils/history', () => ({
+  history: { push: jest.fn() },
 }));
 
 const buildProvider = (overrides: Partial<IAIProvider> = {}): IAIProvider => ({
@@ -125,16 +143,28 @@ describe('AIAgents', () => {
     expect(mockDispatch).toHaveBeenCalledWith(loadAIProviders());
   });
 
-  it('disables the create button and explains why while there are no providers', () => {
+  it('hides the create button and links to Integrations while there are no providers', () => {
     mockState({ providers: [] });
 
     render(<AIAgents />);
 
-    expect(screen.getByTestId('create-ai-agent-btn')).toBeDisabled();
-    expect(screen.getByTestId('tooltip')).toHaveAttribute(
-      'data-content',
-      t('team.create-ai-agent-modal.no-providers-hint'),
-    );
+    expect(screen.queryByTestId('create-ai-agent-btn')).not.toBeInTheDocument();
+
+    const hint = screen.getByTestId('no-ai-providers-hint');
+    expect(hint).toHaveTextContent(t('team.create-ai-agent-modal.no-providers-hint'));
+
+    userEvent.click(screen.getByTestId('go-to-ai-providers'));
+
+    expect(history.push).toHaveBeenCalledWith(ERoutes.Integrations);
+  });
+
+  it('renders the create button while providers are loading', () => {
+    mockState({ providers: [], providersLoaded: false });
+
+    render(<AIAgents />);
+
+    expect(screen.getByTestId('create-ai-agent-btn')).toBeEnabled();
+    expect(screen.queryByTestId('no-ai-providers-hint')).not.toBeInTheDocument();
   });
 
   it('opens the creation modal on the AI agent tab when a provider exists', () => {
@@ -169,12 +199,13 @@ describe('AIAgents', () => {
     expect(mockDispatch).toHaveBeenCalledWith(updateAIAgent({ id: 10, isActive: false }));
   });
 
-  it('opens the edit modal for the picked agent', () => {
+  it('opens the edit modal from the card dropdown', () => {
     mockState({ agents: [buildAgent()] });
 
     render(<AIAgents />);
 
-    userEvent.click(screen.getByTestId('edit-ai-agent-10'));
+    userEvent.click(screen.getByTestId('ai-agent-more-10'));
+    userEvent.click(screen.getByText(t('team.ai-agents.edit')));
 
     expect(screen.getByTestId('edit-ai-agent-modal')).toHaveAttribute('data-agent-id', '10');
   });
@@ -184,7 +215,8 @@ describe('AIAgents', () => {
 
     render(<AIAgents />);
 
-    userEvent.click(screen.getByTestId('delete-ai-agent-10'));
+    userEvent.click(screen.getByTestId('ai-agent-more-10'));
+    userEvent.click(screen.getByText(t('team.ai-agents.delete')));
     userEvent.click(screen.getByTestId('confirm-delete-ai-agent'));
 
     expect(mockDispatch).toHaveBeenCalledWith(deleteAIAgent(10));

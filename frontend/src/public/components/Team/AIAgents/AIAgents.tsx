@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
+import classnames from 'classnames';
 import Switch from 'rc-switch';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
@@ -7,17 +8,20 @@ import { useDispatch, useSelector } from 'react-redux';
 import { IAIAgent } from '../../../types/ai';
 import { TITLES } from '../../../constants/titles';
 import { EPageTitle } from '../../../constants/defaultValues';
+import { ERoutes } from '../../../constants/routes';
+import { history } from '../../../utils/history';
 import { PageTitle } from '../../PageTitle/PageTitle';
 import { AddButton } from '../../UI/Buttons/AddButton';
 import { Button } from '../../UI/Buttons/Button';
 import { Header } from '../../UI/Typeography/Header';
 import { Modal } from '../../UI/Modal/Modal';
-import { Tooltip } from '../../UI';
+import { Dropdown, TDropdownOption } from '../../UI';
+import { MoreIcon } from '../../icons';
 import { TeamUserSkeleton } from '../TeamUserSkeleton';
 import { CreatePerformerModal } from '../Users/CreatePerformerModal';
 import { ECreatePerformerModalTab } from '../Users/CreatePerformerModal/types';
 import { deleteAIAgent, loadAIAgents, loadAIProviders, updateAIAgent } from '../../../redux/ai/slice';
-import { getAIAgentsState, getAIProviders, getCanCreateAIAgent, getIsAISaving } from '../../../redux/selectors/ai';
+import { getAIAgentsState, getAIProvidersState, getIsAISaving } from '../../../redux/selectors/ai';
 
 import { EditAIAgentModal } from './EditAIAgentModal';
 import styles from './AIAgents.css';
@@ -27,8 +31,7 @@ export function AIAgents() {
   const dispatch = useDispatch();
 
   const { list: agents, isLoading } = useSelector(getAIAgentsState);
-  const providers = useSelector(getAIProviders);
-  const canCreateAgent = useSelector(getCanCreateAIAgent);
+  const { list: providers, isLoading: areProvidersLoading } = useSelector(getAIProvidersState);
   const isSaving = useSelector(getIsAISaving);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -63,6 +66,19 @@ export function AIAgents() {
       .join('')
       .toUpperCase();
 
+  const getAgentDropdownOptions = (agent: IAIAgent): TDropdownOption[] => [
+    {
+      label: formatMessage({ id: 'team.ai-agents.edit' }),
+      onClick: () => setAgentToEdit(agent),
+    },
+    {
+      label: formatMessage({ id: 'team.ai-agents.delete' }),
+      onClick: () => setAgentToDelete(agent),
+      color: 'red',
+      withUpperline: true,
+    },
+  ];
+
   const renderAgentCard = (agent: IAIAgent) => (
     <div key={agent.id} className={styles['agent-card']} data-testid={`ai-agent-${agent.id}`}>
       <div className={styles['agent-card__avatar']}>
@@ -82,11 +98,8 @@ export function AIAgents() {
         )}
       </div>
       <div className={styles['agent-card__actions']}>
-        <Tooltip
-          content={formatMessage({
-            id: agent.isActive ? 'team.ai-agents.deactivate' : 'team.ai-agents.activate',
-          })}
-        >
+        <div className={styles['agent-card__toggle']}>
+          <span>{formatMessage({ id: 'team.ai-agents.active-toggle' })}</span>
           <div data-testid={`ai-agent-toggle-${agent.id}`}>
             <Switch
               checked={agent.isActive}
@@ -97,34 +110,16 @@ export function AIAgents() {
               className="custom-switch custom-switch-primary custom-switch-small"
             />
           </div>
-        </Tooltip>
-        <Button
-          type="button"
-          size="sm"
-          buttonStyle="transparent-black"
-          label={formatMessage({ id: 'team.ai-agents.edit' })}
-          onClick={() => setAgentToEdit(agent)}
-          data-testid={`edit-ai-agent-${agent.id}`}
-        />
-        <Button
-          type="button"
-          size="sm"
-          buttonStyle="transparent-black"
-          label={formatMessage({ id: 'team.ai-agents.delete' })}
-          onClick={() => setAgentToDelete(agent)}
-          data-testid={`delete-ai-agent-${agent.id}`}
+        </div>
+        <Dropdown
+          toggleProps={{ 'data-testid': `ai-agent-more-${agent.id}` }}
+          renderToggle={(isOpen) => (
+            <MoreIcon className={classnames(styles['agent-card__more'], isOpen && styles['agent-card__more_active'])} />
+          )}
+          options={getAgentDropdownOptions(agent)}
         />
       </div>
     </div>
-  );
-
-  const createButton = (
-    <AddButton
-      title={formatMessage({ id: 'team.ai-agents.create-button' })}
-      caption={formatMessage({ id: 'team.ai-agents.create-button-caption' })}
-      disabled={!canCreateAgent}
-      onClick={() => setIsCreateModalOpen(true)}
-    />
   );
 
   return (
@@ -138,18 +133,29 @@ export function AIAgents() {
 
       <PageTitle titleId={EPageTitle.Team} withUnderline={false} />
 
-      <div className={styles['buttons-row']}>
-        {canCreateAgent ? (
-          createButton
-        ) : (
-          <Tooltip content={formatMessage({ id: 'team.create-ai-agent-modal.no-providers-hint' })}>
-            {/* A disabled button swallows pointer events, so the tooltip hangs on the wrapper. */}
-            <div data-testid="create-ai-agent-guard">{createButton}</div>
-          </Tooltip>
-        )}
-      </div>
-
-      {isLoading && Array.from([1, 2, 3], (key) => <TeamUserSkeleton key={key} />)}
+      {!areProvidersLoading && providers.length === 0 ? (
+        <div className={styles['no-providers']} data-testid="no-ai-providers-hint">
+          <p className={styles['no-providers__text']}>
+            {formatMessage({ id: 'team.create-ai-agent-modal.no-providers-hint' })}
+          </p>
+          <Button
+            type="button"
+            size="md"
+            buttonStyle="yellow"
+            label={formatMessage({ id: 'team.ai-agents.go-to-providers' })}
+            onClick={() => history.push(ERoutes.Integrations)}
+            data-testid="go-to-ai-providers"
+          />
+        </div>
+      ) : (
+        <div className={styles['buttons-row']}>
+          <AddButton
+            title={formatMessage({ id: 'team.ai-agents.create-button' })}
+            caption={formatMessage({ id: 'team.ai-agents.create-button-caption' })}
+            onClick={() => setIsCreateModalOpen(true)}
+          />
+        </div>
+      )}
 
       {!isLoading && agents.length === 0 && (
         <p className={styles['empty']} data-testid="empty-ai-agents-message">
@@ -157,7 +163,10 @@ export function AIAgents() {
         </p>
       )}
 
-      <div className={styles['cards']}>{agents.map(renderAgentCard)}</div>
+      <div className={styles['cards']}>
+        {isLoading && Array.from([1, 2, 3], (key) => <TeamUserSkeleton key={key} />)}
+        {!isLoading && agents.map(renderAgentCard)}
+      </div>
 
       <Modal isOpen={agentToDelete !== null} onClose={() => setAgentToDelete(null)} width="sm">
         <div data-testid="delete-ai-agent-modal">

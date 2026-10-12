@@ -15,6 +15,3 @@ export const getAIVendorsState = (state: IApplicationState) => state.ai.vendors;
 export const getAIProviderModelsState = (state: IApplicationState) => state.ai.models;
 
 export const getIsAISaving = (state: IApplicationState) => state.ai.isSaving;
-
-export const getCanCreateAIAgent = (state: IApplicationState) =>
-  !state.ai.providers.isLoading && state.ai.providers.list.length > 0;
