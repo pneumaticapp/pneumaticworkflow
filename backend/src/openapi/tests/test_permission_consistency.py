@@ -22,13 +22,6 @@ _KNOWN_MISMATCHES = frozenset({
     # but code uses broader IsAuthenticated.
     'accounts_account_retrieve',
     'accounts_account_update',
-    'accounts_user_activate_vacation_create',
-    'accounts_user_contacts_retrieve',
-    'accounts_user_counters_retrieve',
-    'accounts_user_deactivate_vacation_create',
-    # Docs say BillingPlanPermission, code omits it
-    # for list action.
-    'accounts_user_list',
     # Docs use ACCESS_HIGHLIGHTS instead of
     # ACCESS_DASHBOARD (copy-paste error).
     'reports_dashboard_workflows_breakdown_list',
