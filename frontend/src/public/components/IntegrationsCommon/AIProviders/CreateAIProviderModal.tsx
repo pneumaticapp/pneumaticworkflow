@@ -117,6 +117,7 @@ export function CreateAIProviderModal({ isOpen, onClose }: ICreateAIProviderModa
                       title={formatMessage({ id: 'ai-providers.api-key-label' })}
                       placeholder={formatMessage({ id: 'ai-providers.api-key-placeholder' })}
                       fieldSize="md"
+                      type="password"
                       isRequired
                       data-testid="ai-provider-api-key-input"
                     />
@@ -145,6 +146,7 @@ export function CreateAIProviderModal({ isOpen, onClose }: ICreateAIProviderModa
                       title={formatMessage({ id: 'ai-providers.api-key-label' })}
                       placeholder={formatMessage({ id: 'ai-providers.api-key-placeholder' })}
                       fieldSize="md"
+                      type="password"
                       isRequired
                       data-testid="ai-provider-api-key-input"
                     />
