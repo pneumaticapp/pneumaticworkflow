@@ -779,15 +779,13 @@ class FieldSetRuleType:
 
     # TODO Deprecated
 
-    VALIDATOR = 'validator'
     SUM_EQUAL = 'sum_equal'
 
     CHOICES = (
         (SUM_EQUAL, 'Sum equal'),
-        (VALIDATOR, 'Validator'),
     )
 
-    LITERALS = Literal[SUM_EQUAL, VALIDATOR]
+    LITERALS = Literal[SUM_EQUAL]
 
 
 class FieldRuleType:
@@ -814,6 +812,10 @@ class FieldRuleOperator:
     CONTAIN = 'contains'
     NOT_CONTAIN = 'not_contains'
 
+    # Aliases for consistency with PredicateOperator (ZEN-7)
+    EQUALS = EQUAL
+    MORE_THAN = GREATER_THAN
+
     CHOICES = (
         (EQUAL, 'Equal'),
         (NOT_EQUAL, 'Not equal'),
@@ -836,58 +838,34 @@ class FieldRuleOperator:
         NOT_CONTAIN,
     ]
 
+    _TEXT_OPERATORS = {
+        EQUAL,
+        NOT_EQUAL,
+        CONTAIN,
+        NOT_CONTAIN,
+        EXIST,
+        NOT_EXIST,
+    }
+    _SELECTION_OPERATORS = {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST}
+    _RANGE_OPERATORS = {
+        EQUAL,
+        NOT_EQUAL,
+        GREATER_THAN,
+        LESS_THAN,
+        EXIST,
+        NOT_EXIST,
+    }
+
     ALLOWED_OPERATORS = {
-        FieldType.STRING: {
-            EQUAL,
-            NOT_EQUAL,
-            CONTAIN,
-            NOT_CONTAIN,
-            EXIST,
-            NOT_EXIST,
-        },
-        FieldType.TEXT: {
-            EQUAL,
-            NOT_EQUAL,
-            CONTAIN,
-            NOT_CONTAIN,
-            EXIST,
-            NOT_EXIST,
-        },
-        FieldType.URL: {
-            EQUAL,
-            NOT_EQUAL,
-            CONTAIN,
-            NOT_CONTAIN,
-            EXIST,
-            NOT_EXIST,
-        },
-        FieldType.CHECKBOX: {
-            EQUAL,
-            NOT_EQUAL,
-            CONTAIN,
-            NOT_CONTAIN,
-            EXIST,
-            NOT_EXIST,
-        },
-        FieldType.RADIO: {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST},
-        FieldType.DROPDOWN: {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST},
-        FieldType.USER: {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST},
-        FieldType.DATE: {
-            EQUAL,
-            NOT_EQUAL,
-            GREATER_THAN,
-            LESS_THAN,
-            EXIST,
-            NOT_EXIST,
-        },
-        FieldType.NUMBER: {
-            EQUAL,
-            NOT_EQUAL,
-            GREATER_THAN,
-            LESS_THAN,
-            EXIST,
-            NOT_EXIST,
-        },
+        FieldType.STRING: _TEXT_OPERATORS,
+        FieldType.TEXT: _TEXT_OPERATORS,
+        FieldType.URL: _TEXT_OPERATORS,
+        FieldType.CHECKBOX: _TEXT_OPERATORS,
+        FieldType.RADIO: _SELECTION_OPERATORS,
+        FieldType.DROPDOWN: _SELECTION_OPERATORS,
+        FieldType.USER: _SELECTION_OPERATORS,
+        FieldType.DATE: _RANGE_OPERATORS,
+        FieldType.NUMBER: _RANGE_OPERATORS,
         FieldType.FILE: {EXIST, NOT_EXIST},
     }
 

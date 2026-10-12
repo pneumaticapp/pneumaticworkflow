@@ -422,92 +422,6 @@ def test__get_valid_fields__default_params__ok():
     assert result[0] == field_1
 
 
-def test__get_valid_fields__type_kwarg_provided__raise_exception():
-
-    """
-    type kwarg provided
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(user=user)
-    fieldset = FieldsetTemplate.objects.create(
-        account=account,
-        template=template,
-        name='Fieldset',
-    )
-    ruleset = FieldSetTemplateRuleSet.objects.create(
-        fieldset=fieldset,
-        account=account,
-        template=template,
-    )
-    missing_api_name = 'missing-field-1'
-    rule_type = 'custom-rule'
-    fields_api_names = [missing_api_name]
-    service = FieldsetTemplateRuleSetService(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-        instance=ruleset,
-    )
-
-    # act
-    with pytest.raises(FieldsetTemplateRuleServiceException) as ex:
-        service._get_valid_fields(
-            fields_api_names=fields_api_names,
-            type=rule_type,
-        )
-
-    # assert
-    assert ex.value.message == fs_messages.MSG_FS_0005(
-        rule=rule_type,
-        field=missing_api_name,
-    )
-
-
-def test__get_valid_fields__type_kwarg_omitted_or_falsy__raise_exception():
-
-    """
-    type kwarg omitted or falsy
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(user=user)
-    fieldset = FieldsetTemplate.objects.create(
-        account=account,
-        template=template,
-        name='Fieldset',
-    )
-    ruleset = FieldSetTemplateRuleSet.objects.create(
-        fieldset=fieldset,
-        account=account,
-        template=template,
-    )
-    missing_api_name = 'missing-field-1'
-    fields_api_names = [missing_api_name]
-    service = FieldsetTemplateRuleSetService(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-        instance=ruleset,
-    )
-
-    # act
-    with pytest.raises(FieldsetTemplateRuleServiceException) as ex:
-        service._get_valid_fields(
-            fields_api_names=fields_api_names,
-            type=None,
-        )
-
-    # assert
-    assert ex.value.message == fs_messages.MSG_FS_0005(
-        field=missing_api_name,
-    )
-
-
 def test__get_valid_fields__all_api_names_found__ok():
 
     """
@@ -566,7 +480,7 @@ def test__get_valid_fields__all_api_names_found__ok():
 def test__get_valid_fields__missing_api_name__raise_exception():
 
     """
-    Missing api_name
+    Field from another fieldset raises exception
     """
 
     # arrange
@@ -607,10 +521,13 @@ def test__get_valid_fields__missing_api_name__raise_exception():
 
     # act
     with pytest.raises(FieldsetTemplateRuleServiceException) as ex:
-        service._get_valid_fields(fields_api_names=fields_api_names)
+        service._get_valid_fields(
+            fields_api_names=fields_api_names,
+        )
 
     # assert
     assert ex.value.message == fs_messages.MSG_FS_0005(
+        rule='validator',
         field=field_1.api_name,
     )
 
@@ -689,7 +606,7 @@ def test__create_instance__default_params__ok():
 def test__create_instance__resolve_template_id_from_fieldset__ok():
 
     """
-    Resolve template_id from fieldset
+    template_id=None auto-resolves from fieldset
     """
 
     # arrange
@@ -867,10 +784,10 @@ def test__validate__default_params__ok(mocker):
     validate_sum_mock.assert_called_once_with(group_and=group_and)
 
 
-def test__validate__type_is_not_validator__ok(mocker):
+def test__validate__operator_not_in_sum_operators__ok(mocker):
 
     """
-    Type is not VALIDATOR
+    Operator not in SUM_OPERATORS — _validate_sum not called
     """
 
     # arrange
@@ -886,7 +803,6 @@ def test__validate__type_is_not_validator__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type='show',
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -897,7 +813,7 @@ def test__validate__type_is_not_validator__ok(mocker):
         group_or=group_or,
         account=account,
         template=template,
-        operator=FieldSetRuleOperator.SUM_EQUAL,
+        operator='unknown_operator',
         value='100',
     )
     service = FieldsetTemplateRuleSetService(

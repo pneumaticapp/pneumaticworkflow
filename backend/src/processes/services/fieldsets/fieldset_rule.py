@@ -9,13 +9,16 @@ from src.processes.enums import (
     FieldSetRuleOperator,
     FieldType,
 )
+from src.processes.messages.fieldset import MSG_FS_0005
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.fieldset import (
+    FieldsetTemplate,
     FieldSetTemplateRuleGroupAnd,
     FieldSetTemplateRuleGroupOr,
     FieldSetTemplateRuleSet,
 )
 from src.processes.services.exceptions import (
+    FieldsetTemplateRuleServiceException,
     FieldsetTemplateRuleSumMaxFieldsNotNumber,
     FieldsetTemplateRuleSumMaxInvalidValue,
 )
@@ -36,6 +39,13 @@ class FieldsetTemplateRuleSetService(BaseModelService):
         **kwargs,
     ):
 
+        if template_id is None and fieldset_id is not None:
+            template_id = (
+                FieldsetTemplate.objects
+                .filter(id=fieldset_id)
+                .values_list('template_id', flat=True)
+                .first()
+            )
         create_kwargs = {
             'account': self.account,
             'message': message,
@@ -95,13 +105,27 @@ class FieldsetTemplateRuleSetService(BaseModelService):
         **kwargs,
     ) -> List[FieldTemplate]:
 
-        return list(
+        available_fields = list(
             FieldTemplate.objects
             .filter(
                 fieldset_id=self.instance.fieldset_id,
                 api_name__in=fields_api_names,
             ),
         )
+        available_api_names = {
+            f.api_name for f in available_fields
+        }
+        failed_api_names = (
+            set(fields_api_names) - available_api_names
+        )
+        if failed_api_names:
+            raise FieldsetTemplateRuleServiceException(
+                message=MSG_FS_0005(
+                    rule='validator',
+                    field=failed_api_names.pop(),
+                ),
+            )
+        return available_fields
 
     def _set_fields(self, fields_api_names: List[str], **kwargs):
         if fields_api_names:
