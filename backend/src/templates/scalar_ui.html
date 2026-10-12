@@ -10,51 +10,23 @@
         margin: 0;
         padding: 0;
       }
-      .api-switcher {
-        position: fixed;
-        top: 12px;
-        right: 24px;
-        z-index: 10000;
-      }
-      .api-switcher select {
-        padding: 6px 12px;
-        border-radius: 4px;
-        border: 1px solid #ccc;
-        font-family: sans-serif;
-        font-size: 13px;
-        cursor: pointer;
-      }
     </style>
   </head>
   <body>
-    <!-- API Switcher -->
-    <div class="api-switcher">
-      <select id="api-selector" onchange="window.location.search = '?api=' + this.value;">
-        <option value="core">Pneumatic Core API</option>
-        <option value="files">Pneumatic Files API</option>
-      </select>
-    </div>
-
-    <!-- Scalar container -->
-    <script id="api-reference"></script>
-
     <script>
-      // Determine which API to load based on query param
-      const urlParams = new URLSearchParams(window.location.search);
-      const selectedApi = urlParams.get('api') || 'core';
-
-      // Sync dropdown state
-      document.getElementById('api-selector').value = selectedApi;
-
-      // Set schema URL dynamically
-      const schemaUrl = selectedApi === 'files' ? '/files/openapi.json' : '/api/schema/';
-      document.getElementById('api-reference').dataset.url = schemaUrl;
+      // Core API and Files API are separate services with a schema each;
+      // the page merges both schemas into one document.
+      const CORE_SCHEMA_URL = '/api/schema/?format=json';
+      const FILES_SCHEMA_URL = '/files/openapi.json';
+      const SCALAR_URL = 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.25.81';
+      const SCHEMA_REF_PREFIX = '#/components/schemas/';
+      const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
 
       // Scalar configuration
-      var configuration = {
+      const configuration = {
         theme: 'default',
         metaData: {
-          title: selectedApi === 'files' ? 'Pneumatic Files API' : 'Pneumatic Workflow API',
+          title: 'Pneumatic Workflow API',
         },
         hideModels: false,
         hideDownloadButton: false,
@@ -64,11 +36,111 @@
         layout: 'modern',
         showDeveloperTools: 'never',
         hideClientButton: true,
-      }
-      document.getElementById('api-reference').dataset.configuration = JSON.stringify(configuration)
-    </script>
+        hideTestRequestButton: true,
+      };
 
-    <!-- Load Scalar script from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.25.81"></script>
+      async function fetchSchema(url) {
+        const response = await fetch(url, { headers: { Accept: 'application/json' } });
+        if (!response.ok) {
+          throw new Error(`${url} answered ${response.status}`);
+        }
+        return response.json();
+      }
+
+      function renameRefs(node, renames) {
+        if (Array.isArray(node)) {
+          node.forEach((item) => renameRefs(item, renames));
+          return;
+        }
+        if (!node || typeof node !== 'object') {
+          return;
+        }
+        Object.entries(node).forEach(([key, value]) => {
+          if (key === '$ref' && typeof value === 'string' && value.startsWith(SCHEMA_REF_PREFIX)) {
+            const name = value.slice(SCHEMA_REF_PREFIX.length);
+            if (renames[name]) {
+              node[key] = SCHEMA_REF_PREFIX + renames[name];
+            }
+          } else {
+            renameRefs(value, renames);
+          }
+        });
+      }
+
+      function mergeSchemas(core, files) {
+        const coreComponents = core.components;
+        const filesSchemas = files.components.schemas;
+
+        // Both services define ValidationError, with different shapes.
+        const renames = {};
+        Object.keys(filesSchemas).forEach((name) => {
+          if (name in coreComponents.schemas) {
+            renames[name] = `Files${name}`;
+          }
+        });
+        renameRefs(files.paths, renames);
+        renameRefs(filesSchemas, renames);
+        Object.entries(filesSchemas).forEach(([name, schema]) => {
+          coreComponents.schemas[renames[name] || name] = schema;
+        });
+
+        // Files API declares security once for the whole document.
+        Object.values(files.paths).forEach((pathItem) => {
+          HTTP_METHODS.forEach((method) => {
+            const operation = pathItem[method];
+            if (operation && !operation.security) {
+              operation.security = files.security;
+            }
+          });
+        });
+
+        Object.assign(core.paths, files.paths);
+        coreComponents.securitySchemes = {
+          ...files.components.securitySchemes,
+          ...coreComponents.securitySchemes,
+        };
+        core.tags = core.tags || [];
+        const coreTags = new Set(core.tags.map((tag) => tag.name));
+        core.tags.push(...(files.tags || []).filter((tag) => !coreTags.has(tag.name)));
+        return core;
+      }
+
+      async function loadSchema() {
+        const [core, files] = await Promise.allSettled([
+          fetchSchema(CORE_SCHEMA_URL),
+          fetchSchema(FILES_SCHEMA_URL),
+        ]);
+        if (core.status === 'rejected') {
+          throw core.reason;
+        }
+        if (files.status === 'rejected') {
+          // Core API stays documented while the file service is down.
+          console.warn('Files API schema is unavailable:', files.reason);
+          return core.value;
+        }
+        return mergeSchemas(core.value, files.value);
+      }
+
+      function mountScalar(schema) {
+        // Scalar reads the schema and the configuration of this element
+        // once, when its script loads, so the script is added last.
+        const reference = document.createElement('script');
+        reference.id = 'api-reference';
+        reference.type = 'application/json';
+        reference.dataset.configuration = JSON.stringify(configuration);
+        reference.textContent = JSON.stringify(schema);
+        document.body.appendChild(reference);
+
+        const scalar = document.createElement('script');
+        scalar.src = SCALAR_URL;
+        document.body.appendChild(scalar);
+      }
+
+      loadSchema()
+        .then(mountScalar)
+        .catch((error) => {
+          document.body.textContent = `API documentation is unavailable: ${error.message}`;
+        });
+    </script>
   </body>
 </html>
