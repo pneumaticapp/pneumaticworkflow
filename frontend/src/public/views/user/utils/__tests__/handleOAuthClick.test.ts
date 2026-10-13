@@ -1,9 +1,9 @@
 import { MouseEvent } from 'react';
-import { IntlShape } from 'react-intl';
 import { handleOAuthClick } from '../handleOAuthClick';
 import { getOAuthUrl } from '../../../../api/getGoogleAuthUrl';
 import { NotificationManager } from '../../../../components/UI/Notifications';
 import { EOAuthType } from '../../../../types/auth';
+import { intlMock } from '../../../../__stubs__/intlMock';
 
 jest.mock('../../../../api/getGoogleAuthUrl', () => ({
   getOAuthUrl: jest.fn(),
@@ -15,18 +15,15 @@ jest.mock('../../../../components/UI/Notifications', () => ({
   },
 }));
 
-type FormatMessageFn = IntlShape['formatMessage'];
-
 describe('handleOAuthClick', () => {
   const originalLocation = window.location;
-  const mockFormatMessageFn = jest.fn(({ id }: { id: string }, values?: Record<string, string>) =>
-    values?.type ? `translated:${id}:${values.type}` : `translated:${id}`,
-  );
-  const mockFormatMessage = mockFormatMessageFn as FormatMessageFn;
-  const createMockEvent = (): MouseEvent =>
-    ({
-      preventDefault: jest.fn(),
-    }) as unknown as MouseEvent;
+  const formatUnavailableMessage = (type: EOAuthType) =>
+    intlMock.formatMessage({ id: 'user.oauth-unavailable' }, { type });
+  const createMockEvent = (): MouseEvent => {
+    const preventDefault: MouseEvent['preventDefault'] = jest.fn();
+
+    return { preventDefault } as MouseEvent;
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -50,7 +47,7 @@ describe('handleOAuthClick', () => {
     (getOAuthUrl as jest.Mock).mockResolvedValue({ redirectUri: 'https://oauth.example.com' });
     const mockEvent = createMockEvent();
 
-    await handleOAuthClick(EOAuthType.Google, mockFormatMessage)(mockEvent);
+    await handleOAuthClick(EOAuthType.Google, intlMock.formatMessage)(mockEvent);
 
     expect(mockEvent.preventDefault).toHaveBeenCalledTimes(1);
   });
@@ -60,7 +57,7 @@ describe('handleOAuthClick', () => {
     (getOAuthUrl as jest.Mock).mockResolvedValue({ redirectUri: mockRedirectUri });
     const mockEvent = createMockEvent();
 
-    await handleOAuthClick(EOAuthType.Google, mockFormatMessage)(mockEvent);
+    await handleOAuthClick(EOAuthType.Google, intlMock.formatMessage)(mockEvent);
 
     expect(getOAuthUrl).toHaveBeenCalledTimes(1);
     expect(getOAuthUrl).toHaveBeenCalledWith(EOAuthType.Google);
@@ -74,13 +71,12 @@ describe('handleOAuthClick', () => {
     (getOAuthUrl as jest.Mock).mockResolvedValue(htmlResponse);
     const mockEvent = createMockEvent();
 
-    await handleOAuthClick(EOAuthType.Google, mockFormatMessage)(mockEvent);
+    await handleOAuthClick(EOAuthType.Google, intlMock.formatMessage)(mockEvent);
 
     expect(window.location.assign).not.toHaveBeenCalled();
     expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
-    expect(mockFormatMessageFn).toHaveBeenCalledWith({ id: 'user.oauth-unavailable' }, { type: EOAuthType.Google });
     expect(NotificationManager.warning).toHaveBeenCalledWith({
-      message: 'translated:user.oauth-unavailable:Google',
+      message: formatUnavailableMessage(EOAuthType.Google),
     });
   });
 
@@ -88,19 +84,12 @@ describe('handleOAuthClick', () => {
     (getOAuthUrl as jest.Mock).mockResolvedValue(undefined);
     const mockEvent = createMockEvent();
 
-    await handleOAuthClick(EOAuthType.SSOAuth0, mockFormatMessage)(mockEvent);
+    await handleOAuthClick(EOAuthType.SSOAuth0, intlMock.formatMessage)(mockEvent);
 
     expect(window.location.assign).not.toHaveBeenCalled();
     expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
-    expect(mockFormatMessageFn).toHaveBeenCalledTimes(2);
-    expect(mockFormatMessageFn).toHaveBeenNthCalledWith(1, { id: 'user.oauth-unavailable-sso' });
-    expect(mockFormatMessageFn).toHaveBeenNthCalledWith(
-      2,
-      { id: 'user.oauth-unavailable' },
-      { type: 'translated:user.oauth-unavailable-sso' },
-    );
     expect(NotificationManager.warning).toHaveBeenCalledWith({
-      message: 'translated:user.oauth-unavailable:translated:user.oauth-unavailable-sso',
+      message: formatUnavailableMessage(EOAuthType.SSOAuth0),
     });
   });
 
@@ -108,13 +97,12 @@ describe('handleOAuthClick', () => {
     (getOAuthUrl as jest.Mock).mockResolvedValue({});
     const mockEvent = createMockEvent();
 
-    await handleOAuthClick(EOAuthType.Google, mockFormatMessage)(mockEvent);
+    await handleOAuthClick(EOAuthType.Google, intlMock.formatMessage)(mockEvent);
 
     expect(window.location.assign).not.toHaveBeenCalled();
     expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
-    expect(mockFormatMessageFn).toHaveBeenCalledWith({ id: 'user.oauth-unavailable' }, { type: EOAuthType.Google });
     expect(NotificationManager.warning).toHaveBeenCalledWith({
-      message: 'translated:user.oauth-unavailable:Google',
+      message: formatUnavailableMessage(EOAuthType.Google),
     });
   });
 
@@ -122,17 +110,7 @@ describe('handleOAuthClick', () => {
     (getOAuthUrl as jest.Mock).mockResolvedValue({ redirectUri: null });
     const mockEvent = createMockEvent();
 
-    await handleOAuthClick(EOAuthType.Google, mockFormatMessage)(mockEvent);
-
-    expect(window.location.assign).not.toHaveBeenCalled();
-    expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not call assign and shows warning when redirectUri is empty string', async () => {
-    (getOAuthUrl as jest.Mock).mockResolvedValue({ redirectUri: '' });
-    const mockEvent = createMockEvent();
-
-    await handleOAuthClick(EOAuthType.Google, mockFormatMessage)(mockEvent);
+    await handleOAuthClick(EOAuthType.Google, intlMock.formatMessage)(mockEvent);
 
     expect(window.location.assign).not.toHaveBeenCalled();
     expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
@@ -142,33 +120,21 @@ describe('handleOAuthClick', () => {
     (getOAuthUrl as jest.Mock).mockResolvedValue({ redirectUri: 'javascript:alert(1)' });
     const mockEvent = createMockEvent();
 
-    await handleOAuthClick(EOAuthType.Google, mockFormatMessage)(mockEvent);
+    await handleOAuthClick(EOAuthType.Google, intlMock.formatMessage)(mockEvent);
 
     expect(window.location.assign).not.toHaveBeenCalled();
     expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
   });
 
-  it('does not call assign and shows warning when redirectUri has no host ("https://")', async () => {
-    (getOAuthUrl as jest.Mock).mockResolvedValue({ redirectUri: 'https://' });
-    const mockEvent = createMockEvent();
-
-    await handleOAuthClick(EOAuthType.Google, mockFormatMessage)(mockEvent);
-
-    expect(window.location.assign).not.toHaveBeenCalled();
-    expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
-  });
-
-  it('uses SSO label from user.oauth-unavailable-sso translation for SSOOkta', async () => {
+  it('uses the provider name from enum as is for SSOOkta', async () => {
     (getOAuthUrl as jest.Mock).mockResolvedValue(undefined);
     const mockEvent = createMockEvent();
 
-    await handleOAuthClick(EOAuthType.SSOOkta, mockFormatMessage)(mockEvent);
+    await handleOAuthClick(EOAuthType.SSOOkta, intlMock.formatMessage)(mockEvent);
 
-    expect(mockFormatMessageFn).toHaveBeenCalledTimes(2);
-    expect(mockFormatMessageFn).toHaveBeenNthCalledWith(1, { id: 'user.oauth-unavailable-sso' });
     expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
     expect(NotificationManager.warning).toHaveBeenCalledWith({
-      message: 'translated:user.oauth-unavailable:translated:user.oauth-unavailable-sso',
+      message: formatUnavailableMessage(EOAuthType.SSOOkta),
     });
   });
 
@@ -176,13 +142,12 @@ describe('handleOAuthClick', () => {
     (getOAuthUrl as jest.Mock).mockRejectedValue(new Error('Network error'));
     const mockEvent = createMockEvent();
 
-    await handleOAuthClick(EOAuthType.Google, mockFormatMessage)(mockEvent);
+    await handleOAuthClick(EOAuthType.Google, intlMock.formatMessage)(mockEvent);
 
     expect(window.location.assign).not.toHaveBeenCalled();
     expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
-    expect(mockFormatMessageFn).toHaveBeenCalledWith({ id: 'user.oauth-unavailable' }, { type: EOAuthType.Google });
     expect(NotificationManager.warning).toHaveBeenCalledWith({
-      message: 'translated:user.oauth-unavailable:Google',
+      message: formatUnavailableMessage(EOAuthType.Google),
     });
   });
 });

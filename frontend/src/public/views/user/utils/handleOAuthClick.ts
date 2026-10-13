@@ -4,30 +4,15 @@ import { IntlShape } from 'react-intl';
 import { EOAuthType } from '../../../types/auth';
 import { getOAuthUrl } from '../../../api/getGoogleAuthUrl';
 import { NotificationManager } from '../../../components/UI/Notifications';
-
-const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
-
-const isValidUri = (value: string) => {
-  try {
-    const { protocol } = new URL(value);
-    return ALLOWED_PROTOCOLS.has(protocol);
-  } catch {
-    return false;
-  }
-};
+import { isValidUri } from '../../../utils/urls';
 
 export const handleOAuthClick =
   (type: EOAuthType, formatMessage: IntlShape['formatMessage']) => async (event: MouseEvent) => {
     event.preventDefault();
 
     const showServiceUnavailable = () => {
-      const service =
-        type === EOAuthType.SSOAuth0 || type === EOAuthType.SSOOkta
-          ? formatMessage({ id: 'user.oauth-unavailable-sso' })
-          : type;
-
       NotificationManager.warning({
-        message: formatMessage({ id: 'user.oauth-unavailable' }, { type: service }),
+        message: formatMessage({ id: 'user.oauth-unavailable' }, { type }),
       });
     };
 
