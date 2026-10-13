@@ -1,5 +1,3 @@
-from datetime import datetime
-from datetime import timezone as tz
 from decimal import Decimal, DecimalException
 from typing import Any, Dict, Optional
 
@@ -28,12 +26,12 @@ from src.processes.messages.template import (
     MSG_PT_0066,
     MSG_PT_0067,
     MSG_PT_0068,
-    MSG_PT_0080,
 )
 from src.processes.models.templates.conditions import PredicateTemplate
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
     CustomValidationApiNameMixin,
+    validate_date_timestamp,
 )
 from src.utils.validation import raise_validation_error
 
@@ -231,13 +229,7 @@ class PredicateTemplateSerializer(
                         api_name=api_name,
                     )
             elif field_type == FieldType.DATE:
-                try:
-                    datetime.fromtimestamp(int(value), tz=tz.utc)
-                except (TypeError, ValueError):
-                    raise_validation_error(
-                        message=MSG_PT_0080,
-                        api_name=api_name,
-                    )
+                validate_date_timestamp(value, api_name)
 
     def create(self, validated_data):
         self.additional_validate(validated_data)

@@ -39,20 +39,13 @@ class FieldSetRuleSetService(BaseModelService):
         fieldset: Optional[FieldSet] = None,
         **kwargs,
     ) -> FieldSetRuleSet:
-        fieldset_id = (
-            kwargs.get('fieldset_id') or getattr(fieldset, 'id', None)
-        )
+        fieldset_id = fieldset.id
+        workflow = kwargs.get('workflow')
         workflow_id = (
             kwargs.get('workflow_id')
-            or getattr(kwargs.get('workflow'), 'id', None)
-            or getattr(fieldset, 'workflow_id', None)
+            or getattr(workflow, 'id', None)
         )
-        account = (
-            self.account
-            or getattr(fieldset, 'account', None)
-            or getattr(kwargs.get('workflow'), 'account', None)
-            or kwargs.get('account')
-        )
+        account = self.account or fieldset.account
         api_name = kwargs.get('api_name') or getattr(
             instance_template, 'api_name', None,
         )

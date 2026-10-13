@@ -655,6 +655,7 @@ def test_create__without_user__account_from_fieldset_fallback_ok():
     # act
     ruleset = service.create(
         fieldset=fieldset,
+        workflow=workflow,
         api_name='custom-fs-ruleset',
     )
 

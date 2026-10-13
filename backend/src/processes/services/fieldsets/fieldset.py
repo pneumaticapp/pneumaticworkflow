@@ -40,13 +40,21 @@ from src.processes.services.templates.field_template import (
 from src.processes.services.templates.field_template_rule import (
     FieldTemplateRuleSetService,
 )
+from src.processes.services.templates.ruleset_mixins import (
+    TemplateRulesetsMixin,
+)
 from src.processes.utils.common import create_api_name
 
 
 UserModel = get_user_model()
 
 
-class FieldSetTemplateService(BaseModelService):
+class FieldSetTemplateService(TemplateRulesetsMixin, BaseModelService):
+
+    ruleset_service_class = FieldsetTemplateRuleSetService
+    ruleset_exception_class = FieldsetTemplateRuleSetServiceException
+    parent_service_exception = FieldsetTemplateServiceException
+    parent_id_field = 'fieldset_id'
 
     def _create_instance(
         self,
@@ -354,62 +362,6 @@ class FieldSetTemplateService(BaseModelService):
         fieldset_data.pop('order', None)
         fieldset_data.pop('id', None)
         return fieldset_data
-
-    def create_ruleset(
-        self,
-        ruleset_data: dict,
-    ) -> FieldSetTemplateRuleSet:
-
-        service = FieldsetTemplateRuleSetService(
-            user=self.user,
-            is_superuser=self.is_superuser,
-            auth_type=self.auth_type,
-        )
-        try:
-            return service.create(
-                fieldset_id=self.instance.id,
-                template_id=self.instance.template_id,
-                **ruleset_data,
-            )
-        except FieldsetTemplateRuleSetServiceException as ex:
-            raise FieldsetTemplateServiceException(message=ex.message) from ex
-
-    def create_rulesets(
-        self,
-        rulesets_data: List[Dict],
-    ):
-        for ruleset_data in rulesets_data:
-            self.create_ruleset(ruleset_data)
-
-    def update_rulesets(
-        self,
-        rulesets_data: List[Dict],
-    ):
-        """ All rulesets will be updated """
-
-        existing_rulesets = {
-            ruleset.api_name: ruleset
-            for ruleset in self.instance.rulesets.all()
-        }
-        ruleset_api_names = set()
-        for ruleset_data in rulesets_data:
-            ruleset_api_name = ruleset_data.get('api_name')
-            if ruleset_api_name and ruleset_api_name in existing_rulesets:
-                service = FieldsetTemplateRuleSetService(
-                    user=self.user,
-                    is_superuser=self.is_superuser,
-                    auth_type=self.auth_type,
-                    instance=existing_rulesets[ruleset_api_name],
-                )
-                service.partial_update(**ruleset_data)
-                ruleset_api_names.add(ruleset_api_name)
-            else:
-                ruleset = self.create_ruleset(ruleset_data)
-                ruleset_api_names.add(ruleset.api_name)
-
-        self.instance.rulesets.exclude(
-            api_name__in=ruleset_api_names,
-        ).delete()
 
     @staticmethod
     def to_json(fieldset: FieldsetTemplate) -> dict:

@@ -24,7 +24,6 @@ from src.notifications.tasks import (
 from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
-    FieldRuleType,
     PerformerType,
     TaskStatus,
     WorkflowStatus,
@@ -976,15 +975,7 @@ class WorkflowActionService:
             FieldRuleCheckService(
                 workflow_id=self.workflow.id,
             ).apply_rulesets(
-                self.workflow.field_rulesets
-                .filter(
-                    Q(type=FieldRuleType.SHOW)
-                    | Q(field__task=task)
-                    | Q(field__fieldset__task=task),
-                    field__is_deleted=False,
-                )
-                .select_related('field')
-                .prefetch_related('groups_or__groups_and'),
+                self.workflow.field_rulesets.for_task(task),
             )
 
             AnalyticService.task_completed(

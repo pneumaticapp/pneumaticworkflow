@@ -6,7 +6,11 @@ from src.processes.consts import WORKFLOW_NAME_LENGTH
 from src.processes.serializers.workflows.kickoff_value import (
     KickoffValueSerializer,
 )
+from src.processes.services.exceptions import (
+    FieldRuleCheckServiceException,
+)
 from src.processes.services.tasks.task import TaskService
+from src.processes.services.workflows.workflow import WorkflowService
 from src.processes.utils.common import (
     string_abbreviation,
 )
@@ -58,7 +62,18 @@ class WorkflowSerializerMixin:
             },
         )
         kickoff_slz.is_valid(raise_exception=True)
-        return kickoff_slz.save()
+        result = kickoff_slz.save()
+        try:
+            WorkflowService(
+                instance=self.instance,
+                user=self.context['user'],
+            ).apply_field_rulesets()
+        except FieldRuleCheckServiceException as ex:
+            self.raise_validation_error(
+                message=ex.message,
+                api_name=ex.field_api_name,
+            )
+        return result
 
     def _partial_update_workflow(self, **kwargs):
         update_fields = []

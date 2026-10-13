@@ -352,6 +352,7 @@ def test_create__without_user__account_from_field_fallback_ok():
     # act
     ruleset = service.create(
         field=task_field,
+        workflow=workflow,
         name='Validator rule',
         type=FieldRuleType.VALIDATOR,
         api_name='custom-ruleset-1',

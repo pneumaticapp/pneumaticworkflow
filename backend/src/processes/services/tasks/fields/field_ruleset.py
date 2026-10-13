@@ -28,18 +28,13 @@ class FieldRuleSetService(BaseModelService):
         field: Optional[TaskField] = None,
         **kwargs,
     ) -> FieldRuleSet:
-        field_id = kwargs.get('field_id') or getattr(field, 'id', None)
+        field_id = field.id
+        workflow = kwargs.get('workflow')
         workflow_id = (
             kwargs.get('workflow_id')
-            or getattr(kwargs.get('workflow'), 'id', None)
-            or getattr(field, 'workflow_id', None)
+            or getattr(workflow, 'id', None)
         )
-        account = (
-            self.account
-            or getattr(field, 'account', None)
-            or getattr(kwargs.get('workflow'), 'account', None)
-            or kwargs.get('account')
-        )
+        account = self.account or field.account
         api_name = kwargs.get('api_name') or getattr(
             instance_template, 'api_name', None,
         )

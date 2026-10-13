@@ -29,6 +29,7 @@ from src.processes.enums import (
     OwnerType,
     PerformerType,
     PresetType,
+    FieldRuleType,
     SysTemplateType,
     TaskStatus,
     TemplateOrdering,
@@ -1400,6 +1401,25 @@ class FieldsetTemplateQuerySet(AccountBaseQuerySet):
 class FieldsetTemplateRuleQuerySet(AccountBaseQuerySet):
 
     pass
+
+
+class FieldRuleSetQuerySet(AccountBaseQuerySet):
+
+    def for_kickoff(self):
+        return self.filter(
+            Q(type=FieldRuleType.SHOW)
+            | Q(field__kickoff__isnull=False)
+            | Q(field__fieldset__kickoff__isnull=False),
+            field__is_deleted=False,
+        ).select_related('field').prefetch_related('groups_or__groups_and')
+
+    def for_task(self, task):
+        return self.filter(
+            Q(type=FieldRuleType.SHOW)
+            | Q(field__task=task)
+            | Q(field__fieldset__task=task),
+            field__is_deleted=False,
+        ).select_related('field').prefetch_related('groups_or__groups_and')
 
 
 class FieldSetQuerySet(AccountBaseQuerySet):

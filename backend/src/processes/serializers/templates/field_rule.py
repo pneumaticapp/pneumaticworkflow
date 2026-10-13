@@ -1,5 +1,3 @@
-from datetime import datetime
-from datetime import timezone as tz
 from typing import Any, Dict
 
 from rest_framework.serializers import ModelSerializer, ValidationError
@@ -15,9 +13,7 @@ from src.generics.mixins.serializers import (
 )
 from src.processes.enums import FieldRuleOperator, FieldRuleType, FieldType
 from src.processes.messages.template import (
-    MSG_PT_0075,
     MSG_PT_0079,
-    MSG_PT_0080,
 )
 from src.processes.models.templates.fields import (
     FieldTemplate,
@@ -29,10 +25,13 @@ from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
     CreateOrUpdateRelatedMixin,
     CustomValidationApiNameMixin,
+    FieldRuleApiNameMixin,
+    validate_date_timestamp,
 )
 
 
 class FieldTemplateRuleGroupAndSerializer(
+    FieldRuleApiNameMixin,
     CreateOrUpdateInstanceMixin,
     CustomValidationErrorMixin,
     AdditionalValidationMixin,
@@ -120,32 +119,13 @@ class FieldTemplateRuleGroupAndSerializer(
         else:
             source_field = self.context.get('field')
         if source_field and source_field.type == FieldType.DATE:
-            try:
-                datetime.fromtimestamp(int(value), tz=tz.utc)
-            except (TypeError, ValueError):
-                self.raise_validation_error(
-                    message=MSG_PT_0080,
-                    api_name=data.get('api_name'),
-                )
+            validate_date_timestamp(value, data.get('api_name'))
 
     def create(self, validated_data: Dict[str, Any]):
         self.additional_validate(validated_data)
-        task = self.context.get('task')
-        kickoff = self.context.get('kickoff')
-        field = self.context['field']
-        task_name = 'Kickoff' if kickoff else task.name
-        return self.create_or_update_instance(
-            validated_data={
-                'template': self.context['template'],
-                'account': self.context['account'],
-                'group_or': self.context['group_or'],
-                **validated_data,
-            },
-            not_unique_exception_msg=MSG_PT_0075(
-                task_name=task_name,
-                field_name=field.name,
-                api_name=validated_data.get('api_name'),
-            ),
+        return self._save_ruleset_instance(
+            validated_data=validated_data,
+            extra={'group_or': self.context['group_or']},
         )
 
     def update(
@@ -154,27 +134,15 @@ class FieldTemplateRuleGroupAndSerializer(
         validated_data: Dict[str, Any],
     ):
         self.additional_validate(validated_data)
-        task = self.context.get('task')
-        kickoff = self.context.get('kickoff')
-        field = self.context['field']
-        task_name = 'Kickoff' if kickoff else task.name
-        return self.create_or_update_instance(
+        return self._save_ruleset_instance(
             instance=instance,
-            validated_data={
-                'template': self.context['template'],
-                'account': self.context['account'],
-                'group_or': self.context['group_or'],
-                **validated_data,
-            },
-            not_unique_exception_msg=MSG_PT_0075(
-                task_name=task_name,
-                field_name=field.name,
-                api_name=validated_data.get('api_name'),
-            ),
+            validated_data=validated_data,
+            extra={'group_or': self.context['group_or']},
         )
 
 
 class FieldTemplateRuleGroupOrSerializer(
+    FieldRuleApiNameMixin,
     CreateOrUpdateRelatedMixin,
     CreateOrUpdateInstanceMixin,
     CustomValidationErrorMixin,
@@ -213,22 +181,9 @@ class FieldTemplateRuleGroupOrSerializer(
 
     def create(self, validated_data: Dict[str, Any]):
         self.additional_validate(validated_data)
-        task = self.context.get('task')
-        kickoff = self.context.get('kickoff')
-        field = self.context['field']
-        task_name = 'Kickoff' if kickoff else task.name
-        instance = self.create_or_update_instance(
-            validated_data={
-                'template': self.context['template'],
-                'account': self.context['account'],
-                'ruleset': self.context['ruleset'],
-                **validated_data,
-            },
-            not_unique_exception_msg=MSG_PT_0075(
-                task_name=task_name,
-                field_name=field.name,
-                api_name=validated_data.get('api_name'),
-            ),
+        instance = self._save_ruleset_instance(
+            validated_data=validated_data,
+            extra={'ruleset': self.context['ruleset']},
         )
         self.create_or_update_related(
             data=validated_data.pop('groups_and', None),
@@ -250,23 +205,10 @@ class FieldTemplateRuleGroupOrSerializer(
         validated_data: Dict[str, Any],
     ):
         self.additional_validate(validated_data)
-        task = self.context.get('task')
-        kickoff = self.context.get('kickoff')
-        field = self.context['field']
-        task_name = 'Kickoff' if kickoff else task.name
-        instance = self.create_or_update_instance(
+        instance = self._save_ruleset_instance(
             instance=instance,
-            validated_data={
-                'template': self.context['template'],
-                'account': self.context['account'],
-                'ruleset': self.context['ruleset'],
-                **validated_data,
-            },
-            not_unique_exception_msg=MSG_PT_0075(
-                task_name=task_name,
-                field_name=field.name,
-                api_name=validated_data.get('api_name'),
-            ),
+            validated_data=validated_data,
+            extra={'ruleset': self.context['ruleset']},
         )
         self.create_or_update_related(
             data=validated_data.pop('groups_and', None),
@@ -284,6 +226,7 @@ class FieldTemplateRuleGroupOrSerializer(
 
 
 class FieldTemplateRuleSetSerializer(
+    FieldRuleApiNameMixin,
     CreateOrUpdateRelatedMixin,
     CreateOrUpdateInstanceMixin,
     CustomValidationErrorMixin,
@@ -369,22 +312,9 @@ class FieldTemplateRuleSetSerializer(
 
     def create(self, validated_data: Dict[str, Any]):
         self.additional_validate(validated_data)
-        task = self.context.get('task')
-        kickoff = self.context.get('kickoff')
-        field = self.context['field']
-        task_name = 'Kickoff' if kickoff else task.name
-        instance = self.create_or_update_instance(
-            validated_data={
-                'template': self.context['template'],
-                'account': self.context['account'],
-                'field': field,
-                **validated_data,
-            },
-            not_unique_exception_msg=MSG_PT_0075(
-                task_name=task_name,
-                field_name=field.name,
-                api_name=validated_data.get('api_name'),
-            ),
+        instance = self._save_ruleset_instance(
+            validated_data=validated_data,
+            extra={'field': self.context['field']},
         )
         self.create_or_update_related(
             data=validated_data.get('groups_or'),
@@ -406,23 +336,10 @@ class FieldTemplateRuleSetSerializer(
         validated_data: Dict[str, Any],
     ):
         self.additional_validate(validated_data)
-        task = self.context.get('task')
-        kickoff = self.context.get('kickoff')
-        field = self.context['field']
-        task_name = 'Kickoff' if kickoff else task.name
-        instance = self.create_or_update_instance(
+        instance = self._save_ruleset_instance(
             instance=instance,
-            validated_data={
-                'template': self.context['template'],
-                'account': self.context['account'],
-                'field': field,
-                **validated_data,
-            },
-            not_unique_exception_msg=MSG_PT_0075(
-                task_name=task_name,
-                field_name=field.name,
-                api_name=validated_data.get('api_name'),
-            ),
+            validated_data=validated_data,
+            extra={'field': self.context['field']},
         )
         self.create_or_update_related(
             data=validated_data.get('groups_or'),

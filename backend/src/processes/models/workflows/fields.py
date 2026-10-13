@@ -16,6 +16,7 @@ from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.fieldset import FieldSet
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.querysets import (
+    FieldRuleSetQuerySet,
     FieldSelectionQuerySet,
     TaskFieldQuerySet,
 )
@@ -138,7 +139,7 @@ class FieldRuleSet(
     )
     order = models.PositiveIntegerField(default=0)
 
-    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
+    objects = BaseSoftDeleteManager.from_queryset(FieldRuleSetQuerySet)()
 
     def __str__(self):
         return self.api_name

@@ -2,7 +2,6 @@
 from typing import Optional
 
 from django.contrib.auth import get_user_model
-from django.db.models import Q
 from django.utils import timezone
 
 from src.analysis.actions import (
@@ -11,7 +10,6 @@ from src.analysis.actions import (
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.processes.consts import WORKFLOW_NAME_LENGTH
-from src.processes.enums import FieldRuleType
 from src.processes.utils.common import get_workflow_starter_name
 from src.processes.models.templates.template import Template
 from src.processes.models.workflows.workflow import Workflow
@@ -211,20 +209,9 @@ class WorkflowService(
             the change back. Task field validators are checked on complete.
         """
 
-        rulesets = (
-            self.instance.field_rulesets
-            .filter(
-                Q(type=FieldRuleType.SHOW)
-                | Q(field__kickoff__isnull=False)
-                | Q(field__fieldset__kickoff__isnull=False),
-                field__is_deleted=False,
-            )
-            .select_related('field')
-            .prefetch_related('groups_or__groups_and')
-        )
         FieldRuleCheckService(
             workflow_id=self.instance.id,
-        ).apply_rulesets(rulesets)
+        ).apply_rulesets(self.instance.field_rulesets.for_kickoff())
 
     def _create_actions(self, **kwargs):
         if kwargs.get('anonymous_id'):
