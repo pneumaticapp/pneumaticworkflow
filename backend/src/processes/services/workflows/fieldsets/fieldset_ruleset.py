@@ -1,5 +1,6 @@
 import contextlib
 from decimal import Decimal, DecimalException
+from operator import eq, gt, lt
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 from django.contrib.auth import get_user_model
@@ -32,6 +33,11 @@ UserModel = get_user_model()
 class FieldSetRuleSetService(BaseModelService):
 
     NULL_VALUES = (None, '', [])
+    SUM_OPERATOR_MAP = {
+        FieldSetRuleOperator.SUM_EQUAL: eq,
+        FieldSetRuleOperator.SUM_GREATER_THAN: gt,
+        FieldSetRuleOperator.SUM_LESS_THAN: lt,
+    }
 
     def _create_instance(
         self,
@@ -190,13 +196,10 @@ class FieldSetRuleSetService(BaseModelService):
         except (ValueError, TypeError, DecimalException):
             return False
 
-        if group_and.operator == FieldSetRuleOperator.SUM_EQUAL:
-            return total == target_value
-        if group_and.operator == FieldSetRuleOperator.SUM_GREATER_THAN:
-            return total > target_value
-        if group_and.operator == FieldSetRuleOperator.SUM_LESS_THAN:
-            return total < target_value
-        return False
+        op_func = self.SUM_OPERATOR_MAP.get(group_and.operator)
+        if op_func is None:
+            return False
+        return op_func(total, target_value)
 
     def _get_error_message(
         self,
@@ -253,12 +256,11 @@ class FieldSetRuleSetVersionService(BaseUpdateVersionService):
         if not api_names:
             self.instance.fields.clear()
             return
-        self.instance.fields.set(
-            TaskField.objects.filter(
-                fieldset_id=self.instance.fieldset_id,
-                api_name__in=api_names,
-            ),
+        fields = TaskField.objects.filter(
+            fieldset_id=self.instance.fieldset_id,
+            api_name__in=api_names,
         )
+        self.instance.fields.set(fields)
 
     def _update_groups_and(
         self,
