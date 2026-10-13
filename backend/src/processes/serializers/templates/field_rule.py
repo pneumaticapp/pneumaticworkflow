@@ -95,12 +95,12 @@ class FieldTemplateRuleGroupAndSerializer(
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
-        ruleset_type = (
-            self.context['ruleset'].type
-            if self.context.get('ruleset')
-            else self.context['ruleset_type']
-        )
-        if ruleset_type == FieldRuleType.SHOW and not attrs.get('field'):
+        ruleset = self.context.get('ruleset')
+        if (
+            ruleset
+            and ruleset.type == FieldRuleType.SHOW
+            and not attrs.get('field')
+        ):
             raise ValidationError(MSG_PT_0079)
         return attrs
 
@@ -305,10 +305,15 @@ class FieldTemplateRuleSetSerializer(
         ),
     )
 
-    def to_internal_value(self, data):
-        if isinstance(data, dict):
-            self.context['ruleset_type'] = data.get('type')
-        return super().to_internal_value(data)
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if attrs.get('type') != FieldRuleType.SHOW:
+            return attrs
+        for group_or in attrs.get('groups_or') or []:
+            for group_and in group_or.get('groups_and') or []:
+                if not group_and.get('field'):
+                    raise ValidationError(MSG_PT_0079)
+        return attrs
 
     def create(self, validated_data: Dict[str, Any]):
         self.additional_validate(validated_data)
