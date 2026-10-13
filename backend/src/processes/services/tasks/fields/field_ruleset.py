@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Union
+from typing import Dict, List
 
 from django.contrib.auth import get_user_model
 
@@ -24,110 +24,79 @@ class FieldRuleSetService(BaseModelService):
 
     def _create_instance(
         self,
-        instance_template: Optional[FieldTemplateRuleSet] = None,
-        field: Optional[TaskField] = None,
+        instance_template: FieldTemplateRuleSet,
+        field: TaskField,
         **kwargs,
     ) -> FieldRuleSet:
-        field_id = field.id
-        workflow = kwargs.get('workflow')
-        workflow_id = (
-            kwargs.get('workflow_id')
-            or getattr(workflow, 'id', None)
+        self.instance = FieldRuleSet.objects.create(
+            api_name=instance_template.api_name,
+            account=field.account,
+            workflow_id=field.workflow_id,
+            field=field,
+            name=instance_template.name,
+            type=instance_template.type,
+            message=instance_template.message,
+            order=instance_template.order,
         )
-        account = self.account or field.account
-        api_name = kwargs.get('api_name') or getattr(
-            instance_template, 'api_name', None,
-        )
-        create_kwargs = {
-            'account': account,
-            'workflow_id': workflow_id,
-            'field_id': field_id,
-            'name': kwargs.get('name') or getattr(
-                instance_template, 'name', '',
-            ),
-            'type': kwargs.get('type') or getattr(
-                instance_template, 'type', None,
-            ),
-            'message': kwargs.get('message', getattr(
-                instance_template, 'message', None,
-            )),
-            'order': kwargs.get('order', getattr(
-                instance_template, 'order', 0,
-            )),
-        }
-        if api_name:
-            create_kwargs['api_name'] = api_name
-
-        self.instance = FieldRuleSet.objects.create(**create_kwargs)
         return self.instance
 
-    def _build_group_and(
+    def _create_related(
         self,
-        group_or: FieldRuleGroupOr,
-        data: Union[FieldTemplateRuleGroupAnd, Dict],
-    ) -> FieldRuleGroupAnd:
-        if isinstance(data, dict):
-            api_name = data.get('api_name')
-            operator = data['operator']
-            value = data.get('value')
-            field = data.get('field')
-        else:
-            api_name = data.api_name
-            operator = data.operator
-            value = data.value
-            field = data.field
+        instance_template: FieldTemplateRuleSet,
+        **kwargs,
+    ):
+        self.create_groups_or_from_template(instance_template)
 
-        return FieldRuleGroupAnd(
-            account=self.instance.account,
-            workflow_id=self.instance.workflow_id,
-            group_or=group_or,
-            operator=operator,
-            value=value,
-            field=field,
-            api_name=api_name or create_api_name(
-                FieldRuleGroupAnd.api_name_prefix,
-            ),
-        )
+    def create_groups_or_from_template(
+        self,
+        instance_template: FieldTemplateRuleSet,
+    ):
+        groups_or = instance_template.groups_or.all()
+        for group_or_template in groups_or:
+            self._create_group_or(group_or_template)
 
     def _create_group_or(
         self,
-        data: Union[FieldTemplateRuleGroupOr, Dict],
+        group_or_template: FieldTemplateRuleGroupOr,
     ) -> FieldRuleGroupOr:
-        if isinstance(data, dict):
-            api_name = data.get('api_name')
-            groups_and_data = data.get('groups_and', [])
-        else:
-            api_name = data.api_name
-            groups_and_data = list(data.groups_and.all())
-
         group_or = FieldRuleGroupOr.objects.create(
             account=self.instance.account,
             workflow_id=self.instance.workflow_id,
             ruleset=self.instance,
-            api_name=api_name or create_api_name(
-                FieldRuleGroupOr.api_name_prefix,
+            api_name=(
+                group_or_template.api_name
+                or create_api_name(FieldRuleGroupOr.api_name_prefix)
             ),
         )
+        groups_and = group_or_template.groups_and.all()
         and_objects = [
-            self._build_group_and(group_or=group_or, data=and_item)
-            for and_item in groups_and_data
+            self._build_group_and(
+                group_or=group_or,
+                group_and_template=group_and_template,
+            )
+            for group_and_template in groups_and
         ]
         if and_objects:
             FieldRuleGroupAnd.objects.bulk_create(and_objects)
         return group_or
 
-    def _create_related(
+    def _build_group_and(
         self,
-        instance_template: Optional[FieldTemplateRuleSet] = None,
-        groups_or: Optional[List] = None,
-        **kwargs,
-    ):
-        if groups_or is None and instance_template:
-            groups_or = list(instance_template.groups_or.all())
-
-        if groups_or:
-            for group_or_item in groups_or:
-                self._create_group_or(data=group_or_item)
+        group_or: FieldRuleGroupOr,
+        group_and_template: FieldTemplateRuleGroupAnd,
+    ) -> FieldRuleGroupAnd:
+        return FieldRuleGroupAnd(
+            account=self.instance.account,
+            workflow_id=self.instance.workflow_id,
+            group_or=group_or,
+            operator=group_and_template.operator,
+            value=group_and_template.value,
+            field=group_and_template.field,
+            api_name=(
+                group_and_template.api_name
+                or create_api_name(FieldRuleGroupAnd.api_name_prefix)
+            ),
+        )
 
 
 class FieldRuleSetVersionService(BaseUpdateVersionService):
