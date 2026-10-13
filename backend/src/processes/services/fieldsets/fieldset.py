@@ -163,11 +163,11 @@ class FieldSetTemplateService(TemplateRulesetsMixin, BaseModelService):
             self._create_fields(fields_data=fields)
         if rulesets:
             self.create_rulesets(rulesets_data=rulesets)
+
+    def _create_actions(self, **kwargs):
         self._validate_rulesets()
 
     def _validate_rulesets(self):
-        if self.instance is None:
-            return
         for ruleset in self.instance.rulesets.all():
             service = FieldsetTemplateRuleSetService(
                 user=self.user,
