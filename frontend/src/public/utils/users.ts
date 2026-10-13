@@ -75,7 +75,7 @@ export const sortUsersByStatus = (users: TUserListItem[]) => {
   });
 };
 
-const getUserNameForSorting = (user: TUserListItem) => {
+export const getUserNameForSorting = (user: TUserListItem) => {
   const name = user.firstName || user.email;
 
   return name.toLowerCase();

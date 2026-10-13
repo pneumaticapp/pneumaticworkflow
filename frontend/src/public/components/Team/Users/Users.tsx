@@ -4,15 +4,19 @@ import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { TeamUser } from './TeamUser';
+import { TeamAgent } from './TeamAgent';
 import { DeleteTeamUserPopupContainer } from './DeleteTeamUserPopup';
 import { AddGuestsBanner } from './AddGuestsBanner';
 import { CreatePerformerModal } from './CreatePerformerModal';
 import { VacationSettingsModal } from './VacationSettingsModal';
 
 import { resendInvite } from '../../../api/resendInvite';
-import { TUserListItem } from '../../../types/user';
+import { EUserListSorting, EUserStatus } from '../../../types/user';
+import type { TUserListItem } from '../../../types/user';
 import { getErrorMessage } from '../../../utils/getErrorMessage';
+import { getUserNameForSorting } from '../../../utils/users';
 import { trackInviteTeamInPage } from '../../../utils/analytics';
+import { withSyncedQueryString } from '../../../HOCs/withSyncedQueryString';
 import { SearchLargeIcon } from '../../icons';
 import { InputField } from '../../UI';
 import { AddButton } from '../../UI/Buttons/AddButton';
@@ -21,38 +25,86 @@ import { TeamUserSkeleton } from '../TeamUserSkeleton';
 import { TITLES } from '../../../constants/titles';
 import { PageTitle } from '../../PageTitle';
 import { EPageTitle } from '../../../constants/defaultValues';
-import { getSubscriptionPlan } from '../../../redux/selectors/user';
-import { getIsCreateUserModalOpen } from '../../../redux/selectors/accounts';
+import { getIsUserSubsribed, getSubscriptionPlan } from '../../../redux/selectors/user';
+import {
+  getAccountsTeamList,
+  getIsAccountsTeamLoading,
+  getIsCreateUserModalOpen,
+  getUserListSorting,
+} from '../../../redux/selectors/accounts';
+import { getAuthUserId } from '../../../redux/selectors/authUser';
+import { getAIAgentsState, getAIProviders } from '../../../redux/selectors/ai';
 import { ESubscriptionPlan } from '../../../types/account';
-import { IUsersProps } from './types';
-import { openCreateUserModal, closeCreateUserModal } from '../../../redux/accounts/slice';
+import type { IUsersProps, TTeamListItem } from './types';
+import {
+  closeCreateUserModal,
+  loadChangeUserAdmin,
+  loadChangeUserManager,
+  loadChangeUserReports,
+  openCreateUserModal,
+  openDeleteUserModal,
+  teamFetchStarted,
+  userListSortingChanged,
+} from '../../../redux/accounts/slice';
+import { loadInvitesUsers, openTeamInvitesPopup } from '../../../redux/team/slice';
+import { loadAIAgents, loadAIProviders } from '../../../redux/ai/slice';
+import { setGeneralLoaderVisibility } from '../../../redux/actions';
 
 import styles from './Users.css';
 
-export const STATUS_TITLE_MAP: { [key: string]: string } = {
-  active: 'team.title-group-active',
-  invited: 'team.title-group-invited',
+const getItemName = (item: TTeamListItem): string => {
+  return item.kind === 'user' ? getUserNameForSorting(item.user) : item.agent.name.toLowerCase();
 };
 
-export function Users({
-  currentUserId,
-  isLoading,
-  users,
-  isSubscribed,
-  fetchUsers,
-  loadChangeUserAdmin,
-  openModal,
-  openTeamInvitesPopup,
-  setGeneralLoaderVisibility,
-  loadInvitesUsers,
-  loadChangeUserManager,
-  loadChangeUserReports,
-}: IUsersProps) {
+const sortListItems = (items: TTeamListItem[], sorting: EUserListSorting): TTeamListItem[] => {
+  const compareNames = (a: TTeamListItem, b: TTeamListItem) => {
+    const [nameA, nameB] = [getItemName(a), getItemName(b)];
+
+    return nameA > nameB ? 1 : nameA < nameB ? -1 : 0;
+  };
+
+  if (sorting === EUserListSorting.NameDesc) {
+    return items.slice().sort((a, b) => compareNames(b, a));
+  }
+
+  if (sorting === EUserListSorting.Status) {
+    const isInvitedUser = (item: TTeamListItem) => item.kind === 'user' && item.user.status === EUserStatus.Invited;
+
+    return items
+      .slice()
+      .sort(compareNames)
+      .sort((a, b) => {
+        if (!isInvitedUser(a) && !isInvitedUser(b)) {
+          return 0;
+        }
+
+        return isInvitedUser(a) ? 1 : -1;
+      });
+  }
+
+  return items.slice().sort(compareNames);
+};
+
+const matchesSearchQuery = (item: TTeamListItem, queryWords: string[]): boolean => {
+  const fields = item.kind === 'user' ? [item.user.firstName, item.user.lastName, item.user.email] : [item.agent.name];
+  const loweredFields = fields.map((str) => str.toLowerCase());
+
+  return queryWords.every((queryWord) => loweredFields.some((field) => field.includes(queryWord)));
+};
+
+export function Users({ userListSorting }: IUsersProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
+  const users = useSelector(getAccountsTeamList);
+  const isUsersLoading = useSelector(getIsAccountsTeamLoading);
+  const currentUserId = useSelector(getAuthUserId);
+  const isSubscribed = useSelector(getIsUserSubsribed);
   const billingPlan = useSelector(getSubscriptionPlan);
   const isCreateUserModalOpen = useSelector(getIsCreateUserModalOpen);
+  const { list: agents, isLoading: areAgentsLoading } = useSelector(getAIAgentsState);
+  const providers = useSelector(getAIProviders);
+
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
   const accessConditions = isSubscribed || isFreePlan;
 
@@ -60,22 +112,36 @@ export function Users({
   const [vacationModalUser, setVacationModalUser] = useState<TUserListItem | null>(null);
 
   useEffect(() => {
-    fetchUsers({});
-    loadInvitesUsers();
+    dispatch(teamFetchStarted({}));
+    dispatch(loadInvitesUsers());
+    dispatch(loadAIAgents());
+    dispatch(loadAIProviders());
     document.title = TITLES.Team;
-  }, []);
+  }, [dispatch]);
+
+  const providerNameById = new Map(providers.map((provider) => [provider.id, provider.name]));
+
+  const getVisibleItems = (): TTeamListItem[] => {
+    const items: TTeamListItem[] = [
+      ...users.map((user) => ({ kind: 'user' as const, user })),
+      ...agents.map((agent) => ({ kind: 'agent' as const, agent })),
+    ];
+
+    const filteredItems = searchQuery
+      ? items.filter((item) =>
+          matchesSearchQuery(
+            item,
+            searchQuery.split(' ').map((str) => str.toLowerCase()),
+          ),
+        )
+      : items;
+
+    return sortListItems(filteredItems, userListSorting);
+  };
 
   const handleClickInviteButton = () => {
-    openTeamInvitesPopup();
+    dispatch(openTeamInvitesPopup());
     trackInviteTeamInPage('Team Page');
-  };
-
-  const handleOpenCreateUserModal = () => {
-    dispatch(openCreateUserModal());
-  };
-
-  const handleCloseCreateUserModal = () => {
-    dispatch(closeCreateUserModal());
   };
 
   const renderSearch = () => {
@@ -95,49 +161,26 @@ export function Users({
     );
   };
 
-  const renderUsers = () => {
-    if (isLoading) {
-      return Array.from([1, 2, 3], (key) => <TeamUserSkeleton key={key} />);
-    }
-
-    const getFilteredUsers = () => {
-      if (!searchQuery) {
-        return users;
-      }
-
-      const queryWords = searchQuery.split(' ').map((str) => str.toLowerCase());
-      const checkQueryWord = (queryWord: string, user: TUserListItem) => {
-        return [user.firstName, user.lastName, user.email]
-          .map((str) => str.toLowerCase())
-          .some((property) => property.includes(queryWord));
-      };
-
-      const filteredUsers = users.filter((user) => {
-        return queryWords.every((queryWord) => checkQueryWord(queryWord, user));
-      });
-
-      return filteredUsers;
-    };
-
-    const resendInviteHandler = (userId?: number) => async () => {
-      if (userId) {
+  const renderUserCard = (user: TUserListItem) => {
+    const resendInviteHandler = async () => {
+      if (user.id) {
         try {
-          setGeneralLoaderVisibility(true);
-          await resendInvite(userId);
+          dispatch(setGeneralLoaderVisibility(true));
+          await resendInvite(user.id);
           NotificationManager.success({ message: 'team.resend-invite-success-msg' });
         } catch (err) {
           NotificationManager.warning({ message: getErrorMessage(err) });
         } finally {
-          setGeneralLoaderVisibility(false);
+          dispatch(setGeneralLoaderVisibility(false));
         }
       }
     };
 
-    const handleToggleUserAdmin = (user: TUserListItem) => async () => {
-      const { id, isAdmin, email } = user;
+    const handleToggleUserAdmin = (targetUser: TUserListItem) => async () => {
+      const { id, isAdmin, email } = targetUser;
 
       if (id && email) {
-        loadChangeUserAdmin({ id, isAdmin: !isAdmin, email });
+        dispatch(loadChangeUserAdmin({ id, isAdmin: !isAdmin, email }));
       }
     };
 
@@ -146,7 +189,7 @@ export function Users({
       managerId: number | null,
       callbacks?: { onSuccess?: () => void; onError?: () => void },
     ) => {
-      loadChangeUserManager({ id: userId, managerId, ...callbacks });
+      dispatch(loadChangeUserManager({ id: userId, managerId, ...callbacks }));
     };
 
     const handleChangeUserReports = (
@@ -154,23 +197,39 @@ export function Users({
       reportIds: number[],
       callbacks?: { onSuccess?: () => void; onError?: () => void },
     ) => {
-      loadChangeUserReports({ id: userId, reportIds, ...callbacks });
+      dispatch(loadChangeUserReports({ id: userId, reportIds, ...callbacks }));
     };
 
-    return getFilteredUsers().map((user) => {
+    return (
+      <TeamUser
+        key={user.id}
+        resendInvite={resendInviteHandler}
+        isCurrentUser={currentUserId === user.id}
+        isSubscribed={accessConditions}
+        handleToggleAdmin={handleToggleUserAdmin}
+        handleChangeUserManager={handleChangeUserManager}
+        handleChangeUserReports={handleChangeUserReports}
+        openModal={() => dispatch(openDeleteUserModal({ user }))}
+        openVacationModal={() => setVacationModalUser(user)}
+        user={{ ...user, isAccountOwner: user.isAccountOwner && !user.invite }}
+      />
+    );
+  };
+
+  const renderCards = () => {
+    if (isUsersLoading || areAgentsLoading) {
+      return Array.from([1, 2, 3], (key) => <TeamUserSkeleton key={key} />);
+    }
+
+    return getVisibleItems().map((item) => {
+      if (item.kind === 'user') {
+        return renderUserCard(item.user);
+      }
+
       return (
-        <TeamUser
-          key={user.id}
-          resendInvite={resendInviteHandler(user.id)}
-          isCurrentUser={currentUserId === user.id}
-          isSubscribed={accessConditions}
-          handleToggleAdmin={handleToggleUserAdmin}
-          handleChangeUserManager={handleChangeUserManager}
-          handleChangeUserReports={handleChangeUserReports}
-          openModal={() => openModal({ user })}
-          openVacationModal={() => setVacationModalUser(user)}
-          user={{ ...user, isAccountOwner: user.isAccountOwner && !user.invite }}
-        />
+        <div key={item.agent.id} className={styles['card-wrapper']}>
+          <TeamAgent agent={item.agent} providerName={providerNameById.get(item.agent.providerId)} />
+        </div>
       );
     });
   };
@@ -179,7 +238,7 @@ export function Users({
     <div className={styles['container']}>
       <DeleteTeamUserPopupContainer />
       <AddGuestsBanner />
-      <CreatePerformerModal isOpen={isCreateUserModalOpen} onClose={handleCloseCreateUserModal} />
+      <CreatePerformerModal isOpen={isCreateUserModalOpen} onClose={() => dispatch(closeCreateUserModal())} />
       <VacationSettingsModal
         isOpen={!!vacationModalUser}
         onClose={() => setVacationModalUser(null)}
@@ -198,11 +257,27 @@ export function Users({
         <AddButton
           title={formatMessage({ id: 'team.create-user-button' })}
           caption={formatMessage({ id: 'team.create-user-button-caption' })}
-          onClick={handleOpenCreateUserModal}
+          onClick={() => dispatch(openCreateUserModal())}
         />
       </div>
 
-      <div className={styles['cards']}>{renderUsers()}</div>
+      <div className={styles['cards']}>{renderCards()}</div>
     </div>
   );
+}
+
+const SyncedUsers = withSyncedQueryString<IUsersProps>([
+  {
+    propName: 'userListSorting',
+    queryParamName: 'sorting',
+    defaultAction: userListSortingChanged(EUserListSorting.NameAsc),
+    createAction: userListSortingChanged,
+    getQueryParamByProp: (value) => value,
+  },
+])(Users) as React.ComponentType<IUsersProps>;
+
+export function UsersContainer() {
+  const userListSorting = useSelector(getUserListSorting);
+
+  return <SyncedUsers userListSorting={userListSorting} />;
 }

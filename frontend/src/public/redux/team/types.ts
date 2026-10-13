@@ -33,7 +33,6 @@ export interface IGroup {
 export enum TeamPages {
   Users = 'users',
   Groups = 'groups',
-  AIAgents = 'ai-agents',
 }
 
 export interface UserInvitePayload {

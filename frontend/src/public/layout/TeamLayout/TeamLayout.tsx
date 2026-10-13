@@ -30,9 +30,6 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
       if (checkSomeRouteIsActive(ERoutes.Groups, ERoutes.GroupDetails)) {
         return TeamPages.Groups;
       }
-      if (checkSomeRouteIsActive(ERoutes.TeamAIAgents)) {
-        return TeamPages.AIAgents;
-      }
       return TeamPages.Users;
     };
 
@@ -51,17 +48,14 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
             values={[
               { id: TeamPages.Users, label: formatMessage({ id: 'team.users' }) },
               { id: TeamPages.Groups, label: formatMessage({ id: 'team.groups' }) },
-              { id: TeamPages.AIAgents, label: formatMessage({ id: 'team.ai-agents' }) },
             ]}
             activeValueId={page}
             onChange={(activeTab) => dispatch(setTeamActivePage(activeTab))}
           />
         </div>
-        {page !== TeamPages.AIAgents && (
-          <div className={styles['top-nav__item']}>
-            {page === TeamPages.Users ? <UserListSortingContainer /> : <GroupListSortingContainer />}
-          </div>
-        )}
+        <div className={styles['top-nav__item']}>
+          {page === TeamPages.Users ? <UserListSortingContainer /> : <GroupListSortingContainer />}
+        </div>
       </div>
     );
   };
@@ -70,11 +64,9 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
     return <ReturnLink label={formatMessage({ id: 'menu.groups' })} route={ERoutes.Groups} />;
   };
 
-  // TeamAIAgents goes before Team: matchPath is not exact and '/team/' would swallow it.
   const mapLeftContent: Partial<Record<ERoutes, React.ReactNode>> = {
     [ERoutes.GroupDetails]: renderGroupDetailsLeftContent(),
     [ERoutes.Groups]: renderTeamLeftContent(),
-    [ERoutes.TeamAIAgents]: renderTeamLeftContent(),
     [ERoutes.Team]: renderTeamLeftContent(),
   };
 

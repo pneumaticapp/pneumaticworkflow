@@ -2,13 +2,13 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
-import { IAIAgent } from '../../../types/ai';
+import type { IAIAgent } from '../../../types/ai';
 import { BaseModal, ModalHeader } from '../../UI/BaseModal';
 import { updateAIAgent } from '../../../redux/ai/slice';
-import { CreateAIAgentForm } from '../Users/CreatePerformerModal/CreateAIAgentForm';
-import { IAIAgentFormValues } from '../Users/CreatePerformerModal/types';
+import { CreateAIAgentForm } from './CreatePerformerModal/CreateAIAgentForm';
+import type { IAIAgentFormValues } from './CreatePerformerModal/types';
 
-import modalStyles from '../Users/CreatePerformerModal/CreatePerformerModal.css';
+import modalStyles from './CreatePerformerModal/CreatePerformerModal.css';
 
 export interface IEditAIAgentModalProps {
   agent: IAIAgent | null;
@@ -40,7 +40,6 @@ export function EditAIAgentModal({ agent, onClose }: IEditAIAgentModalProps) {
         model: values.model,
         systemPrompt: values.systemPrompt,
         photo: values.photo || null,
-        // Activation is toggled from the card; editing must not flip it.
         isActive: agent.isActive,
       }),
     );
