@@ -73,10 +73,7 @@ class FieldSetService(BaseModelService):
         instance_template: FieldsetTemplate,
         **kwargs,
     ):
-        ruleset_templates = [
-            r for r in instance_template.rulesets.all()
-            if not getattr(r, 'is_deleted', False)
-        ]
+        ruleset_templates = list(instance_template.rulesets.all())
         for ruleset_template in ruleset_templates:
             service = FieldSetRuleSetService(
                 user=self.user,

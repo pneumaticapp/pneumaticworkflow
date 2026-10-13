@@ -79,10 +79,11 @@ class FieldSetRuleSetService(BaseModelService):
         **kwargs,
     ):
         if fields_api_names is None and instance_template:
-            fields_api_names = [
-                f.api_name for f in instance_template.fields.all()
-                if not getattr(f, 'is_deleted', False)
-            ]
+            fields_api_names = list(
+                instance_template.fields.values_list(
+                    'api_name', flat=True,
+                ),
+            )
 
         if fields_api_names:
             task_fields = TaskField.objects.filter(
@@ -128,10 +129,7 @@ class FieldSetRuleSetService(BaseModelService):
             groups_and_data = data.get('groups_and', [])
         else:
             api_name = data.api_name
-            groups_and_data = [
-                a for a in data.groups_and.all()
-                if not getattr(a, 'is_deleted', False)
-            ]
+            groups_and_data = list(data.groups_and.all())
 
         create_kwargs = {
             'account': self.instance.account,
@@ -164,10 +162,7 @@ class FieldSetRuleSetService(BaseModelService):
         )
 
         if groups_or is None and instance_template:
-            groups_or = [
-                g for g in instance_template.groups_or.all()
-                if not getattr(g, 'is_deleted', False)
-            ]
+            groups_or = list(instance_template.groups_or.all())
 
         if groups_or:
             for group_or_item in groups_or:

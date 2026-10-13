@@ -388,10 +388,7 @@ class TaskFieldService(BaseWorkflowService):
         instance_template: FieldTemplate,
         **kwargs,
     ):
-        ruleset_templates = [
-            r for r in instance_template.rulesets.all()
-            if not getattr(r, 'is_deleted', False)
-        ]
+        ruleset_templates = list(instance_template.rulesets.all())
         for ruleset_template in ruleset_templates:
             service = FieldRuleSetService(
                 user=self.user,

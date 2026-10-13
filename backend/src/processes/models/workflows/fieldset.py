@@ -2,6 +2,7 @@ from django.db import models
 
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
+from src.generics.querysets import AccountBaseQuerySet
 from src.processes.enums import (
     FieldSetRuleOperator,
 )
@@ -100,6 +101,8 @@ class FieldSetRuleSet(
         related_name='fieldset_rulesets',
     )
 
+    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
+
     def __str__(self):
         return self.api_name
 
@@ -123,6 +126,8 @@ class FieldSetRuleGroupOr(
         on_delete=models.CASCADE,
         related_name='groups_or',
     )
+
+    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
 
     def __str__(self):
         return self.api_name
@@ -151,6 +156,8 @@ class FieldSetRuleGroupAnd(
         choices=FieldSetRuleOperator.CHOICES,
     )
     value = models.CharField(max_length=200, null=True, blank=True)
+
+    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
 
     def __str__(self):
         return f'{self.operator} {self.value}'

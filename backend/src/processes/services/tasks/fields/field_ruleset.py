@@ -103,10 +103,7 @@ class FieldRuleSetService(BaseModelService):
             groups_and_data = data.get('groups_and', [])
         else:
             api_name = data.api_name
-            groups_and_data = [
-                a for a in data.groups_and.all()
-                if not getattr(a, 'is_deleted', False)
-            ]
+            groups_and_data = list(data.groups_and.all())
 
         group_or = FieldRuleGroupOr.objects.create(
             account=self.instance.account,
@@ -129,10 +126,7 @@ class FieldRuleSetService(BaseModelService):
         **kwargs,
     ):
         if groups_or is None and instance_template:
-            groups_or = [
-                g for g in instance_template.groups_or.all()
-                if not getattr(g, 'is_deleted', False)
-            ]
+            groups_or = list(instance_template.groups_or.all())
 
         if groups_or:
             for group_or_item in groups_or:

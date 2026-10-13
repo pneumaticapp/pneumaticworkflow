@@ -3,6 +3,7 @@ from django.db.models import Q, UniqueConstraint
 
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
+from src.generics.querysets import AccountBaseQuerySet
 from src.processes.enums import FieldSetRuleOperator
 from src.processes.models.base import BaseApiNameModel
 from src.processes.models.mixins import (
@@ -149,6 +150,8 @@ class FieldSetTemplateRuleSet(
         related_name='fieldset_rulesets',
     )
 
+    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
+
     def __str__(self):
         return self.api_name
 
@@ -181,6 +184,8 @@ class FieldSetTemplateRuleGroupOr(
         on_delete=models.CASCADE,
         related_name='groups_or',
     )
+
+    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
 
     def __str__(self):
         return self.api_name
@@ -219,6 +224,8 @@ class FieldSetTemplateRuleGroupAnd(
         choices=FieldSetRuleOperator.CHOICES,
     )
     value = models.CharField(max_length=200, null=True, blank=True)
+
+    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
 
     def __str__(self):
         return f'{self.operator} {self.value}'
