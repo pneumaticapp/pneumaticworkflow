@@ -1411,15 +1411,21 @@ class FieldRuleSetQuerySet(AccountBaseQuerySet):
             | Q(field__kickoff__isnull=False)
             | Q(field__fieldset__kickoff__isnull=False),
             field__is_deleted=False,
-        ).select_related('field').prefetch_related('groups_or__groups_and')
+        )
 
-    def for_task(self, task):
+    def for_task(self, task_id: int):
         return self.filter(
             Q(type=FieldRuleType.SHOW)
-            | Q(field__task=task)
-            | Q(field__fieldset__task=task),
+            | Q(field__task_id=task_id)
+            | Q(field__fieldset__task_id=task_id),
             field__is_deleted=False,
-        ).select_related('field').prefetch_related('groups_or__groups_and')
+        )
+
+    def with_groups(self):
+        return (
+            self.select_related('field')
+            .prefetch_related('groups_or__groups_and')
+        )
 
 
 class FieldSetQuerySet(AccountBaseQuerySet):

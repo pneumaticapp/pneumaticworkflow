@@ -209,9 +209,15 @@ class WorkflowService(
             the change back. Task field validators are checked on complete.
         """
 
-        FieldRuleCheckService(
+        rulesets = (
+            self.instance.field_rulesets
+            .for_kickoff()
+            .with_groups()
+        )
+        service = FieldRuleCheckService(
             workflow_id=self.instance.id,
-        ).apply_rulesets(self.instance.field_rulesets.for_kickoff())
+        )
+        service.apply_rulesets(rulesets)
 
     def _create_actions(self, **kwargs):
         if kwargs.get('anonymous_id'):

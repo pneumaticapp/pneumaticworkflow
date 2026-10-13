@@ -972,11 +972,15 @@ class WorkflowActionService:
                     )
                     service.validate_rules()
 
-            FieldRuleCheckService(
-                workflow_id=self.workflow.id,
-            ).apply_rulesets(
-                self.workflow.field_rulesets.for_task(task),
+            rulesets = (
+                self.workflow.field_rulesets
+                .for_task(task.id)
+                .with_groups()
             )
+            service = FieldRuleCheckService(
+                workflow_id=self.workflow.id,
+            )
+            service.apply_rulesets(rulesets)
 
             AnalyticService.task_completed(
                 user=self.user,
