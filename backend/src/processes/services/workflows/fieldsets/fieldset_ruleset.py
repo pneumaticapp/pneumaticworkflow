@@ -24,6 +24,7 @@ from src.processes.models.workflows.fieldset import (
 )
 from src.processes.services.base import BaseUpdateVersionService
 from src.processes.services.exceptions import FieldsetServiceException
+from src.processes.utils.common import create_api_name
 
 UserModel = get_user_model()
 
@@ -108,17 +109,16 @@ class FieldSetRuleSetService(BaseModelService):
             operator = data.operator
             value = data.value
 
-        create_kwargs = {
-            'account': self.instance.account,
-            'workflow_id': self.instance.workflow_id,
-            'group_or': group_or,
-            'operator': operator,
-            'value': value,
-        }
-        if api_name:
-            create_kwargs['api_name'] = api_name
-
-        return FieldSetRuleGroupAnd(**create_kwargs)
+        return FieldSetRuleGroupAnd(
+            account=self.instance.account,
+            workflow_id=self.instance.workflow_id,
+            group_or=group_or,
+            operator=operator,
+            value=value,
+            api_name=api_name or create_api_name(
+                FieldSetRuleGroupAnd.api_name_prefix,
+            ),
+        )
 
     def _create_group_or(
         self,

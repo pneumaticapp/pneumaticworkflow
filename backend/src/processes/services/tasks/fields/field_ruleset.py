@@ -109,7 +109,9 @@ class FieldRuleSetService(BaseModelService):
             account=self.instance.account,
             workflow_id=self.instance.workflow_id,
             ruleset=self.instance,
-            api_name=api_name or create_api_name('field-rule-group-or'),
+            api_name=api_name or create_api_name(
+                FieldRuleGroupOr.api_name_prefix,
+            ),
         )
         and_objects = [
             self._build_group_and(group_or=group_or, data=and_item)

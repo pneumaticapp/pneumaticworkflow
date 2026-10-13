@@ -79,6 +79,7 @@ class FieldSetRuleSet(
     class Meta:
         ordering = ['order', 'id']
 
+    api_name_prefix = 'fieldset-ruleset'
     workflow = models.ForeignKey(
         Workflow,
         on_delete=models.CASCADE,
@@ -141,6 +142,7 @@ class FieldSetRuleGroupAnd(
     class Meta:
         ordering = ['id']
 
+    api_name_prefix = 'fieldset-rule-group-and'
     workflow = models.ForeignKey(
         Workflow,
         on_delete=models.CASCADE,

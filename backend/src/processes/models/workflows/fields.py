@@ -115,6 +115,7 @@ class FieldRuleSet(
     class Meta:
         ordering = ['order', 'id']
 
+    api_name_prefix = 'field-ruleset'
     workflow = models.ForeignKey(
         Workflow,
         on_delete=models.CASCADE,
@@ -151,6 +152,7 @@ class FieldRuleGroupOr(
     class Meta:
         ordering = ['id']
 
+    api_name_prefix = 'field-rule-group-or'
     workflow = models.ForeignKey(
         Workflow,
         on_delete=models.CASCADE,
