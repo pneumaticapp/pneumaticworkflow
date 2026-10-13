@@ -92,7 +92,7 @@ class RuleSetVersionMixin:
 class ConditionMixin:
 
     @staticmethod
-    def create_rulesets(
+    def create_rules(
         conditions,
         conditions_tree,
     ):
