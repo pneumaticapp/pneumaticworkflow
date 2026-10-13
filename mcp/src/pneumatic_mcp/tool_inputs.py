@@ -26,79 +26,135 @@ class PageArgs(Args):
     limit: int = Field(
         default=20, ge=1, le=100, description="Number of objects, maximum 100."
     )
-    offset: int = Field(default=0, ge=0, le=1_000_000)
+    offset: int = Field(
+        default=0,
+        ge=0,
+        le=1_000_000,
+        description="Number of results to skip; use data.page.next_offset.",
+    )
 
 
 class TemplatePage(PageArgs):
-    search: str | None = Field(default=None, max_length=200)
+    search: str | None = Field(
+        default=None,
+        max_length=200,
+        description="Optional search text; omit for no search filter. "
+        "Pagination still applies.",
+    )
 
 
 class TemplateArgs(Args):
-    template_id: ObjectId
+    template_id: ObjectId = Field(
+        description="Template ID from list_templates, not a workflow ID."
+    )
 
 
 class WorkflowPage(PageArgs):
-    template_id: ObjectId | None = None
+    template_id: ObjectId | None = Field(
+        default=None, description="Filter workflows by their template ID."
+    )
 
 
 class WorkflowArgs(Args):
-    workflow_id: ObjectId
+    workflow_id: ObjectId = Field(
+        description="Numeric workflow instance ID, not its template ID."
+    )
 
 
 class WorkflowEvents(PageArgs):
-    workflow_id: ObjectId
+    workflow_id: ObjectId = Field(
+        description="Numeric workflow instance ID whose events to list."
+    )
 
 
 class TaskArgs(Args):
-    task_id: ObjectId
+    task_id: ObjectId = Field(
+        description="Numeric workflow task instance ID, not a template step."
+    )
 
 
 class AttachmentPage(PageArgs):
-    workflow_id: ObjectId | None = None
-    task_id: ObjectId | None = None
+    workflow_id: ObjectId | None = Field(
+        default=None, description="Optional workflow attachment filter."
+    )
+    task_id: ObjectId | None = Field(
+        default=None, description="Optional task attachment filter."
+    )
 
 
 class AttachmentArgs(Args):
-    attachment_id: ObjectId
+    attachment_id: ObjectId = Field(
+        description="Numeric attachment id from list_attachments, not file_id."
+    )
 
 
 class RunWorkflow(Args):
-    template_id: ObjectId
+    template_id: ObjectId = Field(
+        description="ID of the active template to start a new workflow from."
+    )
     kickoff: dict[str, JsonValue] = Field(
         default_factory=dict,
-        description="Values keyed by kickoff field API names. File fields"
-        " use arrays of "
-        "{upload_id: UUID} references to ready kickoff "
+        description="Values keyed by kickoff field API names, including "
+        "fields inside fieldsets at the same top level. Read "
+        "get_template_kickoff first; supply required values explicitly. "
+        "Omitted fields do not automatically use their schema defaults. "
+        "Populated file fields accept arrays of {upload_id: UUID} objects "
+        "with no extra keys, referencing ready kickoff "
         "uploads and require files:write. "
-        "References to existing Pneumatic file URLs require "
-        "files:read and files:write.",
+        "Existing Pneumatic file links in non-file values require "
+        "files:read and files:write; URLs are not valid file-field inputs.",
     )
-    name: str | None = Field(default=None, min_length=1, max_length=200)
-    is_urgent: bool = False
+    name: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=200,
+        description="Optional name for the new workflow.",
+    )
+    is_urgent: bool = Field(
+        default=False, description="Whether to mark the new workflow urgent."
+    )
 
 
 class CompleteTask(Args):
-    task_id: ObjectId
+    task_id: ObjectId = Field(
+        description="ID of the active workflow task to submit completion for."
+    )
     output: dict[str, JsonValue] = Field(
         default_factory=dict,
-        description="Values keyed by task output field API names. File "
-        "fields use arrays of "
-        "{upload_id: UUID} references to ready task uploads "
+        description="Only the fields to change, keyed by task output field "
+        "API names, including fieldset fields at the same top level. Omitted "
+        "fields retain saved values; {} changes no fields. Read get_task "
+        "first; read-back values are not always valid write inputs. Populated "
+        "file fields accept arrays of {upload_id: UUID} objects with no "
+        "extra keys, referencing ready task uploads "
         "and require files:write. "
+        "Supplying a file field replaces its saved files; [] clears it. "
         "Clearing file fields also requires files:write. "
-        "References to existing "
-        "Pneumatic file URLs require files:read and files:write.",
+        "Existing Pneumatic file links in non-file values require "
+        "files:read and files:write; URLs are not valid file-field inputs.",
     )
 
 
 class AddWorkflowComment(Args):
-    workflow_id: ObjectId
-    text: str = Field(min_length=1, max_length=10000)
+    workflow_id: ObjectId = Field(
+        description="Workflow ID; the backend selects its eligible task."
+    )
+    text: str = Field(
+        min_length=1,
+        max_length=10000,
+        description="Nonblank comment text; supports Markdown.",
+    )
 
 
 class CommentTask(Args):
-    task_id: ObjectId
-    text: str = Field(min_length=1, max_length=10000)
+    task_id: ObjectId = Field(
+        description="ID of the active or snoozed workflow task to comment on."
+    )
+    text: str = Field(
+        min_length=1,
+        max_length=10000,
+        description="Nonblank comment text; supports Markdown.",
+    )
 
 
 class CreateUploadLink(Args):
@@ -121,17 +177,46 @@ class CreateUploadLink(Args):
             ]
         },
     )
-    target_type: Literal["task", "kickoff"] | None = None
-    task_id: ObjectId | None = None
-    template_id: ObjectId | None = None
+    target_type: Literal["task", "kickoff"] | None = Field(
+        default=None,
+        description="Omitted/null means inferred from the destination ID. "
+        "Non-null must be task for task_id or kickoff for template_id.",
+    )
+    task_id: ObjectId | None = Field(
+        default=None,
+        description="Destination task ID; supply this OR template_id, "
+        "and omit the other key.",
+    )
+    template_id: ObjectId | None = Field(
+        default=None,
+        description="Destination template ID for a kickoff field; supply "
+        "this OR task_id, and omit the other key.",
+    )
     field_api_name: str = Field(
-        min_length=1, max_length=200, pattern=r"^[A-Za-z0-9_-]+$"
+        min_length=1,
+        max_length=200,
+        pattern=r"^[A-Za-z0-9_-]+$",
+        description="Exact api_name of the destination's visible file field.",
     )
-    filename: str = Field(min_length=1, max_length=255)
+    filename: str = Field(
+        min_length=1,
+        max_length=255,
+        description="Filename without path separators, NUL, CR or LF; "
+        "cannot equal '.' or '..'. Backend may normalize the name.",
+    )
     content_type: str = Field(
-        min_length=3, max_length=200, pattern=r"^[\w.+-]+/[\w.+-]+$"
+        min_length=3,
+        max_length=200,
+        pattern=r"^[\w.+-]+/[\w.+-]+$",
+        description="File MIME type; backend normalizes unknown types to "
+        "application/octet-stream.",
     )
-    size: int = Field(ge=1, le=25 * 1024 * 1024)
+    size: int = Field(
+        ge=1,
+        le=25 * 1024 * 1024,
+        description="Size in bytes, at most 25 MiB and the backend limit. "
+        "Must match a browser upload; URL imports use their actual size.",
+    )
 
     @model_validator(mode="after")
     def one_target(self):
@@ -160,7 +245,10 @@ class UploadArgs(Args):
     # String validates consistently from SDK's decoded JSON under strict model
     # validation.
     upload_id: str = Field(
-        min_length=36, max_length=36, description="Upload session UUID."
+        min_length=36,
+        max_length=36,
+        description="Upload session UUID returned as data.id by "
+        "create_upload_link; not a file_id or attachment ID.",
     )
 
     @field_validator("upload_id")
@@ -171,7 +259,10 @@ class UploadArgs(Args):
 
 class ImportAttachment(UploadArgs):
     url: str = Field(
-        min_length=1, max_length=2048, description="Public HTTPS source URL."
+        min_length=1,
+        max_length=2048,
+        description="Public HTTPS source URL, port 443, without embedded "
+        "credentials, a fragment, spaces or control characters.",
     )
 
     @field_validator("url")
@@ -196,4 +287,6 @@ class ImportAttachment(UploadArgs):
 
 
 class AttachUploadedFile(UploadArgs):
-    task_id: ObjectId
+    task_id: ObjectId = Field(
+        description="Original destination task ID of this upload session."
+    )

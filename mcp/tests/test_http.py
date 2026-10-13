@@ -7,6 +7,7 @@ import httpx
 import pytest
 from conftest import SECRET, TOKEN_A, TOKEN_B, UPLOAD_ID, Service
 
+from pneumatic_mcp.app import SERVER_INSTRUCTIONS
 from pneumatic_mcp.errors import MESSAGES
 from pneumatic_mcp.settings import SCOPE_ORDER, SCOPES
 
@@ -45,6 +46,7 @@ async def test_initialize__legacy__sessionless(service: Service):
     # assert
     assert response.status_code == 200
     assert response.json()["result"]["protocolVersion"] == "2025-11-25"
+    assert response.json()["result"]["instructions"] == SERVER_INSTRUCTIONS
     assert "mcp-session-id" not in response.headers
 
 

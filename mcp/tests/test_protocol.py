@@ -11,6 +11,7 @@ from conftest import MODERN, SECRET, TOKEN_A, UPLOAD_ID, Service
 from mcp import Client
 from mcp.client.streamable_http import streamable_http_client
 
+from pneumatic_mcp.app import SERVER_INSTRUCTIONS
 from pneumatic_mcp.outputs import MAX_RESULT_BYTES
 from pneumatic_mcp.tool_catalog import TOOLS
 
@@ -79,6 +80,7 @@ async def test_discover__modern__without_initialize(
     # assert
     assert response.status_code == 200, response.text
     assert MODERN in response.json()["result"]["supportedVersions"]
+    assert response.json()["result"]["instructions"] == SERVER_INSTRUCTIONS
     assert "mcp-session-id" not in response.headers
 
 
@@ -283,6 +285,9 @@ async def test_list_tools__both_versions__oauth_schemes(
     # assert
     assert response.status_code == 200
     assert len(tools) == 18
+    assert tools[name]["description"] == declared["description"]
+    assert tools[name]["inputSchema"] == declared["inputSchema"]
+    assert tools[name]["outputSchema"] == declared["outputSchema"]
     assert tools[name]["securitySchemes"] == schemes
     assert tools[name]["_meta"]["securitySchemes"] == schemes
     assert declared["securitySchemes"] == schemes
