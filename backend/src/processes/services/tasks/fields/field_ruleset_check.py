@@ -301,9 +301,14 @@ class FieldRuleCheckService:
                 message=ruleset.message or MSG_PW_0092,
             )
 
+    APPLY_MAP = {
+        FieldRuleType.SHOW: _apply_show,
+        FieldRuleType.VALIDATOR: _apply_validator,
+    }
+
     def apply_ruleset(self, ruleset: FieldRuleSet):
-        apply_method = getattr(self, f'_apply_{ruleset.type}')
-        apply_method(ruleset)
+        apply_method = self.APPLY_MAP[ruleset.type]
+        apply_method(self, ruleset)
 
     def apply_rulesets(self, rulesets: Iterable[FieldRuleSet]):
 
