@@ -6,7 +6,40 @@ on:
       - 'v*'
 
 jobs:
+  validate_mcp:
+    name: Validate MCP at the release tag
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:6.2-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    permissions:
+      contents: read
+    env:
+      MCP_TEST_REDIS_URL: redis://127.0.0.1:6379/15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v6
+      - working-directory: mcp
+        run: |
+          uv sync --locked
+          uv run ruff check .
+          uv run ruff format --check .
+          uv run pytest
+      - name: Validate release proxy and configuration
+        run: |
+          docker pull nginx:1.25.4-alpine
+          python scripts/tests/test_mcp_nginx.py
+          docker compose -f docker-compose.yml --profile mcp config --quiet
+          docker compose -f docker-compose.src.yml --profile mcp config --quiet
   push_to_registry:
+    needs: validate_mcp
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
     strategy:
@@ -27,6 +60,9 @@ jobs:
           - image: pneumaticworkflow/pneumatic-file-service
             dockerfile: storage/Dockerfile
             build_context: storage
+          - image: pneumaticworkflow/pneumatic-mcp
+            dockerfile: mcp/Dockerfile
+            build_context: mcp
     permissions:
       packages: write
       contents: read

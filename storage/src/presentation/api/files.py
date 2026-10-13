@@ -24,8 +24,10 @@ from src.application.use_cases import (
     DownloadFileUseCase,
     UploadFileUseCase,
 )
+from src.application.use_cases.mcp_upload import MCPUploadService
 from src.domain.entities.file_record import FileRecord
 from src.infra.http_client import HttpClient
+from src.infra.url_importer import MAX_IMPORT_BYTES
 from src.presentation.dto import FileUploadResponse
 from src.shared_kernel.auth.dependencies import (
     AuthenticatedUser,
@@ -38,53 +40,34 @@ from src.shared_kernel.di import (
     get_settings_dep,
     get_upload_use_case,
 )
+from src.shared_kernel.di.container import get_mcp_upload_service
 from src.shared_kernel.events.request_events import RequestEventsDep
 from src.shared_kernel.exceptions import (
+    DomainFileNotFoundError,
     FileAccessDeniedError,
     FileSizeExceededError,
 )
 from src.shared_kernel.permissions import is_authenticated
 from src.shared_kernel.security import sanitize_content_type
+from src.shared_kernel.security.filename import (
+    FALLBACK_FILENAME,
+    secure_filename,
+)
 
 router = APIRouter(prefix='', tags=['Files'])
 
-# Pre-compiled patterns for secure_filename
-_RE_UNSAFE_CHARS = re.compile(r'[^\w.\- ]', re.UNICODE)
-_RE_WHITESPACE = re.compile(r'[\s_]+')
+# Pre-compiled byte range pattern.
 _RE_RANGE = re.compile(r'bytes=(\d+)-(\d*)')
 
 
-FALLBACK_FILENAME = 'unnamed_file'
-
-
-def secure_filename(filename: str | None) -> str:
-    """Sanitize filename to prevent path traversal and unsafe characters.
-
-    Preserves Unicode letters (Cyrillic, CJK, etc.) while blocking
-    control characters, path separators, and shell metacharacters.
-    """
-    if not filename:
-        return FALLBACK_FILENAME
-    # Keep Unicode word chars (\w), dot, dash, space
-    filename = _RE_UNSAFE_CHARS.sub('_', filename)
-    # Collapse multiple spaces/underscores
-    filename = _RE_WHITESPACE.sub('_', filename)
-    # Prevent hidden files and traversal
-    filename = filename.lstrip('._')
-    # Strip trailing dots/spaces (Windows FS issue)
-    filename = filename.rstrip('. ')
-    if not filename:
-        return FALLBACK_FILENAME
-    return filename
-
-
 @router.post('/upload', dependencies=[Depends(is_authenticated)])
-async def upload_file(
+async def upload_file(  # noqa: PLR0913
     file: Annotated[UploadFile, File(...)],
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     use_case: Annotated[UploadFileUseCase, Depends(get_upload_use_case)],
     settings: Annotated[BaseAppSettings, Depends(get_settings_dep)],
     events: RequestEventsDep,
+    mcp_upload: Annotated[MCPUploadService, Depends(get_mcp_upload_service)],
 ) -> FileUploadResponse:
     """Upload file to storage.
 
@@ -94,6 +77,7 @@ async def upload_file(
         use_case: Upload use case dependency.
         settings: Application settings.
         events: Records of this request for the audit journal.
+        mcp_upload: Transactional session upload and core completion.
 
     Returns:
         FileUploadResponse: Upload result with file ID and public URL.
@@ -104,8 +88,15 @@ async def upload_file(
     file_size = file.file.tell()
     file.file.seek(0)
 
-    if file_size > settings.MAX_FILE_SIZE:
-        raise FileSizeExceededError(file_size, settings.MAX_FILE_SIZE)
+    size_limit = settings.MAX_FILE_SIZE
+    if current_user.mcp_connection_id:
+        size_limit = min(
+            size_limit,
+            settings.MCP_MAX_IMPORT_BYTES,
+            MAX_IMPORT_BYTES,
+        )
+    if file_size > size_limit:
+        raise FileSizeExceededError(file_size, size_limit)
 
     # Sanitize filename
     safe_filename = secure_filename(file.filename or '')
@@ -121,18 +112,32 @@ async def upload_file(
     )
 
     # Execute command
-    response = await use_case.execute(command)
+    created = True
+    if current_user.mcp_connection_id:
+        response, created = await mcp_upload.execute(
+            command=command,
+            user=current_user,
+        )
+    else:
+        response = await use_case.execute(command)
 
     # The record is committed: the file exists, journal it. Awaited
     # and not a background task: what runs after the response depends
     # on the server (a client gone mid-response may skip it or not),
     # and a journal entry has to mean one thing. The wait is bounded
     # by the emit timeout and, past one failure, by the circuit.
-    await events.file_upload(
-        user=current_user,
-        file_id=response.file_id,
-        file=command,
-    )
+    if created:
+        await events.file_upload(
+            user=current_user,
+            file_id=response.file_id,
+            file=command,
+        )
+    if current_user.mcp_connection_id:
+        await mcp_upload.complete(
+            file=command,
+            user=current_user,
+            file_id=response.file_id,
+        )
     return FileUploadResponse(
         public_url=response.public_url,
         file_id=response.file_id,
@@ -177,7 +182,16 @@ async def download_file(  # noqa: PLR0913
     # Check file owner (optimization: owner always has access)
     is_owner = _check_file_ownership(current_user, file_record)
 
-    if not is_owner:
+    if current_user.mcp_connection_id and (
+        current_user.account_id != file_record.account_id
+    ):
+        await events.file_access_denied(
+            user=current_user,
+            file_record=file_record,
+        )
+        raise DomainFileNotFoundError(file_id=file_id)
+
+    if not is_owner and not current_user.mcp_connection_id:
         # Check permissions only for non-owners (saves backend request)
         has_access = await http_client.check_file_permission(
             user=current_user,
@@ -217,7 +231,11 @@ async def download_file(  # noqa: PLR0913
     return StreamingResponse(
         file_stream,
         status_code=plan.status_code,
-        media_type=file_record.content_type,
+        media_type=(
+            sanitize_content_type(file_record.content_type)
+            if current_user.mcp_connection_id
+            else file_record.content_type
+        ),
         headers=plan.headers,
     )
 

@@ -28,6 +28,7 @@ from src.shared_kernel.exceptions.error_codes import (
     INFRA_ERROR_CODES,
     VALIDATION_ERROR_CODES,
 )
+from src.shared_kernel.security.redaction import redact_data, redact_text
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +61,7 @@ def register_exception_handlers(app: FastAPI) -> None:
                 'error_code': exc.error_code.code,
                 'error_type': exc.error_type.value,
                 'details': exc.details,
-                'request_path': request.url.path,
+                'request_path': redact_text(request.url.path),
                 'request_method': request.method,
             },
         )
@@ -99,14 +100,14 @@ def register_exception_handlers(app: FastAPI) -> None:
     ) -> JSONResponse:
         """Handle FastAPI request body/query/path validation errors."""
         error_code = VALIDATION_ERROR_CODES['MISSING_REQUIRED_FIELD']
-        details = str(exc.errors())
+        details = str(redact_data(exc.errors()))
 
         logger.warning(
             'Request validation error: %s',
             details,
             extra={
                 'error_code': error_code.code,
-                'request_path': request.url.path,
+                'request_path': redact_text(request.url.path),
                 'request_method': request.method,
             },
         )
@@ -129,14 +130,14 @@ def register_exception_handlers(app: FastAPI) -> None:
     ) -> JSONResponse:
         """Handle Pydantic validation errors."""
         error_code = VALIDATION_ERROR_CODES['MISSING_REQUIRED_FIELD']
-        details = str(exc.errors())
+        details = str(redact_data(exc.errors()))
 
         logger.warning(
             'Validation error: %s',
             details,
             extra={
                 'error_code': error_code.code,
-                'request_path': request.url.path,
+                'request_path': redact_text(request.url.path),
                 'request_method': request.method,
             },
         )
@@ -166,7 +167,7 @@ def register_exception_handlers(app: FastAPI) -> None:
             exc,
             extra={
                 'error_code': error_code.code,
-                'request_path': request.url.path,
+                'request_path': redact_text(request.url.path),
                 'request_method': request.method,
             },
         )

@@ -17,9 +17,10 @@ export NAMESERVER
 
 # Default PORT if not set
 export PORT=${PORT:-8080}
+export MCP_HOST=${MCP_HOST:-pneumatic-mcp.railway.internal:8000}
 
 # Substitute environment variables in nginx.conf
-envsubst '${PORT} ${NAMESERVER} ${FRONTEND_HOST} ${BACKEND_HOST} ${FILE_SERVICE_HOST}' \
+envsubst '${PORT} ${NAMESERVER} ${FRONTEND_HOST} ${BACKEND_HOST} ${FILE_SERVICE_HOST} ${MCP_HOST}' \
   < /etc/nginx/nginx.conf \
   > /etc/nginx/nginx.conf.tmp
 

@@ -13,6 +13,9 @@ from .error_messages import (
     MSG_FILE_001,
     MSG_FILE_004,
     MSG_FILE_006,
+    MSG_MCP_001,
+    MSG_MCP_002,
+    MSG_MCP_003,
     MSG_PERM_001,
     MSG_STORAGE_001,
     MSG_STORAGE_003,
@@ -174,5 +177,26 @@ INFRA_ERROR_CODES = {
         message='Internal server error',
         error_type=ErrorType.INTERNAL,
         http_status=500,
+    ),
+}
+
+MCP_ERROR_CODES = {
+    'CORE_UNAVAILABLE': ErrorCode(
+        code='MCP_503',
+        message=MSG_MCP_001,
+        error_type=ErrorType.EXTERNAL_SERVICE,
+        http_status=503,
+    ),
+    'UPLOAD_CONFLICT': ErrorCode(
+        code='MCP_409',
+        message=MSG_MCP_002,
+        error_type=ErrorType.DOMAIN,
+        http_status=409,
+    ),
+    'UNSAFE_IMPORT': ErrorCode(
+        code='MCP_400',
+        message=MSG_MCP_003,
+        error_type=ErrorType.VALIDATION,
+        http_status=400,
     ),
 }

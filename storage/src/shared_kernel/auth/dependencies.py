@@ -35,6 +35,10 @@ class AuthenticatedUser(AuthUser):
             token=auth_user.token,
             is_api_key=auth_user.is_api_key,
             is_embed_token=auth_user.is_embed_token,
+            mcp_connection_id=auth_user.mcp_connection_id,
+            mcp_upload_session_id=auth_user.mcp_upload_session_id,
+            mcp_authorization_id=auth_user.mcp_authorization_id,
+            mcp_authorization_expires_at=auth_user.mcp_authorization_expires_at,
         )
 
 

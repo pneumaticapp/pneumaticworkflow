@@ -22,12 +22,14 @@ if (
     from sentry_sdk.integrations.django import DjangoIntegration
 
     from src.utils.logging import sentry_before_send
+    from src.utils.redaction import redact_event
 
     kwargs = {
         'dsn': settings.PROJECT_CONF['SENTRY_DSN'],
         'integrations': [DjangoIntegration()],
         'send_default_pii': True,
         'before_send': sentry_before_send,
+        'before_send_transaction': redact_event,
     }
     if configuration == 'Production':
         kwargs['traces_sample_rate'] = 0.2

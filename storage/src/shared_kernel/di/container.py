@@ -10,6 +10,9 @@ from src.application.use_cases import (
     DownloadFileUseCase,
     UploadFileUseCase,
 )
+from src.application.use_cases.mcp_download import MCPDownloadService
+from src.application.use_cases.mcp_import import MCPImportService
+from src.application.use_cases.mcp_upload import MCPUploadService
 from src.infra.adapters import (
     StorageService,
     StorageServiceHolder,
@@ -72,7 +75,36 @@ async def get_download_use_case(
     )
 
 
+async def get_mcp_upload_service(
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    settings: Annotated[BaseAppSettings, Depends(get_settings_dep)],
+    storage_service: Annotated[StorageService, Depends(get_storage_service)],
+) -> MCPUploadService:
+    """Build the transactional MCP upload service."""
+    return MCPUploadService(
+        session=session,
+        storage=storage_service,
+        settings=settings,
+    )
+
+
 async def get_http_client() -> AsyncGenerator[HttpClient, None]:
     """Get HTTP client."""
     settings = get_settings()
     yield HttpClient(base_url=settings.check_permission_url)
+
+
+async def get_mcp_download_service(
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    settings: Annotated[BaseAppSettings, Depends(get_settings_dep)],
+) -> MCPDownloadService:
+    """Build the revocable download ticket service."""
+    return MCPDownloadService(session=session, settings=settings)
+
+
+async def get_mcp_import_service(
+    uploads: Annotated[MCPUploadService, Depends(get_mcp_upload_service)],
+    settings: Annotated[BaseAppSettings, Depends(get_settings_dep)],
+) -> MCPImportService:
+    """Build the bounded URL import service."""
+    return MCPImportService(uploads=uploads, settings=settings)

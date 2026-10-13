@@ -1,16 +1,21 @@
+from src.storage import messages as fs_messages
 import io
-from typing import Optional
+from typing import Any, Optional
 
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework.authentication import get_authorization_header
 
+from src.storage.constants import (
+    STORAGE_TIMEOUT_SECONDS,
+)
 from src.accounts.models import Account
 from src.authentication.tokens import PneumaticToken
 from src.storage.enums import AccessType, SourceType
 from src.storage.services.attachments import AttachmentService
 from src.storage.services.exceptions import (
+    StorageUnavailable,
     FileServiceAuthException,
     FileServiceAuthFailedException,
     FileServiceConnectionException,
@@ -226,3 +231,25 @@ class FileServiceClient:
             access_type=access_type,
         )
         return public_url
+
+    @classmethod
+    def post_internal(cls, path: str, payload: Any):
+        """Call storage privately; never follow redirects or proxies."""
+        try:
+            with requests.Session() as session:
+                session.trust_env = False
+                response = session.post(
+                    url=settings.MCP_FILE_SERVICE_URL.rstrip('/') + path,
+                    headers={
+                        'Authorization': (
+                            f'Bearer {settings.MCP_FILE_SERVICE_SECRET}'
+                        ),
+                    },
+                    json=payload,
+                    timeout=STORAGE_TIMEOUT_SECONDS,
+                    allow_redirects=False,
+                )
+        except requests.RequestException as ex:
+            raise StorageUnavailable from ex
+        if not 200 <= response.status_code < 300:
+            raise StorageUnavailable(fs_messages.MSG_FS_0013)

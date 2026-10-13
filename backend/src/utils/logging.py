@@ -10,6 +10,8 @@ from rest_framework.exceptions import (
 from sentry_sdk import capture_exception, capture_message, push_scope
 from typing_extensions import Literal
 
+from src.utils.redaction import redact_event
+
 # Exception types to drop in Sentry (noise: auth, infra, scan).
 _SENTRY_IGNORE_EXCEPTIONS: Tuple[Type[BaseException], ...] = (
     AuthenticationFailed,
@@ -24,11 +26,11 @@ _sentry_last_messages: Dict[str, float] = {}
 def sentry_before_send(event: dict, hint: dict) -> Optional[dict]:
     """Drop expected auth/validation and infra errors so they are not sent."""
     if 'exc_info' not in hint:
-        return event
+        return redact_event(event=event)
     _, exc_value, _ = hint['exc_info']
     if isinstance(exc_value, _SENTRY_IGNORE_EXCEPTIONS):
         return None
-    return event
+    return redact_event(event=event)
 
 
 class SentryLogLevel:

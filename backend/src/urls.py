@@ -10,6 +10,7 @@ from rest_framework.routers import DefaultRouter
 from src import views
 from src.accounts.views.accounts import AccountPlanView
 from src.accounts.views.tenants import TenantsViewSet
+from src.datasets.views import DatasetItemViewSet, DatasetViewSet
 from src.faq.views import FaqViewSet
 from src.notifications.consumers import (
     EventsConsumer,
@@ -22,14 +23,13 @@ from src.payment.views import (
 from src.processes.views.checklist import (
     CheckListViewSet,
 )
+from src.processes.views.fieldset import (
+    SharedFieldsetTemplateViewSet,
+)
 from src.processes.views.task import (
     TasksListView,
     TaskViewSet,
 )
-from src.processes.views.fieldset import (
-    SharedFieldsetTemplateViewSet,
-)
-from src.datasets.views import DatasetViewSet, DatasetItemViewSet
 from src.processes.views.template import (
     TemplateViewSet,
 )
@@ -70,6 +70,11 @@ router.register(
 )
 
 urlpatterns = [
+    path('', include('src.mcp.urls')),
+    path(
+        'oauth/mcp/',
+        include('src.authentication.oauth_urls', namespace='oauth2_provider'),
+    ),
     path('', views.index, name='index'),
     path(f'{settings.ADMIN_PATH}/', admin.site.urls),
 

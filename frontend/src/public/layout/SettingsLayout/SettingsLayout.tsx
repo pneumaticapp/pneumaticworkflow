@@ -7,6 +7,7 @@ import { ERoutes } from '../../constants/routes';
 import { history } from '../../utils/history';
 import { ESettingsTabs } from '../../types/profile';
 import { Tabs } from '../../components/UI';
+import { McpConnectionsLink } from '../../components/Mcp/McpConnectionsLink';
 
 import styles from './SettingsLayout.css';
 
@@ -30,6 +31,7 @@ export class SettingsLayoutComponent extends React.Component<ISettingsLayoutComp
           activeValueId={activeTab}
           onChange={onChangeTab}
         />
+        <McpConnectionsLink />
       </div>
     );
   };

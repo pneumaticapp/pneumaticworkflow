@@ -12,7 +12,12 @@ import {
   registerWithEmailAsync,
   registerWithEmailPassword,
   registerWithInvite,
+  authenticateUser,
+  handleSetRedirectUrl,
 } from '../saga';
+import { setRedirectUrl, TAuthUserResult } from '../actions';
+import { REDIRECT_URL_STORAGE_KEY } from '../../../constants/storageKeys';
+import { getBrowserConfigEnv } from '../../../utils/getConfig';
 import { registerUser, registerUserInvited, sendForgotPassword, sendForgotPasswordFail } from '../actions';
 import { setJwtCookie } from '../../../utils/authCookie';
 import { setOAuthRegistrationCompleted } from '../../../api/setOAuthRegistrationCompleted';
@@ -20,6 +25,7 @@ import { getOAuthId, getOAuthType } from '../../../utils/auth';
 import { EOAuthType } from '../../../types/auth';
 
 const auth = {
+  getUser: jest.fn(),
   createUserWithEmail: jest.fn(),
   signInWithEmailAndPassword: jest.fn(),
   createUserWithInvite: jest.fn(),
@@ -27,6 +33,7 @@ const auth = {
 jest.mock('../../../utils/auth');
 jest.mock('../../../api/setOAuthRegistrationCompleted');
 jest.mock('../../../utils/authCookie');
+jest.mock('../../../utils/sentryUser', () => ({ setSentryUser: jest.fn() }));
 jest.mock('../../../api/auth', () => ({
   get auth() {
     return auth;
@@ -49,6 +56,43 @@ describe('saga', () => {
     jest.resetAllMocks();
     jest.clearAllMocks();
     jest.resetModules();
+  });
+  describe('MCP password continuation', () => {
+    const originalLocation = window.location;
+    const target = '/mcp/connect?request_id=550e8400-e29b-41d4-a716-446655440000&step=consent';
+    beforeEach(() => {
+      sessionStorage.clear();
+      (getBrowserConfigEnv as jest.Mock).mockReturnValue(configMock);
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: { ...originalLocation, replace: jest.fn() },
+      });
+    });
+    afterEach(() => {
+      sessionStorage.clear();
+      Object.defineProperty(window, 'location', { configurable: true, value: originalLocation });
+    });
+    it('stores a safe consent continuation across password/reset routes', () => {
+      handleSetRedirectUrl(setRedirectUrl(target));
+      expect(sessionStorage.getItem(REDIRECT_URL_STORAGE_KEY)).toBe(target);
+    });
+    it('does not store an arbitrary external continuation', () => {
+      handleSetRedirectUrl(setRedirectUrl('https://evil.example'));
+      expect(sessionStorage.getItem(REDIRECT_URL_STORAGE_KEY)).toBe('');
+    });
+    it('returns through Express after password authentication and consumes the continuation', () => {
+      sessionStorage.setItem(REDIRECT_URL_STORAGE_KEY, target);
+      const result = authenticateUser('/dashboard/');
+      result.next();
+      result.next({
+        id: 7,
+        email: 'user@example.com',
+        account: { isSubscribed: true, billingPlan: 'free', billingSync: true },
+      } as TAuthUserResult);
+      result.next();
+      expect(window.location.replace).toHaveBeenCalledWith(target);
+      expect(sessionStorage.getItem(REDIRECT_URL_STORAGE_KEY)).toBeNull();
+    });
   });
   describe('loginWithEmailPasswordAsync', () => {
     it('returns a successfully completed login promise', async () => {

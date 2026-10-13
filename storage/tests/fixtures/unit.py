@@ -1,13 +1,19 @@
 """Fixtures specific to unit tests."""
 
 import json
+from collections.abc import AsyncIterator, Callable
 from datetime import UTC, datetime
 from pathlib import Path
+from time import time
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, Mock
 
+import httpcore
+import httpx
 import pytest
 from botocore.exceptions import ClientError
 from fastapi import Request
+from pytest_mock import MockerFixture
 from starlette.applications import Starlette
 from starlette.datastructures import Headers
 from starlette.responses import PlainTextResponse, Response
@@ -33,6 +39,7 @@ from src.shared_kernel.auth.user_types import (
     JournalUserType,
     UserType,
 )
+from src.shared_kernel.config import BaseAppSettings
 from src.shared_kernel.database.models import FileRecordORM
 from src.shared_kernel.events.emitter import EventEmitter, get_event_emitter
 from src.shared_kernel.events.request_events import RequestEvents
@@ -808,3 +815,116 @@ def make_context_request():
         return request
 
     return _factory
+
+
+@pytest.fixture
+def core_transport(mocker: MockerFixture) -> tuple[Any, ...]:
+    settings = BaseAppSettings(
+        MCP_ENABLED=True,
+        MCP_FILE_SERVICE_SECRET='storage-only-secret-for-tests-1234',
+        MCP_BACKEND_URL='http://core.internal',
+    )
+    mocker.patch(
+        'src.shared_kernel.auth.mcp.get_settings', return_value=settings
+    )
+    reply = {
+        'active': True,
+        'user_id': 3,
+        'account_id': 10,
+        'connection_id': 'connection-1',
+        'operation': 'download',
+        'expires_at': int(time()) + 300,
+    }
+    requests = []
+
+    async def handle(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, json=reply)
+
+    original = httpx.AsyncClient
+    options = []
+
+    def factory(**kwargs: Any) -> httpx.AsyncClient:
+        options.append(kwargs)
+        return original(transport=httpx.MockTransport(handle), **kwargs)
+
+    mocker.patch(
+        'src.shared_kernel.auth.mcp.httpx.AsyncClient',
+        side_effect=factory,
+    )
+    return settings, reply, requests, options
+
+
+@pytest.fixture
+def wire(mocker: MockerFixture) -> Callable[..., Any]:
+    streams = []
+    backend = AsyncMock(spec=httpcore.AsyncNetworkBackend)
+
+    def install(*responses: bytes) -> tuple[AsyncMock, list[Any]]:
+        for response in responses:
+            stream = httpcore.AsyncMockStream([response])
+            stream.write = AsyncMock(wraps=stream.write)
+            stream.start_tls = AsyncMock(wraps=stream.start_tls)
+            streams.append(stream)
+        backend.connect_tcp.side_effect = streams
+        mocker.patch(
+            'src.infra.url_importer.httpcore.AnyIOBackend',
+            return_value=backend,
+        )
+        return backend, streams
+
+    return install
+
+
+@pytest.fixture
+def mcp_http_transport(mocker: MockerFixture) -> Callable[..., Any]:
+    def install(response: httpx.Response) -> dict[str, Any]:
+        settings = BaseAppSettings(
+            MCP_ENABLED=True,
+            MCP_FILE_SERVICE_SECRET='storage-only-secret-for-tests-1234',
+            MCP_BACKEND_URL='http://core.internal',
+        )
+        settings_mock = mocker.patch(
+            'src.shared_kernel.auth.mcp.get_settings',
+            return_value=settings,
+        )
+        requests: list[httpx.Request] = []
+
+        async def handle(request: httpx.Request) -> httpx.Response:
+            requests.append(request)
+            return response
+
+        client = httpx.AsyncClient(
+            transport=httpx.MockTransport(handle),
+            trust_env=False,
+        )
+        client_mock = mocker.patch(
+            'src.shared_kernel.auth.mcp.httpx.AsyncClient',
+            return_value=client,
+        )
+        return {
+            'settings_mock': settings_mock,
+            'client_mock': client_mock,
+            'requests': requests,
+        }
+
+    return install
+
+
+@pytest.fixture
+def import_response() -> Callable[..., httpcore.Response]:
+    def build(
+        status: int = 200,
+        headers: dict[bytes, bytes] | None = None,
+        body: bytes = b'abc',
+    ) -> httpcore.Response:
+        async def chunks() -> AsyncIterator[bytes]:
+            yield body
+
+        return httpcore.Response(
+            status=status,
+            headers=headers,
+            content=chunks(),
+        )
+
+    return build

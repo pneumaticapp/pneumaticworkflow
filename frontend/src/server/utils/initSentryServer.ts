@@ -19,6 +19,11 @@ export const initSentryServer = (): void => {
     initialScope: {
       tags: { app: 'server' },
     },
+    beforeSend(event) {
+      const url = event.request?.url;
+      if (url && /\/mcp(?:\/|\?|$)/.test(url)) return null;
+      return event;
+    },
   });
 
   setSentryCapture((error: Error) => {

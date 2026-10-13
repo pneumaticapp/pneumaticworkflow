@@ -122,7 +122,8 @@
     "timezones-list": "^3.0.3",
     "tlds": "^1.231.0",
     "webpack-dev-server": "^4.15.1",
-    "webpack-hot-middleware": "^2.26.0"
+    "webpack-hot-middleware": "^2.26.0",
+    "yup": "1.7.1"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^1.2.20",

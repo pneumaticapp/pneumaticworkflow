@@ -12,6 +12,10 @@ const OAUTH_MAP_URL: { [key in EOAuthType]: string } = {
   [EOAuthType.SSOOkta]: 'oAuthSSOOkta',
 };
 
-export function getOAuthUrl(type: EOAuthType) {
-  return commonRequest<IGoogleRegisterInfoResponse>(OAUTH_MAP_URL[type], {}, { type: 'local' });
+export function getOAuthUrl(type: EOAuthType, redirectUrl?: string) {
+  return commonRequest<IGoogleRegisterInfoResponse>(
+    OAUTH_MAP_URL[type],
+    { params: redirectUrl ? { redirectUrl } : undefined },
+    { type: 'local' },
+  );
 }

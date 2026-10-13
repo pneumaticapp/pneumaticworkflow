@@ -9,6 +9,7 @@ import { store } from '../../redux/store';
 import { loadAnalytics } from './segmentSnippet';
 import { isObjectEmpty } from '../helpers';
 import { isEnvAnalytics } from '../../constants/enviroment';
+import { mcpContinuation } from '../safeRedirect';
 
 export interface IAnalyticsParams {
   category: EAnalyticsCategory;
@@ -50,7 +51,12 @@ export class Analytics {
   private periodStarted = 0;
 
   public constructor(isSupermode: boolean) {
-    if (!isEnvAnalytics || isSupermode) {
+    if (
+      !isEnvAnalytics ||
+      isSupermode ||
+      window.location.pathname.startsWith('/mcp/') ||
+      mcpContinuation(new URLSearchParams(window.location.search).get('redirectUrl'))
+    ) {
       return;
     }
 

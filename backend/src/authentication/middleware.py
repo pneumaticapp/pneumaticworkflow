@@ -1,18 +1,48 @@
+import src.authentication.messages as auth_messages
 import json
+from collections.abc import Callable
+from math import ceil
+from typing import Optional
 from urllib.parse import parse_qs
 
 from channels.db import database_sync_to_async
+from django.conf import settings
 from django.contrib.auth.middleware import AuthenticationMiddleware
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.utils import translation
 from django.utils.deprecation import MiddlewareMixin
+from redis.exceptions import RedisError
+from sentry_sdk import isolation_scope
 from rest_framework.authentication import get_authorization_header
+from rest_framework.exceptions import APIException
 
 from src.authentication.enums import AuthTokenType
+from src.authentication.responses import get_oauth_error_response
+from src.authentication.services.mcp_auth import DelegationAuthentication
+from src.authentication.throttling import (
+    OAuthAuthorizeThrottle,
+    OAuthRegisterThrottle,
+    OAuthTokenThrottle,
+)
 from src.authentication.tokens import PneumaticToken
 from src.generics.mixins.views import AnonymousMixin
+from src.generics.responses import (
+    get_api_exception_response,
+    set_private_headers,
+)
+from src.generics.throttling import CustomSimpleRateThrottle
 from src.logs.service import AccountLogService
+from src.authentication.constants import (
+    MCP_TOKEN_PREFIXES,
+)
+from src.mcp.enums import (
+    HttpMethod,
+)
+from src.authentication.enums import (
+    OAuthErrorCode,
+)
 from src.utils.user_agent import get_user_agent
 
 
@@ -113,3 +143,89 @@ class UserLocaleMiddleware(MiddlewareMixin):
     def process_response(self, request, response):
         translation.deactivate()
         return response
+
+
+RATE_UNAVAILABLE_DESCRIPTION = (
+    'Authorization service is temporarily unavailable.'
+)
+RATE_EXCEEDED_DESCRIPTION = 'Too many authorization requests.'
+
+
+class OAuthThrottleMiddleware:
+    """Apply the backend's throttles to non-DRF OAuth views."""
+
+    CACHE_RETRY_SECONDS = 5
+    ROUTES = {
+        (HttpMethod.POST, '/oauth/mcp/register'): OAuthRegisterThrottle,
+        (HttpMethod.GET, '/oauth/mcp/authorize'): OAuthAuthorizeThrottle,
+        (HttpMethod.HEAD, '/oauth/mcp/authorize'): OAuthAuthorizeThrottle,
+        (HttpMethod.GET, '/oauth/mcp/login'): OAuthAuthorizeThrottle,
+        (HttpMethod.HEAD, '/oauth/mcp/login'): OAuthAuthorizeThrottle,
+        (HttpMethod.POST, '/oauth/mcp/token'): OAuthTokenThrottle,
+        (HttpMethod.POST, '/oauth/mcp/revoke'): OAuthTokenThrottle,
+    }
+
+    def __init__(self, get_response: Callable):
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest):
+        throttle_class = self.ROUTES.get(
+            (request.method, request.path_info.rstrip('/')),
+        )
+        if settings.MCP_ENABLED and throttle_class:
+            response = self._get_throttle_response(
+                request=request,
+                throttle=throttle_class(),
+            )
+            if response is not None:
+                return response
+        return self.get_response(request)
+
+    def _get_throttle_response(
+        self,
+        request: HttpRequest,
+        throttle: CustomSimpleRateThrottle,
+    ) -> Optional[JsonResponse]:
+        try:
+            allowed = throttle.allow_request(request=request, view=None)
+        except RedisError:
+            response = get_oauth_error_response(
+                error=OAuthErrorCode.TEMPORARILY_UNAVAILABLE,
+                status=503,
+                description=RATE_UNAVAILABLE_DESCRIPTION,
+            )
+            response['Retry-After'] = str(self.CACHE_RETRY_SECONDS)
+            return set_private_headers(response)
+        if allowed:
+            return None
+        response = get_oauth_error_response(
+            error=OAuthErrorCode.TEMPORARILY_UNAVAILABLE,
+            status=429,
+            description=RATE_EXCEEDED_DESCRIPTION,
+        )
+        response['Retry-After'] = str(max(1, ceil(throttle.wait())))
+        return set_private_headers(response)
+
+
+class McpDelegationMiddleware:
+    """Authenticate MCP requests before views or business execution."""
+
+    def __init__(self, get_response: Callable):
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        parts = request.headers.get('Authorization', '').split()
+        if len(parts) != 2 or not parts[1].startswith(MCP_TOKEN_PREFIXES):
+            return self.get_response(request)
+        try:
+            result = DelegationAuthentication().authenticate(request)
+            if result is None:
+                return JsonResponse(
+                    {'detail': auth_messages.MSG_AU_0032},
+                    status=401,
+                )
+            with isolation_scope() as scope:
+                scope.set_tag('mcp', 'true')
+                return self.get_response(request)
+        except APIException as ex:
+            return get_api_exception_response(ex=ex)

@@ -126,6 +126,8 @@ export function getConfig(): TConfig {
       featureFlags: Object.fromEntries(
         [
           'CAPTCHA',
+          'MCP_ENABLED',
+          'MCP_PUBLIC_URL',
           'GOOGLE_AUTH',
           'MS_AUTH',
           'SSO_AUTH',

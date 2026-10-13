@@ -1,7 +1,7 @@
 import { authMiddleware } from '../authMiddleware';
 import { ERoutes } from '../../../public/constants/routes';
 import { parseCookies } from '../../../public/utils/cookie';
-import { setGuestCookie } from '../../utils/cookie';
+import { setAuthCookie, setGuestCookie } from '../../utils/cookie';
 import { IAuthenticatedUser } from '../../utils/types';
 import { getUser } from '../utils/getUser';
 
@@ -84,6 +84,53 @@ describe('middleware', () => {
       await authMiddleware(guestPageReq, res, next);
 
       expect(next).toHaveBeenCalled();
+    });
+
+    it('test_authMiddleware__MCP_no_plan__returns_to_consent', async () => {
+      // arrange
+      const target = '/mcp/connect?request_id=550e8400-e29b-41d4-a716-446655440000&step=consent';
+      const user = { id: '7', account: { id: 9, is_subscribed: false, billing_plan: null } };
+      const request = {
+        ...req,
+        url: '/auth/signin/',
+        query: { redirectUrl: target },
+        get: jest.fn().mockReturnValue('token=cookie-session'),
+      };
+      const response = { ...res, setHeader: jest.fn() };
+      (getUser as jest.Mock).mockResolvedValueOnce(user);
+
+      // act
+      await authMiddleware(request, response, next);
+
+      // assert
+      expect(response.redirect).toHaveBeenCalledTimes(1);
+      expect(response.redirect).toHaveBeenCalledWith(target);
+      expect(getUser).toHaveBeenCalledTimes(1);
+      expect(getUser).toHaveBeenCalledWith(request, 'cookie-session', 'windows phone');
+      expect(next).not.toHaveBeenCalled();
+      expect(setAuthCookie).not.toHaveBeenCalled();
+    });
+
+    it('test_authMiddleware__MCP_query_token__ignores_credential', async () => {
+      // arrange
+      const target = '/mcp/connections';
+      const request = {
+        ...req,
+        url: '/auth/signin/',
+        query: { redirectUrl: target, mobile_app_token: 'attacker-token' },
+        get: jest.fn().mockReturnValue(''),
+      };
+      const response = { ...res, setHeader: jest.fn() };
+
+      // act
+      await authMiddleware(request, response, next);
+
+      // assert
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith();
+      expect(response.redirect).not.toHaveBeenCalled();
+      expect(getUser).not.toHaveBeenCalled();
+      expect(setAuthCookie).not.toHaveBeenCalled();
     });
   });
 });

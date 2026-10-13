@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 
 from django.db import transaction
@@ -80,3 +81,14 @@ class BaseHardQuerySet(QuerySet):
 class AccountBaseQuerySet(BaseQuerySet):
     def on_account(self, account_id: int):
         return self.filter(account_id=account_id)
+
+
+class ExpiringQuerySet(QuerySet):
+
+    def expired(self, now: datetime, limit: int) -> list:
+        """Oldest expired primary keys; a bounded batch for pruning."""
+        return list(
+            self.filter(expires_at__lte=now)
+            .order_by('expires_at', 'pk')
+            .values_list('pk', flat=True)[:limit],
+        )

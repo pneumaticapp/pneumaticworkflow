@@ -69,3 +69,8 @@ MSG_VAL_005 = 'Invalid token format'
 MSG_VAL_007 = 'Missing required field'
 MSG_VAL_009 = 'Invalid input format'
 MSG_VAL_011 = 'Validation failed'
+
+# MCP file lifecycle errors
+MSG_MCP_001 = 'MCP file authorization temporarily unavailable'
+MSG_MCP_002 = 'MCP upload session conflict'
+MSG_MCP_003 = 'The source could not be safely imported'

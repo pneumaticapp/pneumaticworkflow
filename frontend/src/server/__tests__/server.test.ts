@@ -115,8 +115,8 @@ describe('server', () => {
       const appListenCallback = app.listen.mock.calls[0][1];
       appListenCallback();
 
-      expect(app.use).toHaveBeenCalledTimes(4);
-      expect(app.get).toHaveBeenCalledTimes(7);
+      expect(app.use).toHaveBeenCalledTimes(5);
+      expect(app.get).toHaveBeenCalledTimes(11);
       expect(log).toHaveBeenCalledWith('App listening on port 8000');
     });
 
@@ -145,8 +145,8 @@ describe('server', () => {
 
       initServer();
 
-      expect(app.use).toHaveBeenCalledTimes(6);
-      expect(app.get).toHaveBeenCalledTimes(7);
+      expect(app.use).toHaveBeenCalledTimes(7);
+      expect(app.get).toHaveBeenCalledTimes(11);
     });
 
     it('adds Auth0 SSO route when SSO_AUTH is enabled and SSO_PROVIDER is Auth0', () => {
@@ -158,7 +158,7 @@ describe('server', () => {
 
       initServer();
 
-      expect(app.get).toHaveBeenCalledTimes(8);
+      expect(app.get).toHaveBeenCalledTimes(12);
     });
 
     it('adds Okta SSO route when SSO_AUTH is enabled and SSO_PROVIDER is Okta', () => {
@@ -170,7 +170,7 @@ describe('server', () => {
 
       initServer();
 
-      expect(app.get).toHaveBeenCalledTimes(8);
+      expect(app.get).toHaveBeenCalledTimes(12);
     });
 
     it('does not add SSO routes when SSO_AUTH is disabled', () => {
@@ -182,7 +182,7 @@ describe('server', () => {
 
       initServer();
 
-      expect(app.get).toHaveBeenCalledTimes(7);
+      expect(app.get).toHaveBeenCalledTimes(11);
     });
   });
 });

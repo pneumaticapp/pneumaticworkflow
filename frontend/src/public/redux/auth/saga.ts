@@ -87,7 +87,8 @@ import { ICardSetupResponse, cardSetup } from '../../api/cardSetup';
 import { confirmPaymentDetailsProvided } from './utils/confirmPaymentDetailsProvided';
 import { createAITemplate } from './utils/createAITemplate';
 import { trackCrozdesk } from '../../utils/analytics/trackCrozdesk';
-import { getBrowserConfig } from '../../utils/getConfig';
+import { getBrowserConfig, getBrowserConfigEnv } from '../../utils/getConfig';
+import { mcpContinuation, safeRedirect } from '../../utils/safeRedirect';
 import { getCustomerPortalLink } from '../../api/getCustomerPortalLink';
 import { setSentryUser } from '../../utils/sentryUser';
 import { createTemplateFromName } from './utils/createTemplateFromName';
@@ -105,6 +106,13 @@ export function* authenticateUser(redirectUrl?: string, isRegister: boolean = fa
     yield put(authUserSuccess(user));
 
     setSentryUser({ id: user.id, email: user.email });
+
+    const mcpTarget = mcpContinuation(sessionStorage.getItem(REDIRECT_URL_STORAGE_KEY));
+    if (mcpTarget) {
+      sessionStorage.removeItem(REDIRECT_URL_STORAGE_KEY);
+      window.location.replace(mcpTarget);
+      return;
+    }
 
     if (((isEnvBilling || (!isEnvBilling && billingSync)) && isRegister) || (!isSubscribed && !billingPlan)) {
       yield call(collectPaymentDetailsSaga);
@@ -465,7 +473,10 @@ export function* handleDeleteUserPhoto() {
 }
 
 export function handleSetRedirectUrl({ payload: redirectUrl }: TSetRedirectUrl) {
-  sessionStorage.setItem(REDIRECT_URL_STORAGE_KEY, redirectUrl);
+  sessionStorage.setItem(
+    REDIRECT_URL_STORAGE_KEY,
+    safeRedirect(redirectUrl, getBrowserConfigEnv().api?.fileServiceUrl),
+  );
 }
 
 export function* collectPaymentDetailsSaga() {

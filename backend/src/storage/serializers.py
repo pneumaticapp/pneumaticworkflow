@@ -84,3 +84,5 @@ class AttachmentListFilterSerializer(
         required=False,
         min_value=0,
     )
+    task_id = serializers.IntegerField(required=False, min_value=1)
+    workflow_id = serializers.IntegerField(required=False, min_value=1)

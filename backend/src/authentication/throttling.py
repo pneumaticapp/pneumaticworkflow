@@ -30,3 +30,15 @@ class AuthGoogleTokenThrottle(CustomSimpleRateThrottle):
 
 class AuthGoogleAuthUriThrottle(CustomSimpleRateThrottle):
     scope = '13_auth_google__auth_uri'
+
+
+class OAuthRegisterThrottle(CustomSimpleRateThrottle):
+    scope = '14_mcp_oauth__register'
+
+
+class OAuthAuthorizeThrottle(CustomSimpleRateThrottle):
+    scope = '15_mcp_oauth__authorize'
+
+
+class OAuthTokenThrottle(CustomSimpleRateThrottle):
+    scope = '16_mcp_oauth__token'

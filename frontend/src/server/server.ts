@@ -14,6 +14,17 @@ import { setPublicAuthCookie } from './utils/cookie';
 import { getUserPublic } from './middleware/utils/getUserPublic';
 import { mapToCamelCase } from '../public/utils/mappers';
 import { SSOProvider } from './types';
+import {
+  mcpApprove,
+  mcpConnect,
+  mcpConsentContext,
+  mcpConnections,
+  mcpPage,
+  mcpRevoke,
+  mcpUploadSession,
+  mcpUploadToken,
+} from './handlers/mcpHandlers';
+import { mcpPrivacy } from './utils/mcpSecurity';
 
 const webpackConfig = require('../../webpack.config');
 
@@ -46,6 +57,10 @@ export function initServer() {
 
   app.set('views', './public/');
   app.set('view engine', 'ejs');
+  app.use('/mcp', (_, res, next) => {
+    mcpPrivacy(res);
+    next();
+  });
   app.use(express.json());
   app.use('/assets/', express.static('assets'));
   app.use('/static/', express.static('public'));
@@ -116,6 +131,14 @@ export function initServer() {
     app.get(ERoutes.OAuthSSOOkta, oAuthHandler(urls.getSSOOktaUri, urls.getSSOOktaToken));
   }
 
+  app.get('/mcp/connect/context', mcpConsentContext);
+  app.post('/mcp/connect', mcpConnect);
+  app.post('/mcp/connect/consent', mcpApprove);
+  app.get('/mcp/connections/data', mcpConnections);
+  app.delete('/mcp/connections/:connection_id', mcpRevoke);
+  app.get('/mcp/uploads/:session_id/data', mcpUploadSession);
+  app.post('/mcp/uploads/:session_id/token', mcpUploadToken);
+  app.get([ERoutes.McpConnect, ERoutes.McpConnections, ERoutes.McpUpload], mcpPage, mainHandler);
   app.get('*', authMiddleware);
   app.get('*', mainHandler);
 

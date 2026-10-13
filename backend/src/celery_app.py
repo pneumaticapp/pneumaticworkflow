@@ -27,10 +27,14 @@ if configuration in (
     if settings.PROJECT_CONF['SENTRY_DSN']:
         import sentry_sdk
         from sentry_sdk.integrations.celery import CeleryIntegration
+        from src.utils.redaction import redact_event
+        from src.utils.logging import sentry_before_send
         kwargs = {
             'dsn': settings.PROJECT_CONF['SENTRY_DSN'],
             'integrations': [CeleryIntegration()],
             'send_default_pii': True,
+            'before_send': sentry_before_send,
+            'before_send_transaction': redact_event,
         }
         if configuration == settings.CONFIGURATION_PROD:
             kwargs['traces_sample_rate'] = 0.2

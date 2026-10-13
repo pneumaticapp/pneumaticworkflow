@@ -1,5 +1,10 @@
+from django.utils.functional import Promise
+from rest_framework.exceptions import ValidationError
+
+from src.generics.entities import ValidationErrorData
 from src.generics.exceptions import BaseServiceException
 from src.storage import messages as fs_messages
+from src.utils.validation import ErrorCode
 
 
 class FileServiceException(BaseServiceException):
@@ -55,3 +60,24 @@ class FileSizeExceededException(FileServiceException):
 class InvalidFileTypeException(FileServiceException):
 
     default_message = fs_messages.MSG_FS_0006
+
+
+class StorageUnavailable(Exception):
+    pass
+
+
+class UploadConflict(ValidationError):
+    status_code = 409
+
+    def __init__(self, message: str | Promise):
+        super().__init__(
+            detail=ValidationErrorData(
+                message=message,
+                code=ErrorCode.VALIDATION_ERROR,
+                details={},
+            ),
+        )
+
+
+class IneligibleCleanup(Exception):
+    """Storage gets `{'eligible': false}` and keeps the file."""

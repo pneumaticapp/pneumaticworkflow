@@ -3,6 +3,14 @@ import { render } from '@testing-library/react';
 import { AppRoutes } from '../AppRoutes';
 import { REDIRECT_URL_STORAGE_KEY } from '../../../constants/storageKeys';
 import { ELoggedState } from '../../../types/redux';
+import { getBrowserConfigEnv } from '../../../utils/getConfig';
+
+jest.mock('../../../utils/getConfig', () => ({
+  getBrowserConfigEnv: jest.fn(() => ({ api: { fileServiceUrl: 'https://pneumatic.app/files' }, featureFlags: {} })),
+}));
+jest.mock('../../Mcp/McpConnect', () => ({ McpConnect: () => <div /> }));
+jest.mock('../../Mcp/McpConnections', () => ({ McpConnections: () => <div /> }));
+jest.mock('../../Mcp/McpUpload', () => ({ McpUpload: () => <div /> }));
 
 jest.mock('react-redux', () => ({
   connect: () => (ReactComponent: unknown) => ReactComponent,
@@ -98,11 +106,28 @@ describe('AppRoutes Redirect Logic', () => {
   });
 
   it('redirects to localhost URL via window.location.replace', () => {
+    (getBrowserConfigEnv as jest.Mock).mockReturnValueOnce({
+      api: { fileServiceUrl: 'http://localhost/files' },
+      featureFlags: {},
+    });
     sessionStorage.setItem(REDIRECT_URL_STORAGE_KEY, 'http://localhost/files/abc-123');
 
     render(<AppRoutes containerClassnames="test-class" user={defaultUser} />);
 
     expect(window.location.replace).toHaveBeenCalledWith('http://localhost/files/abc-123');
     expect(sessionStorage.getItem(REDIRECT_URL_STORAGE_KEY)).toBe('');
+  });
+
+  it('blocks an arbitrary external URL from login storage', () => {
+    sessionStorage.setItem(REDIRECT_URL_STORAGE_KEY, 'https://evil.example');
+    render(<AppRoutes containerClassnames="test-class" user={defaultUser} />);
+    expect(window.location.replace).not.toHaveBeenCalled();
+  });
+
+  it('returns through Express for the MCP consent continuation', () => {
+    const target = '/mcp/connect?request_id=550e8400-e29b-41d4-a716-446655440000&step=consent';
+    sessionStorage.setItem(REDIRECT_URL_STORAGE_KEY, target);
+    render(<AppRoutes containerClassnames="test-class" user={defaultUser} />);
+    expect(window.location.replace).toHaveBeenCalledWith(target);
   });
 });

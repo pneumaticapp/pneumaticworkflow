@@ -71,6 +71,11 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         """Add security headers to response."""
         response = await call_next(request)
         for header, value in _SECURITY_HEADERS.items():
+            if (
+                header == 'Referrer-Policy'
+                and response.headers.get(header) == 'no-referrer'
+            ):
+                continue
             response.headers[header] = value
         if self._include_hsts:
             response.headers[_HSTS_HEADER[0]] = _HSTS_HEADER[1]

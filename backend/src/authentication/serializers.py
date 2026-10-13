@@ -1,9 +1,11 @@
+from typing import Any, Dict, Optional
+
+from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.core.validators import RegexValidator
 from django.db.models import Exists, Q
 from drf_recaptcha.fields import ReCaptchaV2Field
 from rest_framework import serializers
-from typing import Any, Dict, Optional
 
 from src.accounts.enums import Language
 from src.accounts.models import Account
@@ -20,8 +22,25 @@ from src.generics.fields import (
 )
 from src.generics.mixins.services import EncryptionMixin
 from src.generics.serializers import CustomValidationErrorMixin
+from src.authentication.constants import (
+    DELEGATION_TTL,
+    LOGIN_CODE_TTL,
+    PKCE_METHOD,
+)
+from src.authentication.enums import (
+    GrantType,
+    TokenEndpointAuthMethod,
+)
+from src.mcp.enums import (
+    HttpMethod,
+)
+from src.mcp.models import AccessBinding, Connection
+from src.generics.serializers import BaseInputSerializer
+from src.authentication.tokens import get_expires_in
 from src.processes.enums import OwnerRole, OwnerType
 from src.processes.models.templates.owner import TemplateOwner
+
+BEARER = 'Bearer'
 
 UserModel = get_user_model()
 
@@ -30,7 +49,6 @@ class SignUpSerializer(
     CustomValidationErrorMixin,
     serializers.ModelSerializer,
 ):
-
     class Meta:
         model = UserModel
         fields = [
@@ -88,7 +106,6 @@ class SignUpSerializer(
 
 
 class SecuredSignUpSerializer(SignUpSerializer):
-
     class Meta:
         model = UserModel
         fields = [
@@ -120,7 +137,6 @@ class SecuredSignUpSerializer(SignUpSerializer):
 
 
 class ContextAccountSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Account
         fields = (
@@ -161,7 +177,6 @@ class ContextAccountSerializer(serializers.ModelSerializer):
 class ContextUserSerializer(
     serializers.ModelSerializer,
 ):
-
     class Meta:
         model = UserModel
         fields = (
@@ -234,18 +249,23 @@ class ContextUserSerializer(
             template__account_id=account_id,
             is_deleted=False,
         ).filter(
-            Q(type=OwnerType.USER, user_id=user_id) |
-            Q(type=OwnerType.GROUP, group__users__id=user_id),
+            Q(type=OwnerType.USER, user_id=user_id)
+            | Q(type=OwnerType.GROUP, group__users__id=user_id),
         )
         owner_subq = base_qs.filter(role=OwnerRole.OWNER)
         viewer_subq = base_qs.filter(role=OwnerRole.VIEWER)
         starter_subq = base_qs.filter(role=OwnerRole.STARTER)
 
-        result = UserModel.objects.filter(pk=user_id).annotate(
-            has_owner=Exists(owner_subq),
-            has_viewer=Exists(viewer_subq),
-            has_starter=Exists(starter_subq),
-        ).values('has_owner', 'has_viewer', 'has_starter').first()
+        result = (
+            UserModel.objects.filter(pk=user_id)
+            .annotate(
+                has_owner=Exists(owner_subq),
+                has_viewer=Exists(viewer_subq),
+                has_starter=Exists(starter_subq),
+            )
+            .values('has_owner', 'has_viewer', 'has_starter')
+            .first()
+        )
 
         has_owner = result['has_owner'] if result else False
         has_viewer = result['has_viewer'] if result else False
@@ -273,7 +293,7 @@ class BaseAuthSerializerMeta:
         'photo',
         'is_active',
     )
-    read_only_fields = ('id', )
+    read_only_fields = ('id',)
     extra_kwargs = {
         'email': {'validators': []},
     }
@@ -297,7 +317,6 @@ class AuthTokenSerializer(
     CustomValidationErrorMixin,
     serializers.Serializer,
 ):
-
     code = serializers.CharField(
         allow_null=False,
         allow_blank=False,
@@ -318,7 +337,6 @@ class AuthTokenSerializer(
 
 
 class MSTokenSerializer(AuthTokenSerializer):
-
     session_state = serializers.CharField(
         allow_null=False,
         allow_blank=False,
@@ -359,7 +377,6 @@ class SSOTokenSerializer(
 
 
 class GoogleTokenSerializer(AuthTokenSerializer):
-
     pass
 
 
@@ -470,3 +487,222 @@ class OktaLogoutSerializer(
             'format': sub_id_data['format'],
             'data': sub_id_data,
         }
+
+
+class ResourceSerializer(serializers.Serializer):
+    """RFC 8707: a token is requested for exactly the MCP resource."""
+
+    resource = serializers.ListField(child=serializers.CharField())
+
+    def validate_resource(self, value: list[str]) -> list[str]:
+        if not settings.MCP_PUBLIC_URL or value != [settings.MCP_PUBLIC_URL]:
+            raise serializers.ValidationError
+        return value
+
+
+class AuthorizeSerializer(ResourceSerializer):
+    code_challenge_method = serializers.ChoiceField(choices=(PKCE_METHOD,))
+
+    def validate(self, attrs: dict) -> dict:
+        if not settings.MCP_ISSUER_URL:
+            raise serializers.ValidationError
+        return attrs
+
+
+class ClientRegistrationSerializer(serializers.Serializer):
+    """RFC 7591 metadata limited to public or basic-auth code clients."""
+
+    grant_types = serializers.ListField(
+        child=serializers.ChoiceField(choices=GrantType.ALLOWED),
+        default=[GrantType.AUTHORIZATION_CODE],
+    )
+    response_types = serializers.ListField(
+        child=serializers.CharField(),
+        default=['code'],
+    )
+    token_endpoint_auth_method = serializers.ChoiceField(
+        choices=TokenEndpointAuthMethod.ALLOWED,
+        default=TokenEndpointAuthMethod.CLIENT_SECRET_BASIC,
+    )
+    client_name = serializers.CharField(required=False, allow_blank=True)
+
+    def validate_grant_types(self, value: list[str]) -> list[str]:
+        if GrantType.AUTHORIZATION_CODE not in value:
+            raise serializers.ValidationError
+        return value
+
+    def validate_response_types(self, value: list[str]) -> list[str]:
+        if value != ['code']:
+            raise serializers.ValidationError
+        return value
+
+    def validate(self, attrs: dict) -> dict:
+        names = self.initial_data.get('client_name', '')
+        if not isinstance(names, str):
+            raise serializers.ValidationError
+        return attrs
+
+
+class RequestSerializer(BaseInputSerializer):
+    request_id = serializers.UUIDField()
+
+
+class ConsentSerializer(RequestSerializer):
+    allow = serializers.BooleanField()
+
+
+class LoginCompleteSerializer(serializers.Serializer):
+    request_id = serializers.UUIDField()
+    code = serializers.CharField(max_length=4096, trim_whitespace=False)
+
+
+class LoginCodeResponseSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    request_id = serializers.CharField()
+    expires_in = serializers.SerializerMethodField()
+
+    def get_expires_in(self, instance) -> int:
+        return int(LOGIN_CODE_TTL.total_seconds())
+
+
+class ConsentContextSerializer(serializers.Serializer):
+    request_id = serializers.CharField(source='auth_request.id')
+    client = serializers.SerializerMethodField()
+    client_id = serializers.CharField(source='application.client_id')
+    client_name = serializers.CharField(source='application.name')
+    account = serializers.SerializerMethodField()
+    user_id = serializers.IntegerField(source='user.pk')
+    account_id = serializers.IntegerField(source='user.account_id')
+    scopes = serializers.SerializerMethodField()
+    expires_at = serializers.SerializerMethodField()
+    login_complete = serializers.SerializerMethodField()
+
+    def get_client(self, instance) -> dict:
+        return {
+            'id': instance.application.client_id,
+            'name': instance.application.name,
+        }
+
+    def get_account(self, instance) -> dict:
+        return {
+            'id': instance.user.account_id,
+            'name': instance.user.account.name,
+        }
+
+    def get_scopes(self, instance) -> list[str]:
+        return instance.auth_request.parameters['scope'].split()
+
+    def get_expires_at(self, instance) -> str:
+        return instance.auth_request.expires_at.isoformat()
+
+    def get_login_complete(self, instance) -> bool:
+        return instance.auth_request.login_completed_at is not None
+
+
+class IntrospectionSerializer(BaseInputSerializer):
+    token = serializers.CharField(max_length=4096, trim_whitespace=False)
+    resource = serializers.CharField(max_length=2048)
+
+
+class DelegationSerializer(IntrospectionSerializer):
+    tool = serializers.CharField(max_length=80)
+    method = serializers.ChoiceField(choices=HttpMethod.DELEGATION_CHOICES)
+    path = serializers.CharField(max_length=8192)
+    scopes = serializers.ListField(
+        child=serializers.CharField(max_length=80),
+        required=False,
+    )
+
+
+class IntrospectionResponseSerializer(serializers.ModelSerializer):
+    """RFC 7662 response for an active token; inactive is `active: false`."""
+
+    class Meta:
+        model = AccessBinding
+        fields = (
+            'active',
+            'client_id',
+            'user_id',
+            'account_id',
+            'connection_id',
+            'scope',
+            'aud',
+            'exp',
+        )
+
+    active = serializers.SerializerMethodField()
+    client_id = serializers.CharField(
+        source='connection.application.client_id',
+    )
+    user_id = serializers.IntegerField(source='connection.user_id')
+    account_id = serializers.IntegerField(source='connection.account_id')
+    connection_id = serializers.CharField(source='connection.id')
+    scope = serializers.CharField(source='access_token.scope')
+    aud = serializers.SerializerMethodField()
+    exp = serializers.SerializerMethodField()
+
+    def get_active(self, instance: AccessBinding) -> bool:
+        return True
+
+    def get_aud(self, instance: AccessBinding) -> list[str]:
+        return [instance.connection.resource]
+
+    def get_exp(self, instance: AccessBinding) -> int:
+        return int(instance.access_token.expires.timestamp())
+
+
+class DelegationResponseSerializer(serializers.Serializer):
+    credential = serializers.CharField()
+    token_type = serializers.SerializerMethodField()
+    expires_in = serializers.SerializerMethodField()
+    expires_at = serializers.SerializerMethodField()
+    audience = serializers.CharField(source='delegation.audience')
+    operation = serializers.CharField(source='delegation.operation')
+    scopes = serializers.ListField(source='delegation.scopes')
+    connection_id = serializers.CharField(source='delegation.connection_id')
+    user_id = serializers.IntegerField(source='delegation.connection.user_id')
+    account_id = serializers.IntegerField(
+        source='delegation.connection.account_id',
+    )
+
+    def get_token_type(self, instance) -> str:
+        return BEARER
+
+    def get_expires_in(self, instance) -> int:
+        return get_expires_in(
+            expires_at=instance.delegation.expires_at,
+            ttl=DELEGATION_TTL,
+        )
+
+    def get_expires_at(self, instance) -> int:
+        return int(instance.delegation.expires_at.timestamp())
+
+
+class ConnectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Connection
+        fields = (
+            'id',
+            'client_id',
+            'client_name',
+            'scopes',
+            'created_at',
+            'revoked_at',
+            'user_id',
+            'account_id',
+        )
+
+    client_id = serializers.CharField(source='application.client_id')
+    client_name = serializers.CharField(source='application.name')
+    created_at = serializers.SerializerMethodField()
+    revoked_at = serializers.SerializerMethodField()
+    user_id = serializers.IntegerField()
+    account_id = serializers.IntegerField()
+
+    def get_created_at(self, instance: Connection) -> str:
+        return instance.created_at.isoformat()
+
+    def get_revoked_at(self, instance: Connection) -> str | None:
+        if instance.revoked_at is None:
+            return None
+        return instance.revoked_at.isoformat()

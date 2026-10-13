@@ -388,6 +388,14 @@ case "$LOGS_BACKEND_VALUE" in
     ;;
 esac
 
+MCP_ENABLED_VALUE=$(
+    grep -E "^\s*MCP_ENABLED=" "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | sed 's/#.*//' | tr -d '"'"'"'[:space:]'
+)
+if [ "${MCP_ENABLED_VALUE:-no}" = "yes" ]; then
+    COMPOSE_ARGS+=('--profile' 'mcp')
+    print_info "MCP enabled: starting the separate MCP service"
+fi
+
 print_info "Selected configuration: $COMPOSE_LABEL"
 echo ""
 

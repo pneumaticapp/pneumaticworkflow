@@ -5,6 +5,10 @@ from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.utils.deprecation import MiddlewareMixin
 
+from src.authentication.constants import (
+    MCP_TOKEN_PREFIXES,
+)
+
 COOKIE_NAME = 'file_service_auth'
 COOKIE_MAX_AGE = 86400  # 24 hours
 
@@ -34,7 +38,7 @@ class FileServiceAuthMiddleware(MiddlewareMixin):
 
         # Get authorization token
         auth_token = self._get_auth_token(request)
-        if not auth_token:
+        if not auth_token or auth_token.startswith(MCP_TOKEN_PREFIXES):
             return response
 
         # Skip if cookie already matches (avoid redundant Set-Cookie headers)

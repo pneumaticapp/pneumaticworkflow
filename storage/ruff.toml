@@ -5,6 +5,7 @@ indent-width = 4
 exclude = [
     ".git",
     ".venv",
+    ".venv*",
     ".dockerignore",
     ".gitignore",
     "venv",
@@ -17,6 +18,8 @@ exclude = [
     ".ruff_cache",
     "migrations",
     "alembic",
+    "tmp",
+    "temp",
 ]
 
 [lint]

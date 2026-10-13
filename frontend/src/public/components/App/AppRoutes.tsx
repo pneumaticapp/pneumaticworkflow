@@ -28,6 +28,12 @@ import { CollectPaymentDetails } from '../CollectPaymentDetails';
 import { AfterPaymentDetailsProvided } from '../AfterPaymentDetailsProvided';
 import { getTemplatesStore } from '../../redux/selectors/templates';
 import { getCanAccessWorkflows } from '../../redux/selectors/user';
+import { getBrowserConfigEnv } from '../../utils/getConfig';
+import { safeRedirect } from '../../utils/safeRedirect';
+import { isMcpEnabled } from '../../api/mcp';
+import { McpConnect } from '../Mcp/McpConnect';
+import { McpConnections } from '../Mcp/McpConnections';
+import { McpUpload } from '../Mcp/McpUpload';
 
 export interface IAppRoutesProps {
   user: IAuthUser;
@@ -49,18 +55,18 @@ const REDIRECT_FORBIDDEN_ROUTES = [
 export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
   const { isTemplateOwner } = useSelector(getTemplatesStore);
   const canAccessWorkflowsObj = useSelector(getCanAccessWorkflows);
-  const redirectUrl = sessionStorage.getItem(REDIRECT_URL_STORAGE_KEY);
+  const redirectUrl = safeRedirect(
+    sessionStorage.getItem(REDIRECT_URL_STORAGE_KEY),
+    getBrowserConfigEnv().api?.fileServiceUrl,
+  );
 
   const shouldRedirectToUrl = redirectUrl && !checkSomeRouteIsActive(...REDIRECT_FORBIDDEN_ROUTES);
 
   if (shouldRedirectToUrl) {
     sessionStorage.setItem(REDIRECT_URL_STORAGE_KEY, '');
 
-    // Full URLs (e.g. from file service redirect) need real browser navigation;
-    // React Router's <Redirect> only handles internal SPA routes.
-    // The redirectUrl always comes from our own backend (Express authMiddleware
-    // or file service browser_utils), so no domain validation is needed.
-    if (redirectUrl!.startsWith('http://') || redirectUrl!.startsWith('https://')) {
+    // MCP pages must pass through Express's cookie authentication and privacy headers.
+    if (redirectUrl.startsWith('/mcp/') || redirectUrl.startsWith('http://') || redirectUrl.startsWith('https://')) {
       // For file downloads (Content-Disposition: attachment) the browser stays
       // on the current page, so we fall through to render normal routes —
       // the user sees the dashboard while the file downloads.
@@ -76,6 +82,10 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
     <Switch>
       <Route path={ERoutes.Error} exact component={Error} />
       <Route path="/auth/" component={User} />
+
+      {isMcpEnabled() && <Route exact path={ERoutes.McpConnect} component={McpConnect} />}
+      {isMcpEnabled() && <Route exact path={ERoutes.McpConnections} component={McpConnections} />}
+      {isMcpEnabled() && <Route exact path={ERoutes.McpUpload} component={McpUpload} />}
 
       <Route path={ERoutes.GuestTask} component={GuestTask} />
 

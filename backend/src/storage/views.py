@@ -9,6 +9,10 @@ from rest_framework.viewsets import GenericViewSet
 
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import IsAuthenticated
+from src.mcp.permissions import (
+    is_delegated_auth,
+    McpBillingPermission,
+)
 from src.openapi import (
     ACCESS_ATTACHMENT,
     UNAUTHORIZED,
@@ -53,6 +57,8 @@ class AttachmentViewSet(
     def get_permissions(self):
         if self.action == 'check_permission':
             return (IsAuthenticatedOrPublicTemplate(),)
+        if self.action == 'list':
+            return (IsAuthenticated(), McpBillingPermission())
         return (IsAuthenticated(),)
 
     @extend_schema(exclude=True)
@@ -137,6 +143,9 @@ class AttachmentViewSet(
         filter_slz.is_valid(raise_exception=True)
         qst = Attachment.objects.raw_list_query(
             user=request.user,
+            current_account_only=is_delegated_auth(
+                auth=request.auth,
+            ),
             **filter_slz.validated_data,
         )
         return self.paginated_response(qst)

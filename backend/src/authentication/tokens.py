@@ -1,18 +1,22 @@
 import hashlib
 import secrets
 from abc import abstractmethod
-from datetime import timedelta
+from datetime import datetime, timedelta
+from math import ceil
 from typing import Any, Optional
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import caches
+from django.utils import timezone
 from django.utils.encoding import force_bytes
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import Token
 
 from src.authentication.enums import AuthTokenType
 from src.utils.salt import get_salt
+
+TOKEN_BYTES = 32
 
 UserModel = get_user_model()
 
@@ -202,3 +206,22 @@ class EmbedToken(PublicBaseToken):
 
     token_type = AuthTokenType.EMBEDDED
     token_length = 32
+
+
+def get_digest(value: str) -> str:
+    """Tokens are stored as SHA-256 digests, never in plain text."""
+    return hashlib.sha256(value.encode()).hexdigest()
+
+
+def create_token(prefix: str = '') -> str:
+    return prefix + secrets.token_urlsafe(TOKEN_BYTES)
+
+
+def get_expiration(ttl: timedelta, limit: datetime) -> datetime:
+    """A derived credential never outlives the credential it came from."""
+    return min(timezone.now() + ttl, limit)
+
+
+def get_expires_in(expires_at: datetime, ttl: timedelta) -> int:
+    seconds = ceil((expires_at - timezone.now()).total_seconds())
+    return min(int(ttl.total_seconds()), seconds)

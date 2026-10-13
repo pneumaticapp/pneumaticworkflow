@@ -27,6 +27,7 @@ from src.generics.mixins.views import (
 )
 from src.generics.permissions import UserIsAuthenticated
 from src.logs.events import AuditEventService
+from src.mcp.services.payloads import McpPayloadService
 from src.openapi import (
     ACCESS_ACCOUNT_OWNER,
     ACCESS_ADMIN,
@@ -684,11 +685,17 @@ class TemplateViewSet(
         },
     )
     @action(methods=['POST'], detail=True)
+    @transaction.atomic
     def run(self, request, *args, **kwargs):
 
         template = self.get_object()
         request_slz = self.get_serializer(
-            data=request.data,
+            data=McpPayloadService.get_run_payload(
+                user=request.user,
+                delegation=request.auth,
+                payload=request.data,
+                template=template,
+            ),
             extra_fields={'template': template},
         )
         request_slz.is_valid(raise_exception=True)

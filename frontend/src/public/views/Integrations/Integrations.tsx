@@ -6,6 +6,7 @@ import { TITLES } from '../../constants/titles';
 import { ERoutes } from '../../constants/routes';
 import { IntegrationsLayout } from '../../layout';
 import { Loader } from '../../components/UI';
+import { McpConnectionsLink } from '../../components/Mcp/McpConnectionsLink';
 
 const Integrations = loadable(
   () => import(/* webpackChunkName: "integrations", webpackPrefetch: true */ '../../components/IntegrationsList'),
@@ -19,6 +20,7 @@ export const IntegrationsView = () => {
 
   return (
     <IntegrationsLayout>
+      <McpConnectionsLink />
       <React.Suspense fallback={<div className="loading" />}>
         <Switch>
           <Route path={ERoutes.Integrations} component={Integrations} />

@@ -92,6 +92,51 @@ class Common(Configuration):
     # Auth
     AUTH_USER_MODEL = 'accounts.User'
     AUTH_TOKEN_ITERATIONS = int(env.get('AUTH_TOKEN_ITERATIONS', '1'))
+    MCP_ENABLED = env.get('MCP_ENABLED', 'no') == 'yes'
+    MCP_PUBLIC_URL = env.get('MCP_PUBLIC_URL', '')
+    MCP_ISSUER_URL = env.get('MCP_ISSUER_URL', '')
+    MCP_SERVICE_SECRET = env.get('MCP_SERVICE_SECRET', '')
+    MCP_FILE_SERVICE_SECRET = env.get('MCP_FILE_SERVICE_SECRET', '')
+    MCP_FILE_SERVICE_URL = env.get('MCP_FILE_SERVICE_URL', '')
+    MCP_MAX_IMPORT_BYTES = int(env.get('MCP_MAX_IMPORT_BYTES', '26214400'))
+    OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
+    OAUTH2_PROVIDER_ACCESS_TOKEN_MODEL = 'oauth2_provider.AccessToken'
+    OAUTH2_PROVIDER_REFRESH_TOKEN_MODEL = 'oauth2_provider.RefreshToken'
+    OAUTH2_PROVIDER_GRANT_MODEL = 'oauth2_provider.Grant'
+    OAUTH2_PROVIDER_ID_TOKEN_MODEL = 'oauth2_provider.IDToken'
+    OAUTH2_PROVIDER_DEVICE_GRANT_MODEL = 'oauth2_provider.DeviceGrant'
+    OAUTH2_PROVIDER = {
+        'OAUTH2_VALIDATOR_CLASS': (
+            'src.authentication.services.mcp_oauth.MCPValidator'
+        ),
+        'ACCESS_TOKEN_EXPIRE_SECONDS': 900,
+        'AUTHORIZATION_CODE_EXPIRE_SECONDS': 60,
+        'REFRESH_TOKEN_EXPIRE_SECONDS': 30 * 24 * 60 * 60,
+        'ROTATE_REFRESH_TOKEN': True,
+        'REFRESH_TOKEN_REUSE_PROTECTION': True,
+        'REFRESH_TOKEN_GRACE_PERIOD_SECONDS': 0,
+        'PKCE_REQUIRED': True,
+        'ALLOWED_REDIRECT_URI_SCHEMES': ['https'],
+        'ALLOW_URI_WILDCARDS': False,
+        'SCOPES': {
+            'pneumatic:read': 'Read workflows, templates and tasks',
+            'pneumatic:write': 'Run workflows, complete tasks and comment',
+            'files:read': 'Read files and upload status',
+            'files:write': 'Upload and import files',
+        },
+        'DEFAULT_SCOPES': ['pneumatic:read'],
+        'DCR_ENABLED': True,
+        'DCR_REGISTRATION_PERMISSION_CLASSES': (
+            'oauth2_provider.dcr.AllowAllDCRPermission',
+        ),
+        'CIMD_ENABLED': True,
+        'OIDC_ISS_ENDPOINT': MCP_ISSUER_URL,
+        'COMPLIANT_BCP_RFC9700_PKCE_METHOD': True,
+        'COMPLIANT_BCP_RFC9700_IMPLICIT_GRANT': True,
+        'COMPLIANT_BCP_RFC9700_PASSWORD_GRANT': True,
+        'COMPLIANT_BCP_RFC9700_AUTHZ_RESPONSE_ISS': True,
+        'COMPLIANT_BCP_RFC9700_TOKEN_STORAGE': True,
+    }
     AUTHENTICATION_BACKENDS = (
         'django.contrib.auth.backends.ModelBackend',
         'guardian.backends.ObjectPermissionBackend',
@@ -181,6 +226,8 @@ class Common(Configuration):
         'guardian',
         'src.accounts',
         'src.authentication',
+        'oauth2_provider',
+        'src.mcp',
         'src.applications',
         'src.notifications',
         'src.celery_app',
@@ -210,9 +257,11 @@ class Common(Configuration):
         'django.contrib.sessions.middleware.SessionMiddleware',
         'corsheaders.middleware.CorsMiddleware',
         'django.middleware.common.CommonMiddleware',
+        'src.authentication.middleware.OAuthThrottleMiddleware',
         'django.middleware.csrf.CsrfViewMiddleware',
         'src.authentication.middleware.UserAgentMiddleware',
         'src.authentication.middleware.AuthMiddleware',
+        'src.authentication.middleware.McpDelegationMiddleware',
         'src.logs.events.middleware.EventContextMiddleware',
         'src.authentication.middleware.UserLocaleMiddleware',
         'src.storage.middleware.FileServiceAuthMiddleware',
@@ -269,6 +318,8 @@ class Common(Configuration):
             'rest_framework.permissions.IsAuthenticated',
         ),
         'DEFAULT_AUTHENTICATION_CLASSES': (
+            'src.authentication.services.mcp_auth.'
+            'DelegationAuthentication',
             'src.authentication.services.public_auth.PublicAuthService',
             'src.authentication.services.guest_auth.GuestJWTAuthService',
             'src.authentication.services.api_key_auth.'
@@ -298,6 +349,9 @@ class Common(Configuration):
             '11_auth__reset_password': env.get('THROTTLE_11'),
             '12_auth_google__token': env.get('THROTTLE_12'),
             '13_auth_google__auth_uri': env.get('THROTTLE_13'),
+            '14_mcp_oauth__register': env.get('THROTTLE_14', '10/min'),
+            '15_mcp_oauth__authorize': env.get('THROTTLE_15', '60/min'),
+            '16_mcp_oauth__token': env.get('THROTTLE_16', '120/min'),
         },
     }
 
@@ -526,6 +580,7 @@ class Common(Configuration):
     # Celery
     CELERY_BROKER_URL = env.get('CELERY_BROKER_URL')
     CELERY_IMPORTS = [
+        'src.mcp.tasks',
         'src.accounts.tasks',
         'src.analysis.tasks',
         'src.authentication.tasks',

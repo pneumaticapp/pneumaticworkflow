@@ -4,6 +4,7 @@ import { setSentryCapture } from './sentryCapture';
 import { DEV_SENTRY_DSN, PROD_SENTRY_DSN } from '../constants/defaultValues';
 import { TEnvironment } from './getConfig';
 import { envSentryRelease } from '../constants/enviroment';
+import { mcpContinuation } from './safeRedirect';
 
 export type TSentryApp = 'main' | 'forms';
 
@@ -29,7 +30,18 @@ export const initSentry = (getConfig: () => { env?: TEnvironment }, app: TSentry
     },
     beforeSend(event) {
       if (!dsn) return null;
+      if (
+        window.location.pathname.startsWith('/mcp/') ||
+        mcpContinuation(new URLSearchParams(window.location.search).get('redirectUrl'))
+      )
+        return null;
       return event;
+    },
+    beforeBreadcrumb(breadcrumb) {
+      return window.location.pathname.startsWith('/mcp/') ||
+        mcpContinuation(new URLSearchParams(window.location.search).get('redirectUrl'))
+        ? null
+        : breadcrumb;
     },
     ignoreErrors: [
       /ResizeObserver loop/,

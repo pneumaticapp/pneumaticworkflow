@@ -12,19 +12,25 @@ from fastapi.openapi.utils import get_openapi
 from src.infra.adapters import StorageServiceHolder
 from src.infra.http_client import close_shared_client, get_shared_client
 from src.presentation.api import files_router
+from src.presentation.api.mcp_files import router as mcp_files_router
 from src.shared_kernel.auth import close_redis_client
 from src.shared_kernel.config import get_settings
 from src.shared_kernel.events import close_event_emitter
 from src.shared_kernel.exceptions import register_exception_handlers
 from src.shared_kernel.middleware import AuthenticationMiddleware
+from src.shared_kernel.middleware.mcp_upload_limit import (
+    MCPUploadLimitMiddleware,
+)
 from src.shared_kernel.middleware.rate_limit import RateLimitMiddleware
 from src.shared_kernel.middleware.request_id import RequestIdMiddleware
 from src.shared_kernel.middleware.security_headers import (
     SecurityHeadersMiddleware,
 )
+from src.shared_kernel.security.redaction import install_log_redaction
 from src.shared_kernel.sentry import init_sentry
 
 settings = get_settings()
+install_log_redaction()
 init_sentry()
 
 
@@ -170,6 +176,8 @@ app.add_middleware(
         'Content-Type',
         'X-Guest-Authorization',
         'X-Public-Authorization',
+        'X-MCP-Delegation',
+        'X-MCP-Upload-Session',
     ],
 )
 
@@ -178,6 +186,7 @@ app.add_middleware(
     require_auth=True,
     public_paths=_build_public_docs_paths(app),
 )
+app.add_middleware(MCPUploadLimitMiddleware)
 
 app.add_middleware(
     RateLimitMiddleware,
@@ -195,4 +204,5 @@ app.add_middleware(RequestIdMiddleware)
 # ── Exception handlers & routers ────────────────────────────
 
 register_exception_handlers(app)
+app.include_router(mcp_files_router)
 app.include_router(files_router)

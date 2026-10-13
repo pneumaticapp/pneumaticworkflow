@@ -897,6 +897,12 @@ class BaseFieldQuerySet(BaseQuerySet):
 
 class FieldTemplateQuerySet(BaseFieldQuerySet):
 
+    def for_kickoff(self, template_id: int) -> 'FieldTemplateQuerySet':
+        return self.filter(
+            Q(kickoff__template_id=template_id)
+            | Q(fieldset__kickoff__template_id=template_id),
+        )
+
     def by_template(self, template_id):
         return self.filter(template_id=template_id)
 
@@ -961,6 +967,9 @@ class SystemTemplateQuerySet(BaseQuerySet):
 
 
 class TaskFieldQuerySet(BaseFieldQuerySet):
+
+    def for_task(self, task_id: int) -> 'TaskFieldQuerySet':
+        return self.filter(Q(task_id=task_id) | Q(fieldset__task_id=task_id))
 
     def with_attachments(self):
         return self.filter(storage_attachments__isnull=False)
@@ -1053,6 +1062,9 @@ class AttachmentQuerySet(AccountBaseQuerySet):
         limit: Optional[int] = None,
         offset: Optional[int] = None,
         using: Optional[str] = None,
+        task_id: Optional[int] = None,
+        workflow_id: Optional[int] = None,
+        current_account_only: bool = False,
     ):
         """Execute raw query for attachment list with pagination."""
         from src.storage.queries import AttachmentListQuery
@@ -1061,6 +1073,9 @@ class AttachmentQuerySet(AccountBaseQuerySet):
             user=user,
             limit=limit,
             offset=offset,
+            task_id=task_id,
+            workflow_id=workflow_id,
+            current_account_only=current_account_only,
         )
         raw_qst = self.execute_raw(query, using=using)
         raw_qst.count = self.raw(

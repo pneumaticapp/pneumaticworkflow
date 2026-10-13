@@ -27,6 +27,7 @@ if (
     from sentry_sdk.integrations.django import DjangoIntegration
 
     from src.utils.logging import sentry_before_send
+    from src.utils.redaction import redact_event
 
     def traces_sampler(sampling_context: dict) -> float:
         scheme = sampling_context.get('asgi_scope', {}).get('scheme')
@@ -43,6 +44,7 @@ if (
         'send_default_pii': True,
         'traces_sampler': traces_sampler,
         'before_send': sentry_before_send,
+        'before_send_transaction': redact_event,
     }
     sentry_sdk.init(**kwargs)
 

@@ -1,7 +1,9 @@
 import re
 
 
+from django.contrib.auth import get_user_model
 from django.db.models import Q
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import BasePermission
 
 from src.accounts.enums import UserType
@@ -27,6 +29,41 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.queries import (
     WorkflowPermissionQuery,
 )
+
+UserModel = get_user_model()
+
+
+def has_template_access(user: UserModel, template_id: int) -> bool:
+    if user.is_account_owner:
+        return True
+    return (
+        Template.objects.by_id(template_id)
+        .on_account(user.account_id)
+        .with_template_access(user.id)
+        .exists()
+    )
+
+
+def check_template_access(user: UserModel, template_id: int):
+    if not has_template_access(user=user, template_id=template_id):
+        raise PermissionDenied
+
+
+def has_task_complete_access(user: UserModel, task_id: int) -> bool:
+    if user.is_account_owner:
+        return True
+    return (
+        TaskPerformer.objects.by_task(task_id)
+        .by_user_or_group(user.id)
+        .type_user_or_group()
+        .exclude_directly_deleted()
+        .exists()
+    )
+
+
+def check_task_performer(user: UserModel, task_id: int):
+    if not has_task_complete_access(user=user, task_id=task_id):
+        raise PermissionDenied
 
 
 class TemplateAdminOwnerPermission(BasePermission):
@@ -68,18 +105,10 @@ class TemplateAccessPermission(BasePermission):
         except (ValueError, TypeError):
             return False
 
-        # Account owner always has access
-        if request.user.is_account_owner:
-            return True
-
-        # Check if user has any access (starter, viewer, or owner)
-        template_access_qst = (
-            Template.objects
-            .by_id(template_id)
-            .on_account(request.user.account_id)
-            .with_template_access(request.user.id)
+        return has_template_access(
+            user=request.user,
+            template_id=template_id,
         )
-        return template_access_qst.exists()
 
 
 class TemplateFieldsPermission(BasePermission):
@@ -280,16 +309,9 @@ class TaskCompletePermission(BasePermission):
         else:
             if request.user.is_guest and request.task_id != task_id:
                 return False
-            task_performer_qst = (
-                TaskPerformer.objects
-                .by_task(task_id)
-                .by_user_or_group(request.user.id)
-                .type_user_or_group()
-                .exclude_directly_deleted()
-            )
-            return (
-                request.user.is_account_owner or
-                task_performer_qst.exists()
+            return has_task_complete_access(
+                user=request.user,
+                task_id=task_id,
             )
 
 

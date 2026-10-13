@@ -1,5 +1,6 @@
 import re
-from typing import List, Optional, Tuple
+from collections.abc import Iterator
+from typing import Any, List, Optional, Tuple
 from urllib.parse import quote, unquote
 
 from django.conf import settings
@@ -112,6 +113,16 @@ def extract_file_ids_from_text(text: str) -> List[str]:
     return list(dict.fromkeys(file_ids))
 
 
+def extract_file_links_from_text(text: Optional[str]) -> List[str]:
+    """
+    Returns file service markdown links from text in their original form.
+    """
+    pattern = _get_file_service_link_pattern(anchored=False)
+    if not text or pattern is None:
+        return []
+    return [match.group(0) for match in pattern.finditer(text)]
+
+
 def extract_file_ids_from_values(
     values: List[Optional[str]],
 ) -> List[str]:
@@ -132,6 +143,22 @@ def extract_file_ids_from_values(
         else:
             file_ids.extend(extract_file_ids_from_text(value))
     return list(dict.fromkeys(file_ids))
+
+
+def extract_file_ids_from_payload(value: Any) -> List[str]:
+    """Extract file links from nested input without interpreting its fields."""
+
+    def iter_strings(item: Any) -> Iterator[str]:
+        if isinstance(item, str):
+            yield item
+        elif isinstance(item, dict):
+            for nested in item.values():
+                yield from iter_strings(item=nested)
+        elif isinstance(item, list):
+            for nested in item:
+                yield from iter_strings(item=nested)
+
+    return extract_file_ids_from_values(values=list(iter_strings(item=value)))
 
 
 def get_file_service_file_url(file_id: str) -> Optional[str]:

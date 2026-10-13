@@ -2,15 +2,57 @@
 
 import json
 import os
+import re
 from functools import lru_cache
+from ipaddress import ip_address
 from typing import Literal
 from urllib.parse import urlparse
 
-from pydantic import ValidationInfo, field_validator, model_validator
+from pydantic import (
+    Field,
+    SecretStr,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 LOGS_BACKENDS = ('otlp', 'elasticsearch')
 REDIS_URL_SCHEMES = ('redis', 'rediss')
+
+
+def _is_private_backend_host(host: str) -> bool:
+    try:
+        address = ip_address(host)
+    except ValueError:
+        labels = host.rstrip('.').split('.')
+        return (
+            all(
+                re.fullmatch(
+                    r'[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?', label
+                )
+                for label in labels
+            )
+            and not host.isdigit()
+            and not host.lower().startswith('0x')
+            and (
+                len(labels) == 1
+                or host.lower()
+                .rstrip('.')
+                .endswith(
+                    (
+                        '.internal',
+                        '.local',
+                        '.localhost',
+                        '.svc',
+                        '.cluster.local',
+                    )
+                )
+            )
+        )
+    return address.is_private and not (
+        address.is_unspecified or address.is_multicast or address.is_link_local
+    )
 
 
 class BaseAppSettings(BaseSettings):
@@ -24,6 +66,7 @@ class BaseAppSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=('.env',),
         extra='ignore',
+        hide_input_in_errors=True,
     )
 
     # ── Application ──────────────────────────────────────────
@@ -42,7 +85,18 @@ class BaseAppSettings(BaseSettings):
 
     # ── Validators ───────────────────────────────────────────
 
-    @field_validator('FASTAPI_BASE_URL', 'BACKEND_PRIVATE_URL', mode='after')
+    @field_validator('MCP_ENABLED', mode='before')
+    @classmethod
+    def parse_mcp_enabled(cls, value: object) -> bool:
+        """Enable MCP only for yes or a programmatic True."""
+        return value is True or value == 'yes'
+
+    @field_validator(
+        'FASTAPI_BASE_URL',
+        'BACKEND_PRIVATE_URL',
+        'MCP_BACKEND_URL',
+        mode='after',
+    )
     @classmethod
     def strip_trailing_slash(cls, v: str) -> str:
         """Strip trailing slash from URLs."""
@@ -104,6 +158,40 @@ class BaseAppSettings(BaseSettings):
             self.ALLOWED_ORIGINS.append(self.FORMS_URL)
         return self
 
+    @model_validator(mode='after')
+    def require_enabled_mcp_config(self) -> 'BaseAppSettings':
+        """Refuse partially configured MCP before accepting any requests."""
+        if not self.MCP_ENABLED:
+            return self
+        if len(self.MCP_FILE_SERVICE_SECRET.get_secret_value().strip()) < 32:  # noqa: PLR2004
+            msg = 'MCP_FILE_SERVICE_SECRET must contain at least 32 characters'
+            raise ValueError(msg)
+        try:
+            parsed = urlparse(self.MCP_BACKEND_URL)
+            valid = (
+                parsed.scheme in ('http', 'https')
+                and bool(parsed.hostname)
+                and _is_private_backend_host(parsed.hostname or '')
+                and parsed.port != 0
+                and parsed.username is None
+                and parsed.password is None
+                and parsed.path in ('', '/')
+                and not (parsed.params or parsed.query or parsed.fragment)
+                and '?' not in self.MCP_BACKEND_URL
+                and '#' not in self.MCP_BACKEND_URL
+                and '\\' not in self.MCP_BACKEND_URL
+                and not any(char.isspace() for char in self.MCP_BACKEND_URL)
+            )
+        except ValueError:
+            valid = False
+        if not valid:
+            msg = (
+                'MCP_BACKEND_URL must be a private HTTP(S) origin '
+                'without credentials'
+            )
+            raise ValueError(msg)
+        return self
+
     # ── Database ─────────────────────────────────────────────
     POSTGRES_USER: str = 'pneumatic'
     POSTGRES_PASSWORD: str = 'pneumatic'  # noqa: S105
@@ -138,6 +226,14 @@ class BaseAppSettings(BaseSettings):
     BUCKET_PREFIX: str = 'pneumatic-dev-test'
     MAX_FILE_SIZE: int = 104857600
     CHUNK_SIZE: int = 1048576  # 1MB chunks for file streaming
+
+    # MCP is explicitly enabled by deployment, never by a credential alone.
+    MCP_ENABLED: bool = False
+    MCP_BACKEND_URL: str = 'http://pneumatic-nginx'
+    MCP_FILE_SERVICE_SECRET: SecretStr = SecretStr('')
+    MCP_MAX_IMPORT_BYTES: int = Field(
+        default=25 * 1024 * 1024, gt=0, le=25 * 1024 * 1024
+    )
 
     # ── Sentry ───────────────────────────────────────────────
     SENTRY_DSN: str | None = None

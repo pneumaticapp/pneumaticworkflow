@@ -180,3 +180,4 @@ MSG_PW_0090 = _(
     'The user or group specified for a "User" field does not exist.',
 )
 MSG_PW_0091 = _('Guest')
+MSG_PW_0092 = _('File field API name is ambiguous in this task.')

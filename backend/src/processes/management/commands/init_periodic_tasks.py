@@ -37,6 +37,9 @@ class Command(BaseCommand):
             self._ensure_process_vacations,
             self._ensure_delegate_vacation_tasks,
             self._ensure_events_consumer,
+            self._ensure_mcp_prune_expired_state,
+            self._ensure_mcp_cleanup_uploads,
+            self._ensure_mcp_dispatch_pending_imports,
         )
 
         for task_func in tasks:
@@ -201,5 +204,38 @@ class Command(BaseCommand):
         self._create_or_skip_task(
             name="Deliver events to log backend",
             task_path="src.logs.events.tasks.consume_events",
+            schedule_obj=schedule,
+        )
+
+    def _ensure_mcp_prune_expired_state(self):
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=1,
+            period=IntervalSchedule.MINUTES,
+        )
+        self._create_or_skip_task(
+            name="MCP: prune expired state",
+            task_path="src.mcp.tasks.prune_expired_state",
+            schedule_obj=schedule,
+        )
+
+    def _ensure_mcp_cleanup_uploads(self):
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=1,
+            period=IntervalSchedule.HOURS,
+        )
+        self._create_or_skip_task(
+            name="MCP: clean up abandoned uploads",
+            task_path="src.mcp.tasks.cleanup_uploads",
+            schedule_obj=schedule,
+        )
+
+    def _ensure_mcp_dispatch_pending_imports(self):
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=30,
+            period=IntervalSchedule.SECONDS,
+        )
+        self._create_or_skip_task(
+            name="MCP: recover pending URL imports",
+            task_path="src.mcp.tasks.dispatch_pending_imports",
             schedule_obj=schedule,
         )

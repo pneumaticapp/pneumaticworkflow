@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.db.models import Prefetch
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.decorators import action
@@ -73,6 +74,7 @@ from src.processes.queries import TaskListQuery
 from src.processes.serializers.comments import (
     CommentCreateSerializer,
 )
+from src.mcp.services.payloads import McpPayloadService
 from src.processes.serializers.workflows.due_date import (
     DueDateSerializer,
 )
@@ -693,9 +695,17 @@ class TaskViewSet(
         },
     )
     @action(methods=['post'], detail=True)
+    @transaction.atomic
     def complete(self, request, *args, **kwargs):
         task = self.get_object()
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(
+            data=McpPayloadService.get_complete_payload(
+                user=request.user,
+                delegation=request.auth,
+                payload=request.data,
+                task=task,
+            ),
+        )
         serializer.is_valid(raise_exception=True)
         service = WorkflowActionService(
             workflow=task.workflow,
@@ -770,6 +780,11 @@ class TaskViewSet(
     @action(methods=['post'], detail=True)
     def comment(self, request, *args, **kwargs):
         task = self.get_object()
+        McpPayloadService.check_write_files(
+            user=request.user,
+            delegation=request.auth,
+            payload=request.data,
+        )
         slz = self.get_serializer(
             data=request.data,
             extra_fields={'workflow': task.workflow},

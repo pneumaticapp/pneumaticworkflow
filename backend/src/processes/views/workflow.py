@@ -28,6 +28,7 @@ from src.generics.permissions import (
     UserIsAuthenticated,
 )
 from src.logs.events import AuditEventService
+from src.mcp.services.payloads import McpPayloadService
 from src.openapi import (
     ACCESS_ACCOUNT_OWNER,
     ACCESS_AUTH,
@@ -401,6 +402,11 @@ class WorkflowViewSet(
     @action(methods=['post'], detail=True)
     def comment(self, request, *args, **kwargs):
         workflow = self.get_object()
+        McpPayloadService.check_write_files(
+            user=request.user,
+            delegation=request.auth,
+            payload=request.data,
+        )
         slz = self.get_serializer(
             data=request.data,
             extra_fields={'workflow': workflow},

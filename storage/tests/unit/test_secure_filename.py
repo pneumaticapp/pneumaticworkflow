@@ -1,6 +1,6 @@
 """Tests for secure_filename function."""
 
-from src.presentation.api.files import secure_filename
+from src.shared_kernel.security.filename import secure_filename
 
 # --- Unicode preservation ---
 

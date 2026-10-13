@@ -22,5 +22,6 @@ frontend/test-results
 .agents/
 .agent/
 .antigravity/
+.mcp-validation/
 .claude/
 GEMINI.md

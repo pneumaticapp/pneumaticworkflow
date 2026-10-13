@@ -1,24 +1,19 @@
-import React, { useEffect } from 'react';
-import { Formik, FormikConfig } from 'formik';
+import * as React from 'react';
+import { Formik } from 'formik';
 import { useIntl } from 'react-intl';
 
-import { EOAuthType } from '../../../types/auth';
 import { ERoutes } from '../../../constants/routes';
-import { TITLES } from '../../../constants/titles';
-import { getOAuthUrl } from '../../../api/getGoogleAuthUrl';
 import { IntlMessages } from '../../../components/IntlMessages';
 import { EAuthUserFailType } from '../../../redux/actions';
 import { NavLink } from '../../../components/NavLink';
 import { validateEmail, validatePassword } from '../../../utils/validators';
-import { getQueryStringParams, history } from '../../../utils/history';
 import { Button, FormikCheckbox, Header, InputField } from '../../../components/UI';
 import { GoogleButton, MicrosoftButton, SSOButton } from '../../../components/OAuthButtons';
-import { saveUTMParams } from '../utils/utmParams';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
-import { isEnvGoogleAuth, isEnvMsAuth, isEnvSSOAuth, isEnvSignup, envSSOProvider } from '../../../constants/enviroment';
+import { isEnvGoogleAuth, isEnvMsAuth, isEnvSSOAuth, isEnvSignup } from '../../../constants/enviroment';
 import { ILoginProps, TLoginValues } from './types';
-import { SSOProvider } from '../../../../server/types';
 
+import { useLogin } from './useLogin';
 import styles from '../User.css';
 
 const INITIAL_VALUES_FORMIK: TLoginValues = {
@@ -29,18 +24,8 @@ const INITIAL_VALUES_FORMIK: TLoginValues = {
 
 export function Login({ loading, error, loginUser, setRedirectUrl }: ILoginProps) {
   const { formatMessage } = useIntl();
-  const typeSSOProvider = envSSOProvider === SSOProvider.Auth0 ? EOAuthType.SSOAuth0 : EOAuthType.SSOOkta;
-
-  useEffect(() => {
-    const queryString = history.location.search;
-    const queryParams = getQueryStringParams(queryString);
-    const { redirectUrl = '' } = queryParams;
-
-    setRedirectUrl(redirectUrl);
-    saveUTMParams();
-
-    document.title = TITLES.Login;
-  }, []);
+  const { handleGoogleSignIn, handleMicrosoftSignIn, handleSSOSignIn, handleSubmitForm, oauthBusy, oauthError } =
+    useLogin({ loginUser, setRedirectUrl });
 
   const wrongCredentialsErrorMessage = () => {
     const shouldShowErrorMessage = [error, error !== EAuthUserFailType.NotVerified].every(Boolean);
@@ -50,22 +35,6 @@ export function Login({ loading, error, loginUser, setRedirectUrl }: ILoginProps
     }
 
     return '';
-  };
-
-  const handleOAuthSignInClick = (type: EOAuthType) => async (e: React.MouseEvent) => {
-    e.preventDefault();
-
-    const result = await getOAuthUrl(type);
-
-    if (result && 'redirectUri' in result) {
-      window.location.assign(result.redirectUri);
-    }
-  };
-
-  const handleSubmitForm: FormikConfig<TLoginValues>['onSubmit'] = (values) => {
-    const { email, password, rememberMe } = values;
-
-    loginUser({ email, password, rememberMe });
   };
 
   return (
@@ -78,25 +47,30 @@ export function Login({ loading, error, loginUser, setRedirectUrl }: ILoginProps
         {isEnvGoogleAuth && (
           <GoogleButton
             label={formatMessage({ id: 'user.sign-up-google' })}
-            onClick={handleOAuthSignInClick(EOAuthType.Google)}
+            onClick={handleGoogleSignIn}
+            disabled={oauthBusy}
             className={styles['oauth__button']}
           />
         )}
         {isEnvMsAuth && (
           <MicrosoftButton
             label={formatMessage({ id: 'user.sign-up-microsoft' })}
-            onClick={handleOAuthSignInClick(EOAuthType.Microsoft)}
+            onClick={handleMicrosoftSignIn}
+            disabled={oauthBusy}
             className={styles['oauth__button']}
           />
         )}
         {isEnvSSOAuth && (
           <SSOButton
             label={formatMessage({ id: 'user.sign-up-sso' })}
-            onClick={handleOAuthSignInClick(typeSSOProvider)}
+            onClick={handleSSOSignIn}
+            disabled={oauthBusy}
             className={styles['oauth__button']}
           />
         )}
       </div>
+
+      {oauthError && <p role="alert">{formatMessage({ id: oauthError })}</p>}
 
       {(isEnvGoogleAuth || isEnvMsAuth || isEnvSSOAuth) && (
         <div className={styles['divider']}>

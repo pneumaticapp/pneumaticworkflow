@@ -11,6 +11,7 @@ from src.shared_kernel.exceptions import (
     FileAccessDeniedError,
     PermissionDeniedError,
 )
+from src.shared_kernel.security.redaction import redact_data
 
 _SKIP_TRACE_METHODS = frozenset({'HEAD', 'OPTIONS'})
 
@@ -24,6 +25,7 @@ _SENTRY_IGNORE_EXCEPTIONS: tuple[type[BaseException], ...] = (
 
 def sentry_before_send(event: Event, hint: Hint) -> Event | None:
     """Drop expected auth/permission errors so they are not sent."""
+    event.update(redact_data(event))
     if 'exc_info' not in hint:
         return event
     _, exc_value, _ = hint['exc_info']
@@ -59,4 +61,6 @@ def init_sentry() -> None:
         send_default_pii=True,
         traces_sampler=traces_sampler,
         before_send=sentry_before_send,
+        before_send_transaction=lambda event, _hint: redact_data(event),
+        before_breadcrumb=lambda breadcrumb, _hint: redact_data(breadcrumb),
     )

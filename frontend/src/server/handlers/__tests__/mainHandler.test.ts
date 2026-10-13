@@ -1,4 +1,4 @@
-const mockConfig = { api: { urls: {} }, formSubdomain: 'form-dev.pneumatic.app' };
+const mockConfig = { api: { urls: { getPages: 'getPages' } }, formSubdomain: 'form-dev.pneumatic.app' };
 jest.mock('../../../public/utils/getConfig', () => ({
   getConfig: jest.fn().mockReturnValue(mockConfig),
   serverConfigToBrowser: jest.fn().mockReturnValue(mockConfig),
@@ -70,6 +70,44 @@ describe('handlers', () => {
       await mainHandler(req as unknown as Request, res as unknown as Response);
 
       expect(res.redirect).not.toHaveBeenCalled();
+    });
+
+    it('test_mainHandler__MCP_login_query__omits_bearer', async () => {
+      // arrange
+      const res = {
+        render: jest.fn(),
+        redirect: jest.fn(),
+        cookie: jest.fn(),
+        locals: {
+          user: { token: 'session-secret', id: 7, first_name: '</script><script>bad()</script>' },
+        },
+      };
+      const req = {
+        get: jest.fn(),
+        url: '/auth/signin/',
+        path: '/auth/signin/',
+        baseUrl: '',
+        query: { redirectUrl: '/mcp/connections' },
+        headers: { 'user-agent': 'windows phone' },
+        hostname: 'dev.pneumatic.app',
+        res,
+      };
+      const pagesMock = jest.spyOn(serverApi, 'get').mockResolvedValueOnce('{}');
+
+      // act
+      await mainHandler(req as unknown as Request, res as unknown as Response);
+
+      // assert
+      expect(res.render).toHaveBeenCalledTimes(1);
+      expect(res.render).toHaveBeenCalledWith(
+        'main',
+        expect.objectContaining({
+          user: '{"id":7,"firstName":"\\u003c/script>\\u003cscript>bad()\\u003c/script>"}',
+        }),
+      );
+      expect(res.redirect).not.toHaveBeenCalled();
+      expect(pagesMock).toHaveBeenCalledTimes(1);
+      expect(pagesMock).toHaveBeenCalledWith('getPages');
     });
   });
 });

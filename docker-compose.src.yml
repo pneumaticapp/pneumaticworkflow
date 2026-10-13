@@ -184,6 +184,15 @@ services:
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
       FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-postgres}
       FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
+      MCP_ENABLED: ${MCP_ENABLED:-no}
+      MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:-https://my.pneumatic.app/mcp}
+      MCP_ISSUER_URL: ${MCP_ISSUER_URL:-https://my.pneumatic.app}
+      MCP_SERVICE_SECRET: ${MCP_SERVICE_SECRET:-}
+      MCP_FILE_SERVICE_SECRET: ${MCP_FILE_SERVICE_SECRET:-}
+      MCP_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/5"
+      MCP_BACKEND_URL: ${MCP_BACKEND_URL:-http://pneumatic-nginx}
+      MCP_FILE_SERVICE_URL: ${MCP_FILE_SERVICE_URL:-http://file-service:8000}
+      MCP_MAX_IMPORT_BYTES: ${MCP_MAX_IMPORT_BYTES:-26214400}
       LOGS_BACKEND: ${LOGS_BACKEND:-}
       LOGS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/4"
       LOGS_OTLP_ENDPOINT: ${LOGS_OTLP_ENDPOINT:-http://otel-collector:4318}
@@ -317,6 +326,15 @@ services:
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
       FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-postgres}
       FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
+      MCP_ENABLED: ${MCP_ENABLED:-no}
+      MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:-https://my.pneumatic.app/mcp}
+      MCP_ISSUER_URL: ${MCP_ISSUER_URL:-https://my.pneumatic.app}
+      MCP_SERVICE_SECRET: ${MCP_SERVICE_SECRET:-}
+      MCP_FILE_SERVICE_SECRET: ${MCP_FILE_SERVICE_SECRET:-}
+      MCP_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/5"
+      MCP_BACKEND_URL: ${MCP_BACKEND_URL:-http://pneumatic-nginx}
+      MCP_FILE_SERVICE_URL: ${MCP_FILE_SERVICE_URL:-http://file-service:8000}
+      MCP_MAX_IMPORT_BYTES: ${MCP_MAX_IMPORT_BYTES:-26214400}
       LOGS_BACKEND: ${LOGS_BACKEND:-}
       LOGS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/4"
       LOGS_OTLP_ENDPOINT: ${LOGS_OTLP_ENDPOINT:-http://otel-collector:4318}
@@ -443,6 +461,15 @@ services:
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
       FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-postgres}
       FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
+      MCP_ENABLED: ${MCP_ENABLED:-no}
+      MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:-https://my.pneumatic.app/mcp}
+      MCP_ISSUER_URL: ${MCP_ISSUER_URL:-https://my.pneumatic.app}
+      MCP_SERVICE_SECRET: ${MCP_SERVICE_SECRET:-}
+      MCP_FILE_SERVICE_SECRET: ${MCP_FILE_SERVICE_SECRET:-}
+      MCP_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/5"
+      MCP_BACKEND_URL: ${MCP_BACKEND_URL:-http://pneumatic-nginx}
+      MCP_FILE_SERVICE_URL: ${MCP_FILE_SERVICE_URL:-http://file-service:8000}
+      MCP_MAX_IMPORT_BYTES: ${MCP_MAX_IMPORT_BYTES:-26214400}
       LOGS_BACKEND: ${LOGS_BACKEND:-}
       LOGS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/4"
       LOGS_OTLP_ENDPOINT: ${LOGS_OTLP_ENDPOINT:-http://otel-collector:4318}
@@ -465,6 +492,8 @@ services:
     image: pneumaticworkflow/pneumatic-frontend:${TAG:-src}
     container_name: pneumatic-frontend
     environment:
+      MCP_ENABLED: ${MCP_ENABLED:-no}
+      MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:-https://my.pneumatic.app/mcp}
       BACKEND_PRIVATE_URL: ${BACKEND_PRIVATE_URL:-http://pneumatic-nginx/}
       BACKEND_URL: ${BACKEND_URL:-http://localhost:8001}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
@@ -498,6 +527,28 @@ services:
       FIREBASE_MEASUREMENT_ID: ${FIREBASE_MEASUREMENT_ID:-}
       RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
     command: pm2-runtime start pm2.json
+    expose:
+      - 8000
+    networks:
+      - pneumatic
+    restart: always
+
+  mcp:
+    profiles: [mcp]
+    build:
+      context: ./mcp
+    image: pneumaticworkflow/pneumatic-mcp:${TAG:-src}
+    container_name: pneumatic-mcp
+    environment:
+      MCP_ENABLED: ${MCP_ENABLED:-no}
+      MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:-https://my.pneumatic.app/mcp}
+      MCP_ISSUER_URL: ${MCP_ISSUER_URL:-https://my.pneumatic.app}
+      MCP_BACKEND_URL: ${MCP_BACKEND_URL:-http://pneumatic-nginx}
+      MCP_FILE_SERVICE_URL: ${MCP_FILE_SERVICE_URL:-http://file-service:8000}
+      MCP_MAX_IMPORT_BYTES: ${MCP_MAX_IMPORT_BYTES:-26214400}
+      MCP_SERVICE_SECRET: ${MCP_SERVICE_SECRET:-}
+      MCP_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/5"
+      MCP_PORT: "8000"
     expose:
       - 8000
     networks:
@@ -571,6 +622,14 @@ services:
       BACKEND_PRIVATE_URL: ${BACKEND_PRIVATE_URL:-http://pneumatic-nginx/}
       SENTRY_DSN: ${SENTRY_FILE_DSN:-}
       SENTRY_ENVIRONMENT: ${ENVIRONMENT:-Production}
+      MCP_ENABLED: ${MCP_ENABLED:-no}
+      MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:-https://my.pneumatic.app/mcp}
+      MCP_ISSUER_URL: ${MCP_ISSUER_URL:-https://my.pneumatic.app}
+      MCP_FILE_SERVICE_SECRET: ${MCP_FILE_SERVICE_SECRET:-}
+      MCP_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/5"
+      MCP_BACKEND_URL: ${MCP_BACKEND_URL:-http://pneumatic-nginx}
+      MCP_FILE_SERVICE_URL: ${MCP_FILE_SERVICE_URL:-http://file-service:8000}
+      MCP_MAX_IMPORT_BYTES: ${MCP_MAX_IMPORT_BYTES:-26214400}
       LOGS_BACKEND: ${LOGS_BACKEND:-}
       LOGS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/4"
       LOGS_STREAM_MAXLEN: ${LOGS_STREAM_MAXLEN:-250000}

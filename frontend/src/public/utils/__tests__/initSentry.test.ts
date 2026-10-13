@@ -187,4 +187,46 @@ describe('initSentry', () => {
       expect(setSentryCapture).not.toHaveBeenCalled();
     });
   });
+
+  it.each(['/mcp/connections', '/auth/signin/?redirectUrl=%2Fmcp%2Fconnections'])(
+    'test_initSentry__MCP_path_%s__drops_events_and_breadcrumbs',
+    (path) => {
+      // arrange
+      jest.resetModules();
+      const { initSentry } = require('../initSentry');
+      const sentry = require('@sentry/react');
+      const { setSentryCapture } = require('../sentryCapture');
+      const originalUrl = window.location.pathname + window.location.search;
+      window.history.replaceState({}, '', path);
+      const event = { message: 'private request' };
+      const breadcrumb = { message: 'private capability' };
+      let callbacks!: {
+        beforeSend(value: typeof event): unknown;
+        beforeBreadcrumb(value: typeof breadcrumb): unknown;
+      };
+      const initMock = sentry.init as jest.Mock;
+      initMock.mockImplementationOnce((options: typeof callbacks) => {
+        callbacks = options;
+      });
+      initSentry(() => ({ env: 'prod' as const }), 'main');
+
+      // act
+      const sentEvent = callbacks.beforeSend(event);
+      const sentBreadcrumb = callbacks.beforeBreadcrumb(breadcrumb);
+      window.history.replaceState({}, '', originalUrl);
+
+      // assert
+      expect(sentEvent).toBeNull();
+      expect(sentBreadcrumb).toBeNull();
+      expect(initMock).toHaveBeenCalledTimes(1);
+      expect(initMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          beforeSend: expect.any(Function),
+          beforeBreadcrumb: expect.any(Function),
+        }),
+      );
+      expect(setSentryCapture).toHaveBeenCalledTimes(1);
+      expect(setSentryCapture).toHaveBeenCalledWith(expect.any(Function));
+    },
+  );
 });

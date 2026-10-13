@@ -1,8 +1,12 @@
 from typing import Dict, Any, Optional
+from django.contrib.auth import get_user_model
 
 from src.generics.paginations import DefaultPagination
-from src.storage.models import Attachment
 from src.queries import SqlQueryObject
+from src.storage.enums import AccessType
+from src.storage.models import Attachment
+
+UserModel = get_user_model()
 
 
 class AttachmentListQuery(SqlQueryObject):
@@ -14,28 +18,44 @@ class AttachmentListQuery(SqlQueryObject):
 
     def __init__(
         self,
-        user,
+        user: UserModel,
         limit: Optional[int] = DefaultPagination.default_limit,
         offset: Optional[int] = None,
+        task_id: Optional[int] = None,
+        workflow_id: Optional[int] = None,
+        current_account_only: bool = False,
     ):
         """
-        Initialization with the user.
-        Only user_id and account_id are needed; permission and groups in SQL.
+        List attachments the user may open.
+
+        Optional filters: task, workflow, and (for MCP) the current
+        account only. Permission and groups stay in SQL.
         """
         self.user = user
         self.limit = limit
         self.offset = offset
+        self.filters: list[str] = []
         self.params: Dict[str, Any] = {
             'user_id': user.id,
             'account_id': user.account_id,
             'limit': limit,
+            'access_account': AccessType.ACCOUNT,
+            'access_public': AccessType.PUBLIC,
         }
+        if task_id is not None:
+            self.filters.append('AND a.task_id = %(task_id)s')
+            self.params['task_id'] = task_id
+        if workflow_id is not None:
+            self.filters.append('AND a.workflow_id = %(workflow_id)s')
+            self.params['workflow_id'] = workflow_id
+        if current_account_only:
+            self.filters.append('AND a.account_id = %(account_id)s')
 
     def _get_where(self) -> str:
         """
         WHERE with EXISTS; permission via join, groups via subquery.
         """
-        return """
+        permissions = """
             WHERE a.is_deleted = FALSE
             AND (
                 EXISTS (
@@ -66,11 +86,13 @@ class AttachmentListQuery(SqlQueryObject):
                     AND gop.object_pk = a.id::text
                 )
                 OR
-                (a.account_id = %(account_id)s AND a.access_type = 'account')
+                (a.account_id = %(account_id)s
+                 AND a.access_type = %(access_account)s)
                 OR
-                a.access_type = 'public'
+                a.access_type = %(access_public)s
             )
         """
+        return permissions + '\n' + '\n'.join(self.filters)
 
     def _get_offset(self) -> str:
         """Returns OFFSET clause if offset is provided."""

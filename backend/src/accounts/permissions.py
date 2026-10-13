@@ -1,4 +1,10 @@
+from dataclasses import dataclass
+
+from django.contrib.auth import get_user_model
 from django.utils import timezone
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.request import Request
+from rest_framework.views import APIView
 from rest_framework.permissions import BasePermission
 
 from src.accounts.enums import BillingPlanType
@@ -9,6 +15,8 @@ from src.accounts.messages import (
     MSG_A_0041,
 )
 from src.generics.permissions import BaseAuthPermission
+
+UserModel = get_user_model()
 
 
 class ExpiredSubscriptionPermission(BaseAuthPermission):
@@ -93,3 +101,40 @@ class DisallowForTenantPermission(BasePermission):
 
     def has_permission(self, request, view):
         return not request.user.account.is_tenant
+
+
+BILLING_PERMISSIONS = (
+    ExpiredSubscriptionPermission,
+    BillingPlanPermission,
+    UsersOverlimitedPermission,
+)
+
+
+@dataclass(frozen=True)
+class _UserRequest:
+    """Billing permissions read only `request.user`.
+
+    Used where a check runs outside an HTTP request: storage callbacks,
+    Celery imports and file operations.
+    """
+
+    user: UserModel
+
+
+class AccountBillingPermission(BasePermission):
+    """Same billing gates as the task complete and template run views."""
+
+    def has_permission(self, request: Request, view: APIView) -> bool:
+        for permission_class in BILLING_PERMISSIONS:
+            permission = permission_class()
+            if not permission.has_permission(request=request, view=view):
+                self.message = permission.message
+                return False
+        return True
+
+
+def check_billing(user: UserModel):
+    request = _UserRequest(user=user)
+    permission = AccountBillingPermission()
+    if not permission.has_permission(request=request, view=None):
+        raise PermissionDenied(permission.message)

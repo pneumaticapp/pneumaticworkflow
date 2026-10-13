@@ -7,6 +7,8 @@ import { identifyAppPartOnServer } from '../../public/utils/identifyAppPart/iden
 import { EAppPart } from '../../public/utils/identifyAppPart/types';
 import { getUser } from './utils/getUser';
 import { IAuthenticatedUser } from '../utils/types';
+import { mcpContinuation } from '../../public/utils/safeRedirect';
+import { mcpCookies, mcpPrivacy, readMcpContinuation } from '../utils/mcpSecurity';
 
 const UNSIGNED_USER_ROUTES = [
   ERoutes.Login,
@@ -21,6 +23,8 @@ const UNSIGNED_USER_ROUTES = [
 const PAYMENT_ROUTES = [ERoutes.CollectPaymentDetails, ERoutes.AfterPaymentDetailsProvided];
 
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
+  const continuation = mcpContinuation(req.query?.redirectUrl) || readMcpContinuation(req);
+  if (continuation) mcpPrivacy(res);
   const isEnvBilling = process.env.BILLING !== 'no';
 
   // We determine the type of the requested application.
@@ -33,9 +37,11 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 
   // We determine the presence of a token in a cookie or a mobile application.
   const { mobile_app_token: mobileAppToken } = req.query || '';
-  const token = (mobileAppToken as string) || parseCookies(req.get('cookie')).token;
+  const token = continuation
+    ? mcpCookies(req).token
+    : (mobileAppToken as string) || parseCookies(req.get('cookie')).token;
   // If we find an authorization token from a mobile application request, we record it in cookies.
-  if (mobileAppToken) setAuthCookie(req, res, { token: req.query.mobile_app_token as string });
+  if (mobileAppToken && !continuation) setAuthCookie(req, res, { token: req.query.mobile_app_token as string });
 
   // If there is no token, we will render the front depending on the url category.
   if (!token) return isUnsignedUserRoute ? next() : res.redirect(getLoginUrl(req));
@@ -45,6 +51,9 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     const user = await getUser(req, token, req.headers['user-agent']);
     const { is_subscribed: isSubscribed, billing_plan: billingPlan } = user.account;
     res.locals.user = { ...user, token };
+
+    // MCP applies its own fresh account check and must not enter billing routes.
+    if (continuation && isUnsignedUserRoute) return res.redirect(continuation);
 
     // If the user has a subscription or it is a free plan and tries to get to the page of an unauthorized user,
     // we redirect him to the product page depending on the status.

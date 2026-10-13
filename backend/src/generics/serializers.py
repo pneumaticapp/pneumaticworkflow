@@ -5,6 +5,7 @@ from rest_framework.serializers import Serializer
 
 from src.generics.fields import TimeStampField
 from src.generics.mixins.serializers import (
+    AdditionalValidationMixin,
     CustomValidationErrorMixin,
 )
 
@@ -20,3 +21,11 @@ def get_default_date_to():
 class DateTimeRangeSerializer(CustomValidationErrorMixin, Serializer):
     date_to_tsp = TimeStampField(default=get_default_date_to)
     date_from_tsp = TimeStampField(default=get_default_date_from)
+
+
+class BaseInputSerializer(
+    AdditionalValidationMixin,
+    CustomValidationErrorMixin,
+    Serializer,
+):
+    pass

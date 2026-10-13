@@ -1,0 +1,60 @@
+name: MCP checks
+
+on:
+  pull_request:
+    paths: &mcp_paths
+      - 'mcp/**'
+      - 'backend/src/**'
+      - 'backend/pyproject.toml'
+      - 'backend/poetry.lock'
+      - 'backend/docs/mcp-api.md'
+      - 'storage/**'
+      - 'frontend/src/**'
+      - 'nginx/**'
+      - 'scripts/tests/test_mcp_*.py'
+      - 'scripts/check_mcp_nginx.sh'
+      - 'docker-compose*.yml'
+      - 'default.env'
+      - 'start.sh'
+      - '.github/workflows/mcp-check.yml'
+  push:
+    paths: *mcp_paths
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:6.2-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      MCP_TEST_REDIS_URL: redis://127.0.0.1:6379/15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v6
+      - name: Install locked dependencies
+        working-directory: mcp
+        run: uv sync --locked
+      - name: Lint and tests
+        working-directory: mcp
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+          uv run pytest
+      - name: Build image
+        run: docker build -t pneumatic-mcp:check mcp
+      - name: Proxy routing and log redaction
+        run: |
+          docker pull nginx:1.25.4-alpine
+          python scripts/tests/test_mcp_nginx.py
+          docker compose -f docker-compose.yml --profile mcp config --quiet
+          docker compose -f docker-compose.src.yml --profile mcp config --quiet

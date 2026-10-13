@@ -1,8 +1,7 @@
-.venv
+.venv*/
 venv
 env
 
-.venv/
 __pypackages__
 
 .git
@@ -14,7 +13,7 @@ __pypackages__
 *.swp
 *.swo
 
-__pycache__
+**/__pycache__
 *.pyc
 *.pyo
 *.pyd
@@ -32,6 +31,9 @@ docker-compose.yml
 
 .env.local
 .env.development
+**/.env
+.mypy_cache/
+.ruff_cache/
 
 tests/
 conftest.py

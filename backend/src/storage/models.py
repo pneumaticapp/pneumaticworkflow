@@ -84,6 +84,8 @@ class Attachment(SoftDeleteModel, AccountBaseMixin):
     )
 
     objects = BaseSoftDeleteManager.from_queryset(AttachmentQuerySet)()
+    # Includes soft-deleted rows: a restorable attachment still owns a file.
+    all_objects = models.Manager()
 
     def delete(self, **kwargs):
         from src.storage.services.attachments import (  # noqa: PLC0415

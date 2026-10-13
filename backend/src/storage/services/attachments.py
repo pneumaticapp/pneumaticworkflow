@@ -4,8 +4,11 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import IntegrityError, models, transaction
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
+from django.db.models.functions import Cast
+from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
+from rest_framework.exceptions import PermissionDenied
 
 from src.generics.base.service import BaseModelService
 from src.permissions.models import (
@@ -805,6 +808,87 @@ class AttachmentService(BaseModelService):
                 continue
             created_attachments.append(attachment)
         return created_attachments
+
+    def get_for_user(self, attachment_id: int) -> Attachment:
+        attachment = get_object_or_404(
+            Attachment,
+            pk=attachment_id,
+            account_id=self.user.account_id,
+        )
+        if not self.check_user_permission(
+            user_id=self.user.pk,
+            account_id=self.user.account_id,
+            file_id=attachment.file_id,
+        ):
+            raise PermissionDenied
+        return attachment
+
+    def check_account_file_permission(self, file_id: str) -> bool:
+        return Attachment.objects.filter(
+            account_id=self.user.account_id,
+            file_id=file_id,
+        ).exists() and self.check_user_permission(
+            user_id=self.user.pk,
+            account_id=self.user.account_id,
+            file_id=file_id,
+        )
+
+    def check_account_files_permission(
+        self,
+        file_ids: Iterable[str],
+    ) -> bool:
+        """Check a batch with the same any-live-attachment access rules."""
+        file_ids = set(file_ids)
+        if not file_ids:
+            return True
+        account_file_ids = set(
+            Attachment.objects.filter(
+                account_id=self.user.account_id,
+                file_id__in=file_ids,
+            ).values_list('file_id', flat=True),
+        )
+        if account_file_ids != file_ids:
+            return False
+
+        attachments = Attachment.objects.filter(file_id__in=file_ids)
+        allowed = Q(access_type=AccessType.PUBLIC) | Q(
+            access_type=AccessType.ACCOUNT,
+            account_id=self.user.account_id,
+        )
+        if self.user.is_active:
+            ctype = ContentType.objects.get_for_model(Attachment)
+            permission = {
+                'object_pk': Cast(OuterRef('pk'), models.CharField()),
+                'permission__content_type': ctype,
+                'permission__codename': 'access_attachment',
+            }
+            user_permissions = UserObjectPermission.objects.filter(
+                user=self.user,
+                **permission,
+            )
+            group_permissions = GroupObjectPermission.objects.filter(
+                group_id__in=self.user.user_groups.values_list(
+                    'id',
+                    flat=True,
+                ),
+                **permission,
+            )
+            attachments = attachments.alias(
+                user_access=Exists(user_permissions),
+                group_access=Exists(group_permissions),
+            )
+            allowed |= Q(
+                Q(user_access=True) | Q(group_access=True),
+                access_type=AccessType.RESTRICTED,
+                account_id=self.user.account_id,
+            )
+        allowed_ids = set(
+            attachments.filter(allowed).values_list(
+                'file_id',
+                flat=True,
+            ),
+        )
+        return allowed_ids == file_ids
 
     def check_user_permission(
         self,

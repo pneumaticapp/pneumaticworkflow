@@ -1,0 +1,89 @@
+.panel {
+  max-width: 64rem;
+  padding: 3.2rem;
+  margin: 3.2rem auto;
+  background: var(--pneumatic-color-white);
+  border-radius: 1.6rem;
+
+  h1 {
+    @mixin h1;
+  }
+
+  h2 {
+    @mixin h5;
+  }
+
+  p,
+  li,
+  label {
+    @mixin text-base;
+  }
+
+  @media (width <= 64rem) {
+    padding: 2.4rem;
+    margin: 1.6rem;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.6rem;
+  margin-top: 2.4rem;
+}
+
+.list {
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  padding: 2.4rem 0;
+  border-bottom: 0.1rem solid var(--pneumatic-color-black8);
+}
+
+.file {
+  display: block;
+  max-width: 100%;
+  margin: 1.6rem 0;
+
+  &:hover {
+    color: var(--pneumatic-color-black88);
+  }
+
+  &:focus-visible {
+    outline: 0.2rem solid var(--pneumatic-color-black100);
+    outline-offset: 0.2rem;
+  }
+
+  &:active {
+    opacity: 0.88;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: var(--pneumatic-button-opacity);
+  }
+}
+
+.link {
+  display: inline-block;
+
+  @mixin text-base;
+
+  margin: 1.6rem 0;
+  color: var(--pneumatic-color-black100);
+
+  &:hover {
+    color: var(--pneumatic-color-black88);
+  }
+
+  &:focus-visible {
+    outline: 0.2rem solid var(--pneumatic-color-black100);
+    outline-offset: 0.2rem;
+  }
+
+  &:active {
+    opacity: 0.88;
+  }
+}

@@ -24,6 +24,7 @@ from src.shared_kernel.browser_utils import (
     redirect_to_login,
 )
 from src.shared_kernel.exceptions import AuthenticationError
+from src.shared_kernel.exceptions.base_exceptions import BaseAppError
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +41,10 @@ class AuthUser:
         *,
         is_api_key: bool = False,
         is_embed_token: bool = False,
+        mcp_connection_id: str | None = None,
+        mcp_upload_session_id: str | None = None,
+        mcp_authorization_id: str | None = None,
+        mcp_authorization_expires_at: int | None = None,
     ) -> None:
         """Initialize authenticated user.
 
@@ -53,6 +58,10 @@ class AuthUser:
             is_embed_token: The public token is the embed one (the
                 kickoff form of a template embedded into another site),
                 not a shared link.
+            mcp_connection_id: Live core connection for file delegation.
+            mcp_upload_session_id: Core-authorized upload session.
+            mcp_authorization_id: Core record binding a source OAuth token.
+            mcp_authorization_expires_at: Source deadline in Unix seconds.
 
         """
         self.auth_type = auth_type
@@ -61,6 +70,10 @@ class AuthUser:
         self.token = token
         self.is_api_key = is_api_key
         self.is_embed_token = is_embed_token
+        self.mcp_connection_id = mcp_connection_id
+        self.mcp_upload_session_id = mcp_upload_session_id
+        self.mcp_authorization_id = mcp_authorization_id
+        self.mcp_authorization_expires_at = mcp_authorization_expires_at
 
     @property
     def journal_user_type(self) -> JournalUserType | None:
@@ -228,6 +241,15 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
 
     async def try_authenticate(self, request: Request) -> AuthUser | None:
         """Try to authenticate user using all available strategies."""
+        # mcp imports AuthUser from this module; defer the reverse dependency.
+        from src.shared_kernel.auth.mcp import (  # noqa: PLC0415
+            authenticate_mcp_request,
+            is_mcp_request,
+        )
+
+        # MCP failures must never be retried using a browser cookie or API key.
+        if is_mcp_request(request):
+            return await authenticate_mcp_request(request)
         for key, source, auth_func in self.auth_strategies:
             token = None
             if source == 'cookie':
@@ -244,13 +266,22 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                     return user
         return None
 
-    async def dispatch(
+    async def dispatch(  # noqa: PLR0911
         self,
         request: Request,
         call_next: Callable[[Request], Awaitable[Response]],
     ) -> Response:
         """Process request with token or session authentication."""
         if request.method == 'OPTIONS':
+            return await call_next(request)
+        # These routes perform their own ticket/body + service authentication.
+        path = request.url.path.removeprefix(
+            getattr(request, 'scope', {}).get('root_path', ''),
+        )
+        if path.startswith('/mcp/download/') or path in (
+            '/internal/mcp/import',
+            '/internal/mcp/cleanup',
+        ):
             return await call_next(request)
         try:
             request.state.user = AuthUser(auth_type=UserType.ANONYMOUS)
@@ -268,10 +299,10 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                 # Browser navigation gets redirect to login page
                 if is_browser_navigation(request):
                     return redirect_to_login(request)
-                raise AuthenticationError  # noqa: TRY301
+                raise AuthenticationError
 
             return await call_next(request)
-        except AuthenticationError as exc:
+        except BaseAppError as exc:
             # Convert exception to HTTP response using existing logic
             error_response = exc.to_response()
             return JSONResponse(
