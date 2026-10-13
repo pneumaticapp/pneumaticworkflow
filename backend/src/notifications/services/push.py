@@ -45,7 +45,7 @@ class PushNotificationService(NotificationService):
 
     ALLOWED_METHODS = {
         NotificationMethod.new_task,
-        NotificationMethod.complete_task,
+        NotificationMethod.task_completed,
         NotificationMethod.returned_task,
         NotificationMethod.overdue_task,
         NotificationMethod.task_reminder,
@@ -269,7 +269,7 @@ class PushNotificationService(NotificationService):
             user_email=user_email,
         )
 
-    def send_complete_task(
+    def send_task_completed(
         self,
         link: str,
         task_id: int,
@@ -280,7 +280,7 @@ class PushNotificationService(NotificationService):
         **kwargs,
     ):
         self._send(
-            method_name=NotificationMethod.complete_task,
+            method_name=NotificationMethod.task_completed,
             title=str(messages.MSG_NF_0012),
             body=str(messages.MSG_NF_0011(workflow_name, task_name)),
             extra_data={

@@ -1,13 +1,6 @@
-import {
-  HEADING,
-  QUOTE,
-  UNORDERED_LIST,
-  ORDERED_LIST,
-  BOLD_STAR,
-  ITALIC_STAR,
-  LINK,
-} from '@lexical/markdown';
+import { HEADING, QUOTE, UNORDERED_LIST, ORDERED_LIST, BOLD_STAR, ITALIC_STAR } from '@lexical/markdown';
 import { MENTION } from './mentionMarkdown';
+import { MARKDOWN_LINK } from './linkMarkdown';
 import { createVariableTransformer } from './variableMarkdown';
 import { createChecklistTransformer } from './checklistMarkdown';
 import { ATTACHMENT, ATTACHMENT_INLINE } from './attachmentMarkdown';
@@ -29,7 +22,7 @@ export function createMarkdownTransformers(templateVariables?: TTaskVariable[]) 
     ORDERED_LIST,
     BOLD_STAR,
     ITALIC_STAR,
-    LINK,
+    MARKDOWN_LINK,
     MENTION,
     createChecklistTransformer(templateVariables),
     createVariableTransformer(templateVariables),

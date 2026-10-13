@@ -12,7 +12,7 @@ export function AddGuestsBanner() {
       lsKey={ADD_GUESTS_BANNER_LS_KEY}
       text={formatMessage({ id: 'team.add-guests-banner-text' })}
       buttonText={formatMessage({ id: 'team.add-guests-banner-button' })}
-      link="https://support.pneumatic.app/en/articles/6145048-free-external-users"
+      link="https://support.pneumatic.app/articles/6145048-free-external-users"
     />
   );
 }

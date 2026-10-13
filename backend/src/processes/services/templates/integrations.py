@@ -37,7 +37,7 @@ class TemplateIntegrationsService(ClsCacheMixin):
         is_superuser: bool = False,
     ):
         self.account = account
-        self.user = user if user else None
+        self.user = user or None
         self.anonymous_id = anonymous_id
         self.is_superuser = is_superuser
 

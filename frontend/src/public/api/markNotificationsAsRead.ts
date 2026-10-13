@@ -7,7 +7,9 @@ export type TMarkNotificationsAsReadRequest = {
 };
 
 export function markNotificationsAsRead(data: TMarkNotificationsAsReadRequest) {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   return commonRequest(
     urls.markNotificationsAsRead,

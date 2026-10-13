@@ -68,7 +68,7 @@ MSG_PW_0034 = _('URL field value should be a string.')
 # Translators: URL field validation
 MSG_PW_0035 = _('The URL is invalid.')
 # Translators: File field validation
-MSG_PW_0036 = _('File value should be a list of integers.')
+MSG_PW_0036 = _('File value should be a list of Markdown links.')
 # Translators: File field validation
 MSG_PW_0037 = _('Attachment not found.')
 # Translators: User field validation
@@ -94,7 +94,7 @@ MSG_PW_0046 = _(
     'Contact administrator.',
 )
 # Translators: Comment create validation
-MSG_PW_0047 = _('You need to specify the comment text or attachments.')
+MSG_PW_0047 = _('You need to specify the comment text.')
 MSG_PW_0048 = _('You cannot write a comment on a completed workflow.')
 MSG_PW_0049 = _('You cannot change a deleted comment.')
 MSG_PW_0050 = lambda bytes_limit: format_lazy(

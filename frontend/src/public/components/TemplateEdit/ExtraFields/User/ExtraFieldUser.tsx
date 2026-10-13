@@ -3,19 +3,21 @@ import { ChangeEvent, ReactNode, useCallback } from 'react';
 import classnames from 'classnames';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
-import { EOptionTypes, UsersDropdown } from '../../../UI/form/UsersDropdown';
+import { EOptionTypes, UsersDropdown, getUsersDropdownOptionValue } from '../../../UI/form/UsersDropdown';
 import { getUsers } from '../../../../redux/selectors/user';
 import { EUserDropdownOptionType, TUserListItem } from '../../../../types/user';
 import { trackInviteTeamInPage } from '../../../../utils/analytics';
 import { getInputNameBackground } from '../utils/getInputNameBackground';
 import { ArrowDropdownIcon } from '../../../icons';
 import { FieldWithName } from '../utils/FieldWithName';
+import { FieldLabel } from '../utils/FieldLabel';
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { EExtraFieldMode, ETaskPerformerType } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { isArrayWithItems } from '../../../../utils/helpers';
 import { IWorkflowExtraFieldProps } from '..';
 import { getNotDeletedUsers, getUserFullName } from '../../../../utils/users';
-import { getGroupsList } from '../../../../redux/selectors/groups';
+import { getRegularGroupsList } from '../../../../redux/selectors/groups';
 import { IGroupDropdownOption } from '../../../../redux/team/types';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
@@ -35,12 +37,13 @@ export function ExtraFieldUser({
   editField,
   isDisabled = false,
   labelBackgroundColor,
+  labelPosition,
   innerRef,
-}: IExtraFieldUserProps) {
+}: IExtraFieldUserProps): JSX.Element {
   const { formatMessage } = useIntl();
 
   const users: ReturnType<typeof getUsers> = getNotDeletedUsers(useSelector(getUsers));
-  const groups = useSelector(getGroupsList);
+  const groups = useSelector(getRegularGroupsList);
 
   const { description } = field;
 
@@ -62,7 +65,6 @@ export function ExtraFieldUser({
 
   const renderKickoffField = () => (
     <FieldWithName
-      inputClassName={inputStyles['kickoff-dropdown-field']}
       labelBackgroundColor={labelBackgroundColor}
       field={field}
       descriptionPlaceholder={descriptionPlaceholder}
@@ -73,6 +75,7 @@ export function ExtraFieldUser({
       validate={getFieldValidator(field, mode)}
       isDisabled={isDisabled}
       icon={<ArrowDropdownIcon />}
+      labelPosition={labelPosition}
       innerRef={innerRef}
     />
   );
@@ -87,7 +90,7 @@ export function ExtraFieldUser({
         ...item,
         optionType: EOptionTypes.User,
         label: getUserFullName(item),
-        value: `${EOptionTypes.User}-${item.id}`,
+        value: getUsersDropdownOptionValue(EOptionTypes.User, item.id),
       };
     });
     const groupsDropdownOption = groups.map((item) => {
@@ -95,7 +98,7 @@ export function ExtraFieldUser({
         ...item,
         optionType: EOptionTypes.Group,
         label: item.name,
-        value: `${EOptionTypes.Group}-${item.id}`,
+        value: getUsersDropdownOptionValue(EOptionTypes.Group, item.id),
         type: ETaskPerformerType.UserGroup,
       };
     });
@@ -120,26 +123,48 @@ export function ExtraFieldUser({
       }
     };
 
+    const isLabelLeft = labelPosition === EFieldLabelPosition.Left;
+
     return (
-      <div className={classnames(inputStyles['dropdown-container'])} data-autofocus-first-field>
-        <div className={fieldNameClassName}>
-          <div className={styles['kick-off-input__name-readonly']}>{field.name}</div>
-          {isRequired && <span className={styles['kick-off-required-sign']} />}
+      <div
+        className={classnames(
+          inputStyles['dropdown-container'],
+          isLabelLeft && styles['kick-off-input__field_label-left'],
+        )}
+        data-autofocus-first-field
+      >
+        {isLabelLeft ? (
+          <FieldLabel
+            name={field.name}
+            isRequired={isRequired || false}
+            isDisabled={isDisabled}
+            mode={mode}
+            labelPosition={labelPosition}
+            labelBackgroundColor={labelBackgroundColor}
+            handleChangeName={handleChangeName}
+          />
+        ) : (
+          <div className={fieldNameClassName}>
+            <div className={styles['kick-off-input__name-readonly']}>{field.name}</div>
+            {isRequired && <span className={styles['kick-off-required-sign']} />}
+          </div>
+        )}
+        <div {...(isLabelLeft && { className: inputStyles['user-dropdown-wrapper_label-left'] })}>
+          <UsersDropdown
+            options={selectionsDropdownOption}
+            onChange={handleUserDropdownChange}
+            placeholder={description}
+            isDisabled={isDisabled}
+            value={selectionsDropdownOption.find(
+              (item) =>
+                item.value === getUsersDropdownOptionValue(EOptionTypes.User, field.userId ?? '') ||
+                item.value === getUsersDropdownOptionValue(EOptionTypes.Group, field.groupId ?? ''),
+            )}
+            onClickInvite={() => trackInviteTeamInPage('From users field')}
+            inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
+            onUsersInvited={onUsersInvited}
+          />
         </div>
-        <UsersDropdown
-          options={selectionsDropdownOption}
-          onChange={handleUserDropdownChange}
-          placeholder={description}
-          isDisabled={isDisabled}
-          value={selectionsDropdownOption.find(
-            (item) =>
-              item.value === `${EOptionTypes.User}-${field.userId}` ||
-              item.value === `${EOptionTypes.Group}-${field.groupId}`,
-          )}
-          onClickInvite={() => trackInviteTeamInPage('From users field')}
-          inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
-          onUsersInvited={onUsersInvited}
-        />
       </div>
     );
   };

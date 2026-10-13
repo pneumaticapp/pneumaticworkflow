@@ -1,17 +1,14 @@
-// <reference types="jest" />
 import { getVariableFromField } from '../getTaskVariables';
+import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 import { EExtraFieldType, IExtraField } from '../../../../../types/template';
 
 describe('getVariableFromField', () => {
-  const makeField = (overrides: Partial<IExtraField> = {}): IExtraField => ({
-    apiName: 'field-1',
-    name: 'Test Field',
-    type: EExtraFieldType.Checkbox,
-    order: 0,
-    userId: null,
-    groupId: null,
-    ...overrides,
-  });
+  const makeField = (overrides: Partial<IExtraField> = {}) =>
+    makeExtraField({
+      name: 'Test Field',
+      type: EExtraFieldType.Checkbox,
+      ...overrides,
+    });
 
   it('includes datasetId when field has dataset', () => {
     const field = makeField({ dataset: 5 });

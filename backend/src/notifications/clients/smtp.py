@@ -33,6 +33,7 @@ class SMTPEmailClient(EmailClient):
         EmailType.INVITE: DEFAULT_TEMPLATE_AUTH,
         EmailType.COMPLETE_WORKFLOW: DEFAULT_TEMPLATE_WORKFLOWS,
         EmailType.TASK_REMINDER: DEFAULT_TEMPLATE_AUTH,
+        EmailType.VACATION_DELEGATION: DEFAULT_TEMPLATE_AUTH,
     }
 
     def __init__(self, account_id: int):
@@ -148,6 +149,7 @@ class SMTPEmailClient(EmailClient):
             EmailType.TASK_REMINDER: (
                 'Reminder: you have unfinished tasks in Pneumatic'
             ),
+            EmailType.VACATION_DELEGATION: 'Tasks have been delegated to you',
         }
 
         return subjects.get(template_code, f'Pneumatic - {template_code}')

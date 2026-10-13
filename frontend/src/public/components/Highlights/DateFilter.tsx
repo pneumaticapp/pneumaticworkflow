@@ -1,24 +1,17 @@
 import * as React from 'react';
+import { useEffect, useState } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { RadioButton } from '../UI/Fields/RadioButton';
-import { EHighlightsDateFilter, THighlightsDateFilter } from '../../types/highlights';
+import { EHighlightsDateFilter } from '../../types/highlights';
 import { ShowMore } from '../UI/ShowMore';
+import { DatePickerCustom } from '../UI/form/DatePicker';
+import { formatDatePickerDisplayValue } from '../UI/form/DatePicker/utils/normalizeDatePickerDate';
+import { useDatePickerSettings } from '../../hooks/useDatePickerSettings';
+import { IDateFilterProps } from './types';
 
 import styles from './Filters.css';
-import { DatePickerCustom } from '../UI/form/DatePicker';
-
-
-
-export interface IDateFilterProps {
-  endDate: Date | null;
-  selectedDateFilter: THighlightsDateFilter;
-  startDate: Date | null;
-  changeEndDate(date: Date): void;
-  changeSelectedDateFilter(filter: EHighlightsDateFilter): () => void;
-  changeStartDate(date: Date): void;
-}
 
 export function DateFilter({
   startDate,
@@ -27,82 +20,123 @@ export function DateFilter({
   changeSelectedDateFilter,
   changeEndDate,
   changeStartDate,
+  onCustomRangeValidityChange,
 }: IDateFilterProps) {
   const { formatMessage } = useIntl();
+  const { timezone } = useDatePickerSettings();
 
   const startDatePlaceholder = formatMessage({ id: 'process-highlights.date-picker-start-date' });
   const endDatePlaceholder = formatMessage({ id: 'process-highlights.date-picker-end-date' });
+  const rangePlaceholder = `${startDatePlaceholder} — ${endDatePlaceholder}`;
+  const isCustomSelected = selectedDateFilter === EHighlightsDateFilter.Custom;
 
-  const lastCheckboxClassName = selectedDateFilter === EHighlightsDateFilter.Custom ? styles['mb-2'] : styles['mb-4'];
+  // Draft range so a first click [start, null] can clear end without keeping a stale Redux endDate.
+  const [draftStartDate, setDraftStartDate] = useState<Date | null>(startDate);
+  const [draftEndDate, setDraftEndDate] = useState<Date | null>(endDate);
 
-  const DATE_FILTER_CHECKBOXES = [
+  useEffect(() => {
+    setDraftStartDate(startDate);
+    setDraftEndDate(endDate);
+  }, [startDate, endDate, selectedDateFilter]);
+
+  useEffect(() => {
+    if (!onCustomRangeValidityChange) {
+      return;
+    }
+
+    const isComplete = !isCustomSelected || Boolean(draftStartDate && draftEndDate);
+
+    onCustomRangeValidityChange(isComplete);
+  }, [draftStartDate, draftEndDate, isCustomSelected, onCustomRangeValidityChange]);
+
+  const DATE_FILTER_OPTIONS = [
     {
-      containerClassName: styles['mb-1'],
       id: 'date-picker-today',
       label: formatMessage({ id: 'process-highlights.date-picker-today' }),
-      type: EHighlightsDateFilter['Today'],
+      type: EHighlightsDateFilter.Today,
     },
     {
-      containerClassName: styles['mb-1'],
       id: 'date-picker-yesterday',
       label: formatMessage({ id: 'process-highlights.date-picker-yesterday' }),
       type: EHighlightsDateFilter.Yesterday,
     },
     {
-      containerClassName: styles['mb-1'],
       id: 'date-picker-week',
       label: formatMessage({ id: 'process-highlights.date-picker-week' }),
       type: EHighlightsDateFilter.Week,
     },
     {
-      containerClassName: styles['mb-1'],
       id: 'date-picker-month',
       label: formatMessage({ id: 'process-highlights.date-picker-month' }),
       type: EHighlightsDateFilter.Month,
     },
     {
-      containerClassName: styles['mb-1'],
       id: 'date-picker-custom',
       label: formatMessage({ id: 'process-highlights.date-picker-custom' }),
       type: EHighlightsDateFilter.Custom,
     },
   ];
-  const startDay = true;
+
+  const handleChangeRange = ([nextStartDate, nextEndDate]: [Date | null, Date | null]) => {
+    setDraftStartDate(nextStartDate);
+    setDraftEndDate(nextEndDate);
+
+    if (nextStartDate && nextEndDate) {
+      changeStartDate(nextStartDate);
+      changeEndDate(nextEndDate);
+    }
+  };
+
+  const startText = draftStartDate ? formatDatePickerDisplayValue(draftStartDate, timezone) : '';
+  const endText = draftEndDate ? formatDatePickerDisplayValue(draftEndDate, timezone) : '';
 
   return (
     <ShowMore
-      containerClassName={styles['filter-container']}
+      containerClassName={styles['filter']}
       label="process-highlights.date-picker-by-time-label"
       isInitiallyVisible
     >
-      {DATE_FILTER_CHECKBOXES.map(({ containerClassName, id, label, type }, idx) => (
-        <RadioButton
-          checked={type === selectedDateFilter}
-          containerClassName={idx === DATE_FILTER_CHECKBOXES.length - 1 ? lastCheckboxClassName : containerClassName}
-          key={id}
-          title={label}
-          onChange={changeSelectedDateFilter(type)}
-          id={id}
-        />
-      ))}
-      {selectedDateFilter === EHighlightsDateFilter.Custom && (
-        <div className={classnames(styles['date-filter-custom'], selectedDateFilter === EHighlightsDateFilter.Custom && styles['mb-4'])}>
-          <DatePickerCustom
-            className={styles['datepicker__input']}
-            onChange={changeStartDate}
-            placeholderText={startDatePlaceholder}
-            selected={startDate}
-            wrapperClassName={styles['datepicker']}
-            startDay={startDay}
+      <div className={styles['filter__options']}>
+        {DATE_FILTER_OPTIONS.map(({ id, label, type }) => (
+          <RadioButton
+            checked={type === selectedDateFilter}
+            key={id}
+            title={label}
+            onChange={changeSelectedDateFilter(type)}
+            id={id}
           />
-          <div className={styles['date-filter-custom__separator']}>—</div>
+        ))}
+      </div>
+      {isCustomSelected && (
+        <div className={styles['filter__datepicker']}>
+          <div className={styles['filter__datepicker-display']} aria-hidden>
+            <span
+              className={classnames(
+                styles['filter__datepicker-start'],
+                !startText && styles['filter__datepicker-placeholder'],
+              )}
+            >
+              {startText || startDatePlaceholder}
+            </span>
+            <span className={styles['filter__datepicker-separator']}>—</span>
+            <span
+              className={classnames(
+                styles['filter__datepicker-end'],
+                !endText && styles['filter__datepicker-placeholder'],
+              )}
+            >
+              {endText || endDatePlaceholder}
+            </span>
+          </div>
           <DatePickerCustom
-            calendarClassName={styles['datepicker__calendar_end-date']}
-            className={styles['datepicker__input']}
-            onChange={changeEndDate}
-            placeholderText={endDatePlaceholder}
-            selected={endDate}
-            wrapperClassName={styles['datepicker']}
+            className={styles['filter__datepicker-input']}
+            endDate={draftEndDate}
+            isClearable={false}
+            onChange={handleChangeRange}
+            placeholderText={rangePlaceholder}
+            selectsRange
+            startDate={draftStartDate}
+            wrapperClassName={styles['filter__datepicker-wrapper']}
           />
         </div>
       )}

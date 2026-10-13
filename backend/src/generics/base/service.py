@@ -3,7 +3,6 @@ from typing import Optional
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import Model
 
 from src.authentication.enums import AuthTokenType
 
@@ -18,19 +17,19 @@ class BaseModelService:
         instance=None,
         is_superuser: bool = False,
         auth_type: AuthTokenType.LITERALS = AuthTokenType.USER,
+        account=None,
     ):
         if user:
             self.user = user
             self.account = user.account
         else:
             self.user = None
-            self.account = None
+            self.account = account
         self.is_superuser = is_superuser
         self.auth_type = auth_type
         self.instance = instance
         self.update_fields = set()
 
-    @abstractmethod
     def _create_related(
         self,
         **kwargs,
@@ -54,7 +53,7 @@ class BaseModelService:
     def create(
         self,
         **kwargs,
-    ) -> Model:
+    ):
         with transaction.atomic():
             self._create_instance(**kwargs)
             self._create_related(**kwargs)
@@ -70,7 +69,7 @@ class BaseModelService:
         self,
         force_save=False,
         **update_kwargs,
-    ) -> Model:
+    ):
 
         self.update_fields.update(update_kwargs.keys())
         for field_name, value in update_kwargs.items():
@@ -78,3 +77,6 @@ class BaseModelService:
         if force_save:
             self.save()
         return self.instance
+
+    def delete(self) -> None:
+        self.instance.delete()

@@ -34,9 +34,6 @@ class DataSetItemService(BaseModelService):
             ) from ex
         return self.instance
 
-    def _create_related(self, **kwargs):
-        pass
-
     def partial_update(
         self,
         force_save: bool = True,
@@ -54,6 +51,3 @@ class DataSetItemService(BaseModelService):
                     message=MSG_DS_0002(value=self.instance.value),
                 ) from ex
         return self.instance
-
-    def delete(self) -> None:
-        self.instance.delete()

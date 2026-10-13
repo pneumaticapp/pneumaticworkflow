@@ -121,7 +121,7 @@ export function DueIn({
         placement="bottom-end"
       >
         <div className={styles['datepicker']}>
-          <DatePickerCustom selected={selectedDate} onChange={(date) => setSelectedDate(date)} inline showTimeInput />
+          <DatePickerCustom inline onChange={(date) => setSelectedDate(date)} selected={selectedDate} startDay />
         </div>
 
         {withTime && (

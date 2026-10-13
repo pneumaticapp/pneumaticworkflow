@@ -15,7 +15,7 @@ import {
   getWorkflowsSearchText,
 } from '../redux/selectors/workflows';
 import { getAccountsUsers } from '../redux/selectors/accounts';
-import { getGroupsList } from '../redux/selectors/groups';
+import { getRegularGroupsList } from '../redux/selectors/groups';
 import { getTimezone } from '../redux/selectors/authUser';
 import {
   buildWorkflowsExportRows,
@@ -61,7 +61,7 @@ export function useWorkflowsExport() {
   const performersGroupIdsFilter = useSelector(getWorkflowPerformersGroupsIdsFilter);
   const searchText = useSelector(getWorkflowsSearchText);
   const users = useSelector(getAccountsUsers);
-  const groups = useSelector(getGroupsList);
+  const groups = useSelector(getRegularGroupsList);
   const timezone = useSelector(getTimezone);
 
   const handleExportClick = useCallback(
@@ -100,10 +100,7 @@ export function useWorkflowsExport() {
           timezone: timezone ?? undefined,
           headerLabels,
           multipleTasksLabel: formatMessage({ id: 'workflows.multiple-active-tasks' }),
-          deletedGroupFallbackTemplate: formatMessage(
-            { id: 'workflows.export-deleted-group' },
-            { id: '{id}' },
-          ),
+          deletedGroupFallbackTemplate: formatMessage({ id: 'workflows.export-deleted-group' }, { id: '{id}' }),
         });
         if (exportFormat === 'csv') {
           downloadWorkflowsCsv(rows);

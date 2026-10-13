@@ -5,9 +5,9 @@ export const prepareChecklistsForRendering = (initialText: string) => {
     if (!prevLine?.trim() || prevLine.includes('[/clist]')) {
       return match;
     }
-  
+
     return `${prevLine}\n${checkOpening}`;
   });
 
   return result;
-}
+};

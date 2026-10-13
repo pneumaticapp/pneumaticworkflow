@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import { all, call, fork, put, takeEvery, select } from 'redux-saga/effects';
 import {
@@ -43,7 +42,14 @@ import { getTemplate } from '../../api/getTemplate';
 
 import { openRunWorkflowModal } from '../runWorkflowModal/actions';
 import { getRunnableWorkflow, loadDatasetsMap } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
-import { ITemplateResponse } from '../../types/template';
+import { ITemplateResponse, IExtraField, ITemplateKickoffClient } from '../../types/template';
+import { IFieldsetRuntime } from '../../types/fieldset';
+import { mapTemplateFieldsetsToRuntime } from '../../utils/mapTemplateFieldsetsToRuntime';
+import { mapFieldsetBindingsToClient } from '../../utils/mapFieldsetsAPIToClient';
+import {
+  mapFieldsetBindingClientToRuntime,
+  mapFieldsToExtraFields,
+} from '../../utils/mapFieldsetBindingClientToRuntime';
 import { getGettingStartedChecklist } from '../../api/getGettingStartedChecklist';
 import { IGettingStartedChecklist } from '../../types/dashboard';
 import { loadTemplateIntegrationsStats } from '../actions';
@@ -87,7 +93,9 @@ function* fetchDashboardBreakdownItems() {
     const rangeDates = getRangeDates(timeRange);
 
     const getBreakdown =
-      canAccessWorkflows && mode === EDashboardModes.Workflows ? getDashboardWorkflowBreakdown : getDashboardTasksBreakdown;
+      canAccessWorkflows && mode === EDashboardModes.Workflows
+        ? getDashboardWorkflowBreakdown
+        : getDashboardTasksBreakdown;
     const breakdownItems: TDashboardBreakdownItemResponse[] = yield getBreakdown(rangeDates);
     const normalizedBreakdownItems = normalizeBreakdownItems(breakdownItems);
     yield put(setBreakdownItems(normalizedBreakdownItems));
@@ -115,7 +123,9 @@ export function* fetchBreakdownTasks({ payload: { templateId } }: TLoadBreakdown
     yield put(patchBreakdownItem({ templateId, changedFields: { areTasksLoading: true } }));
 
     const getBreakdownTasks =
-      canAccessWorkflows && dashboardMode === EDashboardModes.Workflows ? getDashboardWorkflowsTasks : getDashboardTasksBySteps;
+      canAccessWorkflows && dashboardMode === EDashboardModes.Workflows
+        ? getDashboardWorkflowsTasks
+        : getDashboardTasksBySteps;
 
     const [tasks]: [IDashboardTask[]] = yield all([
       call(getBreakdownTasks, {
@@ -141,9 +151,14 @@ export function* openRunWorflowSaga({ payload: { templateId, ancestorTaskId } }:
     yield put(setGeneralLoaderVisibility(true));
     const resData: ITemplateResponse = yield getTemplate(templateId);
 
-    const datasetsMap: Record<number, string[]> = yield call(loadDatasetsMap, resData.kickoff);
+    const { normalizedTemplate, loadedFieldsets } = mapTemplateFieldsetsToRuntime(resData);
+    const datasetsMap: Record<number, string[]> = yield call(
+      loadDatasetsMap,
+      normalizedTemplate.kickoff,
+      loadedFieldsets,
+    );
 
-    const templateData = getRunnableWorkflow(resData, datasetsMap);
+    const templateData = getRunnableWorkflow(normalizedTemplate, datasetsMap, loadedFieldsets);
 
     if (templateData) {
       yield put(openRunWorkflowModal({ ...templateData, ancestorTaskId }));
@@ -162,7 +177,41 @@ export function* openRunWorflowByTemplateDataSaga({
   try {
     yield put(setGeneralLoaderVisibility(true));
 
-    yield put(openRunWorkflowModal({ ...templateData, ancestorTaskId }));
+    const kickoffFieldsets = templateData.kickoff?.fieldsets || [];
+    const clientFieldsets = mapFieldsetBindingsToClient(kickoffFieldsets);
+    const loadedFieldsets = clientFieldsets.map(mapFieldsetBindingClientToRuntime);
+
+    const kickoffFields = mapFieldsToExtraFields(templateData.kickoff?.fields || []);
+
+    const kickoff: ITemplateKickoffClient = {
+      description: '',
+      fields: kickoffFields,
+      fieldsets: [],
+    };
+
+    // Load datasets for both kickoff fields and fieldset fields
+    const datasetsMap: Record<number, string[]> = yield call(loadDatasetsMap, kickoff, loadedFieldsets);
+
+    yield put(
+      openRunWorkflowModal({
+        ...templateData,
+        kickoff: {
+          ...kickoff,
+          fields: kickoffFields.map((field) => ({
+            ...field,
+            selections: field.dataset ? datasetsMap[field.dataset] || [] : field.selections,
+          })),
+        },
+        loadedFieldsets: loadedFieldsets.map((fs: IFieldsetRuntime) => ({
+          ...fs,
+          fields: fs.fields.map((field: IExtraField) => ({
+            ...field,
+            selections: field.dataset ? datasetsMap[field.dataset] || [] : field.selections,
+          })),
+        })),
+        ancestorTaskId,
+      }),
+    );
   } catch (error) {
     logger.info('fetch template error : ', error);
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });

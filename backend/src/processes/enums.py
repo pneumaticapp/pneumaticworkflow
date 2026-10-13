@@ -69,14 +69,17 @@ class PerformerType:
 
     USER = 'user'
     GROUP = 'group'
+    GROUP_USER = 'group_user'  # hidden users
     WORKFLOW_STARTER = 'workflow_starter'
     FIELD = 'field'
+    MANAGER = 'manager'
 
     choices = (
         (USER, USER),
         (GROUP, GROUP),
         (WORKFLOW_STARTER, WORKFLOW_STARTER),
         (FIELD, FIELD),
+        (MANAGER, MANAGER),
     )
 
     filter_choices = (
@@ -248,6 +251,8 @@ class PredicateOperator:
     MORE_THAN = 'more_than'
     LESS_THAN = 'less_than'
     COMPLETED = 'completed'
+    COMPLETED_OR_SKIPPED = 'completed_or_skipped'
+    SKIPPED = 'skipped'
     CHOICES = (
         (EQUAL, 'Equal'),
         (NOT_EQUAL, 'Not equal'),
@@ -258,10 +263,12 @@ class PredicateOperator:
         (MORE_THAN, 'More than'),
         (LESS_THAN, 'Less than'),
         (COMPLETED, COMPLETED),
+        (SKIPPED, SKIPPED),
+        (COMPLETED_OR_SKIPPED, COMPLETED_OR_SKIPPED),
     )
     ALLOWED_OPERATORS = {
         PredicateType.KICKOFF: {COMPLETED},
-        PredicateType.TASK: {COMPLETED},
+        PredicateType.TASK: {COMPLETED, SKIPPED, COMPLETED_OR_SKIPPED},
         PredicateType.USER: {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST},
         PredicateType.GROUP: {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST},
         PredicateType.FILE: {EXIST, NOT_EXIST},
@@ -316,7 +323,13 @@ class PredicateOperator:
             NOT_EXIST,
         },
     }
-    UNARY_OPERATORS = {EXIST, NOT_EXIST, COMPLETED}
+    UNARY_OPERATORS = {
+        EXIST,
+        NOT_EXIST,
+        COMPLETED,
+        SKIPPED,
+        COMPLETED_OR_SKIPPED,
+    }
 
 
 class ConditionAction:
@@ -587,6 +600,7 @@ class WorkflowEventType:
     TASK_PERFORMER_GROUP_CREATED = 20
     TASK_PERFORMER_GROUP_DELETED = 21
     TASK_DELAY = 22
+    TASK_DELEGATION = 23
 
     URGENT_TYPES = (
         URGENT,
@@ -607,6 +621,7 @@ class WorkflowEventType:
         NOT_URGENT,
         SUB_WORKFLOW_RUN,
         TASK_DELAY,
+        TASK_DELEGATION,
     )
 
     CHOICES = (
@@ -632,9 +647,10 @@ class WorkflowEventType:
         (TASK_PERFORMER_DELETED, 'Performer deleted from task'),
         (FORCE_RESUME, 'Workflow resumed'),
         (DUE_DATE_CHANGED, 'Due date changed'),
-        (TASK_PERFORMER_CREATED, 'Performer group added to task'),
-        (TASK_PERFORMER_DELETED, 'Performer group deleted from task'),
+        (TASK_PERFORMER_GROUP_CREATED, 'Performer group added to task'),
+        (TASK_PERFORMER_GROUP_DELETED, 'Performer group deleted from task'),
         (TASK_DELAY, 'Task snoozed from template'),
+        (TASK_DELEGATION, 'Task delegated'),
     )
 
     LITERALS = Literal[
@@ -705,6 +721,21 @@ class SearchContentType:
     )
 
 
+class FileAttachmentAccessType:
+    ACCOUNT = 'account'
+    RESTRICTED = 'restricted'
+
+    CHOICES = (
+        (ACCOUNT, 'account'),
+        (RESTRICTED, 'restricted'),
+    )
+
+
+class WorkflowPermission:
+    CHANGE = 'change_workflow'
+    VIEW = 'view_workflow'
+
+
 class SystemVariable:
 
     DATE = 'date'
@@ -714,4 +745,42 @@ class SystemVariable:
 
     WORKFLOW_NAME_VARS = {DATE, TEMPLATE_NAME, WORKFLOW_ID, WORKFLOW_STARTER}
 
-    TASK_VARS = {WORKFLOW_STARTER}
+    # Allowed in task name / description without matching a FieldTemplate
+    # (same as workflow name template — date, template-name,
+    # workflow-id, starter).
+    TASK_VARS = WORKFLOW_NAME_VARS
+
+
+class LabelPosition:
+
+    TOP = 'top'
+    LEFT = 'left'
+
+    CHOICES = (
+        (TOP, 'Top'),
+        (LEFT, 'Left'),
+    )
+    LITERALS = Literal[TOP, LEFT]
+
+
+class FieldSetLayout:
+
+    HORIZONTAL = 'horizontal'
+    VERTICAL = 'vertical'
+
+    CHOICES = (
+        (HORIZONTAL, 'Horizontal'),
+        (VERTICAL, 'Vertical'),
+    )
+    LITERALS = Literal[HORIZONTAL, VERTICAL]
+
+
+class FieldSetRuleType:
+
+    SUM_EQUAL = 'sum_equal'
+
+    CHOICES = (
+        (SUM_EQUAL, 'The sum is equal'),
+    )
+
+    LITERALS = Literal[SUM_EQUAL]

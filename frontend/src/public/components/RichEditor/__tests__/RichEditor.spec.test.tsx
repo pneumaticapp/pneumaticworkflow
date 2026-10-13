@@ -35,33 +35,23 @@ const defaultProps: IRichEditorProps = {
   withMentions: false,
 };
 
-describe('Spec §7.1 Базовое редактирование', () => {
+describe('Spec §7.1 Basic editing', () => {
   it('renders editor with placeholder and toolbar props', () => {
-    render(
-      <RichEditor
-        {...defaultProps}
-        placeholder="Type here"
-        withToolbar
-      />,
-    );
+    render(<RichEditor {...defaultProps} placeholder="Type here" withToolbar />);
     expect(screen.getByTestId('rich-editor-root')).toBeInTheDocument();
   });
 
   it('accepts withChecklists for checklist toolbar', () => {
-    render(
-      <RichEditor {...defaultProps} withToolbar withChecklists />,
-    );
+    render(<RichEditor {...defaultProps} withToolbar withChecklists />);
     expect(screen.getByTestId('rich-editor-root')).toBeInTheDocument();
   });
 });
 
-describe('Spec §7.2 Переменные', () => {
+describe('Spec §7.2 Variables', () => {
   it('ref.insertVariable(apiName, title, subtitle) is callable', () => {
     const ref = React.createRef<IRichEditorHandle>();
     render(<RichEditor {...defaultProps} ref={ref} />);
-    expect(() =>
-      ref.current?.insertVariable('api_name', 'Title', 'Subtitle'),
-    ).not.toThrow();
+    expect(() => ref.current?.insertVariable('api_name', 'Title', 'Subtitle')).not.toThrow();
     const insertVariable = ref.current!.insertVariable as jest.Mock;
     expect(insertVariable).toHaveBeenCalledWith('api_name', 'Title', 'Subtitle');
   });
@@ -70,67 +60,40 @@ describe('Spec §7.2 Переменные', () => {
     const templateVariables: IRichEditorProps['templateVariables'] = [
       { apiName: 'var1', title: 'Variable 1', type: EExtraFieldType.Text },
     ];
-    render(
-      <RichEditor
-        {...defaultProps}
-        defaultValue=""
-        templateVariables={templateVariables}
-      />,
-    );
+    render(<RichEditor {...defaultProps} defaultValue="" templateVariables={templateVariables} />);
     expect(screen.getByTestId('rich-editor-root')).toBeInTheDocument();
   });
-
 });
 
-describe('Spec §7.3 Чек-листы', () => {
+describe('Spec §7.3 Checklists', () => {
   it('withChecklists renders without crash', () => {
     const handleChangeChecklists = jest.fn();
-    render(
-      <RichEditor
-        {...defaultProps}
-        withChecklists
-        withToolbar
-        handleChangeChecklists={handleChangeChecklists}
-      />,
-    );
+    render(<RichEditor {...defaultProps} withChecklists withToolbar handleChangeChecklists={handleChangeChecklists} />);
     expect(screen.getByTestId('rich-editor-root')).toBeInTheDocument();
   });
-
 });
 
-describe('Spec §7.4 Ссылки и упоминания', () => {
+describe('Spec §7.4 Links and mentions', () => {
   it('withMentions and mentions prop render without crash', () => {
-    render(
-      <RichEditor
-        {...defaultProps}
-        withMentions
-        mentions={[{ id: 1, name: 'User One' }]}
-      />,
-    );
+    render(<RichEditor {...defaultProps} withMentions mentions={[{ id: 1, name: 'User One' }]} />);
     expect(screen.getByTestId('rich-editor-root')).toBeInTheDocument();
   });
-
 });
 
-describe('Spec §7.5 Вложения', () => {
+describe('Spec §7.5 Attachments', () => {
   it('renders with accountId for built-in upload', () => {
-    render(
-      <RichEditor {...defaultProps} accountId={1} />,
-    );
+    render(<RichEditor {...defaultProps} accountId={1} />);
     expect(screen.getByTestId('rich-editor-root')).toBeInTheDocument();
   });
 
   it('renders with onUploadAttachments prop', () => {
     const onUpload = jest.fn().mockResolvedValue(undefined);
-    render(
-      <RichEditor {...defaultProps} onUploadAttachments={onUpload} />,
-    );
+    render(<RichEditor {...defaultProps} onUploadAttachments={onUpload} />);
     expect(screen.getByTestId('rich-editor-root')).toBeInTheDocument();
   });
-
 });
 
-describe('Spec §7.6 Интеграция с формами', () => {
+describe('Spec §7.6 Form integration', () => {
   it('TaskDescriptionEditor profile: handleChange + handleChangeChecklists + VariableList children', () => {
     const handleChange = jest.fn().mockResolvedValue('');
     const handleChangeChecklists = jest.fn();
@@ -186,10 +149,9 @@ describe('Spec §7.6 Интеграция с формами', () => {
     );
     expect(screen.getByTestId('rich-editor-root')).toBeInTheDocument();
   });
-
 });
 
-describe('Spec §7.7 Крайние случаи', () => {
+describe('Spec §7.7 Edge cases', () => {
   it('empty defaultValue: editor mounts with empty content', () => {
     render(<RichEditor {...defaultProps} defaultValue="" />);
     expect(screen.getByTestId('rich-editor-root')).toBeInTheDocument();
@@ -208,8 +170,6 @@ describe('Spec §7.7 Крайние случаи', () => {
 
   it('long markdown in defaultValue does not throw on mount (best-effort)', () => {
     const longMarkdown = '# H\n' + 'text\n'.repeat(500);
-    expect(() =>
-      render(<RichEditor {...defaultProps} defaultValue={longMarkdown} />),
-    ).not.toThrow();
+    expect(() => render(<RichEditor {...defaultProps} defaultValue={longMarkdown} />)).not.toThrow();
   });
 });

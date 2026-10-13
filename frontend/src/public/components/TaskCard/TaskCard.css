@@ -3,28 +3,28 @@
 
 .container {
   position: relative;
-  padding: 80px;
+  padding: 8rem;
   overflow: visible;
   color: var(--pneumatic-color-black100);
-  background-color: white;
-  border-radius: 24px;
+  background-color: var(--pneumatic-color-white);
+  border-radius: 2.4rem;
   transition: box-shadow 0.2s ease-in-out;
 
   @media (--mobile) {
-    padding: 80px 32px;
+    padding: 8rem 3.2rem;
   }
 }
 
 .container_guest {
-  padding: 80px 0;
+  padding: 8rem 0;
 
   @media (--mobile) {
-    padding: 80px 0;
+    padding: 8rem 0;
   }
 
   .complete-form {
     @media (--mobile) {
-      padding: 32px;
+      padding: 3.2rem;
     }
 
     &::before {
@@ -37,18 +37,18 @@
 }
 
 .pretitle {
-  margin-bottom: 8px;
+  margin-bottom: 0.8rem;
   overflow: hidden;
-  font-size: 13px;
-  line-height: 16px;
+  font-size: 1.3rem;
+  line-height: 1.6rem;
   color: var(--pneumatic-color-black48);
 }
 
 .dot {
-  margin: 0 8px 2px;
   display: inline-block;
-  width: 4px;
-  height: 4px;
+  width: 0.4rem;
+  height: 0.4rem;
+  margin: 0 0.8rem 0.2rem;
   vertical-align: baseline;
   background: var(--pneumatic-color-black48);
   border-radius: 50%;
@@ -56,13 +56,13 @@
 
 .date {
   display: block;
-  font-size: 13px;
+  font-size: 1.3rem;
   font-weight: 600;
-  white-space: nowrap;
   color: var(--pneumatic-color-black48);
+  white-space: nowrap;
 
   @media (--mobile) {
-    margin: 0 0 8px;
+    margin: 0 0 0.8rem;
   }
 }
 
@@ -73,43 +73,42 @@
 .workflow-name {
   position: relative;
   margin-bottom: 0;
-  overflow-wrap: break-word;
   overflow: hidden;
   color: var(--pneumatic-color-black48);
+  overflow-wrap: break-word;
 }
 
 .task-name-container {
-  margin: 8px 0;
   display: flex;
+  margin: 0.8rem 0;
 }
 
 .task-name__urgent-marker {
-  margin-top: -2px;
-  margin-right: 8px;
-  padding: 1px 8px;
   display: inline-flex;
-  font-family: Nunito;
-  font-size: 13px;
+  padding: 0.1rem 0.8rem;
+  margin-top: -0.2rem;
+  margin-right: 0.8rem;
+  font-size: 1.3rem;
   font-weight: normal;
-  line-height: 16px;
+  line-height: 1.6rem;
   vertical-align: middle;
-  color: white;
+  color: var(--pneumatic-color-white);
   background: var(--pneumatic-notification-1);
-  border-radius: 14px;
+  border-radius: 1.4rem;
 }
 
 .description {
-  margin: 16px 0;
-  font-size: 15px;
-  line-height: 20px;
-  word-break: break-word;
+  margin: 1.6rem 0;
+  font-size: 1.5rem;
+  line-height: 2rem;
   color: var(--pneumatic-color-black72);
+  overflow-wrap: anywhere;
 }
 
 .info {
-  margin: 32px 0;
   display: flex;
   justify-content: space-between;
+  margin: 3.2rem 0;
 
   @media (--mobile) {
     flex-direction: column;
@@ -117,9 +116,9 @@
 }
 
 .performers {
-  margin: -0.4rem;
   display: flex;
   flex-wrap: wrap;
+  margin: -0.4rem;
 
   > * {
     margin: 0.4rem;
@@ -127,16 +126,16 @@
 }
 
 .performer {
-  align-items: center;
-  margin: 4px;
-  padding: 6px 8px;
   display: inline-flex;
-  font-size: 13px;
-  line-height: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.8rem;
+  margin: 0.4rem;
+  font-size: 1.3rem;
+  line-height: 1.6rem;
   color: var(--pneumatic-color-black100);
   background: var(--pneumatic-color-beige);
-  border-radius: 16px;
-  justify-content: space-between;
+  border-radius: 1.6rem;
 
   button {
     background-color: transparent;
@@ -145,13 +144,13 @@
 }
 
 .performer__avatar {
-  margin-right: 4px;
+  margin-right: 0.4rem;
 }
 
 .performer__delete {
-  margin-left: 4px;
-  cursor: pointer;
+  margin-left: 0.4rem;
   color: var(--pneumatic-color-black16);
+  cursor: pointer;
   transition: color 0.1s ease-in-out;
 
   &:hover {
@@ -162,34 +161,34 @@
 .complete-form {
   position: relative;
   z-index: 1;
-  margin: 32px 0;
-  padding: 32px;
+  padding: 3.2rem;
+  margin: 3.2rem 0;
 
   @media (--mobile) {
-    padding: 32px 0;
+    padding: 3.2rem 0;
   }
 
   &::before {
     position: absolute;
-    z-index: -1;
     top: 0;
     right: 0;
-    left: 0;
     bottom: 0;
+    left: 0;
+    z-index: -1;
     content: '';
     background: var(--pneumatic-color-beige);
-    border-radius: 24px;
+    border-radius: 2.4rem;
 
     @media (--mobile) {
-      right: -32px;
-      left: -32px;
+      right: -3.2rem;
+      left: -3.2rem;
     }
   }
 }
 
 .complete-form_readonly {
-  margin: 0;
   padding: 0;
+  margin: 0;
 
   &::before {
     display: none;
@@ -197,34 +196,47 @@
 }
 
 .task-output {
-  margin-bottom: 32px;
+  margin-bottom: 3.2rem;
 }
 
 .task-output__title {
-  margin-bottom: 24px;
-  font-size: 15px;
+  margin-bottom: 2.4rem;
+  font-size: 1.5rem;
   font-weight: bold;
-  line-height: 20px;
+  line-height: 2rem;
+}
+
+.absent-warning {
+  @mixin text-small;
+
+  display: flex;
+  align-items: center;
+  margin-top: 0.8rem;
+  color: var(--pneumatic-color-warning);
+
+  &-icon {
+    margin-right: 0.4rem;
+  }
 }
 
 .task-output__field {
-  margin: 0 0 20px;
+  margin: 0 0 2rem;
 
   :global .react-datepicker-wrapper input {
-    padding: 14px 50px 14px 16px !important;
     width: 100% !important;
+    padding: 1.4rem 5rem 1.4rem 1.6rem !important;
     font-family: Nunito, sans-serif !important;
-    font-size: 15px !important;
-    line-height: 20px !important;
-    color: #262522 !important;
-    background: var(--pneumatic-color-beige) !important;
-    border: 1px solid #dcdcdb !important;
-    border-radius: 8px !important;
+    font-size: 1.5rem !important;
+    line-height: 2rem !important;
+    color: var(--pneumatic-color-black100) !important;
     outline: none !important;
+    background: var(--pneumatic-color-beige) !important;
+    border: 0.1rem solid var(--pneumatic-color-black16) !important;
+    border-radius: 0.8rem !important;
     transition: 0.15s ease-in border-color !important;
 
     &:focus {
-      border-color: #979795 !important;
+      border-color: var(--pneumatic-color-black48) !important;
     }
 
     &::placeholder {
@@ -237,7 +249,7 @@
   display: flex;
 
   > * + * {
-    margin-left: 8px;
+    margin-left: 0.8rem;
   }
 }
 
@@ -250,24 +262,24 @@
 }
 
 .workflow-info {
-  margin-top: 32px;
+  margin-top: 3.2rem;
 }
 
 .minimize-log-button {
-  margin-top: 32px;
   width: 100%;
+  margin-top: 3.2rem;
 }
 
 .completed,
 .returned {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 
   &__text {
-    margin: 0 0 0 8px;
-    font-size: 13px;
-    line-height: 16px;
+    margin: 0 0 0 0.8rem;
+    font-size: 1.3rem;
+    line-height: 1.6rem;
   }
 
   &__text-date {
@@ -276,39 +288,39 @@
 }
 
 .completed__text {
-  color: #5fad56;
+  color: var(--pneumatic-color-success);
 }
 
 .returned__text {
-  color: #f44336;
+  color: var(--pneumatic-color-notification1);
 }
 
 .due-in {
-  margin-left: 8px;
-  padding: 0.6rem 0;
   display: block;
   flex-shrink: 0;
+  padding: 0.6rem 0;
+  margin-left: 0.8rem;
 
   @media (--mobile) {
-    margin: 32px 0 0;
+    margin: 3.2rem 0 0;
   }
 }
 
 .guest-task-name {
-  margin-bottom: 16px;
-  word-break: break-word;
+  margin-bottom: 1.6rem;
+  overflow-wrap: anywhere;
 }
 
 .help-trigger {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0;
   margin-bottom: 1.6rem;
   margin-left: auto;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
   font: inherit;
-  cursor: pointer;
   color: var(--pneumatic-color-link-dark);
+  cursor: pointer;
   background: none;
   border: none;
 

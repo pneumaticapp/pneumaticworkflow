@@ -2,11 +2,12 @@ import {
   IDueDate,
   IExtraField,
   IExtraFieldSelection,
-  ITemplateTask,
+  ITemplateTaskClient,
   ITemplateTaskPerformer,
   TOutputChecklist,
   TOutputChecklistItem,
 } from '../../../types/template';
+import { IFieldsetBindingClient } from '../../../types/fieldset';
 import {
   createTaskApiName,
   createFieldApiName,
@@ -19,11 +20,12 @@ import {
   createChecklistSelectionApiName,
   createDueDateApiName,
   createPerformerApiName,
+  createFieldsetBindingApiName,
 } from '../../../utils/createId';
 import { omit } from '../../../utils/helpers';
 import { ICondition, TConditionRule } from '../TaskForm/Conditions';
 
-export function getClonedTask(task: ITemplateTask) {
+export function getClonedTask(task: ITemplateTaskClient) {
   const mapChecklist: { [old: string]: string } = {};
   const mapSelectionsChecklist: { [old: string]: string } = {};
 
@@ -130,12 +132,20 @@ export function getClonedTask(task: ITemplateTask) {
   const createdTaskApiName = createTaskApiName();
   const clonedRawDueDate = cloneRawDueDate(task.rawDueDate, createdTaskApiName);
 
-  const clonedTask: ITemplateTask = {
+  const cloneFieldsets = (fieldsets: IFieldsetBindingClient[]): IFieldsetBindingClient[] => {
+    return fieldsets.map((fs) => ({
+      ...fs,
+      apiNameBinding: createFieldsetBindingApiName(),
+    }));
+  };
+
+  const clonedTask: ITemplateTaskClient = {
     ...omit(task, [
       'id',
       'apiName',
       'uuid',
       'fields',
+      'fieldsets',
       'conditions',
       'delay',
       'name',
@@ -149,6 +159,7 @@ export function getClonedTask(task: ITemplateTask) {
     apiName: createdTaskApiName,
     uuid: createUUID(),
     fields: cloneFields(task.fields),
+    fieldsets: cloneFieldsets(task.fieldsets),
     conditions: cloneConditions(task.conditions),
     delay: null,
     rawDueDate: clonedRawDueDate,

@@ -1,11 +1,13 @@
-import { ITemplate } from '../types/template';
+import { ITemplateResponse } from '../types/template';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { mapRequestBody } from '../utils/mappers';
 
 import { commonRequest } from './commonRequest';
 
 export function createTemplateByName(template: TCreateTemplateByNameRequest) {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   return commonRequest(
     urls.templateByName,
@@ -17,4 +19,4 @@ export function createTemplateByName(template: TCreateTemplateByNameRequest) {
   );
 }
 
-export type TCreateTemplateByNameRequest = Pick<ITemplate, 'name'>
+export type TCreateTemplateByNameRequest = Pick<ITemplateResponse, 'name'>;

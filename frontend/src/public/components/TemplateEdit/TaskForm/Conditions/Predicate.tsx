@@ -1,4 +1,3 @@
-/* eslint-disable indent */
 import React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
@@ -120,6 +119,7 @@ export function Predicate({
                 }}
                 isClearable={false}
                 options={dropdownOperators}
+                classNames={{ menu: () => styles['condition-rule__operator-menu'] }}
                 formatOptionLabel={(option: IDropdownOperator, { context }) =>
                   context === 'menu'
                     ? getFormattedDropdownOption({

@@ -1,22 +1,18 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { mapRequestBody } from '../utils/mappers';
-import { ITaskCommentAttachmentRequest } from '../types/workflow';
-import { TUploadedFile } from '../utils/uploadFiles';
 
 export interface ISendTaskCommentResponse {
   text: string;
   process: number;
-  attachments: TUploadedFile[];
 }
 
 export interface ISendTaskCommentConfig {
   taskId: number;
   text?: string;
-  attachments?: ITaskCommentAttachmentRequest[];
 }
 
-export function sendTaskComment({ taskId, text = '', attachments = [] }: ISendTaskCommentConfig) {
+export function sendTaskComment({ taskId, text = '' }: ISendTaskCommentConfig) {
   const {
     api: { urls },
   } = getBrowserConfigEnv();
@@ -26,7 +22,7 @@ export function sendTaskComment({ taskId, text = '', attachments = [] }: ISendTa
   return commonRequest<ISendTaskCommentResponse>(
     url,
     {
-      data: mapRequestBody({ text, attachments }),
+      data: mapRequestBody({ text }),
       method: 'POST',
     },
     { shouldThrow: true },

@@ -14,6 +14,7 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.workflows.field import (
     TaskFieldEventSerializer,
 )
+from src.processes.serializers.workflows.fieldset import FieldSetSerializer
 
 UserModel = get_user_model()
 
@@ -45,9 +46,11 @@ class ActivityKickoffValueSerializer(serializers.ModelSerializer):
         model = KickoffValue
         fields = (
             'output',
+            'fieldsets',
         )
 
     output = TaskFieldEventSerializer(many=True)
+    fieldsets = FieldSetSerializer(many=True)
 
 
 class ActivityWorkflowSerializer(serializers.ModelSerializer):
@@ -110,6 +113,7 @@ class EventHighlightsSerializer(serializers.ModelSerializer):
             'created_tsp',
             'user_id',
             'target_user_id',
+            'target_group_id',
             'workflow',
         )
 
@@ -126,8 +130,47 @@ class AccountDashboardOverviewSerializer(serializers.Serializer):
     snoozed = serializers.IntegerField(read_only=True)
 
 
+class DashboardOverviewResponseSerializer(serializers.Serializer):
+    """Actual SQL overview shape for workflows/tasks dashboards."""
+
+    in_progress = serializers.IntegerField(read_only=True)
+    started = serializers.IntegerField(read_only=True, allow_null=True)
+    completed = serializers.IntegerField(read_only=True, allow_null=True)
+    overdue = serializers.IntegerField(read_only=True)
+
+
+class WorkflowsDashboardBreakdownItemSerializer(serializers.Serializer):
+    template_id = serializers.IntegerField(read_only=True)
+    template_name = serializers.CharField(read_only=True)
+    is_active = serializers.BooleanField(read_only=True)
+    in_progress = serializers.IntegerField(read_only=True)
+    started = serializers.IntegerField(read_only=True, allow_null=True)
+    completed = serializers.IntegerField(read_only=True, allow_null=True)
+    overdue = serializers.IntegerField(read_only=True)
+
+
+class TasksDashboardBreakdownItemSerializer(serializers.Serializer):
+    template_id = serializers.IntegerField(read_only=True)
+    template_name = serializers.CharField(read_only=True)
+    in_progress = serializers.IntegerField(read_only=True)
+    started = serializers.IntegerField(read_only=True, allow_null=True)
+    completed = serializers.IntegerField(read_only=True, allow_null=True)
+    overdue = serializers.IntegerField(read_only=True)
+
+
+class DashboardBreakdownByStepItemSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(read_only=True)
+    number = serializers.IntegerField(read_only=True)
+    api_name = serializers.CharField(read_only=True)
+    in_progress = serializers.IntegerField(read_only=True)
+    started = serializers.IntegerField(read_only=True, allow_null=True)
+    completed = serializers.IntegerField(read_only=True, allow_null=True)
+    overdue = serializers.IntegerField(read_only=True)
+
+
 class DashboardFilterSerializer(DateTimeRangeSerializer):
-    now = serializers.BooleanField()
+    now = serializers.BooleanField(required=False)
 
 
 class BreakdownByStepsFilterSerializer(DashboardFilterSerializer):

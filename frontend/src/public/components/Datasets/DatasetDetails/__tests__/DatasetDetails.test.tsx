@@ -1,4 +1,3 @@
-// <reference types="jest" />
 import * as React from 'react';
 import { render, act } from '@testing-library/react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -7,11 +6,7 @@ import DatasetDetails from '../DatasetDetails';
 import { DatasetItemsList } from '../DatasetItemsList';
 import { Button } from '../../../UI';
 import { history } from '../../../../utils/history';
-import {
-  loadCurrentDataset,
-  resetCurrentDataset,
-  updateDatasetAction,
-} from '../../../../redux/datasets/slice';
+import { loadCurrentDataset, resetCurrentDataset, updateDatasetAction } from '../../../../redux/datasets/slice';
 import { getSortedAndFilteredDatasetItems } from '../../../../utils/dataset';
 import { intlMock } from '../../../../__stubs__/intlMock';
 
@@ -46,9 +41,7 @@ jest.mock('../../DatasetModal/DatasetModal', () => ({
 }));
 
 jest.mock('../DatasetDetailsSkeleton', () => ({
-  DatasetDetailsSkeleton: jest.fn(() =>
-    React.createElement('div', { 'data-testid': 'skeleton' }),
-  ),
+  DatasetDetailsSkeleton: jest.fn(() => React.createElement('div', { 'data-testid': 'skeleton' })),
 }));
 
 jest.mock('../DatasetItemsList', () => ({
@@ -173,14 +166,16 @@ describe('DatasetDetails', () => {
       onSaveNewRow('Cherry');
     });
 
-    expect(mockDispatch).toHaveBeenCalledWith(updateDatasetAction({
-      id: 42,
-      items: [
-        { id: 1, value: 'Apple', order: 0 },
-        { id: 2, value: 'Banana', order: 1 },
-        { value: 'Cherry', order: 2 },
-      ],
-    }));
+    expect(mockDispatch).toHaveBeenCalledWith(
+      updateDatasetAction({
+        id: 42,
+        items: [
+          { id: 1, value: 'Apple', order: 0 },
+          { id: 2, value: 'Banana', order: 1 },
+          { value: 'Cherry', order: 2 },
+        ],
+      }),
+    );
   });
 
   it('dispatches updateDatasetAction with filtered items on handleDeleteRow', () => {
@@ -191,12 +186,12 @@ describe('DatasetDetails', () => {
       onDeleteRow(1);
     });
 
-    expect(mockDispatch).toHaveBeenCalledWith(updateDatasetAction({
-      id: 42,
-      items: [
-        { id: 2, value: 'Banana', order: 1 },
-      ],
-    }));
+    expect(mockDispatch).toHaveBeenCalledWith(
+      updateDatasetAction({
+        id: 42,
+        items: [{ id: 2, value: 'Banana', order: 1 }],
+      }),
+    );
   });
 
   it('dispatches resetCurrentDataset on unmount', () => {

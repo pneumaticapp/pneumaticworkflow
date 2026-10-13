@@ -19,9 +19,13 @@ from src.processes.enums import (
     WorkflowStatus,
 )
 from src.processes.messages import workflow as messages
+from src.accounts.models import UserVacation
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.workflows.event import WorkflowEvent
-from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.workflows.task import (
+    Task,
+    TaskPerformer,
+)
 from src.processes.serializers.workflows.events import (
     TaskEventJsonSerializer,
 )
@@ -50,9 +54,17 @@ from src.processes.tests.fixtures import (
     create_test_admin,
     create_test_group,
     create_test_guest,
+    create_test_not_admin,
+    create_test_owner,
     create_test_template,
     create_test_user,
     create_test_workflow,
+)
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
+from src.processes.tests.guardian_helpers import (
+    assert_guardian_view,
 )
 
 UserModel = get_user_model()
@@ -868,6 +880,76 @@ class TestBasePerformersService:
         assert ex.value.message == messages.MSG_PW_0016
         delete_actions_mock.assert_not_called()
 
+    def test_get_valid_deleted_perf__user_with_group_user__ok(self):
+
+        """
+        USER + GROUP + completed GROUP_USER for the same user
+        → delete USER is allowed and returns the USER performer
+        """
+
+        # arrange
+        account = create_test_account()
+        owner = create_test_owner(account=account)
+        user_1 = create_test_admin(account=account)
+        group_1 = create_test_group(account=account, users=[user_1])
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            group_id=group_1.id,
+            type=PerformerType.GROUP,
+        )
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=owner.id,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
+            date_completed=timezone.now(),
+        )
+
+        # act
+        task_performer = (
+            BasePerformersService._get_valid_deleted_task_performer(
+                task=task,
+                user=owner,
+            )
+        )
+
+        # assert
+        assert task_performer.user_id == owner.id
+        assert task_performer.type == PerformerType.USER
+
+    def test_get_valid_deleted_perf__user_with_only_group_user__raise(self):
+
+        """
+        Sole actionable USER + GROUP_USER ghost
+        → delete USER is blocked (ghost must not inflate the count)
+        """
+
+        # arrange
+        account = create_test_account()
+        owner = create_test_owner(account=account)
+        other_user = create_test_admin(account=account)
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=other_user.id,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
+            date_completed=timezone.now(),
+        )
+
+        # act
+        with pytest.raises(PerformersServiceException) as ex:
+            BasePerformersService._get_valid_deleted_task_performer(
+                task=task,
+                user=owner,
+            )
+
+        # assert
+        assert ex.value.message == messages.MSG_PW_0016
+
 
 class TestTaskPerformersService:
 
@@ -1233,7 +1315,10 @@ class TestTaskPerformersService:
         )
 
         # assert
-        assert user_performer in workflow.members.all()
+        assert WorkflowPermissionService(workflow).has_view(
+            user=user_performer,
+        )
+        assert_guardian_view(workflow, user_performer)
         send_new_task_websocket_mock.assert_not_called()
         send_new_task_notification_mock.assert_called_once_with(
             logging=account.log_api_requests,
@@ -1318,7 +1403,10 @@ class TestTaskPerformersService:
         )
 
         # assert
-        assert user_performer in workflow.members.all()
+        assert WorkflowPermissionService(workflow).has_view(
+            user=user_performer,
+        )
+        assert_guardian_view(workflow, user_performer)
         send_new_task_websocket_mock.assert_not_called()
         send_new_task_notification_mock.assert_not_called()
         assert WorkflowEvent.objects.filter(
@@ -1542,7 +1630,9 @@ class TestTaskPerformersService:
             ).data,
         ).count() == 1
         workflow.refresh_from_db()
-        assert transfer_performer in workflow.members.all()
+        assert not WorkflowPermissionService(workflow).has_view(
+            user=transfer_performer,
+        )
 
     def test_create_actions__with_deleted_group_taskperformer__ok(
         self,
@@ -1607,7 +1697,10 @@ class TestTaskPerformersService:
         )
 
         # assert
-        assert user_performer in workflow.members.all()
+        assert WorkflowPermissionService(workflow).has_view(
+            user=user_performer,
+        )
+        assert_guardian_view(workflow, user_performer)
         send_new_task_websocket_mock.assert_not_called()
         send_new_task_notification_mock.assert_not_called()
         assert WorkflowEvent.objects.filter(
@@ -1678,9 +1771,9 @@ class TestTaskPerformersService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_deleted_event',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_task_deleted_notification.delay',
         )
         is_superuser = False
         auth_type = AuthTokenType.USER
@@ -1702,7 +1795,7 @@ class TestTaskPerformersService:
             task=task,
             performer=deleted_performer,
         )
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
 
     def test_delete_actions_not_last_completed__not_complete_task(
         self,
@@ -1754,9 +1847,9 @@ class TestTaskPerformersService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_deleted_event',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_task_deleted_notification.delay',
         )
         is_superuser = False
         auth_type = AuthTokenType.USER
@@ -1778,7 +1871,7 @@ class TestTaskPerformersService:
             task=task,
             performer=deleted_performer,
         )
-        send_removed_task_notification_mock.assert_called_once_with(
+        send_task_deleted_notification_mock.assert_called_once_with(
             task_id=task.id,
             recipients=[(deleted_performer.id, deleted_performer.email)],
             account_id=account.id,
@@ -1835,9 +1928,9 @@ class TestTaskPerformersService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_deleted_event',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_task_deleted_notification.delay',
         )
         is_superuser = False
         auth_type = AuthTokenType.USER
@@ -1864,7 +1957,7 @@ class TestTaskPerformersService:
             task=task,
             performer=deleted_performer,
         )
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
 
     def test_delete_actions__rcba_last_completed_performer__complete_task(
         self,
@@ -1922,9 +2015,9 @@ class TestTaskPerformersService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_deleted_event',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_task_deleted_notification.delay',
         )
         is_superuser = False
         auth_type = AuthTokenType.USER
@@ -1951,7 +2044,7 @@ class TestTaskPerformersService:
             task=task,
             performer=deleted_performer,
         )
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
 
     def test_delete_actions__with_deleted_group_taskperformer__ok(
         self,
@@ -2008,9 +2101,9 @@ class TestTaskPerformersService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_deleted_event',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_task_deleted_notification.delay',
         )
         is_superuser = False
         auth_type = AuthTokenType.USER
@@ -2032,7 +2125,97 @@ class TestTaskPerformersService:
             task=task,
             performer=deleted_performer,
         )
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
+
+    def test_delete_actions__sub_group__no_run_actions(
+        self,
+        mocker,
+    ):
+        """When user has vacation substitute group, the group
+        performer is deleted with run_actions=False to avoid
+        misleading events and notifications."""
+
+        # arrange
+        account = create_test_account()
+
+        request_user = create_test_admin(
+            account=account, email='request@test.test',
+        )
+        deleted_performer = create_test_admin(
+            account=account, email='performer@test.test',
+        )
+
+        sub_group = create_test_group(
+            account=account,
+            name='SubGroup',
+        )
+        UserVacation.objects.create(
+            user=deleted_performer,
+            account=account,
+            substitute_group=sub_group,
+        )
+
+        workflow = create_test_workflow(request_user)
+        task = workflow.tasks.get(number=1)
+
+        TaskPerformer.objects.create(
+            task=task,
+            group=sub_group,
+            type=PerformerType.GROUP,
+        )
+
+        mocker.patch(
+            'src.processes.services.events.'
+            'WorkflowEventService.performer_deleted_event',
+        )
+        group_performer_service_init_mock = (
+            mocker.patch.object(
+                GroupPerformerService,
+                attribute='__init__',
+                return_value=None,
+            )
+        )
+        delete_performer_mock = mocker.patch.object(
+            GroupPerformerService,
+            attribute='delete_performer',
+        )
+        send_task_deleted_notification_mock = (
+            mocker.patch(
+                'src.notifications.tasks'
+                '.send_task_deleted_notification.delay',
+            )
+        )
+
+        # act
+        TaskPerformersService._delete_actions(
+            request_user=request_user,
+            user=deleted_performer,
+            task=task,
+            auth_type=AuthTokenType.USER,
+            is_superuser=False,
+        )
+
+        # assert
+        group_performer_service_init_mock.assert_called_once_with(
+            user=request_user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
+        )
+        delete_performer_mock.assert_called_once_with(
+            group_id=sub_group.id,
+            run_actions=False,
+        )
+        send_task_deleted_notification_mock.assert_called_once_with(
+            task_id=task.id,
+            recipients=[
+                (
+                    deleted_performer.id,
+                    deleted_performer.email,
+                ),
+            ],
+            account_id=account.id,
+        )
 
 
 class TestGuestPerformersService:
@@ -2526,6 +2709,52 @@ class TestBasePerformerService2:
             service._get_valid_deleted_task_performer(
                     group=group,
                 )
+
+        # assert
+        assert ex.value.message == messages.MSG_PW_0016
+
+    def test_get_valid_deleted_task_performer__group_with_group_user__raise(
+        self,
+    ):
+
+        """
+        Sole actionable GROUP + GROUP_USER ghost
+        → delete GROUP is blocked (ghost must not inflate the count)
+        """
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(account=account)
+        other_user = create_test_admin(account=account)
+        template = create_test_template(user=user, is_active=True)
+        group = create_test_group(account, users=[user])
+        task_template = template.tasks.get(number=1)
+        task_template.delete_raw_performers()
+        task_template.add_raw_performer(
+            group=group,
+            performer_type=PerformerType.GROUP,
+        )
+        workflow = create_test_workflow(user, template=template)
+        task = workflow.tasks.get(number=1)
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=other_user.id,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
+            date_completed=timezone.now(),
+        )
+        service = BasePerformerService2(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
+        )
+
+        # act
+        with pytest.raises(GroupPerformerServiceException) as ex:
+            service._get_valid_deleted_task_performer(
+                group=group,
+            )
 
         # assert
         assert ex.value.message == messages.MSG_PW_0016
@@ -3362,9 +3591,9 @@ class TestGroupPerformerService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_group_deleted_event',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_task_deleted_notification.delay',
         )
         workflow_action_service_init_mock = mocker.patch.object(
             WorkflowActionService,
@@ -3391,7 +3620,7 @@ class TestGroupPerformerService:
             task=task,
             performer=group,
         )
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
         complete_task_mock.assert_called_once_with(task=task)
 
     def test_delete_group_actions__task_completed__ok(self, mocker):
@@ -3422,9 +3651,9 @@ class TestGroupPerformerService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_group_deleted_event',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_task_deleted_notification.delay',
         )
         workflow_action_service_init_mock = mocker.patch.object(
             WorkflowActionService,
@@ -3445,7 +3674,7 @@ class TestGroupPerformerService:
             task=task,
             performer=group,
         )
-        send_removed_task_notification_mock.assert_called_once_with(
+        send_task_deleted_notification_mock.assert_called_once_with(
             task_id=task.id,
             recipients=[(user2.id, user2.email)],
             account_id=account.id,
@@ -3483,9 +3712,9 @@ class TestGroupPerformerService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_group_deleted_event',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_task_deleted_notification.delay',
         )
         workflow_action_service_init_mock = mocker.patch.object(
             WorkflowActionService,
@@ -3506,6 +3735,491 @@ class TestGroupPerformerService:
             task=task,
             performer=group,
         )
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
         workflow_action_service_init_mock.assert_not_called()
         complete_task_mock.assert_not_called()
+
+    def test_del_group_actions__refresh_before_check__ok(
+        self,
+        mocker,
+    ):
+        """refresh_from_db prevents stale task state from
+        causing double completion."""
+
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        user2 = create_test_user(
+            account=account,
+            email='test2@test.test',
+        )
+        group = create_test_group(account, users=[user2])
+        template = create_test_template(
+            user=user,
+            is_active=True,
+        )
+        workflow = create_test_workflow(
+            user=user,
+            template=template,
+        )
+        task = workflow.tasks.get(number=1)
+        performer = task.taskperformer_set.get(user=user)
+        performer.is_completed = True
+        performer.save()
+        task.add_raw_performer(
+            group_id=group.id,
+            performer_type=PerformerType.GROUP,
+        )
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
+        )
+        mocker.patch(
+            'src.processes.services.events.'
+            'WorkflowEventService'
+            '.performer_group_deleted_event',
+        )
+
+        # mark task as completed in DB directly
+        # to simulate concurrent completion
+        Task.objects.filter(
+            id=task.id,
+        ).update(status=TaskStatus.COMPLETED)
+
+        workflow_action_service_init_mock = (
+            mocker.patch.object(
+                WorkflowActionService,
+                attribute='__init__',
+                return_value=None,
+            )
+        )
+        complete_task_mock = mocker.patch(
+            'src.processes.services.workflow_action'
+            '.WorkflowActionService.complete_task',
+        )
+
+        # act
+        service._delete_group_actions(group=group)
+
+        # assert — refresh_from_db picks up COMPLETED
+        # status, so can_be_completed returns False
+        workflow_action_service_init_mock.assert_not_called()
+        complete_task_mock.assert_not_called()
+
+
+class TestReassignPermissionsCalledFromActions:
+    """
+    Verify that all performer service _create_actions and _delete_actions
+    call reassign_restricted_permissions_for_task.
+    These are regression tests for the permission fix.
+    """
+
+    # --- TaskPerformersService ---
+
+    def test_task_performers__create_actions__calls_reassign(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        request_user = create_test_owner(account=account)
+        user_performer = create_test_not_admin(
+            account=account,
+            email='perf_reassign_c@test.test',
+        )
+        workflow = create_test_workflow(request_user)
+        task = workflow.tasks.get(number=1)
+        send_notification_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'send_new_task_notification.delay',
+        )
+        reassign_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'reassign_restricted_permissions_for_task',
+        )
+
+        # act
+        TaskPerformersService._create_actions(
+            task=task,
+            user=user_performer,
+            request_user=request_user,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
+        )
+
+        # assert
+        reassign_mock.assert_called_once_with(
+            task=task,
+            user=request_user,
+        )
+        send_notification_mock.assert_called_once()
+
+    def test_task_performers__delete_actions__calls_reassign(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        request_user = create_test_owner(account=account)
+        user_performer = create_test_not_admin(
+            account=account,
+            email='perf_reassign_d@test.test',
+        )
+        workflow = create_test_workflow(request_user)
+        task = workflow.tasks.get(number=1)
+        task.taskperformer_set.create(
+            user=user_performer,
+            is_completed=False,
+        )
+        performer_deleted_event_mock = mocker.patch(
+            'src.processes.services.events.'
+            'WorkflowEventService.performer_deleted_event',
+        )
+        send_deleted_notification_mock = mocker.patch(
+            'src.notifications.tasks'
+            '.send_task_deleted_notification.delay',
+        )
+        reassign_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'reassign_restricted_permissions_for_task',
+        )
+
+        # act
+        TaskPerformersService._delete_actions(
+            task=task,
+            user=user_performer,
+            request_user=request_user,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
+        )
+
+        # assert
+        reassign_mock.assert_called_once_with(
+            task=task,
+            user=request_user,
+        )
+        performer_deleted_event_mock.assert_called_once()
+        send_deleted_notification_mock.assert_called_once()
+
+    # --- GuestPerformersService ---
+
+    def test_guest_performers__create_actions__calls_reassign(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        request_user = create_test_owner(account=account)
+        guest = create_test_guest(account=account)
+        workflow = create_test_workflow(request_user)
+        task = workflow.tasks.get(number=1)
+        get_str_token_mock = mocker.patch(
+            'src.authentication.services.guest_auth.'
+            'GuestJWTAuthService.get_str_token',
+            return_value='token_str',
+        )
+        send_guest_new_task_mock = mocker.patch(
+            'src.notifications.tasks.send_guest_new_task.delay',
+        )
+        guest_invite_sent_mock = mocker.patch(
+            'src.analysis.services.AnalyticService.'
+            'users_guest_invite_sent',
+        )
+        guest_invited_mock = mocker.patch(
+            'src.analysis.services.AnalyticService.'
+            'users_guest_invited',
+        )
+        activate_cache_mock = mocker.patch(
+            'src.authentication.services.guest_auth.'
+            'GuestJWTAuthService.activate_task_guest_cache',
+        )
+        reassign_mock = mocker.patch(
+            'src.processes.services.tasks.guests.'
+            'reassign_restricted_permissions_for_task',
+        )
+
+        # act
+        GuestPerformersService._create_actions(
+            task=task,
+            user=guest,
+            request_user=request_user,
+            current_url='/page',
+            is_superuser=False,
+        )
+
+        # assert
+        reassign_mock.assert_called_once_with(
+            task=task,
+            user=request_user,
+        )
+        get_str_token_mock.assert_called_once()
+        send_guest_new_task_mock.assert_called_once()
+        guest_invite_sent_mock.assert_called_once()
+        guest_invited_mock.assert_called_once()
+        activate_cache_mock.assert_called_once()
+
+    def test_guest_performers__delete_actions__calls_reassign(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        request_user = create_test_owner(account=account)
+        guest = create_test_guest(account=account)
+        user_performer_stay = create_test_not_admin(
+            account=account,
+            email='stay@test.test',
+        )
+        workflow = create_test_workflow(request_user)
+        task = workflow.tasks.get(number=1)
+        task.taskperformer_set.create(
+            user=user_performer_stay,
+            is_completed=False,
+        )
+        task.taskperformer_set.create(
+            user=guest,
+            is_completed=False,
+            directly_status=DirectlyStatus.DELETED,
+        )
+        performer_deleted_event_mock = mocker.patch(
+            'src.processes.services.events.'
+            'WorkflowEventService.performer_deleted_event',
+        )
+        send_deleted_notification_mock = mocker.patch(
+            'src.notifications.tasks'
+            '.send_task_deleted_notification.delay',
+        )
+        deactivate_cache_mock = mocker.patch(
+            'src.authentication.services.guest_auth.'
+            'GuestJWTAuthService.deactivate_task_guest_cache',
+        )
+        reassign_mock = mocker.patch(
+            'src.processes.services.tasks.guests.'
+            'reassign_restricted_permissions_for_task',
+        )
+
+        # act
+        GuestPerformersService._delete_actions(
+            task=task,
+            user=guest,
+            request_user=request_user,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
+        )
+
+        # assert
+        reassign_mock.assert_called_once_with(
+            task=task,
+            user=request_user,
+        )
+        performer_deleted_event_mock.assert_called_once()
+        send_deleted_notification_mock.assert_not_called()
+        deactivate_cache_mock.assert_called_once()
+
+    # --- GroupPerformerService ---
+
+    def test_group__create_group_actions__calls_reassign(
+        self, mocker,
+    ):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_admin(account=account)
+        user2 = create_test_not_admin(
+            account=account,
+            email='g2@test.test',
+        )
+        group = create_test_group(account, users=[user2])
+        workflow = create_test_workflow(user=user)
+        task = workflow.tasks.get(number=1)
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
+        )
+        group_created_event_mock = mocker.patch(
+            'src.processes.services.events.'
+            'WorkflowEventService.performer_group_created_event',
+        )
+        send_notification_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'send_new_task_notification.delay',
+        )
+        send_websocket_mock = mocker.patch(
+            'src.notifications.tasks'
+            '.send_new_task_websocket.delay',
+        )
+        reassign_mock = mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'reassign_restricted_permissions_for_task',
+        )
+
+        # act
+        service._create_group_actions(group=group)
+
+        # assert
+        reassign_mock.assert_called_once_with(
+            task=task,
+            user=user,
+        )
+        group_created_event_mock.assert_called_once()
+        send_notification_mock.assert_called_once()
+        send_websocket_mock.assert_not_called()
+
+    def test_group__delete_group_actions__calls_reassign(
+        self, mocker,
+    ):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_admin(account=account)
+        user2 = create_test_not_admin(
+            account=account,
+            email='g2d@test.test',
+        )
+        group = create_test_group(account, users=[user2])
+        workflow = create_test_workflow(user=user)
+        task = workflow.tasks.get(number=1)
+        task.taskperformer_set.create(
+            user=user2,
+            is_completed=False,
+        )
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
+        )
+        group_deleted_event_mock = mocker.patch(
+            'src.processes.services.events.'
+            'WorkflowEventService.performer_group_deleted_event',
+        )
+        send_deleted_notification_mock = mocker.patch(
+            'src.notifications.tasks'
+            '.send_task_deleted_notification.delay',
+        )
+        reassign_mock = mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'reassign_restricted_permissions_for_task',
+        )
+
+        # act
+        service._delete_group_actions(group=group)
+
+        # assert
+        reassign_mock.assert_called_once_with(
+            task=task,
+            user=user,
+        )
+        group_deleted_event_mock.assert_called_once()
+        send_deleted_notification_mock.assert_not_called()
+
+
+class TestTaskPerformersDeleteAttachmentSync:
+
+    def test_delete_actions__calls_sync_attachment_permissions(
+        self,
+        mocker,
+    ):
+        """_delete_actions must trigger sync_workflow_attachment_permissions
+        after sync_view to revoke stale file access."""
+
+        # arrange
+        account = create_test_account()
+        owner = create_test_owner(account=account)
+        performer = create_test_not_admin(
+            account=account, email='perf@test.test',
+        )
+        template = create_test_template(
+            user=owner, is_active=True, tasks_count=1,
+        )
+        template.tasks.first().add_raw_performer(user=performer)
+        workflow = create_test_workflow(
+            user=owner, template=template,
+        )
+        task = workflow.tasks.first()
+        sync_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'schedule_sync_workflow_attachment_permissions',
+        )
+        mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'WorkflowPermissionService.sync_view',
+        )
+        mocker.patch(
+            'src.processes.services.events.'
+            'WorkflowEventService.performer_deleted_event',
+        )
+        mocker.patch(
+            'src.analysis.services.AnalyticService.'
+            'task_performer_deleted',
+        )
+        mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'reassign_restricted_permissions_for_task',
+        )
+
+        # act
+        TaskPerformersService._delete_actions(
+            task=task,
+            user=performer,
+            request_user=owner,
+            is_superuser=False,
+            auth_type='User',
+        )
+
+        # assert
+        sync_mock.assert_called_once_with(task.workflow_id)
+
+
+class TestGroupPerformerDeleteAttachmentSync:
+
+    def test_delete_group_actions__calls_sync_attachments(
+        self,
+        mocker,
+    ):
+        """_delete_group_actions must trigger
+        sync_workflow_attachment_permissions after revoke/sync_view
+        and reassign_restricted_permissions_for_task
+        to revoke stale file access for removed group."""
+
+        # arrange
+        account = create_test_account()
+        user = create_test_admin(account=account)
+        user2 = create_test_not_admin(
+            account=account,
+            email='g_att@test.test',
+        )
+        group = create_test_group(account, users=[user2])
+        workflow = create_test_workflow(user=user)
+        task = workflow.tasks.get(number=1)
+        task.taskperformer_set.create(
+            user=user2,
+            is_completed=False,
+        )
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
+        )
+        sync_mock = mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'schedule_sync_workflow_attachment_permissions',
+        )
+        mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'WorkflowPermissionService.sync_performer_group',
+        )
+        mocker.patch(
+            'src.processes.services.events.'
+            'WorkflowEventService'
+            '.performer_group_deleted_event',
+        )
+        mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'reassign_restricted_permissions_for_task',
+        )
+
+        # act
+        service._delete_group_actions(group=group)
+
+        # assert
+        sync_mock.assert_called_once_with(
+            task.workflow_id,
+        )

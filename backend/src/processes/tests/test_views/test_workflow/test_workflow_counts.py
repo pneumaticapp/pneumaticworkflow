@@ -1,4 +1,5 @@
 import pytest
+from django.utils import timezone
 from rest_framework import status
 
 from src.accounts.enums import BillingPlanType
@@ -14,12 +15,19 @@ from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_admin,
     create_test_group,
+    create_test_not_admin,
+    create_test_owner,
     create_test_template,
     create_test_user,
     create_test_workflow,
 )
 from src.utils.validation import ErrorCode
+from src.permissions.enums import PermissionSource
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -35,9 +43,17 @@ class TestWorkflowCountsByWorkflowStarter:
         create_test_workflow(user_1, is_external=True)
         create_test_workflow(user_1)
         workflow_3 = create_test_workflow(user_2)
-        workflow_3.owners.add(user_1)
+        WorkflowPermissionService(workflow_3).grant_change(
+            user=user_1,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         workflow_4 = create_test_workflow(user_2)
-        workflow_4.owners.add(user_1)
+        WorkflowPermissionService(workflow_4).grant_change(
+            user=user_1,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         api_client.token_authenticate(user_1)
 
         # act
@@ -97,11 +113,19 @@ class TestWorkflowCountsByWorkflowStarter:
         external_workflow_done.save()
         create_test_workflow(user_1)
         workflow_3 = create_test_workflow(user_2)
-        workflow_3.owners.add(user_1)
+        WorkflowPermissionService(workflow_3).grant_change(
+            user=user_1,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         workflow_done = create_test_workflow(user_2)
         workflow_done.status = WorkflowStatus.DONE
         workflow_done.save()
-        workflow_done.owners.add(user_1)
+        WorkflowPermissionService(workflow_done).grant_change(
+            user=user_1,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         api_client.token_authenticate(user_1)
 
         # act
@@ -277,7 +301,11 @@ class TestWorkflowCountsByWorkflowStarter:
             email='user3@test.test',
             is_account_owner=False,
         )
-        workflow.owners.add(request_user)
+        WorkflowPermissionService(workflow).grant_change(
+            user=request_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task = workflow.tasks.get(number=1)
         task.taskperformer_set.all().delete()
         performer_1 = create_test_user(
@@ -324,7 +352,11 @@ class TestWorkflowCountsByWorkflowStarter:
             email='performer_1@test.test',
             is_account_owner=False,
         )
-        workflow_1.owners.add(request_user)
+        WorkflowPermissionService(workflow_1).grant_change(
+            user=request_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task_1 = workflow_1.tasks.get(number=1)
         task_1.taskperformer_set.all().delete()
         TaskPerformer.objects.create(
@@ -337,7 +369,11 @@ class TestWorkflowCountsByWorkflowStarter:
             email='performer_2@test.test',
             is_account_owner=False,
         )
-        workflow_2.owners.add(request_user)
+        WorkflowPermissionService(workflow_2).grant_change(
+            user=request_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task_2 = workflow_2.tasks.get(number=1)
         task_2.taskperformer_set.all().delete()
         TaskPerformer.objects.create(
@@ -422,7 +458,11 @@ class TestWorkflowCountsByWorkflowStarter:
             is_account_owner=False,
         )
 
-        workflow.owners.add(request_user)
+        WorkflowPermissionService(workflow).grant_change(
+            user=request_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task = workflow.tasks.get(number=1)
         task.taskperformer_set.all().delete()
         group_user = create_test_user(
@@ -474,7 +514,11 @@ class TestWorkflowCountsByWorkflowStarter:
             email='group_user_1@test.test',
             is_account_owner=False,
         )
-        workflow_1.owners.add(request_user)
+        WorkflowPermissionService(workflow_1).grant_change(
+            user=request_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task_1 = workflow_1.tasks.get(number=1)
         task_1.taskperformer_set.all().delete()
         group_1 = create_test_group(
@@ -492,7 +536,11 @@ class TestWorkflowCountsByWorkflowStarter:
             email='group_user_2@test.test',
             is_account_owner=False,
         )
-        workflow_2.owners.add(request_user)
+        WorkflowPermissionService(workflow_2).grant_change(
+            user=request_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task_2 = workflow_2.tasks.get(number=1)
         task_2.taskperformer_set.all().delete()
         group_2 = create_test_group(
@@ -534,7 +582,11 @@ class TestWorkflowCountsByWorkflowStarter:
             email='user3@test.test',
             is_account_owner=False,
         )
-        workflow_1.owners.add(request_user)
+        WorkflowPermissionService(workflow_1).grant_change(
+            user=request_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task_1 = workflow_1.tasks.get(number=1)
         task_1.taskperformer_set.all().delete()
         performer = create_test_user(
@@ -552,7 +604,11 @@ class TestWorkflowCountsByWorkflowStarter:
             email='group_user_2@test.test',
             is_account_owner=False,
         )
-        workflow_2.owners.add(request_user)
+        WorkflowPermissionService(workflow_2).grant_change(
+            user=request_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task_2 = workflow_2.tasks.get(number=1)
         task_2.taskperformer_set.all().delete()
         group = create_test_group(
@@ -623,7 +679,11 @@ class TestWorkflowCountsByCPerformer:
         create_test_workflow(user_1, is_external=True)
         create_test_workflow(user_1)
         workflow_3 = create_test_workflow(user_2)
-        workflow_3.owners.add(user_1)
+        WorkflowPermissionService(workflow_3).grant_change(
+            user=user_1,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         api_client.token_authenticate(user_1)
 
         # act
@@ -650,7 +710,11 @@ class TestWorkflowCountsByCPerformer:
             email='user1@test.test',
             is_account_owner=False,
         )
-        workflow.owners.add(user_1)
+        WorkflowPermissionService(workflow).grant_change(
+            user=user_1,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         group = create_test_group(account, users=[user_1])
         task = workflow.tasks.get(number=1)
         TaskPerformer.objects.create(
@@ -769,11 +833,23 @@ class TestWorkflowCountsByCPerformer:
             template=template_1,
             is_external=True,
         )
-        workflow_1.owners.add(user_2)
+        WorkflowPermissionService(workflow_1).grant_change(
+            user=user_2,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         workflow_2 = create_test_workflow(user_1, template=template_2)
-        workflow_2.owners.add(user_2)
+        WorkflowPermissionService(workflow_2).grant_change(
+            user=user_2,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         workflow_3 = create_test_workflow(user_1, template=template_3)
-        workflow_3.owners.add(user_2)
+        WorkflowPermissionService(workflow_3).grant_change(
+            user=user_2,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
 
         api_client.token_authenticate(user_2)
 
@@ -1800,3 +1876,140 @@ def test_workflow_counts__template_starter__includes_own_workflows(api_client):
     data = response.json()
     starter_counts = next(x for x in data if x['source_id'] == starter_user.id)
     assert starter_counts['workflows_count'] == 1
+
+
+class TestWorkflowCountsByCPerformerGroupUser:
+
+    def test__group_user_ghost__not_in_user_count(self, api_client):
+
+        """
+        GROUP with user_2 only + ghost GROUP_USER(user_1)
+        → user_1 absent from by-current-performer user breakdown
+        """
+
+        # arrange
+        account = create_test_account()
+        owner = create_test_owner(account=account)
+        user_1 = create_test_not_admin(account=account)
+        user_2 = create_test_admin(account=account)
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        group_1 = create_test_group(account=account, users=[user_2])
+        TaskPerformer.objects.filter(task_id=task.id).update(
+            type=PerformerType.GROUP,
+            group_id=group_1.id,
+            user_id=None,
+        )
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=user_1.id,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
+            date_completed=timezone.now(),
+        )
+        api_client.token_authenticate(owner)
+
+        # act
+        response = api_client.get('/workflows/count/by-current-performer')
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 2
+        assert response.data[0]['type'] == 'group'
+        assert response.data[0]['source_id'] == group_1.id
+        assert response.data[0]['workflows_count'] == 1
+        assert response.data[1]['type'] == 'user'
+        assert response.data[1]['source_id'] == user_2.id
+        assert response.data[1]['workflows_count'] == 1
+
+    def test__user_with_group_user__in_user_count(self, api_client):
+
+        """
+        USER + GROUP_USER for same user → user appears in user breakdown
+        """
+
+        # arrange
+        account = create_test_account()
+        owner = create_test_owner(account=account)
+        user_1 = create_test_not_admin(account=account)
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        TaskPerformer.objects.filter(task_id=task.id).update(
+            user_id=user_1.id,
+        )
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=user_1.id,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
+            date_completed=timezone.now(),
+        )
+        api_client.token_authenticate(owner)
+
+        # act
+        response = api_client.get('/workflows/count/by-current-performer')
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 1
+        assert response.data[0]['type'] == 'user'
+        assert response.data[0]['source_id'] == user_1.id
+        assert response.data[0]['workflows_count'] == 1
+
+
+class TestWorkflowCountsByWorkflowStarterGroupUser:
+
+    def test__filter_current_performer_ids__group_user_only__empty(
+        self,
+        api_client,
+    ):
+
+        """
+        Ghost GROUP_USER without USER → filter by current_performer_ids
+        does not count the workflow for that user
+        """
+
+        # arrange
+        account = create_test_account()
+        owner = create_test_owner(account=account)
+        user_1 = create_test_not_admin(account=account)
+        user_2 = create_test_admin(account=account)
+        request_user = create_test_admin(
+            account=account,
+            email='request@test.test',
+        )
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        WorkflowPermissionService(workflow).grant_view(
+            user=request_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=workflow.template_id,
+        )
+        task = workflow.tasks.get(number=1)
+        group_1 = create_test_group(account=account, users=[user_2])
+        TaskPerformer.objects.filter(task_id=task.id).update(
+            type=PerformerType.GROUP,
+            group_id=group_1.id,
+            user_id=None,
+        )
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=user_1.id,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
+            date_completed=timezone.now(),
+        )
+        api_client.token_authenticate(request_user)
+
+        # act
+        response = api_client.get(
+            '/workflows/count/by-workflow-starter',
+            data={
+                'current_performer_ids': f'{user_1.id}',
+            },
+        )
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 1
+        assert response.data[0]['source_id'] == -1
+        assert response.data[0]['workflows_count'] == 0

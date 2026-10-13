@@ -103,9 +103,7 @@ class TestSendTasksDigest:
 
         for task in second_workflow.tasks.order_by('number').all():
             api_client.post(
-                f'/workflows/{second_workflow.id}/task-complete', data={
-                    'task_id': task.id,
-                },
+                f'/v2/tasks/{task.id}/complete',
             )
 
         Workflow.objects.on_account(user.account_id).update(
@@ -344,10 +342,7 @@ class TestSendTasksDigest:
 
         for task in second_workflow.tasks.order_by('number').all():
             api_client.post(
-                f'/workflows/{second_workflow.id}/task-complete',
-                data={
-                    'task_id': task.id,
-                },
+                f'/v2/tasks/{task.id}/complete',
             )
         email_service_tasks_digest = mocker.patch(
             'src.notifications.tasks.'
@@ -551,10 +546,7 @@ class TestSendTasksDigest:
 
         for task in second_workflow.tasks.order_by('number').all():
             api_client.post(
-                f'/workflows/{second_workflow.id}/task-complete',
-                data={
-                    'task_id': task.id,
-                },
+                f'/v2/tasks/{task.id}/complete',
             )
 
         Workflow.objects.on_account(user.account_id).update(

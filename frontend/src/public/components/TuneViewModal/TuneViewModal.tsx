@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector, useDispatch } from 'react-redux';
 
@@ -43,14 +44,20 @@ export function TuneViewModal() {
 
       const tasksToOpen = new Set<string>();
       templateTasks?.forEach((task) => {
-        const hasSelectedFields = task.fields?.some((field) => savedFieldsSet.has(field.apiName));
+        const hasSelectedFields = task.mergedOutputs?.some((output) => {
+          if (output.kind === 'fieldset') {
+            return output.data.fields.some((field) => savedFieldsSet.has(field.apiName));
+          }
+
+          return savedFieldsSet.has(output.field.apiName);
+        });
         if (hasSelectedFields) {
           tasksToOpen.add(task.apiName);
         }
       });
       setOpenedTasks(tasksToOpen);
     }
-  }, [isOpen, templateId, templateTasks]);
+  }, [isOpen, templateId, templateTasks, savedFields]);
 
   const shouldRender = useDelayUnmount(isOpen, 150);
   if (!shouldRender) {
@@ -73,6 +80,8 @@ export function TuneViewModal() {
     footer: styles['tune-view-modal__footer'],
     footerButton: styles['footer-button'],
     tooltip: styles['tune-view-modal__tooltip'],
+    fieldsetGroup: styles['tune-view-modal__fieldset-group'],
+    fieldsetTitle: styles['tune-view-modal__fieldset-title'],
   };
   const MESSAGES = {
     title: 'workflow.tune-view-modal-title',
@@ -109,14 +118,16 @@ export function TuneViewModal() {
   const handleApplyChanges = (type: 'personal' | 'account') => {
     const orderedFields: TOrderedFields[] = [];
     let orderIndex = 0;
-    templateTasks.forEach(({ fields }) => {
-      fields.forEach(({ apiName }) => {
-        if (selectedFields.has(apiName)) {
-          orderedFields.push({
-            order: (orderIndex += 1),
-            width: 1,
-            apiName,
+    templateTasks.forEach(({ mergedOutputs }) => {
+      mergedOutputs.forEach((output) => {
+        if (output.kind === 'fieldset') {
+          output.data.fields.forEach(({ apiName }) => {
+            if (selectedFields.has(apiName)) {
+              orderedFields.push({ order: (orderIndex += 1), width: 1, apiName });
+            }
           });
+        } else if (selectedFields.has(output.field.apiName)) {
+          orderedFields.push({ order: (orderIndex += 1), width: 1, apiName: output.field.apiName });
         }
       });
     });
@@ -126,6 +137,35 @@ export function TuneViewModal() {
     handleClose();
   };
 
+  const renderFieldCheckbox = (field: IExtraField | TSystemField) => {
+    const { apiName: fieldApiName, name: fieldName } = field;
+    const hasNotTooltip = isSystemField(field) ? field.hasNotTooltip : null;
+    const isDisabled = isSystemField(field) ? field.isDisabled : null;
+
+    return (
+      <div key={fieldApiName} className={STYLES.fieldItem}>
+        <label htmlFor={fieldApiName} className={STYLES.label}>
+          {hasNotTooltip ? (
+            <span className={STYLES.fieldName}>{fieldName}</span>
+          ) : (
+            <Tooltip content={fieldName} interactive={false} contentClassName={STYLES.tooltip}>
+              <span className={STYLES.fieldName}>{fieldName}</span>
+            </Tooltip>
+          )}
+          <Checkbox
+            {...(isDisabled ? { disabled: isDisabled } : {})}
+            checked={selectedFields.has(fieldApiName)}
+            onChange={() => onFieldToggle(fieldApiName)}
+            title={fieldName}
+            titlePosition="external"
+            checkboxId={fieldApiName}
+            labelClassName={STYLES.labelClassName}
+          />
+        </label>
+      </div>
+    );
+  };
+
   return (
     <SideModal className={STYLES.container} onClose={handleClose} isClosing={!isOpen} nonePeddingRight>
       <SideModal.Header className={STYLES.header}>
@@ -133,73 +173,59 @@ export function TuneViewModal() {
       </SideModal.Header>
 
       <SideModal.Body className={STYLES.body}>
-        {templateTasks?.map(({ apiName: taskApiname, name: taskName, needSteName, fields }: TTransformedTask) => (
-          <div key={taskApiname}>
-            <div
-              className={STYLES.taskBoxTitle}
-              onClick={() => toggleTask(taskApiname)}
-              onKeyDown={(e) => e.key === 'Enter' && toggleTask(taskApiname)}
-              role="button"
-              tabIndex={0}
-            >
-              <div className={STYLES.taskTitle}>
-                <Tooltip
-                  interactive={false}
-                  content={
-                    <TooltipRichContent title={taskName} subtitle={taskName} variables={variables || []} hideTitle />
-                  }
-                >
-                  {needSteName ? (
-                    <div>
-                      <StepName initialStepName={taskName} templateId={templateId} />
-                    </div>
-                  ) : (
-                    <span>{taskName}</span>
-                  )}
-                </Tooltip>
-              </div>
-
-              <div className={`${STYLES.taskArrow} ${openedTasks.has(taskApiname) && STYLES.taskArrowRotated}`}>
-                <ShortArrowIcon />
-              </div>
-            </div>
-
-            <div>
-              {openedTasks.has(taskApiname) && (
-                <div className={fields.length > 0 ? STYLES.fieldsContainer : ''}>
-                  {fields.map((field: IExtraField | TSystemField) => {
-                    const { apiName: fieldApiName, name: fieldName } = field;
-                    const hasNotTooltip = isSystemField(field) ? field.hasNotTooltip : null;
-                    const isDisabled = isSystemField(field) ? field.isDisabled : null;
-
-                    return (
-                      <div key={fieldApiName} className={STYLES.fieldItem}>
-                        <label htmlFor={fieldApiName} className={STYLES.label}>
-                          {hasNotTooltip ? (
-                            <span className={STYLES.fieldName}>{fieldName}</span>
-                          ) : (
-                            <Tooltip content={fieldName} interactive={false} contentClassName={STYLES.tooltip}>
-                              <span className={STYLES.fieldName}>{fieldName}</span>
-                            </Tooltip>
-                          )}
-                          <Checkbox
-                            {...(isDisabled ? { disabled: isDisabled } : {})}
-                            checked={selectedFields.has(fieldApiName)}
-                            onChange={() => onFieldToggle(fieldApiName)}
-                            title={fieldName}
-                            titlePosition="external"
-                            checkboxId={fieldApiName}
-                            labelClassName={STYLES.labelClassName}
-                          />
-                        </label>
+        {templateTasks?.map(
+          ({ apiName: taskApiname, name: taskName, needSteName, mergedOutputs }: TTransformedTask) => (
+            <div key={taskApiname}>
+              <div
+                className={STYLES.taskBoxTitle}
+                onClick={() => toggleTask(taskApiname)}
+                onKeyDown={(e) => e.key === 'Enter' && toggleTask(taskApiname)}
+                role="button"
+                tabIndex={0}
+              >
+                <div className={STYLES.taskTitle}>
+                  <Tooltip
+                    interactive={false}
+                    content={
+                      <TooltipRichContent title={taskName} subtitle={taskName} variables={variables || []} hideTitle />
+                    }
+                  >
+                    {needSteName ? (
+                      <div>
+                        <StepName initialStepName={taskName} templateId={templateId} />
                       </div>
-                    );
-                  })}
+                    ) : (
+                      <span>{taskName}</span>
+                    )}
+                  </Tooltip>
                 </div>
-              )}
+
+                <div className={`${STYLES.taskArrow} ${openedTasks.has(taskApiname) && STYLES.taskArrowRotated}`}>
+                  <ShortArrowIcon />
+                </div>
+              </div>
+
+              <div>
+                {openedTasks.has(taskApiname) && (
+                  <div className={mergedOutputs.length > 0 ? STYLES.fieldsContainer : ''}>
+                    {mergedOutputs.map((output) => {
+                      if (output.kind === 'fieldset') {
+                        return (
+                          <div key={output.data.apiNameBinding} className={STYLES.fieldsetGroup}>
+                            <div className={STYLES.fieldsetTitle}>{output.data.title}</div>
+                            {output.data.fields.map(renderFieldCheckbox)}
+                          </div>
+                        );
+                      }
+
+                      return renderFieldCheckbox(output.field);
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ),
+        )}
       </SideModal.Body>
 
       <SideModal.Footer className={STYLES.footer}>

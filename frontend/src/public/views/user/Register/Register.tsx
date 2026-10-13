@@ -23,14 +23,18 @@ import { Button, Header, InputField } from '../../../components/UI';
 import { GoogleButton, MicrosoftButton, SSOButton } from '../../../components/OAuthButtons';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
 import { Phone } from '../../../components/UI/FormikFields';
-import { envSSOProvider, isEnvCaptcha, isEnvGoogleAuth, isEnvMsAuth, isEnvSSOAuth } from '../../../constants/enviroment';
+import {
+  envSSOProvider,
+  isEnvCaptcha,
+  isEnvGoogleAuth,
+  isEnvMsAuth,
+  isEnvSSOAuth,
+} from '../../../constants/enviroment';
 import { TIMEZONE_OFFSET_MAP } from '../../../constants/profile';
 import { SSOProvider } from '../../../../server/types';
 
 import styles from '../User.css';
 import 'react-phone-number-input/style.css';
-
-
 
 const INITIAL_VALUES_FORMIK: TRegisterValues = {
   firstName: '',
@@ -47,7 +51,7 @@ export function Register({ registerUser }: IRegisterProps) {
   const [showCaptcha, setShowCaptcha] = useState(false);
   const defaultOffset = moment().utcOffset();
   const typeSSOProvider = envSSOProvider === SSOProvider.Auth0 ? EOAuthType.SSOAuth0 : EOAuthType.SSOOkta;
-  
+
   useEffect(() => {
     document.title = TITLES.Register;
     saveUTMParams();

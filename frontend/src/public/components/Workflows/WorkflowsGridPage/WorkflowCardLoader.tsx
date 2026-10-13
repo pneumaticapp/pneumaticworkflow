@@ -1,7 +1,6 @@
-/* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 
 import { Skeleton } from '../../UI/Skeleton';
 
@@ -12,7 +11,6 @@ export interface IWorkflowCardLoaderProps {
 }
 
 export function WorkflowCardLoader({ className }: IWorkflowCardLoaderProps) {
-
   return (
     <>
       <div className={styles['card-wrapper']}>

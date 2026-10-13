@@ -6,6 +6,7 @@ from django.utils import timezone
 from src.accounts.enums import UserStatus
 from src.generics.mixins.queries import DereferencedOwnersMixin
 from src.processes.enums import TemplateType, WorkflowStatus
+from src.processes.queries import GuardianOwnerJoinMixin
 from src.queries import SqlQueryObject
 from src.reports.queries.mixins import (
     TemplateViewerMixin,
@@ -17,6 +18,7 @@ from src.reports.queries.mixins import (
 
 
 class OverviewQuery(
+    GuardianOwnerJoinMixin,
     WorkflowsMixin,
     TemplateViewerMixin,
     SqlQueryObject,
@@ -60,8 +62,7 @@ class OverviewQuery(
         LEFT JOIN processes_template pt ON pw.template_id = pt.id AND
           pt.is_deleted IS FALSE AND
           pt.type IN (%(type_user)s, %(type_generic)s)
-        LEFT JOIN
-          processes_workflow_owners pwo ON pw.id = pwo.workflow_id
+        {self._guardian_owner_join('pwo', 'pw.id', self.params)}
         {self._get_template_owner_joins()}
         {self._get_template_viewer_joins()}
         LEFT JOIN overdue_workflows ow ON pw.id = ow.workflow_id
@@ -72,6 +73,7 @@ class OverviewQuery(
 
 
 class OverviewNowQuery(
+    GuardianOwnerJoinMixin,
     WorkflowsNowMixin,
     TemplateViewerMixin,
     SqlQueryObject,
@@ -108,8 +110,7 @@ class OverviewNowQuery(
         LEFT JOIN processes_template pt ON pw.template_id = pt.id AND
           pt.is_deleted IS FALSE AND
           pt.type IN (%(type_user)s, %(type_generic)s)
-        LEFT JOIN
-          processes_workflow_owners pwo ON pw.id = pwo.workflow_id
+        {self._guardian_owner_join('pwo', 'pw.id', self.params)}
         {self._get_template_owner_joins()}
         {self._get_template_viewer_joins()}
         LEFT JOIN overdue_workflows ow ON pw.id = ow.workflow_id
@@ -231,6 +232,7 @@ class WorkflowBreakdownNowQuery(
 
 
 class WorkflowDigestQuery(
+    GuardianOwnerJoinMixin,
     WorkflowsMixin,
     SqlQueryObject,
 ):
@@ -299,7 +301,9 @@ class WorkflowDigestQuery(
           ) AS overdue
         FROM processes_template pt
         JOIN processes_workflow pw ON pt.id = pw.template_id
-        JOIN processes_workflow_owners pwo ON pw.id = pwo.workflow_id
+        {self._guardian_owner_join(
+            'pwo', 'pw.id', self.params
+        ).replace('LEFT JOIN', 'JOIN', 1)}
         JOIN accounts_user au ON pwo.user_id = au.id
         JOIN accounts_account aa ON au.account_id = aa.id
         LEFT JOIN overdue_workflows ow ON pw.id = ow.workflow_id

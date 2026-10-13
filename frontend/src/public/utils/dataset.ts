@@ -9,7 +9,7 @@ export function getSortedAndFilteredDatasetItems(
 
   if (searchText) {
     const lowerSearch = searchText.toLowerCase();
-    result = result.filter(item => item.value.toLowerCase().includes(lowerSearch));
+    result = result.filter((item) => item.value.toLowerCase().includes(lowerSearch));
   }
 
   result.sort((a, b) => {

@@ -59,7 +59,8 @@ class TasksOverviewQuery(
         WHERE
           pt.is_deleted IS FALSE AND
           (ptp.user_id = %(user_id)s OR aug.user_id IS NOT NULL) AND
-          ptp.directly_status != '{DirectlyStatus.DELETED}' AND
+          {self._assignment_performer_type_clause()} AND
+          ptp.directly_status NOT IN ('{DirectlyStatus.DELETED}') AND
           pw.is_deleted IS FALSE AND
           pw.account_id = %(account_id)s AND
           (ag.is_deleted IS FALSE OR ag.id IS NULL)
@@ -102,11 +103,14 @@ class TasksOverviewNowQuery(
           aug.user_id = %(user_id)s
         )
         LEFT JOIN accounts_usergroup ag ON ag.id = aug.usergroup_id
+        {self._user_completed_performer_join()}
         WHERE
           pt.is_deleted IS FALSE AND
           (ptp.user_id = %(user_id)s OR aug.user_id IS NOT NULL) AND
+          {self._assignment_performer_type_clause()} AND
           ptp.is_completed IS FALSE AND
-          ptp.directly_status != '{DirectlyStatus.DELETED}' AND
+          ptp_completed.id IS NULL AND
+          ptp.directly_status NOT IN ('{DirectlyStatus.DELETED}') AND
           pw.is_deleted IS FALSE AND
           pw.account_id = %(account_id)s AND
           (ag.is_deleted IS FALSE OR ag.id IS NULL)
@@ -161,7 +165,8 @@ class TasksBreakdownQuery(
         WHERE
           pt.is_deleted IS FALSE AND
           (ptp.user_id = %(user_id)s OR aug.user_id IS NOT NULL) AND
-          ptp.directly_status != '{DirectlyStatus.DELETED}' AND
+          {self._assignment_performer_type_clause()} AND
+          ptp.directly_status NOT IN ('{DirectlyStatus.DELETED}') AND
           pw.is_deleted IS FALSE AND
           pw.account_id = %(account_id)s AND
           (ag.is_deleted IS FALSE OR ag.id IS NULL) AND
@@ -212,11 +217,14 @@ class TasksBreakdownNowQuery(
           aug.user_id = %(user_id)s
         )
         LEFT JOIN accounts_usergroup ag ON ag.id = aug.usergroup_id
+        {self._user_completed_performer_join()}
         WHERE
           pt.is_deleted IS FALSE AND
           (ptp.user_id = %(user_id)s OR aug.user_id IS NOT NULL) AND
+          {self._assignment_performer_type_clause()} AND
           ptp.is_completed IS FALSE AND
-          ptp.directly_status != '{DirectlyStatus.DELETED}' AND
+          ptp_completed.id IS NULL AND
+          ptp.directly_status NOT IN ('{DirectlyStatus.DELETED}') AND
           pw.is_deleted IS FALSE AND
           pw.account_id = %(account_id)s AND
           (ag.is_deleted IS FALSE OR ag.id IS NULL) AND
@@ -279,7 +287,8 @@ class TasksBreakdownByStepsQuery(
         LEFT JOIN accounts_usergroup ag ON ag.id = aug.usergroup_id
         WHERE
           (ptp.user_id = %(user_id)s OR aug.user_id IS NOT NULL) AND
-          ptp.directly_status != '{DirectlyStatus.DELETED}' AND
+          {self._assignment_performer_type_clause()} AND
+          ptp.directly_status NOT IN ('{DirectlyStatus.DELETED}') AND
           pt.is_deleted IS FALSE AND
           tt.is_deleted IS FALSE AND
           tt.template_id = %(template_id)s AND
@@ -329,6 +338,7 @@ class TasksBreakdownByStepsNowQuery(
           aug.user_id = %(user_id)s
         )
         LEFT JOIN accounts_usergroup ag ON ag.id = aug.usergroup_id
+        {self._user_completed_performer_join()}
         WHERE
           (ptp.user_id = %(user_id)s OR aug.user_id IS NOT NULL) AND
           pt.is_deleted IS FALSE AND
@@ -336,8 +346,10 @@ class TasksBreakdownByStepsNowQuery(
           tt.template_id = %(template_id)s AND
           pw.is_deleted IS FALSE AND
           (ag.is_deleted IS FALSE OR ag.id IS NULL) AND
+          {self._assignment_performer_type_clause()} AND
           ptp.is_completed IS FALSE AND
-          ptp.directly_status != '{DirectlyStatus.DELETED}'
+          ptp_completed.id IS NULL AND
+          ptp.directly_status NOT IN ('{DirectlyStatus.DELETED}')
         GROUP BY tt.id, tt.number
         ORDER BY tt.number
         """, self.params
@@ -428,7 +440,8 @@ class TasksDigestQuery(
           tt.is_deleted IS FALSE AND
           au.is_deleted IS FALSE AND
           au.status = '{UserStatus.ACTIVE}' AND
-          ptp.directly_status != '{DirectlyStatus.DELETED}'
+          {self._assignment_performer_type_clause()} AND
+          ptp.directly_status NOT IN ('{DirectlyStatus.DELETED}')
           {self._get_subscriber_where()}
           {self._get_user_where()}
         GROUP BY au.id, ptmp.id, tt.id

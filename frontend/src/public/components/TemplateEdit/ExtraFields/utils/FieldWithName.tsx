@@ -1,24 +1,13 @@
 import classnames from 'classnames';
-import React, {
-  ChangeEvent,
-  forwardRef,
-  KeyboardEvent,
-  MutableRefObject,
-  ReactNode,
-  Ref,
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import TextareaAutosize from 'react-textarea-autosize';
+import * as React from 'react';
+import { ChangeEvent, forwardRef, KeyboardEvent, MutableRefObject, ReactNode, Ref, useCallback, useMemo } from 'react';
 
 import { Field, EFieldTagName } from '../../../Field';
 import { validateKickoffFieldName } from '../../../../utils/validators';
 import { EInputNameBackgroundColor } from '../../../../types/workflow';
-import { getInputNameBackground } from './getInputNameBackground';
 import { EExtraFieldMode, IExtraField } from '../../../../types/template';
-import { PencilSmallIcon } from '../../../icons';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
+import { FieldLabel } from './FieldLabel';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
 
@@ -38,15 +27,16 @@ interface IKickoffFormFieldWithNameProps {
   handleChangeName(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void;
   handleChangeDescription(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void;
   validate(value: string): string;
+  labelPosition: EFieldLabelPosition;
+  children?: ReactNode;
+  labelClassName?: string;
   onClick?(): void;
+  editorClassName?: string;
   onNumericKeyDown?(event: KeyboardEvent<HTMLInputElement>): void;
   isNumericField?: boolean;
 }
 
-const assignInputRef = (
-  targetRef: Ref<HTMLInputElement> | undefined,
-  node: HTMLInputElement | null,
-): void => {
+const assignInputRef = (targetRef: Ref<HTMLInputElement> | undefined, node: HTMLInputElement | null): void => {
   if (!targetRef) {
     return;
   }
@@ -76,14 +66,15 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
       labelBackgroundColor,
       innerRef,
       accountId,
+      labelPosition,
+      labelClassName,
       onNumericKeyDown,
       isNumericField,
+      editorClassName,
+      children,
     },
     ref,
   ) => {
-    const editInputRef = useRef<HTMLTextAreaElement | null>(null);
-    const [isFocused, setIsFocused] = useState(false);
-
     const descriptionInputRef = useCallback(
       (node: HTMLInputElement | null) => {
         assignInputRef(innerRef, node);
@@ -91,6 +82,8 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
       },
       [innerRef, ref],
     );
+
+    const fieldNameError = useMemo(() => validateKickoffFieldName(name), [name]);
 
     const handleDescriptionWrapperKeyDown = useCallback(
       (event: KeyboardEvent<HTMLDivElement>) => {
@@ -103,36 +96,6 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
         }
       },
       [onClick],
-    );
-
-    const handleEditNameClick = useCallback(() => {
-      editInputRef.current?.focus();
-    }, []);
-
-    const handleNameTextareaRef = useCallback((element: HTMLTextAreaElement | null) => {
-      editInputRef.current = element;
-    }, []);
-
-    const handleNameFocus = useCallback(() => {
-      setIsFocused(true);
-    }, []);
-
-    const handleNameBlur = useCallback(() => {
-      setIsFocused(false);
-    }, []);
-
-    const fieldNameError = useMemo(() => validateKickoffFieldName(name), [name]);
-
-    const isKickoffEditorMode = mode === EExtraFieldMode.Kickoff;
-
-    const fieldNameClassName = useMemo(
-      () =>
-        classnames(
-          getInputNameBackground(labelBackgroundColor),
-          styles['kick-off-input__name'],
-          fieldNameError && styles['kick-off-input__name_error'],
-        ),
-      [labelBackgroundColor, fieldNameError],
     );
 
     const labelReplacementClassName = useMemo(
@@ -149,75 +112,62 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
       () =>
         onClick
           ? {
-            onClick,
-            onKeyDown: handleDescriptionWrapperKeyDown,
-            role: 'button' as const,
-            tabIndex: 0,
-            'aria-label': 'Field description',
-          }
+              onClick,
+              onKeyDown: handleDescriptionWrapperKeyDown,
+              role: 'button' as const,
+              tabIndex: 0,
+              'aria-label': 'Field description',
+            }
           : {},
       [onClick, handleDescriptionWrapperKeyDown],
     );
 
+    const fieldContainerClassName = classnames(
+      styles['kick-off-input__field'],
+      labelPosition === EFieldLabelPosition.Left && styles['kick-off-input__field_label-left'],
+    );
+
     return (
-      <div className={styles['kick-off-input__field']} data-autofocus-first-field>
-        <div className={fieldNameClassName}>
-          {isKickoffEditorMode ? (
-            <>
-              <TextareaAutosize
-                disabled={isDisabled}
-                onChange={handleChangeName}
-                placeholder={namePlaceholder}
-                value={name}
-                ref={handleNameTextareaRef}
-                onFocus={handleNameFocus}
-                onBlur={handleNameBlur}
-                minRows={1}
-                className={styles['kick-off-input__name-textarea']}
-              />
-              {isRequired && <span className={styles['kick-off-required-sign']} />}
-              {!isFocused && (
-                <button
-                  type="button"
-                  aria-label="Edit field name"
-                  onClick={handleEditNameClick}
-                  className={styles['kick-off-edit-name']}
-                >
-                  <PencilSmallIcon />
-                </button>
-              )}
-            </>
-          ) : (
-            <>
-              <div className={styles['kick-off-input__name-readonly']}>{name}</div>
-              {isRequired && <span className={styles['kick-off-required-sign']} />}
-            </>
-          )}
-        </div>
-        <div className={styles['kick-off-input__description']} {...descriptionInteractiveProps}>
-          <Field
-            labelClassName="w-100"
-            onChange={handleChangeDescription}
-            placeholder={descriptionPlaceholder}
-            validate={validate}
-            value={descriptionFieldValue}
-            className={classnames(inputClassName, styles['kickoff-input_single-line'])}
-            icon={icon}
-            tagName={tagName}
-            disabled={isDisabled}
-            shouldReplaceWithLabel={shouldReplaceWithLabel}
-            labelReplacementClassName={labelReplacementClassName}
-            labelReplacementValue={descriptionPlaceholder}
-            errorMessage={fieldNameError}
-            innerRef={descriptionInputRef}
-            accountId={accountId}
-            onKeyDown={onNumericKeyDown}
-            isNumericField={isNumericField}
-          />
+      <div className={fieldContainerClassName} data-autofocus-first-field aria-label="field-container">
+        <FieldLabel
+          name={name}
+          isRequired={isRequired}
+          isDisabled={isDisabled}
+          mode={mode}
+          labelPosition={labelPosition}
+          labelBackgroundColor={labelBackgroundColor}
+          namePlaceholder={namePlaceholder}
+          handleChangeName={handleChangeName}
+          {...(labelClassName && { className: labelClassName })}
+        />
+        <div className={styles['kick-off-input__options-content_label-left']}>
+          <div className={styles['kick-off-input__description']} {...descriptionInteractiveProps}>
+            <Field
+              labelClassName="w-100"
+              onChange={handleChangeDescription}
+              placeholder={descriptionPlaceholder}
+              validate={validate}
+              value={descriptionFieldValue}
+              className={classnames(inputClassName, styles['kickoff-input_single-line'])}
+              icon={icon}
+              tagName={tagName}
+              disabled={isDisabled}
+              shouldReplaceWithLabel={shouldReplaceWithLabel}
+              labelReplacementClassName={labelReplacementClassName}
+              labelReplacementValue={descriptionPlaceholder}
+              errorMessage={fieldNameError}
+              innerRef={descriptionInputRef}
+              accountId={accountId}
+              editorClassName={editorClassName}
+              onKeyDown={onNumericKeyDown}
+              isNumericField={isNumericField}
+              data-use-input
+            />
+          </div>
+          {children}
         </div>
       </div>
     );
   },
 );
 FieldWithName.displayName = 'FieldWithName';
-

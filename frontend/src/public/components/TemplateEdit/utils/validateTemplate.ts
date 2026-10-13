@@ -1,13 +1,13 @@
-/* eslint-disable */
 /* prettier-ignore */
 import { IntlShape } from 'react-intl';
 
-import { ITemplate } from '../../../types/template';
+import { ITemplateClient } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { validateWorkflowName } from '../../../utils/validators';
 import { UnassignedTasksWarning, PremiumFeaturesWarning, IInfoWarningProps } from '../InfoWarningsModal/warnings';
 import { areConditionsValid, isNumberConditionsValid } from '../TaskForm/Conditions/utils/conditionsValidators';
 import { areExtraFieldsValid } from './areExtraFieldsValid';
+import { areFieldsetsValid } from './areFieldsetsValid';
 import { isValidTaskForm } from './isValidTaskForm';
 
 type TWarningRule<T> = {
@@ -15,7 +15,7 @@ type TWarningRule<T> = {
   getMessage(): T;
 };
 
-export function validateTemplate(template: ITemplate, isSubscribed: boolean, intl: IntlShape) {
+export function validateTemplate(template: ITemplateClient, isSubscribed: boolean, intl: IntlShape) {
   const { owners, name, tasks, kickoff } = template;
   const { formatMessage } = intl;
 
@@ -40,7 +40,7 @@ export function validateTemplate(template: ITemplate, isSubscribed: boolean, int
       getMessage: () => formatMessage({ id: 'template.task-validation-error' }),
     },
     {
-      check: () => !areExtraFieldsValid(kickoff!.fields),
+      check: () => !areExtraFieldsValid(kickoff!.fields) || !areFieldsetsValid(kickoff!.fieldsets),
       getMessage: () => formatMessage({ id: 'template.kickoff-validation-error' }),
     },
     {

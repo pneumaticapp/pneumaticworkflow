@@ -1,7 +1,7 @@
 .user-performer {
-  padding: 0.6rem 0.8rem;
   display: inline-flex;
   align-items: center;
+  padding: 0.6rem 0.8rem;
   border-radius: 16px;
 
   &.is-white {
@@ -34,5 +34,10 @@
     &:hover {
       color: var(--pneumatic-color-link-hover);
     }
+  }
+
+  &__badge {
+    margin-left: 0.2rem;
+    font-size: 0.9em;
   }
 }

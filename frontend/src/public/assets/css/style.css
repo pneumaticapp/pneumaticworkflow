@@ -2,6 +2,7 @@
 // Table of Contents
 // -------------------
 // 00. Variables
+// 00.1. Print
 // 01. Library
 // 02. Reset style
 // 03. Base style
@@ -12,7 +13,13 @@
 // 00. Variables
 // =================== */
 
-@import './variables/color';
+@import './variables/color.css';
+
+/* ===================
+// 00.1. Print
+// =================== */
+
+@import './print/print.css';
 
 /* ===================
 // 01. Library
@@ -84,6 +91,12 @@ body {
 
 svg {
   display: block;
+}
+
+img, video {
+  display: block;
+  width: auto;
+  max-width: 100%;
 }
 
 /* ===================

@@ -76,6 +76,7 @@ export function HighlightsFeed({
   const { formatMessage } = useIntl();
 
   const [isFirstFetch, setIsFirstFetch] = useState(true);
+  const [isDateFilterReady, setIsDateFilterReady] = useState(true);
 
   useEffect(() => {
     document.title = TITLES.WorkflowHighlights;
@@ -256,6 +257,7 @@ export function HighlightsFeed({
               changeSelectedDateFilter={handleChangeSelectedDateFilter}
               changeEndDate={(newEndDate: Date) => setFilters({ endDate: newEndDate })}
               changeStartDate={(newStartDate: Date) => setFilters({ startDate: newStartDate })}
+              onCustomRangeValidityChange={setIsDateFilterReady}
             />
             <TemplatesFilter
               changeTemplatesSearchText={handleChangeTemplatesSearchText}
@@ -275,6 +277,7 @@ export function HighlightsFeed({
             <div className={styles['filters__buttons']}>
               <div className={styles['button_save-container']}>
                 <Button
+                  disabled={!isDateFilterReady}
                   onClick={handleApplyFilters}
                   type="button"
                   label={formatMessage({ id: 'workflow-highlights.button-apply-filters' })}

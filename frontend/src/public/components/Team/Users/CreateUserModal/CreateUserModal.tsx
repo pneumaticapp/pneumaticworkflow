@@ -58,9 +58,7 @@ export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
   return (
     <BaseModal isOpen={isOpen} toggle={onClose}>
       <ModalHeader toggle={onClose}>
-        <span data-testid="create-user-modal-header">
-          {formatMessage({ id: 'team.create-user-modal.title' })}
-        </span>
+        <span data-testid="create-user-modal-header">{formatMessage({ id: 'team.create-user-modal.title' })}</span>
       </ModalHeader>
 
       <Formik

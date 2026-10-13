@@ -6,10 +6,7 @@ export const resetLogEventId = () => {
   nextEventId = 1;
 };
 
-export const makeLogEvent = (
-  type: EWorkflowLogEvent,
-  overrides: Partial<IWorkflowLogItem> = {},
-): IWorkflowLogItem => {
+export const makeLogEvent = (type: EWorkflowLogEvent, overrides: Partial<IWorkflowLogItem> = {}): IWorkflowLogItem => {
   const id = nextEventId;
   nextEventId += 1;
 
@@ -34,7 +31,6 @@ export const makeLogEvent = (
     delay: null,
     targetUserId: null,
     targetGroupId: null,
-    attachments: [],
     watched: [],
     reactions: {},
     ...overrides,

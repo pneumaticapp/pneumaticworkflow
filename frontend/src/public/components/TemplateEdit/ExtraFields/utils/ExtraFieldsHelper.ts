@@ -1,6 +1,7 @@
-/* eslint-disable */
 import { EExtraFieldType, IExtraField, TExtraFieldValue } from '../../../../types/template';
 import { getEndOfDayTsp } from '../../../../utils/dateTime';
+import { parseMarkdownToFiles } from '../../../../utils/parseMarkdownFiles';
+import { normalizeCheckboxValue } from '../../../../utils/fields';
 
 type TFieldDispatchRecord = {
   [key in EExtraFieldType]: (field: IExtraField) => IExtraField | null;
@@ -8,6 +9,7 @@ type TFieldDispatchRecord = {
 
 export class ExtraFieldsHelper {
   private fields: IExtraField[];
+
   private storageOutput?: IExtraField[];
 
   public constructor(fields: IExtraField[], storageOutput?: IExtraField[]) {
@@ -20,14 +22,18 @@ export class ExtraFieldsHelper {
       .filter(({ apiName }) => apiName)
       .map(({ apiName, value, type }) => {
         if (type === 'url') {
-          return { [apiName as string]: (value as string).replace(new RegExp(' ', 'gi'), '%20') };
-        } else if (type === 'date' && typeof value === 'string') {
-          return { [apiName as string]: getEndOfDayTsp(value) };
-        } else if (type === 'number') {
-          return { [apiName as string]: String(value).replace(',', '.') };
-        } else {
-          return { [apiName as string]: value };
+          return { [apiName as string]: (value as string).replace(/ /gi, '%20') };
         }
+
+        if (type === 'date' && typeof value === 'string') {
+          return { [apiName as string]: getEndOfDayTsp(value) };
+        }
+
+        if (type === 'number') {
+          return { [apiName as string]: String(value).replace(',', '.') };
+        }
+
+        return { [apiName as string]: value };
       });
   }
 
@@ -37,7 +43,7 @@ export class ExtraFieldsHelper {
       .reduce(
         (acc, { apiName, value, type }) =>
           Object.assign(acc, {
-            [apiName]: type === 'url' ? (value as string).replace(new RegExp(' ', 'gi'), '%20') : value,
+            [apiName]: type === 'url' ? (value as string).replace(/ /gi, '%20') : value,
           }),
         {},
       );
@@ -70,9 +76,14 @@ export class ExtraFieldsHelper {
     defaultValue: TExtraFieldValue,
     fieldApiName: string,
   ) => {
-    const normalizedInitialValue = Array.isArray(initialValue) && initialValue.length === 0 ? null : initialValue;
+    const normalizedInitialValue =
+      initialValue === '' || (Array.isArray(initialValue) && initialValue.length === 0) ? null : initialValue;
+    const storageField = this.getStorageField(fieldApiName);
+    const storageValue = storageField?.value;
+    const normalizedStorageValue =
+      storageValue === '' || (Array.isArray(storageValue) && storageValue.length === 0) ? null : storageValue;
 
-    return this.getStorageField(fieldApiName)?.value || normalizedInitialValue || defaultValue;
+    return storageField ? (normalizedStorageValue ?? defaultValue) : (normalizedInitialValue ?? defaultValue);
   };
 
   private fieldValuesDispatch: TFieldDispatchRecord = {
@@ -89,27 +100,36 @@ export class ExtraFieldsHelper {
       return { ...field, value: this.getFieldValue(field.value, '', field.apiName) };
     },
     [EExtraFieldType.File]: (field: IExtraField) => {
-      const isNoInitialAttachments = Array.isArray(field.attachments) && field.attachments.length === 0;
-      const initialAttachments = isNoInitialAttachments
-        ? null
-        : field.attachments?.filter(({ isRemoved }) => !isRemoved);
-      const storageAttachments = this.getStorageField(field.apiName)?.attachments?.filter(
-        ({ isRemoved }) => !isRemoved,
-      );
-      const attachments = storageAttachments || initialAttachments || [];
-      const value = attachments.map(({ id }) => String(id));
+      const serverAttachmentsFromMarkdown = parseMarkdownToFiles(field.markdownValue);
+      const serverAttachmentsFromField = field.attachments?.filter(({ isRemoved }) => !isRemoved) ?? [];
+      let initialAttachments: IExtraField['attachments'] | null = null;
+
+      if (serverAttachmentsFromMarkdown.length > 0) {
+        initialAttachments = serverAttachmentsFromMarkdown;
+      } else if (serverAttachmentsFromField.length > 0) {
+        initialAttachments = serverAttachmentsFromField;
+      }
+      const storageField = this.getStorageField(field.apiName);
+      const storageAttachments = storageField
+        ? (storageField.attachments?.filter(({ isRemoved }) => !isRemoved) ??
+          parseMarkdownToFiles(storageField.markdownValue))
+        : null;
+      const attachments = storageAttachments ?? initialAttachments ?? [];
+      const value = attachments.map(({ name, url }) => `[${name}](${url})`);
 
       return {
         ...field,
         attachments,
         value,
+        ...(storageField && { markdownValue: value.join('\n') }),
       };
     },
     [EExtraFieldType.Date]: (field: IExtraField) => {
       return { ...field, value: this.getFieldValue(field.value, '', field.apiName) };
     },
     [EExtraFieldType.Checkbox]: (field: IExtraField) => {
-      return { ...field, value: this.getFieldValue(field.value, [], field.apiName) };
+      const rawValue = this.getFieldValue(field.value, [], field.apiName);
+      return { ...field, value: normalizeCheckboxValue(rawValue) };
     },
     [EExtraFieldType.Radio]: (field: IExtraField) => {
       if (!field.selections || field.selections.length === 0) {
@@ -127,7 +147,16 @@ export class ExtraFieldsHelper {
     },
 
     [EExtraFieldType.User]: (field: IExtraField) => {
-      return { ...field, value: this.getFieldValue(field.value, '', field.apiName) };
+      const storageField = this.getStorageField(field.apiName);
+
+      return {
+        ...field,
+        value: this.getFieldValue(field.value, '', field.apiName),
+        ...(storageField && {
+          userId: storageField.userId,
+          groupId: storageField.groupId,
+        }),
+      };
     },
   };
 }

@@ -1,23 +1,22 @@
 import * as React from 'react';
-import { useState, useCallback, FormEvent, MouseEvent } from 'react';
+import { useState, FormEvent, MouseEvent } from 'react';
 import classnames from 'classnames';
-import Truncate from 'react-truncate';
 import { Form, Modal, ModalBody, ModalHeader } from 'reactstrap';
 import { useIntl } from 'react-intl';
 import Switch from 'rc-switch';
 
-import { ELLIPSIS_CHAR } from '../../constants/defaultValues';
 import { ERoutes } from '../../constants/routes';
 
 import { history } from '../../utils/history';
 import { IntlMessages } from '../IntlMessages';
 import { EInputNameBackgroundColor } from '../../types/workflow';
-import { IExtraField, EExtraFieldMode } from '../../types/template';
+import { IExtraField } from '../../types/template';
+import { IFieldsetRuntime } from '../../types/fieldset';
 import { getPluralNoun, isArrayWithItems } from '../../utils/helpers';
 import { getEditedFields } from '../TemplateEdit/ExtraFields/utils/getEditedFields';
+import { MergedOutputList } from '../MergedOutputList';
 
 import { getInitialKickoff } from './utils/getInitialKickoff';
-import { ExtraFieldIntl } from '../TemplateEdit/ExtraFields';
 import { PlayLogoIcon } from '../icons';
 import { validateWorkflowName } from '../../utils/validators';
 import { checkExtraFieldsAreValid } from './utils/areKickoffFieldsValid';
@@ -69,32 +68,13 @@ function WorkflowEditPopupComponent({
 
   const { formatMessage } = useIntl();
 
-  const descriptionLinesCount = 5;
-
   const [workflowName, changeWorkflowName] = useState(
     workflow.wfNameTemplate || `${reactElementToText(<DateFormat />)} — ${workflow.name}`,
   );
   const [kickoffState, setKickoffState] = useState(getInitialKickoff(workflow.kickoff));
+  const [fieldsetStates, setFieldsetStates] = useState<IFieldsetRuntime[]>(workflow.loadedFieldsets || []);
 
   const [isUrgent, setIsUrgent] = useState(false);
-
-  const [textExpaned, setTextExpanded] = useState(false);
-  const expandText = useCallback(() => setTextExpanded(!textExpaned), [textExpaned]);
-
-  const ellispis = (
-    // eslint-disable-next-line jsx-a11y/anchor-is-valid
-    <a
-      href="#"
-      role="button"
-      tabIndex={0}
-      onClick={(e) => { e.preventDefault(); expandText(); }}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') expandText(); }}
-      className={styles['description_more']}
-    >
-      <span className={styles['more_delimeter']}>{ELLIPSIS_CHAR}</span>
-      <IntlMessages id="templates.description-more" />
-    </a>
-  );
 
   const handleEditField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
     setKickoffState((prevKickoff) => {
@@ -104,8 +84,20 @@ function WorkflowEditPopupComponent({
     });
   };
 
+  const handleEditFieldsetField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
+    setFieldsetStates((prevFieldsets) =>
+      prevFieldsets.map((fs) => ({
+        ...fs,
+        fields: getEditedFields(fs.fields, apiName, changedProps),
+      })),
+    );
+  };
+
   const isWorkflowsStartButtonDisabled =
-    isLoading || Boolean(validateWorkflowName(workflowName)) || !checkExtraFieldsAreValid(kickoffState?.fields);
+    isLoading ||
+    Boolean(validateWorkflowName(workflowName)) ||
+    !checkExtraFieldsAreValid(kickoffState?.fields) ||
+    fieldsetStates.some((fieldset) => !checkExtraFieldsAreValid(fieldset.fields));
 
   const handleToggleIsUrgent = () => setIsUrgent(!isUrgent);
 
@@ -146,20 +138,12 @@ function WorkflowEditPopupComponent({
           <div className={styles['popup-title__name']}>{workflow.name}</div>
         </div>
         {workflow.description && (
-          <div className={styles['popup-description']}>
-            <Truncate lines={!textExpaned && descriptionLinesCount} ellipsis={ellispis} trimWhitespace>
-              {/* eslint-disable react/no-array-index-key */}
-              {workflow.description.split('\n').map((el, i, arr) => {
-                const line = <span key={i}>{el}</span>;
-                if (i === arr.length - 1) {
-                  return line;
-                }
-
-                return [line, <br key={`${i}br`} />];
-              })}
-              {/* eslint-enable react/no-array-index-key */}
-            </Truncate>
-          </div>
+          <RichText
+            text={workflow.description}
+            embedVideos={false}
+            maxLines={5}
+            className={styles['popup-description']}
+          />
         )}
         <div className={styles['workflow-modal-info']}>
           <div className={styles['workflow-modal-info__stats']}>
@@ -223,9 +207,14 @@ function WorkflowEditPopupComponent({
 
   const handleRunWorkflow = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const allFieldsetFields = fieldsetStates.flatMap((fs) => fs.fields);
+    const mergedKickoff = {
+      ...kickoffState,
+      fields: [...kickoffState.fields, ...allFieldsetFields],
+    };
     onRunWorkflow({
       ...workflow,
-      kickoff: kickoffState,
+      kickoff: mergedKickoff,
       name: workflowName,
       isUrgent,
       dueDate: undefined,
@@ -252,6 +241,7 @@ function WorkflowEditPopupComponent({
               title={formatMessage({ id: 'templates.start-name' })}
               listVariables={variables}
               templateVariables={variables}
+              showInsertButton={false}
               value={workflowName || ''}
               onChange={(value) => {
                 changeWorkflowName(value);
@@ -262,7 +252,7 @@ function WorkflowEditPopupComponent({
               toolipText={formatMessage({ id: 'kickoff.workflow-name-tooltip' })}
               foregroundColor="beige"
             />
-            {kickoffState && isArrayWithItems(visibleKickoffFields) && (
+            {kickoffState && (isArrayWithItems(visibleKickoffFields) || isArrayWithItems(fieldsetStates)) && (
               <div className={styles['popup__kickoff']}>
                 <SectionTitle className={styles['section-title']}>
                   {formatMessage({ id: 'template.kick-off-form-title' })}
@@ -274,20 +264,15 @@ function WorkflowEditPopupComponent({
                   </span>
                 )}
                 <div className={styles['kickoff__inputs']}>
-                  {visibleKickoffFields.map((field) => (
-                      <ExtraFieldIntl
-                        key={field.apiName}
-                        field={{ ...field }}
-                        editField={handleEditField(field.apiName)}
-                        showDropdown={false}
-                        mode={EExtraFieldMode.ProcessRun}
-                        labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
-                        namePlaceholder={field.name}
-                        descriptionPlaceholder={field.description}
-                        wrapperClassName={styles['kickoff-extra-field']}
-                        accountId={accountId}
-                      />
-                  ))}
+                  <MergedOutputList
+                    fields={visibleKickoffFields || []}
+                    fieldsets={fieldsetStates}
+                    onEditField={handleEditField}
+                    onEditFieldsetField={handleEditFieldsetField}
+                    labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
+                    fieldClassName={styles['kickoff-extra-field']}
+                    accountId={accountId}
+                  />
                 </div>
               </div>
             )}

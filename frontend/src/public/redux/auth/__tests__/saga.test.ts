@@ -1,4 +1,7 @@
+import { put } from 'redux-saga/effects';
+
 import { configMock } from '../../../__stubs__/configMock';
+import { ApiError } from '../../../api/commonRequest';
 jest.mock('../../../utils/getConfig', () => ({
   getBrowserConfigEnv: jest.fn().mockReturnValue(configMock),
   getBrowserConfig: jest.fn().mockReturnValue(configMock),
@@ -10,7 +13,7 @@ import {
   registerWithEmailPassword,
   registerWithInvite,
 } from '../saga';
-import { registerUser, registerUserInvited } from '../actions';
+import { registerUser, registerUserInvited, sendForgotPassword, sendForgotPasswordFail } from '../actions';
 import { setJwtCookie } from '../../../utils/authCookie';
 import { setOAuthRegistrationCompleted } from '../../../api/setOAuthRegistrationCompleted';
 import { getOAuthId, getOAuthType } from '../../../utils/auth';
@@ -38,7 +41,7 @@ const mockRegisterData = {
   photo: '/some/photo.jpg',
   fromEmail: true,
   password: 'test_pwd',
-  timezone: ''
+  timezone: '',
 };
 
 describe('saga', () => {
@@ -193,6 +196,183 @@ describe('saga', () => {
       result.next({ invitedUser: {} } as any);
       result.next(true as any);
       result.next();
+    });
+  });
+
+  describe('handleUploadUserPhoto', () => {
+    let handleUploadUserPhoto: any;
+    let handleDeleteUserPhoto: any;
+
+    const mockNotifyApiError = jest.fn();
+    const mockGetErrorMessage = jest.fn();
+
+    beforeEach(() => {
+      jest.resetModules();
+      jest.clearAllMocks();
+
+      jest.mock('../../../utils/getConfig', () => ({
+        getBrowserConfigEnv: jest.fn().mockReturnValue(configMock),
+        getBrowserConfig: jest.fn().mockReturnValue(configMock),
+      }));
+      jest.mock('../../../components/UI/Notifications', () => ({
+        NotificationManager: { notifyApiError: mockNotifyApiError },
+      }));
+      jest.mock('../../../utils/getErrorMessage', () => ({
+        getErrorMessage: mockGetErrorMessage,
+      }));
+      jest.mock('../../../utils/logger', () => ({
+        logger: { error: jest.fn() },
+      }));
+
+      const saga = require('../saga');
+      handleUploadUserPhoto = saga.handleUploadUserPhoto;
+      handleDeleteUserPhoto = saga.handleDeleteUserPhoto;
+    });
+
+    it('shows notification with mapped message on FILE_003 error', () => {
+      const fsError = Object.assign(new Error('File size exceeds limit'), {
+        code: 'FILE_003',
+        status: 413,
+      });
+      mockGetErrorMessage.mockReturnValue('file-service.size-exceeded');
+
+      const photo = new File(['data'], 'big.zip', { type: 'application/zip' });
+      const gen = handleUploadUserPhoto({
+        payload: { photo, onComplete: jest.fn() },
+      });
+
+      // put(setGeneralLoaderVisibility(true))
+      gen.next();
+      // yield uploadUserAvatar(photo) — throw to simulate error
+      gen.throw(fsError);
+
+      expect(mockGetErrorMessage).toHaveBeenCalledWith(fsError);
+      expect(mockNotifyApiError).toHaveBeenCalledWith(fsError, { message: 'file-service.size-exceeded' });
+    });
+
+    it('shows fallback notification on network error', () => {
+      const networkError = new Error('Network Error');
+      mockGetErrorMessage.mockReturnValue('Network Error');
+
+      const photo = new File(['data'], 'avatar.jpg', { type: 'image/jpeg' });
+      const gen = handleUploadUserPhoto({
+        payload: { photo, onComplete: jest.fn() },
+      });
+
+      gen.next();
+      gen.throw(networkError);
+
+      expect(mockGetErrorMessage).toHaveBeenCalledWith(networkError);
+      expect(mockNotifyApiError).toHaveBeenCalledWith(networkError, { message: 'Network Error' });
+    });
+
+    it('handleDeleteUserPhoto shows notification on error', () => {
+      const error = new Error('Delete failed');
+      mockGetErrorMessage.mockReturnValue('Delete failed');
+
+      const gen = handleDeleteUserPhoto();
+
+      // put(setGeneralLoaderVisibility(true))
+      gen.next();
+      // yield call(changePhotoProfile, { photo: '' }) — throw
+      gen.throw(error);
+
+      expect(mockGetErrorMessage).toHaveBeenCalledWith(error);
+      expect(mockNotifyApiError).toHaveBeenCalledWith(error, { message: 'Delete failed' });
+    });
+
+    it('handleDeleteUserPhoto shows FS error notification', () => {
+      const fsError = Object.assign(new Error('Permission denied'), {
+        code: 'PERM_001',
+        status: 403,
+      });
+      mockGetErrorMessage.mockReturnValue('file-service.permission-denied');
+
+      const gen = handleDeleteUserPhoto();
+
+      gen.next();
+      gen.throw(fsError);
+
+      expect(mockGetErrorMessage).toHaveBeenCalledWith(fsError);
+      expect(mockNotifyApiError).toHaveBeenCalledWith(fsError, { message: 'file-service.permission-denied' });
+    });
+  });
+
+  describe('sendPasswordReset', () => {
+    let sendPasswordResetSaga: any;
+
+    const mockNotifyApiError = jest.fn();
+
+    beforeEach(() => {
+      jest.resetModules();
+      jest.clearAllMocks();
+
+      jest.mock('../../../utils/getConfig', () => ({
+        getBrowserConfigEnv: jest.fn().mockReturnValue(configMock),
+        getBrowserConfig: jest.fn().mockReturnValue(configMock),
+      }));
+      jest.mock('../../../components/UI/Notifications', () => ({
+        NotificationManager: { success: jest.fn(), notifyApiError: mockNotifyApiError },
+      }));
+      jest.mock('../../../utils/logger', () => ({
+        logger: { error: jest.fn(), info: jest.fn() },
+      }));
+      jest.mock('../../../utils/getErrorMessage', () => ({
+        getErrorMessage: jest.fn(() => 'error'),
+      }));
+
+      const saga = require('../saga');
+      sendPasswordResetSaga = saga.sendPasswordReset;
+    });
+
+    it('marks captcha as required without a notification when the API returns a captcha error', () => {
+      const captchaError = new ApiError(
+        'This field may not be blank.',
+        {
+          code: 'validation_error',
+          message: 'This field may not be blank.',
+          details: { name: 'captcha', reason: 'This field may not be blank.' },
+        },
+        400,
+      );
+
+      const gen = sendPasswordResetSaga(sendForgotPassword({ email: 'example@pneumatic.app' }));
+      gen.next();
+      const { value } = gen.throw(captchaError);
+
+      expect(value).toEqual(put(sendForgotPasswordFail(true)));
+      expect(gen.next().done).toBe(true);
+      expect(mockNotifyApiError).not.toHaveBeenCalled();
+    });
+
+    it('notifies as usual on a validation error of another field', () => {
+      const emailError = new ApiError(
+        'Enter a valid email address.',
+        {
+          code: 'validation_error',
+          message: 'Enter a valid email address.',
+          details: { name: 'email', reason: 'Enter a valid email address.' },
+        },
+        400,
+      );
+
+      const gen = sendPasswordResetSaga(sendForgotPassword({ email: 'example@pneumatic.app' }));
+      gen.next();
+      const { value } = gen.throw(emailError);
+
+      expect(mockNotifyApiError).toHaveBeenCalledWith(emailError, { message: 'error' });
+      expect(value).toEqual(put(sendForgotPasswordFail()));
+    });
+
+    it('notifies and fails as usual on any other error', () => {
+      const error = new Error('boom');
+
+      const gen = sendPasswordResetSaga(sendForgotPassword({ email: 'example@pneumatic.app' }));
+      gen.next();
+      const { value } = gen.throw(error);
+
+      expect(mockNotifyApiError).toHaveBeenCalledWith(error, { message: 'error' });
+      expect(value).toEqual(put(sendForgotPasswordFail()));
     });
   });
 });

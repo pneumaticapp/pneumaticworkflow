@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
@@ -31,12 +31,26 @@ export function TaskDescriptionEditor({
 }: ITaskDescriptionEditorProps) {
   const { formatMessage } = useIntl();
   const editorRef = useRef<IRichEditorHandle>(null);
+  const lastEmittedValue = useRef<string | undefined>(value);
 
   const users = useSelector(getUsers);
-  const mentions = useMemo(
-    () => getMentionData(getNotDeletedUsers(users)),
-    [users],
+  const mentions = useMemo(() => getMentionData(getNotDeletedUsers(users)), [users]);
+
+  const wrappedHandleChange = useCallback(
+    (markdown: string) => {
+      lastEmittedValue.current = markdown;
+
+      return handleChange(markdown);
+    },
+    [handleChange],
   );
+
+  useEffect(() => {
+    if (value !== lastEmittedValue.current) {
+      lastEmittedValue.current = value;
+      editorRef.current?.replaceContent(value ?? '');
+    }
+  }, [value]);
 
   const handleInsertVariable = (apiName?: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -49,20 +63,15 @@ export function TaskDescriptionEditor({
 
     if (!newVariable) return;
 
-    editorRef.current.insertVariable(
-      apiName,
-      newVariable.title,
-      newVariable.subtitle,
-    );
+    editorRef.current.insertVariable(apiName, newVariable.title, newVariable.subtitle);
   };
 
   return (
     <RichEditor
       ref={editorRef}
-      title={formatMessage({ id: 'tasks.task-description-field' })}
       placeholder={formatMessage({ id: 'template.task-description-placeholder' })}
       defaultValue={value}
-      handleChange={handleChange}
+      handleChange={wrappedHandleChange}
       handleChangeChecklists={handleChangeChecklists}
       withChecklists
       mentions={mentions}

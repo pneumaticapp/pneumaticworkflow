@@ -1193,7 +1193,7 @@ class TestPushNotificationService:
         # assert
         send_mock.assert_not_called()
 
-    def test_send_complete_task(self, mocker):
+    def test_send_task_completed(self, mocker):
 
         # arrange
 
@@ -1218,7 +1218,7 @@ class TestPushNotificationService:
         link = f'{settings.FRONTEND_URL}/tasks/1'
 
         # act
-        service.send_complete_task(
+        service.send_task_completed(
             link=link,
             task_id=1,
             task_name=task_name,
@@ -1230,7 +1230,7 @@ class TestPushNotificationService:
 
         # assert
         send_mock.assert_called_once_with(
-            method_name=NotificationMethod.complete_task,
+            method_name=NotificationMethod.task_completed,
             title='Task was completed',
             body=f'Workflow: {workflow_name}\nTask: {task_name}',
             extra_data={'task_id': '1', 'link': link},

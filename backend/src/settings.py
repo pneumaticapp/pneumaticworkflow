@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 import datetime
 import os
 from os import environ as env
+from urllib.parse import urlparse
 
 from configurations import Configuration, values
 from corsheaders.defaults import default_headers
@@ -59,14 +60,45 @@ class Common(Configuration):
 
     # Frontend
     FRONTEND_URL = env.get('FRONTEND_URL')
+    if not FRONTEND_URL:
+        raise Exception(
+            'FRONTEND_URL is not set. '
+            'Please define FRONTEND_URL in your .env file.',
+        )
     EXPIRED_INVITE_PAGE = f'{FRONTEND_URL}/auth/expired-invite'
 
     # Forms
     FORMS_URL = env.get('FORMS_URL')
+    if not FORMS_URL:
+        raise Exception(
+            'FORMS_URL is not set. '
+            'Please define FORMS_URL in your .env file.',
+        )
+
+    # File Service
+    FILE_SERVICE_URL = env.get('FILE_SERVICE_URL')
+    FILE_SERVICE_HOST_PATH = None
+    if FILE_SERVICE_URL:
+        parsed = urlparse(FILE_SERVICE_URL)
+        FILE_SERVICE_HOST_PATH = parsed.netloc + parsed.path.rstrip('/')
+
+    FILE_POSTGRES_DB = env.get('FILE_POSTGRES_DB')
+    FILE_POSTGRES_USER = env.get('FILE_POSTGRES_USER')
+    FILE_POSTGRES_PASSWORD = env.get('FILE_POSTGRES_PASSWORD')
+    FILE_POSTGRES_HOST = env.get('FILE_POSTGRES_HOST')
+    FILE_POSTGRES_PORT = env.get('FILE_POSTGRES_PORT')
 
     # Auth
     AUTH_USER_MODEL = 'accounts.User'
     AUTH_TOKEN_ITERATIONS = int(env.get('AUTH_TOKEN_ITERATIONS', '1'))
+    AUTHENTICATION_BACKENDS = (
+        'django.contrib.auth.backends.ModelBackend',
+        'guardian.backends.ObjectPermissionBackend',
+    )
+
+    # Django Guardian — disable anonymous user (not needed)
+    ANONYMOUS_USER_NAME = None
+    ANONYMOUS_USER_ID = -1
 
     # Tokens lifetime
     DIGEST_UNSUB_TOKEN_IN_DAYS = 7
@@ -74,8 +106,15 @@ class Common(Configuration):
     USER_TRANSFER_TOKEN_LIFETIME_IN_DAYS = 7
 
     BACKEND_URL = env.get('BACKEND_URL')
+    if not BACKEND_URL:
+        raise Exception(
+            'BACKEND_URL is not set. '
+            'Please define BACKEND_URL in your .env file.',
+        )
     BACKEND_HOST = BACKEND_URL.split('//')[1].split(':')[0]
-    ALLOWED_HOSTS = [BACKEND_HOST]
+    FRONTEND_HOST = FRONTEND_URL.split('//')[1].split(':')[0]
+    FORMS_HOST = FORMS_URL.split('//')[1].split(':')[0]
+    ALLOWED_HOSTS = [BACKEND_HOST, FRONTEND_HOST, FORMS_HOST]
     EXTRA_ALLOWED_HOSTS = env.get("ALLOWED_HOSTS")
     if EXTRA_ALLOWED_HOSTS:
         ALLOWED_HOSTS.extend(EXTRA_ALLOWED_HOSTS.split(' '))
@@ -108,7 +147,11 @@ class Common(Configuration):
     # A list of origins that are authorized to make cross-site HTTP requests.
     # A list of origins echoed back to the client in the
     # Access-Control-Allow-Origin header. Defaults to [].
-    CORS_ORIGIN_WHITELIST = [FRONTEND_URL, FORMS_URL]
+    CORS_ORIGIN_WHITELIST = [FRONTEND_URL]
+    _parsed_forms = urlparse(FORMS_URL)
+    _forms_origin = f'{_parsed_forms.scheme}://{_parsed_forms.netloc}'
+    if _forms_origin != FRONTEND_URL:
+        CORS_ORIGIN_WHITELIST.append(_forms_origin)
     EXTRA_CORS_ORIGIN_WHITELIST = env.get('CORS_ORIGIN_WHITELIST')
     if EXTRA_CORS_ORIGIN_WHITELIST:
         CORS_ORIGIN_WHITELIST.extend(EXTRA_CORS_ORIGIN_WHITELIST.split(' '))
@@ -124,15 +167,17 @@ class Common(Configuration):
 
         'rest_framework',
         'rest_framework_simplejwt',
+        'drf_spectacular',
 
         'corsheaders',
 
         'django_extensions',
-        'djcelery_email',
         'django_json_widget',
         'django_filters',
         'django_celery_beat',
         'drf_recaptcha',
+        'src.permissions',
+        'guardian',
         'src.accounts',
         'src.authentication',
         'src.applications',
@@ -152,7 +197,11 @@ class Common(Configuration):
         'src.ai',
         'src.payment',
         'src.logs',
+        'src.storage',
     ]
+
+    GUARDIAN_USER_OBJ_PERMS_MODEL = 'permissions.UserObjectPermission'
+    GUARDIAN_GROUP_OBJ_PERMS_MODEL = 'permissions.GroupObjectPermission'
 
     MIDDLEWARE = [
         'django.middleware.security.SecurityMiddleware',
@@ -163,6 +212,8 @@ class Common(Configuration):
         'django.middleware.csrf.CsrfViewMiddleware',
         'src.authentication.middleware.UserAgentMiddleware',
         'src.authentication.middleware.AuthMiddleware',
+        'src.authentication.middleware.UserLocaleMiddleware',
+        'src.storage.middleware.FileServiceAuthMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
     ]
@@ -204,15 +255,18 @@ class Common(Configuration):
         'DEFAULT_RENDERER_CLASSES': [
             'rest_framework.renderers.JSONRenderer',
         ],
+        'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
         'DEFAULT_PERMISSION_CLASSES': (
             'rest_framework.permissions.IsAuthenticated',
         ),
         'DEFAULT_AUTHENTICATION_CLASSES': (
             'src.authentication.services.public_auth.PublicAuthService',
             'src.authentication.services.guest_auth.GuestJWTAuthService',
+            'src.authentication.services.api_key_auth.'
+            'APIKeyAuthentication',
             'src.authentication.services.user_auth.'
             'PneumaticTokenAuthentication',
-            'rest_framework_simplejwt.authentication.JWTAuthentication',
+            'src.authentication.services.jwt_auth.PneumaticJWTAuthentication',
         ),
         'NON_FIELD_ERRORS_KEY': 'errors',
         'TEST_REQUEST_DEFAULT_FORMAT': 'json',
@@ -245,6 +299,140 @@ class Common(Configuration):
             'rest_framework_simplejwt.tokens.AccessToken',
             'src.authentication.tokens.GuestToken',
         ),
+    }
+
+    SPECTACULAR_SETTINGS = {
+        'TITLE': 'Pneumatic Workflow API',
+        'DESCRIPTION': (
+            'The Pneumatic API gives you programmatic access to everything '
+            'you can do in the product — running workflows, managing tasks, '
+            'assigning performers, and integrating with internal systems.\n\n'
+
+            '### Authentication\n'
+            'Every request requires a `Bearer` token. You can find your '
+            'personal API key inside the app:\n'
+            '1. Go to **Integrations** in the left menu.\n'
+            '2. Copy your key from the **Your API Key** section.\n\n'
+            'Pass the key in the `Authorization` header:\n'
+            '```http\n'
+            'Authorization: Bearer <your_api_key>\n'
+            '```\n\n'
+
+            '### Why Use the API?\n'
+            '- **Custom Dashboards:** Pull live task counts and workflow '
+            'progress into your BI tools.\n'
+            '- **Automated Triggers:** Start new workflows automatically '
+            'when events happen in your CRM or ERP.\n'
+            '- **Task Sync:** Sync Pneumatic tasks to your internal task '
+            'trackers.\n'
+            '- **Webhook Integrations:** Subscribe to workflow events and '
+            'push data to Slack, email, or custom endpoints.'
+        ),
+        'VERSION': '1.0.0',
+        'SERVE_INCLUDE_SCHEMA': False,
+        'SERVE_PERMISSIONS': [
+            'rest_framework.permissions.AllowAny',
+        ],
+        'SERVE_AUTHENTICATION': [],
+        'PREPROCESSING_HOOKS': [
+            'src.openapi.preprocessing.exclude_private_endpoints',
+        ],
+        'SCHEMA_PATH_PREFIX': r'/',
+        # Schema is at /api/schema/; without SERVERS OpenAPI clients use
+        # /api as base and breaks real paths (/auth, /templates, …).
+        'ENUM_NAME_OVERRIDES': {
+            'UserStatusEnum': 'src.accounts.enums.UserStatus.CHOICES',
+            'WorkflowStatusEnum': 'src.processes.enums.WorkflowStatus.CHOICES',
+            'FieldTypeEnum': 'src.processes.enums.FieldType.CHOICES',
+            'WorkflowEventTypeEnum': (
+                'src.processes.enums.WorkflowEventType.CHOICES'
+            ),
+            'PerformerTypeEnum': (
+                'src.processes.enums.PerformerType.filter_choices'
+            ),
+            'AccountUserTypeEnum': 'src.accounts.enums.UserType.CHOICES',
+            'LanguageEnum': 'src.accounts.enums.Language.CHOICES',
+            'ResetPasswordStatusEnum': (
+                'src.authentication.enums.ResetPasswordStatus.CHOICES'
+            ),
+        },
+        'SERVERS': [{'url': '/', 'description': 'Pneumatic Core API Server'}],
+        'TAGS': [
+            {
+                'name': 'Auth',
+                'description': (
+                    'Sign in, token obtain/refresh, password '
+                    'management, and user context'
+                ),
+            },
+            {
+                'name': 'Templates',
+                'description': (
+                    'Create, configure, and manage workflow templates'
+                ),
+            },
+            {
+                'name': 'Templates Public',
+                'description': (
+                    'Public and embedded templates for external forms'
+                ),
+            },
+            {
+                'name': 'Workflows',
+                'description': (
+                    'Running workflow instances — complete, return, '
+                    'snooze, comment, and track progress'
+                ),
+            },
+            {
+                'name': 'Tasks',
+                'description': (
+                    'Task operations — complete, revert, manage '
+                    'performers, due dates, and events'
+                ),
+            },
+            {
+                'name': 'Accounts',
+                'description': (
+                    'Account settings, users, invites, groups, '
+                    'and billing plan'
+                ),
+            },
+            {
+                'name': 'Attachments',
+                'description': 'File attachments linked to workflows',
+            },
+            {
+                'name': 'Webhooks',
+                'description': (
+                    'Subscribe to workflow events and manage '
+                    'webhook endpoints'
+                ),
+            },
+            {
+                'name': 'Datasets',
+                'description': (
+                    'Reusable data collections for dropdown '
+                    'and selection fields'
+                ),
+            },
+            {
+                'name': 'Fieldsets',
+                'description': (
+                    'Shared field groups reusable across templates'
+                ),
+            },
+            {
+                'name': 'Tenants',
+                'description': 'Multi-tenant workspace management',
+            },
+            {
+                'name': 'Reports',
+                'description': (
+                    'Dashboard highlights and workflow analytics'
+                ),
+            },
+        ],
     }
 
     # Email
@@ -290,7 +478,7 @@ class Common(Configuration):
     else:
         STRIPE_WEBHOOK_IP_WHITELIST = []
 
-    DEFAULT_MAX_USERS = 5
+    DEFAULT_MAX_USERS = 1000
 
     # Account verification
     VERIFICATION_CHECK = env.get('VERIFICATION_CHECK') == 'yes'
@@ -302,9 +490,6 @@ class Common(Configuration):
     PRIVATE_API_IP_WHITELIST = env.get('PRIVATE_API_IP_WHITELIST')
     if PRIVATE_API_IP_WHITELIST:
         PRIVATE_API_IP_WHITELIST = PRIVATE_API_IP_WHITELIST.split(' ')
-
-    # Google Cloud
-    GCLOUD_DEFAULT_BUCKET_NAME = env.get('GCLOUD_BUCKET_NAME')
 
     # Slack
     SLACK = env.get('SLACK') == 'yes'
@@ -333,19 +518,21 @@ class Common(Configuration):
     CELERY_BROKER_URL = env.get('CELERY_BROKER_URL')
     CELERY_IMPORTS = [
         'src.accounts.tasks',
+        'src.analysis.tasks',
         'src.authentication.tasks',
+        'src.notifications.tasks',
+        'src.payment.tasks',
         'src.processes.tasks.delay',
         'src.processes.tasks.tasks',
         'src.processes.tasks.update_workflow',
         'src.processes.tasks.webhooks',
         'src.reports.tasks',
-        'src.analysis.tasks',
         'src.storage.tasks',
     ]
 
     # reCaptcha
-    DRF_RECAPTCHA_SITE_KEY = env.get('RECAPTCHA_SITE_KEY', 'key')
-    DRF_RECAPTCHA_SECRET_KEY = env.get('RECAPTCHA_SECRET_KEY', 'key')
+    DRF_RECAPTCHA_SITE_KEY = env.get('RECAPTCHA_SITE_KEY') or 'key'
+    DRF_RECAPTCHA_SECRET_KEY = env.get('RECAPTCHA_SECRET_KEY') or 'key'
     DRF_RECAPTCHA_TESTING = env.get('RECAPTCHA_TESTING', 'yes') == 'yes'
 
     # Firebase Credentials
@@ -383,10 +570,10 @@ class Common(Configuration):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': env.get('POSTGRES_DB', 'pneumatic'),
-            'USER': env.get('POSTGRES_USER', 'pneumatic'),
-            'PASSWORD': env.get('POSTGRES_PASSWORD', 'pneumatic'),
-            'HOST': env.get('POSTGRES_HOST', 'localhost'),
+            'NAME': env.get('POSTGRES_DB'),
+            'USER': env.get('POSTGRES_USER'),
+            'PASSWORD': env.get('POSTGRES_PASSWORD'),
+            'HOST': env.get('POSTGRES_HOST'),
             'PORT': env.get('POSTGRES_PORT', '5432'),
         },
     }
@@ -406,8 +593,6 @@ class Common(Configuration):
         'AI_PROVIDER': env.get('AI_PROVIDER'),
         'PUSH': env.get('PUSH') == 'yes',
         'PUSH_PROVIDER': env.get('PUSH_PROVIDER'),
-        'STORAGE': env.get('STORAGE') == 'yes',
-        'STORAGE_PROVIDER': env.get('STORAGE_PROVIDER'),
         'SENTRY_DSN': env.get('SENTRY_DSN'),
     }
 
@@ -434,10 +619,13 @@ class Common(Configuration):
             },
         }
 
+    # Django Guardian - using built-in models
+    # Disable anonymous user creation (not needed for this project)
+    ANONYMOUS_USER_NAME = None
+    ANONYMOUS_USER_ID = -1
+
 
 class Testing(Common):
-
-    TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
 
     # CELERY_ALWAYS_EAGER mean that Celery will not schedule tasks
     # to run as it would regularly do, via sending a message to the broker.
@@ -528,32 +716,31 @@ class Development(Common):
     }
 
 
+
 class Staging(Development):
 
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': env.get('POSTGRES_DB', 'pneumatic'),
-            'USER': env.get('POSTGRES_USER', 'pneumatic'),
-            'PASSWORD': env.get('POSTGRES_PASSWORD', 'pneumatic'),
-            'HOST': env.get('POSTGRES_HOST', 'localhost'),
+            'NAME': env.get('POSTGRES_DB'),
+            'USER': env.get('POSTGRES_USER'),
+            'PASSWORD': env.get('POSTGRES_PASSWORD'),
+            'HOST': env.get('POSTGRES_HOST'),
             'PORT': env.get('POSTGRES_PORT', '5432'),
         },
         'replica': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': env.get('POSTGRES_REPLICA_DB', 'pneumatic'),
-            'USER': env.get('POSTGRES_REPLICA_USER', 'pneumatic'),
-            'PASSWORD': env.get('POSTGRES_REPLICA_PASSWORD', 'pneumatic'),
-            'HOST': env.get('POSTGRES_REPLICA_HOST', 'localhost'),
+            'NAME': env.get('POSTGRES_REPLICA_DB'),
+            'USER': env.get('POSTGRES_REPLICA_USER'),
+            'PASSWORD': env.get('POSTGRES_REPLICA_PASSWORD'),
+            'HOST': env.get('POSTGRES_REPLICA_HOST'),
             'PORT': env.get('POSTGRES_REPLICA_PORT', '5432'),
         },
     }
-
-
 
     MAX_INVITES = 10
 
 
 class Production(Staging):
 
-    MAX_INVITES = 100
+    MAX_INVITES = 1000

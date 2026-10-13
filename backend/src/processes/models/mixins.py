@@ -7,13 +7,16 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.query import QuerySet
 
-from src.accounts.models import UserGroup, AccountBaseMixin
+from src.accounts.models import UserGroup
 from src.processes.enums import (
     ConditionAction,
     FieldType,
+    LabelPosition,
+    FieldSetLayout,
     PerformerType,
     PredicateOperator,
     PredicateType,
+    FieldSetRuleType,
 )
 from src.datasets.models import Dataset
 
@@ -39,6 +42,11 @@ class RawPerformerMixin(models.Model):
         UserGroup,
         on_delete=models.CASCADE,
         null=True,
+    )
+    source_task_api_name = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
     )
 
 
@@ -162,6 +170,7 @@ class TaskMixin(models.Model):
         validators=[MinValueValidator(1)],
     )
     require_completion_by_all = models.BooleanField(default=False)
+    skip_for_starter = models.BooleanField(default=False)
     revert_task = models.CharField(
         max_length=255,
         null=True,
@@ -175,7 +184,7 @@ class TaskMixin(models.Model):
     )
 
 
-class FieldMixin(AccountBaseMixin):
+class FieldMixin(models.Model):
 
     class Meta:
         abstract = True
@@ -282,13 +291,17 @@ class TaskRawPerformersMixin:
         group: Optional[UserGroup] = None,
         field=None,
         performer_type: PerformerType = PerformerType.USER,
+        source_task_api_name: Optional[str] = None,
     ) -> int:
 
         """ Delete a raw_performer
             and returns the number of objects deleted """
 
         if (
-            performer_type != PerformerType.WORKFLOW_STARTER
+            performer_type not in (
+                PerformerType.WORKFLOW_STARTER,
+                PerformerType.MANAGER,
+            )
             and user is None and group is None and field is None
         ):
             raise Exception(
@@ -300,7 +313,8 @@ class TaskRawPerformersMixin:
             user=user,
             group=group,
             field=field,
-        ).delete()[0]
+            source_task_api_name=source_task_api_name,
+        ).delete()
 
     def delete_raw_performers(self):
 
@@ -315,3 +329,43 @@ class ApiNameMixin(models.Model):
         abstract = True
 
     api_name = models.CharField(max_length=200)
+
+
+class FieldMetaMixin(models.Model):
+
+    class Meta:
+        abstract = True
+
+    label_position = models.CharField(
+        max_length=20,
+        choices=LabelPosition.CHOICES,
+        default=LabelPosition.TOP,
+    )
+
+
+class BaseFieldSetMixin(FieldMetaMixin):
+
+    class Meta:
+        abstract = True
+
+    name = models.TextField(max_length=1000)
+    title = models.TextField(blank=True, default='')
+    order = models.IntegerField(default=0)
+    description = models.TextField(blank=True, default='')
+    layout = models.CharField(
+        max_length=200,
+        choices=FieldSetLayout.CHOICES,
+        default=FieldSetLayout.VERTICAL,
+    )
+
+
+class BaseFieldSetRuleMixin(models.Model):
+
+    class Meta:
+        abstract = True
+
+    type = models.CharField(
+        max_length=50,
+        choices=FieldSetRuleType.CHOICES,
+    )
+    value = models.TextField(blank=True, null=True)

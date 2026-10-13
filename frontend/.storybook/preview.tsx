@@ -40,7 +40,7 @@ const preview: Preview = {
       if (context.parameters?.store) {
         sagaMiddleware.run(rootSaga);
       }
-      // Получаем текущую локаль из глобальных параметров
+      // Get current locale from global parameters
       const locale = context.globals.locale || reactIntl.defaultLocale;
       
       return (

@@ -1,4 +1,3 @@
-// <reference types="jest" />
 import { recalculateDuplicateErrors, handleSelectionBlur } from '../handleSelectionBlur';
 import { IExtraFieldSelection } from '../../../../../types/template';
 

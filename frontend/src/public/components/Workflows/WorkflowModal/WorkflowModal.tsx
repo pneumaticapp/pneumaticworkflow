@@ -11,11 +11,13 @@ import {
   IWorkflowEditData,
   IWorkflowLogItem,
 } from '../../../types/workflow';
-import { IExtraField } from '../../../types/template';
+import { EExtraFieldType, IExtraField } from '../../../types/template';
+import { IFieldsetRuntime } from '../../../types/fieldset';
 import { Avatar } from '../../UI/Avatar';
 import { EditIcon, ModalCloseIcon } from '../../icons';
 import { EditKickoffContainer } from '../../KickoffEdit';
 import { getEditKickoff } from '../../../utils/workflows';
+import { normalizeCheckboxValue } from '../../../utils/fields';
 import { getPercent } from '../../../utils/helpers';
 import { getUserFullName } from '../../../utils/users';
 import { IntlMessages } from '../../IntlMessages';
@@ -30,6 +32,7 @@ import { getWorkflowProgressColor } from '../utils/getWorkflowProgressColor';
 import { getEditedFields } from '../../TemplateEdit/ExtraFields/utils/getEditedFields';
 import { UserData } from '../../UserData';
 import { DateFormat } from '../../UI/DateFormat';
+import { RichText } from '../../RichText';
 
 import styles from './WorkflowModal.css';
 import {
@@ -77,16 +80,28 @@ export interface IWorkflowModalStoreProps {
 
 export type IWorkflowModalProps = IWorkflowModalOwnProps & IWorkflowModalStoreProps;
 
-export class WorkflowModal extends React.Component<IWorkflowModalProps> {
+interface IWorkflowModalState {
+  fieldsetFields: IFieldsetRuntime[];
+}
+
+const syncWorkflowModalPrintMode = (isOpen: boolean) => {
+  document.body.classList.toggle('workflow-modal-print-mode', isOpen);
+};
+
+export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflowModalState> {
   private processProgress: number | undefined;
 
   public constructor(props: IWorkflowModalProps) {
     super(props);
     this.processProgress = this.calculateWorkflowProgress();
+    this.state = {
+      fieldsetFields: WorkflowModal.getFieldsetsFromProps(props),
+    };
   }
 
   public componentDidMount() {
-    const { workflow, setWorkflowEdit } = this.props;
+    const { workflow, setWorkflowEdit, isOpen } = this.props;
+    syncWorkflowModalPrintMode(isOpen);
     if (!workflow) {
       return;
     }
@@ -98,7 +113,11 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
   }
 
   public componentDidUpdate(prevProps: IWorkflowModalStoreProps) {
-    const { workflow, setWorkflowEdit } = this.props;
+    const { workflow, setWorkflowEdit, isOpen } = this.props;
+
+    if (prevProps.isOpen !== isOpen) {
+      syncWorkflowModalPrintMode(isOpen);
+    }
     if (!workflow) {
       return;
     }
@@ -109,9 +128,23 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
     if (prevKickoffId !== kickoff.id) {
       const editProcess = { name, kickoff: getEditKickoff(kickoff) };
       setWorkflowEdit(editProcess);
+      this.setState({ fieldsetFields: WorkflowModal.getFieldsetsFromProps(this.props) });
     }
 
     this.processProgress = this.calculateWorkflowProgress();
+  }
+
+  private static getFieldsetsFromProps(props: IWorkflowModalProps): IFieldsetRuntime[] {
+    return (props.workflow?.kickoff?.fieldsets || []).map((fs) => ({
+      ...fs,
+      fields: fs.fields.map((field) =>
+        field.type === EExtraFieldType.Checkbox ? { ...field, value: normalizeCheckboxValue(field.value) } : field,
+      ),
+    }));
+  }
+
+  public componentWillUnmount() {
+    syncWorkflowModalPrintMode(false);
   }
 
   private calculateWorkflowProgress = () => {
@@ -192,7 +225,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
                 &nbsp;&nbsp;
                 <button
                   type="button"
-                  className={styles['popup-title__edit']}
+                  className={classnames(styles['popup-title__edit'], 'no-print')}
                   onClick={() => setIsEditWorkflowName(true)}
                   aria-label="Edit workflow name"
                 >
@@ -264,6 +297,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
       return null;
     }
 
+    const { fieldsetFields } = this.state;
     const initialEditKickoff = getEditKickoff(initialKickoff);
 
     if (!isKickoffEditing) {
@@ -273,6 +307,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
           containerClassName="mt-3"
           description={initialKickoff?.description}
           outputs={initialKickoff?.output}
+          fieldsets={initialKickoff?.fieldsets || []}
           onEdit={canEdit ? () => setIsEditKickoff(true) : undefined}
         />
       );
@@ -285,8 +320,28 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
       setWorkflowEdit({ ...workflowEditData, kickoff: newKickoff });
     };
 
+    const handleEditFieldsetField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
+      this.setState((prevState) => ({
+        fieldsetFields: prevState.fieldsetFields.map((fs) => ({
+          ...fs,
+          fields: getEditedFields(fs.fields, apiName, changedProps),
+        })),
+      }));
+    };
+
+    const handleSave = () => {
+      // Merge fieldset fields into kickoff.fields so they are included in the PATCH body
+      const allFieldsetFields = fieldsetFields.flatMap((fs) => fs.fields);
+      const mergedKickoff = {
+        ...editKickoff,
+        fields: [...editKickoff.fields, ...allFieldsetFields],
+      };
+      this.handleEditProcess({ kickoff: mergedKickoff });
+    };
+
     const handleCancel = () => {
       setWorkflowEdit({ ...workflowEditData, kickoff: initialEditKickoff });
+      this.setState({ fieldsetFields: WorkflowModal.getFieldsetsFromProps(this.props) });
       setIsEditKickoff(false);
     };
 
@@ -295,8 +350,10 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
         <EditKickoffContainer
           isLoading={isKickoffSaving}
           kickoff={editKickoff}
+          fieldsets={fieldsetFields}
           onEditField={handleEditField}
-          onSave={() => this.handleEditProcess({ kickoff: editKickoff })}
+          onEditFieldsetField={handleEditFieldsetField}
+          onSave={handleSave}
           onCancel={handleCancel}
         />
       </div>
@@ -357,7 +414,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
     return (
       <>
         <div className={classnames(styles['popup-header'])}>
-          <ModalCloseIcon onClick={this.closeModal} className={styles['close-icon']} />
+          <ModalCloseIcon onClick={this.closeModal} className={classnames(styles['close-icon'], 'no-print')} />
 
           <div className={styles['header-popup-body']}>
             <div className={styles['popup-general-info-container']}>
@@ -410,7 +467,11 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
     const workflowDescription = workflow?.description;
 
     if (workflowDescription) {
-      return <div className={styles['popup-description']}>{workflowDescription}</div>;
+      return (
+        <div className={styles['popup-description']}>
+          <RichText text={workflowDescription} maxLines={5} embedVideos={false} />
+        </div>
+      );
     }
 
     return null;
@@ -431,12 +492,12 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
             const userData =
               workflow && workflow.isExternal
                 ? {
-                  status: EUserStatus.External,
-                  email: '',
-                  firstName: 'External User',
-                  lastName: '',
-                  photo: '',
-                }
+                    status: EUserStatus.External,
+                    email: '',
+                    firstName: 'External User',
+                    lastName: '',
+                    photo: '',
+                  }
                 : user;
 
             return (

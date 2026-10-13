@@ -1,0 +1,2 @@
+cd frontend
+sh scripts/validate-branch-name.sh warn

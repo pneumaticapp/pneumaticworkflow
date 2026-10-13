@@ -51,9 +51,13 @@ import { patchTaskInList, shiftTaskList, ETaskListActions } from '../tasks/slice
 
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getAuthUser, getUsers, getUserTimezone } from '../selectors/user';
-import { removeOutputFromLocalStorage } from '../../components/TaskCard/utils/storageOutputs';
+import {
+  fieldsetsStorage,
+  removeOutputFromLocalStorage,
+  removeOutputsFromLocalStorage,
+} from '../../components/TaskCard/utils/storageOutputs';
 import { ETaskCardViewMode } from '../../components/TaskCard';
-import { deleteRemovedFilesFromFields } from '../../api/deleteRemovedFilesFromFields';
+
 import { TChannelAction } from '../tasks/saga';
 import { getCurrentTask, getTaskPerformers, getTaskStore } from '../selectors/task';
 import { addTaskPerformer } from '../../api/addTaskPerformer';
@@ -88,12 +92,14 @@ import {
   IWorkflowLogItem,
   TWorkflowDetailsResponse,
 } from '../../types/workflow';
-import { mapFilesToRequest } from '../../utils/workflows';
+
 import { ETemplateOwnerType, RawPerformer } from '../../types/template';
 import { getTaskWorkflowLog } from '../../api/getTaskWorkflowLog';
 import { sendTaskComment } from '../../api/sendTaskComment';
 import { getWorkflowAddComputedPropsToRedux } from '../../components/Workflows/utils/getWorfkflowClientProperties';
 import { ISendWorkflowLogComment } from '../workflows/types';
+import { EPermissionObjectType } from '../../types/permissions';
+import { loadObjectPermissions } from '../permissions/slice';
 
 function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
   const {
@@ -119,6 +125,16 @@ function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
     yield put(setCurrentTask(formattedTask));
 
     if (viewMode !== ETaskCardViewMode.Guest) {
+      const subWorkflowIds = (task.subWorkflows || []).map(({ id }) => id);
+      if (subWorkflowIds.length) {
+        yield put(
+          loadObjectPermissions({
+            objType: EPermissionObjectType.Workflow,
+            objIds: subWorkflowIds,
+          }),
+        );
+      }
+
       yield loadTaskWorkflow(task.workflow.id, task.id);
     } else {
       yield put(
@@ -217,7 +233,7 @@ function* loadTaskWorkflowLog({
   }
 }
 
-function* saveWorkflowLogComment({ payload: { text, attachments, taskId } }: PayloadAction<ISendWorkflowLogComment>) {
+function* saveWorkflowLogComment({ payload: { text, taskId } }: PayloadAction<ISendWorkflowLogComment>) {
   const {
     workflowLog: { items, workflowId: processId, sorting },
   }: ReturnType<typeof getTaskStore> = yield select(getTaskStore);
@@ -226,14 +242,11 @@ function* saveWorkflowLogComment({ payload: { text, attachments, taskId } }: Pay
     return;
   }
 
-  const normalizedAttachments = mapFilesToRequest(attachments);
-
   try {
     yield put(setGeneralLoaderVisibility(true));
     const newComment: IWorkflowLogItem = yield sendTaskComment({
       taskId: taskId || 0,
       text,
-      attachments: normalizedAttachments,
     });
 
     const preLoadedProcessLogMap = {
@@ -300,8 +313,6 @@ export function* setTaskCompleted({ payload: { taskId, output, viewMode } }: TSe
   }
 
   try {
-    yield deleteRemovedFilesFromFields(output);
-
     const mappedOutput = mapOutputToCompleteTask(output);
 
     const usersList: TUserListItem[] = yield select(getUsers);
@@ -312,6 +323,7 @@ export function* setTaskCompleted({ payload: { taskId, output, viewMode } }: TSe
     NotificationManager.success({ title: 'tasks.task-success-complete' });
 
     removeOutputFromLocalStorage(taskId);
+    fieldsetsStorage.remove(taskId);
     yield put(setCurrentTaskStatus(ETaskStatus.Completed));
 
     if (viewMode === ETaskCardViewMode.List) {
@@ -332,7 +344,7 @@ export function* setTaskCompleted({ payload: { taskId, output, viewMode } }: TSe
   }
 }
 
-export function* setTaskReverted({ payload: { viewMode, taskId, comment } }: TSetTaskReverted) {
+export function* setTaskReverted({ payload: { viewMode, taskId, comment, clearOutputTaskIds } }: TSetTaskReverted) {
   const {
     authUser: { id: currentUserId },
   }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
@@ -345,6 +357,10 @@ export function* setTaskReverted({ payload: { viewMode, taskId, comment } }: TSe
     yield put(setCurrentTaskStatus(ETaskStatus.Returning));
 
     yield revertTask({ id: taskId, comment });
+
+    const outputTaskIds = clearOutputTaskIds ?? [taskId];
+    removeOutputsFromLocalStorage(outputTaskIds);
+    outputTaskIds.forEach((outputTaskId) => fieldsetsStorage.remove(outputTaskId));
 
     NotificationManager.success({ message: 'tasks.task-success-revert' });
 
@@ -427,13 +443,15 @@ export function* updatePerformersSaga({ type, payload: { taskId, userId } }: TUp
 
   const fetchMethodMap = [
     {
-      check: () => type === ETaskActions.AddTaskPerformer && user?.type === ETemplateOwnerType.User,
+      check: () =>
+        type === ETaskActions.AddTaskPerformer && userId.type === ETemplateOwnerType.User && user?.type !== 'guest',
       *fetch() {
         yield call(addTaskPerformer, taskId, userId.sourceId);
       },
     },
     {
-      check: () => type === ETaskActions.RemoveTaskPerformer && user?.type === ETemplateOwnerType.User,
+      check: () =>
+        type === ETaskActions.RemoveTaskPerformer && userId.type === ETemplateOwnerType.User && user?.type !== 'guest',
       *fetch() {
         yield call(removeTaskPerformer, taskId, userId.sourceId);
       },
@@ -451,7 +469,8 @@ export function* updatePerformersSaga({ type, payload: { taskId, userId } }: TUp
       },
     },
     {
-      check: () => type === ETaskActions.RemoveTaskPerformer && user?.type === 'guest',
+      check: () =>
+        type === ETaskActions.RemoveTaskPerformer && userId.type === ETemplateOwnerType.User && user?.type === 'guest',
       *fetch() {
         yield call(removeTaskGuest, taskId, user?.email || '');
       },

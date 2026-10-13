@@ -1,8 +1,7 @@
-/* eslint-disable */
-/* prettier-ignore */
-import { ITemplateTask } from '../../../types/template';
+import { ITemplateTaskClient } from '../../../types/template';
 import { areExtraFieldsValid } from './areExtraFieldsValid';
+import { areFieldsetsValid } from './areFieldsetsValid';
 
-export function isValidTaskForm(task: ITemplateTask) {
-  return areExtraFieldsValid(task.fields);
+export function isValidTaskForm(task: ITemplateTaskClient) {
+  return areExtraFieldsValid(task.fields) && areFieldsetsValid(task.fieldsets);
 }

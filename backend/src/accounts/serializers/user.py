@@ -1,22 +1,39 @@
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Prefetch, Q
+
 from rest_framework import serializers
 
 from src.accounts.enums import (
+    AbsenceStatus,
     Language,
     SourceType,
     Timezone,
 )
-from src.accounts.models import Contact
+from src.accounts.models import Contact, UserGroup
 from src.accounts.serializers.group import (
     GroupNameSerializer,
 )
-from src.accounts.messages import MSG_A_0036, MSG_A_0046
+from src.accounts.messages import (
+    MSG_A_0036,
+    MSG_A_0040,
+    MSG_A_0046,
+    MSG_A_0049,
+    MSG_A_0050,
+    MSG_A_0051,
+    MSG_A_0053,
+    MSG_A_0054,
+    MSG_A_0057,
+)
+from src.accounts.serializers.mixins import (
+    VacationSerializer,
+)
 from src.accounts.serializers.user_invites import (
     UserListInviteSerializer,
 )
 from src.generics.fields import (
+    AccountPrimaryKeyRelatedField,
     CommaSeparatedListField,
     DateFormatField,
     RelatedListField,
@@ -25,6 +42,7 @@ from src.generics.fields import (
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
 )
+from src.permissions.enums import PermissionObjectType
 from src.processes.enums import (
     OwnerType,
     PerformerType,
@@ -73,6 +91,9 @@ class UserSerializer(
             'invite',
             'groups',
             'password',
+            'manager_id',
+            'subordinates_ids',
+            'vacation',
         )
         read_only_fields = (
             'id',
@@ -83,6 +104,8 @@ class UserSerializer(
             'date_joined_tsp',
         )
 
+    # Not AccountPrimaryKeyRelatedField(many=True): in form data it turns
+    # a missing key into [] and the update would clear the user groups.
     groups = RelatedListField(
         source='user_groups',
         child=serializers.IntegerField(),
@@ -96,6 +119,19 @@ class UserSerializer(
     date_fmt = DateFormatField(required=False)
     invite = serializers.SerializerMethodField(allow_null=True, read_only=True)
     password = serializers.CharField(write_only=True, required=False)
+    manager_id = AccountPrimaryKeyRelatedField(
+        queryset=UserModel.objects,
+        required=False,
+        allow_null=True,
+        source='manager',
+    )
+    subordinates_ids = AccountPrimaryKeyRelatedField(
+        many=True,
+        queryset=UserModel.objects,
+        required=False,
+        source='subordinates',
+    )
+    vacation = VacationSerializer(read_only=True)
 
     def get_invite(self, instance: UserModel):
         if instance.status_invited and instance.invite:
@@ -112,6 +148,17 @@ class UserSerializer(
     def validate_is_admin(self, value):
         if value is True and not self.context['user'].is_admin:
             raise serializers.ValidationError(MSG_A_0046)
+        return value
+
+    def validate_groups(self, value):
+        if not self.context['user'].is_admin:
+            raise serializers.ValidationError(MSG_A_0057)
+        groups = UserGroup.objects.filter(
+            id__in=value,
+            account=self.context['account'],
+        )
+        if groups.count() != len(value):
+            raise serializers.ValidationError(MSG_A_0040)
         return value
 
     def validate(self, attrs):
@@ -264,6 +311,102 @@ class UserWebsocketSerializer(serializers.ModelSerializer):
             'last_name',
             'email',
             'photo',
+            'phone',
+            'status',
             'is_admin',
             'is_account_owner',
+            'manager_id',
+            'subordinates_ids',
+            'invite_id',
+            'vacation',
         )
+
+    subordinates_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        read_only=True,
+        source='subordinates',
+    )
+    invite_id = serializers.SerializerMethodField()
+    vacation = VacationSerializer(read_only=True)
+
+    def get_invite_id(self, instance: UserModel):
+        if instance.status_invited and instance.invite:
+            return str(instance.invite.id)
+        return None
+
+
+class VacationActivateSerializer(
+    CustomValidationErrorMixin,
+    serializers.Serializer,
+):
+    substitute_user_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        min_length=1,
+        error_messages={'min_length': MSG_A_0051},
+    )
+    vacation_start_date = serializers.DateField(
+        required=False,
+        allow_null=True,
+    )
+    vacation_end_date = serializers.DateField(
+        required=False,
+        allow_null=True,
+    )
+    absence_status = serializers.ChoiceField(
+        choices=AbsenceStatus.CHOICES,
+        required=False,
+        default=AbsenceStatus.VACATION,
+    )
+
+    def validate_substitute_user_ids(self, value):
+        user = self.context['vacation_user']
+        account_id = user.account_id
+
+        if user.id in value:
+            raise serializers.ValidationError(MSG_A_0049)
+
+        existing = set(
+            UserModel.objects
+            .on_account(account_id)
+            .filter(id__in=value)
+            .values_list('id', flat=True),
+        )
+        missing = set(value) - existing
+        if missing:
+            raise serializers.ValidationError(
+                MSG_A_0050(missing=sorted(missing)),
+            )
+        return value
+
+    def validate_absence_status(self, value):
+        if value == AbsenceStatus.ACTIVE:
+            raise serializers.ValidationError(
+                MSG_A_0053,
+            )
+        return value
+
+    def validate(self, attrs):
+        start = attrs.get('vacation_start_date')
+        end = attrs.get('vacation_end_date')
+        if start and end and start >= end:
+            raise serializers.ValidationError(MSG_A_0054)
+        return attrs
+
+
+class UserPermissionRequestSerializer(
+    CustomValidationErrorMixin,
+    serializers.Serializer,
+):
+    obj_type = serializers.ChoiceField(
+        choices=PermissionObjectType.CHOICES,
+    )
+    obj_ids = CommaSeparatedListField(
+        allow_empty=False,
+        child=serializers.IntegerField(min_value=1),
+    )
+
+
+class UserPermissionResponseSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    has_view = serializers.BooleanField()
+    has_change = serializers.BooleanField()

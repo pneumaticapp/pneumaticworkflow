@@ -11,6 +11,7 @@ const mockProps: IUsersProps = {
   currentUserId: 0,
   fetchUsers: jest.fn(),
   loadChangeUserAdmin: jest.fn(),
+  loadChangeUserManager: jest.fn(),
   openModal: jest.fn(),
   users: mockLastNameUsers,
   userListSorting: EUserListSorting.NameAsc,
@@ -18,6 +19,7 @@ const mockProps: IUsersProps = {
   setGeneralLoaderVisibility: jest.fn(),
   trialEnded: null,
   loadInvitesUsers: jest.fn(),
+  loadChangeUserReports: jest.fn(),
 };
 
 describe('Team', () => {

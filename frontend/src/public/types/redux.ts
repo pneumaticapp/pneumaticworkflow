@@ -1,4 +1,4 @@
-import { EGroupsListSorting, EUserListSorting, EUserStatus, IUnsavedUser, TUserListItem } from './user';
+import { EGroupsListSorting, EUserListSorting, EUserStatus, IUnsavedUser, IUserVacation, TUserListItem } from './user';
 import { TNotificationsListItem } from './notifications';
 import { IAccountGenericTemplate } from './genericTemplates';
 import {
@@ -13,13 +13,14 @@ import {
   IWorkflowDetailsClient,
 } from './workflow';
 import { ITask, ITaskListItem, ITasksSettings } from './tasks';
-import { IIntegrationDetailed, IIntegrationListItem } from './integrations';
+import { EPermissionObjectType, TObjectPermissionsById } from './permissions';
+import { IApiKeyItem, IIntegrationDetailed, IIntegrationListItem } from './integrations';
 import { ESettingsTabs } from './profile';
 import { IHighlightsItem, EHighlightsDateFilter } from './highlights';
 import { EDashboardTimeRange, IGettingStartedChecklist } from './dashboard';
 import { EAuthUserFailType, ETaskStatus, ETemplatesSystemStatus } from '../redux/actions';
 import {
-  ITemplate,
+  ITemplateClient,
   ITemplateListItem,
   ISystemTemplate,
   TTemplateIntegrationStats,
@@ -35,6 +36,7 @@ import { IMenuItem } from './menu';
 import { EWebhooksTypeEvent, IWebhook } from './webhooks';
 import { ETenantsSorting, ITenant } from './tenants';
 import { IDataset, IDatasetListItem, EDatasetsSorting, TDatasetItemsSortOrder } from './dataset';
+import { IFieldsetCatalogItem, EFieldsetsSorting } from './fieldset';
 import { IPagesStore } from '../redux/pages/types';
 import { TeamPages, IGroup, UserInvite } from '../redux/team/types';
 
@@ -63,8 +65,16 @@ export interface IApplicationState {
   team: ITeamStore;
   groups: IGroupsStore;
   tenants: ITenantsStore;
-  datasets: IDatasetsStore; 
+  datasets: IDatasetsStore;
+  fieldsets: IFieldsetsStore;
+  permissions: IPermissionsStore;
 }
+
+export type IPermissionsStore = {
+  [objType in EPermissionObjectType]: TObjectPermissionsById;
+} & {
+  userId: number | null;
+};
 
 export enum ELoggedState {
   LoggedIn = 'logged-in',
@@ -79,6 +89,7 @@ export interface IAuthUser extends IUnsavedUser {
   id: number;
   status: EUserStatus;
   loading: boolean;
+  isResetPasswordCaptchaRequired?: boolean;
   invitedUser: IInvitedUser;
   isAccountOwner: boolean;
   isDigestSubscriber: boolean;
@@ -92,6 +103,9 @@ export interface IAuthUser extends IUnsavedUser {
   timezone: string;
   dateFmt: string;
   dateFdw: string;
+  managerId: number | null;
+  reportIds: number[];
+  vacation?: IUserVacation | null;
 }
 
 export interface IInvitedUser {
@@ -197,9 +211,10 @@ export interface IStoreNotification {
 }
 
 export interface IIntegrationsStore {
-  apiKey: {
+  apiKeys: {
     isLoading: boolean;
-    data: string;
+    data: IApiKeyItem[];
+    newlyCreatedKey: string | null;
   };
   list: {
     isLoading: boolean;
@@ -299,12 +314,12 @@ export enum ETemplateStatus {
 }
 
 export interface ITemplateStore {
-  data: ITemplate;
+  data: ITemplateClient;
   status: ETemplateStatus;
   AITemplate: {
     isModalOpened: boolean;
     generationStatus: TAITemplateGenerationStatus;
-    generatedData: ITemplate | null;
+    generatedData: ITemplateClient | null;
   };
 }
 
@@ -374,18 +389,41 @@ export type IDatasetsStore = {
   isAllDatasetsLoading: boolean;
   isAllDatasetsLoaded: boolean;
   isLoading: boolean;
-  searchQuery: string;                
-  datasetsListSorting: EDatasetsSorting;         
+  searchQuery: string;
+  datasetsListSorting: EDatasetsSorting;
 
   isCreateModalOpen: boolean;
   isEditModalOpen: boolean;
-  
-  currentDataset: IDataset | null;    
-  isCurrentDatasetLoading: boolean;   
-  currentSearchQuery: string;         
+
+  currentDataset: IDataset | null;
+  isCurrentDatasetLoading: boolean;
+  currentSearchQuery: string;
   currentSortOrder: TDatasetItemsSortOrder;
- 
+
   datasetsMap: Record<number, IDataset>;
+};
+
+export interface IFieldsetsList {
+  count: number;
+  offset: number;
+  items: IFieldsetCatalogItem[];
+}
+
+export type IFieldsetsStore = {
+  fieldsetsList: IFieldsetsList;
+  isLoading: boolean;
+  searchQuery: string;
+  fieldsetsListSorting: EFieldsetsSorting;
+
+  isCreateModalOpen: boolean;
+  isEditModalOpen: boolean;
+
+  currentFieldset: IFieldsetCatalogItem | null;
+  isCurrentFieldsetLoading: boolean;
+
+  catalogAllFieldsets: IFieldsetCatalogItem[];
+  isCatalogLoading: boolean;
+  isCatalogLoaded: boolean;
 };
 
 export interface IAction<Type> {

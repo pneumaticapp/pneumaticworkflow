@@ -3,6 +3,11 @@ from typing import List, Optional
 from django.db import DataError, transaction
 from django.db.models import Prefetch
 from django.http import Http404
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    extend_schema,
+)
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.viewsets import GenericViewSet
@@ -17,12 +22,41 @@ from src.accounts.permissions import (
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.executor import RawSqlExecutor
-from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
 from src.generics.permissions import UserIsAuthenticated
-from src.processes.filters import TemplateFilter
+from src.openapi import (
+    ACCESS_ACCOUNT_OWNER,
+    ACCESS_ADMIN,
+    ACCESS_AUTH,
+    ACCESS_TEMPLATE_ACCESS,
+    ACCESS_TEMPLATE_AI,
+    ACCESS_TEMPLATE_FIELDS,
+    ACCESS_TEMPLATE_OWNER,
+    EMPTY,
+    FORBIDDEN,
+    LIMIT_OFFSET_LEGACY_NOTE,
+    NOT_FOUND,
+    TEMPLATE_EXPORT_PARAMS,
+    TEMPLATE_INTEGRATIONS_PARAMS,
+    TEMPLATE_STEPS_PARAMS,
+    TEMPLATE_TITLES_BY_EVENTS_PARAMS,
+    TEMPLATE_TITLES_BY_OWNERS_PARAMS,
+    TEMPLATE_TITLES_BY_TASKS_PARAMS,
+    TEMPLATE_TITLES_BY_WORKFLOWS_PARAMS,
+    TOO_MANY_REQUESTS,
+    UNAUTHORIZED,
+    VALIDATION_ERROR,
+    with_access_text,
+)
+from src.openapi.examples import (
+    TEMPLATE_CREATE_EXAMPLE,
+    WORKFLOW_RUN_EXAMPLE,
+)
+from src.processes.filters import (
+    FieldSetFilter,
+)
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.preset import TemplatePreset
@@ -30,6 +64,7 @@ from src.processes.models.templates.system_template import SystemTemplate
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
 from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.fields import FieldTemplateSelection
 from src.processes.permissions import (
     TemplateAccessPermission,
     TemplateAdminOwnerPermission,
@@ -43,6 +78,7 @@ from src.processes.queries import (
 )
 from src.processes.serializers.templates.integrations import (
     TemplateIntegrationsFilterSerializer,
+    TemplateIntegrationsSerializer,
 )
 from src.processes.serializers.templates.preset import (
     TemplatePresetSerializer,
@@ -51,14 +87,17 @@ from src.processes.serializers.templates.task import (
     TemplateStepFilterSerializer,
     TemplateStepNameSerializer,
 )
+from src.processes.serializers.templates.template_fields import (
+    TemplateOnlyFieldsSerializer,
+)
 from src.processes.serializers.templates.template import (
+    TemplateAiResponseSerializer,
     TemplateAiSerializer,
     TemplateByNameSerializer,
     TemplateByStepsSerializer,
     TemplateExportFilterSerializer,
     TemplateListFilterSerializer,
     TemplateListSerializer,
-    TemplateOnlyFieldsSerializer,
     TemplateSerializer,
     TemplateTitlesByEventsSerializer,
     TemplateTitlesByTasksSerializer,
@@ -110,8 +149,6 @@ class TemplateViewSet(
     GenericViewSet,
 ):
     pagination_class = LimitOffsetPagination
-    filter_backends = (PneumaticFilterBackend,)
-    filterset_class = TemplateFilter
     serializer_class = TemplateSerializer
     action_serializer_classes = {
         'list': TemplateListSerializer,
@@ -127,6 +164,9 @@ class TemplateViewSet(
         'fields': TemplateOnlyFieldsSerializer,
         'presets': TemplatePresetSerializer,
         'preset': TemplatePresetSerializer,
+    }
+    action_filterset_classes = {
+        'list_fieldsets': FieldSetFilter,
     }
 
     def get_permissions(self):
@@ -221,6 +261,8 @@ class TemplateViewSet(
         return ()
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Template.objects.none()
         user = self.request.user
         qst = Template.objects.on_account(user.account_id).exclude_onboarding()
         return self.prefetch_queryset(qst)
@@ -242,6 +284,7 @@ class TemplateViewSet(
                 'kickoff',
                 'kickoff__fields',
                 'kickoff__fields__selections',
+                'kickoff__fieldsets',
                 Prefetch('owners', queryset=owners_qs),
                 Prefetch(
                     lookup='tasks',
@@ -251,6 +294,7 @@ class TemplateViewSet(
                         .prefetch_related(
                             'fields',
                             'fields__selections',
+                            'fieldsets',
                             'checklists',
                             'checklists__selections',
                             'conditions',
@@ -271,10 +315,21 @@ class TemplateViewSet(
                             Prefetch(
                                 lookup='fields',
                                 queryset=(
-                                    FieldTemplate.objects.all()
+                                    FieldTemplate.objects.prefetch_related(
+                                        Prefetch(
+                                            'selections',
+                                            queryset=(
+                                                FieldTemplateSelection.objects
+                                                .order_by('id')
+                                            ),
+                                            to_attr='selections_values',
+                                        ),
+                                    )
+                                    .all()
                                     .order_by('-order')
                                 ),
                             ),
+                            'fieldsets',
                         )
                     ),
                 ),
@@ -291,6 +346,7 @@ class TemplateViewSet(
                                     .order_by('-order')
                                 ),
                             ),
+                            'fieldsets',
                         )
                     ),
                 ),
@@ -299,12 +355,25 @@ class TemplateViewSet(
 
     def get_serializer_context(self, **kwargs):
         context = super().get_serializer_context(**kwargs)
+        if getattr(self, 'swagger_fake_view', False):
+            return context
         context['user'] = self.request.user
         context['account'] = self.request.user.account
         context['is_superuser'] = self.request.is_superuser
         context['auth_type'] = self.request.token_type
         return context
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Get template',
+        description=ACCESS_TEMPLATE_OWNER,
+        responses={
+            200: TemplateSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     def retrieve(self, request, *args, **kwargs):
         template = self.get_object()
         serializer = self.get_serializer(instance=template)
@@ -320,6 +389,19 @@ class TemplateViewSet(
             )
         return self.response_ok(serializer.get_response_data())
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Create template',
+        description=ACCESS_ADMIN,
+        request=TemplateSerializer,
+        examples=[TEMPLATE_CREATE_EXAMPLE],
+        responses={
+            200: TemplateSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         with transaction.atomic():
@@ -353,6 +435,20 @@ class TemplateViewSet(
             )
         return self.response_ok(serializer.get_response_data())
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Update template',
+        description=ACCESS_TEMPLATE_OWNER,
+        request=TemplateSerializer,
+        examples=[TEMPLATE_CREATE_EXAMPLE],
+        responses={
+            200: TemplateSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     def update(self, request, *args, **kwargs):
         template = self.get_object()
         serializer = self.get_serializer(
@@ -401,6 +497,17 @@ class TemplateViewSet(
         response_serializer = self.get_serializer(instance=template)
         return self.response_ok(response_serializer.get_response_data())
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Clone template',
+        description=ACCESS_TEMPLATE_OWNER,
+        responses={
+            200: TemplateSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['POST'], detail=True)
     def clone(self, request, *args, **kwargs):
         template = self.get_object()
@@ -412,6 +519,59 @@ class TemplateViewSet(
             serializer.save_as_draft()
         return self.response_ok(serializer.get_response_data())
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='List templates',
+        description=with_access_text(
+            LIMIT_OFFSET_LEGACY_NOTE,
+            ACCESS_AUTH,
+        ),
+        parameters=[
+            OpenApiParameter(
+                name='is_active',
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                required=False,
+            ),
+            OpenApiParameter(
+                name='is_public',
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                required=False,
+            ),
+            OpenApiParameter(
+                name='search',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=False,
+            ),
+            OpenApiParameter(
+                name='ordering',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=False,
+            ),
+            OpenApiParameter(
+                name='limit',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=False,
+            ),
+            OpenApiParameter(
+                name='offset',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=False,
+            ),
+        ],
+        responses={
+            # Item serializer; spectacular wraps with pagination.
+            200: TemplateListSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     def list(self, request, *args, **kwargs):
 
         """ Explanation for pagination:
@@ -421,6 +581,7 @@ class TemplateViewSet(
 
             SQL pagination (by LIMIT, OFFSET) is not possible because
             it is impossible to calculate response 'count' value """
+
         filter_slz = TemplateListFilterSerializer(data=request.GET)
         filter_slz.is_valid(raise_exception=True)
 
@@ -445,6 +606,22 @@ class TemplateViewSet(
             )
         return self.paginated_response(queryset)
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Template titles by owners',
+        description=with_access_text(
+            LIMIT_OFFSET_LEGACY_NOTE,
+            ACCESS_AUTH,
+        ),
+        parameters=TEMPLATE_TITLES_BY_OWNERS_PARAMS,
+        responses={
+            # Item serializer; spectacular wraps with pagination.
+            200: TemplateListSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     @action(methods=['GET'], detail=False, url_path='titles-by-owners')
     def titles_by_owners(self, request, *args, **kwargs):
         """
@@ -475,6 +652,20 @@ class TemplateViewSet(
             )
         return self.paginated_response(queryset)
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Run workflow from template',
+        description=ACCESS_TEMPLATE_ACCESS,
+        request=WorkflowCreateSerializer,
+        examples=[WORKFLOW_RUN_EXAMPLE],
+        responses={
+            200: WorkflowDetailsSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['POST'], detail=True)
     def run(self, request, *args, **kwargs):
 
@@ -515,6 +706,17 @@ class TemplateViewSet(
         slz = WorkflowDetailsSerializer(instance=workflow)
         return self.response_ok(slz.data)
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Delete template',
+        description=ACCESS_TEMPLATE_OWNER,
+        responses={
+            204: EMPTY,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     def destroy(self, request, *args, **kwargs):
 
         template = self.get_object()
@@ -532,6 +734,18 @@ class TemplateViewSet(
         )
         return self.response_ok()
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Template titles by workflows',
+        description=ACCESS_AUTH,
+        parameters=TEMPLATE_TITLES_BY_WORKFLOWS_PARAMS,
+        responses={
+            200: TemplateTitlesSerializer(many=True),
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     @action(methods=['GET'], detail=False, url_path='titles-by-workflows')
     def titles_by_workflows(self, request, *args, **kwargs):
         request_slz = TemplateTitlesByWorkflowsSerializer(data=request.GET)
@@ -544,6 +758,18 @@ class TemplateViewSet(
         response_slz = self.get_serializer(data, many=True)
         return self.response_ok(response_slz.data)
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Template titles by events',
+        description=ACCESS_AUTH,
+        parameters=TEMPLATE_TITLES_BY_EVENTS_PARAMS,
+        responses={
+            200: TemplateTitlesSerializer(many=True),
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     @action(methods=['GET'], detail=False, url_path='titles-by-events')
     def titles_by_events(self, request, *args, **kwargs):
         request_slz = TemplateTitlesByEventsSerializer(data=request.GET)
@@ -556,6 +782,18 @@ class TemplateViewSet(
         response_slz = self.get_serializer(data, many=True)
         return self.response_ok(response_slz.data)
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Template titles by tasks',
+        description=ACCESS_AUTH,
+        parameters=TEMPLATE_TITLES_BY_TASKS_PARAMS,
+        responses={
+            200: TemplateTitlesSerializer(many=True),
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     @action(methods=['GET'], detail=False, url_path='titles-by-tasks')
     def titles_by_tasks(self, request, *args, **kwargs):
         request_slz = TemplateTitlesByTasksSerializer(data=request.GET)
@@ -568,6 +806,18 @@ class TemplateViewSet(
         response_slz = self.get_serializer(data, many=True)
         return self.response_ok(response_slz.data)
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Template steps',
+        description=ACCESS_AUTH,
+        parameters=TEMPLATE_STEPS_PARAMS,
+        responses={
+            200: TemplateStepNameSerializer(many=True),
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['GET'], detail=True, url_path='steps')
     def steps(self, request, pk, *args, **kwargs):
 
@@ -594,12 +844,34 @@ class TemplateViewSet(
             raise Http404 from ex
         return self.response_ok(data)
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Template fields',
+        description=ACCESS_TEMPLATE_FIELDS,
+        responses={
+            200: TemplateOnlyFieldsSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['GET'], detail=True, url_path='fields')
     def fields(self, *args, **kwargs):
         template = self.get_object()
         slz = self.get_serializer(instance=template)
         return self.response_ok(slz.data)
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Template integrations',
+        description=ACCESS_ADMIN,
+        responses={
+            200: TemplateIntegrationsSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['GET'], detail=True)
     def integrations(self, request, pk, *args, **kwargs):
         template = self.get_object()
@@ -613,6 +885,19 @@ class TemplateViewSet(
         )
         return self.response_ok(data=data)
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Generate template with AI',
+        description=ACCESS_TEMPLATE_AI,
+        request=TemplateAiSerializer,
+        responses={
+            200: TemplateAiResponseSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            429: TOO_MANY_REQUESTS,
+        },
+    )
     @action(methods=['POST'], detail=False)
     def ai(self, request, *args, **kwargs):
         request_slz = self.get_serializer(data=request.data)
@@ -631,6 +916,18 @@ class TemplateViewSet(
         else:
             return self.response_ok(data)
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Create template by steps',
+        description=ACCESS_ADMIN,
+        request=TemplateByStepsSerializer,
+        responses={
+            200: TemplateSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     @action(methods=['POST'], detail=False, url_path='by-steps')
     def by_steps(self, request, *args, **kwargs):
         request_slz = self.get_serializer(data=request.data)
@@ -650,6 +947,19 @@ class TemplateViewSet(
             slz = TemplateSerializer(instance=template)
             return self.response_ok(slz.get_response_data())
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Create template by library name',
+        description=ACCESS_ADMIN,
+        request=TemplateByNameSerializer,
+        responses={
+            200: TemplateSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['POST'], detail=False, url_path='by-name')
     def by_name(self, request, *args, **kwargs):
         slz = self.get_serializer(data=request.data)
@@ -684,6 +994,17 @@ class TemplateViewSet(
             slz = TemplateSerializer(instance=template)
             return self.response_ok(slz.get_response_data())
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Discard template draft changes',
+        description=ACCESS_TEMPLATE_OWNER,
+        responses={
+            204: EMPTY,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['POST'], detail=True, url_path='discard-changes')
     def discard_changes(self, request, pk, *args, **kwargs):
         template = self.get_object()
@@ -694,6 +1015,22 @@ class TemplateViewSet(
         template.delete()
         return self.response_ok()
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Export templates',
+        description=with_access_text(
+            LIMIT_OFFSET_LEGACY_NOTE,
+            ACCESS_ACCOUNT_OWNER,
+        ),
+        parameters=TEMPLATE_EXPORT_PARAMS,
+        responses={
+            # Item serializer; spectacular wraps with pagination.
+            200: TemplateSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     @action(methods=['GET'], detail=False, url_path='export')
     def export(self, request, *args, **kwargs):
         user = request.user
@@ -709,6 +1046,17 @@ class TemplateViewSet(
         )
         return self.paginated_response(queryset)
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='List template presets',
+        description=ACCESS_TEMPLATE_ACCESS,
+        responses={
+            200: TemplatePresetSerializer(many=True),
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['GET'], detail=True, url_path='presets')
     def presets(self, request, *args, **kwargs):
         template = self.get_object()
@@ -721,6 +1069,19 @@ class TemplateViewSet(
         serializer = self.get_serializer(user_presets, many=True)
         return self.response_ok(serializer.data)
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Create template preset',
+        description=ACCESS_TEMPLATE_OWNER,
+        request=TemplatePresetSerializer,
+        responses={
+            200: TemplatePresetSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['POST'], detail=True, url_path='preset')
     def preset(self, request, *args, **kwargs):
         template = self.get_object()
@@ -761,6 +1122,18 @@ class TemplateIntegrationsViewSet(
             self.request.user.account_id,
         ).exclude_onboarding()
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='List template integrations',
+        description=ACCESS_ADMIN,
+        parameters=TEMPLATE_INTEGRATIONS_PARAMS,
+        responses={
+            200: TemplateIntegrationsSerializer(many=True),
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     def list(self, request, *args, **kwargs):
         slz = TemplateIntegrationsFilterSerializer(data=request.GET)
         slz.is_valid(raise_exception=True)

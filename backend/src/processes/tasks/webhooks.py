@@ -1,6 +1,6 @@
 import requests
 from celery import shared_task
-from celery.task import Task as CeleryTask
+from celery import Task as CeleryTask
 from django.contrib.auth import get_user_model
 from django.db.models import ObjectDoesNotExist
 

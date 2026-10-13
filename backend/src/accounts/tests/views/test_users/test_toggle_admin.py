@@ -1,6 +1,7 @@
 import pytest
 
 from src.accounts.enums import SourceType
+from src.accounts.serializers.user import UserWebsocketSerializer
 from src.accounts.services.user_invite import UserInviteService
 from src.processes.tests.fixtures import (
     create_invited_user,
@@ -12,6 +13,7 @@ pytestmark = pytest.mark.django_db
 
 
 def test_toggle_admin__upgrade_to_admin__ok(
+    mocker,
     identify_mock,
     api_client,
 ):
@@ -27,6 +29,9 @@ def test_toggle_admin__upgrade_to_admin__ok(
     )
     invited = create_invited_user(user, is_admin=False)
     api_client.token_authenticate(user)
+    send_user_updated_mock = mocker.patch(
+        'src.accounts.views.users.send_user_updated_notification.delay',
+    )
 
     # act
     response = api_client.post(
@@ -38,9 +43,15 @@ def test_toggle_admin__upgrade_to_admin__ok(
     invited.refresh_from_db()
     assert invited.is_admin is True
     identify_mock.assert_called_once_with(invited)
+    send_user_updated_mock.assert_called_once_with(
+        logging=user.account.log_api_requests,
+        account_id=user.account_id,
+        user_data=UserWebsocketSerializer(invited).data,
+    )
 
 
 def test_toggle_admin__downgrade_admin__ok(
+    mocker,
     identify_mock,
     api_client,
 ):
@@ -56,6 +67,9 @@ def test_toggle_admin__downgrade_admin__ok(
     )
     invited = create_invited_user(user, is_admin=True)
     api_client.token_authenticate(user)
+    send_user_updated_mock = mocker.patch(
+        'src.accounts.views.users.send_user_updated_notification.delay',
+    )
 
     # act
     response = api_client.post(
@@ -67,6 +81,11 @@ def test_toggle_admin__downgrade_admin__ok(
     invited.refresh_from_db()
     assert invited.is_admin is False
     identify_mock.assert_called_once_with(invited)
+    send_user_updated_mock.assert_called_once_with(
+        logging=user.account.log_api_requests,
+        account_id=user.account_id,
+        user_data=UserWebsocketSerializer(invited).data,
+    )
 
 
 def test_toggle_admin__downgrade_for_account_owner__not_found(

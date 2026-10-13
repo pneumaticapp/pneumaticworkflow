@@ -1,7 +1,8 @@
-import { IExtraField, IKickoff } from '../types/template';
+import { IExtraField, IRuntimeKickoffClient } from '../types/template';
 import { isArrayWithItems } from './helpers';
 import { IRunWorkflow } from '../components/WorkflowEditPopup/types';
 import { ExtraFieldsHelper } from '../components/TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
+import { normalizeCheckboxValue } from './fields';
 import {
   getEndOfDayTsp,
   toDateString,
@@ -106,6 +107,9 @@ export const mapOutputToCompleteTask = (output: IExtraField[]): IExtraField[] =>
         value: String(item.value).replace(',', '.'),
       };
     }
+    if (item.type === 'checkbox') {
+      return { ...item, value: normalizeCheckboxValue(item.value) };
+    }
     return item;
   });
 };
@@ -158,7 +162,7 @@ export const mapEndOfDayTsp = (fields: IExtraField[]): IExtraField[] => {
   }));
 };
 
-export const getNormalizedKickoff = (kickoff: IKickoff): { [key: string]: string } => {
+export const getNormalizedKickoff = (kickoff: Pick<IRuntimeKickoffClient, 'fields'>): { [key: string]: string } => {
   const mappedKickoffFields = new ExtraFieldsHelper(kickoff.fields).normalizeFieldsValues();
   const mappedKickoff = isArrayWithItems(mappedKickoffFields) ? Object.assign({}, ...mappedKickoffFields) : null;
   return mappedKickoff;
@@ -205,12 +209,24 @@ export const mapBackendWorkflowToRedux = <Workflow extends { kickoff: IWorkflowD
   workflow: Workflow,
   timezone: string,
 ): Workflow => {
-  if (!workflow.kickoff?.output?.length) return workflow;
+  if (!workflow.kickoff) return workflow;
+
+  const hasOutput = workflow.kickoff.output?.length;
+  const hasFieldsets = workflow.kickoff.fieldsets?.length;
+
+  if (!hasOutput && !hasFieldsets) return workflow;
+
   return {
     ...workflow,
     kickoff: {
       ...workflow.kickoff,
-      output: mapTspToString(workflow.kickoff.output, timezone),
+      ...(hasOutput && { output: mapTspToString(workflow.kickoff.output, timezone) }),
+      ...(hasFieldsets && {
+        fieldsets: workflow.kickoff.fieldsets!.map((fieldset) => ({
+          ...fieldset,
+          fields: mapTspToString(fieldset.fields, timezone),
+        })),
+      }),
     },
   };
 };
@@ -220,10 +236,20 @@ export const mapBackandworkflowLogToRedux = (workflowLog: IWorkflowLogItem[], ti
 };
 
 export const mapTspToString = (output: IExtraField[], timezone: string): IExtraField[] => {
-  return output.map((item) => ({
-    ...item,
-    value: item.type === 'date' && typeof item.value === 'string' ? toDateString(item.value, timezone) : item.value,
-  }));
+  return output.map((item) => {
+    if (item.type !== 'date' || item.value == null || item.value === '') {
+      return item;
+    }
+
+    if (typeof item.value !== 'string' && typeof item.value !== 'number') {
+      return item;
+    }
+
+    return {
+      ...item,
+      value: toDateString(item.value, timezone),
+    };
+  });
 };
 
 export const formatTaskDatesForRedux = <T extends TFormatTaskDates>(
@@ -241,6 +267,12 @@ export const formatTaskDatesForRedux = <T extends TFormatTaskDates>(
     ...(task.dateStartedTsp && { dateStarted: toISOStringFromTsp(task.dateStartedTsp) }),
     ...(task.dateCompletedTsp && { dateCompleted: toISOStringFromTsp(task.dateCompletedTsp) }),
     ...(task.output && { output: mapTspToString(task.output, timezone) }),
+    ...(task.fieldsets?.length && {
+      fieldsets: task.fieldsets.map((fieldset) => ({
+        ...fieldset,
+        fields: mapTspToString(fieldset.fields, timezone),
+      })),
+    }),
     ...(task.subWorkflows && {
       subWorkflows: mapWorkflowsAddComputedPropsToRedux(mapWorkflowsToISOStringToRedux(task.subWorkflows)),
     }),

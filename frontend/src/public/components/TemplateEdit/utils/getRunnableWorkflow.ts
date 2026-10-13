@@ -1,36 +1,42 @@
-/* eslint-disable */
 /* prettier-ignore */
-import { ITemplate, ITemplateTask, IKickoff } from '../../../types/template';
+import { ITemplateClient, ITemplateTaskClient, ITemplateKickoffClient, IExtraField } from '../../../types/template';
+import { IFieldsetRuntime } from '../../../types/fieldset';
 import { setPerformersCounts } from '../../../utils/template';
 import { IRunWorkflow } from '../../WorkflowEditPopup/types';
 import { normalizeSelections } from './normalizeSelections';
 
-type TTemplateToRunWorkflow = Pick<
-  ITemplate,
+export type TTemplateToRunWorkflow = Pick<
+  ITemplateClient,
   'id' | 'name' | 'kickoff' | 'description' | 'isActive' | 'wfNameTemplate'
 > & {
-  tasks: Pick<ITemplateTask, 'rawPerformers'>[];
+  tasks: Pick<ITemplateTaskClient, 'rawPerformers'>[];
 };
 
 import { getDataset } from '../../../api/datasets/getDataset';
 
-function getKickoffDatasetIds(kickoff: IKickoff): number[] {
+function getKickoffDatasetIds(kickoff: ITemplateKickoffClient, fieldsets: IFieldsetRuntime[] = []): number[] {
   const ids = new Set<number>();
   for (const field of kickoff.fields) {
     if (field.dataset) ids.add(field.dataset);
   }
+  for (const fs of fieldsets) {
+    for (const field of fs.fields) {
+      if (field.dataset) ids.add(field.dataset);
+    }
+  }
   return [...ids];
 }
 
-export async function loadDatasetsMap(kickoff: IKickoff): Promise<Record<number, string[]>> {
-  const datasetIds = getKickoffDatasetIds(kickoff);
+export async function loadDatasetsMap(
+  kickoff: ITemplateKickoffClient,
+  fieldsets: IFieldsetRuntime[] = [],
+): Promise<Record<number, string[]>> {
+  const datasetIds = getKickoffDatasetIds(kickoff, fieldsets);
   if (datasetIds.length === 0) {
     return {};
   }
 
-  const datasets = await Promise.all(
-    datasetIds.map((id) => getDataset({ id })),
-  );
+  const datasets = await Promise.all(datasetIds.map((id) => getDataset({ id })));
 
   const datasetsMap: Record<number, string[]> = {};
   datasetIds.forEach((id, i) => {
@@ -40,22 +46,27 @@ export async function loadDatasetsMap(kickoff: IKickoff): Promise<Record<number,
   return datasetsMap;
 }
 
+function applyDatasetsToFields(fields: IExtraField[], datasetsMap: Record<number, string[]>): IExtraField[] {
+  return fields.map((field) => ({
+    ...field,
+    selections: field.dataset ? datasetsMap[field.dataset] || [] : normalizeSelections(field.selections),
+  }));
+}
 
-function convertSelectionsToValues(kickoff: IKickoff, datasetsMap: Record<number, string[]>): IKickoff {
+function convertSelectionsToValues(
+  kickoff: ITemplateKickoffClient,
+  datasetsMap: Record<number, string[]>,
+): ITemplateKickoffClient {
   return {
     ...kickoff,
-    fields: kickoff.fields.map((field) => ({
-      ...field,
-      selections: field.dataset
-        ? datasetsMap[field.dataset] || []
-        : normalizeSelections(field.selections),
-    })),
+    fields: applyDatasetsToFields(kickoff.fields, datasetsMap),
   };
 }
 
 export const getRunnableWorkflow = (
   template: TTemplateToRunWorkflow,
   datasetsMap: Record<number, string[]> = {},
+  loadedFieldsets: IFieldsetRuntime[] = [],
 ): IRunWorkflow | null => {
   const { id, name, kickoff, description, isActive, tasks, wfNameTemplate } = template;
   if (!isActive || !id) {
@@ -71,5 +82,9 @@ export const getRunnableWorkflow = (
     performersCount,
     tasksCount: tasks.length,
     wfNameTemplate,
+    loadedFieldsets: loadedFieldsets.map((fs) => ({
+      ...fs,
+      fields: applyDatasetsToFields(fs.fields, datasetsMap),
+    })),
   };
 };

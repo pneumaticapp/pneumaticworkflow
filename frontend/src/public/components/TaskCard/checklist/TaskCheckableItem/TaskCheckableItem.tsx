@@ -12,7 +12,7 @@ export type TTaskCheckableItemOwnProps = {
   listApiName: string;
   itemApiName: string;
   disabled?: boolean;
-}
+};
 
 export type TTaskCheckableItemReduxProps = {
   isChecked: boolean;
@@ -43,16 +43,15 @@ export function TaskCheckableItem({
     } else {
       unmarkChecklistItem({ listApiName, itemApiName });
     }
-  }
+  };
 
   return ReactDOM.createPortal(
     <Checkbox
       checked={isChecked}
       containerClassName={styles['checkbox']}
-      labelClassName={styles['checkbox-label']}
       onChange={handleChange}
       disabled={disabled}
     />,
-    element
+    element,
   );
 }

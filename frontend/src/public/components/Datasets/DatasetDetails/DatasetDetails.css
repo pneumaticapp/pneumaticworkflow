@@ -1,6 +1,6 @@
 .container {
-  margin: 0 auto;
   max-width: 108.8rem;
+  margin: 0 auto;
 }
 
 .header {
@@ -8,8 +8,8 @@
 
   .header__config {
     display: flex;
-    align-items: center;
     gap: 0.8rem;
+    align-items: center;
   }
 
   .add-btn {
@@ -18,13 +18,13 @@
 }
 
 .list {
-  margin: 0 -1.6rem;
   padding: 3.2rem 1.6rem;
+  margin: 0 -1.6rem;
   background-color: var(--pneumatic-color-white);
 
   @media (--desktop) {
-    margin: initial;
     padding: 3.2rem;
+    margin: initial;
     border-radius: 2.4rem;
   }
 }
@@ -34,10 +34,10 @@
 }
 
 .toolbar {
-  padding: 0 0 3.2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0 0 3.2rem;
   border-bottom: 1px solid var(--pneumatic-color-black16);
 
   .search__icon {
@@ -46,8 +46,8 @@
   }
 
   .search-field__input {
-    padding-left: 2.8rem;
     height: auto;
+    padding-left: 2.8rem;
     border: 0;
   }
 
@@ -70,13 +70,12 @@
 
 .header-skeleton {
   background-color: var(--pneumatic-color-skeleton-gray-bg);
-  background-image:
-    linear-gradient(
-      90deg,
-      var(--pneumatic-color-skeleton-gray-bg),
-      var(--pneumatic-color-skeleton-gray-bg-highlight),
-      var(--pneumatic-color-skeleton-gray-bg)
-    );
+  background-image: linear-gradient(
+    90deg,
+    var(--pneumatic-color-skeleton-gray-bg),
+    var(--pneumatic-color-skeleton-gray-bg-highlight),
+    var(--pneumatic-color-skeleton-gray-bg)
+  );
   background-repeat: no-repeat;
   background-size: 200px 100%;
 }

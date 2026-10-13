@@ -16,7 +16,7 @@ export interface IUserSelection {
 
 export function UserSelection({ selectedUsers, onChange, onChangeSelected, onClickAllUsers }: IUserSelection) {
   const users: ReturnType<typeof getUsers> = getNotDeletedUsers(useSelector(getUsers));
-  
+
   const selectionsDropdownOption = users.map((item) => {
     return {
       ...item,

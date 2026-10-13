@@ -1,6 +1,5 @@
 from typing import Optional
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 
 from src.accounts.enums import (
@@ -59,7 +58,7 @@ class AccountLLConverter:
         )
         master_account = self.instance.master_account
         billing_enabled = (
-            settings.PROJECT_CONF['BILLING'] and master_account.billing_sync
+            master_account.billing_sync
         )
         update_kwargs = {
             'logo_lg': master_account.logo_lg,

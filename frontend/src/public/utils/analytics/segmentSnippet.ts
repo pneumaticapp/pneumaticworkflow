@@ -14,7 +14,7 @@ import { logger } from '../logger';
 
 export function loadAnalytics() {
   // Create a queue, but don't obliterate an existing one!
-  let analytics = (window as any).analytics = (window as any).analytics || [];
+  let analytics = ((window as any).analytics = (window as any).analytics || []);
 
   // If the real analytics.js is already on the page return.
   if (analytics.initialize) {
@@ -62,8 +62,8 @@ export function loadAnalytics() {
   // for methods in Analytics.js so that you never have to wait
   // for it to load to actually record data. The `method` is
   // stored as the first argument, so we can replay the data.
-  analytics.factory = function(method: any) {
-    return function() {
+  analytics.factory = function (method: any) {
+    return function () {
       let args = Array.prototype.slice.call(arguments);
       args.unshift(method);
       analytics.push(args);
@@ -80,13 +80,12 @@ export function loadAnalytics() {
 
   // Define a method to load Analytics.js from our CDN,
   // and that will be sure to only ever load it once.
-  analytics.load = function(key: any, options: any) {
+  analytics.load = function (key: any, options: any) {
     // Create an async script element based on your key.
     let script = document.createElement('script');
     script.type = 'text/javascript';
     script.async = true;
-    script.src = `https://cdn.segment.com/analytics.js/v1/${
-      key  }/analytics.min.js`;
+    script.src = `https://cdn.segment.com/analytics.js/v1/${key}/analytics.min.js`;
 
     // Insert our script next to the first script element.
     let first = document.getElementsByTagName('script')[0];

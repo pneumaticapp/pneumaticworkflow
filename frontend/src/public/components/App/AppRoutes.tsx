@@ -22,6 +22,7 @@ import { MainLayout } from '../../layout';
 import { GuestTask } from '../GuestTask';
 import { TenantsView } from '../../views/Tenants';
 import { DatasetsView } from '../../views/Datasets';
+import { FieldsetsView } from '../../views/Fieldsets';
 import { ELoggedState, IAuthUser } from '../../types/redux';
 import { CollectPaymentDetails } from '../CollectPaymentDetails';
 import { AfterPaymentDetailsProvided } from '../AfterPaymentDetailsProvided';
@@ -55,7 +56,18 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
   if (shouldRedirectToUrl) {
     sessionStorage.setItem(REDIRECT_URL_STORAGE_KEY, '');
 
-    return <Redirect to={redirectUrl!} />;
+    // Full URLs (e.g. from file service redirect) need real browser navigation;
+    // React Router's <Redirect> only handles internal SPA routes.
+    // The redirectUrl always comes from our own backend (Express authMiddleware
+    // or file service browser_utils), so no domain validation is needed.
+    if (redirectUrl!.startsWith('http://') || redirectUrl!.startsWith('https://')) {
+      // For file downloads (Content-Disposition: attachment) the browser stays
+      // on the current page, so we fall through to render normal routes —
+      // the user sees the dashboard while the file downloads.
+      window.location.replace(redirectUrl!);
+    } else {
+      return <Redirect to={redirectUrl!} />;
+    }
   }
 
   const canAccessTemplates = user.isAdmin || isTemplateOwner;
@@ -74,16 +86,10 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
             <Route path={ERoutes.CollectPaymentDetails} component={CollectPaymentDetails} />
             <Route path={ERoutes.AfterPaymentDetailsProvided} component={AfterPaymentDetailsProvided} />
             <Route path={ERoutes.Settings} component={Settings} />
-            <ProtectedRoute
-              path={ERoutes.Workflows}
-              hasAccess={canAccessWorkflowsObj}
-            >
+            <ProtectedRoute path={ERoutes.Workflows} hasAccess={canAccessWorkflowsObj}>
               <WorkflowsView />
             </ProtectedRoute>
-            <ProtectedRoute
-              path={ERoutes.WorkflowDetail}
-              hasAccess={canAccessWorkflowsObj}
-            >
+            <ProtectedRoute path={ERoutes.WorkflowDetail} hasAccess={canAccessWorkflowsObj}>
               <WorkflowsView />
             </ProtectedRoute>
             <ProtectedRoute path={ERoutes.TemplatesCreate} hasAccess={user.isAdmin}>
@@ -95,14 +101,11 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
             <ProtectedRoute path={ERoutes.TemplatesEdit} hasAccess={user.isAdmin}>
               <TemplateView />
             </ProtectedRoute>
-            <ProtectedRoute path={ERoutes.Templates} hasAccess={canAccessTemplates}>
+            <ProtectedRoute path={ERoutes.Templates} hasAccess={user.isAdmin}>
               <TemplatesView />
             </ProtectedRoute>
             <Route path={ERoutes.Tasks} component={TasksView} />
-            <ProtectedRoute
-              path={ERoutes.Highlights}
-              hasAccess={canAccessWorkflowsObj}
-            >
+            <ProtectedRoute path={ERoutes.Highlights} hasAccess={canAccessWorkflowsObj}>
               <HighlightsView />
             </ProtectedRoute>
             <ProtectedRoute path={ERoutes.Team} hasAccess={user.isAdmin}>
@@ -121,11 +124,11 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
             >
               <TenantsView />
             </ProtectedRoute>
-            <ProtectedRoute
-              path={ERoutes.Datasets}
-              hasAccess={user.isAdmin || user.isAccountOwner}
-            >
+            <ProtectedRoute path={ERoutes.Datasets} hasAccess={user.isAdmin || user.isAccountOwner}>
               <DatasetsView />
+            </ProtectedRoute>
+            <ProtectedRoute path={ERoutes.Fieldsets} hasAccess={user.isAdmin || user.isAccountOwner}>
+              <FieldsetsView />
             </ProtectedRoute>
 
             <Redirect exact from="/" to={ERoutes.Main} />

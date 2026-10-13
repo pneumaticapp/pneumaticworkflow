@@ -33,3 +33,4 @@ MSG_NF_0024 = lambda count: format_lazy(
     _('You have {count} unfinished tasks in Pneumatic'),
     count=count,
 )
+MSG_NF_0025 = _('Tasks were delegated')

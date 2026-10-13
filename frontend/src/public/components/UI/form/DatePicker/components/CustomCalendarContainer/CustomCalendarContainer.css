@@ -1,8 +1,0 @@
-.calendar-footer {
-  margin-top: 1.6rem;
-  display: inline-flex;
-
-  &__cancel {
-    margin-left: 1.6rem;
-  }
-}

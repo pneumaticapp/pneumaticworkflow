@@ -14,10 +14,10 @@
     position: absolute;
     font-family: 'Abhaya Libre', serif;
     font-size: 20px;
-    font-weight: 800;
     font-style: normal;
+    font-weight: 800;
     line-height: 24px;
-    text-align: center;
     color: #b9b9b8;
+    text-align: center;
   }
 }

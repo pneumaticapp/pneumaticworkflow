@@ -1,8 +1,8 @@
-import { IAccount, TUserId } from './user';
+import { TUserId } from './user';
 import { TUploadedFile } from '../utils/uploadFiles';
 import { ITask, ITemplateStep, TaskWithTsp } from './tasks';
 import {
-  IKickoff,
+  IRuntimeKickoffClient,
   IExtraField,
   ITemplateTitle,
   ETemplateOwnerType,
@@ -10,6 +10,7 @@ import {
   ITableViewFields,
   TTemplatePreset,
 } from './template';
+import { IFieldsetRuntime } from './fieldset';
 import { EProgressbarColor } from '../components/Workflows/utils/getWorfkflowClientProperties';
 
 export type WorkflowWithDateFields = {
@@ -72,7 +73,7 @@ export interface IWorkflowDetails {
 
 export interface IWorkflowEditData {
   name?: string;
-  kickoff?: IKickoff | null;
+  kickoff?: IRuntimeKickoffClient | null;
 }
 
 export interface IWorkflowEdit {
@@ -87,6 +88,7 @@ export interface IWorkflowDetailsKickoff {
   id: number;
   description: string | null;
   output: IExtraField[];
+  fieldsets?: IFieldsetRuntime[];
 }
 
 export interface IWorkflowLogItem {
@@ -101,9 +103,8 @@ export interface IWorkflowLogItem {
   delay: IWorkflowDelay | null;
   targetUserId: number | null;
   targetGroupId: number | null;
-  attachments: [];
-  watched: { date: string; userId: Pick<IAccount, 'id'> }[];
-  reactions: { [value: string]: Pick<IAccount, 'id'>[] };
+  watched: { date: string; userId: number }[];
+  reactions: { [value: string]: number[] };
 }
 
 export interface IWorkflowDelay {
@@ -114,8 +115,10 @@ export interface IWorkflowDelay {
   startDate: string;
 }
 
-export interface IWorkflowLogTask
-  extends Pick<ITask, 'id' | 'name' | 'description' | 'output' | 'performers' | 'dueDate'> {
+export interface IWorkflowLogTask extends Pick<
+  ITask,
+  'id' | 'name' | 'description' | 'output' | 'fieldsets' | 'performers' | 'dueDate'
+> {
   number: number;
   delay: IWorkflowDelay | null;
 }
@@ -226,10 +229,6 @@ export interface ITaskCommentItem {
   failed?: boolean;
   id?: number;
   attachments: TUploadedFile[];
-}
-
-export interface ITaskCommentAttachmentRequest {
-  id: number;
 }
 
 export enum EWorkflowsLogSorting {

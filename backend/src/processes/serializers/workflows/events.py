@@ -5,14 +5,12 @@ from src.processes.enums import WorkflowEventType
 from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.task import Delay, Task
 from src.processes.models.workflows.workflow import Workflow
-from src.processes.serializers.file_attachment import (
-    FileAttachmentSerializer,
-)
 from src.processes.serializers.workflows.field import (
     TaskFieldEventSerializer,
 )
+from src.processes.serializers.workflows.fieldset import FieldSetSerializer
 from src.processes.serializers.workflows.task_performer import (
-    TaskUserGroupPerformerSerializer,
+    get_performers_for_task,
 )
 
 
@@ -68,21 +66,34 @@ class TaskEventJsonSerializer(serializers.ModelSerializer):
             'performers',
             'due_date_tsp',
             'output',
+            'fieldsets',
             'sub_workflow',
         )
 
-    performers = TaskUserGroupPerformerSerializer(
-        many=True,
-        source='exclude_directly_deleted_taskperformer_set',
-    )
+    performers = serializers.SerializerMethodField()
     output = serializers.SerializerMethodField()
+    fieldsets = serializers.SerializerMethodField()
     due_date_tsp = TimeStampField(source='due_date')
     sub_workflow = serializers.SerializerMethodField()
+
+    def get_performers(self, instance):
+        return get_performers_for_task(instance)
 
     def get_output(self, instance):
         if self.context['event_type'] == WorkflowEventType.TASK_COMPLETE:
             return TaskFieldEventSerializer(
-                instance=instance.output.all(),
+                instance=instance.output.filter(fieldset__isnull=True),
+                many=True,
+            ).data
+        return None
+
+    def get_fieldsets(self, instance):
+        if (
+            self.context['event_type'] == WorkflowEventType.TASK_COMPLETE
+            and instance.fieldsets.exists()
+        ):
+            return FieldSetSerializer(
+                instance=instance.fieldsets.all(),
                 many=True,
             ).data
         return None
@@ -113,13 +124,16 @@ class WorkflowEventSerializer(serializers.ModelSerializer):
             'target_group_id',
             'delay',
             'task',
-            'attachments',
             'workflow_id',
+            'is_urgent',
             'watched',
             'reactions',
         )
     task = serializers.JSONField(source='task_json')
     delay = serializers.JSONField(source='delay_json')
-    attachments = FileAttachmentSerializer(many=True)
     created_tsp = TimeStampField(source='created')
     updated_tsp = TimeStampField(source='updated')
+    is_urgent = serializers.BooleanField(
+        source='workflow.is_urgent',
+        read_only=True,
+    )

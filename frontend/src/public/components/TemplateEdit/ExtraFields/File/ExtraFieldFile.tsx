@@ -1,168 +1,168 @@
-/* eslint-disable */
-/* prettier-ignore */
-import * as React from 'react';
+import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import classnames from 'classnames';
-import { EExtraFieldMode } from '../../../../types/template';
-import { PencilSmallIcon } from '../../../icons';
-import { TUploadedFile, uploadFiles } from '../../../../utils/uploadFiles';
-import { NotificationManager } from '../../../UI/Notifications';
-import { ExtraFieldFilesGrid } from './ExtraFieldFilesGrid';
-import { logger } from '../../../../utils/logger';
-
-import { IWorkflowExtraFieldProps } from '..';
-import AutosizeInput from 'react-input-autosize';
-import { validateKickoffFieldName } from '../../../../utils/validators';
-import { IntlMessages } from '../../../IntlMessages';
-import kickoffStyles from '../../KickoffRedux/KickoffRedux.css';
-import styles from './ExtraFieldFile.css';
-import { Button } from '../../../UI/Buttons/Button';
 import { useIntl } from 'react-intl';
+
+import { EFieldLabelPosition } from '../../../../types/fieldset';
+import { EExtraFieldMode } from '../../../../types/template';
+import { TUploadedFile, uploadFiles } from '../../../../utils/uploadFiles';
+import { parseMarkdownToFiles } from '../../../../utils/parseMarkdownFiles';
+import { logger } from '../../../../utils/logger';
+import { Button } from '../../../UI/Buttons/Button';
+import { FieldLabel } from '../utils/FieldLabel';
+import { NotificationManager } from '../../../UI/Notifications';
+import { IWorkflowExtraFieldProps } from '../types';
+import { ExtraFieldFilesGrid } from './ExtraFieldFilesGrid';
+import { ExtraFieldFileTemplate } from './ExtraFieldFileTemplate';
+import kickoffStyles from '../../KickoffRedux/KickoffRedux.css';
+
+import styles from './ExtraFieldFile.css';
 
 export function ExtraFieldFile({
   field,
-  field: { name, isRequired },
   intl,
   namePlaceholder = intl.formatMessage({ id: 'template.kick-off-form-field-name-placeholder' }),
   mode = EExtraFieldMode.Kickoff,
   editField,
   isDisabled = false,
-  accountId,
+  labelBackgroundColor,
+  labelPosition,
+  onUploadStateChange,
 }: IWorkflowExtraFieldProps) {
-  const { useCallback, useState, useEffect, createRef } = React;
-  const [isUploading, setUploadingState] = useState(false);
-  const [filesToUpload, setFilesToUploadState] = useState<TUploadedFile[]>(field.attachments || []);
-  const fieldNameInputRef = React.useRef<HTMLInputElement | null>(null);
-  const [isFocused, setIsFocused] = React.useState(false);
   const { formatMessage } = useIntl();
-  useEffect(() => {
-    const { current } = uploadFieldRef;
+  const getFieldFiles = useCallback(
+    (): TUploadedFile[] => (field.attachments?.length ? field.attachments : parseMarkdownToFiles(field.markdownValue)),
+    [field.attachments, field.markdownValue],
+  );
+  const [filesToUpload, setFilesToUpload] = useState<TUploadedFile[]>(getFieldFiles);
+  const [isUploading, setIsUploading] = useState(false);
+  const filesToUploadRef = useRef<TUploadedFile[]>(getFieldFiles());
+  const uploadFieldRef = useRef<HTMLInputElement>(null);
+  const isMountedRef = useRef(true);
+  const isUploadingRef = useRef(false);
+  const onUploadStateChangeRef = useRef(onUploadStateChange);
 
-    if (current && current.value) {
-      current.value = '';
+  useEffect(() => {
+    onUploadStateChangeRef.current = onUploadStateChange;
+  }, [onUploadStateChange]);
+
+  useEffect(() => {
+    const nextFiles = getFieldFiles();
+    filesToUploadRef.current = nextFiles;
+    setFilesToUpload(nextFiles);
+  }, [getFieldFiles]);
+
+  useEffect(() => {
+    if (uploadFieldRef.current?.value) {
+      uploadFieldRef.current.value = '';
     }
   }, [filesToUpload]);
 
-  const uploadFieldRef = createRef<HTMLInputElement>();
-
-  const handleChangeName = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      editField({ name: e.target.value });
+  useEffect(
+    () => () => {
+      isMountedRef.current = false;
+      if (isUploadingRef.current) {
+        onUploadStateChangeRef.current?.(false);
+      }
     },
-    [editField],
+    [],
   );
-  const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { files } = e.target;
 
-    if (!files) {
+  const setUploadingState = (nextIsUploading: boolean) => {
+    isUploadingRef.current = nextIsUploading;
+    setIsUploading(nextIsUploading);
+    onUploadStateChangeRef.current?.(nextIsUploading);
+  };
+
+  const updateFieldFiles = (attachments: TUploadedFile[]) => {
+    const value = attachments.filter((file) => !file.isRemoved).map((file) => `[${file.name}](${file.url})`);
+
+    filesToUploadRef.current = attachments;
+    setFilesToUpload(attachments);
+    editField({ value, attachments });
+  };
+
+  const handleUploadFile = async ({ target: { files } }: ChangeEvent<HTMLInputElement>) => {
+    if (!files || isDisabled || isUploadingRef.current) {
       return;
     }
 
+    setUploadingState(true);
     try {
-      setUploadingState(true);
-      const uploadedFiles = await uploadFiles(files, accountId);
-      const newUploadedFiles = [...filesToUpload, ...(uploadedFiles as TUploadedFile[])];
-      const newUploadedFilesIds = newUploadedFiles.filter((file) => !file.isRemoved).map((file) => String(file.id));
+      const uploadedFiles = await uploadFiles(files);
+      if (!isMountedRef.current) {
+        return;
+      }
 
-      setFilesToUploadState(newUploadedFiles);
-      editField({ value: newUploadedFilesIds, attachments: newUploadedFiles });
+      const successfulFiles = uploadedFiles.filter((file) => !file.error) as TUploadedFile[];
+      updateFieldFiles([...filesToUploadRef.current, ...successfulFiles]);
     } catch (error) {
-      NotificationManager.warning({ message: 'workflows.tasks-failed-to-upload-files' });
-      logger.error(error);
+      if (isMountedRef.current) {
+        NotificationManager.warning({ message: 'workflows.tasks-failed-to-upload-files' });
+        logger.error(error);
+      }
     } finally {
-      setUploadingState(false);
+      if (isMountedRef.current) {
+        setUploadingState(false);
+      }
     }
   };
 
-  const handleDeleteFile = (id: number) => async () => {
-    const newUploadedFiles = filesToUpload.map((file) => (file.id === id ? { ...file, isRemoved: true } : file));
-    const newUploadedFilesIds = newUploadedFiles.filter((file) => !file.isRemoved).map((file) => String(file.id));
-
-    setFilesToUploadState(newUploadedFiles);
-    editField({ value: newUploadedFilesIds, attachments: newUploadedFiles });
-  };
-  const fieldNameErrorMessage = validateKickoffFieldName(name) || '';
-  const isKickoffFieldNameValid = !Boolean(fieldNameErrorMessage);
-
-  const renderKickoffView = () => (
-    <div className={styles['extra-field-file__conteiner--template']}>
-      <div className={styles['extra-field-file__input--template']}>
-        <AutosizeInput
-          inputRef={(ref) => (fieldNameInputRef.current = ref)}
-          inputClassName={classnames(
-            styles['extra-field-file__input-name--template'],
-            !isKickoffFieldNameValid && styles['extra-field-file__input-name-error--template'],
-          )}
-          onChange={handleChangeName}
-          placeholder={namePlaceholder}
-          type="text"
-          value={name}
-          disabled={isDisabled}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              setIsFocused(false);
-              event.currentTarget.blur();
-            }
-          }}
-        />
-        {isRequired && <span className={kickoffStyles['kick-off-required-sign']} />}
-        {!isFocused && mode === EExtraFieldMode.Kickoff && (
-          <button
-            onClick={() => fieldNameInputRef.current?.focus()}
-            className={classnames(
-              kickoffStyles['kick-off-edit-name'],
-              styles['extra-field-file__edit-name-button--template'],
-            )}
-          >
-            <PencilSmallIcon />
-          </button>
-        )}
-      </div>
-
-      {!isKickoffFieldNameValid && (
-        <p className={styles['extra-field-file__error-message--template']}>
-          <IntlMessages id={fieldNameErrorMessage} />
-        </p>
-      )}
-      <div className={styles['extra-field-file__upload-button-conteiner']}>
-        <Button
-          label={formatMessage({ id: 'file-upload.label-upload-button' })}
-          size="sm"
-          buttonStyle="transparent-black"
-          disabled
-          className={styles['extra-field-file__upload-button--template']}
-        />
-      </div>
-    </div>
-  );
-
-  const handleOpenUploadWindow = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    if (!uploadFieldRef.current) {
+  const handleDeleteFile = (id: string) => () => {
+    if (isDisabled) {
       return;
     }
 
-    uploadFieldRef.current.click();
+    updateFieldFiles(filesToUploadRef.current.map((file) => (file.id === id ? { ...file, isRemoved: true } : file)));
   };
 
-  const renderProcessView = () => {
+  if (mode === EExtraFieldMode.Kickoff) {
     return (
-      <div className={styles['extra-field-file__container']} data-autofocus-first-field={true}>
-        <div>
-          <div className={styles['extra-field-file__field-name']}>{name}</div>
-          {isRequired && <span className={kickoffStyles['kick-off-required-sign']} />}
-        </div>
+      <ExtraFieldFileTemplate
+        field={field}
+        isDisabled={isDisabled}
+        namePlaceholder={namePlaceholder}
+        labelPosition={labelPosition}
+        editField={editField}
+      />
+    );
+  }
 
+  const isLabelLeft = labelPosition === EFieldLabelPosition.Left;
+
+  return (
+    <div
+      className={classnames(
+        styles['extra-field-file__container'],
+        isLabelLeft && kickoffStyles['kick-off-input__field_label-left'],
+      )}
+      data-autofocus-first-field
+    >
+      {isLabelLeft ? (
+        <FieldLabel
+          name={field.name}
+          isRequired={field.isRequired || false}
+          isDisabled={isDisabled}
+          mode={mode}
+          labelPosition={labelPosition}
+          labelBackgroundColor={labelBackgroundColor}
+          handleChangeName={(event) => editField({ name: event.target.value })}
+        />
+      ) : (
+        <div>
+          <div className={styles['extra-field-file__field-name']}>{field.name}</div>
+          {field.isRequired && <span className={kickoffStyles['kick-off-required-sign']} />}
+        </div>
+      )}
+      <div {...(isLabelLeft && { className: styles['file-content-wrapper_label-left'] })}>
         <ExtraFieldFilesGrid
           attachments={filesToUpload}
           deleteFile={handleDeleteFile}
           isUploading={isUploading}
-          isEdit
+          isEdit={!isDisabled}
         />
-
         <input
           className={styles['extra-field-file__ref']}
+          disabled={isDisabled || isUploading}
           multiple
           onChange={handleUploadFile}
           ref={uploadFieldRef}
@@ -173,21 +173,14 @@ export function ExtraFieldFile({
             label={formatMessage({ id: 'file-upload.label-upload-button' })}
             size="sm"
             buttonStyle="transparent-black"
-            onClick={handleOpenUploadWindow}
+            disabled={isDisabled || isUploading}
+            onClick={(event) => {
+              event.preventDefault();
+              uploadFieldRef.current?.click();
+            }}
           />
         </div>
       </div>
-    );
-  };
-
-  const renderFileField = () => {
-    const fieldsMap: { [key in EExtraFieldMode]: React.ReactNode } = {
-      [EExtraFieldMode.Kickoff]: renderKickoffView(),
-      [EExtraFieldMode.ProcessRun]: renderProcessView(),
-    };
-
-    return fieldsMap[mode];
-  };
-
-  return renderFileField();
+    </div>
+  );
 }

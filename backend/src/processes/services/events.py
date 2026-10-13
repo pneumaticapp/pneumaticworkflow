@@ -1,4 +1,3 @@
-import re
 from typing import List, Optional, Tuple
 
 from django.contrib.auth import get_user_model
@@ -10,16 +9,17 @@ from src.analysis.services import AnalyticService
 from src.generics.base.service import BaseModelService
 from src.notifications.tasks import (
     send_comment_notification,
+    send_event_created,
+    send_event_updated,
     send_mention_notification,
     send_reaction_notification,
-    send_workflow_event,
 )
+from src.permissions.enums import PermissionSource
 from src.processes.enums import (
     CommentStatus,
     WorkflowEventActionType,
     WorkflowEventType,
 )
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.event import (
     WorkflowEvent,
     WorkflowEventAction,
@@ -35,17 +35,24 @@ from src.processes.serializers.workflows.events import (
     WorkflowEventSerializer,
 )
 from src.processes.services.exceptions import (
-    AttachmentNotFound,
     CommentedNotTask,
     CommentedTaskNotActive,
     CommentedWorkflowNotRunning,
     CommentIsDeleted,
     CommentTextRequired,
 )
-from src.services.markdown import (
-    MarkdownPatterns,
-    MarkdownService,
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
 )
+from src.processes.utils.common import MENTION_RE
+from src.services.markdown import MarkdownPatterns, MarkdownService
+from src.storage.services.attachments import (
+    clear_guardian_permissions_for_attachment_ids,
+)
+from src.storage.tasks import (
+    schedule_sync_workflow_attachment_permissions,
+)
+from src.storage.utils import refresh_attachments
 
 UserModel = get_user_model()
 
@@ -58,7 +65,7 @@ class WorkflowEventService:
         """ Send workflow event websocket """
 
         data = WorkflowEventSerializer(instance=event).data
-        send_workflow_event.delay(
+        send_event_created.delay(
             logging=event.account.log_api_requests,
             logo_lg=event.account.logo_lg,
             account_id=event.account_id,
@@ -227,7 +234,6 @@ class WorkflowEventService:
         task: Task,
         text: Optional[str],
         clear_text: Optional[str] = None,
-        attachments: Optional[List[int]] = None,
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
@@ -241,7 +247,7 @@ class WorkflowEventService:
                 instance=task,
                 context={'event_type': WorkflowEventType.COMMENT},
             ).data,
-            with_attachments=bool(attachments),
+            with_attachments=False,  # Will be updated by refresh_attachments
             workflow=task.workflow,
             user=user,
         )
@@ -573,11 +579,35 @@ class WorkflowEventService:
             cls._after_create_actions(event)
         return event
 
+    @classmethod
+    def task_delegation_event(
+        cls,
+        task: Task,
+        user: UserModel,
+        substitute_group: UserGroup,
+        after_create_actions: bool = True,
+    ) -> WorkflowEvent:
+
+        event = WorkflowEvent.objects.create(
+            type=WorkflowEventType.TASK_DELEGATION,
+            account=task.account,
+            task=task,
+            task_json=TaskEventJsonSerializer(
+                instance=task,
+                context={
+                    'event_type': WorkflowEventType.TASK_DELEGATION,
+                },
+            ).data,
+            workflow=task.workflow,
+            target_user_id=user.id,
+            target_group_id=substitute_group.id,
+        )
+        if after_create_actions:
+            cls._after_create_actions(event)
+        return event
+
 
 class CommentService(BaseModelService):
-
-    def _create_related(self, **kwargs):
-        pass
 
     def _create_instance(self, **kwargs):
         pass
@@ -587,7 +617,7 @@ class CommentService(BaseModelService):
         text: str,
         exclude_ids: List[int],
     ) -> Tuple[int]:
-        list_of_ids = re.findall(r'\[.*?\|\s*([0-9]+)\]', text)
+        list_of_ids = MENTION_RE.findall(text)
         if not list_of_ids:
             return ()
         return UserModel.objects.filter(
@@ -596,62 +626,46 @@ class CommentService(BaseModelService):
             self.account.id,
         ).only_ids()
 
-    def _update_attachments(self, ids: Optional[List[int]] = None):
-
-        """ Attach new attachments to comment event and remove previous """
-
-        if ids:
-            self.instance.attachments.exclude(id__in=ids).delete()
-            qst = FileAttachment.objects.on_account(
-                self.account.id,
-            ).with_event_or_not_attached(self.instance.id).by_ids(ids)
-
-            if qst.count() < len(ids):
-                raise AttachmentNotFound
-            qst.update(
-                event=self.instance,
-                workflow=self.instance.workflow,
-            )
-        else:
-            self.instance.attachments.all().delete()
+    @staticmethod
+    def _text_has_attachment_markers(text: Optional[str]) -> bool:
+        if not text:
+            return False
+        if 'attachment_id:' in text:
+            return True
+        if MarkdownPatterns.LINK_MARKDOWN_PATTERN.search(text):
+            return True
+        return bool(MarkdownPatterns.IMAGE_MARKDOWN_PATTERN.search(text))
 
     def _get_new_comment_recipients(
         self,
         task: Task,
-    ) -> Tuple[Tuple[int], Tuple[int]]:
+    ) -> Tuple[Tuple[int], Tuple[int], Tuple[int]]:
 
-        """ Return mentioned users and comment notification receipenes """
-
-        mentioned_users_ids = ()
-        notify_users_ids = task.taskperformer_set.exclude_directly_deleted(
-        ).exclude(user_id=self.user.id).user_ids()
-        if self.instance.text:
-            mentioned_users_ids = self._get_mentioned_users_ids(
-                text=self.instance.text,
-                exclude_ids=notify_users_ids,
-            )
-        notify_users_ids = tuple(
-            set(notify_users_ids) - set(mentioned_users_ids),
+        performer_ids = (
+            task.taskperformer_set.exclude_directly_deleted()
+            .exclude(user_id=self.user.id)
+            .user_ids()
         )
-        return mentioned_users_ids, notify_users_ids
-
-    def _get_updated_comment_recipients(self) -> Tuple[int]:
-
-        """ Return only new mentioned users """
-
-        workflow = self.instance.workflow
-        mentioned_users_ids = ()
+        performer_set = set(performer_ids)
+        all_mention_ids = ()
         if self.instance.text:
-            # Only new mentioned users
-            mentioned_users_ids = self._get_mentioned_users_ids(
+            all_mention_ids = self._get_mentioned_users_ids(
                 text=self.instance.text,
-                exclude_ids=workflow.members.values_list('id', flat=True),
+                exclude_ids=[self.user.id],
             )
-        return mentioned_users_ids
+        mentioned_for_notify = tuple(
+            uid for uid in all_mention_ids
+            if uid not in performer_set
+        )
+        return (
+            all_mention_ids,
+            mentioned_for_notify,
+            tuple(performer_ids),
+        )
 
-    def _send_workflow_event(self):
+    def _send_event_updated(self):
         data = WorkflowEventSerializer(instance=self.instance).data
-        send_workflow_event.delay(
+        send_event_updated.delay(
             logging=self.instance.account.log_api_requests,
             logo_lg=self.instance.account.logo_lg,
             account_id=self.instance.account_id,
@@ -668,7 +682,6 @@ class CommentService(BaseModelService):
         self,
         task: Task,
         text: Optional[str] = None,
-        attachments: Optional[List[int]] = None,
     ) -> WorkflowEvent:
 
         """ If the user is a performer and is mentioned in the message,
@@ -681,41 +694,54 @@ class CommentService(BaseModelService):
         workflow = task.workflow
         if workflow.is_completed:
             raise CommentedWorkflowNotRunning
-        if not text and not attachments:
+        if not text:
             raise CommentTextRequired
         clear_text = MarkdownService.clear(text) if text else None
-        if not attachments:
-            # find attachment ids in the text
-            pattern = MarkdownPatterns.MEDIA_PATTERN
-            attachments = pattern.findall(text)
-            if attachments:
-                attachments = [int(e) for e in attachments]
         with transaction.atomic():
             self.instance = WorkflowEventService.comment_created_event(
                 user=self.user,
                 task=task,
                 text=text,
                 clear_text=clear_text,
-                attachments=attachments,
+                after_create_actions=False,
             )
             if not task.contains_comments:
                 task.contains_comments = True
                 task.save(update_fields=['contains_comments'])
-            if attachments:
-                self._update_attachments(attachments)
-            mentioned_users_ids, notify_users_ids = (
+            refresh_attachments(source=self.instance, user=self.user)
+            WorkflowEventService._after_create_actions(self.instance)
+            all_mention_ids, mentioned_users_ids, notify_users_ids = (
                 self._get_new_comment_recipients(task)
             )
+            if all_mention_ids:
+                WorkflowPermissionService(workflow).sync_view(
+                    user_ids=all_mention_ids,
+                    source_type=PermissionSource.MENTION,
+                    source_id=self.instance.id,
+                )
+            if (
+                all_mention_ids
+                or self._text_has_attachment_markers(text)
+            ):
+                schedule_sync_workflow_attachment_permissions(
+                    workflow.id,
+                )
             if mentioned_users_ids:
-                workflow.members.add(*mentioned_users_ids)
-                send_mention_notification.delay(
-                    logging=self.user.account.log_api_requests,
-                    logo_lg=self.user.account.logo_lg,
-                    author_id=self.user.id,
-                    event_id=self.instance.id,
-                    account_id=self.user.account.id,
-                    users_ids=mentioned_users_ids,
-                    text=self.instance.text,
+                _event_id = self.instance.id
+                _event_text = self.instance.text
+                transaction.on_commit(
+                    lambda _eid=_event_id, _etxt=_event_text,
+                    _uids=mentioned_users_ids: (
+                        send_mention_notification.delay(
+                            logging=self.user.account.log_api_requests,
+                            logo_lg=self.user.account.logo_lg,
+                            author_id=self.user.id,
+                            event_id=_eid,
+                            account_id=self.user.account.id,
+                            users_ids=_uids,
+                            text=_etxt,
+                        )
+                    ),
                 )
                 AnalyticService.mentions_created(
                     text=clear_text,
@@ -725,14 +751,21 @@ class CommentService(BaseModelService):
                     workflow=workflow,
                 )
             if notify_users_ids:
-                send_comment_notification.delay(
-                    logging=self.account.log_api_requests,
-                    logo_lg=self.account.logo_lg,
-                    author_id=self.user.id,
-                    event_id=self.instance.id,
-                    account_id=self.account.id,
-                    users_ids=notify_users_ids,
-                    text=self.instance.text,
+                _event_id = self.instance.id
+                _event_text = self.instance.text
+                transaction.on_commit(
+                    lambda _eid=_event_id, _etxt=_event_text,
+                    _uids=notify_users_ids: (
+                        send_comment_notification.delay(
+                            logging=self.account.log_api_requests,
+                            logo_lg=self.account.logo_lg,
+                            author_id=self.user.id,
+                            event_id=_eid,
+                            account_id=self.account.id,
+                            users_ids=_uids,
+                            text=_etxt,
+                        )
+                    ),
                 )
                 AnalyticService.comment_added(
                     text=clear_text,
@@ -741,32 +774,24 @@ class CommentService(BaseModelService):
                     auth_type=self.auth_type,
                     workflow=workflow,
                 )
-            return self.instance
+        return self.instance
 
     def update(
         self,
         force_save=False,
         text: Optional[str] = None,
-        attachments: Optional[List[int]] = None,
     ) -> WorkflowEvent:
 
         self._validate_comment_action()
         task = self.instance.task
         if task is not None and not (task.is_active or task.is_delayed):
             raise CommentedTaskNotActive
-        if not text and not attachments:
+        if not text:
             raise CommentTextRequired
         clear_text = MarkdownService.clear(text) if text else None
-        if not attachments:
-            # find attachment ids in the text
-            pattern = MarkdownPatterns.MEDIA_PATTERN
-            attachments = pattern.findall(text)
-            if attachments:
-                attachments = [int(e) for e in attachments]
         kwargs = {
             'status': CommentStatus.UPDATED,
             'updated': timezone.now(),
-            'with_attachments': bool(attachments),
             'text': text,
             'clear_text': clear_text,
         }
@@ -776,22 +801,42 @@ class CommentService(BaseModelService):
                 force_save=force_save,
                 **kwargs,
             )
-            if attachments:
-                self._update_attachments(attachments)
-            new_mentioned_users_ids = self._get_updated_comment_recipients()
-            if new_mentioned_users_ids:
-                self.instance.workflow.members.add(*new_mentioned_users_ids)
-                send_mention_notification.delay(
-                    logging=self.user.account.log_api_requests,
-                    logo_lg=self.user.account.logo_lg,
-                    author_id=self.user.id,
-                    event_id=self.instance.id,
-                    account_id=self.user.account.id,
-                    users_ids=new_mentioned_users_ids,
-                    text=self.instance.text,
+            refresh_attachments(source=self.instance, user=self.user)
+            all_mentioned_ids = self._get_mentioned_users_ids(
+                text=self.instance.text,
+                exclude_ids=[self.user.id],
+            ) if self.instance.text else ()
+
+            perm_service = WorkflowPermissionService(self.instance.workflow)
+            added_ids = perm_service.sync_view(
+                user_ids=all_mentioned_ids,
+                source_type=PermissionSource.MENTION,
+                source_id=self.instance.id,
+            )
+
+            if added_ids:
+                _event_id = self.instance.id
+                _event_text = self.instance.text
+                _added = tuple(added_ids)
+                transaction.on_commit(
+                    lambda _eid=_event_id, _etxt=_event_text,
+                    _uids=_added: (
+                        send_mention_notification.delay(
+                            logging=self.user.account.log_api_requests,
+                            logo_lg=self.user.account.logo_lg,
+                            author_id=self.user.id,
+                            event_id=_eid,
+                            account_id=self.user.account.id,
+                            users_ids=_uids,
+                            text=_etxt,
+                        )
+                    ),
                 )
 
-        self._send_workflow_event()
+        self._send_event_updated()
+        schedule_sync_workflow_attachment_permissions(
+            self.instance.workflow_id,
+        )
         AnalyticService.comment_edited(
             text=clear_text,
             user=self.user,
@@ -808,14 +853,28 @@ class CommentService(BaseModelService):
         task = self.instance.task
         if task is not None and not (task.is_active or task.is_delayed):
             raise CommentedTaskNotActive
-        self.instance.attachments.delete()
-        super().partial_update(
-            status=CommentStatus.DELETED,
-            with_attachments=False,
-            text=None,
-            force_save=True,
+        storage_attachments = self.instance.storage_attachments
+        ids_to_delete = list(storage_attachments.values_list('id', flat=True))
+        with transaction.atomic():
+            clear_guardian_permissions_for_attachment_ids(ids_to_delete)
+            storage_attachments.delete()
+            super().partial_update(
+                status=CommentStatus.DELETED,
+                with_attachments=False,
+                text=None,
+                force_save=True,
+            )
+            # Targeted revoke: only remove mention-permissions
+            WorkflowPermissionService(
+                self.instance.workflow,
+            ).revoke_view(
+                source_type=PermissionSource.MENTION,
+                source_id=self.instance.id,
+            )
+        self._send_event_updated()
+        schedule_sync_workflow_attachment_permissions(
+            self.instance.workflow_id,
         )
-        self._send_workflow_event()
         AnalyticService.comment_deleted(
             text=self.instance.clear_text,
             user=self.user,
@@ -859,7 +918,7 @@ class CommentService(BaseModelService):
                 is_superuser=self.is_superuser,
                 auth_type=self.auth_type,
             )
-            self._send_workflow_event()
+            self._send_event_updated()
             # Don't send reactions to yourself
             if self.user.id != self.instance.user_id:
                 send_reaction_notification.delay(
@@ -896,4 +955,4 @@ class CommentService(BaseModelService):
                 is_superuser=self.is_superuser,
                 auth_type=self.auth_type,
             )
-            self._send_workflow_event()
+            self._send_event_updated()

@@ -3,24 +3,15 @@ import { IApplicationState } from '../../types/redux';
 import { TeamInvitesPopup } from './TeamInvitesPopup';
 import { ITeamInvitesPopupProps } from './types';
 
-import {
-  closeTeamInvitesPopup,
-} from '../../redux/team/slice';
+import { closeTeamInvitesPopup } from '../../redux/team/slice';
 
-type TStoreProps = Pick<ITeamInvitesPopupProps,
-| 'isTeamInvitesOpened'
-| 'invitesUsersList'
-| 'teamUsers'
->;
-type TDispatchProps = Pick<ITeamInvitesPopupProps,
-| 'closeTeamInvitesPopup'
->;
+type TStoreProps = Pick<ITeamInvitesPopupProps, 'isTeamInvitesOpened' | 'invitesUsersList' | 'teamUsers'>;
+type TDispatchProps = Pick<ITeamInvitesPopupProps, 'closeTeamInvitesPopup'>;
 
 export function mapStateToProps({
   team: { isInvitesPopupOpen: isTeamInvitesOpened, invitesUsersList },
   accounts,
 }: IApplicationState): TStoreProps {
-
   return {
     isTeamInvitesOpened,
     invitesUsersList,
@@ -29,10 +20,7 @@ export function mapStateToProps({
 }
 
 export const mapDispatchToProps: TDispatchProps = {
-  closeTeamInvitesPopup
+  closeTeamInvitesPopup,
 };
 
-export const TeamInvitesPopupContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(TeamInvitesPopup);
+export const TeamInvitesPopupContainer = connect(mapStateToProps, mapDispatchToProps)(TeamInvitesPopup);

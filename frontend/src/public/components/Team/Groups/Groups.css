@@ -1,13 +1,13 @@
 /* stylelint-disable declaration-no-important */
 .container {
-  margin: 0 auto;
   max-width: 864px;
+  margin: 0 auto;
 }
 
 .search {
   position: relative;
-  margin-bottom: 32px;
   width: 100%;
+  margin-bottom: 32px;
 
   &__icon {
     position: absolute;
@@ -23,7 +23,7 @@
 
   &-field__input {
     padding-left: 48px !important;
-    background-color: var(----background-color);
+    background-color: var(--background-color);
   }
 }
 

@@ -1,4 +1,3 @@
-// <reference types="jest" />
 import * as React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -114,13 +113,15 @@ describe('DatasetCard', () => {
     render(React.createElement(DatasetCard, baseProps));
     findOption(EDIT_LABEL).onClick();
 
-    expect(mockDispatch).toHaveBeenCalledWith(setCurrentDataset({
-      id: 42,
-      name: 'My Dataset',
-      description: 'Test description',
-      dateCreatedTsp: 1704067200,
-      items: [],
-    }));
+    expect(mockDispatch).toHaveBeenCalledWith(
+      setCurrentDataset({
+        id: 42,
+        name: 'My Dataset',
+        description: 'Test description',
+        dateCreatedTsp: 1704067200,
+        items: [],
+      }),
+    );
     expect(mockDispatch).toHaveBeenCalledWith(openEditModal());
   });
 

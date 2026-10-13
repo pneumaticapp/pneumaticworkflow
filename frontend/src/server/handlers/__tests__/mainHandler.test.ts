@@ -22,6 +22,8 @@ describe('handlers', () => {
       const req = {
         get: jest.fn(),
         url: '/',
+        path: '/',
+        baseUrl: '',
         headers: {
           'user-agent': 'windows phone',
         },
@@ -31,6 +33,7 @@ describe('handlers', () => {
         sendFile: jest.fn(),
         render: jest.fn(),
         redirect: jest.fn(),
+        cookie: jest.fn(),
       };
       const env = process.env.MCS_RUN_ENV || 'local';
       jest.spyOn(serverApi, 'get').mockResolvedValueOnce({});
@@ -50,6 +53,8 @@ describe('handlers', () => {
       const req = {
         get: jest.fn(),
         url: '/',
+        path: '/',
+        baseUrl: '',
         headers: {
           'user-agent': 'windows phone',
         },
@@ -59,6 +64,7 @@ describe('handlers', () => {
         sendFile: jest.fn(),
         render: jest.fn(),
         redirect: jest.fn(),
+        cookie: jest.fn(),
       };
 
       await mainHandler(req as unknown as Request, res as unknown as Response);

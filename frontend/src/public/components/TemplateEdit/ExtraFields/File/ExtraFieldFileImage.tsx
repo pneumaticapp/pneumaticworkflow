@@ -33,23 +33,13 @@ export function ExtraFieldFileImage({ deleteFile, isRemoved, isEdit, thumbnailUr
 
   return (
     <div className={classnames(styles['images-list__image-container'])}>
-      {isEdit &&
-        <button
-          className={styles['extra-field-image__delete-button']}
-          onClick={handleDeleteIconClick}
-          type="button"
-        >
+      {isEdit && (
+        <button className={styles['extra-field-image__delete-button']} onClick={handleDeleteIconClick} type="button">
           <DeleteBoldIcon className={styles['delete-button']} />
         </button>
-      }
-      <button
-        className={styles['extra-field-image__link']}
-        onClick={() => dispatch(openFullscreenImage({ url }))}
-      >
-        <img
-          src={thumbnailUrl}
-          className={styles['extra-field-image']}
-        />
+      )}
+      <button className={styles['extra-field-image__link']} onClick={() => dispatch(openFullscreenImage({ url }))}>
+        <img src={thumbnailUrl} className={styles['extra-field-image']} />
       </button>
     </div>
   );

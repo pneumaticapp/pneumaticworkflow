@@ -1,31 +1,21 @@
-import {
-  EDashboardActivityAction,
-  EWorkflowLogEvent,
-  ECommentType,
-  IWorkflowDetailsKickoff,
-  ITaskCommentAttachmentRequest,
-} from '../types/workflow';
-import {
-  ITemplateTask,
-  IKickoff,
-  IExtraField,
-} from '../types/template';
+import { EDashboardActivityAction, EWorkflowLogEvent, ECommentType, IWorkflowDetailsKickoff } from '../types/workflow';
+import { ITemplateTaskClient, IRuntimeKickoffClient, IExtraField } from '../types/template';
+
 import { isArrayWithItems, deepCopy } from './helpers';
 import { ExtraFieldsHelper } from '../components/TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
-import { TUploadedFile } from './uploadFiles';
 
-export const MAP_COMMENT_LOG: {[key: number]: EWorkflowLogEvent} = {
+export const MAP_COMMENT_LOG: { [key: number]: EWorkflowLogEvent } = {
   [EDashboardActivityAction.Reverted]: EWorkflowLogEvent.TaskRevert,
   [EDashboardActivityAction.Comment]: EWorkflowLogEvent.TaskComment,
 };
 
-export const COMMENT_FIELD_PLACEHOLDER: {[key in ECommentType]: string} = {
+export const COMMENT_FIELD_PLACEHOLDER: { [key in ECommentType]: string } = {
   [ECommentType.Comment]: 'Your comment...',
   [ECommentType.Reverted]: 'State the reason for return',
   [ECommentType.Finish]: 'State the reason for workflow completion',
 };
 
-export const moveTask = (a: number, b: number, arr: ITemplateTask[]): ITemplateTask[] => {
+export const moveTask = (a: number, b: number, arr: ITemplateTaskClient[]): ITemplateTaskClient[] => {
   if (!isArrayWithItems(arr)) {
     return [];
   }
@@ -47,7 +37,6 @@ export const moveTask = (a: number, b: number, arr: ITemplateTask[]): ITemplateT
 };
 
 export const moveWorkflowField = (a: number, b: number, arr: IExtraField[]) => {
-
   if (!Number.isFinite(a) && !Number.isFinite(b)) {
     return arr;
   }
@@ -64,11 +53,19 @@ export const moveWorkflowField = (a: number, b: number, arr: IExtraField[]) => {
   return copy;
 };
 
-export const getEditKickoff = (kickoff: IWorkflowDetailsKickoff): IKickoff => {
+export const getEditKickoff = (kickoff: IWorkflowDetailsKickoff): IRuntimeKickoffClient => {
   const kickoffFields = new ExtraFieldsHelper(kickoff.output).getFieldsWithValues();
   const kickoffDescritpiton = kickoff.description || '';
+  const kickoffFieldsets = (kickoff.fieldsets || []).map((fieldset) => ({
+    ...fieldset,
+    fields: new ExtraFieldsHelper(fieldset.fields).getFieldsWithValues(),
+  }));
 
-  return { description: kickoffDescritpiton, fields: kickoffFields };
+  return {
+    description: kickoffDescritpiton,
+    fields: kickoffFields,
+    fieldsets: kickoffFieldsets,
+  };
 };
 
 export const getNormalizeFieldsOrders = (fields?: IExtraField[]): IExtraField[] => {
@@ -79,10 +76,6 @@ export const getNormalizeFieldsOrders = (fields?: IExtraField[]): IExtraField[] 
   return fields.map((field, index) => ({ ...field, order: fields.length - index - 1 }));
 };
 
-export const mapFilesToRequest = (files?: TUploadedFile[]) => {
-  if (!files || !isArrayWithItems(files)) {
-    return [];
-  }
-
-  return files.map(file => ({ id: file.id } as ITaskCommentAttachmentRequest));
+export const sortFieldsByOrder = (fields: IExtraField[]): IExtraField[] => {
+  return [...fields].sort((a, b) => b.order - a.order);
 };

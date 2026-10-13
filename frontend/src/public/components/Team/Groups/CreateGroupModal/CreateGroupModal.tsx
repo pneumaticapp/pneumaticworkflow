@@ -6,6 +6,7 @@ import { validateTenantName } from '../../../../utils/validators';
 import { Button, Header, InputField, Modal } from '../../../UI';
 import { IApplicationState } from '../../../../types/redux';
 import { createGroup, createModalClose } from '../../../../redux/actions';
+import { EUserGroupType } from '../../../../redux/team/types';
 
 import styles from './CreateGroupModal.css';
 
@@ -42,6 +43,7 @@ export function CreateGroupModal() {
         photo: null,
         users: [],
         id: -1,
+        type: EUserGroupType.Regular,
       }),
     );
 

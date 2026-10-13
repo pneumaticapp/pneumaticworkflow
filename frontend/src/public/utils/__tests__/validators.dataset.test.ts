@@ -1,4 +1,3 @@
-// <reference types="jest" />
 import { validateDatasetName, validateDatasetRow } from '../validators';
 
 describe('validateDatasetName', () => {

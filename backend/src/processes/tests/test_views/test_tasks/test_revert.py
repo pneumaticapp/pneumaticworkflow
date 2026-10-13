@@ -358,6 +358,64 @@ def test_revert__invalid_comment__validation_error(
     service_revert_mock.assert_not_called()
 
 
+def test_revert__multi_step_return__send_removed_for_completed_tasks(
+    mocker,
+    api_client,
+):
+
+    # arrange
+    owner = create_test_owner()
+    workflow = create_test_workflow(user=owner, tasks_count=3)
+    task_1 = workflow.tasks.get(number=1)
+    task_2 = workflow.tasks.get(number=2)
+    task_3 = workflow.tasks.get(number=3)
+    task_3.revert_task = task_1.api_name
+    task_3.save(update_fields=['revert_task'])
+    api_client.token_authenticate(owner)
+    text_comment = 'text_comment'
+
+    mocker.patch(
+        'src.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay',
+    )
+    mocker.patch(
+        'src.processes.tasks.webhooks.'
+        'send_workflow_started_webhook.delay',
+    )
+    response_complete_1 = api_client.post(f'/v2/tasks/{task_1.id}/complete')
+    response_complete_2 = api_client.post(f'/v2/tasks/{task_2.id}/complete')
+
+    send_task_deleted_notification_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'send_task_deleted_notification.delay',
+    )
+    send_new_task_notification_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'send_new_task_notification.delay',
+    )
+
+    # act
+    response = api_client.post(
+        f'/v2/tasks/{task_3.id}/revert',
+        data={
+            'comment': text_comment,
+        },
+    )
+
+    # assert
+    assert response_complete_1.status_code == 200
+    assert response_complete_2.status_code == 200
+    assert response.status_code == 204
+    task_1.refresh_from_db()
+    assert task_1.is_active
+    task_2.refresh_from_db()
+    assert task_2.is_pending
+    task_3.refresh_from_db()
+    assert task_3.is_pending
+    assert send_task_deleted_notification_mock.call_count == 3
+    send_new_task_notification_mock.assert_called_once()
+
+
 def test_revert__start_multiple_tasks__ok(api_client):
     # arrange
     owner = create_test_owner()

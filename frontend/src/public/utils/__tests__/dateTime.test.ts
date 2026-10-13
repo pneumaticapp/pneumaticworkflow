@@ -4,6 +4,8 @@ import {
   formatDuration,
   getSeconds,
   parseDuration,
+  parseUnixSeconds,
+  toDateString,
 } from '../dateTime';
 
 describe('dateTime', () => {
@@ -53,6 +55,36 @@ describe('dateTime', () => {
       const expected = '12 07:00:00';
 
       expect(result).toEqual(expected);
+    });
+  });
+
+  describe('parseUnixSeconds', () => {
+    it('returns finite numbers as unix seconds', () => {
+      expect(parseUnixSeconds(1718409600)).toBe(1718409600);
+    });
+
+    it('parses numeric strings', () => {
+      expect(parseUnixSeconds('1718409600')).toBe(1718409600);
+    });
+
+    it('returns null for formatted dates and empty values', () => {
+      expect(parseUnixSeconds('Jun 15, 2024')).toBeNull();
+      expect(parseUnixSeconds('')).toBeNull();
+      expect(parseUnixSeconds(null)).toBeNull();
+    });
+  });
+
+  describe('toDateString', () => {
+    it('formats a unix timestamp number', () => {
+      expect(toDateString(1718409600, 'UTC')).toMatch(/15, 2024/);
+    });
+
+    it('formats a unix timestamp string', () => {
+      expect(toDateString('1718409600', 'UTC')).toMatch(/15, 2024/);
+    });
+
+    it('returns null for invalid values instead of throwing', () => {
+      expect(toDateString('not-a-date', 'UTC')).toBeNull();
     });
   });
 });

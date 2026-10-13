@@ -11,10 +11,7 @@ export function escapeAttachmentNameForMarkdown(name: string): string {
  * Parentheses would end the URL segment; spaces break CommonMark link destination parsing.
  */
 function encodeAttachmentUrlForMarkdown(url: string): string {
-  return url
-    .replace(/\)/g, '%29')
-    .replace(/\(/g, '%28')
-    .replace(/ /g, '%20');
+  return url.replace(/\)/g, '%29').replace(/\(/g, '%28').replace(/ /g, '%20');
 }
 
 /**
@@ -27,7 +24,7 @@ export type TAttachmentEntityType = 'image' | 'video' | 'file';
 export function buildAttachmentMarkdownString(
   name: string,
   url: string,
-  id: number | undefined,
+  id: number | string | undefined,
   entityType: TAttachmentEntityType,
 ): string {
   const escapedName = escapeAttachmentNameForMarkdown(name);

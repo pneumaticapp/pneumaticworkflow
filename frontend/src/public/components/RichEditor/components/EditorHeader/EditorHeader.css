@@ -1,9 +1,9 @@
 .title {
   position: absolute;
-  z-index: 1;
   top: 0;
   right: auto;
   left: 1.2rem;
+  z-index: 1;
   padding: 0 0.4rem;
   font-size: 1.3rem;
   line-height: 1.6rem;

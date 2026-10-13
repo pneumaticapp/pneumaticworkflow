@@ -15,7 +15,7 @@ import { copyToClipboard } from '../../../../utils/helpers';
 import { NotificationManager } from '../../../UI/Notifications';
 import { Button, InputField, Loader, Tabs } from '../../../UI';
 import { useDidUpdateEffect } from '../../../../hooks/useDidUpdateEffect';
-import { ITemplate } from '../../../../types/template';
+import { ITemplateClient } from '../../../../types/template';
 import { noop } from '../../../../utils/noop';
 import { trackShareKickoffForm } from '../../../../utils/analytics';
 import { TPublicFormType } from '../../../../types/publicForms';
@@ -61,7 +61,7 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
     return generateEmbedCode(embedUrl);
   }, [embedUrl]);
 
-  const editTemplate = (templateFields: Partial<ITemplate>) => {
+  const editTemplate = (templateFields: Partial<ITemplateClient>) => {
     dispatch(patchTemplate({ changedFields: templateFields }));
   };
 

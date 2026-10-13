@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from django.contrib.auth import get_user_model
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.decorators import action
 from rest_framework.generics import (
     CreateAPIView,
@@ -15,6 +16,7 @@ from rest_framework.viewsets import GenericViewSet
 from src.accounts.enums import (
     NotificationStatus,
 )
+from src.accounts.models import Notification
 from src.accounts.filters import (
     NotificationFilter,
 )
@@ -33,10 +35,42 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
+from src.openapi import (
+    ACCESS_NOTIFICATIONS_DESTROY,
+    ACCESS_NOTIFICATIONS_LIST,
+    CountResponseSerializer,
+    EMPTY,
+    FORBIDDEN,
+    NOT_FOUND,
+    UNAUTHORIZED,
+)
 
 UserModel = get_user_model()
 
 
+@extend_schema_view(
+    list=extend_schema(
+        tags=['Notifications'],
+        summary='List notifications',
+        description=ACCESS_NOTIFICATIONS_LIST,
+        responses={
+            200: NotificationsSerializer(many=True),
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    ),
+    destroy=extend_schema(
+        tags=['Notifications'],
+        summary='Delete notification',
+        description=ACCESS_NOTIFICATIONS_DESTROY,
+        responses={
+            204: EMPTY,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    ),
+)
 class NotificationsViewSet(
     CustomViewSetMixin,
     ListModelMixin,
@@ -60,6 +94,8 @@ class NotificationsViewSet(
         )
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Notification.objects.none()
         return self.request.user.notifications
 
     def prefetch_queryset(
@@ -74,6 +110,16 @@ class NotificationsViewSet(
             extra_fields=extra_fields,
         )
 
+    @extend_schema(
+        tags=['Notifications'],
+        summary='Count notifications',
+        description=ACCESS_NOTIFICATIONS_LIST,
+        responses={
+            200: CountResponseSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     @action(methods=['GET'], detail=False)
     def count(self, request):
         queryset = self.get_queryset()

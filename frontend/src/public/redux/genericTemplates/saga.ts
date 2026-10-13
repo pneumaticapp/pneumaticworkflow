@@ -1,7 +1,11 @@
-/* eslint-disable */
 /* prettier-ignore */
 import { all, call, fork, put, takeEvery, select } from 'redux-saga/effects';
-import { EGenericTemplatesActions, setGenericTemplates, setSelectedGenericTemplates, fetchGenericTemplatesFailed } from './actions';
+import {
+  EGenericTemplatesActions,
+  setGenericTemplates,
+  setSelectedGenericTemplates,
+  fetchGenericTemplatesFailed,
+} from './actions';
 
 import { getGenericTemplates } from '../../api/getGenericTemplates';
 import { getAccountGenericTemplates } from '../../api/getAccountGenericTemplates';
@@ -14,21 +18,16 @@ import { isArrayWithItems } from '../../utils/helpers';
 type TAllGenericWorkflowsResponse = [IAccountGenericTemplate[], IAccountGenericTemplate[]];
 
 const getAllGenericTemplatesAsync = (): Promise<TAllGenericWorkflowsResponse> =>
-  Promise.all([
-    getGenericTemplates(),
-    getAccountGenericTemplates(),
-  ])
-    .then(result => result)
-    .catch(error => error);
+  Promise.all([getGenericTemplates(), getAccountGenericTemplates()])
+    .then((result) => result)
+    .catch((error) => error);
 
 function* fetchAllGenericTemplates() {
   try {
-    const [
-      genericWorkflows,
-      selectedGenericWorkflows,
-    ]: TAllGenericWorkflowsResponse = yield call(getAllGenericTemplatesAsync);
+    const [genericWorkflows, selectedGenericWorkflows]: TAllGenericWorkflowsResponse =
+      yield call(getAllGenericTemplatesAsync);
     yield put(setGenericTemplates(genericWorkflows));
-    const selected = selectedGenericWorkflows.map(({id}) => id);
+    const selected = selectedGenericWorkflows.map(({ id }) => id);
     yield put(setSelectedGenericTemplates(selected));
   } catch (error) {
     logger.info('fetch generic templates error : ', error);
@@ -38,8 +37,8 @@ function* fetchAllGenericTemplates() {
 
 const saveSelectedGenericTemplatesAsync = (selected: number[]) =>
   saveAccountGenericTemplates(selected)
-    .then(result => result)
-    .catch(error => error);
+    .then((result) => result)
+    .catch((error) => error);
 
 function* saveSelectedGenericTemplates() {
   try {
@@ -62,7 +61,5 @@ export function* watchFetchGenericTemplates() {
 }
 
 export function* rootSaga() {
-  yield all([
-    fork(watchFetchGenericTemplates),
-  ]);
+  yield all([fork(watchFetchGenericTemplates)]);
 }

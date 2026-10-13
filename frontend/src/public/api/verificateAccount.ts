@@ -2,15 +2,23 @@ import { commonRequest } from './commonRequest';
 import { getBrowserConfig } from '../utils/getConfig';
 
 export function verificateAccount(token: string) {
-  const { config: { api: { urls } } } = getBrowserConfig();
-
-  return commonRequest(`${urls.verificateAccount}?token=${token}`, {
-    headers: {
-      'Content-Type': 'text/plain',
+  const {
+    config: {
+      api: { urls },
     },
-  }, {
-    shouldThrow: true,
-    responseType: 'empty',
-    type: 'local',
-  });
+  } = getBrowserConfig();
+
+  return commonRequest(
+    `${urls.verificateAccount}?token=${token}`,
+    {
+      headers: {
+        'Content-Type': 'text/plain',
+      },
+    },
+    {
+      shouldThrow: true,
+      responseType: 'empty',
+      type: 'local',
+    },
+  );
 }

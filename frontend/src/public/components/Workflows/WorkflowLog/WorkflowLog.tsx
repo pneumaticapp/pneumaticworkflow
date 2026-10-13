@@ -74,10 +74,7 @@ export const WorkflowLog = ({
   const { formatMessage } = useIntl();
 
   const users = useSelector(getUsers);
-  const mentions = useMemo(
-    () => getMentionData(getNotDeletedUsers(users)),
-    [users],
-  );
+  const mentions = useMemo(() => getMentionData(getNotDeletedUsers(users)), [users]);
 
   useEffect(() => {
     return () => {
@@ -97,7 +94,7 @@ export const WorkflowLog = ({
     }
 
     return (
-      <div className={styles['popup-body-controls']}>
+      <div className={classnames(styles['popup-body-controls'], 'no-print')}>
         <div className={styles['popup-body-controls__inner']}>
           <div className={styles['popup-body-controls-general']}>
             <Tabs
@@ -222,7 +219,7 @@ export const WorkflowLog = ({
     }
 
     return (
-      <div className={styles['comment-field']}>
+      <div className={classnames(styles['comment-field'], 'no-print')}>
         <PopupCommentFieldContainer sendComment={sendComment} taskId={taskId} mentions={mentions} />
       </div>
     );
@@ -244,10 +241,10 @@ export const WorkflowLog = ({
     const filteredItems = isSkippedTasksShown
       ? items
       : items.filter(
-        (event) =>
-          event.type !== EWorkflowLogEvent.TaskSkipped &&
+          (event) =>
+            event.type !== EWorkflowLogEvent.TaskSkipped &&
             event.type !== EWorkflowLogEvent.TaskSkippedDueLackAssignedPerformers,
-      );
+        );
 
     const normalizedItems =
       isLogMinimized && minimizedLogMaxEvents ? filteredItems.slice(0, minimizedLogMaxEvents) : filteredItems;
@@ -271,6 +268,7 @@ export const WorkflowLog = ({
           <WorkflowLogTaskComplete currentTask={eventTask} isOnlyAttachmentsShown={isOnlyAttachmentsShown} {...event} />
         ),
         [EWorkflowLogEvent.WorkflowFinished]: <WorkflowLogWorkflowFinished {...event} />,
+        [EWorkflowLogEvent.WorkflowComplete]: <WorkflowLogWorkflowFinished {...event} />,
         [EWorkflowLogEvent.WorkflowSnoozed]: <WorkflowLogDelay delay={delay} theme={theme} />,
         [EWorkflowLogEvent.WorkflowSnoozedManually]: <WorkflowLogWorkflowSnoozedManually {...event} delay={delay!} />,
         [EWorkflowLogEvent.WorkflowResumed]: <WorkflowLogWorkflowResumed {...event} />,
@@ -298,7 +296,6 @@ export const WorkflowLog = ({
         [EWorkflowLogEvent.AddedPerformer]: <WorkflowLogAddedPerformer {...event} />,
         [EWorkflowLogEvent.RemovedPerformer]: <WorkflowLogRemovedPerformer {...event} />,
         [EWorkflowLogEvent.DueDateChanged]: <WorkflowLogDueDateChanged {...event} />,
-        [EWorkflowLogEvent.WorkflowComplete]: null,
         [EWorkflowLogEvent.WorkflowRun]: null,
         [EWorkflowLogEvent.AddedPerformerGroup]: <WorkflowLogAddedPerformerGroup {...event} />,
         [EWorkflowLogEvent.RemovedPerformerGroup]: <WorkflowLogRemovedPerformerGroup {...event} />,
@@ -346,7 +343,7 @@ export interface IWorkflowLogProps {
   areRightTogglesHidden?: boolean;
   changeWorkflowLogViewSettings(payload: IChangeWorkflowLogViewSettingsPayload): void;
   toggleSkippedTasksVisibility(): void;
-  sendComment({ text, attachments, taskId }: ISendWorkflowLogComment): void;
+  sendComment({ text, taskId }: ISendWorkflowLogComment): void;
   onClickTask?(): void;
   onUnmount?(): void;
   isInTaskCard?: boolean;

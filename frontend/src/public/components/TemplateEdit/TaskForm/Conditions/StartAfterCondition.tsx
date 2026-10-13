@@ -101,6 +101,7 @@ export function StartAfterCondition({ startingOrder, conditions, variables, isSu
                 dropdownOperators={dropdownOperators}
                 handleRemoveRule={handleRemoveRule}
                 options={options}
+                isCheckIs
               />
             );
           })}

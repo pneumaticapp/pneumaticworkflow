@@ -1,0 +1,20 @@
+{
+  "identities": [
+    {
+      "name": "file-service",
+      "credentials": [
+        {
+          "accessKey": "any-secret-key-will-work",
+          "secretKey": "any-secret-key-will-work"
+        }
+      ],
+      "actions": [
+        "Read",
+        "Write",
+        "List",
+        "Tagging",
+        "Admin"
+      ]
+    }
+  ]
+}

@@ -21,7 +21,6 @@ from src.processes.models.templates.fields import (
 )
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.task import TaskTemplate
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.checklist import (
     Checklist,
     ChecklistSelection,
@@ -30,6 +29,7 @@ from src.processes.models.workflows.fields import (
     FieldSelection,
     TaskField,
 )
+from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.tasks.checklist_selection import (
@@ -56,6 +56,14 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_template,
     create_test_workflow,
+)
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
+from src.processes.tests.guardian_helpers import (
+    assert_guardian_manage,
+    assert_guardian_view,
+    assert_no_guardian_view,
 )
 
 UserModel = get_user_model()
@@ -160,7 +168,7 @@ class TestWorkflowUpdateVersionService:
             instance=workflow.kickoff_instance,
         )
         kickoff_service_update_mock.assert_called_once_with(
-            data={'fields': []},
+            data={'fields': [], 'fieldsets': []},
             version=template_version.version,
         )
         workflow_service_init_mock.assert_called_once_with(
@@ -189,10 +197,16 @@ class TestWorkflowUpdateVersionService:
             sync=False,
         )
         update_tasks_status_mock.assert_called_once_with()
-        assert workflow.owners.count() == 1
-        assert workflow.owners.first().id == user.id
-        assert workflow.members.count() == 2
-        assert user in workflow.members.all()
+        assert len(
+            WorkflowPermissionService(workflow).get_users_with_change(),
+        ) == 1
+        assert WorkflowPermissionService(workflow).has_change(user=user)
+        assert len(
+            WorkflowPermissionService(workflow).get_users_with_view(),
+        ) == 2
+        assert WorkflowPermissionService(workflow).has_view(user=user)
+        assert_guardian_manage(workflow, user)
+        assert_guardian_view(workflow, user)
 
     def test_update_from_version__all_instances__ok(self):
 
@@ -654,6 +668,7 @@ class TestWorkflowUpdateVersionService:
             user=user,
             is_active=True,
         )
+        markdown_value = '[attachment](http://file.png)'
         kickoff = template.kickoff_instance
         kickoff_field_template_1 = FieldTemplate.objects.create(
             type=FieldType.FILE,
@@ -671,10 +686,10 @@ class TestWorkflowUpdateVersionService:
             workflow=workflow,
             value='http://file.png',
             clear_value='http://clear-file.png',
-            markdown_value='[attachment](http://file.png)',
+            markdown_value=markdown_value,
             account=user.account,
         )
-        attachment = FileAttachment.objects.create(
+        FileAttachment.objects.create(
             name='attachment',
             url='http://file.png',
             workflow=workflow,
@@ -709,10 +724,7 @@ class TestWorkflowUpdateVersionService:
         assert task_1.description_template == (
             'Screenshot: {{ %s }}' % kickoff_field_template_1.api_name
         )
-        expected = (
-            f'Screenshot: [{attachment.name}]({attachment.url})'
-        )
-        assert task_1.description == expected
+        assert task_1.description == f'Screenshot: {markdown_value}'
 
     def test_update_from_version__add_user_to_current_task__ok(
         self,
@@ -741,6 +753,10 @@ class TestWorkflowUpdateVersionService:
         template.refresh_from_db()
         template = TemplateVersioningService(TemplateSchemaV1).save(template)
 
+        mocker.patch(
+            'src.storage.tasks.'
+            'schedule_sync_workflow_attachment_permissions',
+        )
         version_service = WorkflowUpdateVersionService(
             instance=workflow,
             user=user,
@@ -756,7 +772,8 @@ class TestWorkflowUpdateVersionService:
 
         # assert
         workflow.refresh_from_db()
-        assert workflow.members.filter(id=invited.id).exists()
+        assert WorkflowPermissionService(workflow).has_view(user=invited)
+        assert_guardian_view(workflow, invited)
 
     def test_update_from_version__remove_user_from_current_task__ok(
         self,
@@ -781,6 +798,10 @@ class TestWorkflowUpdateVersionService:
         template.save()
         template.refresh_from_db()
         template = TemplateVersioningService(TemplateSchemaV1).save(template)
+        mocker.patch(
+            'src.storage.tasks.'
+            'schedule_sync_workflow_attachment_permissions',
+        )
         version_service = WorkflowUpdateVersionService(
             instance=workflow,
             user=owner,
@@ -796,7 +817,8 @@ class TestWorkflowUpdateVersionService:
 
         # assert
         workflow.refresh_from_db()
-        assert workflow.members.filter(id=user_2.id).exists()
+        assert not WorkflowPermissionService(workflow).has_view(user=user_2)
+        assert_no_guardian_view(workflow, user_2)
 
     def test_update_from_version__prev_task_checklist__not_changed(
         self,

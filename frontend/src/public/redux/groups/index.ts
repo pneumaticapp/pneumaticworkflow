@@ -1,3 +1,2 @@
-export * from './reducer';
-
-export { reducer as groups } from './reducer';
+export { default as groups } from './slice';
+export * from './slice';

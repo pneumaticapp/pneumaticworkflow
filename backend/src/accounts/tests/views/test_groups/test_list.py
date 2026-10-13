@@ -5,8 +5,10 @@ from django.utils import timezone
 
 from src.accounts.enums import (
     BillingPlanType,
+    UserGroupType,
 )
 from src.authentication.services.guest_auth import GuestJWTAuthService
+from src.accounts.models import UserGroup
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
@@ -253,3 +255,71 @@ def test_list__invalid_ordering__validation_error(value, api_client):
     assert response.data['message'] == message
     assert response.data['details']['reason'] == message
     assert response.data['details']['name'] == 'ordering'
+
+
+def test_list__personal_group__included(api_client):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.UNLIMITED,
+    )
+    user = create_test_user(account=account)
+    api_client.token_authenticate(user)
+    regular_group = create_test_group(
+        account=account,
+        name='Regular group',
+        users=[user],
+    )
+
+    personal_group = UserGroup.include_personal.create(
+        name='Substitute for User',
+        account=account,
+        type=UserGroupType.PERSONAL,
+    )
+    personal_group.users.add(user)
+
+    # act
+    response = api_client.get(
+        path='/accounts/groups',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 2
+    names = {item['name'] for item in response.data}
+    assert regular_group.name in names
+    assert personal_group.name in names
+
+
+def test_list__deleted_personal_group__excluded(
+    api_client,
+):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.UNLIMITED,
+    )
+    user = create_test_user(account=account)
+    api_client.token_authenticate(user)
+    regular_group = create_test_group(
+        account=account,
+        name='Regular group',
+        users=[user],
+    )
+
+    UserGroup.include_personal.create(
+        name='Deleted substitute',
+        account=account,
+        type=UserGroupType.PERSONAL,
+        is_deleted=True,
+    )
+
+    # act
+    response = api_client.get(
+        path='/accounts/groups',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['name'] == regular_group.name

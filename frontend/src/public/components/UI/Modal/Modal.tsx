@@ -24,15 +24,17 @@ export function Modal({ isOpen, children, width = 'sm', onClose }: IModalProps) 
       contentClassName={styles['modal-content']}
       backdropClassName={styles['backdrop']}
     >
-      {onClose && (<button
-        onClick={onClose}
-        type="button"
-        className={styles['close-button']}
-        aria-label="Close modal"
-        data-test-id="close"
-      >
-        <ClearIcon />
-      </button>)}
+      {onClose && (
+        <button
+          onClick={onClose}
+          type="button"
+          className={styles['close-button']}
+          aria-label="Close modal"
+          data-test-id="close"
+        >
+          <ClearIcon />
+        </button>
+      )}
       {children}
     </BootstrapModal>
   );

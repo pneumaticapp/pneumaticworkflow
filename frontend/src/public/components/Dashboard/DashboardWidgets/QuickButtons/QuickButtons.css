@@ -11,12 +11,12 @@
 }
 
 .item-quick-button {
-  padding: 16px;
   display: block;
   width: 100%;
+  padding: 16px;
+  color: var(--pneumatic-color-black72) !important;
   text-align: left;
   cursor: pointer;
-  color: var(--pneumatic-color-black72) !important;
   background-color: transparent;
   border: 1px solid var(--pneumatic-color-black72);
   border-radius: 16px;

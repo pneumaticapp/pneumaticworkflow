@@ -11,6 +11,7 @@ from src.generics.fields import TimeStampField
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
 )
+from src.processes.enums import PerformerType
 from src.processes.models.workflows.task import TaskPerformer
 
 UserModel = get_user_model()
@@ -42,8 +43,29 @@ class TaskUserGroupPerformerSerializer(
 
     def get_source_id(self, instance):
         return (
-            instance.group_id if instance.type == 'group' else instance.user_id
+            instance.group_id if instance.type == PerformerType.GROUP
+            else instance.user_id
         )
+
+
+def get_performers_for_task(task) -> list:
+    """Serialize active (non-deleted) performers for a given task.
+
+    Shared by WorkflowCurrentTaskSerializer and TaskSerializer to
+    avoid duplicating the serialization logic.
+
+    Uses prefetched ``all_performers`` (set by the workflow list
+    queryset via ``to_attr``) when available to avoid N+1 queries.
+    """
+    if hasattr(task, 'all_performers'):
+        performers = task.all_performers
+    else:
+        performers = (
+            task.taskperformer_set
+            .exclude_directly_deleted()
+            .type_user_or_group()
+        )
+    return TaskUserGroupPerformerSerializer(performers, many=True).data
 
 
 class TaskGuestPerformerSerializer(

@@ -4,13 +4,13 @@ import * as React from 'react';
 
 import { Avatar, TAvatarUser } from '../../../UI/Avatar';
 import { isArrayWithItems } from '../../../../utils/helpers';
-import { ETaskPerformerType, ITemplateTask, ITemplateTaskPerformer } from '../../../../types/template';
+import { ETaskPerformerType, ITemplateTaskClient, ITemplateTaskPerformer } from '../../../../types/template';
 import { UserData } from '../../../UserData';
 
 import styles from './TaskItemUsers.css';
 
 export interface ITaskItemUsersProps {
-  task: ITemplateTask;
+  task: ITemplateTaskClient;
   maxUsers?: number;
   onClick(): void;
 }
@@ -62,6 +62,9 @@ export function TaskItemUsers({ task, maxUsers = MAX_SHOW_USERS, onClick }: ITas
         );
       },
       [ETaskPerformerType.WorkflowStarter]: () => {
+        return <Avatar size="sm" containerClassName={styles['card-user']} isEmpty />;
+      },
+      [ETaskPerformerType.Manager]: () => {
         return <Avatar size="sm" containerClassName={styles['card-user']} isEmpty />;
       },
     };

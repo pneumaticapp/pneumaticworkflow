@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-07 11:48+0000\n"
+"POT-Creation-Date: 2026-04-13 23:53+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -171,4 +171,23 @@ msgid "You can't delete yourself."
 msgstr ""
 
 msgid "You can't delete the account owner."
+msgstr ""
+
+msgid "You cannot delegate to yourself."
+msgstr ""
+
+#, python-brace-format
+msgid "The following users were not found: {missing}"
+msgstr ""
+
+msgid "Select at least one substitute."
+msgstr ""
+
+msgid "The vacation is not active."
+msgstr ""
+
+msgid "The status is already active."
+msgstr ""
+
+msgid "The end date must be after the start date."
 msgstr ""

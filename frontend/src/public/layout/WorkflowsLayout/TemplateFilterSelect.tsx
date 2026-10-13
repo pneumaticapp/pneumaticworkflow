@@ -15,6 +15,7 @@ import styles from './WorkflowsLayout.css';
 
 import {
   getWorkflowsStatus,
+  getWorkflowTemplateListIsLoading,
   getWorkflowTemplateListItems,
   getWorkflowTemplatesIdsFilter,
 } from '../../redux/selectors/workflows';
@@ -26,6 +27,7 @@ export function TemplateFilterSelect() {
   const dispatch = useDispatch();
   const templatesIdsFilter = useSelector(getWorkflowTemplatesIdsFilter);
   const filterTemplates = useSelector(getWorkflowTemplateListItems);
+  const areFilterTemplatesLoading = useSelector(getWorkflowTemplateListIsLoading);
   const statusFilter = useSelector(getWorkflowsStatus);
 
   const { isMobile } = useCheckDevice();
@@ -40,8 +42,10 @@ export function TemplateFilterSelect() {
   return (
     <div className={styles['template-filter']}>
       <FilterSelect
+        isLoading={areFilterTemplatesLoading}
         isMultiple
         isSearchShown
+        isWideMenu
         placeholderText={formatMessage({ id: 'sorting.no-template-found' })}
         searchPlaceholder={formatMessage({ id: 'sorting.search-placeholder' })}
         selectedOptions={templatesIdsFilter}

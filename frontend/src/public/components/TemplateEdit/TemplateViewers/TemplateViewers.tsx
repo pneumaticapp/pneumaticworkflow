@@ -2,12 +2,17 @@ import React from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
-import { IApplicationState } from '../../../types/redux';
+import { getRegularGroupsList } from '../../../redux/selectors/groups';
 import { ESubscriptionPlan } from '../../../types/account';
 import { createViewerApiName } from '../../../utils/createId';
 import { trackInviteTeamInPage } from '../../../utils/analytics';
 import { getNotDeletedUsers, getUserFullName } from '../../../utils/users';
-import { EOptionTypes, TUsersDropdownOption, UsersDropdown } from '../../UI/form/UsersDropdown';
+import {
+  EOptionTypes,
+  TUsersDropdownOption,
+  UsersDropdown,
+  getUsersDropdownOptionValue,
+} from '../../UI/form/UsersDropdown';
 import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../../../redux/selectors/user';
 import {
   ETaskPerformerType,
@@ -15,7 +20,7 @@ import {
   ETemplateOwnerType,
   TemplateViewerType,
   TTemplateViewerType,
-  ITemplateOwner
+  ITemplateOwner,
 } from '../../../types/template';
 import { ViewerItem } from './components';
 
@@ -32,20 +37,16 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
 
   const isSubscribed = useSelector(getIsUserSubsribed);
   const billingPlan = useSelector(getSubscriptionPlan);
-  const groups = useSelector((state: IApplicationState) => state.groups.list);
+  const groups = useSelector(getRegularGroupsList);
 
   const users = getNotDeletedUsers(useSelector(getUsers));
   const mapUsersDropdownValue = users.filter((user) =>
-    templateViewers.find(
-      ({ sourceId, type }) =>
-        Number(sourceId) === user.id && type === TemplateViewerType.User,
-    ),
+    templateViewers.find(({ sourceId, type }) => Number(sourceId) === user.id && type === TemplateViewerType.User),
   );
 
   const mapGroupDropdownValue = groups.filter((group) =>
     templateViewers.find(
-      ({ sourceId, type }) =>
-        Number(sourceId) === group.id && type === TemplateViewerType.UserGroup,
+      ({ sourceId, type }) => Number(sourceId) === group.id && type === TemplateViewerType.UserGroup,
     ),
   );
 
@@ -55,7 +56,7 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
       optionType: EOptionTypes.Group,
       type: ETaskPerformerType.UserGroup,
       label: group.name,
-      value: `${EOptionTypes.Group}-${group.id}`,
+      value: getUsersDropdownOptionValue(EOptionTypes.Group, group.id),
     };
   });
 
@@ -66,7 +67,7 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
       lastName: '',
       optionType: EOptionTypes.User,
       label: getUserFullName(item),
-      value: `${EOptionTypes.User}-${item.id}`,
+      value: getUsersDropdownOptionValue(EOptionTypes.User, item.id),
     };
   });
 
@@ -80,7 +81,7 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
       ...item,
       optionType: EOptionTypes.User,
       label: getUserFullName(item),
-      value: `${EOptionTypes.User}-${item.id}`,
+      value: getUsersDropdownOptionValue(EOptionTypes.User, item.id),
     };
   });
 
@@ -89,16 +90,13 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
       ...item,
       optionType: EOptionTypes.Group,
       label: item.name,
-      value: `${EOptionTypes.Group}-${item.id}`,
+      value: getUsersDropdownOptionValue(EOptionTypes.Group, item.id),
     };
   });
 
-  const handleRemoveTemplateViewer = (
-    { id, optionType }: Pick<TUsersDropdownOption, 'id' | 'optionType'>,
-  ) => {
+  const handleRemoveTemplateViewer = ({ id, optionType }: Pick<TUsersDropdownOption, 'id' | 'optionType'>) => {
     const newTemplateViewers = templateViewers.filter(
-      ({ sourceId, type }) =>
-        !(sourceId === String(id) && type === (optionType as unknown as TTemplateViewerType)),
+      ({ sourceId, type }) => !(sourceId === String(id) && type === (optionType as unknown as TTemplateViewerType)),
     );
     onChangeTemplateViewers(newTemplateViewers);
   };
@@ -141,10 +139,12 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
                   <ViewerItem
                     name={getUserFullName(user)}
                     user={user}
-                    onRemove={() => handleRemoveTemplateViewer({
-                      id: Number(sourceId),
-                      optionType: type as unknown as EOptionTypes,
-                    })}
+                    onRemove={() =>
+                      handleRemoveTemplateViewer({
+                        id: Number(sourceId),
+                        optionType: type as unknown as EOptionTypes,
+                      })
+                    }
                   />
                 );
               }}

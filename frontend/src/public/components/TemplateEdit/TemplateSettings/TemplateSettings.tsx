@@ -9,7 +9,7 @@ import { NAVBAR_HEIGHT } from '../../../constants/defaultValues';
 import { getTemplateData } from '../../../redux/selectors/template';
 import { saveTemplate, setTemplate, setTemplateStatus } from '../../../redux/actions';
 import { ETemplateStatus } from '../../../types/redux';
-import { ITemplate } from '../../../types/template';
+import { ITemplateClient } from '../../../types/template';
 import { TemplateControllsContainer } from '../TemplateControlls';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { IInfoWarningProps, InfoWarningsModal } from '../InfoWarningsModal';
@@ -25,29 +25,31 @@ export function TemplateSettings() {
   const [isInfoWarningsModaOpen, setIsInfoWarningsModaOpen] = useState(false);
   const [infoWarnings, setInfoWarnings] = useState<any>([]);
 
-  const handleChangeTemplateField = (field: keyof ITemplate) => (value: ITemplate[keyof ITemplate]) => {
-    const workflow = template;
-    let newWorkflow: ITemplate;
-    dispatch(setTemplateStatus(ETemplateStatus.Saving));
+  const handleChangeTemplateField =
+    (field: keyof ITemplateClient) => (value: ITemplateClient[keyof ITemplateClient]) => {
+      const workflow = template;
+      let newWorkflow: ITemplateClient;
+      dispatch(setTemplateStatus(ETemplateStatus.Saving));
 
-    if (field === 'isActive') {
-      newWorkflow = {
-        ...workflow,
-        isActive: value as boolean,
-      };
-    } else {
-      newWorkflow = {
-        ...workflow,
-        [field]: value,
-        isActive: false,
-      };
-    }
+      if (field === 'isActive') {
+        newWorkflow = {
+          ...workflow,
+          isActive: value as boolean,
+        };
+      } else {
+        newWorkflow = {
+          ...workflow,
+          [field]: value,
+          isActive: false,
+        };
+      }
 
-    dispatch(setTemplate(newWorkflow));
-    submitDebounced();
-  };
+      dispatch(setTemplate(newWorkflow));
+      submitDebounced();
+    };
 
-  const handleChangeTextField = (field: keyof ITemplate) => (value: string) => handleChangeTemplateField(field)(value);
+  const handleChangeTextField = (field: keyof ITemplateClient) => (value: string) =>
+    handleChangeTemplateField(field)(value);
 
   const submitDebounced = debounce(350, () => dispatch(saveTemplate()));
 

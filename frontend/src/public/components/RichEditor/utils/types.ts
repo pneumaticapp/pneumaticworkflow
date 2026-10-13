@@ -11,12 +11,12 @@ export const CUSTOM_EDITOR_ENTITES = Object.values(ECustomEditorEntities);
 
 export type TEditorAttachment = {
   url: string;
-  id?: number;
+  id?: string;
   name?: string;
 };
 
 export enum EEditorBlock {
-  Unstyled  = 'unstyled',
+  Unstyled = 'unstyled',
   HeaderOne = 'header-one',
   HeaderTwo = 'header-two',
   HeaderThree = 'header-three',
@@ -28,9 +28,9 @@ export enum EEditorBlock {
   Blockquote = 'blockquote',
   Code = 'code-block',
   Atomic = 'atomic',
-};
+}
 
 export enum EEditorStyle {
   Bold = 'BOLD',
   Italic = 'ITALIC',
-};
+}

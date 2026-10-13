@@ -1,7 +1,7 @@
 import { Request } from 'express';
 
 import { identifyAppPartOnServer } from '../../../public/utils/identifyAppPart/identifyAppPartOnServer';
-import { logger } from '../../../public/utils/logger';
+import { logServerError } from '../../utils/expectedErrors';
 import { serverApi } from '../../utils';
 import { getAuthHeader } from '../../utils/getAuthHeader';
 import { IAuthenticatedUser } from '../../utils/types';
@@ -21,7 +21,7 @@ export async function getUser(req: Request, token: string, userAgent?: string) {
 
     return user;
   } catch (error) {
-    logger.error('failed to get user context: ', error);
+    logServerError('failed to get user context: ', error);
 
     throw error;
   }

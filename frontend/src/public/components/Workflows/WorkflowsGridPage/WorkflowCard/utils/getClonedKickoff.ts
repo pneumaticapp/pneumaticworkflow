@@ -1,46 +1,68 @@
 /* eslint-disable */
 /* prettier-ignore */
-import { copyAttachment } from '../../../../../api/copyAttachment';
-import { EExtraFieldType, IExtraField, IKickoff, TExtraFieldValue } from '../../../../../types/template';
+import {
+  EExtraFieldType,
+  IExtraField,
+  ITemplateKickoffClient,
+  IRuntimeKickoffClient,
+  TExtraFieldValue,
+} from '../../../../../types/template';
 import { IWorkflowDetailsKickoff } from '../../../../../types/workflow';
-import { TUploadedFile } from '../../../../../utils/uploadFiles';
 import { getEditKickoff } from '../../../../../utils/workflows';
 import { normalizeSelections } from '../../../../TemplateEdit/utils/normalizeSelections';
+import { normalizeCheckboxValue } from '../../../../../utils/fields';
+import { IFieldsetField, IFieldsetRuntime } from '../../../../../types/fieldset';
 
-export async function getClonedKickoff(
+function normalizeKickoffFields(
+  fields: (IExtraField | IFieldsetField)[] = [],
+  templateKickoffFields: (IExtraField | IFieldsetField)[] = [],
+): IExtraField[] {
+  return fields
+    .map((field) => {
+      const templateField = templateKickoffFields.find((templateField) => templateField.apiName === field.apiName);
+      if (!templateField) {
+        return null;
+      }
+
+      return cloneFieldSelections(field as IExtraField, templateField as IExtraField);
+    })
+    .filter(Boolean) as IExtraField[];
+}
+
+export function getClonedKickoff(
   workflowKickoff: IWorkflowDetailsKickoff,
-  templateKickoff: IKickoff,
-): Promise<IKickoff> {
+  templateKickoff: ITemplateKickoffClient,
+): IRuntimeKickoffClient {
   const kickoff = getEditKickoff(workflowKickoff);
-  const normalizedKickoffFieldsPromises = kickoff.fields.map((field) => {
-    const templateField = templateKickoff.fields.find((templateField) => templateField.apiName === field.apiName);
-    if (!templateField) {
-      return null;
-    }
+  const finalFields = normalizeKickoffFields(kickoff.fields, templateKickoff.fields);
 
-    return cloneAttachments(cloneFieldSelections(field, templateField));
-  });
-  const normalizedKickoffFields = (await Promise.all(normalizedKickoffFieldsPromises).then((fields) =>
-    fields.filter(Boolean),
-  )) as IExtraField[];
+  const finalFieldsets: IFieldsetRuntime[] = (kickoff.fieldsets || [])
+    .map((fieldset) => {
+      // TODO (Technical Debt): Backend workflow fieldsets contain raw properties (id, apiName),
+      // while client-side template fieldsets expect apiNameBinding.
+      // We fall back to fieldset.apiName to safely match template fieldsets.
+      const fieldsetApiName = fieldset.apiNameBinding || (fieldset as any).apiName;
 
-  const finalFields = normalizedKickoffFields.map((field) => {
-    if (field.type !== EExtraFieldType.Checkbox) {
-      return field;
-    }
+      const templateFieldset = (templateKickoff.fieldsets || []).find(
+        (fieldsetFromTemplate) => fieldsetFromTemplate.apiNameBinding === fieldsetApiName,
+      );
 
-    if (Array.isArray(field.value)) {
-      return field;
-    }
+      if (!templateFieldset) {
+        return null;
+      }
 
-    const arrayValue = typeof field.value === 'string' && field.value !== ''
-      ? field.value.split(', ')
-      : [];
+      return {
+        ...fieldset,
+        fields: normalizeKickoffFields(fieldset.fields, templateFieldset.fields),
+      };
+    })
+    .filter((fieldset): fieldset is IFieldsetRuntime => Boolean(fieldset));
 
-    return { ...field, value: arrayValue as TExtraFieldValue };
-  });
-
-  return { ...kickoff, fields: finalFields };
+  return {
+    ...kickoff,
+    fields: finalFields,
+    fieldsets: finalFieldsets,
+  };
 }
 
 function cloneFieldSelections(field: IExtraField, templateField: IExtraField): IExtraField {
@@ -51,9 +73,7 @@ function cloneFieldSelections(field: IExtraField, templateField: IExtraField): I
   let normalizedValue = field.value;
 
   if (normalizedValue) {
-    const parts = Array.isArray(normalizedValue)
-      ? normalizedValue
-      : (normalizedValue as string).split(', ');
+    const parts = normalizeCheckboxValue(normalizedValue);
     const filtered = parts.filter((value) => templateValues.includes(value));
 
     if (field.type === EExtraFieldType.Checkbox) {
@@ -64,32 +84,4 @@ function cloneFieldSelections(field: IExtraField, templateField: IExtraField): I
   }
 
   return { ...field, selections: templateValues, value: normalizedValue };
-}
-
-async function cloneAttachments(field: IExtraField): Promise<IExtraField> {
-  if (!field.attachments) {
-    return field;
-  }
-
-  const attachmentsMap = new Map();
-  for (const attachment of field.attachments) {
-    const newAttachment = await copyAttachment(attachment.id);
-    attachmentsMap.set(attachment.id, newAttachment?.id);
-  }
-
-  const normalizedAttachments = field.attachments.map((attachment) => {
-    return { ...attachment, id: attachmentsMap.get(attachment.id) } as TUploadedFile;
-  }) as TUploadedFile[];
-
-  const normalizedValue = (field.type === EExtraFieldType.File && Array.isArray(field.value))
-    ? (field.value
-        .map((fileId) => {
-          const newValue = attachmentsMap.get(Number(fileId));
-
-          return newValue ? String(newValue) : null;
-        })
-        .filter(Boolean) as TExtraFieldValue)
-    : field.value;
-
-  return { ...field, attachments: normalizedAttachments, value: normalizedValue };
 }

@@ -14,6 +14,7 @@ from src.accounts.enums import (
 from src.accounts import messages
 from src.accounts.services.exceptions import UserServiceException
 from src.accounts.services.user import UserService
+from src.accounts.serializers.user import UserWebsocketSerializer
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.models.workflows.task import TaskPerformer
@@ -1008,6 +1009,37 @@ def test_update__groups_non_list_type__validation_error(api_client, mocker):
     partial_update_mock.assert_not_called()
 
 
+def test_update__groups_another_account__validation_error(
+    api_client,
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    target_user = create_test_not_admin(account=account)
+    another_account = create_test_account()
+    another_group = create_test_group(account=another_account)
+    partial_update_mock = mocker.patch(
+        'src.accounts.views.users.UserService.partial_update',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.put(
+        path=f'/accounts/users/{target_user.id}',
+        data={'groups': [another_group.id]},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_A_0040
+    assert response.data['details']['name'] == 'groups'
+    assert response.data['details']['reason'] == messages.MSG_A_0040
+    partial_update_mock.assert_not_called()
+
+
 def test_update__first_name_exceeds_max__validation_error(
     api_client,
     mocker,
@@ -1315,5 +1347,117 @@ def test_partial_update__only_required_fields__ok(api_client, mocker):
         email=email,
         force_save=True,
     )
-    assert response.data['id'] == target_user.id
-    assert response.data['email'] == target_user.email
+
+
+def test_partial_update__groups_another_account__validation_error(
+    api_client,
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    target_user = create_test_not_admin(account=account)
+    another_account = create_test_account()
+    another_group = create_test_group(account=another_account)
+    partial_update_mock = mocker.patch(
+        'src.accounts.views.users.UserService.partial_update',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.patch(
+        path=f'/accounts/users/{target_user.id}',
+        data={'groups': [another_group.id]},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_A_0040
+    assert response.data['details']['name'] == 'groups'
+    assert response.data['details']['reason'] == messages.MSG_A_0040
+    partial_update_mock.assert_not_called()
+
+
+def test_update__remove_manager_id__ok(api_client, mocker):
+    """PUT /accounts/users/<id> with manager_id: null removes the manager."""
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    manager = create_test_not_admin(account=account)
+    target_user = create_test_not_admin(
+        account=account,
+        email='target_to_remove@test.test',
+    )
+    target_user.manager = manager
+    target_user.save(update_fields=('manager',))
+
+    ws_mock = mocker.patch(
+        'src.accounts.services.user.send_user_updated_notification.delay',
+    )
+
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.patch(
+        f'/accounts/users/{target_user.id}',
+        {'manager_id': None},
+    )
+
+    # assert
+    assert response.status_code == 200
+    target_user.refresh_from_db()
+    manager.refresh_from_db()
+    assert target_user.manager is None
+
+    assert ws_mock.call_count == 2
+    ws_mock.assert_any_call(
+        logging=False,
+        account_id=account.id,
+        user_data=UserWebsocketSerializer(manager).data,
+    )
+    ws_mock.assert_any_call(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        user_data=UserWebsocketSerializer(target_user).data,
+    )
+
+
+def test_update__without_manager_id_preserves_manager__ok(api_client, mocker):
+    """PUT /accounts/users/<id> without manager_id preserves the manager."""
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    manager = create_test_not_admin(account=account)
+    target_user = create_test_not_admin(
+        account=account,
+        email='target_to_preserve@test.test',
+    )
+    target_user.manager = manager
+    target_user.save(update_fields=('manager',))
+
+    ws_mock = mocker.patch(
+        'src.accounts.services.user.send_user_updated_notification.delay',
+    )
+
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.patch(
+        f'/accounts/users/{target_user.id}',
+        {'first_name': 'NewName'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    target_user.refresh_from_db()
+    assert target_user.manager == manager
+    assert target_user.first_name == 'NewName'
+    ws_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        user_data=UserWebsocketSerializer(target_user).data,
+    )

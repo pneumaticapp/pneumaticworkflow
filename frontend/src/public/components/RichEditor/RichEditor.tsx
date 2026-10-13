@@ -1,10 +1,4 @@
-import React, {
-  forwardRef,
-  useCallback,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from 'react';
+import React, { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
 import classnames from 'classnames';
 import type { EditorState, LexicalEditor } from 'lexical';
 import {
@@ -23,7 +17,12 @@ import { useAttachmentUpload, usePasteUpload } from './hooks';
 import type { IRichEditorHandle, IRichEditorProps } from './types';
 import { lexicalTheme } from './theme';
 import { LEXICAL_NODES } from './nodes';
-import { applyMarkdownToEditor, convertLexicalToMarkdown } from './converters';
+import {
+  applyMarkdownToEditor,
+  applyPlainTextToEditor,
+  convertLexicalToMarkdown,
+  convertLexicalToPlainText,
+} from './converters';
 import { prepareChecklistsForAPI } from '../../utils/checklists/prepareChecklistsForAPI';
 import { LinkPluginProvider } from './plugins';
 import { LexicalEditorContent } from './components/LexicalEditorContent/LexicalEditorContent';
@@ -32,14 +31,10 @@ import { resolveUploadHandler } from './utils/resolveUploadHandler';
 
 import styles from './RichEditor.css';
 
-
-
-export const RichEditor = forwardRef<
-  IRichEditorHandle,
-  IRichEditorProps
->(function RichEditor(
+export const RichEditor = forwardRef<IRichEditorHandle, IRichEditorProps>(function RichEditor(
   {
     className,
+    editorClassName,
     withChecklists = false,
     withToolbar = true,
     withMentions = true,
@@ -61,6 +56,7 @@ export const RichEditor = forwardRef<
     onCancel,
     submitIcon,
     cancelIcon,
+    plainText = false,
   },
   ref,
 ) {
@@ -68,6 +64,22 @@ export const RichEditor = forwardRef<
   const editorContainerRef = useRef<HTMLDivElement | null>(null);
   const templateVariablesRef = useRef(templateVariables);
   templateVariablesRef.current = templateVariables;
+  const plainTextRef = useRef(plainText);
+  plainTextRef.current = plainText;
+
+  const applyContentToEditor = useCallback((editor: LexicalEditor, content: string): void => {
+    const options = {
+      tag: 'history-merge' as const,
+      templateVariables: templateVariablesRef.current,
+    };
+
+    if (plainTextRef.current) {
+      applyPlainTextToEditor(editor, content, options);
+      return;
+    }
+
+    applyMarkdownToEditor(editor, content, options);
+  }, []);
 
   const initialConfig = {
     namespace: 'RichEditor',
@@ -79,11 +91,8 @@ export const RichEditor = forwardRef<
     editorState:
       defaultValue != null && defaultValue.trim() !== ''
         ? (editor: LexicalEditor) => {
-          applyMarkdownToEditor(editor, defaultValue, {
-            tag: 'history-merge',
-            templateVariables: templateVariablesRef.current,
-          });
-        }
+            applyContentToEditor(editor, defaultValue);
+          }
         : undefined,
   };
 
@@ -122,61 +131,60 @@ export const RichEditor = forwardRef<
 
   const onChange = useCallback(
     (editorState: EditorState): void => {
-      const markdown = convertLexicalToMarkdown(editorState);
+      const content = plainTextRef.current
+        ? convertLexicalToPlainText(editorState)
+        : convertLexicalToMarkdown(editorState);
 
       if (handleChangeChecklists) {
-        const checklistsData = prepareChecklistsForAPI(markdown);
+        const checklistsData = prepareChecklistsForAPI(content);
         handleChangeChecklists(checklistsData);
       }
 
-      handleChange(markdown);
+      handleChange(content);
     },
     [handleChange, handleChangeChecklists],
   );
 
-  const insertVariableToEditor = useCallback(
-    (apiName: string, variableTitle: string, subtitle: string): void => {
-      const editor = editorRef.current;
-      if (!editor) return;
+  const insertVariableToEditor = useCallback((apiName: string, variableTitle: string, subtitle: string): void => {
+    const editor = editorRef.current;
+    if (!editor) return;
 
-      editor.update(() => {
-        const selection = $getSelection();
-        if (!$isRangeSelection(selection)) return;
+    editor.update(() => {
+      const selection = $getSelection();
+      if (!$isRangeSelection(selection)) return;
 
-        const variableNode = $createVariableNode({
-          apiName,
-          title: variableTitle,
-          subtitle,
-        });
-
-        const needSpace = ((): boolean => {
-          if (!selection.isCollapsed()) return true;
-          const {anchor} = selection;
-          const node = anchor.getNode();
-          if ($isTextNode(node)) {
-            const text = node.getTextContent();
-            if (anchor.offset < text.length && text[anchor.offset] === ' ') return false;
-          }
-          const nextNode = node.getNextSibling();
-          if (nextNode && $isTextNode(nextNode) && nextNode.getTextContent().startsWith(' ')) {
-            return false;
-          }
-          return true;
-        })();
-
-        if (needSpace) {
-          $insertNodes([variableNode, $createTextNode(' ')]);
-          const after = variableNode.getNextSibling();
-          if (after && $isTextNode(after)) after.selectEnd();
-          else variableNode.selectNext();
-        } else {
-          $insertNodes([variableNode]);
-          variableNode.selectNext();
-        }
+      const variableNode = $createVariableNode({
+        apiName,
+        title: variableTitle,
+        subtitle,
       });
-    },
-    [],
-  );
+
+      const needSpace = ((): boolean => {
+        if (!selection.isCollapsed()) return true;
+        const { anchor } = selection;
+        const node = anchor.getNode();
+        if ($isTextNode(node)) {
+          const text = node.getTextContent();
+          if (anchor.offset < text.length && text[anchor.offset] === ' ') return false;
+        }
+        const nextNode = node.getNextSibling();
+        if (nextNode && $isTextNode(nextNode) && nextNode.getTextContent().startsWith(' ')) {
+          return false;
+        }
+        return true;
+      })();
+
+      if (needSpace) {
+        $insertNodes([variableNode, $createTextNode(' ')]);
+        const after = variableNode.getNextSibling();
+        if (after && $isTextNode(after)) after.selectEnd();
+        else variableNode.selectNext();
+      } else {
+        $insertNodes([variableNode]);
+        variableNode.selectNext();
+      }
+    });
+  }, []);
 
   const clearContent = useCallback((): void => {
     const editor = editorRef.current;
@@ -190,6 +198,15 @@ export const RichEditor = forwardRef<
     });
   }, []);
 
+  const replaceContent = useCallback(
+    (content: string): void => {
+      const editor = editorRef.current;
+      if (!editor) return;
+      applyContentToEditor(editor, content);
+    },
+    [applyContentToEditor],
+  );
+
   useImperativeHandle(
     ref,
     () => ({
@@ -197,18 +214,17 @@ export const RichEditor = forwardRef<
         editorRef.current?.focus();
       },
       insertVariable(apiName: string, variableTitle: string, subtitle: string): void {
-        if (!apiName?.trim() || !variableTitle?.trim() || !subtitle?.trim()) return;
-        insertVariableToEditor(apiName, variableTitle, subtitle);
+        if (!apiName?.trim() || !variableTitle?.trim()) return;
+        insertVariableToEditor(apiName, variableTitle, subtitle ?? '');
       },
       getEditor(): LexicalEditor | undefined {
         return editorRef.current ?? undefined;
       },
       clearContent,
+      replaceContent,
     }),
-    [insertVariableToEditor, clearContent],
+    [insertVariableToEditor, clearContent, replaceContent],
   );
-
-
 
   return (
     <div
@@ -242,7 +258,10 @@ export const RichEditor = forwardRef<
             onCancel={onCancel}
             submitIcon={submitIcon}
             cancelIcon={cancelIcon}
+            editorClassName={editorClassName}
             withControls={Boolean(onSubmit)}
+            plainText={plainText}
+            templateVariables={templateVariables}
           />
         </LinkPluginProvider>
       </LexicalComposer>

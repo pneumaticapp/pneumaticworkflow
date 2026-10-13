@@ -107,11 +107,11 @@ export function WebhookItem({ event, url, status }: IWebhookItemProps) {
           label={
             status === EWebhooksSubscriberStatus.Subscribed
               ? formatMessage({
-                id: 'template.intergrations-webhook-unsubscribe',
-              })
+                  id: 'template.intergrations-webhook-unsubscribe',
+                })
               : formatMessage({
-                id: 'template.intergrations-webhook-subscribe',
-              })
+                  id: 'template.intergrations-webhook-subscribe',
+                })
           }
           onClick={status === EWebhooksSubscriberStatus.Subscribed ? onUnsubscribe : onSubscribe}
           isLoading={[

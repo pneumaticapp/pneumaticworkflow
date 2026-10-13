@@ -1,5 +1,4 @@
-/* eslint-disable */
-/* prettier-ignore */
-export { HighlightsFeedContainer as default } from './container';
+export { HighlightsFeedContainer } from './container';
 export * from './DateFilter';
 export * from './HighlightsFeed';
+export * from './types';

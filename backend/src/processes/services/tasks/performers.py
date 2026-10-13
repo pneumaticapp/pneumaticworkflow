@@ -6,8 +6,9 @@ from src.authentication.enums import AuthTokenType
 from src.notifications.tasks import (
     send_new_task_notification,
     send_new_task_websocket,
-    send_removed_task_notification,
+    send_task_deleted_notification,
 )
+from src.permissions.enums import PermissionSource
 from src.processes.enums import PerformerType
 from src.processes.messages.workflow import (
     MSG_PW_0014,
@@ -17,12 +18,23 @@ from src.processes.services.tasks.base import (
     BasePerformersService,
 )
 from src.processes.services.tasks.exceptions import (
+    GroupPerformerServiceException,
     PerformersServiceException,
+)
+from src.processes.services.tasks.groups import (
+    GroupPerformerService,
 )
 from src.processes.services.workflow_action import (
     WorkflowActionService,
     WorkflowEventService,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
+from src.storage.tasks import (
+    schedule_sync_workflow_attachment_permissions,
+)
+from src.storage.utils import reassign_restricted_permissions_for_task
 
 UserModel = get_user_model()
 
@@ -81,29 +93,60 @@ class TaskPerformersService(BasePerformersService):
             auth_type=auth_type,
             is_superuser=is_superuser,
         )
+
+        schedule = user.vacation
+        sub_group_id = schedule.substitute_group_id if schedule else None
+        if sub_group_id:
+            try:
+                group_service = GroupPerformerService(
+                    user=request_user,
+                    task=task,
+                    is_superuser=is_superuser,
+                    auth_type=auth_type,
+                )
+                group_service.delete_performer(
+                    group_id=sub_group_id,
+                    run_actions=False,
+                )
+                # run_actions=False skips events/notifications, but
+                # PERFORMER_GROUP UOP must still be realigned.
+                WorkflowPermissionService(
+                    task.workflow,
+                ).sync_performer_group(
+                    group_id=sub_group_id,
+                )
+            except GroupPerformerServiceException:
+                pass
+
         if task.can_be_completed():
-            first_completed_user = (
+            first_completed = (
                 task.taskperformer_set.completed()
                 .exclude_directly_deleted()
                 .exclude(type=PerformerType.GROUP)
-                .first().user
+                .first()
+            )
+            first_completed_user = (
+                first_completed.user if first_completed else None
             )
             if first_completed_user is None:
-                group = (
+                group_performer = (
                     task.taskperformer_set.completed()
                     .exclude_directly_deleted()
                     .filter(type=PerformerType.GROUP)
                     .first()
-                    .group
                 )
-                first_completed_user = group.users.first().user
-            service = WorkflowActionService(
-                workflow=task.workflow,
-                user=first_completed_user,
-                is_superuser=False,
-                auth_type=AuthTokenType.USER,
-            )
-            service.complete_task(task=task)
+                if group_performer and group_performer.group_id:
+                    first_completed_user = (
+                        group_performer.group.users.first()
+                    )
+            if first_completed_user is not None:
+                service = WorkflowActionService(
+                    workflow=task.workflow,
+                    user=first_completed_user,
+                    is_superuser=False,
+                    auth_type=AuthTokenType.USER,
+                )
+                service.complete_task(task=task)
         else:
             task_performers = (
                 UserModel.objects
@@ -111,11 +154,31 @@ class TaskPerformersService(BasePerformersService):
                 .user_ids_set()
             )
             if user.id not in task_performers:
-                send_removed_task_notification.delay(
+                send_task_deleted_notification.delay(
                     task_id=task.id,
                     recipients=[(user.id, user.email)],
                     account_id=task.account_id,
                 )
+
+        remaining_user_ids = (
+            task.taskperformer_set
+            .exclude_directly_deleted()
+            .filter(type=PerformerType.USER)
+            .values_list('user_id', flat=True)
+        )
+        WorkflowPermissionService(task.workflow).sync_view(
+            user_ids=remaining_user_ids,
+            source_type=PermissionSource.PERFORMER,
+            source_id=task.id,
+        )
+
+        reassign_restricted_permissions_for_task(
+            task=task,
+            user=request_user,
+        )
+
+        # Sync attachment permissions so removed performer loses file access
+        schedule_sync_workflow_attachment_permissions(task.workflow_id)
 
     @classmethod
     def _create_actions(
@@ -139,8 +202,13 @@ class TaskPerformersService(BasePerformersService):
             auth_type=auth_type,
             is_superuser=is_superuser,
         )
+        WorkflowPermissionService(task.workflow).grant_view(
+            user=user,
+            source_type=PermissionSource.PERFORMER,
+            source_id=task.id,
+        )
+        schedule_sync_workflow_attachment_permissions(task.workflow_id)
         if not task.get_active_delay():
-            task.workflow.members.add(user)
             task_performer_users = (
                 UserModel.objects
                 .get_users_taskperformer_groups(task=task)
@@ -191,3 +259,8 @@ class TaskPerformersService(BasePerformersService):
                         logo_lg=task.account.logo_lg,
                         is_returned=False,
                     )
+
+        reassign_restricted_permissions_for_task(
+            task=task,
+            user=request_user,
+        )

@@ -1,6 +1,5 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt.views import TokenRefreshView
 
 from src.authentication.views.auth0 import Auth0ViewSet
 from src.authentication.views.context import ContextUserView
@@ -15,6 +14,7 @@ from src.authentication.views.password import (
     ResetPasswordViewSet,
 )
 from src.authentication.views.signin import (
+    AuthTokenRefreshView,
     SuperuserEmailTokenView,
     TokenObtainPairCustomView,
 )
@@ -42,7 +42,7 @@ urlpatterns = [
     ),
     path(
         'token/refresh',
-        TokenRefreshView.as_view(),
+        AuthTokenRefreshView.as_view(),
         name='auth-token-refresh',
     ),
 

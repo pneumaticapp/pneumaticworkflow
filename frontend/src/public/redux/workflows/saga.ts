@@ -1,7 +1,5 @@
 import uniqBy from 'lodash.uniqby';
 import { all, fork, put, takeEvery, select, takeLatest, call, delay, take, race } from 'redux-saga/effects';
-import { EventChannel } from 'redux-saga';
-
 import { PayloadAction } from '@reduxjs/toolkit';
 import {
   openRunWorkflowModal,
@@ -101,24 +99,25 @@ import {
   getWorkflowsStatus,
   getLastLoadedTemplateIdForTable,
 } from '../selectors/workflows';
-import { getTaskStore, getCurrentTask } from '../selectors/task';
-import { getEditKickoff, mapFilesToRequest } from '../../utils/workflows';
+import { getCurrentTask } from '../selectors/task';
+import { syncRenamedWorkflowToTasks } from './utils/syncRenamedWorkflowToTasks';
+import { getEditKickoff } from '../../utils/workflows';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getWorkflows } from '../../api/getWorkflows';
 import { getWorkflow } from '../../api/getWorkflow';
 import { getWorkflowLog } from '../../api/getWorkflowLog';
 import { returnWorkflowToTask } from '../../api/returnWorkflowToTask';
 import { history } from '../../utils/history';
-import { IStoreTask, IStoreWorkflows } from '../../types/redux';
+import { IStoreWorkflows } from '../../types/redux';
 import { logger } from '../../utils/logger';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { sendWorkflowComment } from '../../api/sendWorkflowComment';
 import { finishWorkflow } from '../../api/finishWorkflow';
 import { editWorkflow, IEditWorkflowResponse } from '../../api/editWorkflow';
 import { getTemplatesTitles, TGetTemplatesTitlesResponse } from '../../api/getTemplatesTitles';
-import { IKickoff, ITemplateResponse, TTemplatePreset } from '../../types/template';
+import { IRuntimeKickoffClient, ITemplateResponse, TTemplatePreset } from '../../types/template';
 import { getWorkflowLogStore } from '../selectors/workflowLog';
-import { deleteRemovedFilesFromFields } from '../../api/deleteRemovedFilesFromFields';
+
 import { TChannelAction } from '../tasks/saga';
 import { ITemplateStep } from '../../types/tasks';
 import { getTemplateSteps } from '../../api/getTemplateSteps';
@@ -128,6 +127,7 @@ import { handleLoadTemplateVariables } from '../templates/saga';
 import { deleteWorkflow } from '../../api/deleteWorkflow';
 import { getTemplate } from '../../api/getTemplate';
 import { getRunnableWorkflow, loadDatasetsMap } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
+import { mapTemplateFieldsetsToRuntime } from '../../utils/mapTemplateFieldsetsToRuntime';
 import { getClonedKickoff } from '../../components/Workflows/WorkflowsGridPage/WorkflowCard/utils/getClonedKickoff';
 import { getWorkflowsCurrentPerformerCounters } from '../../api/getWorkflowsCurrentPerformerCounters';
 import { getWorkflowsStartersCounters } from '../../api/getWorkflowsStartersCounters';
@@ -136,18 +136,12 @@ import { getWorkflowsTemplateStepsCounters } from '../../api/getWorkflowsTemplat
 import { snoozeWorkflow } from '../../api/snoozeWorkflow';
 import { deleteComment, IDeleteComment } from '../../api/workflows/deleteComment';
 import { editComment, IEditComment } from '../../api/workflows/editComment';
-import { getBrowserConfigEnv } from '../../utils/getConfig';
-import { mergePaths } from '../../utils/urls';
-import { parseCookies } from '../../utils/cookie';
-import { createWebSocketChannel } from '../utils/createWebSocketChannel';
 import { deleteReactionComment, IDeleteReaction } from '../../api/workflows/deleteReactionComment';
 import { createReactionComment, ICreateReaction } from '../../api/workflows/createReactionComment';
 import { IWatchedComment, watchedComment } from '../../api/workflows/watchedComment';
-import { envWssURL } from '../../constants/enviroment';
 import {
   mapBackandworkflowLogToRedux,
   mapBackendWorkflowToRedux,
-  mapBackendNewEventToRedux,
   formatDueDateToEditWorkflow,
   mapWorkflowsToISOStringToRedux,
   mapWorkflowsAddComputedPropsToRedux,
@@ -164,6 +158,8 @@ import { addTemplatePreset } from '../../api/addTemplatePreset';
 import { ALL_SYSTEM_FIELD_NAMES } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
 import { TUserListItem } from '../../types/user';
 import { isRequestCanceled } from '../../utils/isRequestCanceled';
+import { EPermissionObjectType } from '../../types/permissions';
+import { loadObjectPermissions } from '../permissions/slice';
 
 function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: number; showLoader?: boolean }) {
   const {
@@ -193,6 +189,12 @@ function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: nu
 
     yield put(changeWorkflow(formattedWorkflow));
     yield put(changeWorkflowLog({ items: formattedWorkflowLog, workflowId }));
+    yield put(
+      loadObjectPermissions({
+        objType: EPermissionObjectType.Workflow,
+        objIds: [workflowId],
+      }),
+    );
   } catch (error) {
     logger.info('fetch prorcess error : ', error);
     throw error;
@@ -211,13 +213,13 @@ function* fetchWorkflow({ payload: id }: PayloadAction<number>) {
   }
 }
 
-function* handleOpenWorkflowLogPopup({
+export function* handleOpenWorkflowLogPopup({
   payload: { workflowId, shouldSetWorkflowDetailUrl, redirectTo404IfNotFound },
 }: PayloadAction<TOpenWorkflowLogPopupPayload>) {
   try {
     if (shouldSetWorkflowDetailUrl) {
       const newUrl = ERoutes.WorkflowDetail.replace(':id', String(workflowId)) + history.location.search;
-      window.history.replaceState(null, '', newUrl);
+      history.replace(newUrl);
     }
 
     yield handleLoadWorkflow({ workflowId });
@@ -290,9 +292,9 @@ function* fetchWorkflowsList({ payload: offset = 0 }: PayloadAction<number>) {
     sessionStorage.getItem('isInternalNavigation') === 'true' &&
     Boolean(
       view === EWorkflowsView.Table &&
-        offset === 0 &&
-        currentTemplateId &&
-        String(lastLoadedTemplateIdForTable) !== String(currentTemplateId),
+      offset === 0 &&
+      currentTemplateId &&
+      String(lastLoadedTemplateIdForTable) !== String(currentTemplateId),
     );
   const externalNavigation = Boolean(view === EWorkflowsView.Table && currentTemplateId && selectedFields.length === 0);
 
@@ -359,6 +361,12 @@ function* fetchWorkflowsList({ payload: offset = 0 }: PayloadAction<number>) {
     const items = offset > 0 ? uniqBy([...workflowsList.items, ...formattedResults], 'id') : formattedResults;
 
     yield put(changeWorkflowsList({ count, offset, items: mapWorkflowsAddComputedPropsToRedux(items) }));
+    yield put(
+      loadObjectPermissions({
+        objType: EPermissionObjectType.Workflow,
+        objIds: results.map(({ id }) => id),
+      }),
+    );
   } catch (error) {
     logger.info('fetch workflows list error : ', error);
     yield put(loadWorkflowsListFailed());
@@ -366,7 +374,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: PayloadAction<number>) {
   }
 }
 
-function* saveWorkflowLogComment({ payload: { text, attachments } }: PayloadAction<ISendWorkflowLogComment>) {
+function* saveWorkflowLogComment({ payload: { text } }: PayloadAction<ISendWorkflowLogComment>) {
   const {
     items,
     workflowId: processId,
@@ -377,14 +385,11 @@ function* saveWorkflowLogComment({ payload: { text, attachments } }: PayloadActi
     return;
   }
 
-  const normalizedAttachments = mapFilesToRequest(attachments);
-
   try {
     yield put(setGeneralLoaderVisibility(true));
     const newComment: IWorkflowLogItem = yield sendWorkflowComment({
       id: processId,
       text,
-      attachments: normalizedAttachments,
     });
 
     const preLoadedProcessLogMap = {
@@ -412,8 +417,6 @@ function* editWorkflowInWork({ payload }: PayloadAction<TEditWorkflowPayload>) {
 
   if (name) yield put(setIsSavingWorkflowName(true));
   if (kickoff) yield put(setIsSavingKickoff(true));
-
-  yield deleteRemovedFilesFromFields(payload.kickoff?.fields);
 
   try {
     yield put(setGeneralLoaderVisibility(true));
@@ -445,12 +448,12 @@ function* editWorkflowInWork({ payload }: PayloadAction<TEditWorkflowPayload>) {
     const normalizedOutputs = getNormalizeOutputUsersToEmails(formattedPayload.kickoff?.fields || [], setUsers);
     const normalizedPayload = formattedPayload.kickoff
       ? {
-        ...formattedPayload,
-        kickoff: {
-          ...formattedPayload.kickoff,
-          fields: normalizedOutputs,
-        },
-      }
+          ...formattedPayload,
+          kickoff: {
+            ...formattedPayload.kickoff,
+            fields: normalizedOutputs,
+          },
+        }
       : formattedPayload;
 
     const editedWorkflow: IEditWorkflowResponse = yield editWorkflow(normalizedPayload);
@@ -480,6 +483,9 @@ function* editWorkflowInWork({ payload }: PayloadAction<TEditWorkflowPayload>) {
           ),
         ),
       );
+    }
+    if (name) {
+      yield syncRenamedWorkflowToTasks(task, payload.workflowId, formattedEditedWorkflow.name, formattedWorkflow.tasks);
     }
     // yield put(loadWorkflowsList(0));
     yield updateDetailedWorkflow(payload.workflowId);
@@ -619,6 +625,9 @@ export function* cloneWorkflowSaga({
       throw new Error('no template id');
     }
 
+    // TODO (Technical Debt): Backend fieldsets in TWorkflowDetailsResponse contain raw backend properties (id, apiName),
+    // which do not match the declared client runtime model IFieldsetRuntime (which expects apiNameBinding
+    // instead of apiName, and lacks id).
     const [workflowDetails, template]: [TWorkflowDetailsResponse, ITemplateResponse] = yield all([
       getWorkflow(workflowId),
       getTemplate(templateId),
@@ -628,20 +637,29 @@ export function* cloneWorkflowSaga({
       throw new Error('failed to prepare runnable workflow object');
     }
 
-    const datasetsMap: Record<number, string[]> = yield call(loadDatasetsMap, template.kickoff);
+    const { normalizedTemplate, loadedFieldsets } = mapTemplateFieldsetsToRuntime(template);
+    const datasetsMap: Record<number, string[]> = yield call(
+      loadDatasetsMap,
+      normalizedTemplate.kickoff,
+      loadedFieldsets,
+    );
 
-    const runnableWorkflow = getRunnableWorkflow(template, datasetsMap);
+    const runnableWorkflow = getRunnableWorkflow(normalizedTemplate, datasetsMap, loadedFieldsets);
     if (!runnableWorkflow) {
       return;
     }
 
-    const kickoff: IKickoff = yield getClonedKickoff(formattedworkflowDetails.kickoff, template.kickoff);
+    const kickoff: IRuntimeKickoffClient = yield getClonedKickoff(
+      formattedworkflowDetails.kickoff,
+      normalizedTemplate.kickoff,
+    );
 
     yield put(
       openRunWorkflowModal({
         ...runnableWorkflow,
         name: `${workflowName} (Clone)`,
         kickoff,
+        loadedFieldsets: kickoff.fieldsets || [],
       }),
     );
   } catch (error) {
@@ -895,41 +913,16 @@ export function* deleteCommentSaga({ payload: { id } }: PayloadAction<IDeleteCom
   }
 }
 
-export function* editCommentSaga({ payload: { id, text, attachments } }: PayloadAction<IEditComment>) {
+export function* editCommentSaga({ payload: { id, text } }: PayloadAction<IEditComment>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
-    const updateComment: IWorkflowLogItem = yield editComment({ id, text, attachments });
+    const updateComment: IWorkflowLogItem = yield editComment({ id, text });
     yield put(updateWorkflowLogItem(updateComment));
     yield put(updateTaskWorkflowLogItem(updateComment));
   } catch (error) {
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
-  }
-}
-
-export function* watchNewWorkflowsEvent() {
-  const {
-    api: { wsPublicUrl, urls },
-  } = getBrowserConfigEnv();
-  const url = mergePaths(
-    envWssURL || wsPublicUrl,
-    `${urls.wsWorkflowsEvent}?auth_token=${parseCookies(document.cookie).token}`,
-  );
-  const channel: EventChannel<IWorkflowLogItem> = yield call(createWebSocketChannel, url);
-
-  while (true) {
-    const newEvent: IWorkflowLogItem = yield take(channel);
-    const timezone: ReturnType<typeof getUserTimezone> = yield select(getUserTimezone);
-    const { data }: IStoreTask = yield select(getTaskStore);
-    const { workflow }: IStoreTask = yield select(getWorkflowsStore);
-
-    const formattedNewEvent: IWorkflowLogItem = mapBackendNewEventToRedux(newEvent, timezone);
-
-    if (newEvent.workflowId === data?.workflow.id || newEvent?.workflowId === workflow?.id) {
-      yield put(updateWorkflowLogItem(formattedNewEvent));
-      yield put(updateTaskWorkflowLogItem(formattedNewEvent));
-    }
   }
 }
 

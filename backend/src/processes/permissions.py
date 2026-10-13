@@ -1,18 +1,19 @@
 import re
 
-from django.conf import settings
+
 from django.db.models import Q
 from rest_framework.permissions import BasePermission
 
 from src.accounts.enums import UserType
-from src.processes.enums import OwnerRole, OwnerType, PresetType
+from src.processes.enums import (
+    OwnerRole,
+    OwnerType,
+    PresetType,
+)
 from src.processes.messages.template import (
     MSG_PT_0023,
     MSG_PT_0069,
     MSG_PT_0070,
-)
-from src.processes.messages.workflow import (
-    MSG_PW_0001,
 )
 from src.processes.models.templates.preset import TemplatePreset
 from src.processes.models.templates.template import Template
@@ -23,6 +24,9 @@ from src.processes.models.workflows.task import (
     TaskPerformer,
 )
 from src.processes.models.workflows.workflow import Workflow
+from src.processes.queries import (
+    WorkflowPermissionQuery,
+)
 
 
 class TemplateAdminOwnerPermission(BasePermission):
@@ -91,6 +95,7 @@ class TemplateFieldsPermission(BasePermission):
             return False
 
         user = request.user
+        user_id = user.id
         if user.is_account_owner:
             return True
 
@@ -101,15 +106,18 @@ class TemplateFieldsPermission(BasePermission):
             .filter(
                 Q(
                     owners__type=OwnerType.USER,
-                    owners__user_id=user.id,
+                    owners__user_id=user_id,
                     owners__is_deleted=False,
                     owners__role__in=(OwnerRole.OWNER, OwnerRole.VIEWER),
                 ) | Q(
                     owners__type=OwnerType.GROUP,
-                    owners__group__users__id=user.id,
+                    owners__group__users__id=user_id,
+                    owners__group__is_deleted=False,
                     owners__is_deleted=False,
                     owners__role__in=(OwnerRole.OWNER, OwnerRole.VIEWER),
-                ) | Q(workflows__members=user.id),
+                ) | WorkflowPermissionQuery.viewer_q(
+                    user_id, pk_field='workflows__pk',
+                ),
             ).exists()
         )
 
@@ -196,12 +204,17 @@ class WorkflowOwnerPermission(BasePermission):
         if not request.user.is_admin:
             return False
 
-        workflow_owner_qst = Workflow.objects.filter(
-            owners=request.user,
-            pk=workflow_id,
-            account_id=request.user.account_id,
+        return (
+            Workflow.objects
+            .filter(
+                pk=workflow_id,
+                account_id=request.user.account_id,
+            )
+            .filter(
+                WorkflowPermissionQuery.change_q(request.user.id),
+            )
+            .exists()
         )
-        return workflow_owner_qst.exists()
 
 
 class WorkflowMemberPermission(BasePermission):
@@ -221,6 +234,7 @@ class WorkflowMemberPermission(BasePermission):
             return False
 
         user = request.user
+        user_id = user.id
 
         if user.type != UserType.USER or user.is_account_owner:
             return True
@@ -229,9 +243,7 @@ class WorkflowMemberPermission(BasePermission):
             pk=workflow_id,
             account_id=user.account_id,
         ).filter(
-            Q(tasks__taskperformer__user_id=user.id)
-            | Q(tasks__taskperformer__group__users__id=user.id)
-            | Q(members=user.id),
+            WorkflowPermissionQuery.viewer_q(user_id),
         ).exists()
 
 
@@ -249,6 +261,7 @@ class TaskRevertPermission(BasePermission):
                 TaskPerformer.objects
                 .by_task(task_id)
                 .by_user_or_group(request.user.id)
+                .type_user_or_group()
                 .exclude_directly_deleted()
             )
             return (
@@ -271,6 +284,7 @@ class TaskCompletePermission(BasePermission):
                 TaskPerformer.objects
                 .by_task(task_id)
                 .by_user_or_group(request.user.id)
+                .type_user_or_group()
                 .exclude_directly_deleted()
             )
             return (
@@ -295,9 +309,13 @@ class TaskWorkflowOwnerPermission(BasePermission):
             return True
 
         workflow_owner_qst = Task.objects.filter(
-            workflow__owners=request.user,
             pk=task_id,
             account_id=request.user.account_id,
+        ).filter(
+            WorkflowPermissionQuery.change_q(
+                request.user.id,
+                pk_field='workflow_id',
+            ),
         )
         return workflow_owner_qst.exists()
 
@@ -321,6 +339,7 @@ class TaskWorkflowMemberPermission(BasePermission):
             return False
 
         user = request.user
+        user_id = user.id
 
         if user.type != UserType.USER or user.is_account_owner:
             return True
@@ -329,9 +348,9 @@ class TaskWorkflowMemberPermission(BasePermission):
             id=task_id,
             account_id=user.account_id,
         ).filter(
-            Q(workflow__tasks__taskperformer__user_id=user.id)
-            | Q(workflow__tasks__taskperformer__group__users__id=user.id)
-            | Q(workflow__members=user.id),
+            WorkflowPermissionQuery.viewer_q(
+                user_id, prefix='workflow__',
+            ),
         ).exists()
 
         if has_access:
@@ -397,10 +416,7 @@ class TaskCommentPermission(BasePermission):
         )
 
         is_workflow_member = base_qst.filter(
-            Q(members=user_id)
-            | Q(owners=user_id)
-            | Q(tasks__taskperformer__user_id=user_id)
-            | Q(tasks__taskperformer__group__users__id=user_id),
+            WorkflowPermissionQuery.viewer_q(user_id),
         ).exists()
         if is_workflow_member:
             return True
@@ -440,10 +456,7 @@ class WorkflowCommentPermission(BasePermission):
         base_qst = Workflow.objects.by_id(workflow_id).on_account(account_id)
 
         is_workflow_member = base_qst.filter(
-            Q(members=user_id)
-            | Q(owners=user_id)
-            | Q(tasks__taskperformer__user_id=user.id)
-            | Q(tasks__taskperformer__group__users__id=user_id),
+            WorkflowPermissionQuery.viewer_q(user_id),
         ).exists()
         if is_workflow_member:
             return True
@@ -463,7 +476,7 @@ class GuestWorkflowPermission(BasePermission):
 
     workflow_urls_pattern = (
         r'^\/workflows\/(?P<workflow_id>\d+)\/'
-        r'(comment|task-complete)\/{0,1}$'
+        r'comment\/{0,1}$'
     )
 
     def has_permission(self, request, view):
@@ -601,6 +614,7 @@ class CommentReactionPermission(BasePermission):
             return False
 
         user = request.user
+        user_id = user.id
         qst = WorkflowEvent.objects.filter(
             id=comment_id,
             account_id=user.account_id,
@@ -614,9 +628,9 @@ class CommentReactionPermission(BasePermission):
 
         # Check workflow members
         is_member = qst.filter(
-            Q(workflow__members=user.id) |
-            Q(workflow__tasks__taskperformer__user_id=user.id) |
-            Q(workflow__tasks__taskperformer__group__users=user.id),
+            WorkflowPermissionQuery.viewer_q(
+                user_id, prefix='workflow__',
+            ),
         ).exists()
         if is_member:
             return True
@@ -630,17 +644,9 @@ class CommentReactionPermission(BasePermission):
             Workflow.objects
             .by_id(workflow_id)
             .on_account(user.account_id)
-            .with_owner_viewer_or_started_by_starter(user.id)
+            .with_owner_viewer_or_started_by_starter(user_id)
             .exists()
         )
-
-
-class StoragePermission(BasePermission):
-
-    message = MSG_PW_0001
-
-    def has_permission(self, request, view):
-        return settings.PROJECT_CONF['STORAGE']
 
 
 class TemplatePresetPermission(BasePermission):
@@ -658,24 +664,26 @@ class TemplatePresetPermission(BasePermission):
             return False
 
         user = request.user
+        user_id = user.id
         preset = TemplatePreset.objects.filter(
             id=preset_id,
             account_id=user.account_id,
         ).first()
         if not preset:
             return False
-        if preset.author_id == user.id or user.is_account_owner:
+        if preset.author_id == user_id or user.is_account_owner:
             return True
         if preset.type == PresetType.ACCOUNT:
             return preset.template.owners.filter(
                 Q(
                     type=OwnerType.USER,
-                    user_id=user.id,
+                    user_id=user_id,
                     role=OwnerRole.OWNER,
                     is_deleted=False,
                 ) | Q(
                     type=OwnerType.GROUP,
-                    group__users__id=user.id,
+                    group__users__id=user_id,
+                    group__is_deleted=False,
                     role=OwnerRole.OWNER,
                     is_deleted=False,
                 ),

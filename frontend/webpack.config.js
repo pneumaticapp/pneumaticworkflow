@@ -1,20 +1,14 @@
 const webpack = require('webpack');
 const path = require('path');
-const dotenv = require('dotenv');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
-const env = dotenv.config().parsed;
-const { NODE_ENV = 'development', MCS_RUN_ENV = 'local' } = process.env;
+const { NODE_ENV = 'development' } = process.env;
 const devMode = NODE_ENV !== 'production';
 const fontsDir = path.resolve(__dirname, './src/public/assets');
 
-const envKeys = Object.keys(Object.assign(env, process.env)).reduce((prev, next) => {
-  prev[next] = JSON.stringify(env[next]);
-  return prev;
-}, {});
 
 const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN;
 const sentryRelease = process.env.SENTRY_RELEASE;
@@ -97,7 +91,7 @@ module.exports = {
   },
   plugins: [
     new webpack.DefinePlugin({
-      'process.env': envKeys,
+      'process.env.NODE_ENV': JSON.stringify(NODE_ENV),
     }),
     new webpack.HotModuleReplacementPlugin(),
     new MiniCssExtractPlugin({
@@ -107,7 +101,7 @@ module.exports = {
       chunks: ['main'],
       filename: 'main.ejs',
       template: '!!raw-loader!./src/public/index.ejs',
-      mcsRunEnv: MCS_RUN_ENV,
+
       removeComments: true,
       favicon: './src/public/assets/favicon.png',
     }),
@@ -115,7 +109,7 @@ module.exports = {
       chunks: ['forms'],
       filename: 'forms.ejs',
       template: '!!raw-loader!./src/public/forms.ejs',
-      mcsRunEnv: MCS_RUN_ENV,
+
       removeComments: true,
       favicon: './src/public/assets/favicon.png',
     }),
@@ -138,6 +132,7 @@ module.exports = {
           })(),
         ]
       : []),
+
     {
       apply: (compiler) => {
         compiler.hooks.done.tap('DonePlugin', (stats) => {
@@ -160,10 +155,4 @@ module.exports = {
     },
   },
   mode: NODE_ENV,
-  devtool: devMode ? 'eval-cheap-module-source-map' : 'hidden-source-map',
 };
-
-
-
-
-

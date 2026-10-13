@@ -1,13 +1,14 @@
 import * as React from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
 
 import { TaskDescriptionEditor } from './TaskDescriptionEditor';
 import { scrollToElement } from '../../../utils/helpers';
 import { TUserListItem } from '../../../types/user';
-import { IKickoff, ITemplateTask } from '../../../types/template';
+import { ITemplateKickoffClient, ITemplateTaskClient } from '../../../types/template';
 import { TTaskVariable, TTaskFormPart, ETaskFormParts } from '../types';
-import { OutputFormIntl } from '../OutputForm';
+import { OutputFormIntl } from '../OutputForm/OutputForm';
 import { ShowMore } from '../../UI/ShowMore';
 import { TaskPerformers } from './TaskPerformers';
 import { CheckIfConditions, ICondition, removeDeletedTasks, StartAfterCondition } from './Conditions';
@@ -16,7 +17,8 @@ import { TPatchTaskPayload } from '../../../redux/actions';
 
 import { ReturnTo } from './ReturnTo';
 import { DueDate } from './DueDate';
-import { getSingleLineVariables, getSystemVariables } from './utils/getTaskVariables';
+import { getFieldsetsCatalogIsLoading } from '../../../redux/selectors/fieldsets';
+import { getSingleLineVariables, getSystemVariables, getTaskVariables, getVariables } from './utils/getTaskVariables';
 
 import styles from '../TemplateEdit.css';
 
@@ -29,22 +31,18 @@ import { TaskRenderReturnInfo } from '../TaskRenderReturnInfo';
 import { StepName } from '../../StepName';
 
 export interface ITaskFormProps {
-  listVariables: TTaskVariable[];
-  templateVariables: TTaskVariable[];
-  task: ITemplateTask;
+  task: ITemplateTaskClient;
   users: TUserListItem[];
   isSubscribed: boolean;
   scrollTarget: TTaskFormPart;
   accountId: number;
   isTeamInvitesModalOpen: boolean;
-  tasks: ITemplateTask[];
-  kickoff: IKickoff;
+  tasks: ITemplateTaskClient[];
+  kickoff: ITemplateKickoffClient;
   patchTask(args: TPatchTaskPayload): void;
 }
 
 export function TaskForm({
-  listVariables,
-  templateVariables,
   task,
   users,
   isSubscribed,
@@ -58,16 +56,20 @@ export function TaskForm({
 }: ITaskFormProps & { templateId: number | undefined }) {
   if (!task) return null;
   const { formatMessage } = useIntl();
+  const fieldsetsCatalogLoading = useSelector(getFieldsetsCatalogIsLoading);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const taskName = task.name || '';
-  const listSystemVariables = useMemo(() => [
-    ...getSystemVariables(),
-    ...listVariables,
-  ], [listVariables]);
+  const listVariables = useMemo(
+    () => getTaskVariables(kickoff, tasks, task, templateId),
+    [kickoff, task, tasks, templateId],
+  );
+  const templateVariables = useMemo(() => getVariables({ kickoff, tasks, templateId }), [kickoff, tasks, templateId]);
+  const listSystemVariables = useMemo(() => [...getSystemVariables(), ...listVariables], [listVariables]);
   const taskFormPartsRefs = {
     [ETaskFormParts.AssignPerformers]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.DueIn]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.Fields]: useRef<HTMLDivElement>(null),
+    [ETaskFormParts.Fieldsets]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.StartsAfter]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.CheckIf]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.ReturnTo]: useRef<HTMLDivElement>(null),
@@ -102,18 +104,20 @@ export function TaskForm({
   }, [startingOrder, task.conditions, onEdit]);
 
   useLayoutEffect(() => {
-    const scrollTo = (scrollTarget && taskFormPartsRefs[scrollTarget]?.current) || wrapperRef.current;
+    const scrollKey = scrollTarget === ETaskFormParts.Fieldsets ? ETaskFormParts.Fields : scrollTarget;
+    const scrollTo = (scrollKey && taskFormPartsRefs[scrollKey]?.current) || wrapperRef.current;
 
     if (scrollTo) scrollToElement(scrollTo);
   }, []);
 
-  const setCurrentTask = (changedFields: Partial<ITemplateTask>) => {
+  const setCurrentTask = (changedFields: Partial<ITemplateTaskClient>) => {
     patchTask({ taskUUID: task.uuid, changedFields });
   };
 
-  const handleTaskFieldChange = (field: keyof ITemplateTask) => (value: ITemplateTask[keyof ITemplateTask]) => {
-    setCurrentTask({ [field]: value });
-  };
+  const handleTaskFieldChange =
+    (field: keyof ITemplateTaskClient) => (value: ITemplateTaskClient[keyof ITemplateTaskClient]) => {
+      setCurrentTask({ [field]: value });
+    };
 
   const createWidget = useCallback(
     (Component, props) => {
@@ -137,6 +141,7 @@ export function TaskForm({
         <TaskPerformers
           users={users}
           task={task}
+          tasks={tasks}
           variables={listVariables}
           setCurrentTask={setCurrentTask}
           isTeamInvitesModalOpen={isTeamInvitesModalOpen}
@@ -165,11 +170,12 @@ export function TaskForm({
       title: 'tasks.task-outputs-create-help',
       component: (
         <OutputFormIntl
-          fields={task.fields}
-          onOutputChange={handleTaskFieldChange('fields')}
-          isDisabled={false}
-          show={ETaskFormParts.Fields === scrollTarget}
+          mode="taskMerged"
+          task={task}
+          fieldsetsCatalogLoading={fieldsetsCatalogLoading}
           accountId={accountId}
+          show={ETaskFormParts.Fields === scrollTarget || ETaskFormParts.Fieldsets === scrollTarget}
+          patchTask={patchTask}
         />
       ),
       widget: createWidget(TaskRenderExtraFieldsInfo, { task }),
@@ -232,6 +238,7 @@ export function TaskForm({
             placeholder={formatMessage({ id: 'tasks.task-task-name-placeholder' })}
             listVariables={getSingleLineVariables(listSystemVariables)}
             templateVariables={templateVariables}
+            showInsertButton
             value={taskName}
             onChange={(value: string) => {
               handleTaskFieldChange('name')(value);
@@ -239,7 +246,6 @@ export function TaskForm({
               return Promise.resolve(value);
             }}
             className={styles['task-name-field']}
-            title={formatMessage({ id: 'tasks.task-task-name' })}
             toolipText={formatMessage({ id: 'tasks.task-description-button-tooltip' })}
           />
           <TaskDescriptionEditor

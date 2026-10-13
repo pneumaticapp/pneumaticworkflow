@@ -1,10 +1,6 @@
 import { all, fork, put, takeLatest } from 'redux-saga/effects';
 
-import {
-  EProfileSettingsActions,
-  changeProfileSettingsActiveTab,
-  TSetProfileSettingsActiveTab,
-} from './actions';
+import { EProfileSettingsActions, changeProfileSettingsActiveTab, TSetProfileSettingsActiveTab } from './actions';
 
 import { ERoutes } from '../../constants/routes';
 import { ESettingsTabs } from '../../types/profile';
@@ -26,7 +22,5 @@ export function* watchSetProcessTypeSorting() {
 }
 
 export function* rootSaga() {
-  yield all([
-    fork(watchSetProcessTypeSorting),
-  ]);
+  yield all([fork(watchSetProcessTypeSorting)]);
 }

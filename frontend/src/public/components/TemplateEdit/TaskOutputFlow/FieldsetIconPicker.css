@@ -1,0 +1,36 @@
+.fieldset-picker__container,
+.fieldset-picker__toggle {
+  padding: 0;
+}
+
+.fieldset-picker__arrow_hidden {
+  display: none;
+}
+
+.fieldset-picker__menu {
+  max-width: 20rem;
+}
+
+.fieldset-picker__option-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.fieldset-picker__option-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.fieldset-picker__tooltip-content {
+  padding: 0.4rem 0.8rem;
+  text-align: center;
+}
+
+.fieldset-picker__option-meta {
+  font-size: 1.2rem;
+  line-height: 1.6rem;
+  color: var(--pneumatic-color-black48);
+}

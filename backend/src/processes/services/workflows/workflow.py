@@ -29,6 +29,13 @@ from src.processes.utils.common import (
     insert_fields_values_to_text,
     string_abbreviation,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
+from src.storage.tasks import (
+    schedule_sync_workflow_attachment_permissions,
+)
+from src.storage.utils import refresh_attachments
 from src.utils.dates import date_to_user_fmt
 
 UserModel = get_user_model()
@@ -188,6 +195,9 @@ class WorkflowService(
             )
         self.update_owners()
 
+        # Update attachments for workflow
+        refresh_attachments(self.instance, self.user)
+
     def _create_actions(self, **kwargs):
         if kwargs.get('anonymous_id'):
             AnalyticService.workflows_started(
@@ -223,9 +233,26 @@ class WorkflowService(
                 user_agent=kwargs.get('user_agent'),
             )
 
+    def partial_update(
+        self,
+        force_save=False,
+        **update_kwargs,
+    ):
+        result = super().partial_update(
+            force_save=force_save,
+            **update_kwargs,
+        )
+        if 'description' in update_kwargs:
+            refresh_attachments(self.instance, self.user)
+        return result
+
     def update_owners(self):
         user_ids = Template.objects.filter(
             id=self.instance.template_id,
         ).get_owners_as_users()
-        self.instance.owners.set(user_ids)
-        self.instance.members.add(*user_ids)
+        WorkflowPermissionService(self.instance).set_view_and_change(
+            user_ids=user_ids,
+        )
+        schedule_sync_workflow_attachment_permissions(
+            self.instance.id,
+        )

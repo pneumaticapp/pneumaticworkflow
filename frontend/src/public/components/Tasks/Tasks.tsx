@@ -248,7 +248,7 @@ export function Tasks({
   const renderTasks = () => {
     return (
       <>
-        <div className={styles['left-area']}>
+        <div className={classnames(styles['left-area'], 'no-print')}>
           <div
             className={classnames(styles['left-area__inner'], withPaywall && styles['left-area__inner_with-paywall'])}
           >

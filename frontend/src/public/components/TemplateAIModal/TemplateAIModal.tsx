@@ -3,7 +3,7 @@ import { useIntl } from 'react-intl';
 
 import { Button, Header, InputField, Modal } from '../UI';
 import { TGenerateAITemplatePayload } from '../../redux/actions';
-import { ITemplate, ITemplateTask, TAITemplateGenerationStatus } from '../../types/template';
+import { ITemplateClient, ITemplateTaskClient, TAITemplateGenerationStatus } from '../../types/template';
 import { useDidUpdateEffect } from '../../hooks/useDidUpdateEffect';
 import { InfiniteLoader } from '../InfiniteLoader';
 
@@ -12,7 +12,7 @@ import styles from './TemplateAIModal.css';
 export interface ITemplateAIModalProps {
   isOpen: boolean;
   generationStatus: TAITemplateGenerationStatus;
-  generatedTemplate: ITemplate | null;
+  generatedTemplate: ITemplateClient | null;
   generateTemplate(payload: TGenerateAITemplatePayload): void;
   stopTemplateGeneration(): void;
   setIsModalOpened(isOpened: boolean): void;
@@ -33,7 +33,7 @@ export function TemplateAIModal({
   const { formatMessage } = useIntl();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [description, setDescription] = useState('');
-  const [renderedTemplate, setRenderedTemplate] = useState<ITemplate | null>(null);
+  const [renderedTemplate, setRenderedTemplate] = useState<ITemplateClient | null>(null);
   const [heightContainer, setHeightContainer] = useState(0);
   const [activeTask, setActiveTask] = useState(0);
 
@@ -199,7 +199,7 @@ export function TemplateAIModal({
 
 interface IAnimationTaskProps {
   order: number;
-  task: ITemplateTask;
+  task: ITemplateTaskClient;
   lastItem: boolean;
   onActiveTask(index: number): void;
   onChangeHeightContainer(height: number): void;

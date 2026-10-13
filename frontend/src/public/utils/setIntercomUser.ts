@@ -1,8 +1,5 @@
-/* eslint-disable import/prefer-default-export */
-/* eslint-disable prefer-template */
 /* eslint-disable prefer-rest-params */
-/* eslint-disable vars-on-top */
-/* eslint-disable func-names */
+
 /* eslint-disable no-var */
 // @ts-nocheck
 

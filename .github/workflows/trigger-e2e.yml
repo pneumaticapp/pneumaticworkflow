@@ -1,0 +1,17 @@
+name: Trigger Playwright Tests
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch Event to pneumatic-playwright
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          repository: pneumaticapp/pneumatic-playwright
+          event-type: run-playwright-tests

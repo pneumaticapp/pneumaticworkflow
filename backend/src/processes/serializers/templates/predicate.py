@@ -85,7 +85,8 @@ class PredicateTemplateSerializer(
         condition = self.context['condition']
         if (
             condition.action == ConditionAction.START_TASK
-            and operator != PredicateOperator.COMPLETED
+            and operator not in
+                PredicateOperator.ALLOWED_OPERATORS[PredicateType.TASK]
         ):
             raise_validation_error(
                 message=MSG_PT_0064(name=task.name),

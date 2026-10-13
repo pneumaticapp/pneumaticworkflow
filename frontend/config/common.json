@@ -26,6 +26,7 @@
       "getUsers": "/accounts/users",
       "createUser": "/accounts/users",
       "getUsersPublic": "/accounts/public/users",
+      "getPublicAccount": "/accounts/public/account",
       "getActiveUsersCount": "/accounts/users/active-count",
       "getWorkflowsDuration": "/workflows/duration",
       "getWorkflowsSuccessRate": "/workflows/success-rate",
@@ -118,8 +119,9 @@
       "confirmPaymentDetails": "/payment/confirm?token=:token",
       "startFreeSubscription": "/payment/subscription/downgrade-to-free",
       "getCustomerPortalLink": "/payment/customer-portal?cancel_url=:cancel_url",
-      "apiKey": "/api/accounts/api-key",
+      "apiKeys": "/api/accounts/api-keys/:id?",
       "getTasksCount": "/accounts/user/counters",
+      "getUserObjectPermissions": "/accounts/user/permission",
       "createKickoffForm": "/kickoffs",
       "editKickoffForm": "/kickoffs/:id/edit",
       "highlights": "/reports/highlights",
@@ -132,6 +134,7 @@
       "attachment": "/api/workflows/attachments/:id",
       "attachmentPublic": "/workflows/public/attachments/:id",
       "copyAttachment": "/workflows/attachments/:id/clone",
+      "fileServiceUpload": "/upload",
       "integrations": "/applications/integrations",
       "integrationDetails": "/applications/integrations/:id",
       "gettingStartedChecklist": "/accounts/user/checklist",
@@ -152,22 +155,28 @@
       "tenantToken": "/tenants/:id/token",
       "datasets": "/datasets",
       "dataset": "/datasets/:id",
+      "fieldsets": "/fieldsets",
+      "fieldset": "/fieldsets/:id",
+      "cloneFieldset": "/fieldsets/:id/clone",
       "getFaq": "/faq",
-      "wsNotifications": "/ws/notifications",
-      "wsNewTask": "/ws/workflows/new-task",
-      "wsRemovedTask": "/ws/workflows/removed-task",
-      "wsWorkflowsEvent": "/ws/workflows/events"
+      "vacationActivate": "/accounts/user/activate-vacation",
+      "vacationDeactivate": "/accounts/user/deactivate-vacation",
+      "vacationUserActivate": "/accounts/users/:id/activate-vacation",
+      "vacationUserDeactivate": "/accounts/users/:id/deactivate-vacation",
+      "wsEvents": "/ws/events"
     }
   },
   "exposedToBrowser": [
     "host",
     "api.publicUrl",
     "api.wsPublicUrl",
+    "api.fileServiceUrl",
     "api.urls",
     "analyticsId",
     "mainPage",
     "formSubdomain",
     "recaptchaSecret",
-    "firebase"
+    "firebase",
+    "featureFlags"
   ]
 }

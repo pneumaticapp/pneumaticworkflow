@@ -6,8 +6,13 @@ import { mentionsRegex, variableRegex } from '../../../../constants/defaultValue
 import { TTaskVariable } from '../../../TemplateEdit/types';
 import { TMentionData } from '../../types';
 import { ECustomEditorEntities } from '../types';
-import { getAttachmentEntityType } from '../getAttachmentEntityType';
+import { getAttachmentEntityType, getAttachmentEntityTypeByFilename } from '../getAttachmentEntityType';
 import { ContentToken } from 'remarkable/lib';
+import {
+  parseAttachmentMarkdownFromStart,
+  parseGeneralMarkdownLinkFromStart,
+  unescapeMarkdownLinkText,
+} from './markdownLinkText';
 
 export type TVariableToken = {
   title: string;
@@ -138,15 +143,17 @@ export const linksRemarkablePlugin = (remarkable: Remarkable) => {
         return false;
       }
 
-      const regEx =
-        /^!?\[([^\]]*)\]\((.*?)\s*(?:"(?:attachment_id:(\d*))?(?:\s+)?(?:entityType:([^"\s]*))?(?:[^"]*)?")?\s*\)/;
-      const match = regEx.exec(state.src.slice(state.pos));
+      const slice = state.src.slice(state.pos);
+      const attachmentMatch = parseAttachmentMarkdownFromStart(slice);
+      const generalMatch = attachmentMatch ? null : parseGeneralMarkdownLinkFromStart(slice);
+      const match = attachmentMatch ?? generalMatch;
 
       if (!match) {
         return false;
       }
 
-      const [matchString, name, url, id, type] = match;
+      const [matchString, nameRaw, url, id, type] = match;
+      const name = unescapeMarkdownLinkText(nameRaw);
 
       // valid match found, now we need to advance cursor
       state.pos += matchString.length;
@@ -156,7 +163,7 @@ export const linksRemarkablePlugin = (remarkable: Remarkable) => {
         return true;
       }
 
-      const entityType = getLinkEntityType(url, type);
+      const entityType = getLinkEntityType(url, type, name);
 
       const linkOpenToken: TCustomLinkToken = {
         type: 'link_open',
@@ -188,7 +195,7 @@ export const linksRemarkablePlugin = (remarkable: Remarkable) => {
   );
 };
 
-const getLinkEntityType = (url: string, entityType: string) => {
+const getLinkEntityType = (url: string, entityType: string, name?: string) => {
   const googleBucket = 'https://storage.googleapis.com/';
 
   const attachmentEntityTypes = [ECustomEditorEntities.Image, ECustomEditorEntities.File, ECustomEditorEntities.Video];
@@ -202,6 +209,15 @@ const getLinkEntityType = (url: string, entityType: string) => {
   // for legacy attachments with no entityType
   if (url.includes(googleBucket)) {
     return getAttachmentEntityType(url);
+  }
+
+  // for file-service URLs where the URL has no extension (UUID-based paths)
+  // but the link text (filename) contains a recognizable extension
+  if (name) {
+    const entityTypeByName = getAttachmentEntityTypeByFilename(name);
+    if (entityTypeByName !== ECustomEditorEntities.Link) {
+      return entityTypeByName;
+    }
   }
 
   return ECustomEditorEntities.Link;

@@ -1,15 +1,15 @@
-/* eslint-disable import/no-extraneous-dependencies */
 import * as path from 'path';
-import * as express from 'express';
-import * as webpack from 'webpack';
-import * as devMiddleware from 'webpack-dev-middleware';
-import * as hotMiddleware from 'webpack-hot-middleware';
+import express from 'express';
+import webpack from 'webpack';
+import devMiddleware from 'webpack-dev-middleware';
+import hotMiddleware from 'webpack-hot-middleware';
 
 import { initSentryServer } from './utils/initSentryServer';
 import { mainHandler, oAuthHandler, apiProxy } from './handlers';
 import { authMiddleware, verificateAccountMiddleware, forwardForSubdomain } from './middleware';
 import { getConfig, serverConfigToBrowser } from '../public/utils/getConfig';
 import { ERoutes } from '../public/constants/routes';
+import { FORMS_PATH_PREFIX } from '../public/utils/identifyAppPart/constants';
 import { setPublicAuthCookie } from './utils/cookie';
 import { getUserPublic } from './middleware/utils/getUserPublic';
 import { mapToCamelCase } from '../public/utils/mappers';
@@ -18,6 +18,7 @@ import { SSOProvider } from './types';
 const webpackConfig = require('../../webpack.config');
 
 const { NODE_ENV = 'development' } = process.env;
+
 const devMode = NODE_ENV !== 'production';
 
 const isSSOAuth = process.env.SSO_AUTH !== 'no';
@@ -35,7 +36,7 @@ export function initServer() {
   const { host, port = 8000, formSubdomain, mainPage, firebase } = getConfig();
 
   if (devMode) {
-    app.use(devMiddleware(webpackCompiler));
+    app.use(devMiddleware(webpackCompiler, { writeToDisk: true }));
     app.use(
       hotMiddleware(webpackCompiler, {
         path: '/__webpack_hmr',
@@ -95,7 +96,14 @@ export function initServer() {
     return null;
   });
 
-  app.use(forwardForSubdomain([formSubdomain], formsRouter));
+  // Path-based forms: domain.com/forms/* (always available)
+  app.use(FORMS_PATH_PREFIX, formsRouter);
+
+  // Subdomain forms: form.domain.com/* (if FORM_DOMAIN is set)
+  if (formSubdomain) {
+    app.use(forwardForSubdomain([formSubdomain], formsRouter));
+  }
+
   app.get(ERoutes.AccountVerificationLink, verificateAccountMiddleware);
   app.get(ERoutes.OAuthGoogle, oAuthHandler(urls.getGoogleAuthUri, urls.getGoogleAuthToken));
   app.get(ERoutes.OAuthMicrosoft, oAuthHandler(urls.getMicrosoftAuthUri, urls.getMicrosoftAuthToken));

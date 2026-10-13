@@ -3,14 +3,21 @@ import { mapRequestBody } from '../utils/mappers';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 
 export function resendInvite(inviteId: number) {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   return commonRequest(
-    urls.resendInvite.replace(':id', String(inviteId)), {
+    urls.resendInvite.replace(':id', String(inviteId)),
+    {
       method: 'POST',
       data: mapRequestBody({ inviteId }),
       headers: { 'Content-Type': 'application/json' },
-    }, {
-      type: 'local', shouldThrow: true, responseType: 'empty',
-    });
+    },
+    {
+      type: 'local',
+      shouldThrow: true,
+      responseType: 'empty',
+    },
+  );
 }

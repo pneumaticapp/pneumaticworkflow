@@ -10,7 +10,6 @@ export interface INotification {
   message: React.ReactNode | null;
   timeOut: number;
   customClassName: string;
-  priority?: boolean;
   onCancelClick?: Function;
   onClick?: Function;
   onSubmitClick?: Function;
@@ -34,6 +33,10 @@ export type TNotificationsListItemOptional =
         id: number;
         name: string;
       };
+    }
+  | {
+      type: 'complete_workflow';
+      workflow: Pick<IWorkflow, 'id' | 'name'>;
     }
   | {
       type: 'reaction';
@@ -132,6 +135,17 @@ export type TNotificationsListItemOptional =
       task: {
         id: number;
         name: string;
+      };
+    }
+  | {
+      type: 'due_date_changed';
+      author: number;
+      text: null;
+      workflow: Pick<IWorkflow, 'id' | 'name'>;
+      task: {
+        id: number;
+        name: string;
+        dueDate: string | null;
       };
     };
 

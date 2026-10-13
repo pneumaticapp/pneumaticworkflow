@@ -5,7 +5,9 @@ import { enMessages } from '../../../../lang/locales/en_US';
 
 import { ExtraFieldIntl } from '../index';
 import { ExtraFieldDropdown } from '../utils/ExtraFieldDropdown';
-import { EExtraFieldMode, EExtraFieldType } from '../../../../types/template';
+import { makeExtraField } from '../../../../__stubs__/fields.factory';
+import { EExtraFieldMode } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 
 jest.mock('react-redux', () => ({
   useSelector: jest.fn((selector) => {
@@ -37,20 +39,18 @@ jest.mock('../File', () => ({ ExtraFieldFile: () => <div /> }));
 jest.mock('../User', () => ({ ExtraFieldUser: () => <div /> }));
 jest.mock('../Number', () => ({ ExtraFieldNumber: () => <div /> }));
 
-const baseField = {
+const baseField = makeExtraField({
   apiName: 'f1',
   name: 'Field 1',
-  type: EExtraFieldType.String,
-  order: 0,
-  userId: null,
-  groupId: null,
-};
+});
 
 const baseProps = {
   field: baseField,
   editField: jest.fn(),
   accountId: 1,
   showDropdown: true,
+  datasetOptions: [],
+  labelPosition: EFieldLabelPosition.Top,
   mode: EExtraFieldMode.Kickoff,
 };
 
@@ -68,25 +68,42 @@ describe('ExtraField', () => {
 
   describe('Passing isHidden to ExtraFieldDropdown', () => {
     it('passes isHidden=true to ExtraFieldDropdown', () => {
-      renderWithIntl(
-        <ExtraFieldIntl {...baseProps} field={{ ...baseField, isHidden: true }} />,
-      );
+      renderWithIntl(<ExtraFieldIntl {...baseProps} field={{ ...baseField, isHidden: true }} />);
 
-      expect(ExtraFieldDropdown as jest.Mock).toHaveBeenCalledWith(
-        expect.objectContaining({ isHidden: true }),
-        {},
-      );
+      expect(ExtraFieldDropdown as jest.Mock).toHaveBeenCalledWith(expect.objectContaining({ isHidden: true }), {});
     });
 
     it('passes isHidden=false by default when field has no isHidden', () => {
-      renderWithIntl(
-        <ExtraFieldIntl {...baseProps} field={{ ...baseField }} />,
-      );
+      renderWithIntl(<ExtraFieldIntl {...baseProps} field={{ ...baseField }} />);
 
-      expect(ExtraFieldDropdown as jest.Mock).toHaveBeenCalledWith(
-        expect.objectContaining({ isHidden: false }),
-        {},
-      );
+      expect(ExtraFieldDropdown as jest.Mock).toHaveBeenCalledWith(expect.objectContaining({ isHidden: false }), {});
+    });
+  });
+
+  describe('Dataset options passing', () => {
+    it('does not pass undefined datasetOptions to ExtraFieldDropdown', () => {
+      const propsWithoutDatasets = {
+        field: baseField,
+        editField: jest.fn(),
+        accountId: 1,
+        showDropdown: true,
+        mode: EExtraFieldMode.Kickoff,
+      };
+
+      // @ts-ignore deliberately omitting datasetOptions to test runtime safety
+      renderWithIntl(<ExtraFieldIntl {...propsWithoutDatasets} />);
+
+      const dropdownCall = (ExtraFieldDropdown as jest.Mock).mock.calls[0]?.[0];
+      expect(dropdownCall.datasetOptions).toBeDefined();
+      expect(Array.isArray(dropdownCall.datasetOptions)).toBe(true);
+    });
+  });
+
+  describe('Read-only status and icon rendering', () => {
+    it('does not render ExtraFieldDropdown when isDisabled=true', () => {
+      renderWithIntl(<ExtraFieldIntl {...baseProps} isDisabled />);
+
+      expect(ExtraFieldDropdown as jest.Mock).not.toHaveBeenCalled();
     });
   });
 });

@@ -68,7 +68,7 @@ export function FeedItem({
                   Icon: EditIcon,
                   size: 'lg',
                 } as TDropdownOption,
-            ]
+              ]
             : []),
           ...(template
             ? [
@@ -77,7 +77,7 @@ export function FeedItem({
                   onClick: applyTemplatesFilter(template.id),
                   size: 'lg',
                 } as TDropdownOption,
-            ]
+              ]
             : []),
           {
             label: formatMessage({ id: 'process-highlights.review-workflows-of' }, { user: userName }),
@@ -157,6 +157,8 @@ export const ALLOWED_EVENT_TYPES = [
   EWorkflowLogEvent.WorkflowIsNotUrgent,
   EWorkflowLogEvent.AddedPerformer,
   EWorkflowLogEvent.RemovedPerformer,
+  EWorkflowLogEvent.AddedPerformerGroup,
+  EWorkflowLogEvent.RemovedPerformerGroup,
   EWorkflowLogEvent.WorkflowSnoozedManually,
   EWorkflowLogEvent.WorkflowResumed,
   EWorkflowLogEvent.DueDateChanged,

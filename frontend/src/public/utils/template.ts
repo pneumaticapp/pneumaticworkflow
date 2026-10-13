@@ -1,10 +1,9 @@
-/* eslint-disable */
-/* prettier-ignore */
 import {
   ITemplate,
+  ITemplateClient,
+  ITemplateTaskClient,
+  ITemplateKickoffClient,
   ITemplateRequest,
-  ITemplateTask,
-  IKickoff,
   ITemplateTaskRequest,
   ITemplateResponse,
   ITemplateTaskResponse,
@@ -12,11 +11,13 @@ import {
   ETemplateOwnerType,
   ETemplateOwnerRole,
   ITemplateOwner,
+  IExtraField,
 } from '../types/template';
+import { IFieldsetBindingClient, IFieldsetBindingMeta } from '../types/fieldset';
+import { mapFieldsetBindingsToClient } from './mapFieldsetsAPIToClient';
 import { getUrlParams } from './getUrlParams';
 import { DEFAULT_TEMPLATE_NAME } from '../components/TemplateEdit/constants';
 
-import { getNormalizeFieldsOrders } from './workflows';
 import { createOwnerApiName, createTaskApiName, createUUID } from './createId';
 import { isArrayWithItems, omit } from './helpers';
 import { getEmptyConditions } from '../components/TemplateEdit/TaskForm/Conditions/utils/getEmptyConditions';
@@ -34,7 +35,7 @@ export function getTemplateIdFromUrl(url: string) {
     return null;
   }
 
-  const { template } = getUrlParams(location.search);
+  const { template } = getUrlParams(window.location.search);
 
   if (!template) {
     return null;
@@ -43,10 +44,11 @@ export function getTemplateIdFromUrl(url: string) {
   return Number(template) ? template : null;
 }
 
-export function getEmptyKickoff(): IKickoff {
+export function getEmptyKickoff(): ITemplateKickoffClient {
   return {
     description: '',
     fields: [],
+    fieldsets: [],
   };
 }
 
@@ -55,17 +57,22 @@ export const getNormalizedTemplate = (
   isSubscribed: boolean,
   users: TUserListItem[],
   billingPlan: ESubscriptionPlan,
-): ITemplate => {
-  const normalizedKickoff = template.kickoff || getEmptyKickoff();
+): ITemplateClient => {
+  const hasFullAccess = isSubscribed || billingPlan === ESubscriptionPlan.Free;
+  const normalizedKickoff = {
+    ...getEmptyKickoff(),
+    ...(template.kickoff || {}),
+    fieldsets: template.kickoff ? mapFieldsetBindingsToClient(template.kickoff.fieldsets) : [],
+  };
+
   const normalizedTasks = [...template.tasks]
     .sort((a, b) => a.number - b.number)
-    .map((task, index, tasks) => getNormalizedTask(task, isSubscribed, tasks[index - 1]));
+    .map((task) => getNormalizedTask(task, hasFullAccess));
 
   const performersCount = setPerformersCounts(normalizedTasks);
-  const normalizedTemplateOwners =
-    !isSubscribed && billingPlan !== ESubscriptionPlan.Free
-      ? getNormalizedTemplateOwners(template.owners, isSubscribed, users)
-      : template.owners;
+  const normalizedTemplateOwners = !hasFullAccess
+    ? getNormalizedTemplateOwners(template.owners, isSubscribed, users)
+    : template.owners;
 
   return {
     ...template,
@@ -104,17 +111,13 @@ export const getNormalizedTemplateOwners = (
       apiName: createOwnerApiName(),
       type: ETemplateOwnerType.User,
       role: ETemplateOwnerRole.Owner,
-    } as ITemplateOwner
+    } as ITemplateOwner;
   });
 
   return mapOwnersNotDeletedUsers;
 };
 
-export const getNormalizedTask = (
-  task: ITemplateTaskResponse,
-  isSubscribed: boolean,
-  prevTask?: ITemplateTaskResponse,
-): ITemplateTask => {
+export const getNormalizedTask = (task: ITemplateTaskResponse, isSubscribed: boolean): ITemplateTaskClient => {
   const conditions = isArrayWithItems(task.conditions)
     ? normalizeConditiosForFrontend(task.conditions)
     : getEmptyConditions(isSubscribed);
@@ -124,15 +127,125 @@ export const getNormalizedTask = (
   return {
     ...omit(task, ['dueIn']),
     apiName: task.apiName || createTaskApiName(),
-    fields: getNormalizeFieldsOrders(task.fields),
     uuid: createUUID(),
     conditions,
     rawDueDate,
+    fieldsets: mapFieldsetBindingsToClient(task.fieldsets),
   };
 };
 
-export const mapTemplateRequest = (template: ITemplate): ITemplateRequest => {
-  const { tasks } = template;
+export const collectFieldApiNames = (
+  fields: IExtraField[],
+  fieldsets: IFieldsetBindingClient[],
+  validApiNames: Set<string>,
+) => {
+  fields.forEach((field) => {
+    if (field.apiName) validApiNames.add(field.apiName);
+  });
+  fieldsets.forEach((fieldset) => {
+    fieldset.fields?.forEach((field) => {
+      if (field.apiName) validApiNames.add(field.apiName);
+    });
+  });
+};
+
+export const cleanTemplateReferences = (template: ITemplateClient): ITemplateClient => {
+  // System variables that the backend recognizes and skips during validation.
+  // Must stay in sync with backend/src/processes/enums.py :: SystemVariable
+  const TASK_SYSTEM_VARS = new Set(['workflow-starter']);
+  const WF_NAME_SYSTEM_VARS = new Set(['date', 'template-name', 'workflow-id', 'workflow-starter']);
+
+  const validApiNames = new Set<string>();
+  collectFieldApiNames(template.kickoff.fields, template.kickoff.fieldsets, validApiNames);
+
+  const removeInvalidReferences = (
+    text: string | null | undefined,
+    validApis: Set<string>,
+    systemVars: Set<string>,
+  ): string => {
+    if (!text) return text || '';
+    return text.replace(/\{\{\s*([\w-]+)\s*\}\}/g, (match, apiName) => {
+      if (validApis.has(apiName) || systemVars.has(apiName)) {
+        return match;
+      }
+      return '';
+    });
+  };
+
+  const tasks = [...(template.tasks || [])].sort((a, b) => a.number - b.number);
+
+  const validTaskApiNames = new Set<string>();
+  tasks.forEach((t) => {
+    if (t.apiName) validTaskApiNames.add(t.apiName);
+  });
+
+  const cleanedTasks = tasks.map((task) => {
+    const name = removeInvalidReferences(task.name, validApiNames, TASK_SYSTEM_VARS);
+    const description = removeInvalidReferences(task.description, validApiNames, TASK_SYSTEM_VARS);
+
+    const conditions = (task.conditions || []).map((condition) => {
+      const rules = condition.rules.filter(
+        (rule) =>
+          !rule.field || rule.fieldType === 'task' || rule.fieldType === 'kickoff' || validApiNames.has(rule.field),
+      );
+      return { ...condition, rules };
+    });
+
+    const rawPerformers = (task.rawPerformers || []).filter((p) => {
+      if (p.type === 'field') {
+        return !!p.sourceId && validApiNames.has(p.sourceId);
+      }
+      if (p.type === 'manager') {
+        return !!p.sourceId && validTaskApiNames.has(p.sourceId);
+      }
+      return true;
+    });
+
+    let { rawDueDate } = task;
+    if (rawDueDate && rawDueDate.ruleTarget === 'field') {
+      if (rawDueDate.sourceId && !validApiNames.has(rawDueDate.sourceId)) {
+        rawDueDate = {
+          ...rawDueDate,
+          duration: null,
+          durationMonths: null,
+          sourceId: null,
+          ruleTarget: 'task started',
+        };
+      }
+    }
+
+    collectFieldApiNames(task.fields, task.fieldsets, validApiNames);
+
+    return {
+      ...task,
+      name,
+      description,
+      conditions,
+      rawPerformers,
+      rawDueDate,
+    };
+  });
+
+  const validKickoffApiNames = new Set<string>();
+  collectFieldApiNames(template.kickoff.fields, template.kickoff.fieldsets, validKickoffApiNames);
+
+  return {
+    ...template,
+    wfNameTemplate: removeInvalidReferences(template.wfNameTemplate, validKickoffApiNames, WF_NAME_SYSTEM_VARS),
+    tasks: cleanedTasks,
+  };
+};
+
+function mapFieldsetForApi({ apiNameBinding, ...rest }: IFieldsetBindingClient): IFieldsetBindingMeta {
+  return {
+    ...rest,
+    apiName: apiNameBinding,
+  };
+}
+
+export const mapTemplateRequest = (template: ITemplateClient): ITemplateRequest => {
+  const cleanedTemplate = cleanTemplateReferences(template);
+  const { tasks } = cleanedTemplate;
 
   const normilizedTasks: ITemplateTaskRequest[] = tasks?.map((task) => {
     const normalizeDuration = (duration: string | null) => {
@@ -144,13 +257,18 @@ export const mapTemplateRequest = (template: ITemplate): ITemplateRequest => {
       delay: normalizeDuration(task.delay),
       conditions: normalizeConditionForBackend(task.conditions),
       rawDueDate: normalizeDueDateForBackend(task.rawDueDate),
+      fieldsets: task.fieldsets.map(mapFieldsetForApi),
     };
   });
 
   return {
-    ...template,
-    name: template.name || DEFAULT_TEMPLATE_NAME,
+    ...cleanedTemplate,
+    name: cleanedTemplate.name || DEFAULT_TEMPLATE_NAME,
     tasks: normilizedTasks,
-    publicSuccessUrl: template.publicSuccessUrl || null,
+    kickoff: {
+      ...cleanedTemplate.kickoff,
+      fieldsets: cleanedTemplate.kickoff.fieldsets.map(mapFieldsetForApi),
+    },
+    publicSuccessUrl: cleanedTemplate.publicSuccessUrl || null,
   };
 };

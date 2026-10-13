@@ -8,17 +8,14 @@ import 'rc-slider/assets/index.css';
 import styles from './Slider.css';
 import { SliderHandleArrowLeftIcon, SliderHandleArrowRightIcon } from '../icons';
 
-export interface ISliderProps extends SliderProps { }
+export interface ISliderProps extends SliderProps {}
 
 const SliderComponent = Slider as unknown as Function;
 
 export function CustomSlider(props: ISliderProps) {
   return (
-    <div className={styles['container']} >
-      <SliderComponent
-        handle={CustomHandle}
-        {...props}
-      />
+    <div className={styles['container']}>
+      <SliderComponent handle={CustomHandle} {...props} />
     </div>
   );
 }

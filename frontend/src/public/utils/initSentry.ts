@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/react';
 import { setSentryCapture } from './sentryCapture';
 import { DEV_SENTRY_DSN, PROD_SENTRY_DSN } from '../constants/defaultValues';
 import { TEnvironment } from './getConfig';
+import { envSentryRelease } from '../constants/enviroment';
 
 export type TSentryApp = 'main' | 'forms';
 
@@ -12,17 +13,12 @@ const sentryDsnMap: { [key in TEnvironment]: string | null } = {
   prod: PROD_SENTRY_DSN,
 };
 
-export const initSentry = (
-  getConfig: () => { env?: TEnvironment },
-  app: TSentryApp,
-) => {
+export const initSentry = (getConfig: () => { env?: TEnvironment }, app: TSentryApp) => {
   const { env = 'local' } = getConfig();
   const dsn = sentryDsnMap[env];
   if (!dsn) return;
 
-  const release = typeof process.env.SENTRY_RELEASE === 'string'
-    ? process.env.SENTRY_RELEASE
-    : undefined;
+  const release = typeof envSentryRelease === 'string' ? envSentryRelease : undefined;
 
   Sentry.init({
     dsn,
@@ -36,6 +32,7 @@ export const initSentry = (
       return event;
     },
     ignoreErrors: [
+      /ResizeObserver loop/,
       /^Loading chunk \d+ failed\./,
       /^Loading CSS chunk \d+ failed\./,
       /ChunkLoadError/,

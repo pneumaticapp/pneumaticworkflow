@@ -1,6 +1,7 @@
-import React, { ChangeEvent, ReactNode, SVGAttributes, useState } from 'react';
+import * as React from 'react';
+import { ChangeEvent, ReactNode, SVGAttributes, useState } from 'react';
 import classnames from 'classnames';
-import * as PerfectScrollbar from 'react-perfect-scrollbar';
+import PerfectScrollbar from 'react-perfect-scrollbar';
 import { DropdownItem, DropdownMenu, DropdownToggle, Dropdown } from 'reactstrap';
 
 import OutsideClickHandler from 'react-outside-click-handler';
@@ -12,6 +13,9 @@ import { Checkbox, InputField } from '..';
 import styles from './Select.css';
 
 const ScrollBar = PerfectScrollbar as unknown as Function;
+
+const DROPDOWN_SKELETON_ROW_COUNT = 5;
+const DROPDOWN_SKELETON_WIDTHS = ['80%', '60%', '80%', '60%', '70%'];
 
 type TOptionId = number | string | null;
 export type TOptionBase<IdKey extends string, LabelKey extends string> = {
@@ -45,15 +49,18 @@ interface IFilterSelectCommonProps<
   toggleClassName?: string;
   arrowClassName?: string;
   menuClassName?: string;
+  isWideMenu?: boolean;
   optionIdKey: IdKey;
   optionLabelKey: LabelKey;
   containerClassname?: string;
   selectAllLabel?: string;
+  id?: string;
   resetFilter(): void;
   selectAll?(): void;
   Icon?(props: SVGAttributes<SVGElement>): JSX.Element;
   renderPlaceholder(options: TOption[]): string | JSX.Element;
   positionFixed?: boolean;
+  getOptionSelectionKey?: (option: TOption) => TOptionId;
 }
 
 interface IFilterSelectMultiOptionsProps {
@@ -94,6 +101,7 @@ export function FilterSelect<
     toggleClassName,
     arrowClassName,
     menuClassName,
+    isWideMenu,
     options,
     groupedOptions,
     flatGroupedOptions,
@@ -107,8 +115,11 @@ export function FilterSelect<
     selectedOption,
     renderPlaceholder,
     positionFixed = false,
+    getOptionSelectionKey,
+    id,
   } = props;
   const allOptions = flatGroupedOptions || options;
+  const getSelectionKey = getOptionSelectionKey ?? ((option: TOption) => option[optionIdKey]);
   const [searchText, setSearchText] = useState('');
   const [isSelectAll, setIsSelectAll] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -124,6 +135,7 @@ export function FilterSelect<
     }
 
     const optionId = option[optionIdKey];
+    const selectionKey = getSelectionKey(option);
 
     if (!isMultiple) {
       onChange(optionId);
@@ -131,13 +143,13 @@ export function FilterSelect<
       return;
     }
 
-    const newIsChecked = !selectedOptions.includes(optionId);
+    const newIsChecked = !selectedOptions.includes(selectionKey);
 
     const newSelectedOptions = newIsChecked
-      ? [...selectedOptions, optionId]
-      : selectedOptions.filter((selectedOptionElement) => selectedOptionElement !== optionId);
+      ? [...selectedOptions, selectionKey]
+      : selectedOptions.filter((selectedOptionElement) => selectedOptionElement !== selectionKey);
 
-    const mapSelectedOption = allOptions.filter((item) => newSelectedOptions.includes(item[optionIdKey]));
+    const mapSelectedOption = allOptions.filter((item) => newSelectedOptions.includes(getSelectionKey(item)));
 
     onChange(newSelectedOptions, mapSelectedOption);
 
@@ -149,7 +161,7 @@ export function FilterSelect<
   };
 
   const renderSearchInput = () => {
-    if (!isSearchShown) {
+    if (!isSearchShown || isLoading) {
       return null;
     }
 
@@ -163,6 +175,8 @@ export function FilterSelect<
             onClear={handleClearSearchText}
             fieldSize="md"
             autoFocus
+            autoComplete="one-time-code"
+            name="filter-select-search"
             placeholder={searchPlaceholder}
           />
         </div>
@@ -201,7 +215,7 @@ export function FilterSelect<
     }
 
     const filteredValues: (TOption | string)[] = [];
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     Array.from(groupedOptions.entries()).forEach(([_, group]) => {
       if (!searchText) {
         filteredValues.push(group.title, ...group.options);
@@ -254,7 +268,7 @@ export function FilterSelect<
         if (!isSelectAll) {
           setIsSelectAll(true);
           onChange(
-            allOptions.map((option) => option[optionIdKey]),
+            allOptions.map((option) => getSelectionKey(option)),
             allOptions,
           );
         } else {
@@ -312,7 +326,7 @@ export function FilterSelect<
             >
               {isMultiple && typeof option !== 'string' ? (
                 <Checkbox
-                  checked={selectedOptions.includes(option[optionIdKey])}
+                  checked={selectedOptions.includes(getSelectionKey(option))}
                   title={label}
                   onClick={(e) => e.stopPropagation()}
                   onChange={() => {}}
@@ -345,11 +359,29 @@ export function FilterSelect<
     setSearchText('');
   };
 
-  if (isLoading) {
-    const loaderClassName = classnames('dropdown-menu-right ml-sm-4 dropdown');
+  const renderDropdownSkeleton = () => (
+    <div className={styles['dropdown-menu__skeleton']}>
+      {Array.from({ length: DROPDOWN_SKELETON_ROW_COUNT }, (_, index) => (
+        <div
+          key={index}
+          className={classnames(
+            styles['dropdown-menu__skeleton-item'],
+            index === DROPDOWN_SKELETON_ROW_COUNT - 1 && styles['dropdown-menu__skeleton-item_last'],
+          )}
+        >
+          <Skeleton display="block" height="2.4rem" width={DROPDOWN_SKELETON_WIDTHS[index]} />
+        </div>
+      ))}
+    </div>
+  );
 
-    return <Skeleton className={loaderClassName} />;
-  }
+  const renderDropdownContent = () => {
+    if (isLoading) {
+      return renderDropdownSkeleton();
+    }
+
+    return renderDropdownList();
+  };
 
   return (
     <OutsideClickHandler disabled={!isDropdownOpen} onOutsideClick={handleToggleDropdown}>
@@ -372,6 +404,7 @@ export function FilterSelect<
             toggleClassName,
             isClearHovered && styles['active-value_clear-hovered'],
           )}
+          {...(id && { id })}
         >
           {Icon && <Icon className={styles['icon']} />}
           <span className={styles['active-value__text']}>{renderPlaceholder(allOptions)}</span>
@@ -412,6 +445,7 @@ export function FilterSelect<
           className={classnames(
             styles['dropdown-menu'],
             styles['dropdown-menu_search'],
+            isWideMenu && styles['dropdown-menu_wide'],
             menuClassName,
             positionFixed && styles['dropdown-menu__position-fixed'],
           )}
@@ -423,7 +457,7 @@ export function FilterSelect<
             className={styles['dropdown-menu__scrollbar']}
             options={{ suppressScrollX: true, wheelPropagation: false }}
           >
-            {renderDropdownList()}
+            {renderDropdownContent()}
           </ScrollBar>
         </DropdownMenu>
       </Dropdown>

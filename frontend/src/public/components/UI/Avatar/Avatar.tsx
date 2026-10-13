@@ -29,7 +29,6 @@ export const getBackgroundColor = (fullName: string) => {
   const name = [...fullName];
   const hash =
     name.reduce((result, char) => {
-      // eslint-disable-next-line no-bitwise
       return char.charCodeAt(0) + ((result << 2) - result);
     }, 0) % 360;
 
@@ -94,11 +93,7 @@ export function Avatar({
     }
 
     if (user?.type === 'group') {
-      return (
-        <div className={containerClassName}>
-          <GroupIcon className={classnames(styles['avatar'], styles['is-group'], ...sizeClasses, className)} />
-        </div>
-      );
+      return <GroupIcon className={classnames(styles['avatar'], styles['is-group'], ...sizeClasses, className)} />;
     }
 
     const notRegistratedStatues = [EUserStatus.Invited, EUserStatus.External];

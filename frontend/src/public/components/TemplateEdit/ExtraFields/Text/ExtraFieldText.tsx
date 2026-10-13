@@ -2,10 +2,13 @@ import * as React from 'react';
 
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { EExtraFieldMode } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { EFieldTagName } from '../../../Field';
 import { FieldWithName } from '../utils/FieldWithName';
 
 import { IWorkflowExtraFieldProps } from '..';
+
+import styles from '../../KickoffRedux/KickoffRedux.css';
 
 export const ExtraFieldText = ({
   field,
@@ -16,8 +19,10 @@ export const ExtraFieldText = ({
   editField,
   isDisabled = false,
   labelBackgroundColor,
+  labelPosition,
   innerRef,
   accountId,
+  icon,
 }: IWorkflowExtraFieldProps) => {
   const handleChangeName = React.useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,12 +50,15 @@ export const ExtraFieldText = ({
       namePlaceholder={namePlaceholder}
       mode={mode}
       labelBackgroundColor={labelBackgroundColor}
+      labelPosition={labelPosition}
+      {...(labelPosition === EFieldLabelPosition.Left && { editorClassName: styles['rich-editor_label-left'] })}
       tagName={mode === EExtraFieldMode.ProcessRun ? EFieldTagName.RichText : EFieldTagName.Textarea}
       handleChangeName={handleChangeName}
       handleChangeDescription={handleChangeDescription}
       validate={getFieldValidator(field, mode)}
       isDisabled={isDisabled}
       accountId={accountId}
+      icon={icon}
     />
   );
 };

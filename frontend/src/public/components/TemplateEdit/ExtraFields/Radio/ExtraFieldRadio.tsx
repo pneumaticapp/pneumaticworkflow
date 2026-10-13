@@ -2,13 +2,14 @@
 /* prettier-ignore */
 import * as React from 'react';
 import classnames from 'classnames';
-import AutosizeInput from 'react-input-autosize';
 
 import { getEmptySelection } from '../../KickoffRedux/utils/getEmptySelection';
 import { validateCheckboxAndRadioField, validateKickoffFieldName } from '../../../../utils/validators';
 import { handleSelectionBlur, recalculateDuplicateErrors } from '../utils/handleSelectionBlur';
 import { IntlMessages } from '../../../IntlMessages';
 import { EExtraFieldMode, IExtraFieldSelection } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
+import { FieldLabel } from '../utils/FieldLabel';
 import { fitInputWidth } from '../utils/fitInputWidth';
 import { PencilSmallIcon, RemoveIcon } from '../../../icons';
 import { RadioButton } from '../../../UI/Fields/RadioButton';
@@ -21,7 +22,6 @@ import fieldStyles from './ExtraFieldRadio.css';
 import { useState } from 'react';
 
 const DEFAULT_OPTION_INPUT_WIDTH = 120;
-const DEFAULT_FIELD_INPUT_WIDTH = 120;
 
 export function ExtraFieldRadio({
   field,
@@ -32,11 +32,14 @@ export function ExtraFieldRadio({
   deleteField,
   editField,
   isDisabled = false,
+  isFieldsetReadOnly = false,
   datasetName,
-}: IWorkflowExtraFieldProps) {
+  labelPosition,
+  labelBackgroundColor,
+}: IWorkflowExtraFieldProps): JSX.Element {
   const selectionItems = field.selections as IExtraFieldSelection[];
   const selectionValues = field.selections as string[];
-  const fieldNameInputRef = React.useRef<HTMLInputElement | null>(null);
+  const fieldNameInputRef = React.useRef<HTMLTextAreaElement | null>(null);
   const optionInputsRefs = React.useRef<HTMLInputElement[]>([]);
   const [isFocused, setIsFocused] = React.useState(false);
 
@@ -44,13 +47,9 @@ export function ExtraFieldRadio({
     optionInputsRefs.current.forEach((input) => fitInputWidth(input, DEFAULT_OPTION_INPUT_WIDTH));
   }, [selectionItems]);
 
-  React.useEffect(() => {
-    fitInputWidth(fieldNameInputRef.current, DEFAULT_FIELD_INPUT_WIDTH);
-  }, []);
-
   const [activeOptionIndex, setActiveOptionIndex] = useState<number | null>(null);
-  const [duplicateErrors, setDuplicateErrors] = useState<Record<string, string>>(
-    () => recalculateDuplicateErrors(selectionItems || []),
+  const [duplicateErrors, setDuplicateErrors] = useState<Record<string, string>>(() =>
+    recalculateDuplicateErrors(selectionItems || []),
   );
 
   const fieldNameErrorMessage = validateKickoffFieldName(name) || '';
@@ -70,38 +69,56 @@ export function ExtraFieldRadio({
     );
 
     return (
-      <div className={fieldStyles['kickoff-create-field-container']}>
-        <div className={fieldNameClassName}>
-          <AutosizeInput
-            inputRef={(ref) => (fieldNameInputRef.current = ref)}
-            inputClassName={classnames(
-              fieldStyles['kickoff-create-field-name-input'],
-              !isKickoffFieldNameValid && fieldStyles['kickoff-create-field-name-input_error'],
-            )}
-            onChange={handleChangeName}
-            placeholder={namePlaceholder}
-            type="text"
-            value={name}
-            disabled={isDisabled}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                setIsFocused(false);
-                event.currentTarget.blur();
-              }
-            }}
+      <div
+        className={classnames(
+          fieldStyles['kickoff-create-field-container'],
+          labelPosition === EFieldLabelPosition.Left && styles['kick-off-input__field_label-left'],
+        )}
+      >
+        {labelPosition === EFieldLabelPosition.Left ? (
+          <FieldLabel
+            name={name}
+            isRequired={isRequired}
+            isDisabled={isDisabled}
+            mode={mode}
+            labelPosition={labelPosition}
+            namePlaceholder={namePlaceholder}
+            handleChangeName={handleChangeName}
           />
-          {isRequired && <span className={styles['kick-off-required-sign']} />}
-          {!isFocused && mode === EExtraFieldMode.Kickoff && (
-            <button
-              onClick={() => fieldNameInputRef.current?.focus()}
-              className={classnames(styles['kick-off-edit-name'], fieldStyles['edit-name-button'])}
-            >
-              <PencilSmallIcon />
-            </button>
-          )}
-        </div>
+        ) : (
+          <div className={fieldNameClassName}>
+            <textarea
+              ref={(ref) => (fieldNameInputRef.current = ref)}
+              className={classnames(
+                fieldStyles['kickoff-create-field-name-input'],
+                !isKickoffFieldNameValid && fieldStyles['kickoff-create-field-name-input_error'],
+              )}
+              data-use-input
+              onChange={handleChangeName}
+              placeholder={namePlaceholder}
+              value={name}
+              disabled={isDisabled}
+              rows={1}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  setIsFocused(false);
+                  event.currentTarget.blur();
+                }
+              }}
+            />
+            {isRequired && <span className={styles['kick-off-required-sign']} />}
+            {!isFocused && mode === EExtraFieldMode.Kickoff && (
+              <button
+                onClick={() => fieldNameInputRef.current?.focus()}
+                className={classnames(styles['kick-off-edit-name'], fieldStyles['edit-name-button'])}
+              >
+                <PencilSmallIcon />
+              </button>
+            )}
+          </div>
+        )}
 
         {!isKickoffFieldNameValid && (
           <p className={fieldStyles['kickoff-create-field-container__error-message']}>
@@ -109,7 +126,15 @@ export function ExtraFieldRadio({
           </p>
         )}
 
-        <OutputFieldContent field={field} editField={editField} isDisabled={isDisabled} datasetName={datasetName}>
+        <OutputFieldContent
+          field={field}
+          editField={editField}
+          isDisabled={isDisabled}
+          datasetName={datasetName}
+          {...(labelPosition === EFieldLabelPosition.Left && {
+            className: styles['kick-off-input__options-content_label-left'],
+          })}
+        >
           {customOptionsList}
           {!isDisabled && addOptionButton}
         </OutputFieldContent>
@@ -139,16 +164,27 @@ export function ExtraFieldRadio({
             id={`extra-field-radio-${optionIndex}`}
             containerClassName={fieldStyles['connected_radio']}
           />
-          <input
-            ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
-            className={fieldStyles['labeled-checkbox__input']}
-            onChange={handleChangeOption(optionIndex)}
-            onBlur={handleBlurOption(field.apiName)}
-            placeholder={namePlaceholder}
-            type="text"
-            value={value}
-            disabled={isDisabled}
-          />
+          {isFieldsetReadOnly ? (
+            <textarea
+              className={fieldStyles['labeled-checkbox__input']}
+              data-use-input
+              value={value}
+              disabled
+              rows={1}
+            />
+          ) : (
+            <input
+              ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
+              className={fieldStyles['labeled-checkbox__input']}
+              data-use-input
+              onChange={handleChangeOption(optionIndex)}
+              onBlur={handleBlurOption(field.apiName)}
+              placeholder={namePlaceholder}
+              type="text"
+              value={value}
+              disabled={isDisabled}
+            />
+          )}
           <span className={fieldStyles['measure']} />
           {isActive && !isDisabled && (selectionItems?.length || 0) > 1 && (
             <div
@@ -170,8 +206,7 @@ export function ExtraFieldRadio({
   };
 
   const handleChangeName = React.useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      fitInputWidth(e.target, DEFAULT_FIELD_INPUT_WIDTH);
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       editField({ name: e.target.value });
     },
     [editField],
@@ -213,7 +248,12 @@ export function ExtraFieldRadio({
 
     return (
       <li key={selectionValue} className={fieldStyles['kickoff-set-field-option']}>
-        <RadioButton id={selectionValue} title={selectionValue} onChange={handleToggleOption(selectionValue)} checked={isChecked} />
+        <RadioButton
+          id={`${field.apiName}-${selectionValue}`}
+          title={selectionValue}
+          onChange={handleToggleOption(selectionValue)}
+          checked={isChecked}
+        />
       </li>
     );
   };
@@ -221,16 +261,36 @@ export function ExtraFieldRadio({
   const renderProcessRunField = () => {
     if (!selectionValues) return null;
 
+    const isLabelLeft = labelPosition === EFieldLabelPosition.Left;
     const fieldNameClassName = classnames(fieldStyles['kickoff-set-field-name']);
 
     return (
-      <div className={fieldStyles['kickoff-set-field-container']} data-autofocus-first-field={true}>
-        <div>
-          <div className={fieldNameClassName}>{name}</div>
-          {isRequired && <span className={styles['kick-off-required-sign']} />}
+      <div
+        className={classnames(
+          fieldStyles['kickoff-set-field-container'],
+          isLabelLeft && styles['kick-off-input__field_label-left'],
+        )}
+        data-autofocus-first-field={true}
+      >
+        {isLabelLeft ? (
+          <FieldLabel
+            name={name}
+            isRequired={isRequired}
+            isDisabled={isDisabled}
+            mode={mode}
+            labelPosition={labelPosition}
+            labelBackgroundColor={labelBackgroundColor}
+            handleChangeName={handleChangeName}
+          />
+        ) : (
+          <div>
+            <div className={fieldNameClassName}>{name}</div>
+            {isRequired && <span className={styles['kick-off-required-sign']} />}
+          </div>
+        )}
+        <div {...(isLabelLeft && { className: fieldStyles['radio-options-wrapper_label-left'] })}>
+          <ul className={fieldStyles['kickoff-set-field-options']}>{selectionValues.map(renderProcessRunOption)}</ul>
         </div>
-
-        <ul className={fieldStyles['kickoff-set-field-options']}>{selectionValues.map(renderProcessRunOption)}</ul>
       </div>
     );
   };
@@ -251,5 +311,5 @@ export function ExtraFieldRadio({
     return fieldsMap[mode];
   };
 
-  return renderField();
+  return <>{renderField()}</>;
 }

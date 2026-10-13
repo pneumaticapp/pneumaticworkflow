@@ -1,16 +1,9 @@
-// <reference types="jest" />
-
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { WorkflowLog } from '../WorkflowLog';
-import {
-  EWorkflowLogEvent,
-  EWorkflowsLogSorting,
-  EWorkflowStatus,
-  IWorkflowLogItem,
-} from '../../../../types/workflow';
+import { EWorkflowLogEvent, EWorkflowsLogSorting, EWorkflowStatus, IWorkflowLogItem } from '../../../../types/workflow';
 import { makeLogEvent, resetLogEventId } from '../../../../__stubs__/workflowLogEvents';
 import { intlMock } from '../../../../__stubs__/intlMock';
 

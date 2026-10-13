@@ -7,7 +7,7 @@ import { SelectTemplateModalContainer } from '../../components/SelectTemplateMod
 import { NotificationsListContainer } from '../../components/NotificationsList/container';
 import { WorkflowEditPopupContainer } from '../../components/WorkflowEditPopup';
 import { GeneralLoader } from '../../components/GeneralLoader';
-import { SidebarContainer } from '../../components/Sidebar';
+import { Sidebar } from '../../components/Sidebar';
 import { ILoadNotificationsPayload } from '../../redux/notifications/actions';
 import { useDelayUnmount } from '../../hooks/useDelayUnmount';
 import { TeamInvitesPopupContainer } from '../../components/TeamInvitesPopup';
@@ -27,9 +27,6 @@ import { isEnvAnalytics, isEnvPush } from '../../constants/enviroment';
 import { IUnsavedUser, TUserListItem } from '../../types/user';
 import { checkIsTemplateOwner, loadGroups } from '../../redux/actions';
 import { getIsAdmin } from '../../redux/selectors/user';
-import { closeAllConnections, hasActiveConnections } from '../../redux/utils/webSocketConnections';
-import { promiseDelay } from '../../utils/timeouts';
-
 import styles from './MainLayout.css';
 
 export interface IMainLayoutComponentStoreProps {
@@ -101,13 +98,7 @@ export function MainLayout({
 
   React.useEffect(() => {
     if (billingPlan) {
-      if (hasActiveConnections()) {
-        closeAllConnections()
-          .then(() => promiseDelay(500))
-          .then(() => watchUserWSEventsAction());
-      } else {
-        watchUserWSEventsAction();
-      }
+      watchUserWSEventsAction();
 
       loadNotificationsList();
       loadTasksCount();
@@ -170,7 +161,7 @@ export function MainLayout({
     <>
       <div id="app-container" className={classnames(classNames, styles['main-layout'])}>
         {children}
-        <SidebarContainer />
+        <Sidebar />
       </div>
       {((!isSubscribed && !(billingPlan === ESubscriptionPlan.Free)) || isPlanExpired) && (
         <Paywall currentUser={user} owner={accountOwner} />

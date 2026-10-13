@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
+  $getRoot,
   $getSelection,
   $isRangeSelection,
   $isRootNode,
@@ -45,13 +46,7 @@ export function InsertAttachmentPlugin(): null {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
-    if (
-      !editor.hasNodes([
-        ImageAttachmentNode,
-        VideoAttachmentNode,
-        FileAttachmentNode,
-      ])
-    ) {
+    if (!editor.hasNodes([ImageAttachmentNode, VideoAttachmentNode, FileAttachmentNode])) {
       throw new Error(
         'InsertAttachmentPlugin: ImageAttachmentNode, VideoAttachmentNode, FileAttachmentNode must be registered',
       );
@@ -60,10 +55,6 @@ export function InsertAttachmentPlugin(): null {
     const removeInsert = editor.registerCommand(
       INSERT_ATTACHMENT_COMMAND,
       (payload) => {
-        const selection = $getSelection();
-        if (!$isRangeSelection(selection)) {
-          return false;
-        }
         let node;
         if (payload.type === 'image') {
           node = $createImageAttachmentNode(payload);
@@ -72,24 +63,23 @@ export function InsertAttachmentPlugin(): null {
         } else {
           node = $createFileAttachmentNode(payload);
         }
-        $insertNodeToNearestRoot(node);
+
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          $insertNodeToNearestRoot(node);
+        } else {
+          // Focus lost (file picker, paste from outside) — append to end
+          const root = $getRoot();
+          root.append(node);
+        }
         return true;
       },
       COMMAND_PRIORITY_EDITOR,
     );
 
-    const removeImageTransform = editor.registerNodeTransform(
-      ImageAttachmentNode,
-      $promoteBlockDecorator,
-    );
-    const removeVideoTransform = editor.registerNodeTransform(
-      VideoAttachmentNode,
-      $promoteBlockDecorator,
-    );
-    const removeFileTransform = editor.registerNodeTransform(
-      FileAttachmentNode,
-      $promoteBlockDecorator,
-    );
+    const removeImageTransform = editor.registerNodeTransform(ImageAttachmentNode, $promoteBlockDecorator);
+    const removeVideoTransform = editor.registerNodeTransform(VideoAttachmentNode, $promoteBlockDecorator);
+    const removeFileTransform = editor.registerNodeTransform(FileAttachmentNode, $promoteBlockDecorator);
 
     return () => {
       removeInsert();

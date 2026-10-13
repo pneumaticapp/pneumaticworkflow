@@ -1,4 +1,3 @@
-/* eslint-disable indent */
 import React, { ReactNode, useMemo, useState } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
@@ -10,16 +9,16 @@ import { getFormattedDropdownOption } from '../Conditions/utils/getFormattedDrop
 import { useCheckDevice } from '../../../../hooks/useCheckDevice';
 
 import { TTaskVariable } from '../../types';
-import { ITemplateTask } from '../../../../types/template';
+import { ITemplateTaskClient } from '../../../../types/template';
 
 import styles from './ReturnTo.css';
 import stylesTaskForm from '../TaskForm.css';
 
 interface IReturnToProps {
   variables: TTaskVariable[];
-  tasks: ITemplateTask[];
+  tasks: ITemplateTaskClient[];
   currentTaskRevertTask: string | null;
-  setCurrentTask(changedFields: Partial<ITemplateTask>): void;
+  setCurrentTask(changedFields: Partial<ITemplateTaskClient>): void;
   taskAncestors: Set<string>;
 }
 
@@ -57,7 +56,7 @@ export function ReturnTo({ variables, tasks, currentTaskRevertTask, setCurrentTa
   const dropdownTaskList = useMemo(
     () => [
       ...tasks
-        .filter((task: ITemplateTask) => taskAncestors.has(task.apiName))
+        .filter((task: ITemplateTaskClient) => taskAncestors.has(task.apiName))
         .map(({ name, apiName }) => {
           return {
             label: name,

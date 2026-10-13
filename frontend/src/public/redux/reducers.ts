@@ -21,7 +21,7 @@ import { runWorkflowModal } from './runWorkflowModal';
 import { webhooks } from './webhooks';
 import { tenants } from './tenants';
 import { EAuthActions } from './actions';
-import { groups } from './groups';
+import groups from './groups/slice';
 
 import pages from './pages/slice';
 import team from './team/slice';
@@ -29,7 +29,8 @@ import workflows from './workflows/slice';
 import accounts from './accounts/slice';
 import tasks from './tasks/slice';
 import datasets from './datasets/slice';
-
+import fieldsets from './fieldsets/slice';
+import permissions from './permissions/slice';
 
 export const reducers = combineReducers({
   general,
@@ -55,10 +56,11 @@ export const reducers = combineReducers({
   webhooks,
   tenants,
   datasets,
+  fieldsets,
+  permissions,
   pages,
 });
 
-// eslint-disable-next-line @typescript-eslint/default-param-last
 export const rootReducer: RootStateOrAny = (state: IApplicationState = initialState, action: any) => {
   if (action.type === EAuthActions.LogoutUserSuccess) {
     return reducers(initialState, action);

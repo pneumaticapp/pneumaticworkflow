@@ -9,10 +9,7 @@ import {
   $isDecoratorNode,
   $createNodeSelection,
 } from 'lexical';
-import {
-  $getClipboardDataFromSelection,
-  setLexicalClipboardDataTransfer,
-} from '@lexical/clipboard';
+import { $getClipboardDataFromSelection, setLexicalClipboardDataTransfer } from '@lexical/clipboard';
 
 /**
  * Builds expanded clipboard data when selection contains decorator nodes.
@@ -20,9 +17,7 @@ import {
  * inside editor.update()), because $getClipboardDataFromSelection clones nodes
  * for HTML export and Lexical throws in read-only mode.
  */
-function $buildExpandedClipboardData(
-  event: ClipboardEvent,
-): boolean {
+function $buildExpandedClipboardData(event: ClipboardEvent): boolean {
   const { clipboardData } = event;
   if (clipboardData == null) return false;
 

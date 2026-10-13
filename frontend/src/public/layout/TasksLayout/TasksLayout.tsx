@@ -31,6 +31,8 @@ export interface ITasksLayoutStoreProps {
   sorting: ETaskListSorting | ETaskListCompleteSorting;
   filterTemplates: ITemplateTitleBaseWithCount[];
   filterSteps: ITemplateStep[];
+  areFilterTemplatesLoading: boolean;
+  areFilterStepsLoading: boolean;
   templateIdFilter: number | null;
   taskApiNameFilter: string | null;
   completionStatus: ETaskListCompletionStatus;
@@ -55,6 +57,8 @@ export function TasksLayoutComponent({
   sorting,
   filterTemplates,
   filterSteps,
+  areFilterTemplatesLoading,
+  areFilterStepsLoading,
   templateIdFilter,
   taskApiNameFilter,
   completionStatus,
@@ -171,7 +175,9 @@ export function TasksLayoutComponent({
           />
           <div className={styles['template-filter']}>
             <FilterSelect
+              isLoading={areFilterTemplatesLoading}
               isSearchShown
+              isWideMenu
               noValueLabel={formatMessage({ id: 'sorting.all-templates' })}
               placeholderText={formatMessage({ id: 'sorting.no-template-found' })}
               selectedOption={templateIdFilter}
@@ -191,6 +197,7 @@ export function TasksLayoutComponent({
           {templateIdFilter && (
             <div className={styles['step-filter']}>
               <FilterSelect
+                isLoading={areFilterStepsLoading}
                 isSearchShown
                 noValueLabel={formatMessage({ id: 'sorting.all-steps' })}
                 placeholderText={formatMessage({ id: 'sorting.no-step-found' })}

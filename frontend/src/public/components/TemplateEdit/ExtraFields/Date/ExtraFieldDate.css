@@ -8,15 +8,46 @@
   position: relative;
 }
 
+.date-input-wrapper_label-left {
+  flex: 1;
+  min-width: 0;
+
+  .icon {
+    bottom: auto;
+    height: 50px;
+  }
+}
+
 .icon {
   position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
   display: flex;
-  justify-content: center;
   align-items: center;
-  width: 50px;
-  pointer-events: none;
+  justify-content: center;
+  width: 5rem;
   color: var(--pneumatic-color-black16);
+  pointer-events: none;
+}
+
+.clear-button {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pneumatic-color-black32);
+  pointer-events: all;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: color 0.1s ease-in-out;
+}
+
+.clear-button:hover {
+  color: var(--pneumatic-color-link-hover);
+}
+
+.clear-button:focus-visible {
+  outline: 0.13rem solid var(--pneumatic-color-black48);
+  outline-offset: 0.13rem;
 }

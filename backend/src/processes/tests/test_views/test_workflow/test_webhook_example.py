@@ -61,6 +61,7 @@ def test_webhook_example__body__ok(api_client):
         'kickoff': {
             'id': workflow.kickoff_instance.id,
             'output': [],
+            'fieldsets': [],
         },
         'tasks': [
             OrderedDict([

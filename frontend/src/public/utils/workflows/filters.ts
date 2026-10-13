@@ -1,10 +1,9 @@
 import { IntlShape } from 'react-intl';
 import { EWorkflowsSorting, EWorkflowsStatus, EWorkflowsView } from '../../types/workflow';
 
-
 export const WORKFLOW_VIEW_STATE_STORAGE_KEY = 'workflow_view_state';
 
-export const getWorkflowViewStorageState = ()  => {
+export const getWorkflowViewStorageState = () => {
   return localStorage.getItem(WORKFLOW_VIEW_STATE_STORAGE_KEY) as EWorkflowsView;
 };
 

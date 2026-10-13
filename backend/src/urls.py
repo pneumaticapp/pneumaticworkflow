@@ -1,6 +1,10 @@
 from django.conf import settings
 from django.contrib import admin
-from django.urls import include, path, re_path
+from django.urls import include, path
+from django.views.generic import TemplateView
+from drf_spectacular.views import (
+    SpectacularAPIView,
+)
 from rest_framework.routers import DefaultRouter
 
 from src import views
@@ -9,10 +13,6 @@ from src.accounts.views.tenants import TenantsViewSet
 from src.faq.views import FaqViewSet
 from src.notifications.consumers import (
     EventsConsumer,
-    NewTaskConsumer,
-    NotificationsConsumer,
-    RemovedTaskConsumer,
-    WorkflowEventConsumer,
 )
 from src.payment.views import (
     PaymentViewSet,
@@ -26,12 +26,16 @@ from src.processes.views.task import (
     TasksListView,
     TaskViewSet,
 )
+from src.processes.views.fieldset import (
+    SharedFieldsetTemplateViewSet,
+)
 from src.datasets.views import DatasetViewSet, DatasetItemViewSet
 from src.processes.views.template import (
     TemplateViewSet,
 )
 from src.processes.views.workflow import WorkflowViewSet
 from src.services.views import ServicesViewSet
+from src.storage.views import AttachmentViewSet
 from src.webhooks.views.buffer import WebHookBufferViewSet
 from src.webhooks.views.events import WebHookEventViewSet
 from src.webhooks.views.webhooks import WebHookViewSet
@@ -56,9 +60,14 @@ router.register('payment', PaymentViewSet, basename='payment')
 router.register('payment/stripe', StripeViewSet, basename='stripe')
 router.register('payment/subscription', SubscriptionViewSet, basename='subs')
 router.register('faq', FaqViewSet, basename='faq')
+router.register('attachments', AttachmentViewSet, basename='attachments')
 router.register('datasets', DatasetViewSet, basename='datasets')
 router.register('datasets/items', DatasetItemViewSet, basename='dataset-items')
-
+router.register(
+    prefix='fieldsets',
+    viewset=SharedFieldsetTemplateViewSet,
+    basename='fieldsets',
+)
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -86,11 +95,21 @@ urlpatterns = [
 
 urlpatterns += router.urls
 
+# Public API documentation (access controlled via SPECTACULAR_SETTINGS).
+urlpatterns += [
+    path(
+        'api/schema/',
+        SpectacularAPIView.as_view(),
+        name='schema',
+    ),
+    path(
+        'api/docs/',
+        TemplateView.as_view(template_name='scalar_ui.html'),
+        name='scalar-ui',
+    ),
+]
+
 
 websocket_urlpatterns = [
-    re_path('ws/notifications', NotificationsConsumer.as_asgi()),
-    path('ws/workflows/new-task', NewTaskConsumer.as_asgi()),
-    path('ws/workflows/removed-task', RemovedTaskConsumer.as_asgi()),
-    path('ws/workflows/events', WorkflowEventConsumer.as_asgi()),
     path('ws/events', EventsConsumer.as_asgi()),
 ]

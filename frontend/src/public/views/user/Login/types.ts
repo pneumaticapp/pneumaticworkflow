@@ -1,4 +1,4 @@
-import { EAuthUserFailType, IUserCredentials } from "../../../redux/actions";
+import { EAuthUserFailType, IUserCredentials } from '../../../redux/actions';
 
 export interface ILoginProps {
   loading?: boolean;

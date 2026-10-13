@@ -16,8 +16,8 @@
   font-size: 11px;
   font-weight: bold;
   line-height: 16px;
-  letter-spacing: 0.05em;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .description {
@@ -36,8 +36,8 @@
 }
 
 .copy-button {
-  margin-top: 32px;
   width: 100%;
+  margin-top: 32px;
 }
 
 .tabs-labels {
@@ -49,16 +49,16 @@
 }
 
 .embed-code-field {
-  padding: 10px 16px;
   display: flex;
   width: 100%;
+  padding: 10px 16px;
   font-size: 15px;
   line-height: 20px;
   resize: none;
+  outline: none;
   background-color: var(--pneumatic-color-beige);
   border: 1px solid var(--pneumatic-color-black16);
   border-radius: 8px;
-  outline: none;
 }
 
 .field-title {
@@ -78,15 +78,15 @@
 }
 
 .redirect-url-header {
-  margin: 0 0 8px;
   display: flex;
-  align-items: cetnter;
+  align-items: center;
+  margin: 0 0 8px;
 }
 
 .redirect-url__toggle {
-  margin-left: auto;
   display: flex;
   align-items: center;
+  margin-left: auto;
 }
 
 .redirect-url-toggle__label {
@@ -94,9 +94,9 @@
   font-size: 11px;
   font-weight: bold;
   line-height: 16px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   color: var(--pneumatic-color-black100);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .redirect-url__field {

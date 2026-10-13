@@ -7,8 +7,10 @@ from django.db import transaction
 from django.db.models import (
     Avg,
     Count,
+    Exists,
     F,
     Max,
+    OuterRef,
     Prefetch,
     Q,
 )
@@ -115,6 +117,7 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
                 owners__role=OwnerRole.OWNER,
                 owners__type=OwnerType.GROUP,
                 owners__group__users__id=user_id,
+                owners__group__is_deleted=False,
                 owners__is_deleted=False,
             ),
         ).distinct()
@@ -130,6 +133,7 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
                 owners__role=OwnerRole.VIEWER,
                 owners__type=OwnerType.GROUP,
                 owners__group__users__id=user_id,
+                owners__group__is_deleted=False,
                 owners__is_deleted=False,
             ),
         ).distinct()
@@ -145,6 +149,7 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
                 owners__role=OwnerRole.STARTER,
                 owners__type=OwnerType.GROUP,
                 owners__group__users__id=user_id,
+                owners__group__is_deleted=False,
                 owners__is_deleted=False,
             ),
         ).distinct()
@@ -158,6 +163,7 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
             ) | Q(
                 owners__type=OwnerType.GROUP,
                 owners__group__users__id=user_id,
+                owners__group__is_deleted=False,
                 owners__is_deleted=False,
             ),
         ).distinct()
@@ -174,6 +180,7 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
             owners__type=OwnerType.GROUP,
             owners__group__users__isnull=False,
             owners__group__users__id__isnull=False,
+            owners__group__is_deleted=False,
             owners__is_deleted=False,
         ).prefetch_related('owners__group__users').values_list(
             'owners__group__users__id', flat=True,
@@ -293,6 +300,7 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
                     lookup='kickoff',
                     queryset=(
                         Kickoff.objects.all().prefetch_related(
+                            'fieldsets',
                             Prefetch(
                                 lookup='fields',
                                 queryset=(
@@ -364,6 +372,7 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
                     lookup='kickoff',
                     queryset=(
                         Kickoff.objects.all().prefetch_related(
+                            'fieldsets',
                             Prefetch(
                                 lookup='fields',
                                 queryset=(
@@ -443,14 +452,20 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
                 'tasks__conditions__rules',
                 'tasks__conditions__rules__predicates',
                 'tasks__raw_performers',
+                'tasks__fieldsets',
                 'kickoff',
                 'kickoff__fields',
                 'kickoff__fields__selections',
+                'kickoff__fieldsets',
             )
         )
 
 
 class WorkflowQuerySet(WorkflowsBaseQuerySet):
+
+    def by_ids(self, ids: List[int]):
+        return self.filter(id__in=ids)
+
     def running(self):
         return self.filter(
             status__in=[WorkflowStatus.RUNNING, WorkflowStatus.DELAYED],
@@ -472,6 +487,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             | Q(
                 template__owners__role=OwnerRole.OWNER,
                 template__owners__group__users__id=user_id,
+                template__owners__group__is_deleted=False,
                 template__owners__is_deleted=False,
             ),
         ).distinct()
@@ -486,6 +502,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             | Q(
                 template__owners__role=OwnerRole.VIEWER,
                 template__owners__group__users__id=user_id,
+                template__owners__group__is_deleted=False,
                 template__owners__is_deleted=False,
             ),
         ).distinct()
@@ -500,6 +517,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             | Q(
                 template__owners__role=OwnerRole.STARTER,
                 template__owners__group__users__id=user_id,
+                template__owners__group__is_deleted=False,
                 template__owners__is_deleted=False,
             ),
         ).distinct()
@@ -511,6 +529,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
                 template__owners__is_deleted=False,
             ) | Q(
                 template__owners__group__users__id=user_id,
+                template__owners__group__is_deleted=False,
                 template__owners__is_deleted=False,
             ),
         ).distinct()
@@ -524,6 +543,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             Q(
                 template__owners__type=OwnerType.GROUP,
                 template__owners__group__users__id=user_id,
+                template__owners__group__is_deleted=False,
             )
         )
         access_q = (
@@ -536,7 +556,31 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
         return self.exclude_legacy().filter(base_owner_q & access_q).distinct()
 
     def with_member(self, user_id: int):
-        return self.filter(members=user_id)
+        from src.processes.queries import (
+            WorkflowPermissionQuery,
+        )
+        return self.filter(
+            WorkflowPermissionQuery.viewer_q(user_id),
+        )
+
+    def with_view_access(self, user_id: int):
+        """Guardian view permission or template owner/viewer/starter
+        access (rules of WorkflowMemberOrViewerPermission). Owner
+        access is a subquery, so the outer query needs no DISTINCT."""
+        return self.with_member(user_id) | self.filter(
+            pk__in=self.with_owner_viewer_or_started_by_starter(
+                user_id,
+            ).values('pk'),
+        )
+
+    def with_change_access(self, user_id: int):
+        """Guardian change permission (rule of WorkflowOwnerPermission)."""
+        from src.processes.queries import (
+            WorkflowPermissionQuery,
+        )
+        return self.filter(
+            WorkflowPermissionQuery.change_q(user_id),
+        )
 
     def exclude_onboarding(self):
         return self.filter(
@@ -567,7 +611,6 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
                         .filter(api_name__in=fields)
                         .prefetch_related(
                             'selections',
-                            'attachments',
                         )
                     ),
                 ),
@@ -576,7 +619,6 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             qst = qst.prefetch_related(
                 'fields',
                 'fields__selections',
-                'fields__attachments',
             )
         return qst
 
@@ -636,11 +678,6 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
         )
         prefetch_args = [
             Prefetch(
-                lookup='owners',
-                to_attr='owners_ids',
-                queryset=UserModel.objects.order_by('id').only('id'),
-            ),
-            Prefetch(
                 lookup='template',
                 queryset=Template.objects.only(
                     'id',
@@ -659,6 +696,8 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
                             queryset=(
                                 TaskPerformer.objects
                                 .exclude_directly_deleted()
+                                .type_user_or_group()
+                                .select_related('group')
                             ),
                         ),
                         Prefetch(
@@ -685,7 +724,12 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
                     queryset=(
                         TaskField.objects
                         .filter(api_name__in=fields)
-                        .order_by('kickoff_id', 'task__number', '-order')
+                        .order_by(
+                            'kickoff_id',
+                            'task__number',
+                            'fieldset_id',
+                            '-order',
+                        )
                     ),
                 ),
             )
@@ -705,7 +749,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
         return raw_qst
 
 
-class TasksQuerySet(TasksBaseQuerySet):
+class TaskQuerySet(TasksBaseQuerySet):
 
     def by_number(self, number):
         return self.filter(number=number)
@@ -737,6 +781,29 @@ class TasksQuerySet(TasksBaseQuerySet):
         return self.filter(date_first_started__isnull=False)
 
     def active_for_user(self, user_id):
+        """
+        Active tasks in running workflows assigned to the user
+        (directly or via group), excluding deleted performers
+        and tasks already completed by the user (USER or GROUP_USER).
+
+        When require_completion_by_all is True, only tasks where
+        the user has not yet completed their part are included.
+        """
+        from src.processes.models.workflows.task import TaskPerformer
+
+        user_already_completed = (
+            TaskPerformer.objects
+            .filter(task_id=OuterRef('pk'))
+            .exclude(directly_status=DirectlyStatus.DELETED)
+            .filter(
+                user_id=user_id,
+                is_completed=True,
+                type__in=(
+                    PerformerType.USER,
+                    PerformerType.GROUP_USER,
+                ),
+            )
+        )
         return self.filter(
             Q(
                 Q(
@@ -747,16 +814,28 @@ class TasksQuerySet(TasksBaseQuerySet):
                 ),
             ) & Q(
                 (
-                    Q(taskperformer__group__users__id=user_id) |
-                    Q(taskperformer__user_id=user_id)
+                    Q(
+                        taskperformer__user_id=user_id,
+                        taskperformer__type=PerformerType.USER,
+                    ) |
+                    Q(
+                        taskperformer__group__users__id=user_id,
+                        taskperformer__group__is_deleted=False,
+                    )
                 ) &
                 Q(
                     status=TaskStatus.ACTIVE,
                     workflow__status=WorkflowStatus.RUNNING,
                 ),
             ) & ~Q(
-                taskperformer__directly_status=DirectlyStatus.DELETED,
+                taskperformer__directly_status__in=(
+                    DirectlyStatus.DELETED,
+                ),
             ),
+        ).annotate(
+            _user_already_completed=Exists(user_already_completed),
+        ).filter(
+            _user_already_completed=False,
         )
 
     def active_for_group(self, group_id):
@@ -769,17 +848,13 @@ class TasksQuerySet(TasksBaseQuerySet):
                     taskperformer__is_completed=False,
                 ),
             ) & Q(
-                (
-                    Q(taskperformer__group_id=group_id) |
-                    Q(taskperformer__type=PerformerType.GROUP)
-                ) &
-                Q(
-                    workflow__current_task=F('number'),
-                    status=TaskStatus.ACTIVE,
-                    workflow__status=WorkflowStatus.RUNNING,
-                ),
+                taskperformer__group_id=group_id,
+                status=TaskStatus.ACTIVE,
+                workflow__status=WorkflowStatus.RUNNING,
             ) & ~Q(
-                taskperformer__directly_status=DirectlyStatus.DELETED,
+                taskperformer__directly_status__in=(
+                    DirectlyStatus.DELETED,
+                ),
             ),
         )
 
@@ -789,9 +864,11 @@ class TasksQuerySet(TasksBaseQuerySet):
     def on_performer(self, user_id: int):
         return self.filter(
             taskperformer__user_id=user_id,
+            taskperformer__type=PerformerType.USER,
         )
 
     def exclude_directly_deleted(self):
+        """Exclude tasks where performer has DELETED directly_status."""
         return self.exclude(
             taskperformer__directly_status=DirectlyStatus.DELETED,
         )
@@ -886,12 +963,15 @@ class SystemTemplateQuerySet(BaseQuerySet):
 class TaskFieldQuerySet(BaseFieldQuerySet):
 
     def with_attachments(self):
-        return self.filter(attachments__isnull=False)
+        return self.filter(storage_attachments__isnull=False)
 
     def only_values(self):
         return self.values_list('value', flat=True)
 
 
+# TODO remove legacy model after migration to file service.
+# DEPRECATED: This queryset will be removed after full migration.
+# Use AttachmentQuerySet instead.
 class FileAttachmentQuerySet(AccountBaseQuerySet):
 
     def by_ids(self, ids: List[int]):
@@ -924,6 +1004,71 @@ class FileAttachmentQuerySet(AccountBaseQuerySet):
     def ids_set(self):
         qst = self.values_list('id', flat=True)
         return set(qst)
+
+
+class AttachmentQuerySet(AccountBaseQuerySet):
+    """QuerySet for Attachment model."""
+
+    def by_ids(self, ids: List[int]):
+        """Filter by attachment IDs."""
+        return self.filter(id__in=ids)
+
+    def by_file_ids(self, file_ids: List[str]):
+        """Filter by file_id values."""
+        return self.filter(file_id__in=file_ids)
+
+    def by_source_type(self, source_type: str):
+        """Filter by source_type."""
+        return self.filter(source_type=source_type)
+
+    def by_workflow(self, workflow_id: int):
+        """Filter by workflow ID."""
+        return self.filter(workflow_id=workflow_id)
+
+    def by_task(self, task_id: int):
+        """Filter by task ID."""
+        return self.filter(task_id=task_id)
+
+    def by_template(self, template_id: int):
+        """Filter by template ID."""
+        return self.filter(template_id=template_id)
+
+    def on_workflow(self, workflow_id: int):
+        """Filter attachments on workflow. Alias for by_workflow."""
+        return self.by_workflow(workflow_id)
+
+    def ids_set(self):
+        """Return set of attachment IDs."""
+        qst = self.values_list('id', flat=True)
+        return set(qst)
+
+    def file_ids_set(self):
+        """Return set of file_id values."""
+        qst = self.values_list('file_id', flat=True)
+        return set(qst)
+
+    def raw_list_query(
+        self,
+        user,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        using: Optional[str] = None,
+    ):
+        """Execute raw query for attachment list with pagination."""
+        from src.storage.queries import AttachmentListQuery
+
+        query = AttachmentListQuery(
+            user=user,
+            limit=limit,
+            offset=offset,
+        )
+        raw_qst = self.execute_raw(query, using=using)
+        raw_qst.count = self.raw(
+            raw_query=query.get_count_sql(),
+            params=query.params,
+            using=using,
+        )[0].count
+        return raw_qst
 
 
 class TemplateDraftQuerySet(BaseQuerySet):
@@ -967,7 +1112,7 @@ class TemplateDraftQuerySet(BaseQuerySet):
         )
 
 
-class TaskPerformerQuerySet(BaseHardQuerySet):
+class TaskPerformerQuerySet(BaseQuerySet, BaseHardQuerySet):
 
     def with_tasks_after(self, task):
         return self.filter(task__number__gte=task.number)
@@ -989,6 +1134,31 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
 
     def completed(self):
         return self.filter(is_completed=True)
+
+    def type_user(self):
+        return self.filter(type=PerformerType.USER)
+
+    def type_group(self):
+        return self.filter(type=PerformerType.GROUP)
+
+    def type_group_user(self):
+        return self.filter(type=PerformerType.GROUP_USER)
+
+    def type_user_or_group(self):
+        return self.filter(
+            type__in=(
+                PerformerType.USER,
+                PerformerType.GROUP,
+            ),
+        )
+
+    def type_user_or_group_user(self):
+        return self.filter(
+            type__in=(
+                PerformerType.USER,
+                PerformerType.GROUP_USER,
+            ),
+        )
 
     def completed_task(self):
         return self.filter(task__status=TaskStatus.COMPLETED)
@@ -1012,7 +1182,11 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
         return self.filter(directly_status=DirectlyStatus.NO_STATUS)
 
     def exclude_directly_deleted(self):
-        return self.exclude(directly_status=DirectlyStatus.DELETED)
+        return self.exclude(
+            directly_status__in=(
+                DirectlyStatus.DELETED,
+            ),
+        )
 
     def user_is_subscriber(self):
         return self.filter(
@@ -1040,40 +1214,16 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
         )
         return set(direct_users).union(set(group_users))
 
-    def get_user_ids_emails_subscriber_set(self):
-        direct_users = self.filter(user__isnull=False).values_list(
-            'user_id',
-            'user__email',
-            'user__is_new_tasks_subscriber',
-        )
-        group_users = self.filter(group__isnull=False).values_list(
-            'group__users__id',
-            'group__users__email',
-            'group__users__is_new_tasks_subscriber',
-        )
-        return set(direct_users).union(set(group_users))
-
-    def get_user_ids_name_emails_subscriber_set(self):
-        direct_users = self.filter(user__isnull=False).values_list(
-            'user_id',
-            'user__email',
-            'user__first_name',
-            'user__is_new_tasks_subscriber',
-        )
-        group_users = self.filter(group__isnull=False).values_list(
-            'group__users__id',
-            'group__users__email',
-            'group__users__first_name',
-            'group__users__is_new_tasks_subscriber',
-        )
-        return set(direct_users).union(set(group_users))
-
     def group_ids(self):
-        qst = self.filter(type='group').values_list('group_id', flat=True)
+        qst = self.filter(
+            type=PerformerType.GROUP,
+        ).values_list('group_id', flat=True)
         return tuple(elem for elem in qst)
 
     def user_ids(self):
-        qst = self.filter(type='user').values_list('user_id', flat=True)
+        qst = self.filter(
+            type=PerformerType.USER,
+        ).values_list('user_id', flat=True)
         return tuple(elem for elem in qst)
 
     def user_ids_set(self) -> set:
@@ -1084,13 +1234,9 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
         return self.filter(user__type=UserType.GUEST)
 
     def users(self):
-        direct_users = self.filter(
-            user__isnull=False,
-            user__type=UserType.USER,
-        )
+        direct_users = self.filter(user__type=UserType.USER)
         group_users = (
-            self.filter(group__isnull=False)
-            .filter(
+            self.filter(
                 group__users__isnull=False,
                 group__users__type=UserType.USER,
             )
@@ -1109,7 +1255,14 @@ class ChecklistTemplateSelectionQuerySet(BaseQuerySet):
 class ChecklistQuerySet(BaseQuerySet):
 
     def with_workflow_member(self, user_id: int):
-        return self.filter(task__workflow__members=user_id)
+        from src.processes.queries import (
+            WorkflowPermissionQuery,
+        )
+        return self.filter(
+            WorkflowPermissionQuery.viewer_q(
+                user_id, pk_field='task__workflow_id',
+            ),
+        )
 
 
 class ChecklistSelectionQuerySet(BaseQuerySet):
@@ -1257,5 +1410,26 @@ class TemplatePresetQuerySet(AccountBaseQuerySet):
 
 
 class SearchContentQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldsetTemplateQuerySet(AccountBaseQuerySet):
+
+    def shared(self):
+        return self.filter(is_shared=True)
+
+
+class FieldsetTemplateRuleQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldSetQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldSetRuleQuerySet(AccountBaseQuerySet):
 
     pass

@@ -1,9 +1,8 @@
-/* eslint-disable */
 /* prettier-ignore */
-import { IKickoff } from '../../../../types/template';
+import { ITemplateKickoffClient } from '../../../../types/template';
 import { isArrayWithItems } from '../../../../utils/helpers';
 
-export const isKickoffCleared = (kickoff: IKickoff) => {
+export const isKickoffCleared = (kickoff: ITemplateKickoffClient) => {
   const hasFields = isArrayWithItems(kickoff.fields);
 
   return !hasFields && !kickoff.description;

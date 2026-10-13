@@ -1,5 +1,4 @@
-/* eslint-disable indent */
-import React, { useState, ReactNode, ChangeEvent } from 'react';
+import React, { ReactNode, ChangeEvent } from 'react';
 import { useSelector } from 'react-redux';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
@@ -13,11 +12,11 @@ import { getUserFullName } from '../../../../../utils/users';
 import { EConditionOperators, TConditionRule } from '../types';
 import { OPERATORS_WITHOUT_VALUE } from '..';
 import { DatePickerCustom } from '../../../../UI/form/DatePicker';
-import { toTspDate } from '../../../../../utils/dateTime';
+import { parseUnixSeconds, toTspDate } from '../../../../../utils/dateTime';
 import { getFormattedDropdownOption } from '../utils/getFormattedDropdownOption';
 import styles from '../Conditions.css';
 import { EStartingType } from '../utils/getDropdownOperators';
-import { IApplicationState } from '../../../../../types/redux';
+import { getRegularGroupsList } from '../../../../../redux/selectors/groups';
 import { useLazyDataset } from '../utils/useLazyDataset';
 
 interface IConditionValueFieldProps {
@@ -38,7 +37,7 @@ export function ConditionValueField({
   changeRuleValue,
 }: IConditionValueFieldProps) {
   const { formatMessage } = useIntl();
-  const groups = useSelector((state: IApplicationState) => state.groups.list);
+  const groups = useSelector(getRegularGroupsList);
   const datasetItems = useLazyDataset(variable)?.items;
 
   if (!variable || !operator) return null;
@@ -95,11 +94,12 @@ export function ConditionValueField({
         value: item.value,
         label: item.value,
       }));
-
     } else if (variable?.selections?.length) {
-      dropdownSelections = variable.selections.map((selectionValue) => ({ value: selectionValue, label: selectionValue }));
+      dropdownSelections = variable.selections.map((selectionValue) => ({
+        value: selectionValue,
+        label: selectionValue,
+      }));
     } else {
-
       return null;
     }
 
@@ -133,13 +133,27 @@ export function ConditionValueField({
   function renderUserField() {
     interface IDropdownUser extends TUserListItem {
       label: string;
+      entityType: 'user' | 'group';
+      value: string;
     }
 
     const activeUsers = users.filter((user) => user.status === EUserStatus.Active);
-    const labelUsers = activeUsers.map((user) => ({ ...user, label: getUserFullName(user), entityType: 'user' }));
-    const labelGroups = groups.map((group) => ({ ...group, label: group.name, entityType: 'group' }));
+    const labelUsers = activeUsers.map((user) => ({
+      ...user,
+      label: getUserFullName(user),
+      entityType: 'user' as const,
+      value: `user-${user.id}`,
+    }));
+    const labelGroups = groups.map((group) => ({
+      ...group,
+      label: group.name,
+      entityType: 'group' as const,
+      value: `group-${group.id}`,
+    }));
     const dropdownEntities = [...labelGroups, ...labelUsers];
-    const selectedEntity = dropdownEntities.find((user) => user.id === Number(rule.value)) || null;
+    const selectedEntity =
+      dropdownEntities.find((entity) => entity.id === Number(rule.value) && entity.entityType === rule.fieldType) ||
+      null;
 
     return (
       <DropdownList
@@ -148,7 +162,7 @@ export function ConditionValueField({
         placeholder={formatMessage({ id: 'templates.conditions.value-placeholder' })}
         value={selectedEntity}
         onChange={(option: IDropdownUser) => {
-          const kind = (option as any).entityType === 'user' ? 'user' : 'group';
+          const kind = option.entityType === 'user' ? 'user' : 'group';
           changeRuleValue(option.id, kind);
         }}
         isClearable={false}
@@ -157,7 +171,7 @@ export function ConditionValueField({
           context === 'menu'
             ? getFormattedDropdownOption({
                 label: option.label,
-                isSelected: option.id === rule.value,
+                isSelected: option.id === rule.value && option.entityType === rule.fieldType,
                 isTooltip: true,
               })
             : option.label
@@ -168,20 +182,15 @@ export function ConditionValueField({
   }
 
   function renderDateField() {
-    const [selectedDate, setSelectedDate] = useState<number | null>(rule.value as number);
+    const unixSeconds = parseUnixSeconds(rule.value);
 
-    const handleChangeDate = (date: Date) => {
+    const handleChangeDate = (date: Date | null) => {
       if (!date) {
         changeRuleValue('');
-        setSelectedDate(null);
-
         return;
       }
 
-      const unixTime = toTspDate(date);
-
-      changeRuleValue(unixTime);
-      setSelectedDate(unixTime);
+      changeRuleValue(toTspDate(date));
     };
 
     return (
@@ -189,7 +198,7 @@ export function ConditionValueField({
         disabled={isDisabled}
         onChange={handleChangeDate}
         placeholderText={formatMessage({ id: 'templates.conditions.value-placeholder' })}
-        selected={selectedDate ? new Date(selectedDate * 1000) : null}
+        selected={unixSeconds !== null ? new Date(unixSeconds * 1000) : null}
         showPopperArrow={false}
       />
     );

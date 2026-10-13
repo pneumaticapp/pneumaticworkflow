@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import * as PerfectScrollbar from 'react-perfect-scrollbar';
+import PerfectScrollbar from 'react-perfect-scrollbar';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
@@ -13,8 +13,6 @@ import { IOAuthInvitesTabProps } from './types';
 
 import styles from './OAuthInvitesTab.css';
 import popupStyles from '../../TeamInvitesPopup.css';
-
-
 
 const ScrollBar = PerfectScrollbar as unknown as Function;
 
@@ -32,7 +30,7 @@ export function OAuthInvitesTab({ type, users, teamUsers }: IOAuthInvitesTabProp
   const filteredUsers = useMemo(() => {
     return users.filter((user) => isMatchingSearchQuery(searchText, [user.email, getUserFullName(user)]));
   }, [users, searchText]);
-  
+
   const sendInvite = useCallback(
     (email: string) => () => {
       dispatch(

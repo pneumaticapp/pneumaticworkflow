@@ -6,53 +6,41 @@ import { getLanguage } from '../../../../../redux/selectors/user';
 import { Avatar } from '../../../../UI/Avatar';
 import { ClockIcon } from '../../../../icons';
 import { DateFormat } from '../../../../UI/DateFormat';
-import { getUserFullName } from '../../../../../utils/users';
-import { UserData } from '../../../../UserData';
 import { IWorkflowLogItem } from '../../../../../types/workflow';
 import { getDueInData } from '../../../../DueIn/utils/getDueInData';
 
 import styles from './WorkflowLogDueDateChanged.css';
 
-export type TWorkflowLogDueDateChangedProps = Pick<IWorkflowLogItem, 'userId' | 'created' | 'task'>;
+export type TWorkflowLogDueDateChangedProps = Pick<IWorkflowLogItem, 'created' | 'task'>;
 
-export function WorkflowLogDueDateChanged({ userId, created, task }: TWorkflowLogDueDateChangedProps) {
+export function WorkflowLogDueDateChanged({ created, task }: TWorkflowLogDueDateChangedProps) {
   const { formatMessage } = useIntl();
   const locale = useSelector(getLanguage);
   const dueDateData = task ? getDueInData([task.dueDate], undefined, undefined, locale) : null;
   const dueDate = dueDateData ? <DateFormat date={dueDateData.dueDate} /> : null;
 
   return (
-    <UserData userId={userId}>
-      {(userData) => {
-        if (!userData) {
-          return null;
-        }
+    <div className={styles['container']}>
+      <div className={styles['avatar']}>
+        <Avatar size="lg" sizeMobile="sm" isSystemAvatar />
+      </div>
+      <div className={styles['body']}>
+        <p className={styles['title']}>
+          <span className={styles['title__text']}>{formatMessage({ id: 'general.pneumatic' })}</span>
+          <span className={styles['title__icon']}>
+            <ClockIcon />
+          </span>
+          <span className={styles['title__date']}>
+            <DateFormat date={created} />
+          </span>
+        </p>
 
-        return (
-          <div className={styles['container']}>
-            <div className={styles['avatar']}>
-              <Avatar user={userData} size="lg" sizeMobile="sm" />
-            </div>
-            <div className={styles['body']}>
-              <p className={styles['title']}>
-                <span className={styles['title__text']}>{getUserFullName(userData)}</span>
-                <span className={styles['title__icon']}>
-                  <ClockIcon />
-                </span>
-                <span className={styles['title__date']}>
-                  <DateFormat date={created} />
-                </span>
-              </p>
-
-              <div className={styles['text']}>
-                {dueDate
-                  ? formatMessage({ id: 'workflows.due-date-changed' }, { date: dueDate })
-                  : formatMessage({ id: 'workflows.due-date-removed' })}
-              </div>
-            </div>
-          </div>
-        );
-      }}
-    </UserData>
+        <div className={styles['text']}>
+          {dueDate
+            ? formatMessage({ id: 'workflows.due-date-changed' }, { date: dueDate })
+            : formatMessage({ id: 'workflows.due-date-removed' })}
+        </div>
+      </div>
+    </div>
   );
 }

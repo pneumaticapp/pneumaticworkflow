@@ -1,4 +1,5 @@
-import { all, call, fork, put, takeEvery, takeLatest, select, takeLeading } from 'redux-saga/effects';
+import type { Task } from 'redux-saga';
+import { all, call, cancel, fork, put, takeEvery, takeLatest, select, takeLeading } from 'redux-saga/effects';
 import { auth } from '../../api/auth';
 import {
   accountEditFailed,
@@ -39,6 +40,8 @@ import {
   TLogoutUser,
   TMakeStripePayment,
   makeStripePayment,
+  TVacationActivate,
+  vacationSuccess,
 } from './actions';
 
 import { resendVerification } from '../../api/resendVerification';
@@ -46,7 +49,7 @@ import { ERoutes } from '../../constants/routes';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { setJwtCookie, removeAuthCookies } from '../../utils/authCookie';
 import { setOAuthRegistrationCompleted } from '../../api/setOAuthRegistrationCompleted';
-import { TUserInvited } from '../../types/user';
+import { TUserInvited, IUserResponse } from '../../types/user';
 import { getAuthUser, getInvitedUser } from '../selectors/user';
 import { getOAuthId, getOAuthType } from '../../utils/auth';
 import { editProfile, IUpdateUserRequest, IUpdateUserResponse, TUpdateUserMappedResponse } from '../../api/editProfile';
@@ -63,8 +66,8 @@ import { REDIRECT_URL_STORAGE_KEY } from '../../constants/storageKeys';
 import { getUTMParams, IUserUtm } from '../../views/user/utils/utmParams';
 import { clearAppFilters, setGeneralLoaderVisibility } from '../general/actions';
 import { getQueryStringParams, history } from '../../utils/history';
-import { watchNewTask, watchRemoveTask } from '../tasks/saga';
-import { watchNewNotifications } from '../notifications/saga';
+import { watchWsEvents } from '../realtime/watchWsEvents';
+import { closeAllConnections } from '../utils/webSocketConnections';
 import { TUploadedFile, uploadUserAvatar } from '../../utils/uploadFiles';
 import { changePhotoProfile } from '../../api/changePhotoProfile';
 import { ELoggedState, IAuthUser } from '../../types/redux';
@@ -78,6 +81,7 @@ import {
 } from './utils/superuserReturnRoute';
 import { IMakePaymentResponse, makePayment } from '../../api/makePayment';
 import { fetchPlan } from '../accounts/saga';
+import { changeUserReports } from '../accounts/slice';
 import { getAbsolutePath } from '../../utils/getAbsolutePath';
 import { ICardSetupResponse, cardSetup } from '../../api/cardSetup';
 import { confirmPaymentDetailsProvided } from './utils/confirmPaymentDetailsProvided';
@@ -87,10 +91,10 @@ import { getBrowserConfig } from '../../utils/getConfig';
 import { getCustomerPortalLink } from '../../api/getCustomerPortalLink';
 import { setSentryUser } from '../../utils/sentryUser';
 import { createTemplateFromName } from './utils/createTemplateFromName';
-import { ITemplate } from '../../types/template';
-import { watchNewWorkflowsEvent } from '../workflows/saga';
+import { ITemplateResponse } from '../../types/template';
 import { removeLocalStorage } from '../../utils/localStorage';
 import { isEnvBilling } from '../../constants/enviroment';
+import { activateVacation, deactivateVacation } from '../../api/vacation';
 
 export function* authenticateUser(redirectUrl?: string, isRegister: boolean = false) {
   try {
@@ -239,7 +243,6 @@ export const registerInviteAsync = (id: string, body: TUserInvited) =>
 
 export function* registerWithInvite({ payload }: TRegisterUserInvited) {
   const {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     invitedUser: { id },
   }: ReturnType<typeof getInvitedUser> = yield select(getInvitedUser);
   if (!id) {
@@ -266,6 +269,7 @@ export function* registerWithInvite({ payload }: TRegisterUserInvited) {
 }
 
 function* handleLogoutUnsubscribing({ shouldExpireToken }: { shouldExpireToken: boolean }) {
+  yield call(stopWatchWsEvents);
   yield put(clearAppFilters());
   resetFirebaseDeviceToken();
   resetSuperuserToken();
@@ -311,25 +315,34 @@ export function* logout(action: TLogoutUser) {
   }
 }
 
-export const updateUserAsync = (body: IUpdateUserRequest) =>
-  editProfile(body)
-    .then((authUser) => authUser)
-    .catch((error) => error);
+export const updateUserAsync = (body: IUpdateUserRequest) => editProfile(body);
 
 export function* editCurrentProfile({ payload }: TEditUser) {
+  const { onSuccess, onError, ...body } = payload;
   try {
-    const result: IUpdateUserResponse | void = yield call(updateUserAsync, payload);
+    const result: IUpdateUserResponse | void = yield call(updateUserAsync, body);
     if (!result) {
       return;
     }
+
     NotificationManager.success({
       message: 'user-account.edit-profile-success',
     });
-    yield put(editCurrentUserSuccess(mapToCamelCase(result) as TUpdateUserMappedResponse));
+    const mapped = mapToCamelCase(result) as TUpdateUserMappedResponse;
+    yield put(editCurrentUserSuccess(mapped));
+
+    // Sync accounts store when subordinatesIds were changed so the
+    // Team page reflects the update without a full refetch.
+    if (body.subordinatesIds) {
+      const { authUser }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
+      yield put(changeUserReports({ id: authUser.id, reportIds: body.subordinatesIds }));
+    }
+    onSuccess?.();
   } catch (err) {
     yield put(profileEditFailed());
-    NotificationManager.notifyApiError(err, { message: 'user-account.edit-account-fail' });
+    NotificationManager.notifyApiError(err, { message: getErrorMessage(err) });
     logger.error('edit profile error', err);
+    onError?.();
   }
 }
 
@@ -362,6 +375,11 @@ export function* sendPasswordReset({ payload }: TSendForgotPassword) {
     });
     yield put(sendForgotPasswordSuccess());
   } catch (error) {
+    if (error?.data?.details?.name === 'captcha') {
+      yield put(sendForgotPasswordFail(true));
+      return;
+    }
+
     const message = getErrorMessage(error);
     logger.error(message, error);
     NotificationManager.notifyApiError(error, { message });
@@ -418,14 +436,8 @@ export function* fetchResendVerification() {
 
 export function* handleUploadUserPhoto({ payload: { photo, onComplete } }: TUploadUserPhoto) {
   try {
-    const {
-      authUser: {
-        account: { id },
-      },
-    }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
     yield put(setGeneralLoaderVisibility(true));
-    const [value]: TUploadedFile[] = yield uploadUserAvatar(photo, id!);
-
+    const [value]: TUploadedFile[] = yield uploadUserAvatar(photo);
     if (value?.url) {
       yield call(changePhotoProfile, { photo: value.url });
       yield put(setUserPhoto(value.url));
@@ -450,10 +462,6 @@ export function* handleDeleteUserPhoto() {
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
-}
-
-function* handleWatchUserWSEvents() {
-  yield all([fork(watchNewTask), fork(watchRemoveTask), fork(watchNewNotifications), fork(watchNewWorkflowsEvent)]);
 }
 
 export function handleSetRedirectUrl({ payload: redirectUrl }: TSetRedirectUrl) {
@@ -556,7 +564,7 @@ export function* onAfterPaymentDetailsProvidedSaga() {
   }
 
   try {
-    const templateId: Pick<ITemplate, 'name'> = yield createTemplateFromName();
+    const templateId: Pick<ITemplateResponse, 'name'> = yield createTemplateFromName();
 
     if (templateId) {
       history.push(ERoutes.TemplatesEdit.replace(':id', String(templateId)));
@@ -586,6 +594,40 @@ function* redirectToCustomerPortalSaga() {
   } catch (error) {
     yield put(setGeneralLoaderVisibility(false));
     logger.error(error);
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+  }
+}
+
+export function* handleVacationActivate({ payload }: TVacationActivate) {
+  try {
+    const result: IUserResponse = yield call(activateVacation, payload);
+    if (result) {
+      yield put(
+        vacationSuccess({
+          vacation: result.vacation || null,
+        }),
+      );
+      NotificationManager.success({ message: 'user-info.vacation.activated-success' });
+    }
+  } catch (error) {
+    logger.error('vacation activate error', error);
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+  }
+}
+
+export function* handleVacationDeactivate() {
+  try {
+    const result: IUserResponse = yield call(deactivateVacation);
+    if (result) {
+      yield put(
+        vacationSuccess({
+          vacation: result.vacation || null,
+        }),
+      );
+      NotificationManager.success({ message: 'user-info.vacation.deactivated-success' });
+    }
+  } catch (error) {
+    logger.error('vacation deactivate error', error);
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
@@ -650,8 +692,24 @@ export function* watchSetUserToken() {
   yield takeEvery(EAuthActions.SetToken, handleSetUserToken);
 }
 
+let watchWsEventsTask: Task | undefined;
+
+function* stopWatchWsEvents() {
+  if (watchWsEventsTask) {
+    yield cancel(watchWsEventsTask);
+    watchWsEventsTask = undefined;
+  }
+
+  yield call(closeAllConnections);
+}
+
+function* handleWatchUserWSEvents() {
+  yield call(stopWatchWsEvents);
+  watchWsEventsTask = yield fork(watchWsEvents);
+}
+
 export function* watchUserWSEvents() {
-  yield takeEvery(EAuthActions.WatchUserWSEvents, handleWatchUserWSEvents);
+  yield takeLeading(EAuthActions.WatchUserWSEvents, handleWatchUserWSEvents);
 }
 
 export function* watchUploadUserPhoto() {
@@ -686,6 +744,14 @@ export function* watchRedirectToCustomerPortal() {
   yield takeEvery(EAuthActions.RedirectToCustomerPortal, redirectToCustomerPortalSaga);
 }
 
+export function* watchVacationActivate() {
+  yield takeEvery(EAuthActions.VacationActivate, handleVacationActivate);
+}
+
+export function* watchVacationDeactivate() {
+  yield takeEvery(EAuthActions.VacationDeactivate, handleVacationDeactivate);
+}
+
 export function* rootSaga() {
   yield all([
     fork(watchLoginUser),
@@ -712,5 +778,7 @@ export function* rootSaga() {
     fork(watchMakeStripePayment),
     fork(watchOnAfterPaymentDetailsProvided),
     fork(watchRedirectToCustomerPortal),
+    fork(watchVacationActivate),
+    fork(watchVacationDeactivate),
   ]);
 }

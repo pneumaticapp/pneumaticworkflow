@@ -94,6 +94,7 @@ class UsersListFilterSet(FilterSet):
     groups = ListFilter(
         field_name='user_groups',
         lookup_expr='in',
+        distinct=True,
     )
 
 

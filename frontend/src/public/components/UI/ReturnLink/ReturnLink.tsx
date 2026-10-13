@@ -1,7 +1,7 @@
 import * as React from 'react';
 import classnames from 'classnames';
+import * as H from 'history';
 
-import { ERoutes } from '../../../constants/routes';
 import { ReturnIcon } from '../../icons';
 import { NavLink } from '../../NavLink';
 
@@ -9,7 +9,7 @@ import styles from './ReturnLink.css';
 
 interface IReturnLinkProps {
   label: string;
-  route: ERoutes;
+  route: H.Pathname;
   className?: string;
 }
 

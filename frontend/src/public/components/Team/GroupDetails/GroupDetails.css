@@ -1,7 +1,7 @@
 /* stylelint-disable declaration-no-important */
 .container {
-  margin: 0 auto;
   max-width: 108.8rem;
+  margin: 0 auto;
 }
 
 .header {
@@ -9,8 +9,8 @@
 
   .header__config {
     display: flex;
-    align-items: center;
     gap: 0.8rem;
+    align-items: center;
   }
 
   .header__config-btn {
@@ -19,13 +19,13 @@
 }
 
 .list {
-  margin: 0 -1.6rem;
   padding: 3.2rem 1.6rem;
+  margin: 0 -1.6rem;
   background-color: var(--pneumatic-color-white);
 
   @media (--desktop) {
-    margin: initial;
     padding: 3.2rem;
+    margin: initial;
     border-radius: 2.4rem;
   }
 
@@ -35,18 +35,18 @@
   }
 
   &__filter {
-    padding-bottom: 3.2rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding-bottom: 3.2rem;
     border-bottom: 1px solid var(--pneumatic-color-black16);
   }
 }
 
 .search {
   position: relative;
-  margin-right: 2.4rem;
   flex: 1;
+  margin-right: 2.4rem;
 
   &__icon {
     position: absolute;
@@ -56,15 +56,15 @@
   }
 
   &-field__input {
-    padding-left: 2.8rem !important;
     height: 2rem !important;
+    padding-left: 2.8rem !important;
     border: none;
   }
 }
 
 .test button {
-  margin: 0;
   padding: 0;
+  margin: 0;
   text-transform: uppercase;
   background-color: transparent;
 
@@ -76,8 +76,8 @@
 }
 
 .dropdown__sorting {
-  margin: 0;
   padding: 0;
+  margin: 0;
 }
 
 .placeholder {

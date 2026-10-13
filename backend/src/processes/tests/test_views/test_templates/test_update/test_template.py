@@ -31,6 +31,9 @@ from src.processes.models.templates.template import Template
 from src.processes.services.templates.integrations import (
     TemplateIntegrationsService,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
@@ -40,6 +43,7 @@ from src.processes.tests.fixtures import (
     create_test_template,
     create_test_user,
     create_test_workflow,
+    create_test_fieldset_template, create_test_shared_fieldset,
 )
 
 pytestmark = pytest.mark.django_db
@@ -1256,10 +1260,10 @@ class TestUpdateTemplate:
         # assert
         workflow.refresh_from_db()
         assert response.status_code == 200
-        workflow_owners = list(workflow.owners.all())
-        assert len(workflow_owners) == 2
-        assert user in workflow_owners
-        assert user_2 in workflow_owners
+        owner_ids = WorkflowPermissionService(workflow).get_users_with_change()
+        assert len(owner_ids) == 2
+        assert user.id in owner_ids
+        assert user_2.id in owner_ids
 
     def test_update__workflow_changed_owners_empty_group__ok(
         self,
@@ -1336,10 +1340,10 @@ class TestUpdateTemplate:
         # assert
         workflow.refresh_from_db()
         assert response.status_code == 200
-        workflow_owners = list(workflow.owners.all())
-        assert len(workflow_owners) == 2
-        assert user in workflow_owners
-        assert user_2 in workflow_owners
+        owner_ids = WorkflowPermissionService(workflow).get_users_with_change()
+        assert len(owner_ids) == 2
+        assert user.id in owner_ids
+        assert user_2.id in owner_ids
 
     def test_update__change_template_owners__ok(
         self,
@@ -2829,3 +2833,74 @@ def test_update__inactive_template__analytics_skipped(mocker, api_client):
     api_request_mock.assert_not_called()
     templates_kickoff_updated_mock.assert_not_called()
     templates_updated_mock.assert_not_called()
+
+
+def test_update__wf_name_template_with_fieldset_field__ok(
+    mocker,
+    api_client,
+):
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+    template = create_test_template(user=user, tasks_count=1)
+    task = template.tasks.first()
+    kickoff = template.kickoff_instance
+    shared_fieldset = create_test_shared_fieldset(account=account)
+    fieldset = create_test_fieldset_template(
+        account=account,
+        shared_fieldset=shared_fieldset,
+    )
+    field = fieldset.fields.first()
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    wf_name_template = f'Template {{ {field.api_name} }}'
+
+    request_data = {
+        'id': template.id,
+        'is_active': True,
+        'wf_name_template': wf_name_template,
+        'name': template.name,
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id,
+                'role': OwnerRole.OWNER,
+            },
+        ],
+        'kickoff': {
+            'id': kickoff.id,
+            'fieldsets': [
+                {
+                    'shared_fieldset_id': shared_fieldset.id,
+                    'order': 1,
+                },
+            ],
+        },
+        'tasks': [
+            {
+                'id': task.id,
+                'number': task.number,
+                'name': task.name,
+                'api_name': task.api_name,
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
+    }
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['wf_name_template'] == wf_name_template

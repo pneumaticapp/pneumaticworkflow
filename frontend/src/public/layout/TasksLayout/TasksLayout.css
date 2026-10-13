@@ -1,20 +1,20 @@
 .navbar-left__content {
   display: flex;
-  width: 100%;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
 
   @media (--mobile) {
-    width: 100%;
-    justify-content: center;
     flex-flow: column nowrap;
+    justify-content: center;
+    width: 100%;
   }
 }
 
 .filters {
   display: flex;
-  width: 100%;
   align-items: center;
+  width: 100%;
 
   @media (--mobile) {
     flex-direction: column;
@@ -29,8 +29,8 @@
     max-width: min-content;
 
     @media (--mobile) {
-      max-width: 100%;
       flex: 1 1 auto;
+      max-width: 100%;
     }
   }
 
@@ -41,8 +41,8 @@
     max-width: min-content;
 
     @media (--mobile) {
-      max-width: 100%;
       flex: 1 1 auto;
+      max-width: 100%;
     }
   }
 

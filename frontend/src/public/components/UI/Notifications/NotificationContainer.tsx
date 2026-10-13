@@ -1,6 +1,3 @@
-/* eslint-disable class-methods-use-this */
-/* eslint-disable react/default-props-match-prop-types */
-/* eslint-disable react/sort-comp */
 import * as React from 'react';
 import { NotificationManager } from './NotificationManager';
 import { NotificationsIntl } from './Notifications';

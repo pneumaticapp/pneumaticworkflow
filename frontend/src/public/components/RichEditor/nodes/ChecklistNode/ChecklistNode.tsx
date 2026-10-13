@@ -1,4 +1,3 @@
-/* eslint-disable no-underscore-dangle -- Lexical node internal field by convention */
 import {
   type DOMConversionMap,
   type DOMConversionOutput,
@@ -25,8 +24,7 @@ export class ChecklistNode extends ElementNode {
   }
 
   static importJSON(serialized: SerializedChecklistNode): ChecklistNode {
-    const { format, direction, indent } = serialized as SerializedElementNode &
-      SerializedChecklistNode;
+    const { format, direction, indent } = serialized as SerializedElementNode & SerializedChecklistNode;
     const node = new ChecklistNode(serialized.listApiName);
     node.setFormat(format);
     node.setDirection(direction);
@@ -49,7 +47,6 @@ export class ChecklistNode extends ElementNode {
     return self;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Lexical createDOM(config) signature
   createDOM(_config: EditorConfig): HTMLElement {
     const ul = document.createElement('ul');
     ul.className = CHECKLIST_UL_CLASS;
@@ -57,7 +54,6 @@ export class ChecklistNode extends ElementNode {
     return ul;
   }
 
-  // eslint-disable-next-line class-methods-use-this -- Lexical ElementNode.updateDOM() override
   updateDOM(prevNode: ChecklistNode): boolean {
     return this.__listApiName !== prevNode.__listApiName;
   }
@@ -72,9 +68,7 @@ export class ChecklistNode extends ElementNode {
   static importDOM(): DOMConversionMap<HTMLUListElement> | null {
     return {
       ul: (domNode: HTMLUListElement) => {
-        const isChecklist =
-          domNode.hasAttribute(CHECKLIST_LIST_ATTR) ||
-          domNode.classList.contains(CHECKLIST_UL_CLASS);
+        const isChecklist = domNode.hasAttribute(CHECKLIST_LIST_ATTR) || domNode.classList.contains(CHECKLIST_UL_CLASS);
         if (!isChecklist) return null;
         return {
           conversion: (element: HTMLUListElement): DOMConversionOutput => ({
@@ -98,17 +92,14 @@ export class ChecklistNode extends ElementNode {
     };
   }
 
-  // eslint-disable-next-line class-methods-use-this -- Lexical ElementNode.canBeEmpty() override
   canBeEmpty(): boolean {
     return false;
   }
 
-  // eslint-disable-next-line class-methods-use-this -- Lexical ElementNode.canIndent() override
   canIndent(): boolean {
     return false;
   }
 
-  // eslint-disable-next-line class-methods-use-this -- Lexical ElementNode.isInline() override
   isInline(): boolean {
     return false;
   }
@@ -118,8 +109,6 @@ export function $createChecklistNode(payload: TChecklistNodePayload): ChecklistN
   return new ChecklistNode(payload.listApiName);
 }
 
-export function $isChecklistNode(
-  node: LexicalNode | null | undefined,
-): node is ChecklistNode {
+export function $isChecklistNode(node: LexicalNode | null | undefined): node is ChecklistNode {
   return node instanceof ChecklistNode;
 }

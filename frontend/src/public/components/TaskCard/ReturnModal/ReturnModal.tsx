@@ -5,16 +5,11 @@ import { useIntl } from 'react-intl';
 import { Modal } from '../../UI/Modal';
 import { RichEditor } from '../../RichEditor';
 import { Button } from '../../UI';
+import { IReturnModalProps } from './types';
 
 import styles from './ReturnModal.css';
 
-interface IReturnModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: (message: string) => void;
-}
-
-export function ReturnModal({ isOpen, onClose, onConfirm }: IReturnModalProps) {
+export function ReturnModal({ isOpen, isConfirmDisabled = false, onClose, onConfirm }: IReturnModalProps) {
   const { formatMessage } = useIntl();
   const [returnMessage, setReturnMessage] = useState('');
   const isModal = true;
@@ -43,7 +38,7 @@ export function ReturnModal({ isOpen, onClose, onConfirm }: IReturnModalProps) {
 
         <div className={styles['return-modal__buttons']}>
           <Button
-            disabled={Boolean(!returnMessage)}
+            disabled={!returnMessage || isConfirmDisabled}
             type="button"
             buttonStyle="yellow"
             size="md"

@@ -5,7 +5,7 @@ export enum EDashboardTimeRange {
   ThisWeek = 'dashboard.sorting-this-week',
   LastWeek = 'dashboard.sorting-last-week',
   ThisMonth = 'dashboard.sorting-this-month',
-  LastMonth  = 'dashboard.sorting-last-month',
+  LastMonth = 'dashboard.sorting-last-month',
 }
 
 export type TDashboardTimeRangeDates = {

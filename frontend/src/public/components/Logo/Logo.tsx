@@ -16,13 +16,7 @@ export interface ILogoProps {
   className?: string;
 }
 
-export function Logo({
-  size,
-  theme,
-  partnerLogoSm,
-  partnerLogoLg,
-  className,
-}: ILogoProps) {
+export function Logo({ size, theme, partnerLogoSm, partnerLogoLg, className }: ILogoProps) {
   const renderLogoMap = [
     {
       check: () => size === 'lg' && partnerLogoLg,
@@ -36,11 +30,11 @@ export function Logo({
       check: () => true,
       render: () => {
         const sizeToNumberMap = {
-          'sm': 32,
-          'md': 40,
-        }
+          sm: 32,
+          md: 40,
+        };
 
-        const sizePx = sizeToNumberMap[size as TMinimizedLogoSize]
+        const sizePx = sizeToNumberMap[size as TMinimizedLogoSize];
 
         if (partnerLogoSm) {
           return (
@@ -54,14 +48,10 @@ export function Logo({
           );
         }
 
-        return <LogoCircle theme={theme} size={sizePx} />
+        return <LogoCircle theme={theme} size={sizePx} />;
       },
     },
-  ]
+  ];
 
-  return (
-    <div className={className}>
-      {renderLogoMap.find(({ check }) => check())?.render()}
-    </div>
-  );
+  return <div className={className}>{renderLogoMap.find(({ check }) => check())?.render()}</div>;
 }

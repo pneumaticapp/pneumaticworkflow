@@ -11,6 +11,7 @@ from src.accounts.enums import (
     LeaseLevel,
     UserDateFormat,
     UserFirstDayWeek,
+    UserGroupType,
     UserInviteStatus,
     UserStatus,
 )
@@ -25,7 +26,9 @@ from src.authentication.enums import AuthTokenType
 from src.payment.enums import BillingPeriod
 from src.processes.enums import (
     ConditionAction,
+    FieldSetLayout,
     FieldType,
+    LabelPosition,
     OwnerRole,
     OwnerType,
     PerformerType,
@@ -34,7 +37,7 @@ from src.processes.enums import (
     TaskStatus,
     TemplateType,
     WorkflowEventType,
-    WorkflowStatus,
+    WorkflowStatus, FieldSetRuleType,
 )
 from src.processes.models.templates.checklist import (
     ChecklistTemplate,
@@ -45,6 +48,12 @@ from src.processes.models.templates.conditions import (
     PredicateTemplate,
     RuleTemplate,
 )
+from src.processes.models.templates.fieldset import (
+    FieldsetTemplate,
+    FieldsetTemplateRule,
+)
+from src.processes.models.templates.fields import FieldTemplate, \
+    FieldTemplateSelection
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.preset import (
@@ -54,7 +63,7 @@ from src.processes.models.templates.preset import (
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
 from src.datasets.models import Dataset, DatasetItem
-from src.processes.models.workflows.attachment import FileAttachment
+
 from src.processes.models.workflows.conditions import (
     Condition,
     Predicate,
@@ -64,6 +73,7 @@ from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.fields import (
     TaskField,
 )
+from src.processes.models.workflows.fieldset import FieldSet, FieldSetRule
 from src.processes.models.workflows.kickoff import KickoffValue
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
@@ -72,9 +82,13 @@ from src.processes.serializers.templates.template import (
 )
 from src.processes.serializers.workflows.events import TaskEventJsonSerializer
 from src.processes.services.tasks.task import TaskService
-from src.utils.salt import get_salt
+from src.storage.models import Attachment
+from src.storage.enums import SourceType, AccessType
 from src.webhooks.enums import HookEvent
 from src.webhooks.models import WebHook
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 UserModel = get_user_model()
 
@@ -374,7 +388,7 @@ def create_test_template(
                 )
                 PredicateTemplate.objects.create(
                     rule=rule,
-                    operator=PredicateOperator.COMPLETED,
+                    operator=PredicateOperator.COMPLETED_OR_SKIPPED,
                     field_type=PredicateType.TASK,
                     field=parents[0],
                     value=None,
@@ -454,15 +468,14 @@ def create_test_workflow(
         template_owners_ids = Template.objects.filter(
             id=template.id,
         ).get_owners_as_users()
-        workflow.owners.set(template_owners_ids)
-        workflow.members.add(*template_owners_ids)
     else:
-        workflow.members.add(*set(
+        template_owners_ids = list(
             template.owners.values_list('user_id', flat=True),
-        ))
-        workflow.owners.add(*set(
-            template.owners.values_list('user_id', flat=True),
-        ))
+        )
+
+    # Guardian: set owners for test fixture workflow
+    perm_svc = WorkflowPermissionService(workflow)
+    perm_svc.set_view_and_change(user_ids=template_owners_ids)
 
     KickoffValue.objects.create(
         workflow=workflow,
@@ -630,37 +643,6 @@ def get_workflow_create_data(user):
     }
 
 
-def create_test_attachment(
-    account: Account,
-    workflow: Optional[Workflow] = None,
-    event: Optional[WorkflowEvent] = None,
-    field: Optional[TaskField] = None,
-    name: str = 'file.jpg',
-    size: int = 215678,
-) -> FileAttachment:
-
-    """Creating file attachments."""
-
-    filename = f'{get_salt(30)}_{name}'
-    thumb_filename = f'thumb_{filename}'
-    attachment = FileAttachment(
-        account=account,
-        workflow=workflow,
-        name=filename,
-        url=f'https://link.to/{filename}',
-        thumbnail_url=f'https://link.to/{thumb_filename}',
-        size=size,
-    )
-    if event:
-        attachment.event = event
-        event.with_attachments = True
-        event.save()
-    if field:
-        attachment.field = field
-    attachment.save()
-    return attachment
-
-
 def create_test_event(
     workflow: Workflow,
     user: UserModel,
@@ -702,6 +684,7 @@ def create_test_group(
     name: str = 'Group_test',
     photo: Optional[str] = None,
     users: Optional[List[UserModel]] = None,
+    type_: str = UserGroupType.REGULAR,
 ) -> UserGroup:
 
     """Creating user groups."""
@@ -710,6 +693,7 @@ def create_test_group(
         name=name,
         photo=photo,
         account=account,
+        type=type_,
     )
     if users:
         group.users.set(users)
@@ -797,6 +781,89 @@ def create_test_template_preset(
     return preset
 
 
+def create_test_attachment(
+    account,
+    file_id: str = 'test_file',
+    task=None,
+    workflow=None,
+    template=None,
+    output=None,
+    event=None,
+    access_type=AccessType.RESTRICTED,
+    source_type=None,
+):
+    """
+    Create test attachment for new storage service.
+
+    Args:
+        account: Account instance
+        file_id: Unique file identifier
+        task: Optional Task instance
+        workflow: Optional Workflow instance
+        template: Optional Template instance
+        output: Optional TaskField instance (for field-level attachments)
+        event: Optional WorkflowEvent instance
+        access_type: AccessType (default RESTRICTED)
+        source_type: SourceType (default from task/workflow/template)
+
+    Returns:
+        Attachment instance
+    """
+    if source_type is None:
+        if task:
+            source_type = SourceType.TASK
+        elif template:
+            source_type = SourceType.TEMPLATE
+        else:
+            source_type = SourceType.WORKFLOW
+
+    return Attachment.objects.create(
+        file_id=file_id,
+        account=account,
+        source_type=source_type,
+        access_type=access_type,
+        task=task,
+        workflow=workflow,
+        template=template,
+        output=output,
+        event=event,
+    )
+
+
+def create_test_attachment_for_event(
+    account,
+    event,
+    file_id: str = 'event_file.png',
+):
+    """
+    Create test attachment linked to event.
+
+    Args:
+        account: Account instance
+        event: WorkflowEvent instance
+        file_id: Unique file identifier
+
+    Returns:
+        Attachment instance
+    """
+    source_type = SourceType.TASK if event.task else SourceType.WORKFLOW
+
+    attachment = Attachment.objects.create(
+        file_id=file_id,
+        account=account,
+        source_type=source_type,
+        access_type=AccessType.RESTRICTED,
+        task=event.task,
+        workflow=event.workflow,
+        event=event,
+    )
+
+    event.with_attachments = True
+    event.save(update_fields=['with_attachments'])
+
+    return attachment
+
+
 def create_test_dataset(
     account: Account,
     name: str = 'Test Dataset',
@@ -819,3 +886,176 @@ def create_test_dataset(
             order=i,
         )
     return dataset
+
+
+def create_test_shared_fieldset(
+    account: Account,
+    name: str = 'Test Fieldset',
+    title: str = '',
+    description: str = '',
+    order: int = 0,
+    label_position: LabelPosition.LITERALS = LabelPosition.TOP,
+    layout: FieldSetLayout.LITERALS = FieldSetLayout.VERTICAL,
+    rule_type: Optional[FieldSetRuleType.LITERALS] = None,
+    rule_value: Optional[str] = None,
+    api_name: Optional[str] = None,
+) -> FieldsetTemplate:
+
+    """Creating fieldset templates."""
+
+    fieldset = FieldsetTemplate.objects.create(
+        account=account,
+        name=name,
+        title=title,
+        description=description,
+        order=order,
+        label_position=label_position,
+        layout=layout,
+        api_name=api_name,
+        is_shared=True,
+    )
+    if rule_type:
+        FieldsetTemplateRule.objects.create(
+            fieldset=fieldset,
+            account=account,
+            api_name=f'{fieldset.api_name}-shared-rule-1',
+            type=rule_type,
+            value=rule_value,
+        )
+    if rule_type == FieldSetRuleType.SUM_EQUAL:
+        field_type = FieldType.NUMBER
+    else:
+        field_type = FieldType.STRING
+
+    FieldTemplate.objects.create(
+        name='Fieldset field',
+        type=field_type,
+        fieldset=fieldset,
+        order=1,
+        api_name=f'{fieldset.api_name}-shared-field-1',
+        account=account,
+    )
+    return fieldset
+
+
+def create_test_fieldset_template(
+    account: Account,
+    template: Optional[Template] = None,
+    kickoff: Optional[Kickoff] = None,
+    task: Optional[TaskTemplate] = None,
+    title: Optional[str] = None,
+    description: Optional[str] = None,
+    order: int = 0,
+    api_name: Optional[str] = None,
+    shared_fieldset: Optional[FieldsetTemplate] = None,
+    rule_type: Optional[FieldSetRuleType.LITERALS] = None,
+    rule_value: Optional[str] = None,
+) -> FieldsetTemplate:
+
+    """Creating fieldset templates."""
+
+    if shared_fieldset is None:
+        shared_fieldset = create_test_shared_fieldset(
+            account=account,
+            rule_type=rule_type,
+            rule_value=rule_value,
+        )
+
+    fieldset = FieldsetTemplate.objects.create(
+        account=account,
+        template=template,
+        name=shared_fieldset.name,
+        title=title or shared_fieldset.title,
+        description=description or shared_fieldset.description,
+        order=order,
+        label_position=shared_fieldset.label_position,
+        layout=shared_fieldset.layout,
+        api_name=api_name,
+        task=task,
+        kickoff=kickoff,
+        is_shared=False,
+        shared_fieldset=shared_fieldset,
+    )
+    for shared_rule in shared_fieldset.rules.all():
+        FieldsetTemplateRule.objects.create(
+            fieldset=fieldset,
+            account=account,
+            api_name=f'{fieldset.api_name}-rule-1',
+            type=shared_rule.type,
+            value=shared_rule.value,
+        )
+
+    for shared_field in shared_fieldset.fields.all():
+        field_template = FieldTemplate.objects.create(
+            name=shared_field.name,
+            type=shared_field.type,
+            fieldset=fieldset,
+            template=template,
+            order=shared_field.order,
+            api_name=f'{fieldset.api_name}-field-1',
+            account=account,
+        )
+        for shared_selection in shared_field.selections.all():
+            FieldTemplateSelection.objects.create(
+                field_template=field_template,
+                template=template,
+                value=shared_selection.value,
+                api_name=f'{field_template.api_name}-selection-1',
+            )
+    return fieldset
+
+
+def create_test_fieldset(
+    workflow: Workflow,
+    task: Optional[Task] = None,
+    kickoff: Optional[KickoffValue] = None,
+    name: str = 'Test Fieldset',
+    description: str = '',
+    order: int = 0,
+    label_position: LabelPosition.LITERALS = LabelPosition.TOP,
+    layout: FieldSetLayout.LITERALS = FieldSetLayout.VERTICAL,
+    rule_type: Optional[FieldSetRuleType.LITERALS] = None,
+    rule_value: Optional[str] = None,
+    api_name: Optional[str] = None,
+) -> FieldSet:
+
+    """Creating a workflow FieldSet with one TaskField."""
+
+    fieldset = FieldSet.objects.create(
+        account=workflow.account,
+        workflow=workflow,
+        kickoff=kickoff,
+        task=task,
+        name=name,
+        description=description,
+        order=order,
+        label_position=label_position,
+        layout=layout,
+        api_name=api_name,
+    )
+    if rule_type:
+        FieldSetRule.objects.create(
+            fieldset=fieldset,
+            account=workflow.account,
+            api_name=f'{fieldset.api_name}-rule-1',
+            type=rule_type,
+            value=rule_value,
+        )
+    if rule_type == FieldSetRuleType.SUM_EQUAL:
+        field_type = FieldType.NUMBER
+        field_value = '10'
+    else:
+        field_type = FieldType.STRING
+        field_value = 'Some value'
+    TaskField.objects.create(
+        account=workflow.account,
+        workflow=workflow,
+        fieldset=fieldset,
+        task=task,
+        name='Fieldset field',
+        type=field_type,
+        order=1,
+        api_name=f'{fieldset.api_name}-field-1',
+        value=field_value,
+    )
+    return fieldset

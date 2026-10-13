@@ -218,43 +218,6 @@ class TestAnalyticService:
             is_superuser=is_superuser,
         )
 
-    def test__users_invited__ok(self, mocker):
-
-        # arrange
-        invite_to = create_test_user()
-        value = 'value'
-        is_superuser = True
-        invite_token = '123'
-
-        private_track_mock = mocker.patch(
-            'src.analysis.services.AnalyticService._track',
-            return_value=value,
-        )
-
-        # act
-        result = AnalyticService.users_invited(
-            invite_to=invite_to,
-            is_superuser=is_superuser,
-            invite_token=invite_token,
-        )
-
-        # assert
-        assert result == value
-        private_track_mock.assert_called_once_with(
-            user_id=invite_to.id,
-            event=UserAnalyticsEvent.invited,
-            properties={
-                'text': 'Invitation sent by email',
-                'first_name': invite_to.first_name,
-                'last_name': invite_to.last_name,
-                'email': invite_to.email,
-                'account_id': invite_to.account_id,
-                'category': EventCategory.users,
-                'invite_token': invite_token,
-            },
-            is_superuser=False,
-        )
-
     def test__users_logged_in__ok(self, mocker):
 
         # arrange
@@ -1089,16 +1052,14 @@ class TestAnalyticService:
             event=AttachmentAnalyticsEvent.uploaded,
             is_superuser=is_superuser,
             properties={
-                'text': f'{attachment.name} {attachment.url}',
+                'text': f'{attachment.file_id}',
                 'email': user.email,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
                 'account_id': user.account_id,
                 'auth_type': token_type,
                 'id': attachment.id,
-                'size': attachment.humanize_size,
                 'category': EventCategory.attachments,
-                'type': attachment.extension,
             },
         )
 
@@ -1132,16 +1093,14 @@ class TestAnalyticService:
             event=AttachmentAnalyticsEvent.uploaded,
             is_superuser=is_superuser,
             properties={
-                'text': f'{attachment.name} {attachment.url}',
+                'text': f'{attachment.file_id}',
                 'email': None,
                 'first_name': None,
                 'last_name': None,
                 'auth_type': token_type,
                 'id': attachment.id,
-                'size': attachment.humanize_size,
                 'account_id': account.id,
                 'category': EventCategory.attachments,
-                'type': attachment.extension,
             },
         )
 

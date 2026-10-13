@@ -5,13 +5,12 @@ import type { TOutputChecklist } from '../../types/template';
 import type { TTaskVariable } from '../TemplateEdit/types';
 import type { TForegroundColor } from '../UI/Fields/common/types';
 
-
-
 export interface IRichEditorHandle {
   focus(): void;
   insertVariable(apiName: string, variableTitle: string, subtitle?: string): void;
   getEditor?(): LexicalEditor | undefined;
   clearContent(): void;
+  replaceContent(markdown: string): void;
 }
 
 export type TMentionData = {
@@ -25,6 +24,7 @@ export interface IRichEditorBaseProps {
   accountId?: number;
   placeholder?: string;
   className?: string;
+  editorClassName?: string;
   defaultValue?: string;
   withToolbar?: boolean;
   withChecklists?: boolean;
@@ -33,6 +33,7 @@ export interface IRichEditorBaseProps {
   title?: string;
   foregroundColor?: TForegroundColor;
   stripPastedFormatting?: boolean;
+  plainText?: boolean;
   templateVariables?: TTaskVariable[];
   submitIcon?: ReactNode;
   cancelIcon?: ReactNode;
@@ -64,6 +65,7 @@ export interface ILexicalEditorContentProps {
   withMentions: boolean;
   mentions: TMentionData[] | undefined;
   isModal: boolean | undefined;
+  editorClassName?: string;
   isUploading?: boolean;
   onUploadAttachments?: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
   onPasteFiles?: (files: File[]) => Promise<void>;
@@ -75,4 +77,6 @@ export interface ILexicalEditorContentProps {
   submitIcon?: ReactNode;
   cancelIcon?: ReactNode;
   withControls?: boolean;
+  plainText?: boolean;
+  templateVariables?: TTaskVariable[];
 }

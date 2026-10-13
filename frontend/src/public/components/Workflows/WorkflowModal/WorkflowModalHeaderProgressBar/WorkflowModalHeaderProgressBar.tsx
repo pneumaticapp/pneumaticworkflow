@@ -54,7 +54,7 @@ export function WorkflowModalHeaderProgressBar({
           }
 
           return (
-            <div className={styles['action-buttons']}>
+            <div className={classnames(styles['action-buttons'], 'no-print')}>
               {getNormalizedControlls(controllOptions).map((option) => {
                 const { Icon, onClick, label, mapKey, subOptions, isHidden } = option;
                 if (isHidden) {

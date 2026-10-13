@@ -10,17 +10,11 @@ import { ALL_SYSTEM_FIELD_NAMES } from '../../../components/Workflows/WorkflowsT
 import { downloadBlobInBrowser } from '../downloadBlobInBrowser';
 import { IExportWorkflowsToExcelConfig } from './types';
 
-export const WORKFLOWS_XLSX_MIME =
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+export const WORKFLOWS_XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
 export const WORKFLOWS_XLSX_DEFAULT_FILENAME = 'workflows.xlsx';
 
-
-function getStarterDisplayName(
-  workflowStarter: number | null,
-  isExternal: boolean,
-  users: TUserListItem[],
-): string {
+function getStarterDisplayName(workflowStarter: number | null, isExternal: boolean, users: TUserListItem[]): string {
   if (workflowStarter === null) return '';
   if (isExternal) return getUserFullName(EXTERNAL_USER);
   const user = getUserById(users, workflowStarter);
@@ -93,12 +87,10 @@ export function buildWorkflowsExportRows({
   multipleTasksLabel,
   deletedGroupFallbackTemplate,
 }: IExportWorkflowsToExcelConfig): string[][] {
-  const headerKeys = selectedFields.length > 0
-    ? selectedFields
-    : [
-      ...ALL_SYSTEM_FIELD_NAMES,
-      ...(optionalFieldsFromWorkflow ?? []).map((f) => f.apiName),
-    ];
+  const headerKeys =
+    selectedFields.length > 0
+      ? selectedFields
+      : [...ALL_SYSTEM_FIELD_NAMES, ...(optionalFieldsFromWorkflow ?? []).map((f) => f.apiName)];
 
   const headerRow = headerKeys.map((key) => headerLabels[key] ?? key);
   const bodyRows: string[][] = [];
@@ -108,18 +100,12 @@ export function buildWorkflowsExportRows({
       completedTasks: workflow.completedTasks,
       tasksCountWithoutSkipped: workflow.tasksCountWithoutSkipped,
     });
-    const stepLabel = workflow.areMultipleTasks
-      ? multipleTasksLabel
-      : (workflow.oneActiveTaskName ?? '');
+    const stepLabel = workflow.areMultipleTasks ? multipleTasksLabel : (workflow.oneActiveTaskName ?? '');
 
     const systemValues: Record<string, string> = {
       'system-column-workflow': workflow.name,
       'system-column-templateName': workflow.template?.name ?? '',
-      'system-column-starter': getStarterDisplayName(
-        workflow.workflowStarter,
-        workflow.isExternal,
-        users,
-      ),
+      'system-column-starter': getStarterDisplayName(workflow.workflowStarter, workflow.isExternal, users),
       'system-column-progress': `${progress}%`,
       'system-column-step': stepLabel,
       'system-column-performer': getPerformersDisplayName(
@@ -155,10 +141,7 @@ export async function buildWorkflowsXlsxBuffer(rows: string[][]) {
   return workbook.xlsx.writeBuffer();
 }
 
-export function downloadWorkflowsExcel(
-  buffer: BlobPart,
-  filename = WORKFLOWS_XLSX_DEFAULT_FILENAME,
-): void {
+export function downloadWorkflowsExcel(buffer: BlobPart, filename = WORKFLOWS_XLSX_DEFAULT_FILENAME): void {
   const blob = new Blob([buffer], { type: WORKFLOWS_XLSX_MIME });
   downloadBlobInBrowser(blob, filename);
 }

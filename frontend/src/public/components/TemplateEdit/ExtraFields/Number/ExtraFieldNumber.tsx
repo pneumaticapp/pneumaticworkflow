@@ -18,6 +18,7 @@ export const ExtraFieldNumber = ({
   editField,
   isDisabled = false,
   labelBackgroundColor,
+  labelPosition,
   innerRef,
 }: IWorkflowExtraFieldProps) => {
   const handleChangeName = useCallback(
@@ -46,6 +47,7 @@ export const ExtraFieldNumber = ({
         namePlaceholder={namePlaceholder}
         mode={mode}
         labelBackgroundColor={labelBackgroundColor}
+        labelPosition={labelPosition}
         handleChangeName={handleChangeName}
         handleChangeDescription={handleChangeDescription}
         validate={getFieldValidator(field, mode)}

@@ -2,21 +2,32 @@ import React from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
-import { IApplicationState } from '../../../types/redux';
+import { getRegularGroupsList } from '../../../redux/selectors/groups';
 import { ESubscriptionPlan } from '../../../types/account';
 import { createOwnerApiName } from '../../../utils/createId';
 import { trackInviteTeamInPage } from '../../../utils/analytics';
 import { getNotDeletedUsers, getUserFullName } from '../../../utils/users';
-import { EOptionTypes, TUsersDropdownOption, UsersDropdown } from '../../UI/form/UsersDropdown';
+import {
+  EOptionTypes,
+  TUsersDropdownOption,
+  UsersDropdown,
+  getUsersDropdownOptionValue,
+} from '../../UI/form/UsersDropdown';
 import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../../../redux/selectors/user';
-import { ETaskPerformerType, ETemplateOwnerRole, ETemplateOwnerType, ITemplate, ITemplateOwner } from '../../../types/template';
+import {
+  ETaskPerformerType,
+  ETemplateOwnerRole,
+  ETemplateOwnerType,
+  ITemplateClient,
+  ITemplateOwner,
+} from '../../../types/template';
 import OwnerItem from './components';
 
 import styles from './TemplateOwners.css';
 import UserDataWithGroup from '../../UserDataWithGroup';
 
 interface ITemplateOwnersProps {
-  templateOwners: ITemplate['owners'];
+  templateOwners: ITemplateClient['owners'];
   onChangeTemplateOwners(templateOwners: ITemplateOwner[]): void;
 }
 
@@ -25,21 +36,15 @@ export function TemplateOwners({ templateOwners = [], onChangeTemplateOwners }: 
 
   const isSubscribed = useSelector(getIsUserSubsribed);
   const billingPlan = useSelector(getSubscriptionPlan);
-  const groups = useSelector((state: IApplicationState) => state.groups.list);
+  const groups = useSelector(getRegularGroupsList);
 
   const users = getNotDeletedUsers(useSelector(getUsers));
   const mapUsersDropdownValue = users.filter((user) =>
-    templateOwners.find(
-      ({ sourceId, type }) =>
-        Number(sourceId) === user.id && type === ETemplateOwnerType.User,
-    ),
+    templateOwners.find(({ sourceId, type }) => Number(sourceId) === user.id && type === ETemplateOwnerType.User),
   );
 
   const mapGroupDropdownValue = groups.filter((group) =>
-    templateOwners.find(
-      ({ sourceId, type }) =>
-        Number(sourceId) === group.id && type === ETemplateOwnerType.UserGroup,
-    ),
+    templateOwners.find(({ sourceId, type }) => Number(sourceId) === group.id && type === ETemplateOwnerType.UserGroup),
   );
 
   const templateOwnerGroupDropdownOption = groups.map((group) => {
@@ -48,7 +53,7 @@ export function TemplateOwners({ templateOwners = [], onChangeTemplateOwners }: 
       optionType: EOptionTypes.Group,
       type: ETaskPerformerType.UserGroup,
       label: group.name,
-      value: `${EOptionTypes.Group}-${group.id}`,
+      value: getUsersDropdownOptionValue(EOptionTypes.Group, group.id),
     };
   });
 
@@ -59,7 +64,7 @@ export function TemplateOwners({ templateOwners = [], onChangeTemplateOwners }: 
       lastName: '',
       optionType: EOptionTypes.User,
       label: getUserFullName(item),
-      value: `${EOptionTypes.User}-${item.id}`,
+      value: getUsersDropdownOptionValue(EOptionTypes.User, item.id),
     };
   });
 
@@ -73,7 +78,7 @@ export function TemplateOwners({ templateOwners = [], onChangeTemplateOwners }: 
       ...item,
       optionType: EOptionTypes.User,
       label: getUserFullName(item),
-      value: `${EOptionTypes.User}-${item.id}`,
+      value: getUsersDropdownOptionValue(EOptionTypes.User, item.id),
     };
   });
 
@@ -82,16 +87,13 @@ export function TemplateOwners({ templateOwners = [], onChangeTemplateOwners }: 
       ...item,
       optionType: EOptionTypes.Group,
       label: item.name,
-      value: `${EOptionTypes.Group}-${item.id}`,
+      value: getUsersDropdownOptionValue(EOptionTypes.Group, item.id),
     };
   });
 
-  const handleRemoveTemplateOwner = (
-    { id, optionType }: Pick<TUsersDropdownOption, 'id' | 'optionType'>,
-  ) => {
+  const handleRemoveTemplateOwner = ({ id, optionType }: Pick<TUsersDropdownOption, 'id' | 'optionType'>) => {
     const newTemplateOwners = templateOwners.filter(
-      ({ sourceId, type }) =>
-        !(sourceId === String(id) && type === (optionType as unknown as ETemplateOwnerType)),
+      ({ sourceId, type }) => !(sourceId === String(id) && type === (optionType as unknown as ETemplateOwnerType)),
     );
     onChangeTemplateOwners(newTemplateOwners);
   };
@@ -130,10 +132,12 @@ export function TemplateOwners({ templateOwners = [], onChangeTemplateOwners }: 
                   <OwnerItem
                     name={getUserFullName(user)}
                     user={user}
-                    removeOwner={() => handleRemoveTemplateOwner({
-                      id: Number(sourceId),
-                      optionType: type as unknown as EOptionTypes,
-                    })}
+                    removeOwner={() =>
+                      handleRemoveTemplateOwner({
+                        id: Number(sourceId),
+                        optionType: type as unknown as EOptionTypes,
+                      })
+                    }
                   />
                 );
               }}

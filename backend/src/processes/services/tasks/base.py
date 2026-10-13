@@ -113,14 +113,32 @@ class BasePerformersService:
         user: UserModel,
     ) -> Optional[TaskPerformer]:
         performers = (
-            TaskPerformer.objects.by_task(task.id).exclude_directly_deleted()
+            TaskPerformer.objects
+            .by_task(task.id)
+            .exclude_directly_deleted()
+            .type_user_or_group()
         )
-        if (
-            performers.count() == 1
-            and performers.filter(user_id=user.id).exists()
-        ):
+        user_performer = performers.filter(
+            user_id=user.id,
+            type=PerformerType.USER,
+        ).first()
+        if not user_performer:
+            return None
+
+        schedule = getattr(user, 'vacation', None)
+        sub_group_id = schedule.substitute_group_id if schedule else None
+        if sub_group_id:
+            if (
+                performers
+                .exclude(user_id=user.id)
+                .exclude(group_id=sub_group_id)
+                .count()
+            ) == 0:
+                raise PerformersServiceException(MSG_PW_0016)
+        elif performers.count() == 1:
             raise PerformersServiceException(MSG_PW_0016)
-        return performers.filter(user_id=user.id).first()
+
+        return user_performer
 
     @classmethod
     def create_performer(
@@ -140,15 +158,19 @@ class BasePerformersService:
             account_id=request_user.account.id,
             user_key=user_key,
         )
-        task_performer, created = TaskPerformer.objects.get_or_create(
-            task_id=task.id,
-            type=PerformerType.USER,
-            user_id=user.id,
-            defaults={'directly_status': DirectlyStatus.CREATED},
+        task_performer, created = (
+            TaskPerformer.objects.get_or_create(
+                task_id=task.id,
+                type=PerformerType.USER,
+                user_id=user.id,
+                defaults={
+                    'directly_status': DirectlyStatus.CREATED,
+                },
+            )
         )
         if task_performer.directly_status == DirectlyStatus.DELETED:
             task_performer.directly_status = DirectlyStatus.CREATED
-            task_performer.save()
+            task_performer.save(update_fields=['directly_status'])
             created = True
         if created and run_actions:
             cls._create_actions(
@@ -240,9 +262,10 @@ class BasePerformerService2:
         group: UserGroup,
     ) -> Optional[TaskPerformer]:
         performers = (
-            TaskPerformer.objects.by_task(
-                self.task.id,
-            ).exclude_directly_deleted()
+            TaskPerformer.objects
+            .by_task(self.task.id)
+            .exclude_directly_deleted()
+            .type_user_or_group()
         )
         if (
             performers.count() == 1

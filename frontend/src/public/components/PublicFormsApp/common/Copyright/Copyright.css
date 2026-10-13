@@ -2,8 +2,8 @@
   margin: 0;
   font-size: 15px;
   line-height: 20px;
-  text-align: center;
   color: var(--pneumatic-color-black32);
+  text-align: center;
 }
 
 .copyright__link {

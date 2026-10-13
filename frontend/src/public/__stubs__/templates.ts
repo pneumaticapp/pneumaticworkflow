@@ -1,5 +1,5 @@
 import { ITaskCommentItem } from '../types/workflow';
-import { ITemplate, ITemplateListItem } from '../types/template';
+import { ITemplateClient, ITemplateListItem } from '../types/template';
 import { getEmptyKickoff } from '../utils/template';
 
 export const templatesList: ITemplateListItem[] = [
@@ -71,7 +71,7 @@ export const templatesList: ITemplateListItem[] = [
   },
 ];
 
-const DEFAULT_TEMPLATE: ITemplate = {
+const DEFAULT_TEMPLATE: ITemplateClient = {
   id: 1,
   name: 'Customer study process',
   description: '',
@@ -115,11 +115,11 @@ export const mockComments: Array<ITaskCommentItem> = [
   },
 ];
 
-export const getTemplate = (id: string): ITemplate => {
+export const getTemplate = (id: string): ITemplateClient => {
   const listItem = templatesList.find((process) => String(process.id) === id);
 
   return {
     ...DEFAULT_TEMPLATE,
-    ...(listItem as unknown as ITemplate),
+    ...(listItem as unknown as ITemplateClient),
   };
 };

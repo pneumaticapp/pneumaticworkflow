@@ -36,21 +36,13 @@ function FileAttachmentComponent({
     });
   }, [editor, nodeKey]);
 
-  return (
-    <DocumentAttachment
-      url={url}
-      name={name ?? url}
-      isEdit
-      isClickable={false}
-      deleteFile={deleteFile}
-    />
-  );
+  return <DocumentAttachment url={url} name={name ?? url} isEdit isClickable={false} deleteFile={deleteFile} />;
 }
 
 export class FileAttachmentNode extends DecoratorNode<React.ReactElement> {
   attachmentUrl: string;
 
-  attachmentId?: number;
+  attachmentId?: number | string;
 
   attachmentName?: string;
 
@@ -59,12 +51,7 @@ export class FileAttachmentNode extends DecoratorNode<React.ReactElement> {
   }
 
   static clone(node: FileAttachmentNode): FileAttachmentNode {
-    return new FileAttachmentNode(
-      node.attachmentUrl,
-      node.attachmentId,
-      node.attachmentName,
-      node.getKey(),
-    );
+    return new FileAttachmentNode(node.attachmentUrl, node.attachmentId, node.attachmentName, node.getKey());
   }
 
   static importJSON(serialized: SerializedFileAttachmentNode): FileAttachmentNode {
@@ -79,7 +66,7 @@ export class FileAttachmentNode extends DecoratorNode<React.ReactElement> {
           conversion: (element: HTMLDivElement): DOMConversionOutput => {
             const url = element.getAttribute('data-lexical-attachment-url') ?? '';
             const rawId = element.getAttribute('data-lexical-attachment-id');
-            const id = rawId != null ? parseInt(rawId, 10) : undefined;
+            const id = rawId != null ? rawId : undefined;
             const name = element.getAttribute('data-lexical-attachment-name') ?? undefined;
             return { node: $createFileAttachmentNode({ url, id, name }) };
           },
@@ -89,7 +76,7 @@ export class FileAttachmentNode extends DecoratorNode<React.ReactElement> {
     };
   }
 
-  constructor(url: string, id?: number, name?: string, key?: NodeKey) {
+  constructor(url: string, id?: number | string, name?: string, key?: NodeKey) {
     super(key);
     this.attachmentUrl = url;
     this.attachmentId = id;
@@ -131,39 +118,22 @@ export class FileAttachmentNode extends DecoratorNode<React.ReactElement> {
   }
 
   updateDOM(): false {
-    return (this.getType(), false);
+    return false;
   }
 
   getTextContent(): string {
-    return buildAttachmentMarkdownString(
-      this.attachmentName ?? '',
-      this.attachmentUrl,
-      this.attachmentId,
-      'file',
-    );
+    return buildAttachmentMarkdownString(this.attachmentName ?? '', this.attachmentUrl, this.attachmentId, 'file');
   }
 
   decorate(): React.ReactElement {
-    return (
-      <FileAttachmentComponent
-        nodeKey={this.getKey()}
-        url={this.attachmentUrl}
-        name={this.attachmentName}
-      />
-    );
+    return <FileAttachmentComponent nodeKey={this.getKey()} url={this.attachmentUrl} name={this.attachmentName} />;
   }
 }
 
-export function $createFileAttachmentNode(
-  payload: TAttachmentPayload,
-): FileAttachmentNode {
-  return $applyNodeReplacement(
-    new FileAttachmentNode(payload.url, payload.id, payload.name),
-  );
+export function $createFileAttachmentNode(payload: TAttachmentPayload): FileAttachmentNode {
+  return $applyNodeReplacement(new FileAttachmentNode(payload.url, payload.id, payload.name));
 }
 
-export function $isFileAttachmentNode(
-  node: LexicalNode | null | undefined,
-): node is FileAttachmentNode {
+export function $isFileAttachmentNode(node: LexicalNode | null | undefined): node is FileAttachmentNode {
   return node instanceof FileAttachmentNode;
 }

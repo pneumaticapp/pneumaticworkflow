@@ -1,4 +1,4 @@
-FROM node:18-bookworm-slim
+FROM node:22-bookworm-slim
 
 LABEL org.opencontainers.image.title="Pneumatic web client" \
       org.opencontainers.image.source="https://github.com/pneumaticapp/pneumaticworkflow/frontend" \
@@ -18,6 +18,12 @@ RUN npm install pm2 -g
 WORKDIR /pneumatic_frontend
 ADD package-lock.json /pneumatic_frontend/package-lock.json
 ADD package.json /pneumatic_frontend/package.json
-RUN npm ci --legacy-peer-deps
+RUN npm ci --legacy-peer-deps --ignore-scripts
 
 ADD . /pneumatic_frontend/
+
+# Build webpack bundle at image build time (env-independent since runtime config refactor)
+ENV NODE_OPTIONS="--max-old-space-size=3072"
+RUN npm run build-client:prod
+
+CMD ["pm2-runtime", "start", "pm2.json"]

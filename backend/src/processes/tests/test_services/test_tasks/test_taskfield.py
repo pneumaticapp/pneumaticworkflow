@@ -1,7 +1,9 @@
 import pytest
 from django.contrib.auth import get_user_model
+from django.test import override_settings
 
 from src.processes.enums import (
+    FieldSetRuleType,
     FieldType,
     WorkflowEventType,
 )
@@ -10,14 +12,15 @@ from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
-from src.processes.models.workflows.attachment import FileAttachment
-from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.templates.fieldset import (
+    FieldsetTemplateRule,
+)
+from src.processes.models.workflows.fieldset import (
+    FieldSetRule,
+)
 from src.processes.models.workflows.fields import (
     TaskField,
     FieldSelection,
-)
-from src.processes.services.events import (
-    WorkflowEventService,
 )
 from src.processes.services.tasks.exceptions import (
     TaskFieldException,
@@ -30,12 +33,18 @@ from src.processes.services.tasks.selection import SelectionService
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
+    create_test_event,
     create_test_group,
     create_test_owner,
     create_test_template,
     create_test_user,
-    create_test_workflow, create_test_dataset,
+    create_test_workflow,
+    create_test_dataset,
+    create_test_fieldset_template,
+    create_test_fieldset,
 )
+from src.storage.models import Attachment
+from src.storage.enums import SourceType, AccessType
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -481,29 +490,23 @@ def test_link_new_attachments__not_attached__ok():
         workflow=workflow,
         account=user.account,
     )
-    attachment = FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=user.account_id,
-    )
     service = TaskFieldService(
         instance=task_field,
         user=user,
     )
 
     # act
-    service._link_new_attachments(
-        attachments_ids=[attachment.id],
-    )
+    file_ids = ['john_cena_file']
+    service._link_new_attachments(markdown_values=file_ids)
 
     # assert
-    attachment.refresh_from_db()
-    assert attachment.output_id == task_field.id
-    assert attachment.workflow_id == workflow.id
+    attachment = Attachment.objects.get(file_id=file_ids[0])
+    assert attachment.task == task
+    assert attachment.workflow == workflow
+    assert attachment.account == user.account
 
 
-def test_link_new_attachments__update_attached__ok():
+def test_link_new_attachments__create_multiple__ok():
 
     # arrange
     user = create_test_user()
@@ -516,30 +519,26 @@ def test_link_new_attachments__update_attached__ok():
         workflow=workflow,
         account=user.account,
     )
-    attachment = FileAttachment.objects.create(
-        output_id=task_field.id,
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=user.account_id,
-    )
     service = TaskFieldService(
         instance=task_field,
         user=user,
     )
 
     # act
-    service._link_new_attachments(
-        attachments_ids=[attachment.id],
-    )
+    file_ids = ['file1', 'file2']
+    service._link_new_attachments(markdown_values=file_ids)
 
     # assert
-    attachment.refresh_from_db()
-    assert attachment.output_id == task_field.id
-    assert attachment.workflow_id == workflow.id
+    attachments = Attachment.objects.filter(file_id__in=file_ids)
+    assert attachments.count() == 2
+
+    for attachment in attachments:
+        assert attachment.task == task
+        assert attachment.workflow == workflow
+        assert attachment.account == user.account
 
 
-def test_link_new_attachments__event_attachment__not_link():
+def test_link_new_attachments__creates_new_attachments():
 
     # arrange
     user = create_test_user()
@@ -552,22 +551,6 @@ def test_link_new_attachments__event_attachment__not_link():
         workflow=workflow,
         account=user.account,
     )
-    attachment = FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=user.account_id,
-    )
-
-    event = WorkflowEventService.comment_created_event(
-        user=user,
-        attachments=[attachment.id],
-        task=task,
-        text=None,
-        after_create_actions=False,
-    )
-    attachment.event = event
-    attachment.save()
 
     service = TaskFieldService(
         instance=task_field,
@@ -575,20 +558,20 @@ def test_link_new_attachments__event_attachment__not_link():
     )
 
     # act
-    service._link_new_attachments(
-        attachments_ids=[attachment.id],
-    )
+    file_ids = ['event_file_123.jpg']
+    service._link_new_attachments(markdown_values=file_ids)
 
     # assert
-    attachment.refresh_from_db()
-    assert attachment.output_id is None
-    assert attachment.workflow_id is None
+    attachment = Attachment.objects.get(file_id=file_ids[0])
+    assert attachment.task == task
+    assert attachment.workflow == workflow
+    assert attachment.account == user.account
 
 
-def test_link_new_attachments__another_account_attachment__not_update():
+def test_link_new_attachments__creates_for_current_account():
 
     # arrange
-    another_account = create_test_account()
+    create_test_account()
     user = create_test_user()
     workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -599,29 +582,23 @@ def test_link_new_attachments__another_account_attachment__not_update():
         workflow=workflow,
         account=user.account,
     )
-    attachment = FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=another_account.id,
-    )
     service = TaskFieldService(
         instance=task_field,
         user=user,
     )
 
     # act
-    service._link_new_attachments(
-        attachments_ids=[attachment.id],
-    )
+    file_ids = ['account_file_123.jpg']
+    service._link_new_attachments(markdown_values=file_ids)
 
     # assert
-    attachment.refresh_from_db()
-    assert attachment.output_id is None
-    assert attachment.workflow_id is None
+    attachment = Attachment.objects.get(file_id=file_ids[0])
+    assert attachment.account == user.account
+    assert attachment.task == task
+    assert attachment.workflow == workflow
 
 
-def test_link_new_attachments__not_value__not_attached():
+def test_link_new_attachments__empty_list__no_attachments_created():
 
     # arrange
     user = create_test_user()
@@ -634,26 +611,58 @@ def test_link_new_attachments__not_value__not_attached():
         workflow=workflow,
         account=user.account,
     )
-    attachment = FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=user.account_id,
-    )
     service = TaskFieldService(
         instance=task_field,
         user=user,
     )
 
     # act
-    service._link_new_attachments(
-        attachments_ids=[],
+    service._link_new_attachments(markdown_values=[])
+
+    # assert
+    attachments_count = Attachment.objects.filter(
+        task=task,
+        workflow=workflow,
+    ).count()
+    assert attachments_count == 0
+
+
+def test_link_new_attachments__existing_file_id__does_not_overwrite():
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    field_a = TaskField.objects.create(
+        task=task,
+        api_name='file-field-a',
+        type=FieldType.FILE,
+        workflow=workflow,
+        account=user.account,
     )
+    field_b = TaskField.objects.create(
+        task=task,
+        api_name='file-field-b',
+        type=FieldType.FILE,
+        workflow=workflow,
+        account=user.account,
+    )
+    service_a = TaskFieldService(instance=field_a, user=user)
+    service_a._link_new_attachments(markdown_values=['shared_file_id'])
+    attachment = Attachment.objects.get(file_id='shared_file_id')
+    original_output_id = attachment.output_id
+    original_task_id = attachment.task_id
+
+    # act
+    service_b = TaskFieldService(instance=field_b, user=user)
+    service_b._link_new_attachments(markdown_values=['shared_file_id'])
 
     # assert
     attachment.refresh_from_db()
-    assert attachment.output_id is None
-    assert attachment.workflow_id is None
+    assert attachment.output_id == original_output_id
+    assert attachment.output == field_a
+    assert attachment.task_id == original_task_id
+    assert attachment.workflow == workflow
 
 
 def test__link_new_attachments__ids_none__skip():
@@ -672,11 +681,11 @@ def test__link_new_attachments__ids_none__skip():
         workflow=workflow,
         account=account,
     )
-    attachment = FileAttachment.objects.create(
-        name='test.jpg',
-        url='https://test.test/test.jpg',
-        size=1234,
-        account_id=account.id,
+    attachment = Attachment.objects.create(
+        file_id='test.jpg',
+        account=account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
     )
     service = TaskFieldService(instance=task_field, user=user)
 
@@ -705,33 +714,33 @@ def test__remove_unused_attachments__value_some_deleted__ok():
         workflow=workflow,
         account=account,
     )
-    attachment_1 = FileAttachment.objects.create(
-        name='keep.jpg',
-        url='https://test.test/keep.jpg',
-        size=100,
-        account_id=account.id,
+    attachment_1 = Attachment.objects.create(
+        file_id='keep.jpg',
+        account=account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
         output=task_field,
+        workflow=workflow,
     )
-    attachment_2 = FileAttachment.objects.create(
-        name='delete.jpg',
-        url='https://test.test/delete.jpg',
-        size=200,
-        account_id=account.id,
+    attachment_2 = Attachment.objects.create(
+        file_id='delete.jpg',
+        account=account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
         output=task_field,
+        workflow=workflow,
     )
     service = TaskFieldService(instance=task_field, user=user)
-    value = attachment_1.url
-    attachment_ids = [str(attachment_1.id)]
+    markdown_values = [attachment_1.file_id]
 
     # act
     service._remove_unused_attachments(
-        value=value,
-        attachment_ids=attachment_ids,
+        markdown_values=markdown_values,
     )
 
     # assert
-    assert FileAttachment.objects.filter(id=attachment_1.id).exists()
-    assert not FileAttachment.objects.filter(id=attachment_2.id).exists()
+    assert Attachment.objects.filter(id=attachment_1.id).exists()
+    assert not Attachment.objects.filter(id=attachment_2.id).exists()
 
 
 def test__remove_unused_attachments__value_none_deleted__ok():
@@ -750,25 +759,23 @@ def test__remove_unused_attachments__value_none_deleted__ok():
         workflow=workflow,
         account=account,
     )
-    attachment_1 = FileAttachment.objects.create(
-        name='keep.jpg',
-        url='https://test.test/keep.jpg',
-        size=100,
-        account_id=account.id,
+    attachment_1 = Attachment.objects.create(
+        file_id='keep.jpg',
+        account=account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
         output=task_field,
     )
     service = TaskFieldService(instance=task_field, user=user)
-    value = attachment_1.url
-    attachment_ids = [str(attachment_1.id)]
+    markdown_values = [attachment_1.file_id]
 
     # act
     service._remove_unused_attachments(
-        value=value,
-        attachment_ids=attachment_ids,
+        markdown_values=markdown_values,
     )
 
     # assert
-    assert FileAttachment.objects.filter(id=attachment_1.id).exists()
+    assert Attachment.objects.filter(id=attachment_1.id).exists()
 
 
 def test__remove_unused_attachments__no_value__ok():
@@ -787,23 +794,23 @@ def test__remove_unused_attachments__no_value__ok():
         workflow=workflow,
         account=account,
     )
-    attachment_1 = FileAttachment.objects.create(
-        name='delete.jpg',
-        url='https://test.test/delete.jpg',
-        size=100,
-        account_id=account.id,
+    attachment_1 = Attachment.objects.create(
+        file_id='delete.jpg',
+        account=account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
         output=task_field,
+        workflow=workflow,
     )
     service = TaskFieldService(instance=task_field, user=user)
 
     # act
     service._remove_unused_attachments(
-        value=None,
-        attachment_ids=None,
+        markdown_values=None,
     )
 
     # assert
-    assert not FileAttachment.objects.filter(id=attachment_1.id).exists()
+    assert not Attachment.objects.filter(id=attachment_1.id).exists()
 
 
 def test__remove_unused_attachments__no_value_no_attachments__ok():
@@ -826,12 +833,11 @@ def test__remove_unused_attachments__no_value_no_attachments__ok():
 
     # act
     service._remove_unused_attachments(
-        value=None,
-        attachment_ids=None,
+        markdown_values=None,
     )
 
     # assert
-    assert not FileAttachment.objects.filter(
+    assert not Attachment.objects.filter(
         output=task_field,
     ).exists()
 
@@ -869,6 +875,10 @@ def test__create_related__file_type_not_skip__ok(mocker):
         'src.processes.services.tasks.field.'
         'TaskFieldService._create_selections',
     )
+    link_rules_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_rules',
+    )
     service = TaskFieldService(instance=task_field, user=user)
     raw_value = ['123']
 
@@ -882,6 +892,7 @@ def test__create_related__file_type_not_skip__ok(mocker):
     # assert
     link_new_attachments_mock.assert_called_once_with(raw_value)
     create_selections_mock.assert_not_called()
+    link_rules_mock.assert_not_called()
 
 
 def test__create_related__file_type_skip__skip(mocker):
@@ -917,6 +928,10 @@ def test__create_related__file_type_skip__skip(mocker):
         'src.processes.services.tasks.field.'
         'TaskFieldService._create_selections',
     )
+    link_rules_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_rules',
+    )
     service = TaskFieldService(instance=task_field, user=user)
 
     # act
@@ -929,6 +944,7 @@ def test__create_related__file_type_skip__skip(mocker):
     # assert
     link_new_attachments_mock.assert_not_called()
     create_selections_mock.assert_not_called()
+    link_rules_mock.assert_not_called()
 
 
 def test__create_related__selection_type__ok(mocker):
@@ -964,6 +980,10 @@ def test__create_related__selection_type__ok(mocker):
         'src.processes.services.tasks.field.'
         'TaskFieldService._create_selections',
     )
+    link_rules_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_rules',
+    )
     service = TaskFieldService(instance=task_field, user=user)
 
     # act
@@ -974,6 +994,7 @@ def test__create_related__selection_type__ok(mocker):
     # assert
     create_selections_mock.assert_called_once_with(field_template)
     link_new_attachments_mock.assert_not_called()
+    link_rules_mock.assert_not_called()
 
 
 def test__create_related__other_type__skip(mocker):
@@ -1009,6 +1030,10 @@ def test__create_related__other_type__skip(mocker):
         'src.processes.services.tasks.field.'
         'TaskFieldService._create_selections',
     )
+    link_rules_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_rules',
+    )
     service = TaskFieldService(instance=task_field, user=user)
 
     # act
@@ -1019,6 +1044,59 @@ def test__create_related__other_type__skip(mocker):
     # assert
     link_new_attachments_mock.assert_not_called()
     create_selections_mock.assert_not_called()
+    link_rules_mock.assert_not_called()
+
+
+def test__create_related__with_rules__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    task_template = template.tasks.first()
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=task_template,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    field_template = fieldset_template.fields.first()
+    rule_template = fieldset_template.rules.first()
+    rule_template.fields.add(field_template)
+    workflow = create_test_workflow(user=user, template=template)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='string-field-1',
+        type=FieldType.STRING,
+        workflow=workflow,
+        account=account,
+    )
+    link_new_attachments_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_new_attachments',
+    )
+    create_selections_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._create_selections',
+    )
+    link_rules_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_rules',
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+    kwargs = {'some': 'data'}
+
+    # act
+    service._create_related(
+        instance_template=field_template,
+        **kwargs,
+    )
+
+    # assert
+    link_new_attachments_mock.assert_not_called()
+    create_selections_mock.assert_not_called()
+    link_rules_mock.assert_called_once_with(field_template, **kwargs)
 
 
 def test_partial_update__ok(mocker):
@@ -1065,7 +1143,9 @@ def test_partial_update__ok(mocker):
     service.partial_update(value=raw_value)
 
     # assert
-    get_valid_value_mock.assert_called_once_with(raw_value)
+    get_valid_value_mock.assert_called_once_with(
+        raw_value=raw_value,
+    )
     link_new_attachments_mock.assert_not_called()
     task_field.refresh_from_db()
     assert task_field.value == value
@@ -1089,23 +1169,18 @@ def test_partial_update__type_file__ok(mocker):
         workflow=workflow,
         account=user.account,
     )
-    deleted_attachment = FileAttachment.objects.create(
-        name='test',
-        url='https://test.test',
-        size=1488,
-        account_id=user.account_id,
+    deleted_attachment = Attachment.objects.create(
+        file_id='deleted_file_123.png',
+        account=user.account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
+        task=task,
+        workflow=workflow,
         output=task_field,
     )
-    value = 'https://john.cena/john.cena'
-    clear_value = 'https://clear-john.cena/john.cena'
-    markdown_value = '[john.cena](https://john.cena/john.cena)'
-    attachment = FileAttachment.objects.create(
-        name='john.cena',
-        url=value,
-        size=1488,
-        account_id=user.account_id,
-        output=task_field,
-    )
+    value = 'new_file_456.jpg'
+    clear_value = 'new_file_456.jpg'
+    markdown_value = 'File: new_file_456.jpg'
     get_valid_value_mock = mocker.patch(
         'src.processes.services.tasks.field.'
         'TaskFieldService._get_valid_value',
@@ -1124,14 +1199,16 @@ def test_partial_update__type_file__ok(mocker):
         instance=task_field,
         user=user,
     )
-    raw_value = [str(attachment.id)]
+    raw_value = ['new_file_456.jpg']
 
     # act
     service.partial_update(value=raw_value)
 
     # assert
-    get_valid_value_mock.assert_called_once_with(raw_value)
-    assert not FileAttachment.objects.filter(id=deleted_attachment.id).exists()
+    get_valid_value_mock.assert_called_once_with(
+        raw_value=raw_value,
+    )
+    assert not Attachment.objects.filter(id=deleted_attachment.id).exists()
     link_new_attachments_mock.assert_called_once_with(raw_value)
     task_field.refresh_from_db()
     assert task_field.value == value
@@ -1158,11 +1235,13 @@ def test_partial_update__type_file_null_value__ok(mocker):
         workflow=workflow,
         account=user.account,
     )
-    deleted_attachment = FileAttachment.objects.create(
-        name='test',
-        url='https://test.test',
-        size=1488,
-        account_id=user.account_id,
+    deleted_attachment = Attachment.objects.create(
+        file_id='deleted_null_file_123.png',
+        account=user.account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
+        task=task,
+        workflow=workflow,
         output=task_field,
     )
     service = TaskFieldService(
@@ -1190,8 +1269,10 @@ def test_partial_update__type_file_null_value__ok(mocker):
     service.partial_update(value=raw_value)
 
     # assert
-    get_valid_value_mock.assert_called_once_with(raw_value)
-    assert not FileAttachment.objects.filter(id=deleted_attachment.id).exists()
+    get_valid_value_mock.assert_called_once_with(
+        raw_value=raw_value,
+    )
+    assert not Attachment.objects.filter(id=deleted_attachment.id).exists()
     link_new_attachments_mock.assert_called_once_with(raw_value)
     task_field.refresh_from_db()
     assert task_field.value == value
@@ -1199,6 +1280,199 @@ def test_partial_update__type_file_null_value__ok(mocker):
     assert task_field.clear_value == clear_value
     assert task_field.user_id is None
     assert task_field.group_id is None
+
+
+def test_remove_unused_attachments__event_linked_attachment_preserved(
+    mocker,
+):
+    """
+    Attachment with both output (field) and event set must NOT be deleted.
+
+    Without event__isnull=True in filter_kwargs such attachment would be
+    selected and deleted when field is cleared. With event__isnull=True
+    it is excluded and preserved (consistency refresh_attachments_for_text).
+    """
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        is_required=True,
+        type=FieldType.FILE,
+        workflow=workflow,
+        account=user.account,
+    )
+    comment_event = create_test_event(
+        workflow=workflow,
+        user=user,
+        type_event=WorkflowEventType.COMMENT,
+    )
+    attachment_linked_to_event = Attachment.objects.create(
+        file_id='event_and_field_file.png',
+        account=user.account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
+        task=task,
+        workflow=workflow,
+        output=task_field,
+        event=comment_event,
+    )
+    get_valid_value_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._get_valid_value',
+        return_value=FieldData(
+            value='',
+            markdown_value='',
+            clear_value='',
+        ),
+    )
+    link_new_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_new_attachments',
+    )
+    create_selections_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._create_selections',
+    )
+    service = TaskFieldService(
+        instance=task_field,
+        user=user,
+    )
+
+    # act
+    service.partial_update(value=None)
+
+    # assert
+    get_valid_value_mock.assert_called_once()
+    assert Attachment.objects.filter(
+        id=attachment_linked_to_event.id,
+    ).exists()
+    link_new_mock.assert_called_once_with(None)
+    create_selections_mock.assert_not_called()
+
+
+def test_remove_unused_attachments__field_only_attachment_deleted(mocker):
+    """
+    Attachment with output=field and event=null is deleted when field cleared.
+
+    Normal case: only field-level attachments are considered for removal.
+    """
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-2',
+        is_required=False,
+        type=FieldType.FILE,
+        workflow=workflow,
+        account=user.account,
+    )
+    field_only_attachment = Attachment.objects.create(
+        file_id='field_only_file.png',
+        account=user.account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
+        task=task,
+        workflow=workflow,
+        output=task_field,
+        event=None,
+    )
+    get_valid_value_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._get_valid_value',
+        return_value=FieldData(
+            value='',
+            markdown_value='',
+            clear_value='',
+        ),
+    )
+    link_new_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_new_attachments',
+    )
+    create_selections_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._create_selections',
+    )
+    service = TaskFieldService(
+        instance=task_field,
+        user=user,
+    )
+
+    # act
+    service.partial_update(value=None)
+
+    # assert
+    get_valid_value_mock.assert_called_once()
+    assert not Attachment.objects.filter(
+        id=field_only_attachment.id,
+    ).exists()
+    link_new_mock.assert_called_once_with(None)
+    create_selections_mock.assert_not_called()
+
+
+def test_remove_unused_attachments__comment_attachment_unchanged(mocker):
+    """
+    Comment attachment (output=null, event set) is out of scope for field.
+
+    Updating/clearing the field must not delete attachments linked to events.
+    """
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-3',
+        is_required=False,
+        type=FieldType.FILE,
+        workflow=workflow,
+        account=user.account,
+    )
+    comment_event = create_test_event(
+        workflow=workflow,
+        user=user,
+        type_event=WorkflowEventType.COMMENT,
+    )
+    comment_attachment = Attachment.objects.create(
+        file_id='comment_only_file.png',
+        account=user.account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
+        task=task,
+        workflow=workflow,
+        output=None,
+        event=comment_event,
+    )
+    get_valid_value_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._get_valid_value',
+        return_value=FieldData(
+            value='',
+            markdown_value='',
+            clear_value='',
+        ),
+    )
+    link_new_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_new_attachments',
+    )
+    service = TaskFieldService(
+        instance=task_field,
+        user=user,
+    )
+
+    # act
+    service.partial_update(value=None)
+
+    # assert
+    get_valid_value_mock.assert_called_once()
+    assert Attachment.objects.filter(id=comment_attachment.id).exists()
+    link_new_mock.assert_called_once_with(None)
 
 
 def test__partial_update__no_value_kwarg__ok(mocker):
@@ -1236,7 +1510,9 @@ def test__partial_update__no_value_kwarg__ok(mocker):
     service.partial_update()
 
     # assert
-    get_valid_value_mock.assert_called_once_with(None)
+    get_valid_value_mock.assert_called_once_with(
+        raw_value=None,
+    )
     remove_unused_attachments_mock.assert_not_called()
     link_new_attachments_mock.assert_not_called()
 
@@ -1635,6 +1911,7 @@ def test_get_valid_checkbox_value__many_values__ok(mocker):
     clear_markdown_mock.assert_called_once_with(value)
 
 
+@override_settings(FILE_SERVICE_HOST_PATH='example.com')
 def test__get_valid_checkbox_value__not_list__raise_exception(mocker):
 
     """raw_value is not a list — raises TaskFieldException"""
@@ -1736,39 +2013,36 @@ def test__get_valid_checkbox_value__not_in_allowed__raise_exception(mocker):
     get_selections_values_mock.assert_called_once_with()
 
 
+@override_settings(FILE_SERVICE_HOST_PATH='example.com')
 def test_get_valid_file_value__one_file__ok():
 
     # arrange
     user = create_test_owner()
     workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
-    TaskField.objects.create(
+    field = TaskField.objects.create(
         task=task,
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
         account=user.account,
     )
-    attachment = FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=user.account_id,
-    )
-    service = TaskFieldService(user=user)
-    raw_value = [str(attachment.id)]
+    value = 'abc123def456ghi789'
+    full_url = f'https://example.com/{value}'
+    service = TaskFieldService(user=user, instance=field)
+    file_id = f'[doc]({full_url})'
+    raw_value = [file_id]
 
     # act
     field_data = service._get_valid_file_value(raw_value=raw_value)
 
     # assert
-    assert field_data.value == attachment.url
-    assert field_data.markdown_value == (
-        f'[{attachment.name}]({attachment.url})'
-    )
-    assert field_data.clear_value == attachment.url
+    assert field_data.value == full_url
+    assert field_data.markdown_value == file_id
+    assert field_data.clear_value == full_url
 
 
+@override_settings(FILE_SERVICE_HOST_PATH='example.com')
 def test_get_valid_file_value__multiple_files__ok():
 
     # arrange
@@ -1782,35 +2056,27 @@ def test_get_valid_file_value__multiple_files__ok():
         workflow=workflow,
         account=user.account,
     )
-    attachment_1 = FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=user.account_id,
-        output=field,
-    )
-    attachment_2 = FileAttachment.objects.create(
-        name='The Rock',
-        url='https://rock.com',
-        size=1483,
-        account_id=user.account_id,
-    )
     service = TaskFieldService(user=user, instance=field)
-    raw_value = [str(attachment_1.id), str(attachment_2.id)]
+    value = 'abc123def456ghi789'
+    value_2 = 'abc123def456ghi7890'
+    url_1 = f'https://example.com/{value}'
+    url_2 = f'https://example.com/{value_2}'
+    file_ids = [
+        f'[doc]({url_1})',
+        f'[doc2]({url_2})',
+    ]
+    raw_value = file_ids
 
     # act
     field_data = service._get_valid_file_value(raw_value=raw_value)
 
     # assert
-    assert field_data.value == f'{attachment_1.url}, {attachment_2.url}'
-    assert field_data.markdown_value == (
-        f'[{attachment_1.name}]({attachment_1.url}), '
-        f'[{attachment_2.name}]({attachment_2.url})'
-    )
-    assert field_data.clear_value == f'{attachment_1.url}, {attachment_2.url}'
+    assert field_data.value == f'{url_1}, {url_2}'
+    assert field_data.markdown_value == ', '.join(file_ids)
+    assert field_data.clear_value == f'{url_1}, {url_2}'
 
 
-def test_get_valid_file_value__new_field__ok():
+def test_get_valid_file_value__empty_list__empty_result():
 
     # arrange
     user = create_test_owner()
@@ -1823,46 +2089,16 @@ def test_get_valid_file_value__new_field__ok():
         workflow=workflow,
         account=user.account,
     )
-    event = WorkflowEvent.objects.create(
-        account=user.account,
-        type=WorkflowEventType.COMMENT,
-        workflow=workflow,
-        task=task,
-        user=user,
-    )
-    FileAttachment.objects.create(
-        name='The Rock',
-        url='https://rock.com',
-        size=1483,
-        account_id=user.account_id,
-        output=field,
-    )
-    FileAttachment.objects.create(
-        name='The Rock',
-        url='https://rock.com',
-        size=1483,
-        account_id=user.account_id,
-        event=event,
-    )
-    new_attachment = FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=user.account_id,
-    )
-
-    service = TaskFieldService(user=user)
-    raw_value = [str(new_attachment.id)]
+    service = TaskFieldService(user=user, instance=field)
+    raw_value = []
 
     # act
     field_data = service._get_valid_file_value(raw_value=raw_value)
 
     # assert
-    assert field_data.value == new_attachment.url
-    assert field_data.markdown_value == (
-        f'[{new_attachment.name}]({new_attachment.url})'
-    )
-    assert field_data.clear_value == new_attachment.url
+    assert field_data.value == ''
+    assert field_data.markdown_value == ''
+    assert field_data.clear_value == ''
 
 
 def test_get_valid_file_value__not_list__raise_exception():
@@ -1878,19 +2114,7 @@ def test_get_valid_file_value__not_list__raise_exception():
         workflow=workflow,
         account=user.account,
     )
-    attachment = FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=user.account_id,
-    )
-    another_user = create_test_owner(email='test@test.test')
-    another_attachment = FileAttachment.objects.create(
-        name='another',
-        url='https://another',
-        size=1652,
-        account_id=another_user.account_id,
-    )
+
     service = TaskFieldService(
         instance=task_field,
         user=user,
@@ -1899,16 +2123,42 @@ def test_get_valid_file_value__not_list__raise_exception():
     # act
     with pytest.raises(TaskFieldException) as ex:
         service._get_valid_file_value(
-            raw_value=[attachment.id, another_attachment.id],
+            raw_value='not_a_list',
         )
 
     # assert
-    assert ex.value.message == messages.MSG_PW_0037
+    assert ex.value.message == messages.MSG_PW_0036
     assert ex.value.api_name == task_field.api_name
 
 
-@pytest.mark.parametrize('raw_value', ('abc', None, []))
-def test_get_valid_file_value__invalid_attach_id__raise_exception(raw_value):
+@override_settings(FILE_SERVICE_HOST_PATH='example.com')
+def test_get_valid_file_value__external_domain_link__raise_exception():
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.FILE,
+        workflow=workflow,
+        account=user.account,
+    )
+    service = TaskFieldService(user=user, instance=field)
+    raw_value = ['[x](https://other.com/id12345678)']
+
+    # act
+    with pytest.raises(TaskFieldException) as ex:
+        service._get_valid_file_value(raw_value=raw_value)
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0036
+    assert ex.value.api_name == field.api_name
+
+
+@override_settings(FILE_SERVICE_HOST_PATH='example.com')
+def test_get_valid_file_value__invalid_attach_id__raise_exception():
 
     # arrange
     user = create_test_owner()
@@ -1925,7 +2175,7 @@ def test_get_valid_file_value__invalid_attach_id__raise_exception(raw_value):
 
     # act
     with pytest.raises(TaskFieldException) as ex:
-        service._get_valid_file_value(raw_value=[raw_value])
+        service._get_valid_file_value(raw_value=['abc'])
 
     # assert
     assert ex.value.message == messages.MSG_PW_0036
@@ -2391,3 +2641,315 @@ def test__get_valid_value__not_required_and_null_value__ok(
     # assert
     assert result == FieldData()
     get_valid_string_value_mock.assert_not_called()
+
+
+def test__link_rules__one_rule__ok():
+
+    """One template rule → one FieldSetRule linked"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    task_template = template.tasks.first()
+    fieldset_api_name = 'fs1'
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=task_template,
+        api_name=fieldset_api_name,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    field_template = fieldset_template.fields.first()
+    rule_template = fieldset_template.rules.first()
+    rule_template.fields.add(field_template)
+
+    workflow = create_test_workflow(
+        user=user,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name=fieldset_api_name,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    rule = fieldset.rules.first()
+    task_field = fieldset.fields.first()
+
+    service = TaskFieldService(
+        instance=task_field,
+        user=user,
+    )
+
+    # act
+    service._link_rules(
+        instance_template=field_template,
+        fieldset_id=fieldset.id,
+    )
+
+    # assert
+    assert task_field.rules.count() == 1
+    assert task_field.rules.first() == rule
+
+
+def test__link_rules__multiple_rules__ok():
+
+    """Two template rules → two FieldSetRules linked"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    task_template = template.tasks.first()
+    fieldset_api_name = 'fs1'
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=task_template,
+        api_name=fieldset_api_name,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    rule_tmpl_2 = FieldsetTemplateRule.objects.create(
+        fieldset=fieldset_template,
+        account=account,
+        api_name=f'{fieldset_api_name}-rule-2',
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='200',
+    )
+    field_template = fieldset_template.fields.first()
+    rule_tmpl_1 = fieldset_template.rules.get(
+        api_name=f'{fieldset_api_name}-rule-1',
+    )
+    field_template.rules.set(
+        [rule_tmpl_1, rule_tmpl_2],
+    )
+
+    workflow = create_test_workflow(
+        user=user,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name=fieldset_api_name,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    rule_2 = FieldSetRule.objects.create(
+        fieldset=fieldset,
+        account=account,
+        api_name=f'{fieldset_api_name}-rule-2',
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='200',
+    )
+    rule_1 = fieldset.rules.exclude(id=rule_2.id).first()
+    task_field = fieldset.fields.first()
+
+    service = TaskFieldService(
+        instance=task_field,
+        user=user,
+    )
+
+    # act
+    service._link_rules(
+        instance_template=field_template,
+        fieldset_id=fieldset.id,
+    )
+
+    # assert
+    assert task_field.rules.count() == 2
+    linked_ids = set(
+        task_field.rules.values_list('id', flat=True),
+    )
+    assert linked_ids == {rule_1.id, rule_2.id}
+
+
+def test__link_rules__partial_match__ok():
+
+    """Two template rules, only one FieldSetRule exists
+    — only matched one linked"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    task_template = template.tasks.first()
+    fieldset_api_name = 'fs1'
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=task_template,
+        api_name=fieldset_api_name,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    rule_tmpl_2 = FieldsetTemplateRule.objects.create(
+        fieldset=fieldset_template,
+        account=account,
+        api_name=f'{fieldset_api_name}-rule-2',
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='200',
+    )
+    field_template = fieldset_template.fields.first()
+    rule_tmpl_1 = fieldset_template.rules.get(
+        api_name=f'{fieldset_api_name}-rule-1',
+    )
+    field_template.rules.set(
+        [rule_tmpl_1, rule_tmpl_2],
+    )
+
+    workflow = create_test_workflow(
+        user=user,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name=fieldset_api_name,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    rule = fieldset.rules.first()
+    task_field = fieldset.fields.first()
+
+    service = TaskFieldService(
+        instance=task_field,
+        user=user,
+    )
+
+    # act
+    service._link_rules(
+        instance_template=field_template,
+        fieldset_id=fieldset.id,
+    )
+
+    # assert
+    assert task_field.rules.count() == 1
+    assert task_field.rules.first() == rule
+
+
+def test__link_rules__no_matching_rules__empty():
+
+    """Template has rule, but no FieldSetRule
+    with that api_name — M2M stays empty"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    task_template = template.tasks.first()
+    fieldset_api_name = 'fs1'
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=task_template,
+        api_name=fieldset_api_name,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    field_template = fieldset_template.fields.first()
+    rule_template = fieldset_template.rules.first()
+    rule_template.fields.add(field_template)
+
+    workflow = create_test_workflow(
+        user=user,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name=fieldset_api_name,
+    )
+    FieldSetRule.objects.create(
+        fieldset=fieldset,
+        account=account,
+        api_name='different-rule',
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='999',
+    )
+    task_field = fieldset.fields.first()
+
+    service = TaskFieldService(
+        instance=task_field,
+        user=user,
+    )
+
+    # act
+    service._link_rules(
+        instance_template=field_template,
+        fieldset_id=fieldset.id,
+    )
+
+    # assert
+    assert task_field.rules.count() == 0
+
+
+def test__link_rules__another_fieldset_rule__not_linked():
+
+    """FieldSetRule has matching api_name
+    but belongs to another fieldset — not linked"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    task_template = template.tasks.first()
+    fieldset_api_name = 'fs1'
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=task_template,
+        api_name=fieldset_api_name,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    field_template = fieldset_template.fields.first()
+    rule_template = fieldset_template.rules.first()
+    rule_template.fields.add(field_template)
+
+    workflow = create_test_workflow(
+        user=user,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    fieldset_1 = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name=fieldset_api_name,
+    )
+    task_field = fieldset_1.fields.first()
+    create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fs2',
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+
+    service = TaskFieldService(
+        instance=task_field,
+        user=user,
+    )
+
+    # act
+    service._link_rules(
+        instance_template=field_template,
+        fieldset_id=fieldset_1.id,
+    )
+
+    # assert
+    assert task_field.rules.count() == 0

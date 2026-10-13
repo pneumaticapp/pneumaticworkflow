@@ -7,27 +7,27 @@
   @media (--desktop) {
     display: flex;
     flex-wrap: nowrap;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
   }
 
   &:hover {
-    box-shadow: 0 8px 24px rgba(98, 98, 95, 0.08);
+    box-shadow: 0 8px 24px rgb(98 98 95 / 8%);
   }
 
   figure {
-    margin: 0;
-    margin-bottom: 1.6rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
     width: 100%;
+    margin: 0;
+    margin-bottom: 1.6rem;
     color: #62625f;
 
     @media (--desktop) {
+      width: 4rem;
       margin: 0;
       margin-right: 1.6rem;
-      width: 4rem;
     }
 
     > img {
@@ -40,11 +40,11 @@
 
   &__info {
     @media (--desktop) {
-      margin-right: 3.2rem;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
       flex: 1;
+      align-items: center;
+      justify-content: space-between;
+      margin-right: 3.2rem;
     }
   }
 

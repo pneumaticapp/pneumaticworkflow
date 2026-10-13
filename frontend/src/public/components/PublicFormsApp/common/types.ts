@@ -1,12 +1,12 @@
-/* eslint-disable */
-/* prettier-ignore */
-import { IKickoff } from '../../../types/template';
+import { IRuntimeKickoffClient } from '../../../types/template';
+
+export type IPublicFormKickoff = IRuntimeKickoffClient;
 
 export interface IPublicForm {
   accountId: number;
   name: string;
   description: string;
-  kickoff: IKickoff;
+  kickoff: IPublicFormKickoff;
   showCaptcha: boolean;
 }
 

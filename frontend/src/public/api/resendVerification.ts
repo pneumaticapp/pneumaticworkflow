@@ -5,10 +5,14 @@ export interface IResendVerificationResponse {
 }
 
 export function resendVerification() {
-  return commonRequest<IResendVerificationResponse>('resendVerification', {
-    method: 'POST',
-  }, {
-    shouldThrow: true,
-    type: 'local',
-  });
+  return commonRequest<IResendVerificationResponse>(
+    'resendVerification',
+    {
+      method: 'POST',
+    },
+    {
+      shouldThrow: true,
+      type: 'local',
+    },
+  );
 }

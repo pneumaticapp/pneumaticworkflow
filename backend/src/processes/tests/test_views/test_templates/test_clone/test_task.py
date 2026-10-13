@@ -1,6 +1,5 @@
 import pytest
 
-from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     OwnerRole,
     ConditionAction,
@@ -10,12 +9,149 @@ from src.processes.enums import (
     PredicateOperator,
     PredicateType,
 )
+from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
 from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_owner,
     create_test_user,
 )
 
 pytestmark = pytest.mark.django_db
+
+
+def test_clone__preserves_task_api_name__ok(mocker, api_client):
+
+    # arrange
+    task_api_name = 'task-699a25'
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+    create_response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'api_name': task_api_name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+    assert create_response.status_code == 200
+    origin_template = Template.objects.get(
+        id=create_response.data['id'],
+    )
+    create_integrations_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+
+    # act
+    clone_response = api_client.post(
+        f'/templates/{origin_template.id}/clone',
+    )
+
+    # assert
+    assert clone_response.status_code == 200
+    assert create_response.data['tasks'][0]['api_name'] == task_api_name
+    assert clone_response.data['tasks'][0]['api_name'] == task_api_name
+    create_integrations_mock.assert_called_once_with(
+        template=Template.objects.get(id=clone_response.data['id']),
+    )
+
+
+def test_clone__activate_with_same_api_name__ok(mocker, api_client):
+
+    # arrange
+    task_api_name = 'task-699a25'
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+    create_response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'api_name': task_api_name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+    assert create_response.status_code == 200
+    origin_template = Template.objects.get(
+        id=create_response.data['id'],
+    )
+    create_integrations_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    clone_response = api_client.post(
+        f'/templates/{origin_template.id}/clone',
+    )
+    assert clone_response.status_code == 200
+    clone_data = clone_response.data
+    clone_data['is_active'] = True
+    template_updated_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+
+    # act
+    activate_response = api_client.put(
+        f'/templates/{clone_data["id"]}',
+        data=clone_data,
+    )
+
+    # assert
+    assert activate_response.status_code == 200
+    assert origin_template.tasks.get().api_name == task_api_name
+    assert TaskTemplate.objects.get(
+        template_id=clone_data['id'],
+    ).api_name == task_api_name
+    create_integrations_mock.assert_called_once_with(
+        template=Template.objects.get(id=clone_data['id']),
+    )
+    template_updated_mock.assert_called_once_with(
+        template=Template.objects.get(id=clone_data['id']),
+    )
 
 
 class TestCopyTemplateTask:
@@ -99,15 +235,10 @@ class TestCopyTemplateTask:
 
     def test_clone__due_date__ok(
         self,
-        mocker,
         api_client,
     ):
 
         # arrange
-        analysis_mock = mocker.patch(
-            'src.processes.serializers.templates.task.'
-            'AnalyticService.templates_task_due_date_created',
-        )
         user = create_test_user()
         api_client.token_authenticate(user)
         duration = '10:00:00'
@@ -156,13 +287,6 @@ class TestCopyTemplateTask:
         assert response.status_code == 200
         task_data = response.data['tasks'][0]
         assert task_data['raw_due_date']['duration'] == duration
-        analysis_mock.assert_called_once_with(
-            user=user,
-            template=template,
-            task=template.tasks.get(number=1),
-            auth_type=AuthTokenType.USER,
-            is_superuser=False,
-        )
 
     def test_clone__return_task__ok(
         self,

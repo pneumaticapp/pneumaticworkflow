@@ -28,10 +28,8 @@ export interface IGetUserMenuItemsOptions {
 export const getUserMenuItems = (
   user: IAuthUser,
   counters?: TMenuCounter[],
-  options?: IGetUserMenuItemsOptions,
+  _options?: IGetUserMenuItemsOptions,
 ): IMenuItem[] => {
-  const { isTemplateOwner } = options || {};
-  const canAccessTemplates = user.isAdmin || isTemplateOwner;
   const canAccessWorkflows = getCanAccessWorkflows({ authUser: user } as any);
 
   const items: IMenuItem[] = [
@@ -59,7 +57,7 @@ export const getUserMenuItems = (
       iconComponent: TemplatesIcon,
       label: 'menu.templates',
       to: ERoutes.Templates,
-      isHidden: !canAccessTemplates,
+      isHidden: !user.isAdmin,
     },
     {
       id: 'highlights',
@@ -84,7 +82,7 @@ export const getUserMenuItems = (
     },
     {
       id: 'help-center',
-      to: 'https://support.pneumatic.app/en/',
+      to: 'https://support.pneumatic.app/',
       label: 'menu.help-center',
       subsSlug: 'help-center',
       newWindow: true,

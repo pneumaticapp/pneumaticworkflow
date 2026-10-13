@@ -4,7 +4,9 @@ import { mapRequestBody } from '../utils/mappers';
 import { IAuthUser } from '../types/redux';
 
 export function changePhotoProfile(changedProfileFields: Partial<IAuthUser>) {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   return commonRequest(
     urls.editProfile,

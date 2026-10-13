@@ -9,9 +9,35 @@ import { identifyAppPartOnClient } from '../utils/identifyAppPart/identifyAppPar
 import { getCurrentToken } from '../utils/auth';
 import { envBackendURL } from '../constants/enviroment';
 import { isRequestCanceled } from '../utils/isRequestCanceled';
+import { isExpectedClientError } from '../utils/expectedClientErrors';
 
-export type TRequestType = 'public' | 'local';
+import { InterceptorError } from './InterceptorError';
+import { createApiError } from './utils/createApiError';
+import { bufferNetworkError } from './networkErrorBuffer';
+
+export { InterceptorError };
+
+export type TRequestType = 'public' | 'local' | 'fileService';
 export type TResponseType = 'json' | 'text' | 'empty';
+
+export class ApiError extends InterceptorError {
+  status?: number;
+
+  data?: unknown;
+
+  [key: string]: unknown;
+
+  constructor(message: string, payload: unknown, status?: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.data = payload;
+    this.status = status;
+    if (payload && typeof payload === 'object') {
+      Object.assign(this, payload);
+    }
+    Object.setPrototypeOf(this, ApiError.prototype);
+  }
+}
 
 interface ICommonRequestOptions {
   type: TRequestType;
@@ -31,7 +57,6 @@ const DEFAULT_OPTIONS: ICommonRequestOptions = {
 
 const axiosInstance: AxiosInstance = axios.create({
   timeout: ETimeouts.Default,
-  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -58,6 +83,10 @@ axiosInstance.interceptors.request.use(
       });
     }
 
+    if (config.data instanceof FormData) {
+      headers.delete('Content-Type');
+    }
+
     config.headers = headers;
     return config;
   },
@@ -80,18 +109,40 @@ axiosInstance.interceptors.response.use(
     }
 
     if (error.response) {
-      logger.error('Response Error:', error.response.data);
+      const responseData = error.response.data;
+      if (isExpectedClientError(responseData)) {
+        logger.info('Response Error:', error.response.status, responseData);
+      } else {
+        logger.error('Response Error:', error.response.status, responseData);
+      }
     } else if (error.request) {
-      logger.error('Request Error:', error.request);
+      if (error.code === 'ERR_NETWORK') {
+        bufferNetworkError({
+          method: error.config?.method,
+          url: error.config?.url,
+        });
+      } else {
+        // Don't log error.request (XMLHttpRequest) — contains auth tokens via __sentry_xhr_v3__
+        // Don't log error.config.headers — contains Authorization Bearer token
+        logger.error('Request Error:', {
+          message: error.message,
+          code: error.code,
+          status: error.status,
+          method: error.config?.method,
+          url: error.config?.url,
+          baseURL: error.config?.baseURL,
+          timeout: error.config?.timeout,
+        });
+      }
     } else {
       logger.error('Error:', error.message);
     }
 
-    const data = error.response?.data;
-    const payload = typeof data === 'string' ? { error: data } : data ?? {};
-    return Promise.reject(Object.assign(new Error(), payload, { status: error.response?.status }));
+    return Promise.reject(createApiError(error.response?.data, error.response?.status));
   },
 );
+
+let cachedRequestBaseUrlsMap: { [key in TRequestType]: string } | null = null;
 
 export async function commonRequest(
   rawUrl: string,
@@ -104,28 +155,36 @@ export async function commonRequest<T>(
   options?: Partial<ICommonRequestOptions>,
 ): Promise<T>;
 
-/* eslint-disable consistent-return */
 export async function commonRequest<T>(
   rawUrl: string,
   params: Partial<AxiosRequestConfig> = {},
   options: Partial<ICommonRequestOptions> = {},
 ): Promise<T | void> {
-  const {
-    api: { publicUrl, urls },
-  } = getBrowserConfigEnv();
+  if (!cachedRequestBaseUrlsMap) {
+    const {
+      api: { publicUrl, fileServiceUrl },
+    } = getBrowserConfigEnv();
+    cachedRequestBaseUrlsMap = {
+      public: envBackendURL || publicUrl,
+      local: '',
+      fileService: fileServiceUrl,
+    };
+  }
+
   const { type, shouldThrow, successStatusCodes, timeOut } = { ...DEFAULT_OPTIONS, ...options };
-  const requestBaseUrlsMap: { [key in TRequestType]: string } = {
-    public: envBackendURL || publicUrl,
-    local: '',
-  };
+  const requestBaseUrlsMap = cachedRequestBaseUrlsMap;
 
   try {
+    const {
+      api: { urls },
+    } = getBrowserConfigEnv();
     const url = (urls as { [key in string]: string })[rawUrl] || rawUrl;
     const fullUrl = mergePaths(requestBaseUrlsMap[type], url);
 
     const config: AxiosRequestConfig = {
       ...params,
       timeout: timeOut,
+      withCredentials: type !== 'fileService',
       responseType: options.responseType === 'text' || options.responseType === 'empty' ? 'text' : 'json',
       validateStatus: (status) => successStatusCodes.includes(status),
     };
@@ -141,8 +200,8 @@ export async function commonRequest<T>(
     if (shouldThrow) {
       throw error;
     }
-    logger.error(error);
-    
+    if (!(error instanceof InterceptorError)) {
+      logger.error(error);
+    }
   }
 }
-/* eslint-enable consistent-return */

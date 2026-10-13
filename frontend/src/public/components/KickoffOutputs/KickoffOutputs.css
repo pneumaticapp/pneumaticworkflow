@@ -13,9 +13,9 @@
   font-size: 11px;
   font-weight: 800;
   line-height: 16px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   color: #b9b9b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .header-title__edit {
@@ -30,8 +30,8 @@
 }
 
 .header__description {
-  margin-top: 16px;
   display: block;
+  margin-top: 16px;
   font-family: Nunito, sans-serif;
   font-size: 15px;
   line-height: 20px;
@@ -39,10 +39,10 @@
 }
 
 .output {
-  margin-bottom: 8px;
   display: block;
-  overflow: hidden;
   width: 100%;
+  margin-bottom: 8px;
+  overflow: hidden;
   text-overflow: ellipsis;
 
   &:last-child {
@@ -63,8 +63,8 @@
   font-family: Nunito, sans-serif;
   font-size: 15px;
   line-height: 20px;
-  overflow-wrap: break-word;
   color: var(--pneumatic-color-black72);
+  overflow-wrap: break-word;
 }
 
 .output__url {
@@ -72,12 +72,40 @@
   font-family: Nunito, sans-serif;
   font-size: 15px;
   line-height: 20px;
+  color: var(--pneumatic-color-link-dark);
   white-space: nowrap;
   text-decoration: underline;
-  color: var(--pneumatic-color-link-dark);
   transition: color 0.1s ease-in-out;
 
   &:hover {
     color: var(--pneumatic-color-link-hover);
   }
+}
+
+.fieldset-output-group {
+  padding-left: 12px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  border-left: 3px solid var(--pneumatic-color-link);
+}
+
+.fieldset-output-group__title {
+  margin: 0 0 4px;
+  font-family: Nunito, sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 20px;
+  color: #262522;
+
+  @mixin text-wrap;
+}
+
+.fieldset-output-group__description {
+  margin: 0 0 8px;
+  font-family: Nunito, sans-serif;
+  font-size: 13px;
+  line-height: 18px;
+  color: #79756d;
+
+  @mixin text-wrap;
 }

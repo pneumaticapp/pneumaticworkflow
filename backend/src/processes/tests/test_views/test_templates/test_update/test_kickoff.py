@@ -211,6 +211,7 @@ class TestUpdateKickoff:
         assert response.status_code == 200
         assert response.data['kickoff'] == {
             'fields': [],
+            'fieldsets': [],
         }
         assert response.data['is_active'] is False
         kickoff_update_mock.assert_not_called()
@@ -267,6 +268,7 @@ class TestUpdateKickoff:
         assert response.status_code == 200
         assert response.data['kickoff'] == {
             'fields': [],
+            'fieldsets': [],
         }
         assert response.data['is_active'] is False
         kickoff_update_mock.assert_not_called()
@@ -309,5 +311,6 @@ class TestUpdateKickoff:
         assert response.status_code == 200
         assert response.data['kickoff'] == {
             'fields': [],
+            'fieldsets': [],
         }
         kickoff_update_mock.assert_not_called()

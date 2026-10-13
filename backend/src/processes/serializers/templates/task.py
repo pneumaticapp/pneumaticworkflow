@@ -32,12 +32,15 @@ from src.processes.serializers.templates.condition import (
 )
 from src.processes.serializers.templates.field import (
     FieldTemplateSerializer,
-    FieldTemplateShortViewSerializer,
+)
+from src.processes.serializers.templates.fieldset import (
+    FieldsetTemplateSerializer,
 )
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
     CreateOrUpdateRelatedMixin,
     CustomValidationApiNameMixin,
+    FieldsetMixin,
 )
 from src.processes.serializers.templates.raw_due_date import (
     RawDueDateTemplateSerializer,
@@ -59,6 +62,7 @@ class TaskTemplateSerializer(
     CustomValidationErrorMixin,
     AdditionalValidationMixin,
     CustomValidationApiNameMixin,
+    FieldsetMixin,
     ModelSerializer,
 ):
 
@@ -71,8 +75,10 @@ class TaskTemplateSerializer(
             'number',
             'description',
             'require_completion_by_all',
+            'skip_for_starter',
             'delay',
             'fields',
+            'fieldsets',
             'conditions',
             'api_name',
             'raw_performers',
@@ -87,6 +93,7 @@ class TaskTemplateSerializer(
             'number',
             'description',
             'require_completion_by_all',
+            'skip_for_starter',
             'delay',
             'api_name',
             'template',
@@ -99,6 +106,11 @@ class TaskTemplateSerializer(
     number = IntegerField()
     api_name = CharField(max_length=200, required=False)
     fields = FieldTemplateSerializer(many=True, required=False)
+    fieldsets = FieldsetTemplateSerializer(
+        many=True,
+        required=False,
+        allow_empty=True,
+    )
     checklists = ChecklistTemplateSerializer(many=True, required=False)
     conditions = ConditionTemplateSerializer(many=True, required=False)
     raw_performers = RawPerformerSerializer(
@@ -143,6 +155,32 @@ class TaskTemplateSerializer(
             context['account_user_ids'] = set(
                 self.context['account'].get_user_ids(include_invited=True),
             )
+        if PerformerType.MANAGER in performers_types:
+            all_tasks_data = self.context.get('all_tasks_data')
+            if all_tasks_data is not None:
+                context['template_tasks'] = {
+                    task_data['api_name']: {
+                        'name': task_data['name'],
+                        'require_completion_by_all': (
+                            task_data.get(
+                                'require_completion_by_all',
+                                False,
+                            )
+                        ),
+                    }
+                    for task_data in all_tasks_data
+                }
+            else:
+                template = self.context['template']
+                context['template_tasks'] = {
+                    task.api_name: {
+                        'name': task.name,
+                        'require_completion_by_all': (
+                            task.require_completion_by_all
+                        ),
+                    }
+                    for task in template.tasks.all()
+                }
         return context
 
     def _get_task_available_fields(
@@ -388,15 +426,14 @@ class TaskTemplateSerializer(
             },
         )
         template = self.context['template']
-        if template.is_active and validated_data.get('raw_due_date'):
-            AnalyticService.templates_task_due_date_created(
-                user=self.context['user'],
+        fieldsets_data = validated_data.pop('fieldsets', None)
+        if fieldsets_data is not None:
+            self.create_or_update_fieldsets(
+                fieldsets_data=fieldsets_data,
                 template=template,
                 task=instance,
-                is_superuser=self.context['is_superuser'],
-                auth_type=self.context['auth_type'],
+                user=self.context['user'],
             )
-
         self.create_or_update_related(
             data=validated_data.get('fields'),
             ancestors_data={
@@ -458,8 +495,9 @@ class TaskTemplateSerializer(
             },
         )
 
+        raw_due_date_data = validated_data.get('raw_due_date')
         self.create_or_update_related_one(
-            data=validated_data.get('raw_due_date'),
+            data=raw_due_date_data,
             ancestors_data={
                 'task': instance,
                 'template': self.context['template'],
@@ -470,6 +508,14 @@ class TaskTemplateSerializer(
                 'task': instance,
             },
         )
+        if template.is_active and raw_due_date_data:
+            AnalyticService.templates_task_due_date_created(
+                user=self.context['user'],
+                template=template,
+                task=instance,
+                is_superuser=self.context['is_superuser'],
+                auth_type=self.context['auth_type'],
+            )
         return instance
 
     def update(
@@ -497,6 +543,14 @@ class TaskTemplateSerializer(
                 **validated_data,
             },
         )
+        fieldsets_data = validated_data.pop('fieldsets', None)
+        if fieldsets_data is not None:
+            self.create_or_update_fieldsets(
+                fieldsets_data=fieldsets_data,
+                template=template,
+                task=instance,
+                user=self.context['user'],
+            )
         if raw_due_date_created:
             AnalyticService.templates_task_due_date_created(
                 user=self.context['user'],
@@ -585,29 +639,10 @@ class TemplateStepNameSerializer(ModelSerializer):
     class Meta:
         model = TaskTemplate
         fields = (
-            'id',  # Deprecated
             'name',
             'number',
             'api_name',
         )
-
-
-class TemplateTaskOnlyFieldsSerializer(ModelSerializer):
-    class Meta:
-        model = TaskTemplate
-        fields = (
-            'id',  # Deprecated
-            'name',
-            'number',
-            'api_name',
-            'fields',
-        )
-
-    fields = FieldTemplateShortViewSerializer(
-        many=True,
-        required=False,
-        read_only=True,
-    )
 
 
 class TaskTemplatePrivilegesSerializer(ModelSerializer):

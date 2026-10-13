@@ -37,7 +37,7 @@ from src.processes.models.templates.conditions import ConditionTemplate
 from src.processes.models.templates.system_template import SystemTemplate
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
-from src.processes.models.workflows.attachment import FileAttachment
+from src.storage.models import Attachment
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
 
@@ -102,32 +102,6 @@ class AnalyticService:
                 'current_url': current_url,
             },
             is_superuser=is_superuser,
-        )
-
-    @classmethod
-    def users_invited(
-        cls,
-        invite_to: UserModel,
-        invite_token: str,
-        is_superuser: bool,
-    ) -> bool:
-
-        """ Sent always to trigger the sending of an invitation email
-            is_superuser may be "master account" for tenant """
-
-        return cls._track(
-            user_id=invite_to.id,
-            event=UserAnalyticsEvent.invited,
-            properties={
-                'text': 'Invitation sent by email',
-                'first_name': invite_to.first_name,
-                'last_name': invite_to.last_name,
-                'email': invite_to.email,
-                'invite_token': invite_token,
-                'account_id': invite_to.account_id,
-                'category': EventCategory.users,
-            },
-            is_superuser=False,
         )
 
     @classmethod
@@ -684,7 +658,7 @@ class AnalyticService:
     @classmethod
     def attachments_uploaded(
         cls,
-        attachment: FileAttachment,
+        attachment: Attachment,
         is_superuser: bool,
         auth_type: AuthTokenType,
         user: Optional[UserModel] = None,
@@ -698,16 +672,14 @@ class AnalyticService:
             'event': AttachmentAnalyticsEvent.uploaded,
             'is_superuser': is_superuser,
             'properties': {
-                'text': f'{attachment.name} {attachment.url}',
+                'text': f'{attachment.file_id}',
                 'email': None,
                 'first_name': None,
                 'last_name': None,
                 'account_id': attachment.account_id,
                 'auth_type': auth_type,
                 'id': attachment.id,
-                'size': attachment.humanize_size,
                 'category': EventCategory.attachments,
-                'type': attachment.extension,
             },
         }
         if user.is_authenticated:

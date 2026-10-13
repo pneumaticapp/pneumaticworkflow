@@ -11,9 +11,11 @@ import { getInputNameBackground } from '../utils/getInputNameBackground';
 import { RemoveIcon, ArrowDropdownIcon } from '../../../icons';
 import { IntlMessages } from '../../../IntlMessages';
 import { FieldWithName } from '../utils/FieldWithName';
+import { FieldLabel } from '../utils/FieldLabel';
 import { OutputFieldContent } from '../utils/OutputFieldContent';
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { EExtraFieldMode, IExtraFieldSelection } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { validateCheckboxAndRadioField } from '../../../../utils/validators';
 import { handleSelectionBlur, recalculateDuplicateErrors } from '../utils/handleSelectionBlur';
 
@@ -43,10 +45,12 @@ export function ExtraFieldCreatable({
   editField,
   deleteField,
   isDisabled = false,
+  isFieldsetReadOnly = false,
   labelBackgroundColor,
+  labelPosition,
   innerRef,
   datasetName,
-}: IWorkflowExtraFieldProps) {
+}: IWorkflowExtraFieldProps): JSX.Element {
   const { isRequired } = field;
   const optionInputsRefs = React.useRef<HTMLInputElement[]>([]);
 
@@ -61,16 +65,20 @@ export function ExtraFieldCreatable({
   const selectionValues = field.selections as string[];
 
   const dropdownSelections: IDropdownSelection[] = useMemo(
-    () => (selectionValues || []).map((selectionValue) => ({
-      value: selectionValue,
-      label: selectionValue,
-    } as IDropdownSelection)),
+    () =>
+      (selectionValues || []).map(
+        (selectionValue) =>
+          ({
+            value: selectionValue,
+            label: selectionValue,
+          }) as IDropdownSelection,
+      ),
     [selectionValues],
   );
 
   const [activeOptionIndex, setActiveOptionIndex] = useState<number | null>(null);
-  const [duplicateErrors, setDuplicateErrors] = useState<Record<string, string>>(
-    () => recalculateDuplicateErrors(selectionItems || []),
+  const [duplicateErrors, setDuplicateErrors] = useState<Record<string, string>>(() =>
+    recalculateDuplicateErrors(selectionItems || []),
   );
 
   const handleSelectableChange = (inputValue: IDropdownSelection) => {
@@ -138,16 +146,27 @@ export function ExtraFieldCreatable({
         onMouseLeave={() => setActiveOptionIndex(null)}
       >
         <div className={inputStyles['kickoff-create-field__input-container']}>
-          <input
-            ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
-            className={inputStyles['kickoff-create-field-option__input']}
-            onChange={handleChangeOption(optionIndex)}
-            onBlur={handleBlurOption(apiName)}
-            placeholder={namePlaceholder}
-            type="text"
-            value={value}
-            disabled={isDisabled}
-          />
+          {isFieldsetReadOnly ? (
+            <textarea
+              className={inputStyles['kickoff-create-field-option__input']}
+              data-use-input
+              value={value}
+              disabled
+              rows={1}
+            />
+          ) : (
+            <input
+              ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
+              className={inputStyles['kickoff-create-field-option__input']}
+              data-use-input
+              onChange={handleChangeOption(optionIndex)}
+              onBlur={handleBlurOption(apiName)}
+              placeholder={namePlaceholder}
+              type="text"
+              value={value}
+              disabled={isDisabled}
+            />
+          )}
           <span className={inputStyles['measure']} />
           {isActive && !isDisabled && (selectionItems?.length || 0) > 1 && (
             <div
@@ -170,7 +189,6 @@ export function ExtraFieldCreatable({
 
   const renderKickoffField = () => (
     <FieldWithName
-      inputClassName={inputStyles['kickoff-dropdown-field']}
       labelBackgroundColor={labelBackgroundColor}
       field={field}
       descriptionPlaceholder={descriptionPlaceholder}
@@ -181,6 +199,7 @@ export function ExtraFieldCreatable({
       validate={getFieldValidator(field, mode)}
       isDisabled={isDisabled}
       icon={<ArrowDropdownIcon />}
+      labelPosition={labelPosition}
       innerRef={innerRef}
     />
   );
@@ -196,35 +215,85 @@ export function ExtraFieldCreatable({
       </button>
     );
 
+    const optionsContent = (
+      <OutputFieldContent field={field} editField={editField} isDisabled={isDisabled} datasetName={datasetName}>
+        {customOptionsList}
+        {!isDisabled && addOptionButton}
+      </OutputFieldContent>
+    );
+
+    const isLabelLeft = labelPosition === EFieldLabelPosition.Left;
+
+    if (isLabelLeft) {
+      return (
+        <div className={inputStyles['kickoff-create-field-container']}>
+          <FieldWithName
+            inputClassName={inputStyles['kickoff-dropdown-field']}
+            labelBackgroundColor={labelBackgroundColor}
+            field={field}
+            descriptionPlaceholder={descriptionPlaceholder}
+            namePlaceholder={namePlaceholder}
+            mode={mode}
+            handleChangeName={handleChangeName}
+            handleChangeDescription={handleChangeDescription}
+            validate={getFieldValidator(field, mode)}
+            isDisabled={isDisabled}
+            icon={<ArrowDropdownIcon />}
+            labelPosition={labelPosition}
+            innerRef={innerRef}
+          >
+            {optionsContent}
+          </FieldWithName>
+        </div>
+      );
+    }
+
     return (
       <div className={inputStyles['kickoff-create-field-container']}>
         {renderKickoffField()}
-
-        <OutputFieldContent field={field} editField={editField} isDisabled={isDisabled} datasetName={datasetName}>
-          {customOptionsList}
-          {!isDisabled && addOptionButton}
-        </OutputFieldContent>
+        {optionsContent}
       </div>
     );
   };
 
   const renderSelectableView = () => {
     const displayValue = dropdownSelections.find((selection) => selection.value === field.value) || null;
+    const isLabelLeft = labelPosition === EFieldLabelPosition.Left;
 
     return (
-      <div className={inputStyles['dropdown-container']} data-autofocus-first-field={true}>
-        <div className={fieldNameClassName}>
-          <div className={styles['kick-off-input__name-readonly']}>{field.name}</div>
-          {isRequired && <span className={styles['kick-off-required-sign']} />}
+      <div
+        className={classnames(
+          inputStyles['dropdown-container'],
+          isLabelLeft && styles['kick-off-input__field_label-left'],
+        )}
+        data-autofocus-first-field={true}
+      >
+        {isLabelLeft ? (
+          <FieldLabel
+            name={field.name}
+            isRequired={isRequired || false}
+            isDisabled={isDisabled}
+            mode={mode}
+            labelPosition={labelPosition}
+            labelBackgroundColor={labelBackgroundColor}
+            handleChangeName={handleChangeName}
+          />
+        ) : (
+          <div className={fieldNameClassName}>
+            <div className={styles['kick-off-input__name-readonly']}>{field.name}</div>
+            {isRequired && <span className={styles['kick-off-required-sign']} />}
+          </div>
+        )}
+        <div {...(isLabelLeft && { className: inputStyles['dropdown-select-wrapper_label-left'] })}>
+          <DropdownList
+            options={dropdownSelections}
+            onChange={handleSelectableChange}
+            placeholder={description}
+            isDisabled={isDisabled}
+            isSearchable={false}
+            value={displayValue}
+          />
         </div>
-        <DropdownList
-          options={dropdownSelections}
-          onChange={handleSelectableChange}
-          placeholder={description}
-          isDisabled={isDisabled}
-          isSearchable={false}
-          value={displayValue}
-        />
       </div>
     );
   };
@@ -238,5 +307,5 @@ export function ExtraFieldCreatable({
     return fieldsMap[mode];
   };
 
-  return renderDropdownField();
+  return <>{renderDropdownField()}</>;
 }

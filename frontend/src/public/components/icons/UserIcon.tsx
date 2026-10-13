@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import * as React from 'react';
 
 export type TUserIconProps = React.SVGAttributes<SVGElement>;

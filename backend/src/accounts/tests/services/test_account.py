@@ -38,10 +38,6 @@ def test_create_tenant__master_account_on_premium__inherit_plan(
 ):
 
     # arrange
-    settings_mock = mocker.patch(
-        'src.accounts.services.account.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     trial_start = timezone.now() - timedelta(days=30)
     trial_end = timezone.now() - timedelta(days=23)
     trial_ended = True
@@ -90,10 +86,6 @@ def test_create_tenant__master_account_on_fractionalcoo__set_plan_freemium(
 ):
 
     # arrange
-    settings_mock = mocker.patch(
-        'src.accounts.services.account.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     trial_start = timezone.now() - timedelta(days=30)
     trial_end = timezone.now() - timedelta(days=23)
     trial_ended = True
@@ -142,10 +134,6 @@ def test_create_tenant__master_account_on_freemium__set_plan_freemium(
 ):
 
     # arrange
-    settings_mock = mocker.patch(
-        'src.accounts.services.account.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     master_account = create_test_account(
         logo_lg='https://some.logo/image1.png',
         logo_sm='https://some.logo/image2.png',
@@ -189,10 +177,6 @@ def test_create_tenant__master_account_on_freemium__set_plan_freemium(
 def test_create_tenant__master_account_on_unlimited__set_plan_is_null(mocker):
 
     # arrange
-    settings_mock = mocker.patch(
-        'src.accounts.services.account.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     trial_start = timezone.now() - timedelta(days=30)
     trial_end = timezone.now() - timedelta(days=23)
     trial_ended = True
@@ -235,16 +219,7 @@ def test_create_tenant__master_account_on_unlimited__set_plan_is_null(mocker):
     assert tenant_account.trial_end is None
     assert tenant_account.trial_ended is False
 
-
-def test_create_tenant__master_account_on_unlimited_bs_disabled__inherit_plan(
-    mocker,
-):
-
     # arrange
-    settings_mock = mocker.patch(
-        'src.accounts.services.account.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': False}
     trial_ended = True
     master_account = create_test_account(
         logo_lg='https://some.logo/image1.png',
@@ -273,15 +248,15 @@ def test_create_tenant__master_account_on_unlimited_bs_disabled__inherit_plan(
     assert tenant_account.lease_level == LeaseLevel.TENANT
     assert tenant_account.logo_lg == master_account.logo_lg
     assert tenant_account.logo_sm == master_account.logo_sm
-    assert tenant_account.max_users == master_account.max_users
-    assert tenant_account.billing_sync == master_account.billing_sync
+    assert tenant_account.max_users == 1000
+    assert tenant_account.billing_sync is True
 
-    assert tenant_account.billing_plan == master_account.billing_plan
-    assert tenant_account.billing_period == master_account.billing_period
-    assert tenant_account.plan_expiration == master_account.plan_expiration
-    assert tenant_account.trial_start == master_account.trial_start
-    assert tenant_account.trial_end == master_account.trial_end
-    assert tenant_account.trial_ended == trial_ended
+    assert tenant_account.billing_plan is None
+    assert tenant_account.billing_period is None
+    assert tenant_account.plan_expiration is None
+    assert tenant_account.trial_start is None
+    assert tenant_account.trial_end is None
+    assert tenant_account.trial_ended is False
 
 
 def test_create_instance__tenant__ok(mocker):
@@ -318,10 +293,6 @@ def test_create_instance__ok(mocker):
         'src.accounts.services.account.AccountService.'
         '_create_tenant',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.services.account.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     company_name = 'Name'
     service = AccountService()
 
@@ -377,10 +348,6 @@ def test_create_instance__disable_billing_sync__set_freemium_plan(mocker):
         'src.accounts.services.account.AccountService.'
         '_create_tenant',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.services.account.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     company_name = 'Company'
     service = AccountService()
 
@@ -389,41 +356,6 @@ def test_create_instance__disable_billing_sync__set_freemium_plan(mocker):
         is_verified=False,
         name=company_name,
         billing_sync=False,
-    )
-
-    # assert
-    assert account.id
-    assert account.billing_sync is False
-    assert account.name == company_name
-    assert account.is_verified is False
-    assert account.billing_plan == BillingPlanType.FREEMIUM
-    assert account.billing_period is None
-    assert account.plan_expiration is None
-    assert account.trial_start is None
-    assert account.trial_end is None
-    assert account.trial_ended is False
-    create_tenant_mock.assert_not_called()
-
-
-def test_create_instance__disable_global_billing__set_freemium_plan(mocker):
-
-    # arrange
-    create_tenant_mock = mocker.patch(
-        'src.accounts.services.account.AccountService.'
-        '_create_tenant',
-    )
-    settings_mock = mocker.patch(
-        'src.accounts.services.account.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': False}
-    company_name = 'Company'
-    service = AccountService()
-
-    # act
-    account = service._create_instance(
-        is_verified=False,
-        name=company_name,
-        billing_sync=True,
     )
 
     # assert
@@ -794,6 +726,8 @@ def test_partial_update__ok(mocker):
         billing_sync=True,
     )
     user = create_test_user(account=account)
+    old_logo_lg = account.logo_lg
+    old_logo_sm = account.logo_sm
     logo_lg = 'http://site.com/logo_lg.img'
     logo_sm = 'http://site.com/logo_sm.img'
     name = 'New account name'
@@ -801,10 +735,6 @@ def test_partial_update__ok(mocker):
         instance=account,
         user=user,
     )
-    settings_mock = mocker.patch(
-        'src.accounts.services.account.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     group_mock = mocker.patch(
         'src.analysis.mixins.BaseIdentifyMixin.group',
     )
@@ -819,6 +749,9 @@ def test_partial_update__ok(mocker):
     identify_users_mock = mocker.patch(
         'src.accounts.services.account.'
         'AccountService._identify_users',
+    )
+    sync_account_file_fields_mock = mocker.patch(
+        'src.accounts.services.account.sync_account_file_fields',
     )
 
     # act
@@ -843,6 +776,41 @@ def test_partial_update__ok(mocker):
     )
     identify_users_mock.assert_called_once()
     group_mock.assert_called_once_with(user=user, account=account)
+    sync_account_file_fields_mock.assert_called_once_with(
+        account=account,
+        user=user,
+        old_values=[old_logo_lg, old_logo_sm],
+        new_values=[logo_lg, logo_sm],
+    )
+
+
+def test_partial_update__logos_unchanged__sync_not_called(mocker):
+
+    # arrange
+    account = create_test_account(
+        lease_level=LeaseLevel.STANDARD,
+        billing_sync=False,
+    )
+    user = create_test_user(account=account)
+    name = 'New account name'
+    service = AccountService(
+        instance=account,
+        user=user,
+    )
+    sync_account_file_fields_mock = mocker.patch(
+        'src.accounts.services.account.sync_account_file_fields',
+    )
+
+    # act
+    result = service.partial_update(
+        name=name,
+        force_save=True,
+    )
+
+    # assert
+    account.refresh_from_db()
+    assert result.name == name
+    sync_account_file_fields_mock.assert_not_called()
 
 
 def test_partial_update__disabled_billing_sync__ok(mocker):
@@ -860,62 +828,6 @@ def test_partial_update__disabled_billing_sync__ok(mocker):
         instance=account,
         user=user,
     )
-    settings_mock = mocker.patch(
-        'src.accounts.services.account.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
-    group_mock = mocker.patch(
-        'src.analysis.mixins.BaseIdentifyMixin.group',
-    )
-    update_stripe_account_mock = mocker.patch(
-        'src.accounts.services.account.'
-        'AccountService._update_stripe_account',
-    )
-    update_tenants_mock = mocker.patch(
-        'src.accounts.services.account.'
-        'AccountService._update_tenants',
-    )
-    identify_users_mock = mocker.patch(
-        'src.accounts.services.account.'
-        'AccountService._identify_users',
-    )
-
-    # act
-    result = service.partial_update(
-        name=name,
-        logo_lg=logo_lg,
-        logo_sm=logo_sm,
-        force_save=True,
-    )
-
-    # assert
-    account.refresh_from_db()
-    assert result.id == account.id
-    assert account.logo_lg == logo_lg
-    assert account.logo_sm == logo_sm
-    assert account.name == name
-    update_tenants_mock.assert_called_once()
-    update_stripe_account_mock.assert_not_called()
-    identify_users_mock.assert_called_once()
-    group_mock.assert_called_once_with(user=user, account=account)
-
-
-def test_partial_update__disabled_billing__ok(mocker):
-
-    # arrange
-    account = create_test_account(lease_level=LeaseLevel.STANDARD)
-    user = create_test_user(account=account)
-    logo_lg = 'http://site.com/logo_lg.img'
-    logo_sm = 'http://site.com/logo_sm.img'
-    name = 'New account name'
-    service = AccountService(
-        instance=account,
-        user=user,
-    )
-    settings_mock = mocker.patch(
-        'src.accounts.services.account.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': False}
     group_mock = mocker.patch(
         'src.analysis.mixins.BaseIdentifyMixin.group',
     )

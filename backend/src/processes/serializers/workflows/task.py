@@ -1,4 +1,3 @@
-# ruff: noqa: PLC0415
 import re
 from django.db.models import Q
 from typing import Any, Dict, List, Optional
@@ -8,7 +7,12 @@ from rest_framework.exceptions import ValidationError
 
 from src.generics.fields import TimeStampField
 from src.generics.serializers import CustomValidationErrorMixin
-from src.processes.enums import OwnerRole, OwnerType, TaskOrdering
+from src.processes.enums import (
+    OwnerRole,
+    OwnerType,
+    PerformerType,
+    TaskOrdering,
+)
 from src.processes.messages.workflow import (
     MSG_PW_0057,
     MSG_PW_0083,
@@ -16,6 +20,7 @@ from src.processes.messages.workflow import (
 from src.processes.models.workflows.task import (
     Task,
     TaskForList,
+    TaskPerformer,
 )
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.workflows.checklist import (
@@ -27,10 +32,12 @@ from src.processes.serializers.workflows.delay import (
 from src.processes.serializers.workflows.field import (
     TaskFieldSerializer,
 )
-from src.processes.serializers.workflows.task_performer import (
-    TaskUserGroupPerformerSerializer,
+from src.processes.serializers.workflows.fieldset import (
+    FieldSetSerializer,
 )
-from src.processes.models.workflows.task import TaskPerformer
+from src.processes.serializers.workflows.task_performer import (
+    get_performers_for_task,
+)
 
 
 class TaskShortSerializer(serializers.ModelSerializer):
@@ -84,11 +91,7 @@ class WorkflowCurrentTaskSerializer(serializers.ModelSerializer):
         return None
 
     def get_performers(self, instance) -> List[Dict[str, Any]]:
-        if hasattr(instance, 'all_performers'):
-            performers = instance.all_performers
-        else:
-            performers = instance.exclude_directly_deleted_taskperformer_set()
-        return TaskUserGroupPerformerSerializer(performers, many=True).data
+        return get_performers_for_task(instance)
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -118,14 +121,12 @@ class TaskSerializer(serializers.ModelSerializer):
             'status',
             'revert_tasks',
             'is_read_only_viewer',
+            'fieldsets',
         )
 
     date_started_tsp = TimeStampField(source='date_started')
     date_completed_tsp = TimeStampField(source='date_completed')
-    performers = TaskUserGroupPerformerSerializer(
-        many=True,
-        source='exclude_directly_deleted_taskperformer_set',
-    )
+    performers = serializers.SerializerMethodField()
     workflow = serializers.SerializerMethodField()
     output = TaskFieldSerializer(many=True)
     delay = serializers.SerializerMethodField(required=False, allow_null=True)
@@ -139,6 +140,10 @@ class TaskSerializer(serializers.ModelSerializer):
     sub_workflows = serializers.SerializerMethodField()
     revert_tasks = TaskShortSerializer(many=True, source='get_revert_tasks')
     is_read_only_viewer = serializers.SerializerMethodField()
+    fieldsets = FieldSetSerializer(many=True)
+
+    def get_performers(self, instance) -> List[Dict[str, Any]]:
+        return get_performers_for_task(instance)
 
     def get_is_completed(self, instance):
         #  TODO Remove in 41258
@@ -169,13 +174,13 @@ class TaskSerializer(serializers.ModelSerializer):
             account_id=instance.account_id,
             ancestor_task_id=instance.id,
         )
-        from src.processes.serializers.workflows.workflow import (
+        from src.processes.serializers.workflows.workflow import (  # noqa: PLC0415
             WorkflowListSerializer,
         )
         return WorkflowListSerializer(instance=qst, many=True).data
 
     def get_workflow(self, instance):
-        from src.processes.serializers.workflows.workflow import (
+        from src.processes.serializers.workflows.workflow import (  # noqa: PLC0415
             WorkflowShortInfoSerializer,
         )
         return WorkflowShortInfoSerializer(instance=instance.workflow).data
@@ -211,9 +216,12 @@ class TaskSerializer(serializers.ModelSerializer):
         is_performer = TaskPerformer.objects.filter(
             task__workflow=workflow,
             task__account_id=user.account_id,
-        ).filter(
-            Q(user_id=user.id) |
-            Q(group__users__id=user.id),
+        ).type_user_or_group().filter(
+            Q(user_id=user.id, type=PerformerType.USER)
+            | Q(
+                type=PerformerType.GROUP,
+                group__users__id=user.id,
+            ),
         ).exists()
         if is_performer:
             return False
@@ -281,7 +289,7 @@ class TaskListFilterSerializer(
     def validate_search(self, value: str) -> Optional[str]:
         removed_chars_regex = r'\s\s+'
         clear_text = re.sub(removed_chars_regex, '', value).strip()
-        return clear_text if clear_text else None
+        return clear_text or None
 
     def validate_assigned_to(self, value):
         if not self.context['user'].is_admin:

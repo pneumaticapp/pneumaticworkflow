@@ -7,7 +7,6 @@ export enum ERoutes {
   Register = '/auth/signup/',
   SignUpInvite = '/auth/signup/invite/',
 
-
   ForgotPassword = '/auth/forgot-password/',
   ResetPassword = '/auth/reset-password/',
   ExpiredInvite = '/auth/expired-invite/',
@@ -51,6 +50,8 @@ export enum ERoutes {
   Tenants = '/tenants/',
   Datasets = '/datasets/',
   DatasetDetail = '/datasets/:id/',
+  Fieldsets = '/fieldsets/',
+  FieldsetDetail = '/fieldsets/:id/',
 }
 
 export enum EPublicFormRoutes {

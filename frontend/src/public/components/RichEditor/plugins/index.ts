@@ -14,3 +14,5 @@ export { ChecklistPlugin, INSERT_CHECKLIST_COMMAND } from './ChecklistPlugin';
 export { MentionsPlugin } from './MentionsPlugin';
 export { DecoratorNavigationPlugin } from './DecoratorNavigationPlugin';
 export { CopyAttachmentPlugin } from './CopyAttachmentPlugin/CopyAttachmentPlugin';
+export { DisableRichTextFormattingPlugin } from './DisableRichTextFormattingPlugin';
+export { PlainTextPastePlugin } from './PlainTextPastePlugin';

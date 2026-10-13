@@ -2,7 +2,11 @@ import { useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { IExtraField } from '../../../../types/template';
-import { getAllDatasetsList, getIsAllDatasetsLoading, getIsAllDatasetsLoaded } from '../../../../redux/selectors/datasets';
+import {
+  getAllDatasetsList,
+  getIsAllDatasetsLoading,
+  getIsAllDatasetsLoaded,
+} from '../../../../redux/selectors/datasets';
 import { loadAllDatasets } from '../../../../redux/datasets/slice';
 import { DATASET_FIELD_TYPES } from '../constants';
 

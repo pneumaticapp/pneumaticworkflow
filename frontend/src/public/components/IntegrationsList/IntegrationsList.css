@@ -4,16 +4,16 @@
 }
 
 .integraions-list {
-  margin: 0 -16px;
   display: flex;
   flex-wrap: wrap;
+  margin: 0 -16px;
 }
 
 .integraion-card {
-  margin: 0 16px 32px;
   width: calc(50% - 32px);
+  margin: 0 16px 32px;
 
-  @media (max-width: 992px) {
+  @media (width <= 992px) {
     width: calc(100% - 32px);
   }
 
@@ -21,7 +21,7 @@
     width: calc(50% - 32px);
   }
 
-  @media (max-width: 480px) {
+  @media (width <= 480px) {
     width: calc(100% - 32px);
   }
 }

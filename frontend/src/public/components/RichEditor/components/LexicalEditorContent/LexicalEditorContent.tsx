@@ -8,7 +8,7 @@ import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
-import { ELEMENT_TRANSFORMERS } from '@lexical/markdown';
+import { ELEMENT_TRANSFORMERS, TEXT_FORMAT_TRANSFORMERS } from '@lexical/markdown';
 
 import {
   InsertAttachmentPlugin,
@@ -21,6 +21,8 @@ import {
   PasteAttachmentPlugin,
   DecoratorNavigationPlugin,
   CopyAttachmentPlugin,
+  DisableRichTextFormattingPlugin,
+  PlainTextPastePlugin,
 } from '../../plugins';
 import { EditorControls } from '../EditorControls/EditorControls';
 import { EditorToolbar } from '../EditorToolbar/EditorToolbar';
@@ -29,7 +31,7 @@ import type { ILexicalEditorContentProps } from '../../types';
 
 import styles from './LexicalEditorContent.css';
 
-
+const MARKDOWN_SHORTCUT_TRANSFORMERS = [...ELEMENT_TRANSFORMERS, ...TEXT_FORMAT_TRANSFORMERS];
 
 export function LexicalEditorContent({
   placeholder = '',
@@ -49,9 +51,13 @@ export function LexicalEditorContent({
   onCancel,
   submitIcon,
   cancelIcon,
+  editorClassName,
   withControls = false,
+  plainText = false,
+  templateVariables,
 }: ILexicalEditorContentProps): React.ReactElement {
   const showMentions = withMentions && Boolean(mentions?.length);
+  const showRichTextPlugins = !plainText;
 
   return (
     <div
@@ -60,6 +66,7 @@ export function LexicalEditorContent({
         styles['editor'],
         multiline && styles['editor-multiline'],
         isUploading && styles['editor-uploading'],
+        editorClassName,
       )}
     >
       <Loader isLoading={isUploading} />
@@ -98,24 +105,22 @@ export function LexicalEditorContent({
       )}
 
       <HistoryPlugin />
-      <ListPlugin />
+      {showRichTextPlugins && <ListPlugin />}
       <SetEditorRefPlugin editorRef={editorRef} />
-      {withControls && onSubmit ? (
-        <SubmitOnKeyPlugin onSubmit={onSubmit} />
-      ) : null}
+      {withControls && onSubmit ? <SubmitOnKeyPlugin onSubmit={onSubmit} /> : null}
       <OnChangePlugin ignoreSelectionChange onChange={onChange} />
-      <MarkdownShortcutPlugin transformers={ELEMENT_TRANSFORMERS} />
+      {showRichTextPlugins && <MarkdownShortcutPlugin transformers={MARKDOWN_SHORTCUT_TRANSFORMERS} />}
+      {plainText && <DisableRichTextFormattingPlugin />}
+      {plainText && <PlainTextPastePlugin templateVariables={templateVariables} />}
 
-      <LinkPlugin />
-      <LinkTooltipPlugin />
+      {showRichTextPlugins && <LinkPlugin />}
+      {showRichTextPlugins && <LinkTooltipPlugin />}
       <VariableTooltipPlugin />
       {withChecklists && <ChecklistPlugin />}
-      <InsertAttachmentPlugin />
-      <CopyAttachmentPlugin />
+      {showRichTextPlugins && <InsertAttachmentPlugin />}
+      {showRichTextPlugins && <CopyAttachmentPlugin />}
       <DecoratorNavigationPlugin />
-      {onPasteFiles ? (
-        <PasteAttachmentPlugin onPasteFiles={onPasteFiles} />
-      ) : null}
+      {onPasteFiles ? <PasteAttachmentPlugin onPasteFiles={onPasteFiles} /> : null}
       {showMentions && mentions ? <MentionsPlugin mentions={mentions} /> : null}
     </div>
   );

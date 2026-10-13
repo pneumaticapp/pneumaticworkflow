@@ -1,6 +1,5 @@
 /* eslint-disable no-useless-escape */
-/* eslint-disable no-irregular-whitespace */
-/* eslint-disable max-len */
+
 import { Config } from 'react-player';
 
 import { TMenuType } from '../types/common';
@@ -34,10 +33,10 @@ export const numberRegex = /^-?(?:0(?:[.,]\d+)?|[1-9]\d*(?:[.,]\d+)?)$/;
 export const urlWithProtocolRegex = /((https?|ftp):\/\/)[a-z0-9.-]+\.[a-z]{2,}(\/\S*?(?=\.*(?:\s|,|$)))?/gi;
 export const couponRegex = /([A-Za-z0-9\+\-\_])+/;
 export const hostNameRegex = /(^https?:\/\/)(www[0-9]?\.)?([^/:]+)/i;
-export const mentionsRegex = /\[([^\n\|]+)\|([0-9]+)\]/;
+export const mentionsRegex = /\[((?:[^\]\\]|\\.)+)\|([0-9]+)\]/;
 export const variableRegex = /\{\{\s?([а-яa-z0-9\-_]+)\s?\}\}/i;
 export const youtubeVideoRegexp =
-  /(?:http(?:s?):\/\/(?:www\.)?youtu(?:be\.com\/watch\?v=|\.be\/)([\w\-\_]*)(?:&(?:amp;)?‌​[\w\?‌​=]*)?)/gi;
+  /(?:https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?(?:[^#\s&]+&)*v=|youtu\.be\/))([\w-]+)/gi;
 export const loomVideoRegexp =
   /(?:https?:\/\/(?:www\.|stage\.)?(?:use)?(?:loom|loomlocal)\.com(?::4444)?\/share\/([a-f0-9]+))(?:\?t=[0-9]*)?/gi;
 export const wistiaVideoRegexp = /(?:https?:\/\/)?[a-z0-9]+\.wistia\.com\/medias\/([a-z0-9]+)/gi;
@@ -118,19 +117,21 @@ export const enum EPageTitle {
   Integrations = 'integrations.title',
   Team = 'team.title',
   Datasets = 'datasets.title',
+  Fieldsets = 'fieldsets.title',
 }
 
 export const enum ELearnMoreLinks {
-  Tasks = 'https://support.pneumatic.app/en/articles/5920342-video-task-management-in-pneumatic',
-  Workflows = 'https://support.pneumatic.app/en/articles/5605999-video-quick-product-overview',
+  Tasks = 'https://support.pneumatic.app/articles/5920342-video-task-management-in-pneumatic',
+  Workflows = 'https://support.pneumatic.app/articles/5605999-video-quick-product-overview',
   Templates = '',
   TemplatesSystem = '',
-  Highlights = 'https://support.pneumatic.app/en/articles/5249965-how-to-use-workflow-highlights',
-  Integrations = 'https://support.pneumatic.app/en/articles/6014550-integrations',
-  HowToCreateTemplate = 'https://support.pneumatic.app/en/articles/5534875-how-to-create-your-first-workflow-template',
+  Highlights = 'https://support.pneumatic.app/articles/5249965-how-to-use-workflow-highlights',
+  Integrations = 'https://support.pneumatic.app/articles/6014550-integrations',
+  HowToCreateTemplate = 'https://support.pneumatic.app/articles/5534875-how-to-create-your-first-workflow-template',
   Datasets = '',
-  GuestUsers = 'https://support.pneumatic.app/en/articles/6145048-free-external-users',
-  Checklists = 'https://support.pneumatic.app/en/articles/6145048-free-external-users',
+  Fieldsets = '',
+  GuestUsers = 'https://support.pneumatic.app/articles/6145048-free-external-users',
+  Checklists = 'https://support.pneumatic.app/articles/6145048-free-external-users',
   Tenants = 'https://www.pneumatic.app/partners/',
   TenantsModal = 'https://www.pneumatic.app/partners/',
   Team = '',
@@ -182,3 +183,4 @@ export const enum EResponseStatuses {
 export const LIMIT_LOAD_TEMPLATES = 30;
 export const LIMIT_LOAD_SYSTEMS_TEMPLATES = 16;
 export const LIMIT_LOAD_DATASETS = 30;
+export const LIMIT_LOAD_FIELDSETS = 30;

@@ -1,21 +1,26 @@
-/* eslint-disable */
-/* prettier-ignore */
-import { EventChannel } from 'redux-saga';
-import { all, call, fork, put, select, take, takeEvery } from 'redux-saga/effects';
+import {
+  ActionChannelEffect,
+  ActionPattern,
+  actionChannel,
+  all,
+  call,
+  fork,
+  put,
+  select,
+  take,
+  takeEvery,
+} from 'redux-saga/effects';
 import uniqBy from 'lodash.uniqby';
 
 import { getNotifications, TGetNotificationsResponse } from '../../api/getNotifications';
 import { removeNotificationItem } from '../../api/removeNotificationItem';
 import { markNotificationsAsRead } from '../../api/markNotificationsAsRead';
-import { parseCookies } from '../../utils/cookie';
-import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { isArrayWithItems } from '../../utils/helpers';
-import { mergePaths } from '../../utils/urls';
 import { TRemoveNotificationItem } from '../actions';
 import { getNotificationsStore } from '../selectors/notifications';
-import { createWebSocketChannel } from '../utils/createWebSocketChannel';
 import { TNotificationsListItem } from '../../types';
+import { IStoreNotification } from '../../types/redux';
 
 import {
   ENotificationsActions,
@@ -27,13 +32,10 @@ import {
   changeUnreadNotificationsCount,
 } from './actions';
 import { getUnreadNotificationsCount } from '../../api/getUnreadNotificationsCount';
-import { envWssURL } from '../../constants/enviroment';
 import { NotificationManager } from '../../components/UI/Notifications';
 
 function* fetchNotificationsAsRead() {
-  const { items: notificationsList, unreadItemsCount }: ReturnType<typeof getNotificationsStore> = yield select(
-    getNotificationsStore,
-  );
+  const { items: notificationsList, unreadItemsCount }: IStoreNotification = yield select(getNotificationsStore);
   const newNotificationsIds = notificationsList.filter(({ status }) => status === 'new').map(({ id }) => id);
 
   if (!isArrayWithItems(newNotificationsIds)) {
@@ -45,7 +47,7 @@ function* fetchNotificationsAsRead() {
 }
 
 function* markAllNotificationsAsRead() {
-  const { items: notificationsList }: ReturnType<typeof getNotificationsStore> = yield select(getNotificationsStore);
+  const { items: notificationsList }: IStoreNotification = yield select(getNotificationsStore);
 
   const normalizedNotfications: TNotificationsListItem[] = notificationsList.map((notification) => {
     return { ...notification, status: 'read' };
@@ -55,7 +57,7 @@ function* markAllNotificationsAsRead() {
 }
 
 function* fetchNotifications({ payload: { offset } = { offset: 0 } }: TLoadNotifications) {
-  const { items: currentItems }: ReturnType<typeof getNotificationsStore> = yield select(getNotificationsStore);
+  const { items: currentItems }: IStoreNotification = yield select(getNotificationsStore);
   const isEmptyList = offset === 0;
 
   try {
@@ -78,22 +80,25 @@ function* fetchNotifications({ payload: { offset } = { offset: 0 } }: TLoadNotif
   }
 }
 
-function* handleRemoveNotification({ payload: { notificationId } }: TRemoveNotificationItem) {
-  const { items, totalItemsCount, unreadItemsCount }: ReturnType<typeof getNotificationsStore> = yield select(
-    getNotificationsStore,
-  );
-  const newItems = items.filter(({ id }) => id !== notificationId);
+export function* handleRemoveNotification({ payload: { notificationId } }: TRemoveNotificationItem) {
+  const { items, totalItemsCount, unreadItemsCount }: IStoreNotification = yield select(getNotificationsStore);
   const deletingItem = items.find(({ id }) => id === notificationId);
-  if (!deletingItem || items.length === newItems.length) {
+
+  if (!deletingItem) {
     return;
   }
 
-  const newNotificationsList = {
-    items: newItems,
-    count: totalItemsCount - 1,
-  };
+  const targetItemsCount = items.length;
+  const remainingTotalItemsCount = Math.max(0, totalItemsCount - 1);
+  const newItems = items.filter(({ id }) => id !== notificationId);
 
-  yield put(changeNotificationsList(newNotificationsList));
+  yield put(
+    changeNotificationsList({
+      items: newItems,
+      count: remainingTotalItemsCount,
+    }),
+  );
+
   if (deletingItem.status === 'new') {
     yield put(changeUnreadNotificationsCount(Math.max(0, unreadItemsCount - 1)));
   }
@@ -103,6 +108,43 @@ function* handleRemoveNotification({ payload: { notificationId } }: TRemoveNotif
   } catch (error) {
     NotificationManager.notifyApiError(error, {
       title: 'notifications.failed-to-remove-notification',
+      message: getErrorMessage(error),
+    });
+    return;
+  }
+
+  const { items: currentItems }: IStoreNotification = yield select(getNotificationsStore);
+  const refillItemsCount = Math.min(
+    targetItemsCount - currentItems.length,
+    remainingTotalItemsCount - currentItems.length,
+  );
+
+  if (refillItemsCount <= 0) {
+    return;
+  }
+
+  try {
+    const { results: olderItems, count: updatedTotalItemsCount }: TGetNotificationsResponse = yield call(
+      getNotifications,
+      {
+        offset: currentItems.length,
+        limit: refillItemsCount,
+      },
+    );
+    const { items: latestItems, totalItemsCount: latestTotalItemsCount }: IStoreNotification =
+      yield select(getNotificationsStore);
+    const safeTotalItemsCount =
+      latestTotalItemsCount === remainingTotalItemsCount ? updatedTotalItemsCount : latestTotalItemsCount;
+
+    yield put(
+      changeNotificationsList({
+        items: uniqBy([...latestItems, ...olderItems], 'id'),
+        count: safeTotalItemsCount,
+      }),
+    );
+  } catch (error) {
+    NotificationManager.notifyApiError(error, {
+      title: 'notifications.fetch-error',
       message: getErrorMessage(error),
     });
   }
@@ -126,38 +168,19 @@ export function* watchMarkNotificationsAsRead() {
   yield takeEvery(ENotificationsActions.MarkNotificationsAsRead, markAllNotificationsAsRead);
 }
 
-function* watchRemoveNotification() {
-  yield takeEvery(ENotificationsActions.RemoveNotificationItem, handleRemoveNotification);
+export function* watchRemoveNotification() {
+  const removeNotificationChannel: ActionPattern<ActionChannelEffect> = yield actionChannel(
+    ENotificationsActions.RemoveNotificationItem,
+  );
+
+  while (true) {
+    const action: TRemoveNotificationItem = yield take(removeNotificationChannel);
+    yield call(handleRemoveNotification, action);
+  }
 }
 
 function* watchChangeList() {
   yield takeEvery(ENotificationsActions.ChangeList, handleChangeList);
-}
-
-export function* watchNewNotifications() {
-  const {
-    api: { wsPublicUrl, urls },
-  } = getBrowserConfigEnv();
-
-  const apiUrl = `${urls.wsNotifications}?auth_token=${parseCookies(document.cookie).token}`;
-  const url = mergePaths(envWssURL || wsPublicUrl, apiUrl);
-  const channel: EventChannel<TNotificationsListItem> = yield call(createWebSocketChannel, url);
-
-  while (true) {
-    const newNotification: TNotificationsListItem = yield take(channel);
-    const {
-      items: currentNotificationsList,
-      totalItemsCount,
-      unreadItemsCount,
-      isNotificationsListOpen,
-    }: ReturnType<typeof getNotificationsStore> = yield select(getNotificationsStore);
-    const newNotficationsListItems = [newNotification, ...currentNotificationsList];
-    yield put(changeNotificationsList({ items: newNotficationsListItems, count: totalItemsCount + 1 }));
-
-    if (!isNotificationsListOpen) {
-      yield put(changeUnreadNotificationsCount(unreadItemsCount + 1));
-    }
-  }
 }
 
 export function* rootSaga() {

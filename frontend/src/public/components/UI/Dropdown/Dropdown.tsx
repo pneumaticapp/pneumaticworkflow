@@ -10,6 +10,7 @@ import { ArrowRightIcon } from '../../icons';
 
 import styles from './Dropdown.css';
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
+import { Tooltip } from '../Tooltip';
 
 type TDropdownItemColor = 'black' | 'green' | 'red' | 'orange';
 
@@ -23,6 +24,8 @@ export type TDropdownOption = {
   customSubOption?: React.ReactElement;
   color?: TDropdownItemColor;
   isHidden?: boolean;
+  isDisabled?: boolean;
+  disabledTooltip?: string;
   size?: 'lg' | 'sm';
   className?: string;
   Icon?(props: React.SVGAttributes<SVGElement>): JSX.Element;
@@ -35,6 +38,10 @@ export interface IDropdownProps {
   className?: string;
   toggleProps?: { [key in string]: string };
   menuClassName?: string;
+  /** Passes reactstrap DropdownMenu `positionFixed` so Popper uses fixed positioning (escapes overflow scroll). */
+  menuPositionFixed?: boolean;
+  /** Passes reactstrap DropdownMenu `container` (portal target), e.g. `document.body`. */
+  menuContainer?: string | HTMLElement;
   renderToggle(isOpen: boolean): React.ReactNode;
   renderMenuContent?(renderedOptions: React.ReactNode): React.ReactNode;
   CustomDropdownMenu?(props: IDropdownMenuProps): JSX.Element;
@@ -59,6 +66,8 @@ export function Dropdown({
   className,
   toggleProps,
   menuClassName,
+  menuPositionFixed = false,
+  menuContainer,
   renderToggle,
   renderMenuContent,
   CustomDropdownMenu,
@@ -77,6 +86,10 @@ export function Dropdown({
   };
 
   const renderOptions = (items: TDropdownOption[] | TDropdownOption, level = 0): React.ReactNode => {
+    const overlayAtRoot = level === 0;
+    const positionFixed = Boolean(menuPositionFixed && overlayAtRoot);
+    const container = overlayAtRoot ? menuContainer : undefined;
+
     if (!Array.isArray(items)) {
       const Menu = CustomDropdownMenu || DefaultDropdownMenu;
 
@@ -88,6 +101,8 @@ export function Dropdown({
           direction={direction}
           className={menuClassName}
           renderMenuContent={renderMenuContent}
+          positionFixed={positionFixed}
+          container={container}
         />
       );
     }
@@ -103,6 +118,8 @@ export function Dropdown({
         withConfirmation,
         initialConfirmationState,
         isHidden,
+        isDisabled: isOptionDisabled,
+        disabledTooltip,
         className: optionClassName,
         Icon,
         onClick,
@@ -129,7 +146,10 @@ export function Dropdown({
             direction="right"
             className={optionClassName}
           >
-            <DropdownToggle tag="button" className={classnames(styles['dropdown-item'], getDropdownItemColorClass(color))}>
+            <DropdownToggle
+              tag="button"
+              className={classnames(styles['dropdown-item'], getDropdownItemColorClass(color))}
+            >
               <span className={styles['label']}>{label}</span>
               <ArrowRightIcon className={styles['dropdown-item-icon']} />
             </DropdownToggle>
@@ -141,25 +161,28 @@ export function Dropdown({
                 renderedOptions={customSubOption}
                 isWide
                 level={level + 1}
+                positionFixed={false}
               />
             )}
           </UncontrolledDropdown>
         );
       }
 
-      return (
+      const optionContent = (
         <div key={`option-${typeof label === 'string' ? label : mapKey}`}>
           {withUpperline && <hr className={styles['line']} />}
           <ConfirmableDropdownItem
-            {...(onClick && {
-              onClick: () => {
-                onClick?.(() => setIsOpen(false));
-                closeDropdown();
-              },
-            })}
+            {...(!isOptionDisabled &&
+              onClick && {
+                onClick: () => {
+                  onClick?.(() => setIsOpen(false));
+                  closeDropdown();
+                },
+              })}
             cssModule={{
               'dropdown-item': classnames(styles['dropdown-item'], getDropdownItemColorClass(color), {
                 [styles['dropdown-item-mobile']]: isMobile && isFromBreakdownItem,
+                [styles['dropdown-item_disabled']]: isOptionDisabled,
               }),
             }}
             withConfirmation={withConfirmation}
@@ -172,6 +195,22 @@ export function Dropdown({
           </ConfirmableDropdownItem>
         </div>
       );
+
+      if (isOptionDisabled && disabledTooltip) {
+        return (
+          <Tooltip
+            key={`disabled-${typeof label === 'string' ? label : mapKey}`}
+            content={disabledTooltip}
+            placement="top"
+            interactive={false}
+            contentClassName={styles['dropdown-item-tooltip']}
+          >
+            {optionContent}
+          </Tooltip>
+        );
+      }
+
+      return optionContent;
     });
     const isWide = items.every((item) => item.size === 'lg');
     const Menu = CustomDropdownMenu || DefaultDropdownMenu;
@@ -184,6 +223,8 @@ export function Dropdown({
         level={level}
         direction={direction}
         className={menuClassName}
+        positionFixed={positionFixed}
+        container={container}
         {...(level === 0 && { renderMenuContent })}
       />
     );
@@ -226,6 +267,8 @@ export interface IDropdownMenuProps {
   direction?: 'right' | 'left';
   className?: string;
   renderMenuContent?(renderedOptions: React.ReactNode): React.ReactNode;
+  positionFixed?: boolean;
+  container?: string | HTMLElement;
 }
 
 export function DefaultDropdownMenu({
@@ -235,18 +278,26 @@ export function DefaultDropdownMenu({
   direction = 'right',
   className,
   renderMenuContent,
+  positionFixed = false,
+  container,
 }: IDropdownMenuProps) {
   const content = renderMenuContent?.(renderedOptions) || renderedOptions;
 
   return (
     <DropdownMenu
       cssModule={{
-        'dropdown-menu': classnames(styles['dropdown-menu'], isWide && styles['dropdown-menu_wide']),
+        'dropdown-menu': classnames(
+          styles['dropdown-menu'],
+          isWide && styles['dropdown-menu_wide'],
+          !positionFixed && styles['dropdown-menu_bootstrap-placement'],
+        ),
         show: styles['dropdown-menu_show'],
       }}
       right={level === 0 && direction === 'right'}
       className={className}
       modifiers={{ preventOverflow: { boundariesElement: 'window' } }}
+      positionFixed={positionFixed}
+      container={container}
     >
       {content}
     </DropdownMenu>

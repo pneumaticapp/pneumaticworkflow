@@ -3,14 +3,14 @@ import { ETemplateParts } from '../../../types/template';
 import { getLinkToTemplate } from '../../../utils/routes/getLinkToTemplate';
 
 type TIntegrationSetting<T> = {
-  [key in EIntegrations] : {
+  [key in EIntegrations]: {
     title: string;
     description: string;
     anchor: string;
     link: T extends number ? string : null;
-  }
-}
-export const getIntegrationsSettings = <T extends number | undefined>(templateId: T): TIntegrationSetting<T>  => ({
+  };
+};
+export const getIntegrationsSettings = <T extends number | undefined>(templateId: T): TIntegrationSetting<T> => ({
   [EIntegrations.Shared]: {
     title: 'Share Kick-off',
     description: 'Create a link to enable users to launch workflows from outside Pneumatic',
@@ -37,10 +37,9 @@ export const getIntegrationsSettings = <T extends number | undefined>(templateId
   },
 });
 
-
 const getAnchor = (templatePart: ETemplateParts) => {
   return `#${templatePart}`;
-}
+};
 
 type TGetLinkReturnType<T extends number | undefined> = T extends number ? string : null;
 const getLink = <T extends number | undefined>(templateId: T, templatePart: ETemplateParts): TGetLinkReturnType<T> => {
@@ -49,4 +48,4 @@ const getLink = <T extends number | undefined>(templateId: T, templatePart: ETem
   }
 
   return getLinkToTemplate({ templateId: templateId as number, templatePart }) as unknown as TGetLinkReturnType<T>;
-}
+};

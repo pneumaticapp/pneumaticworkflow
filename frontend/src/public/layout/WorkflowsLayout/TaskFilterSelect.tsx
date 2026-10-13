@@ -40,6 +40,8 @@ export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITe
 
   const mustDisableFilter = !isArrayWithItems(templatesIdsFilter) || !canFilterByTemplateStep(statusFilter);
 
+  const areStepsLoading = selectedTemplates.some((template) => template.areStepsLoading);
+
   const groupedSteps: IGroupedTasksMap | null = useMemo(() => {
     if (selectedTemplates.length === 0) {
       return new Map();
@@ -68,6 +70,7 @@ export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITe
   return (
     <FilterSelect
       isDisabled={mustDisableFilter}
+      isLoading={!mustDisableFilter && areStepsLoading}
       isMultiple
       isSearchShown
       placeholderText={formatMessage({ id: 'workflows.filter-no-step' })}

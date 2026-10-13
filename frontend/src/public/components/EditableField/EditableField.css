@@ -4,17 +4,17 @@
 }
 
 .edit-field {
-  margin: -5px;
-  padding-right: 5px;
   display: block;
   width: calc(100% - 30px);
   height: 32px;
+  padding-right: 5px;
+  margin: -5px;
   border: 5px solid transparent;
 }
 
 .edit--hidden-icon .edit-field {
-  padding: 0;
   width: 100%;
+  padding: 0;
 }
 
 .edit--editable {
