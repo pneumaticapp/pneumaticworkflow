@@ -24,3 +24,16 @@ MSG_AI_0008 = lambda model: format_lazy(
     _('The request to the model "{model}" returned an empty response.'),
     model=model,
 )
+MSG_AI_0009 = lambda attempts, report: format_lazy(
+    _(
+        'I could not complete the task in {attempts} attempts: '
+        'my answer did not pass the validation. '
+        'The details are in the report {report}',
+    ),
+    attempts=attempts,
+    report=report,
+)
+MSG_AI_0010 = lambda attempts: format_lazy(
+    _('The agent failed to complete the task in {attempts} attempts.'),
+    attempts=attempts,
+)
