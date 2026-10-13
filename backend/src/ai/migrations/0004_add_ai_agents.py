@@ -10,7 +10,7 @@ import src.generics.mixins.services
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('processes', '0260_auto_20260914_1039'),
+        ('processes', '0259_populate_fieldset_title_from_name'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('accounts', '0146_user_is_ai'),
         ('ai', '0003_auto_20231123_1812'),
