@@ -84,7 +84,8 @@ class TaskUpdateVersionService(
     def _update_fields(
         self,
         data: Optional[List[Dict]] = None,
-        version: int = 0,
+        *,
+        version: int,
     ):
 
         # TODO Move to TaskFieldService

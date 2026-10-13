@@ -152,8 +152,7 @@ class FieldTemplateService(BaseModelService):
         }
         ruleset_api_names = set()
         for ruleset_data in rulesets_data:
-            ruleset_data_dict = dict(ruleset_data)
-            ruleset_api_name = ruleset_data_dict.get('api_name')
+            ruleset_api_name = ruleset_data.get('api_name')
             if ruleset_api_name and ruleset_api_name in existing_rulesets:
                 service = FieldTemplateRuleSetService(
                     user=self.user,

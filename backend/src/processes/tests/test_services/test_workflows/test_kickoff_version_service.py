@@ -605,7 +605,7 @@ def test__update_fields__provided__ok(mocker):
     )
 
     # act
-    service._update_fields(data=data)
+    service._update_fields(data=data, version=0)
 
     # assert
     update_field_mock.assert_called_once_with(

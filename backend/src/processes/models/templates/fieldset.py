@@ -141,7 +141,7 @@ class FieldSetTemplateRuleSet(
     message = models.TextField(
         null=True,
         blank=True,
-        help_text='custom error message for a type="validator"',
+        help_text='Custom error message when the sum check fails.',
     )
     order = models.PositiveIntegerField(default=0)
     fields = models.ManyToManyField(

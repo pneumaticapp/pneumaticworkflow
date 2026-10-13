@@ -220,7 +220,6 @@ class FieldSetTemplateService(BaseModelService):
         fields_api_names = set()
         for field_data in fields_data:
             field_data_dict = dict(field_data)
-            # Field-level rulesets are not created here yet.
             field_data_dict.pop('id', None)
             field_api_name = field_data_dict.get('api_name')
             if field_api_name and field_api_name in existing_fields:
@@ -394,8 +393,7 @@ class FieldSetTemplateService(BaseModelService):
         }
         ruleset_api_names = set()
         for ruleset_data in rulesets_data:
-            ruleset_data_dict = dict(ruleset_data)
-            ruleset_api_name = ruleset_data_dict.get('api_name')
+            ruleset_api_name = ruleset_data.get('api_name')
             if ruleset_api_name and ruleset_api_name in existing_rulesets:
                 service = FieldsetTemplateRuleSetService(
                     user=self.user,

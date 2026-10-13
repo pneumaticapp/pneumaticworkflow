@@ -143,7 +143,6 @@ class FieldRuleCheckService:
             field.api_name: field
             for field in TaskField.objects.filter(
                 workflow_id=workflow_id,
-                is_deleted=False,
             ).prefetch_related('storage_attachments')
         }
 

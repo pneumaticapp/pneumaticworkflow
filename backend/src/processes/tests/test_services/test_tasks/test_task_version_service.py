@@ -2210,7 +2210,7 @@ def test__update_fields__preserves_fieldset_fields(mocker):
     )
 
     # act
-    service._update_fields(data=[field_data])
+    service._update_fields(data=[field_data], version=0)
 
     # assert
     update_field_mock.assert_called_once_with(field_data, fieldset=None)

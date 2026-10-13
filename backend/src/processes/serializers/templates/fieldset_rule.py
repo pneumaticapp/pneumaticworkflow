@@ -111,10 +111,7 @@ class FieldSetTemplateRuleSetSerializer(
         allow_null=True,
         allow_blank=True,
         example='Sum must equal 10',
-        help_text=(
-            'Error shown when the ruleset conditions are '
-            'not met.'
-        ),
+        help_text='Custom error message when the sum check fails.',
     )
     order = DocIntegerField(
         required=False,

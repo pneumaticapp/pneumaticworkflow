@@ -94,12 +94,10 @@ class FieldSetRuleSetSerializer(serializers.ModelSerializer):
         example='fieldset-ruleset-1',
         help_text='Stable unique identifier.',
     )
-    # The model help_text still mentions a type="validator" copied over
-    # from the deprecated flat rule; these models have no type at all.
     message = DocCharField(
         read_only=True,
         example='The sum of the fields must equal 100',
-        help_text='Error shown when none of the OR branches passes.',
+        help_text='Custom error message when the sum check fails.',
     )
     order = DocIntegerField(
         read_only=True,

@@ -89,7 +89,7 @@ class KickoffUpdateVersionService(
     def _update_fields(
         self,
         data: List[Dict],
-        version: int = 0,
+        version: int,
     ):
 
         # TODO Move to TaskFieldService

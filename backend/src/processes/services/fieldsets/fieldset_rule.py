@@ -186,17 +186,16 @@ class FieldsetTemplateRuleSetService(BaseModelService):
         }
         groups_and_api_names = set()
         for group_and_data in groups_and_data:
-            group_and_data_dict = dict(group_and_data)
-            api_name = group_and_data_dict.get('api_name')
+            api_name = group_and_data.get('api_name')
             if api_name and api_name in existing_groups_and:
                 group_and = self._update_group_and(
                     group_and=existing_groups_and[api_name],
-                    group_and_data=group_and_data_dict,
+                    group_and_data=group_and_data,
                 )
             else:
                 group_and = self._create_group_and(
                     group_or=group_or,
-                    group_and_data=group_and_data_dict,
+                    group_and_data=group_and_data,
                 )
             groups_and_api_names.add(group_and.api_name)
         group_or.groups_and.exclude(
@@ -246,16 +245,15 @@ class FieldsetTemplateRuleSetService(BaseModelService):
         }
         groups_or_api_names = set()
         for group_or_data in groups_or_data:
-            group_or_data_dict = dict(group_or_data)
-            api_name = group_or_data_dict.get('api_name')
+            api_name = group_or_data.get('api_name')
             if api_name and api_name in existing_groups_or:
                 group_or = self._update_group_or(
                     group_or=existing_groups_or[api_name],
-                    group_or_data=group_or_data_dict,
+                    group_or_data=group_or_data,
                 )
             else:
                 group_or = self._create_group_or(
-                    group_or_data=group_or_data_dict,
+                    group_or_data=group_or_data,
                 )
             groups_or_api_names.add(group_or.api_name)
         self.instance.groups_or.exclude(
