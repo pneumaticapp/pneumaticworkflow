@@ -202,7 +202,7 @@ export function Users({ userListSorting }: IUsersProps) {
 
     return (
       <TeamUser
-        key={user.id}
+        key={`user:${user.id}`}
         resendInvite={resendInviteHandler}
         isCurrentUser={currentUserId === user.id}
         isSubscribed={accessConditions}
@@ -227,7 +227,7 @@ export function Users({ userListSorting }: IUsersProps) {
       }
 
       return (
-        <div key={item.agent.id} className={styles['card-wrapper']}>
+        <div key={`agent:${item.agent.id}`} className={styles['card-wrapper']}>
           <TeamAgent agent={item.agent} providerName={providerNameById.get(item.agent.providerId)} />
         </div>
       );

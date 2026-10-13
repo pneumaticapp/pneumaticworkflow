@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
-import { render } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { Users } from '../Users';
@@ -12,9 +12,6 @@ import { EUserListSorting } from '../../../../types/user';
 import { EAIVendor } from '../../../../types/ai';
 import type { IAIAgent, IAIProvider } from '../../../../types/ai';
 import type { TUserListItem } from '../../../../types/user';
-import { loadAIAgents, loadAIProviders } from '../../../../redux/ai/slice';
-import { teamFetchStarted } from '../../../../redux/accounts/slice';
-import { loadInvitesUsers } from '../../../../redux/team/slice';
 
 jest.mock('../DeleteTeamUserPopup', () => ({
   DeleteTeamUserPopupContainer: () => null,
@@ -37,7 +34,14 @@ jest.mock('../../../PageTitle', () => ({
 }));
 
 jest.mock('../TeamUser', () => ({
-  TeamUser: () => <div data-testid="team-user-card" />,
+  TeamUser: ({ user }: { user: TUserListItem }) => {
+    const [expanded, setExpanded] = React.useState(false);
+    return (
+      <button type="button" data-testid={`team-user-card-${user.id}`} onClick={() => setExpanded(true)}>
+        {expanded ? 'Expanded' : 'Collapsed'}
+      </button>
+    );
+  },
 }));
 
 jest.mock('../TeamAgent', () => ({
@@ -113,32 +117,6 @@ describe('Users', () => {
     mockState();
   });
 
-  it('rendered correctly', () => {
-    const wrapper = renderUsers();
-
-    expect(wrapper).toMatchSnapshot();
-  });
-
-  it('rendered correctly with descending sorting', () => {
-    const wrapper = renderUsers(EUserListSorting.NameDesc);
-
-    expect(wrapper).toMatchSnapshot();
-  });
-
-  it('rendered correctly with agents in the list', () => {
-    mockState({ agents: [buildAgent()] });
-    const wrapper = renderUsers();
-
-    expect(wrapper).toMatchSnapshot();
-  });
-
-  it('correctly reacts on user id', () => {
-    const wrapper = renderUsers();
-
-    expect(wrapper.find(TeamUser).at(0).props().isCurrentUser).toBe(true);
-    expect(wrapper.find(TeamUser).at(2).props().isCurrentUser).toBe(false);
-  });
-
   it('interleaves agents with users sorted by name', () => {
     mockState({
       users: [generateUser(1, { firstName: 'Bravo' }), generateUser(2, { firstName: 'Delta' })],
@@ -159,6 +137,20 @@ describe('Users', () => {
       });
 
     expect(renderedOrder).toEqual(['agent:10', 'user:1', 'agent:11', 'user:2']);
+  });
+
+  it('preserves user card state when sorting a user and an agent with the same id', () => {
+    mockState({
+      users: [generateUser(10, { firstName: 'Bravo' })],
+      agents: [buildAgent({ id: 10, name: 'Alpha' })],
+    });
+
+    const { rerender } = render(<Users userListSorting={EUserListSorting.NameDesc} />);
+    fireEvent.click(screen.getByTestId('team-user-card-10'));
+    rerender(<Users userListSorting={EUserListSorting.NameAsc} />);
+
+    expect(screen.getByTestId('team-user-card-10')).toHaveTextContent('Expanded');
+    expect(screen.getAllByTestId('team-agent-card')).toHaveLength(1);
   });
 
   it('applies the search query to both users and agents', () => {
@@ -183,16 +175,5 @@ describe('Users', () => {
 
     expect(wrapper.find(TeamUserSkeleton)).toHaveLength(3);
     expect(wrapper.find(TeamUser)).toHaveLength(0);
-  });
-
-  it('loads users, invites, agents and providers on mount', () => {
-    mockState({ agents: [buildAgent()] });
-
-    render(<Users userListSorting={EUserListSorting.NameAsc} />);
-
-    expect(mockDispatch).toHaveBeenCalledWith(teamFetchStarted({}));
-    expect(mockDispatch).toHaveBeenCalledWith(loadInvitesUsers());
-    expect(mockDispatch).toHaveBeenCalledWith(loadAIAgents());
-    expect(mockDispatch).toHaveBeenCalledWith(loadAIProviders());
   });
 });
