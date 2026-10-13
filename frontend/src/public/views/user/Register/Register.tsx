@@ -17,6 +17,7 @@ import { NavLink } from '../../../components/NavLink';
 import { saveUTMParams } from '../utils/utmParams';
 import { prepareRegisterUser } from '../../../api/prepareRegisterUser';
 import { getBrowserConfigEnv } from '../../../utils/getConfig';
+import { logger } from '../../../utils/logger';
 import { setLandingTemplate } from '../../../utils/landingTemplate';
 import { setTemplateName } from './utils/templateName';
 import { Button, Header, InputField } from '../../../components/UI';
@@ -72,10 +73,14 @@ export function Register({ registerUser }: IRegisterProps) {
   }, []);
 
   const checkCaptchaNeeded = async () => {
-    const prepareResult = await prepareRegisterUser();
+    try {
+      const prepareResult = await prepareRegisterUser();
 
-    if (prepareResult || (prepareResult as any).showCaptcha) {
-      setShowCaptcha(true);
+      if (prepareResult || (prepareResult as any).showCaptcha) {
+        setShowCaptcha(true);
+      }
+    } catch (error) {
+      logger.error(error);
     }
   };
 
