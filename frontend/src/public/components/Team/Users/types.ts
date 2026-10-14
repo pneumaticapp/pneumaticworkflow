@@ -6,3 +6,10 @@ export interface IUsersProps {
 }
 
 export type TTeamListItem = { kind: 'user'; user: TUserListItem } | { kind: 'agent'; agent: IAIAgent };
+
+export interface ITeamUserCardProps {
+  user: TUserListItem;
+  currentUserId: number;
+  isSubscribed: boolean;
+  onOpenVacationModal(user: TUserListItem): void;
+}

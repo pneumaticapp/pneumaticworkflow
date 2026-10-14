@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { Users } from '../Users';
-import { TeamUser } from '../TeamUser';
+import { TeamUserCard } from '../TeamUserCard';
 import { TeamAgent } from '../TeamAgent';
 import { TeamUserSkeleton } from '../../TeamUserSkeleton';
 import { generateUser, mockLastNameUsers } from '../../../../__stubs__/users';
@@ -129,7 +129,7 @@ describe('Users', () => {
       .find('.cards')
       .children()
       .map((child) => {
-        if (child.is(TeamUser)) {
+        if (child.is(TeamUserCard)) {
           return `user:${child.prop('user').id}`;
         }
 
@@ -163,7 +163,7 @@ describe('Users', () => {
     wrapper.find('InputField').simulate('change', { currentTarget: { value: 'charlie' } });
     wrapper.update();
 
-    expect(wrapper.find(TeamUser)).toHaveLength(0);
+    expect(wrapper.find(TeamUserCard)).toHaveLength(0);
     expect(wrapper.find(TeamAgent)).toHaveLength(1);
     expect(wrapper.find(TeamAgent).prop('agent').id).toBe(10);
   });
@@ -174,6 +174,6 @@ describe('Users', () => {
     const wrapper = renderUsers();
 
     expect(wrapper.find(TeamUserSkeleton)).toHaveLength(3);
-    expect(wrapper.find(TeamUser)).toHaveLength(0);
+    expect(wrapper.find(TeamUserCard)).toHaveLength(0);
   });
 });
