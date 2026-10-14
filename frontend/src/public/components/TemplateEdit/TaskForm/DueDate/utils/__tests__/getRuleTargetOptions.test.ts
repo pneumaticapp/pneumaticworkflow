@@ -16,6 +16,7 @@ const makeTask = (overrides: Partial<ITemplateTaskClient> = {}): ITemplateTaskCl
   rawPerformers: [],
   requireCompletionByAll: false,
   skipForStarter: false,
+  skipOnReturn: false,
   fields: [],
   delay: null,
   rawDueDate: createEmptyTaskDueDate(),
