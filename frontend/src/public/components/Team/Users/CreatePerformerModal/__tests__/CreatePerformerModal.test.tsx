@@ -40,6 +40,7 @@ jest.mock('../../../../../redux/accounts/slice', () => ({
 jest.mock('../../../../UI/Notifications', () => ({
   NotificationManager: {
     success: jest.fn(),
+    warning: jest.fn(),
   },
 }));
 
@@ -283,6 +284,121 @@ describe('CreatePerformerModal', () => {
       await waitFor(() => {
         expect(document.querySelector('.modal__avatar-preview img')).toBeInTheDocument();
       });
+    });
+
+    it('waits for the selected avatar before allowing agent creation', async () => {
+      let resolveUpload!: (value: unknown) => void;
+      (uploadUserAvatar as jest.Mock).mockReturnValue(
+        new Promise((resolve) => {
+          resolveUpload = resolve;
+        }),
+      );
+
+      render(<CreatePerformerModal isOpen onClose={mockOnClose} />);
+      await openAIAgentTab();
+      await fillAgentForm();
+      await userEvent.upload(
+        screen.getByLabelText(getTranslatedText('team.create-ai-agent-modal.upload')),
+        new File(['avatar'], 'avatar.png', { type: 'image/png' }),
+      );
+
+      expect(getAgentSubmitButton()).toBeDisabled();
+      await userEvent.click(getAgentSubmitButton());
+      expect(mockDispatch.mock.calls.some(([action]) => action.type === createAIAgent.type)).toBe(false);
+
+      await act(async () => {
+        resolveUpload([{ id: 'file-1', name: 'avatar.png', url: 'https://files.example.com/avatar.png', size: 1 }]);
+      });
+
+      await waitFor(() => expect(getAgentSubmitButton()).toBeEnabled());
+      await userEvent.click(getAgentSubmitButton());
+      await waitFor(() =>
+        expect(mockDispatch).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: createAIAgent.type,
+            payload: expect.objectContaining({ photo: 'https://files.example.com/avatar.png' }),
+          }),
+        ),
+      );
+    });
+
+    it('keeps submission blocked until the most recent avatar upload finishes', async () => {
+      const resolveUploads: ((value: unknown) => void)[] = [];
+      (uploadUserAvatar as jest.Mock).mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveUploads.push(resolve);
+          }),
+      );
+
+      render(<CreatePerformerModal isOpen onClose={mockOnClose} />);
+      await openAIAgentTab();
+      await fillAgentForm();
+      const avatarInput = screen.getByLabelText(getTranslatedText('team.create-ai-agent-modal.upload'));
+      await userEvent.upload(avatarInput, new File(['old'], 'old.png', { type: 'image/png' }));
+      await userEvent.upload(avatarInput, new File(['new'], 'new.png', { type: 'image/png' }));
+
+      await act(async () => {
+        resolveUploads[0]([{ id: 'old', url: 'https://files.example.com/old.png', size: 1 }]);
+      });
+      expect(getAgentSubmitButton()).toBeDisabled();
+
+      await act(async () => {
+        resolveUploads[1]([{ id: 'new', url: 'https://files.example.com/new.png', size: 1 }]);
+      });
+      await waitFor(() => expect(getAgentSubmitButton()).toBeEnabled());
+      expect(document.querySelector('.modal__avatar-preview img')).toHaveAttribute(
+        'src',
+        'https://files.example.com/new.png',
+      );
+    });
+
+    it('allows submitting generated initials without waiting for a discarded upload', async () => {
+      let resolveUpload!: (value: unknown) => void;
+      (uploadUserAvatar as jest.Mock).mockReturnValue(
+        new Promise((resolve) => {
+          resolveUpload = resolve;
+        }),
+      );
+
+      render(<CreatePerformerModal isOpen onClose={mockOnClose} />);
+      await openAIAgentTab();
+      await fillAgentForm();
+      await userEvent.upload(
+        screen.getByLabelText(getTranslatedText('team.create-ai-agent-modal.upload')),
+        new File(['old'], 'old.png', { type: 'image/png' }),
+      );
+      expect(getAgentSubmitButton()).toBeDisabled();
+
+      await userEvent.click(
+        screen.getByRole('button', { name: getTranslatedText('team.create-ai-agent-modal.generate') }),
+      );
+      expect(getAgentSubmitButton()).toBeEnabled();
+      await act(async () => {
+        resolveUpload([{ id: 'old', url: 'https://files.example.com/old.png', size: 1 }]);
+      });
+      expect(getAgentSubmitButton()).toBeEnabled();
+
+      await userEvent.click(getAgentSubmitButton());
+      await waitFor(() =>
+        expect(mockDispatch).toHaveBeenCalledWith(
+          expect.objectContaining({ type: createAIAgent.type, payload: expect.objectContaining({ photo: null }) }),
+        ),
+      );
+    });
+
+    it('unblocks submission if avatar compression fails', async () => {
+      (uploadUserAvatar as jest.Mock).mockRejectedValue(new Error('Compression failed'));
+      render(<CreatePerformerModal isOpen onClose={mockOnClose} />);
+      await openAIAgentTab();
+      await fillAgentForm();
+      await userEvent.upload(
+        screen.getByLabelText(getTranslatedText('team.create-ai-agent-modal.upload')),
+        new File(['avatar'], 'avatar.png', { type: 'image/png' }),
+      );
+
+      await waitFor(() => expect(getAgentSubmitButton()).toBeEnabled());
+      expect(NotificationManager.warning).toHaveBeenCalledWith({ message: 'file-service.upload-failed' });
     });
 
     it('ignores a stale avatar upload finished after Generate was pressed', async () => {

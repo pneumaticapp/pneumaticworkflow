@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { Formik } from 'formik';
 import type { FormikProps } from 'formik';
@@ -7,6 +7,7 @@ import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
 import { Button } from '../../../UI/Buttons/Button';
+import { NotificationManager } from '../../../UI/Notifications';
 import { FormikDropdownList } from '../../../UI/DropdownList';
 import { FormikInputField } from '../../../UI/Fields/InputField';
 import { FormikTextareaField } from '../../../UI/Fields/TextareaField';
@@ -31,6 +32,7 @@ export function CreateAIAgentForm({
 }: IAIAgentFormProps) {
   const { formatMessage } = useIntl();
   const latestAvatarActionRef = useRef(0);
+  const [isAvatarUploading, setIsAvatarUploading] = useState(false);
   const providers = useSelector(getAIProviders);
   const modelsState = useSelector(getAIProviderModelsState);
   const formikRef = useRef<FormikProps<IAIAgentFormValues> | null>(null);
@@ -39,6 +41,7 @@ export function CreateAIAgentForm({
   useEffect(() => {
     if (isOpen && !wasOpenRef.current) {
       latestAvatarActionRef.current += 1;
+      setIsAvatarUploading(false);
       formikRef.current?.resetForm();
     }
     wasOpenRef.current = isOpen;
@@ -78,9 +81,20 @@ export function CreateAIAgentForm({
           const actionId = latestAvatarActionRef.current;
           event.currentTarget.value = '';
 
-          const [uploaded] = await uploadUserAvatar(file);
-          if (actionId === latestAvatarActionRef.current && uploaded && !uploaded.error) {
-            setFieldValue('photo', uploaded.url);
+          setIsAvatarUploading(true);
+          try {
+            const [uploaded] = await uploadUserAvatar(file);
+            if (actionId === latestAvatarActionRef.current && uploaded && !uploaded.error) {
+              await setFieldValue('photo', uploaded.url);
+            }
+          } catch {
+            if (actionId === latestAvatarActionRef.current) {
+              NotificationManager.warning({ message: 'file-service.upload-failed' });
+            }
+          } finally {
+            if (actionId === latestAvatarActionRef.current) {
+              setIsAvatarUploading(false);
+            }
           }
         };
 
@@ -117,6 +131,7 @@ export function CreateAIAgentForm({
                     type="button"
                     onClick={() => {
                       latestAvatarActionRef.current += 1;
+                      setIsAvatarUploading(false);
                       setFieldValue('photo', '');
                     }}
                   >
@@ -167,7 +182,7 @@ export function CreateAIAgentForm({
                 type="submit"
                 label={submitLabel}
                 buttonStyle="yellow"
-                disabled={!dirty || !isValid || isSubmitting}
+                disabled={!dirty || !isValid || isSubmitting || isAvatarUploading}
                 isLoading={isSubmitting}
               />
             </ModalFooter>
