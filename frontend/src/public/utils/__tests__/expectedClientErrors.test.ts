@@ -31,6 +31,12 @@ describe('isExpectedClientError', () => {
     expect(isExpectedClientError({ detail: 'Invalid login or password.' })).toBe(true);
   });
 
+  it('returns true for expired subscription 403 response', () => {
+    const responseData = { detail: 'Your subscription has already expired. Renew subscription or contact support.' };
+
+    expect(isExpectedClientError(responseData)).toBe(true);
+  });
+
   it('returns true for validation error pattern', () => {
     expect(isExpectedClientError({ code: 'validation_error', detail: 'invalid field' })).toBe(true);
   });
