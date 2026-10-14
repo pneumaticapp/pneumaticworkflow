@@ -1443,6 +1443,8 @@ class WorkflowActionService:
             raise exceptions.WorkflowActionServiceException(
                 messages.MSG_PW_0079(revert_to_task.name),
             )
+        if revert_to_task.skip_on_return:
+            self._validate_revert_is_possible([revert_to_task])
 
         # validate revert from tasks
         revert_from_tasks = list(self.workflow.tasks.active_or_delayed())
