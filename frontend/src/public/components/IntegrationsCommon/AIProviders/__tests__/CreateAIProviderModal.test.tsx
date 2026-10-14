@@ -85,17 +85,20 @@ describe('CreateAIProviderModal', () => {
   const mockDispatch = jest.fn();
   const mockOnClose = jest.fn();
   const t = (id: string) => intlMock.formatMessage({ id });
+  let createProviderState: { status: string; requestId: number | null };
 
   const renderModal = () => render(<CreateAIProviderModal isOpen onClose={mockOnClose} />);
 
   beforeEach(() => {
     jest.clearAllMocks();
+    createProviderState = { status: 'idle', requestId: null };
     (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
     (useSelector as unknown as jest.Mock).mockImplementation((selectorFn) =>
       selectorFn({
         ai: {
           vendors: { isLoading: false, list: vendors },
           isSaving: false,
+          createProvider: createProviderState,
         },
       }),
     );
@@ -108,7 +111,7 @@ describe('CreateAIProviderModal', () => {
   });
 
   it('creates a provider by vendor from the default tab', async () => {
-    renderModal();
+    const { rerender } = renderModal();
 
     expect(screen.getByText(t('ai-providers.connection-check-info'))).toBeInTheDocument();
 
@@ -124,15 +127,20 @@ describe('CreateAIProviderModal', () => {
     userEvent.click(submit);
 
     await waitFor(() =>
-      expect(mockDispatch).toHaveBeenCalledWith(
-        createAIProviderByVendor({ vendor: 'openrouter', apiKey: 'sk-or-v1-secret' }),
-      ),
+      expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: createAIProviderByVendor.type })),
     );
+    const action = mockDispatch.mock.calls
+      .map(([dispatched]) => dispatched)
+      .find(({ type }) => type === createAIProviderByVendor.type);
+    expect(action).toMatchObject({ payload: { vendor: 'openrouter', apiKey: 'sk-or-v1-secret' } });
+    expect(mockOnClose).not.toHaveBeenCalled();
+    createProviderState = { status: 'succeeded', requestId: action.meta.requestId };
+    rerender(<CreateAIProviderModal isOpen onClose={mockOnClose} />);
     expect(mockOnClose).toHaveBeenCalled();
   });
 
   it('creates a custom provider from the second tab', async () => {
-    renderModal();
+    const { rerender } = renderModal();
 
     userEvent.click(screen.getByText(t('ai-providers.tab-custom')));
 
@@ -149,14 +157,38 @@ describe('CreateAIProviderModal', () => {
     userEvent.click(submit);
 
     await waitFor(() =>
-      expect(mockDispatch).toHaveBeenCalledWith(
-        createAIProvider({
-          name: 'My provider',
-          baseUrl: 'https://openrouter.ai/api/v1',
-          apiKey: 'sk-or-v1-secret',
-        }),
-      ),
+      expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: createAIProvider.type })),
     );
+    const action = mockDispatch.mock.calls
+      .map(([dispatched]) => dispatched)
+      .find(({ type }) => type === createAIProvider.type);
+    expect(action).toMatchObject({
+      payload: { name: 'My provider', baseUrl: 'https://openrouter.ai/api/v1', apiKey: 'sk-or-v1-secret' },
+    });
+    expect(mockOnClose).not.toHaveBeenCalled();
+    createProviderState = { status: 'succeeded', requestId: action.meta.requestId };
+    rerender(<CreateAIProviderModal isOpen onClose={mockOnClose} />);
     expect(mockOnClose).toHaveBeenCalled();
+  });
+
+  it('keeps the draft and allows retry when the create request fails', async () => {
+    const { rerender } = renderModal();
+    userEvent.type(screen.getByTestId('ai-provider-api-key-input'), 'secret');
+    userEvent.selectOptions(screen.getByTestId('ai-provider-vendor-select'), 'openrouter');
+    await waitFor(() => expect(screen.getByTestId('submit-create-ai-provider')).toBeEnabled());
+    userEvent.click(screen.getByTestId('submit-create-ai-provider'));
+
+    await waitFor(() =>
+      expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: createAIProviderByVendor.type })),
+    );
+    const action = mockDispatch.mock.calls
+      .map(([dispatched]) => dispatched)
+      .find(({ type }) => type === createAIProviderByVendor.type);
+    createProviderState = { status: 'failed', requestId: action.meta.requestId };
+    rerender(<CreateAIProviderModal isOpen onClose={mockOnClose} />);
+
+    expect(mockOnClose).not.toHaveBeenCalled();
+    expect(screen.getByTestId('ai-provider-api-key-input')).toHaveValue('secret');
+    expect(screen.getByTestId('submit-create-ai-provider')).toBeEnabled();
   });
 });

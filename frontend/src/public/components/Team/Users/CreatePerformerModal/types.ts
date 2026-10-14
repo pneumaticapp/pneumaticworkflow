@@ -51,6 +51,7 @@ export const EMPTY_AI_AGENT_FORM_VALUES: IAIAgentFormValues = {
 export interface IAIAgentFormProps {
   isActive: boolean;
   isOpen: boolean;
+  isSubmitting?: boolean;
   initialValues?: IAIAgentFormValues;
   submitLabel: string;
   onSubmit(values: IAIAgentFormValues): void;

@@ -6,6 +6,10 @@ export const getAIProviders = (state: IApplicationState) => state.ai.providers.l
 
 export const getAIProvidersState = (state: IApplicationState) => state.ai.providers;
 
+export const getAICreateProviderState = (state: IApplicationState) => state.ai.createProvider;
+
+export const getAICreateAgentState = (state: IApplicationState) => state.ai.createAgent;
+
 export const getAIAgents = (state: IApplicationState) => state.ai.agents.list;
 
 export const getAIAgentsState = (state: IApplicationState) => state.ai.agents;

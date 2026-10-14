@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { CreatePerformerModal } from '../CreatePerformerModal';
 import { createUser } from '../../../../../redux/accounts/slice';
-import { createAIAgent, loadAIProviderModels } from '../../../../../redux/ai/slice';
+import { createAIAgent, loadAIProviderModels, loadAIProviders } from '../../../../../redux/ai/slice';
 import { uploadUserAvatar } from '../../../../../utils/uploadFiles';
 import { NotificationManager } from '../../../../UI/Notifications';
 import { copyToClipboard } from '../../../../../utils/helpers';
@@ -111,15 +111,18 @@ describe('CreatePerformerModal', () => {
     { name: 'GPT-4o', slug: 'openai/gpt-4o' },
     { name: 'Claude Sonnet', slug: 'anthropic/claude-sonnet' },
   ];
+  let createAgentState: { status: string; requestId: number | null };
 
   const mockAIState = ({
     providers = [OPENROUTER_PROVIDER],
     models = { isLoading: false, providerId: 1, list: DEFAULT_MODELS },
-  }: { providers?: object[]; models?: object } = {}) => {
+    providersStatus = 'succeeded',
+  }: { providers?: object[]; models?: object; providersStatus?: string } = {}) => {
     (useSelector as unknown as jest.Mock).mockImplementation((selector) =>
       selector({
         ai: {
-          providers: { isLoading: false, list: providers },
+          providers: { status: providersStatus, list: providers },
+          createAgent: createAgentState,
           agents: { isLoading: false, list: [] },
           models,
           isSaving: false,
@@ -149,6 +152,7 @@ describe('CreatePerformerModal', () => {
   beforeEach(() => {
     jest.useRealTimers();
     jest.clearAllMocks();
+    createAgentState = { status: 'idle', requestId: null };
     (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
     (uploadUserAvatar as jest.Mock).mockResolvedValue([
       { id: 'file-1', name: 'avatar.png', url: 'https://files.example.com/avatar.png', size: 1 },
@@ -213,6 +217,17 @@ describe('CreatePerformerModal', () => {
     const getAgentSubmitButton = () =>
       screen.getByRole('button', { name: getTranslatedText('team.create-ai-agent-modal.submit') });
 
+    const fillAgentForm = async () => {
+      await userEvent.type(getNameInput(), 'Research assistant');
+      await userEvent.click(getDropdownControl('team.create-ai-agent-modal.model'));
+      await userEvent.click(screen.getByText('GPT-4o'));
+      await userEvent.type(
+        screen.getByLabelText(getTranslatedText('team.create-ai-agent-modal.system-prompt')),
+        'You are helpful.',
+      );
+      await waitFor(() => expect(getAgentSubmitButton()).toBeEnabled());
+    };
+
     it('renders the agent fields once a provider exists', async () => {
       render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
@@ -230,6 +245,18 @@ describe('CreatePerformerModal', () => {
 
       expect(screen.getByTestId('ai-agent-no-providers-hint')).toBeInTheDocument();
       expect(screen.queryByLabelText(getTranslatedText('team.create-ai-agent-modal.name'))).not.toBeInTheDocument();
+    });
+
+    it('shows an error and retries after a failed provider load, not the empty-state hint', async () => {
+      mockAIState({ providers: [], providersStatus: 'failed' });
+      render(<CreatePerformerModal isOpen onClose={mockOnClose} />);
+      await openAIAgentTab();
+
+      expect(screen.getByTestId('ai-agent-providers-error')).toBeInTheDocument();
+      expect(screen.queryByTestId('ai-agent-no-providers-hint')).not.toBeInTheDocument();
+      mockDispatch.mockClear();
+      await userEvent.click(screen.getByRole('button', { name: getTranslatedText('ai-providers.retry') }));
+      expect(mockDispatch).toHaveBeenCalledWith(loadAIProviders());
     });
 
     it('preselects the provider and loads its models when the account has exactly one', async () => {
@@ -394,38 +421,59 @@ describe('CreatePerformerModal', () => {
       expect(screen.queryByText('GPT-4o')).not.toBeInTheDocument();
     });
 
-    it('submits the agent to the API contract and closes the modal', async () => {
-      render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+    it('closes only after agent creation succeeds', async () => {
+      const { rerender } = render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
 
       const submitButton = getAgentSubmitButton();
       // The sole provider is auto-preselected; wait for validation to settle instead of asserting a race.
       await waitFor(() => expect(getAgentSubmitButton()).toBeDisabled());
 
-      await userEvent.type(getNameInput(), 'Research assistant');
-      await userEvent.click(getDropdownControl('team.create-ai-agent-modal.model'));
-      await userEvent.click(screen.getByText('GPT-4o'));
-      await userEvent.type(
-        screen.getByLabelText(getTranslatedText('team.create-ai-agent-modal.system-prompt')),
-        'You are helpful.',
-      );
-
-      await waitFor(() => expect(submitButton).not.toBeDisabled());
+      await fillAgentForm();
       await userEvent.click(submitButton);
 
-      await waitFor(() => {
-        expect(mockDispatch).toHaveBeenCalledWith(
-          createAIAgent({
-            name: 'Research assistant',
-            providerId: 1,
-            model: 'openai/gpt-4o',
-            systemPrompt: 'You are helpful.',
-            photo: null,
-            isActive: true,
-          }),
-        );
+      await waitFor(() =>
+        expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: createAIAgent.type })),
+      );
+      const action = mockDispatch.mock.calls
+        .map(([dispatched]) => dispatched)
+        .find(({ type }) => type === createAIAgent.type);
+      expect(action).toMatchObject({
+        payload: {
+          name: 'Research assistant',
+          providerId: 1,
+          model: 'openai/gpt-4o',
+          systemPrompt: 'You are helpful.',
+          photo: null,
+          isActive: true,
+        },
       });
+      expect(mockOnClose).not.toHaveBeenCalled();
+      expect(submitButton).toBeDisabled();
+
+      createAgentState = { status: 'succeeded', requestId: action.meta.requestId };
+      rerender(<CreatePerformerModal isOpen onClose={mockOnClose} />);
       expect(mockOnClose).toHaveBeenCalled();
+    });
+
+    it('keeps the agent draft after an API failure and permits retry', async () => {
+      const { rerender } = render(<CreatePerformerModal isOpen onClose={mockOnClose} />);
+      await openAIAgentTab();
+      await fillAgentForm();
+      await userEvent.click(getAgentSubmitButton());
+
+      await waitFor(() =>
+        expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: createAIAgent.type })),
+      );
+      const action = mockDispatch.mock.calls
+        .map(([dispatched]) => dispatched)
+        .find(({ type }) => type === createAIAgent.type);
+      createAgentState = { status: 'failed', requestId: action.meta.requestId };
+      rerender(<CreatePerformerModal isOpen onClose={mockOnClose} />);
+
+      expect(mockOnClose).not.toHaveBeenCalled();
+      expect(getNameInput()).toHaveValue('Research assistant');
+      expect(getAgentSubmitButton()).toBeEnabled();
     });
   });
 

@@ -4,9 +4,10 @@ import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { BaseModal, ModalHeader, ModalBody } from '../../../UI/BaseModal';
+import { Button } from '../../../UI/Buttons/Button';
 import { Tabs } from '../../../UI/Tabs';
 import { createAIAgent, loadAIProviders } from '../../../../redux/ai/slice';
-import { getAIProvidersState } from '../../../../redux/selectors/ai';
+import { getAICreateAgentState, getAIProvidersState } from '../../../../redux/selectors/ai';
 
 import { CreateAIAgentForm } from './CreateAIAgentForm';
 import { CreateUserForm } from './CreateUserForm';
@@ -22,30 +23,47 @@ export function CreatePerformerModal({
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState(initialTab);
-  const { isLoading: areProvidersLoading, list: providers } = useSelector(getAIProvidersState);
+  const [pendingRequestId, setPendingRequestId] = useState<number | null>(null);
+  const { status: providersStatus, list: providers } = useSelector(getAIProvidersState);
+  const createAgentState = useSelector(getAICreateAgentState);
 
   useEffect(() => {
     if (isOpen) {
       setActiveTab(initialTab);
       dispatch(loadAIProviders());
+    } else {
+      setPendingRequestId(null);
     }
-  }, [isOpen, initialTab]);
+  }, [dispatch, isOpen, initialTab]);
+
+  useEffect(() => {
+    if (
+      isOpen &&
+      pendingRequestId !== null &&
+      createAgentState.requestId === pendingRequestId &&
+      createAgentState.status === 'succeeded'
+    ) {
+      onClose();
+    }
+  }, [isOpen, pendingRequestId, createAgentState, onClose]);
 
   const handleCreateAIAgent = (values: IAIAgentFormValues) => {
-    dispatch(
-      createAIAgent({
-        name: values.name.trim(),
-        providerId: Number(values.providerId),
-        model: values.model,
-        systemPrompt: values.systemPrompt,
-        photo: values.photo || null,
-        isActive: true,
-      }),
-    );
-    onClose();
+    const action = createAIAgent({
+      name: values.name.trim(),
+      providerId: Number(values.providerId),
+      model: values.model,
+      systemPrompt: values.systemPrompt,
+      photo: values.photo || null,
+      isActive: true,
+    });
+    setPendingRequestId(action.meta.requestId);
+    dispatch(action);
   };
 
   const hasProviders = providers.length > 0;
+  const isCreating =
+    pendingRequestId !== null &&
+    (createAgentState.requestId !== pendingRequestId || createAgentState.status !== 'failed');
 
   return (
     <BaseModal
@@ -73,7 +91,20 @@ export function CreatePerformerModal({
         </div>
       </ModalHeader>
 
-      {activeTab === ECreatePerformerModalTab.AIAgent && !areProvidersLoading && !hasProviders && (
+      {activeTab === ECreatePerformerModalTab.AIAgent && providersStatus === 'failed' && !hasProviders && (
+        <ModalBody className={styles['modal__body']}>
+          <p data-testid="ai-agent-providers-error">{formatMessage({ id: 'ai-providers.load-error' })}</p>
+          <Button
+            type="button"
+            onClick={() => dispatch(loadAIProviders())}
+            size="sm"
+            buttonStyle="transparent-black"
+            label={formatMessage({ id: 'ai-providers.retry' })}
+          />
+        </ModalBody>
+      )}
+
+      {activeTab === ECreatePerformerModalTab.AIAgent && providersStatus === 'succeeded' && !hasProviders && (
         <ModalBody className={styles['modal__body']}>
           <p className={styles['modal__no-providers-hint']} data-testid="ai-agent-no-providers-hint">
             {formatMessage({ id: 'team.create-ai-agent-modal.no-providers-hint' })}
@@ -84,6 +115,7 @@ export function CreatePerformerModal({
       <CreateAIAgentForm
         isActive={activeTab === ECreatePerformerModalTab.AIAgent && hasProviders}
         isOpen={isOpen}
+        isSubmitting={isCreating}
         submitLabel={formatMessage({ id: 'team.create-ai-agent-modal.submit' })}
         onSubmit={handleCreateAIAgent}
       />

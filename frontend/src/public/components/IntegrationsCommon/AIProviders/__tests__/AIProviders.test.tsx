@@ -74,11 +74,12 @@ const buildProvider = (overrides: Partial<IAIProvider> = {}): IAIProvider => ({
 describe('AIProviders', () => {
   const mockDispatch = jest.fn();
 
-  const mockAIState = (providers: IAIProvider[], extra: object = {}) => {
+  const mockAIState = (providers: IAIProvider[], extra: object = {}, status = 'succeeded') => {
     (useSelector as unknown as jest.Mock).mockImplementation((selectorFn) =>
       selectorFn({
         ai: {
-          providers: { isLoading: false, list: providers },
+          providers: { status, list: providers },
+          createProvider: { status: 'idle', requestId: null },
           agents: { isLoading: false, list: [] },
           vendors: { isLoading: false, list: [] },
           models: { isLoading: false, providerId: null, list: [] },
@@ -160,21 +161,30 @@ describe('AIProviders', () => {
   });
 
   it('shows the loading state before the first response', () => {
-    (useSelector as unknown as jest.Mock).mockImplementation((selectorFn) =>
-      selectorFn({
-        ai: {
-          providers: { isLoading: true, list: [] },
-          agents: { isLoading: false, list: [] },
-          vendors: { isLoading: false, list: [] },
-          models: { isLoading: false, providerId: null, list: [] },
-          isSaving: false,
-        },
-      }),
-    );
+    mockAIState([], {}, 'loading');
 
     render(<AIProviders />);
 
     expect(screen.getByTestId('ai-providers-skeleton')).toBeInTheDocument();
     expect(screen.queryByTestId('empty-ai-providers-message')).not.toBeInTheDocument();
+  });
+
+  it('shows a retry action rather than an empty state after loading fails', () => {
+    mockAIState([], {}, 'failed');
+    render(<AIProviders />);
+
+    expect(screen.getByTestId('ai-providers-load-error')).toBeInTheDocument();
+    expect(screen.queryByTestId('empty-ai-providers-message')).not.toBeInTheDocument();
+    jest.clearAllMocks();
+    userEvent.click(screen.getByRole('button', { name: intlMock.formatMessage({ id: 'ai-providers.retry' }) }));
+    expect(mockDispatch).toHaveBeenCalledWith(loadAIProviders());
+  });
+
+  it('keeps existing providers visible after a failed refresh', () => {
+    mockAIState([buildProvider()], {}, 'failed');
+    render(<AIProviders />);
+
+    expect(screen.getByTestId('ai-provider-1')).toBeInTheDocument();
+    expect(screen.getByTestId('ai-providers-load-error')).toBeInTheDocument();
   });
 });

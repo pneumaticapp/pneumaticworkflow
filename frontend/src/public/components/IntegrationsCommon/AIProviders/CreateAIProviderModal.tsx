@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { createAIProvider, createAIProviderByVendor, loadAIVendors } from '../../../redux/ai/slice';
-import { getAIVendorsState, getIsAISaving } from '../../../redux/selectors/ai';
+import { getAICreateProviderState, getAIVendorsState, getIsAISaving } from '../../../redux/selectors/ai';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
 import { validateRequired } from '../../../utils/validators';
 import { Button } from '../../UI/Buttons/Button';
@@ -13,22 +13,11 @@ import { Header } from '../../UI/Typeography/Header';
 import { Modal } from '../../UI/Modal/Modal';
 import { Tabs } from '../../UI/Tabs';
 import { FormikDropdownList } from '../../UI/DropdownList';
+import type { ICreateAIProviderModalProps, ICreateAIProviderFormValues } from './types';
 
 import styles from './AIProviders.css';
 
 type TCreateTab = 'vendor' | 'custom';
-
-interface ICreateAIProviderModalProps {
-  isOpen: boolean;
-  onClose(): void;
-}
-
-interface ICreateAIProviderFormValues {
-  vendor: string;
-  name: string;
-  baseUrl: string;
-  apiKey: string;
-}
 
 const INITIAL_VALUES: ICreateAIProviderFormValues = {
   vendor: '',
@@ -41,9 +30,11 @@ export function CreateAIProviderModal({ isOpen, onClose }: ICreateAIProviderModa
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const isSaving = useSelector(getIsAISaving);
+  const createProviderState = useSelector(getAICreateProviderState);
   const { list: vendors } = useSelector(getAIVendorsState);
 
   const [activeTab, setActiveTab] = React.useState<TCreateTab>('vendor');
+  const [pendingRequestId, setPendingRequestId] = React.useState<number | null>(null);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -51,18 +42,38 @@ export function CreateAIProviderModal({ isOpen, onClose }: ICreateAIProviderModa
     }
   }, [isOpen, dispatch]);
 
+  React.useEffect(() => {
+    if (!isOpen) setPendingRequestId(null);
+  }, [isOpen]);
+
+  React.useEffect(() => {
+    if (
+      isOpen &&
+      pendingRequestId !== null &&
+      createProviderState.requestId === pendingRequestId &&
+      createProviderState.status === 'succeeded'
+    ) {
+      onClose();
+    }
+  }, [isOpen, pendingRequestId, createProviderState, onClose]);
+
   const handleSubmit = ({ vendor, name, baseUrl, apiKey }: ICreateAIProviderFormValues) => {
     if (activeTab === 'vendor') {
-      dispatch(createAIProviderByVendor({ vendor, apiKey: apiKey.trim() }));
+      const action = createAIProviderByVendor({ vendor, apiKey: apiKey.trim() });
+      setPendingRequestId(action.meta.requestId);
+      dispatch(action);
     } else {
-      dispatch(createAIProvider({ name: name.trim(), baseUrl: baseUrl.trim(), apiKey: apiKey.trim() }));
+      const action = createAIProvider({ name: name.trim(), baseUrl: baseUrl.trim(), apiKey: apiKey.trim() });
+      setPendingRequestId(action.meta.requestId);
+      dispatch(action);
     }
-
-    onClose();
   };
 
   const vendorOptions = vendors.map(({ slug, name: vendorName }) => ({ value: slug, label: vendorName }));
   const isVendorTab = activeTab === 'vendor';
+  const isCreating =
+    pendingRequestId !== null &&
+    (createProviderState.requestId !== pendingRequestId || createProviderState.status !== 'failed');
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} width="sm">
@@ -81,7 +92,9 @@ export function CreateAIProviderModal({ isOpen, onClose }: ICreateAIProviderModa
           ]}
           containerClassName={styles['create-modal__tabs']}
           activeTabClassName={styles['create-modal__tab_active']}
-          onChange={(tabId) => setActiveTab(tabId as TCreateTab)}
+          onChange={(tabId) => {
+            if (!isCreating) setActiveTab(tabId as TCreateTab);
+          }}
         />
         <Formik
           key={activeTab}
@@ -159,8 +172,8 @@ export function CreateAIProviderModal({ isOpen, onClose }: ICreateAIProviderModa
                   type="submit"
                   size="md"
                   buttonStyle="yellow"
-                  disabled={!isValid || isSaving}
-                  isLoading={isSaving}
+                  disabled={!isValid || isSaving || isCreating}
+                  isLoading={isCreating}
                   label={formatMessage({ id: 'ai-providers.add' })}
                   data-testid="submit-create-ai-provider"
                 />

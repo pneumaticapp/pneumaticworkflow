@@ -1,8 +1,10 @@
-import React, { useEffect, useRef } from 'react';
-import { Formik, useFormikContext } from 'formik';
+import * as React from 'react';
+import { useEffect, useRef } from 'react';
+import type { ChangeEvent } from 'react';
+import { Formik } from 'formik';
 import type { FormikProps } from 'formik';
 import { useIntl } from 'react-intl';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 
 import { Button } from '../../../UI/Buttons/Button';
 import { FormikDropdownList } from '../../../UI/DropdownList';
@@ -11,49 +13,18 @@ import { FormikTextareaField } from '../../../UI/Fields/TextareaField';
 import { ModalBody, ModalFooter } from '../../../UI/BaseModal';
 import { validateRequired } from '../../../../utils/validators';
 import { uploadUserAvatar } from '../../../../utils/uploadFiles';
-import { loadAIProviderModels } from '../../../../redux/ai/slice';
 import { getAIProviderModelsState, getAIProviders } from '../../../../redux/selectors/ai';
-import { EMPTY_AI_AGENT_FORM_VALUES, IAIAgentFormProps, IAIAgentFormValues } from './types';
+import { EMPTY_AI_AGENT_FORM_VALUES } from './types';
+import type { IAIAgentFormProps, IAIAgentFormValues } from './types';
+import { ProviderModelsSync } from './ProviderModelsSync';
+import { getAgentInitials } from '../getAgentInitials';
 
 import styles from './CreatePerformerModal.css';
-
-// Syncs the model dropdown with the picked provider: loads its models, clears a stale model, preselects a sole provider.
-function ProviderModelsSync() {
-  const dispatch = useDispatch();
-  const providers = useSelector(getAIProviders);
-  const modelsState = useSelector(getAIProviderModelsState);
-  const { values, setFieldValue } = useFormikContext<IAIAgentFormValues>();
-  const prevProviderIdRef = useRef(values.providerId);
-  const modelsRequestedForRef = useRef('');
-
-  useEffect(() => {
-    if (!values.providerId && providers.length === 1) {
-      setFieldValue('providerId', String(providers[0].id));
-    }
-  }, [values.providerId, providers, setFieldValue]);
-
-  useEffect(() => {
-    if (!values.providerId) {
-      return;
-    }
-
-    if (values.providerId !== prevProviderIdRef.current && values.model) {
-      setFieldValue('model', '');
-    }
-    prevProviderIdRef.current = values.providerId;
-
-    if (modelsState.providerId !== Number(values.providerId) && modelsRequestedForRef.current !== values.providerId) {
-      modelsRequestedForRef.current = values.providerId;
-      dispatch(loadAIProviderModels(Number(values.providerId)));
-    }
-  }, [values.providerId, modelsState.providerId, dispatch, setFieldValue]);
-
-  return null;
-}
 
 export function CreateAIAgentForm({
   isActive,
   isOpen,
+  isSubmitting = false,
   initialValues = EMPTY_AI_AGENT_FORM_VALUES,
   submitLabel,
   onSubmit,
@@ -97,15 +68,9 @@ export function CreateAIAgentForm({
       onSubmit={onSubmit}
     >
       {({ dirty, handleSubmit, isValid, setFieldValue, values }) => {
-        const initials = values.name
-          .split(' ')
-          .filter(Boolean)
-          .slice(0, 2)
-          .map((word) => word.charAt(0))
-          .join('')
-          .toUpperCase();
+        const initials = getAgentInitials(values.name);
 
-        const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const handleAvatarUpload = async (event: ChangeEvent<HTMLInputElement>) => {
           const file = event.target.files?.[0];
           if (!file) return;
 
@@ -202,7 +167,8 @@ export function CreateAIAgentForm({
                 type="submit"
                 label={submitLabel}
                 buttonStyle="yellow"
-                disabled={!dirty || !isValid}
+                disabled={!dirty || !isValid || isSubmitting}
+                isLoading={isSubmitting}
               />
             </ModalFooter>
           </form>

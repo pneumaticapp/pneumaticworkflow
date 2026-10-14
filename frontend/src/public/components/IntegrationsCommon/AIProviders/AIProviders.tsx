@@ -80,7 +80,8 @@ export function AIProviders() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
-  const { list: providers, isLoading } = useSelector(getAIProvidersState);
+  const { list: providers, status } = useSelector(getAIProvidersState);
+  const isLoading = providers.length === 0 && (status === 'idle' || status === 'loading');
 
   const [confirmDeleteId, setConfirmDeleteId] = React.useState<number | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
@@ -117,7 +118,20 @@ export function AIProviders() {
 
       {isLoading && <AIProvidersSkeleton />}
 
-      {!isLoading && providers.length === 0 && (
+      {status === 'failed' && (
+        <div data-testid="ai-providers-load-error">
+          <p>{formatMessage({ id: 'ai-providers.load-error' })}</p>
+          <Button
+            type="button"
+            onClick={() => dispatch(loadAIProviders())}
+            size="sm"
+            buttonStyle="transparent-black"
+            label={formatMessage({ id: 'ai-providers.retry' })}
+          />
+        </div>
+      )}
+
+      {status === 'succeeded' && providers.length === 0 && (
         <p className={styles['providers__empty']} data-testid="empty-ai-providers-message">
           {formatMessage({ id: 'ai-providers.empty' })}
         </p>
