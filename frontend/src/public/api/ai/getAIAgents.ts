@@ -7,5 +7,5 @@ export function getAIAgents() {
     api: { urls },
   } = getBrowserConfigEnv();
 
-  return commonRequest<IAIAgent[]>(urls.aiAgents, {}, { shouldThrow: true });
+  return commonRequest<IAIAgent[]>(urls.getAIAgents, {}, { shouldThrow: true });
 }

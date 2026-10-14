@@ -9,7 +9,7 @@ export function updateAIAgent(id: number, data: TUpdateAIAgentRequest) {
   } = getBrowserConfigEnv();
 
   return commonRequest<IAIAgent>(
-    urls.aiAgent.replace(':id', String(id)),
+    urls.updateAIAgent.replace(':id', String(id)),
     {
       data: mapRequestBody(data),
       method: 'PATCH',

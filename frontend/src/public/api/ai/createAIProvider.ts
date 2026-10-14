@@ -9,7 +9,7 @@ export function createAIProvider(data: ICreateAIProviderRequest) {
   } = getBrowserConfigEnv();
 
   return commonRequest<IAIProvider>(
-    urls.aiProviders,
+    urls.createAIProvider,
     {
       data: mapRequestBody(data),
       method: 'POST',

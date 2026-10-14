@@ -8,5 +8,5 @@ export function getAIProviders() {
     api: { urls },
   } = getBrowserConfigEnv();
 
-  return commonRequest<IAIProvider[]>(urls.aiProviders, {}, { shouldThrow: true });
+  return commonRequest<IAIProvider[]>(urls.getAIProviders, {}, { shouldThrow: true });
 }

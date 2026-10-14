@@ -9,7 +9,7 @@ export function updateAIProvider(id: number, data: TUpdateAIProviderRequest) {
   } = getBrowserConfigEnv();
 
   return commonRequest<IAIProvider>(
-    urls.aiProvider.replace(':id', String(id)),
+    urls.updateAIProvider.replace(':id', String(id)),
     {
       data: mapRequestBody(data),
       method: 'PATCH',

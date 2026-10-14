@@ -9,7 +9,7 @@ export function createAIAgent(data: ICreateAIAgentRequest) {
   } = getBrowserConfigEnv();
 
   return commonRequest<IAIAgent>(
-    urls.aiAgents,
+    urls.createAIAgent,
     {
       data: mapRequestBody(data),
       method: 'POST',
