@@ -76,7 +76,7 @@ export function Register({ registerUser }: IRegisterProps) {
     try {
       const prepareResult = await prepareRegisterUser();
 
-      if (prepareResult || (prepareResult as any).showCaptcha) {
+      if (prepareResult.showCaptcha) {
         setShowCaptcha(true);
       }
     } catch (error) {

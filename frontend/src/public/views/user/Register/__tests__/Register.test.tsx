@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 
 import { Register } from '../Register';
 import { prepareRegisterUser } from '../../../../api/prepareRegisterUser';
@@ -49,7 +49,7 @@ jest.mock('../../../../constants/enviroment', () => ({
 
 jest.mock('react-google-recaptcha', () => ({
   __esModule: true,
-  default: () => null,
+  default: () => React.createElement('div', { role: 'group', 'aria-label': 'captcha' }),
 }));
 
 jest.mock('../../../../components/IntlMessages', () => ({
@@ -79,6 +79,40 @@ jest.mock('../../../../components/UI', () => ({
 describe('Register', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('captcha visibility by showCaptcha field', () => {
+    const CAPTCHA_LABEL = 'captcha';
+
+    it('shows captcha when showCaptcha is true', async () => {
+      (prepareRegisterUser as jest.Mock).mockResolvedValue({ showCaptcha: true });
+
+      render(React.createElement(Register, { registerUser: jest.fn() }));
+
+      expect(await screen.findByRole('group', { name: CAPTCHA_LABEL })).toBeInTheDocument();
+    });
+
+    it('does not show captcha when showCaptcha is false', async () => {
+      (prepareRegisterUser as jest.Mock).mockResolvedValue({ showCaptcha: false });
+
+      render(React.createElement(Register, { registerUser: jest.fn() }));
+
+      await waitFor(() => {
+        expect(prepareRegisterUser).toHaveBeenCalledTimes(1);
+      });
+      expect(screen.queryByRole('group', { name: CAPTCHA_LABEL })).not.toBeInTheDocument();
+    });
+
+    it('does not show captcha when showCaptcha is undefined', async () => {
+      (prepareRegisterUser as jest.Mock).mockResolvedValue({ showCaptcha: undefined });
+
+      render(React.createElement(Register, { registerUser: jest.fn() }));
+
+      await waitFor(() => {
+        expect(prepareRegisterUser).toHaveBeenCalledTimes(1);
+      });
+      expect(screen.queryByRole('group', { name: CAPTCHA_LABEL })).not.toBeInTheDocument();
+    });
   });
 
   describe('captcha check request failure', () => {
