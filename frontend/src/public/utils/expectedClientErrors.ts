@@ -19,6 +19,7 @@ const EXPECTED_AUTH_PATTERNS = [
   'Permission denied',
   'Request was throttled',
   'Invalid login or password',
+  'Your subscription has already expired',
 ];
 
 // Validation — user input errors, not code bugs
