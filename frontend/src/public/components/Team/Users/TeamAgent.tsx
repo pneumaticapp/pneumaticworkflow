@@ -15,6 +15,7 @@ import { MoreIcon } from '../../icons';
 import { deleteAIAgent, updateAIAgent } from '../../../redux/ai/slice';
 import { getIsAISaving } from '../../../redux/selectors/ai';
 import { EditAIAgentModal } from './EditAIAgentModal';
+import { getAgentInitials } from './getAgentInitials';
 
 import styles from './TeamAgent.css';
 
@@ -31,13 +32,7 @@ export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  const initials = agent.name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word.charAt(0))
-    .join('')
-    .toUpperCase();
+  const initials = getAgentInitials(agent.name);
 
   const dropdownOptions: TDropdownOption[] = [
     {
