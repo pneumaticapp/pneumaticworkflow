@@ -15,7 +15,7 @@ describe('getUsersQueryString', () => {
       isAi: false,
     });
 
-    expect(query).toBe('?type=user&status=active,invited&is_ai=false');
+    expect(query).toBe('?type=user&status=active%2Cinvited&is_ai=false');
   });
 
   it('omits is_ai entirely when the caller does not care', () => {
@@ -30,5 +30,9 @@ describe('getUsersQueryString', () => {
 
   it('returns an empty string without a config', () => {
     expect(getUsersQueryString()).toBe('');
+  });
+
+  it('escapes values in query parameters', () => {
+    expect(getUsersQueryString({ type: 'user & admin' as 'user' })).toBe('?type=user+%26+admin');
   });
 });

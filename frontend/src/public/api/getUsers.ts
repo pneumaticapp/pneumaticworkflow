@@ -1,17 +1,9 @@
-import { EUserStatus, TUserListItem } from '../types/user';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { isArrayWithItems } from '../utils/helpers';
 import { identifyAppPartOnClient } from '../utils/identifyAppPart/identifyAppPartOnClient';
 import { EAppPart } from '../utils/identifyAppPart/types';
 import { commonRequest } from './commonRequest';
-
-export type TResponseUser = TUserListItem[];
-
-export interface IGetUsersConfig {
-  type?: TUserListItem['type'];
-  status?: (EUserStatus.Active | EUserStatus.Inactive | EUserStatus.Invited)[];
-  isAi?: boolean;
-}
+import type { IGetUsersConfig, TResponseUser } from './types';
 
 const getUrl = () => {
   const {
@@ -36,13 +28,11 @@ export function getUsersQueryString(config?: IGetUsersConfig) {
 
   const { type, status, isAi } = config;
 
-  const queryString = [
-    type && `type=${type}`,
-    isArrayWithItems(status) && `status=${status.join(',')}`,
-    typeof isAi === 'boolean' && `is_ai=${isAi}`,
-  ]
-    .filter(Boolean)
-    .join('&');
+  const params = new URLSearchParams();
+  if (type) params.set('type', type);
+  if (isArrayWithItems(status)) params.set('status', status.join(','));
+  if (typeof isAi === 'boolean') params.set('is_ai', String(isAi));
 
+  const queryString = params.toString();
   return queryString ? `?${queryString}` : '';
 }

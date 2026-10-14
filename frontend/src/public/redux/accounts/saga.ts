@@ -44,7 +44,8 @@ import { EUserListSorting, EUserStatus, ICreateUserRequest, TUserListItem } from
 import { EDeleteUserModalState, IAccounts } from '../../types/redux';
 
 import { getErrorMessage } from '../../utils/getErrorMessage';
-import { getUsers, TResponseUser } from '../../api/getUsers';
+import { getUsers } from '../../api/getUsers';
+import type { TResponseUser } from '../../api/types';
 import { getPlan, TGetPlanResponse } from '../../api/getPlan';
 import { authUserSuccess, makeStripePayment, TAuthUserResult } from '../auth/actions';
 import { ERoutes } from '../../constants/routes';
