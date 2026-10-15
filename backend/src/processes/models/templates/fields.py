@@ -3,7 +3,6 @@ from django.db.models import Q, UniqueConstraint
 
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
-from src.generics.querysets import AccountBaseQuerySet
 from src.processes.enums import FieldRuleType, FieldRuleOperator
 from src.processes.models.base import BaseApiNameModel
 from src.processes.models.mixins import (
@@ -14,6 +13,8 @@ from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
 from src.processes.querysets import (
     FieldTemplateQuerySet,
+    FieldTemplateRuleGroupAndQuerySet,
+    FieldTemplateRuleGroupOrQuerySet,
     FieldTemplateRuleSetQuerySet,
     FieldTemplateValuesQuerySet,
 )
@@ -177,7 +178,9 @@ class FieldTemplateRuleGroupOr(
         related_name='groups_or',
     )
 
-    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
+    objects = BaseSoftDeleteManager.from_queryset(
+        FieldTemplateRuleGroupOrQuerySet,
+    )()
 
     def __str__(self):
         return self.api_name
@@ -216,7 +219,9 @@ class FieldTemplateRuleGroupAnd(
         null=True,
     )
 
-    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
+    objects = BaseSoftDeleteManager.from_queryset(
+        FieldTemplateRuleGroupAndQuerySet,
+    )()
 
     def __str__(self):
         return self.api_name

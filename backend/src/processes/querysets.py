@@ -901,6 +901,16 @@ class FieldTemplateRuleSetQuerySet(AccountBaseQuerySet):
     pass
 
 
+class FieldTemplateRuleGroupOrQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldTemplateRuleGroupAndQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
 class FieldSelectionQuerySet(BaseQuerySet):
 
     def by_ids(self, ids: List[int]):
@@ -1404,6 +1414,21 @@ class FieldsetTemplateQuerySet(AccountBaseQuerySet):
 
 
 class FieldsetTemplateRuleQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldSetTemplateRuleSetQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldSetTemplateRuleGroupOrQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldSetTemplateRuleGroupAndQuerySet(AccountBaseQuerySet):
 
     pass
 
