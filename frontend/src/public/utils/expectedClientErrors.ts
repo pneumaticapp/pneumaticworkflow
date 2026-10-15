@@ -16,6 +16,7 @@ const EXPECTED_AUTH_PATTERNS = [
   'Token is expired',
   'Authentication credentials were not provided',
   'You do not have permission',
+  'Permission denied',
   'Request was throttled',
   'Invalid login or password',
 ];
