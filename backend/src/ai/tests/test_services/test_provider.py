@@ -515,30 +515,36 @@ def test_create_first_completion__empty_completion__raise_exception(mocker):
     )
 
 
-def test_create_actions__provider_check__ok(mocker):
+def test_create__ok(mocker):
 
-    """ Provider check """
+    """ Create provider """
 
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
     provider = create_test_provider(account=account)
-    model = 'gpt-4o'
-    get_first_model_mock = mocker.patch(
-        'src.ai.services.provider.AIProviderService._get_first_model',
-        return_value=model,
+    service = AIProviderService(user=owner)
+    kwargs = {
+        'name': 'OpenAI',
+        'base_url': 'https://api.openai.com/v1',
+        'api_key': 'sk-example',
+        'vendor': AIVendor.OPENAI,
+    }
+
+    def create_instance(**_kwargs):
+        service.instance = provider
+
+    create_instance_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_instance',
+        side_effect=create_instance,
     )
-    create_first_completion_mock = mocker.patch(
-        'src.ai.services.provider.AIProviderService._create_first_completion',
-    )
-    service = AIProviderService(user=owner, instance=provider)
 
     # act
-    service._create_actions(name='OpenAI')
+    result = service.create(**kwargs)
 
     # assert
-    get_first_model_mock.assert_called_once_with()
-    create_first_completion_mock.assert_called_once_with(model=model)
+    assert result == provider
+    create_instance_mock.assert_called_once_with(**kwargs)
 
 
 def test_create_instance__with_vendor__ok(mocker):
@@ -551,9 +557,17 @@ def test_create_instance__with_vendor__ok(mocker):
     name = 'OpenAI'
     base_url = 'https://api.openai.com/v1'
     api_key = 'sk-example'
+    model = 'gpt-4o'
     encrypt_mock = mocker.patch(
         'src.ai.services.provider.AIProviderService.encrypt',
         return_value='encrypted-key',
+    )
+    get_first_model_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._get_first_model',
+        return_value=model,
+    )
+    create_first_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_first_completion',
     )
     service = AIProviderService(user=owner)
 
@@ -574,6 +588,8 @@ def test_create_instance__with_vendor__ok(mocker):
     assert provider.vendor == AIVendor.OPENAI
     assert service.instance == provider
     encrypt_mock.assert_called_once_with(api_key)
+    get_first_model_mock.assert_called_once_with()
+    create_first_completion_mock.assert_called_once_with(model=model)
 
 
 def test_create_instance__default_vendor__create_custom(mocker):
@@ -584,9 +600,17 @@ def test_create_instance__default_vendor__create_custom(mocker):
     account = create_test_account()
     owner = create_test_owner(account=account)
     api_key = 'sk-example'
+    model = 'gpt-4o'
     encrypt_mock = mocker.patch(
         'src.ai.services.provider.AIProviderService.encrypt',
         return_value='encrypted-key',
+    )
+    get_first_model_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._get_first_model',
+        return_value=model,
+    )
+    create_first_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_first_completion',
     )
     service = AIProviderService(user=owner)
 
@@ -601,6 +625,8 @@ def test_create_instance__default_vendor__create_custom(mocker):
     provider = AIProvider.objects.get(id=result.id)
     assert provider.vendor == AIVendor.CUSTOM
     encrypt_mock.assert_called_once_with(api_key)
+    get_first_model_mock.assert_called_once_with()
+    create_first_completion_mock.assert_called_once_with(model=model)
 
 
 def test_create_instance__extra_kwargs__ignore_kwargs(mocker):
@@ -612,9 +638,17 @@ def test_create_instance__extra_kwargs__ignore_kwargs(mocker):
     owner = create_test_owner(account=account)
     name = 'OpenAI'
     api_key = 'sk-example'
+    model = 'gpt-4o'
     encrypt_mock = mocker.patch(
         'src.ai.services.provider.AIProviderService.encrypt',
         return_value='encrypted-key',
+    )
+    get_first_model_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._get_first_model',
+        return_value=model,
+    )
+    create_first_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_first_completion',
     )
     service = AIProviderService(user=owner)
 
@@ -631,6 +665,48 @@ def test_create_instance__extra_kwargs__ignore_kwargs(mocker):
     provider = AIProvider.objects.get(id=result.id)
     assert provider.name == name
     encrypt_mock.assert_called_once_with(api_key)
+    get_first_model_mock.assert_called_once_with()
+    create_first_completion_mock.assert_called_once_with(model=model)
+
+
+def test_create_instance__check_failed__not_saved(mocker):
+
+    """ Provider check failed """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    model = 'gpt-4o'
+    error_message = MSG_AI_0008(model=model)
+    mocker.patch(
+        'src.ai.services.provider.AIProviderService.encrypt',
+        return_value='encrypted-key',
+    )
+    get_first_model_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._get_first_model',
+        return_value=model,
+    )
+    create_first_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_first_completion',
+        side_effect=AIProviderException(message=error_message),
+    )
+    service = AIProviderService(user=owner)
+
+    # act
+    with pytest.raises(AIProviderException) as ex:
+        service._create_instance(
+            name='OpenAI',
+            base_url='https://api.openai.com/v1',
+            api_key='sk-example',
+            vendor=AIVendor.OPENAI,
+        )
+
+    # assert
+    assert str(ex.value) == str(error_message)
+    assert not AIProvider.objects.filter(account=account).exists()
+    assert service.instance.pk is None
+    get_first_model_mock.assert_called_once_with()
+    create_first_completion_mock.assert_called_once_with(model=model)
 
 
 def test_create_by_vendor__known_vendor__ok(mocker):

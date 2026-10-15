@@ -33,13 +33,20 @@ class AIProviderService(
         vendor: Optional[str] = None,
         **kwargs,
     ):
-        self.instance = AIProvider.objects.create(
+        self.instance = AIProvider(
             account=self.account,
             name=name,
             base_url=base_url,
             api_key_encrypted=self.encrypt(api_key),
             vendor=vendor or AIVendor.CUSTOM,
         )
+        model = self._get_first_model()
+        self._create_first_completion(model=model)
+        self.instance.save()
+        return self.instance
+
+    def create(self, **kwargs) -> AIProvider:
+        self._create_instance(**kwargs)
         return self.instance
 
     def create_by_vendor(
@@ -107,10 +114,6 @@ class AIProviderService(
             raise AIProviderException(
                 message=MSG_AI_0008(model=model),
             )
-
-    def _create_actions(self, **kwargs):
-        model = self._get_first_model()
-        self._create_first_completion(model=model)
 
     def _get_handler(
         self,
