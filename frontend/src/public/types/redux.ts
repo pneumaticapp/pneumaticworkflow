@@ -357,7 +357,7 @@ export type ITeamStore = {
 
 export interface IAIStore {
   providers: {
-    status: 'idle' | 'loading' | 'succeeded' | 'failed';
+    isLoading: boolean;
     list: IAIProvider[];
   };
   createProvider: {

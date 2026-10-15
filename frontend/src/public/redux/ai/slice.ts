@@ -14,7 +14,7 @@ import type {
 
 const initialState: IAIStore = {
   providers: {
-    status: 'idle',
+    isLoading: true,
     list: [],
   },
   createProvider: { status: 'idle', requestId: null },
@@ -62,13 +62,13 @@ const aiSlice = createSlice({
   initialState,
   reducers: {
     loadAIProvidersStarted: (state) => {
-      state.providers.status = 'loading';
+      state.providers.isLoading = state.providers.list.length === 0;
     },
     loadAIProvidersSuccess: (state, action: PayloadAction<IAIProvider[]>) => {
-      state.providers = { status: 'succeeded', list: action.payload };
+      state.providers = { isLoading: false, list: action.payload };
     },
     loadAIProvidersFailed: (state) => {
-      state.providers.status = 'failed';
+      state.providers.isLoading = false;
     },
 
     createAIProviderStarted: (state, action: PayloadAction<number>) => {
@@ -114,7 +114,6 @@ const aiSlice = createSlice({
       state.models = { isLoading: true, providerId: action.payload, list: [] };
     },
     loadAIProviderModelsSuccess: (state, action: PayloadAction<{ providerId: number; models: IAIModel[] }>) => {
-      // A slower response for a provider the user already switched away from must not land.
       if (state.models.providerId !== action.payload.providerId) {
         return;
       }

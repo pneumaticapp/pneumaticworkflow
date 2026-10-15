@@ -1285,8 +1285,6 @@ export const ruMessages = {
   'ai-providers.title': 'AI-провайдеры',
   'ai-providers.add': 'Добавить AI-провайдера',
   'ai-providers.empty': 'AI-провайдеров пока нет. Добавьте провайдера, чтобы создавать AI-агентов.',
-  'ai-providers.load-error': 'Не удалось загрузить AI-провайдеров.',
-  'ai-providers.retry': 'Повторить',
   'ai-providers.delete': 'Удалить',
   'ai-providers.usage': 'Используется: {agents}',
   'ai-providers.delete-disabled-tooltip':

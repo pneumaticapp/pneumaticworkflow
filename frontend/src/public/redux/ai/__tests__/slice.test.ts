@@ -12,14 +12,16 @@ import reducer, {
 import { EAIVendor } from '../../../types/ai';
 
 describe('AI request state', () => {
-  it('distinguishes a successfully loaded empty list from a failed load', () => {
+  it('uses isLoading until the provider request succeeds or fails', () => {
     const initial = reducer(undefined, { type: 'init' });
-    expect(initial.providers.status).toBe('idle');
+    expect(initial.providers).toEqual({ isLoading: true, list: [] });
 
     const loading = reducer(initial, loadAIProvidersStarted());
-    expect(loading.providers.status).toBe('loading');
-    expect(reducer(loading, loadAIProvidersSuccess([])).providers.status).toBe('succeeded');
-    expect(reducer(loading, loadAIProvidersFailed()).providers.status).toBe('failed');
+    expect(loading.providers.isLoading).toBe(true);
+    expect(reducer(loading, loadAIProvidersSuccess([])).providers).toEqual({ isLoading: false, list: [] });
+    const failed = reducer(loading, loadAIProvidersFailed());
+    expect(failed.providers).toEqual({ isLoading: false, list: [] });
+    expect(reducer(failed, loadAIProvidersStarted()).providers.isLoading).toBe(true);
   });
 
   it('preserves the last provider list when a refresh fails', () => {
@@ -34,9 +36,11 @@ describe('AI request state', () => {
       usage: [],
     };
     const loaded = reducer(initial, loadAIProvidersSuccess([provider]));
-    const failed = reducer(reducer(loaded, loadAIProvidersStarted()), loadAIProvidersFailed());
+    const refreshing = reducer(loaded, loadAIProvidersStarted());
+    expect(refreshing.providers.isLoading).toBe(false);
+    const failed = reducer(refreshing, loadAIProvidersFailed());
 
-    expect(failed.providers).toEqual({ status: 'failed', list: [provider] });
+    expect(failed.providers).toEqual({ isLoading: false, list: [provider] });
   });
 
   it('ignores completion of an old agent request after a retry starts', () => {

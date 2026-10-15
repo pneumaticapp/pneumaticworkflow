@@ -117,12 +117,12 @@ describe('CreatePerformerModal', () => {
   const mockAIState = ({
     providers = [OPENROUTER_PROVIDER],
     models = { isLoading: false, providerId: 1, list: DEFAULT_MODELS },
-    providersStatus = 'succeeded',
-  }: { providers?: object[]; models?: object; providersStatus?: string } = {}) => {
+    isLoadingProviders = false,
+  }: { providers?: object[]; models?: object; isLoadingProviders?: boolean } = {}) => {
     (useSelector as unknown as jest.Mock).mockImplementation((selector) =>
       selector({
         ai: {
-          providers: { status: providersStatus, list: providers },
+          providers: { isLoading: isLoadingProviders, list: providers },
           createAgent: createAgentState,
           agents: { isLoading: false, list: [] },
           models,
@@ -177,6 +177,7 @@ describe('CreatePerformerModal', () => {
       await openModal();
 
       expect(screen.getByTestId('create-user-modal-header')).toBeInTheDocument();
+      expect(mockDispatch).toHaveBeenCalledWith(loadAIProviders());
     });
 
     it('displays all form fields', async () => {
@@ -248,16 +249,13 @@ describe('CreatePerformerModal', () => {
       expect(screen.queryByLabelText(getTranslatedText('team.create-ai-agent-modal.name'))).not.toBeInTheDocument();
     });
 
-    it('shows an error and retries after a failed provider load, not the empty-state hint', async () => {
-      mockAIState({ providers: [], providersStatus: 'failed' });
+    it('does not show the no-providers hint while providers are loading', async () => {
+      mockAIState({ providers: [], isLoadingProviders: true });
       render(<CreatePerformerModal isOpen onClose={mockOnClose} />);
       await openAIAgentTab();
 
-      expect(screen.getByTestId('ai-agent-providers-error')).toBeInTheDocument();
       expect(screen.queryByTestId('ai-agent-no-providers-hint')).not.toBeInTheDocument();
-      mockDispatch.mockClear();
-      await userEvent.click(screen.getByRole('button', { name: getTranslatedText('ai-providers.retry') }));
-      expect(mockDispatch).toHaveBeenCalledWith(loadAIProviders());
+      expect(screen.queryByLabelText(getTranslatedText('team.create-ai-agent-modal.name'))).not.toBeInTheDocument();
     });
 
     it('preselects the provider and loads its models when the account has exactly one', async () => {

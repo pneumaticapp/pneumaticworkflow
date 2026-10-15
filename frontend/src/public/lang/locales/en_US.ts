@@ -1392,8 +1392,6 @@ export const enMessages = {
   'ai-providers.title': 'AI providers',
   'ai-providers.add': 'Add AI provider',
   'ai-providers.empty': 'No AI providers yet. Add one to start creating AI agents.',
-  'ai-providers.load-error': 'Could not load AI providers.',
-  'ai-providers.retry': 'Retry',
   'ai-providers.delete': 'Delete',
   'ai-providers.usage': 'Used by: {agents}',
   'ai-providers.delete-disabled-tooltip': 'This provider is used by AI agents: {agents}. Remove those agents first.',
