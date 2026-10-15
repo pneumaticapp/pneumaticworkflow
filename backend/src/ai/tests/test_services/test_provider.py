@@ -194,7 +194,7 @@ def test_get_models__cache_hit__return_cached_models(mocker):
     # assert
     assert result == models
     get_cache_mock.assert_called_once_with(
-        key=f'{owner.id}_{provider.name}',
+        key=provider.id,
         default=[],
     )
     get_handler_mock.assert_not_called()
@@ -231,13 +231,13 @@ def test_get_models__cache_miss__return_handler_models(mocker):
     # assert
     assert result == models
     get_cache_mock.assert_called_once_with(
-        key=f'{owner.id}_{provider.name}',
+        key=provider.id,
         default=[],
     )
     get_handler_mock.assert_called_once_with()
     get_models_mock.assert_called_once_with()
     set_cache_mock.assert_called_once_with(
-        key=f'{owner.id}_{provider.name}',
+        key=provider.id,
         value=models,
     )
 
@@ -271,15 +271,54 @@ def test_get_models__cache_miss_handler_empty__return_empty_list(mocker):
     # assert
     assert result == []
     get_cache_mock.assert_called_once_with(
-        key=f'{owner.id}_{provider.name}',
+        key=provider.id,
         default=[],
     )
     get_handler_mock.assert_called_once_with()
     get_models_mock.assert_called_once_with()
     set_cache_mock.assert_called_once_with(
-        key=f'{owner.id}_{provider.name}',
+        key=provider.id,
         value=[],
     )
+
+
+def test_get_models__unsaved_provider__skip_cache_read(mocker):
+
+    """ Provider not saved yet """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    provider = AIProvider(
+        account=account,
+        name='OpenAI',
+        base_url='https://api.openai.com/v1',
+        vendor=AIVendor.OPENAI,
+    )
+    models = [{'slug': 'gpt-4o', 'name': 'gpt-4o'}]
+    get_cache_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._get_cache',
+    )
+    get_models_mock = mocker.Mock(return_value=models)
+    handler = mocker.Mock(get_models=get_models_mock)
+    get_handler_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._get_handler',
+        return_value=handler,
+    )
+    set_cache_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._set_cache',
+    )
+    service = AIProviderService(user=owner, instance=provider)
+
+    # act
+    result = service.get_models()
+
+    # assert
+    assert result == models
+    get_cache_mock.assert_not_called()
+    get_handler_mock.assert_called_once_with()
+    get_models_mock.assert_called_once_with()
+    set_cache_mock.assert_called_once_with(key=None, value=models)
 
 
 def test_get_completion__default_params__ok(mocker):
@@ -836,6 +875,72 @@ def test_partial_update__not_force_save__not_saved(mocker):
     encrypt_mock.assert_not_called()
 
 
+def test_partial_update__api_key__delete_models_cache(mocker):
+
+    """ Api key changed """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    provider = create_test_provider(account=account)
+    mocker.patch(
+        'src.ai.services.provider.AIProviderService.encrypt',
+        return_value='encrypted-new-key',
+    )
+    delete_cache_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._delete_cache',
+    )
+    service = AIProviderService(user=owner, instance=provider)
+
+    # act
+    service.partial_update(api_key='sk-new-key')
+
+    # assert
+    delete_cache_mock.assert_called_once_with(key=provider.id)
+
+
+def test_partial_update__base_url__delete_models_cache(mocker):
+
+    """ Base url changed """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    provider = create_test_provider(account=account)
+    delete_cache_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._delete_cache',
+    )
+    service = AIProviderService(user=owner, instance=provider)
+
+    # act
+    service.partial_update(base_url='https://example.com/v1')
+
+    # assert
+    provider.refresh_from_db()
+    assert provider.base_url == 'https://example.com/v1'
+    delete_cache_mock.assert_called_once_with(key=provider.id)
+
+
+def test_partial_update__name_and_is_active__cache_not_deleted(mocker):
+
+    """ Credentials not changed """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    provider = create_test_provider(account=account)
+    delete_cache_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._delete_cache',
+    )
+    service = AIProviderService(user=owner, instance=provider)
+
+    # act
+    service.partial_update(name='New name', is_active=False)
+
+    # assert
+    delete_cache_mock.assert_not_called()
+
+
 def test_delete__not_in_use__ok(mocker):
 
     """ Provider not in use """
@@ -856,7 +961,7 @@ def test_delete__not_in_use__ok(mocker):
     provider.refresh_from_db()
     assert provider.is_deleted is True
     delete_cache_mock.assert_called_once_with(
-        key=f'{owner.id}_{provider.name}',
+        key=provider.id,
     )
 
 

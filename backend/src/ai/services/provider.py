@@ -68,19 +68,25 @@ class AIProviderService(
         **update_kwargs,
     ) -> AIProvider:
 
+        credentials_changed = bool(
+            {'api_key', 'base_url'} & update_kwargs.keys(),
+        )
         if 'api_key' in update_kwargs:
             update_kwargs['api_key_encrypted'] = self.encrypt(
                 update_kwargs.pop('api_key'),
             )
-        return super().partial_update(
+        super().partial_update(
             force_save=force_save,
             **update_kwargs,
         )
+        if credentials_changed:
+            self._delete_cache(key=self.instance.id)
+        return self.instance
 
     def delete(self) -> None:
         if self.instance.ai_agents.exists():
             raise AIProviderInUseException
-        self._delete_cache(key=f'{self.user.id}_{self.instance.name}')
+        self._delete_cache(key=self.instance.id)
         super().delete()
 
     def _get_vendor(self):
@@ -132,12 +138,13 @@ class AIProviderService(
         )
 
     def get_models(self) -> List[dict]:
-        cache_key = f'{self.user.id}_{self.instance.name}'
-        models = self._get_cache(key=cache_key, default=[])
+        models = None
+        if self.instance.id:
+            models = self._get_cache(key=self.instance.id, default=[])
         if not models:
             handler = self._get_handler()
             models = handler.get_models()
-            self._set_cache(key=cache_key, value=models)
+            self._set_cache(key=self.instance.id, value=models)
         return models
 
     def get_completion(
