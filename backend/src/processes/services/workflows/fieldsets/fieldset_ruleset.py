@@ -1,4 +1,3 @@
-import contextlib
 from decimal import Decimal, DecimalException
 from operator import eq, gt, lt
 from typing import Dict, Iterable, List, Optional, Tuple, Union
@@ -9,6 +8,7 @@ from src.generics.base.service import BaseModelService
 from src.processes.enums import FieldSetRuleOperator
 from src.processes.messages.fieldset import (
     MSG_FS_0002,
+    MSG_FS_0003,
     MSG_FS_0012,
 )
 from src.processes.models.templates.fieldset import (
@@ -94,7 +94,7 @@ class FieldSetRuleSetService(BaseModelService):
         else:
             self.instance.fields.clear()
 
-    def _build_group_and(
+    def _create_group_and(
         self,
         group_or: FieldSetRuleGroupOr,
         data: Union[FieldSetTemplateRuleGroupAnd, Dict],
@@ -108,7 +108,7 @@ class FieldSetRuleSetService(BaseModelService):
             operator = data.operator
             value = data.value
 
-        return FieldSetRuleGroupAnd(
+        return FieldSetRuleGroupAnd.objects.create(
             account=self.instance.account,
             workflow_id=self.instance.workflow_id,
             group_or=group_or,
@@ -128,7 +128,7 @@ class FieldSetRuleSetService(BaseModelService):
             groups_and_data = data.get('groups_and', [])
         else:
             api_name = data.api_name
-            groups_and_data = list(data.groups_and.all())
+            groups_and_data = data.groups_and.all()
 
         create_kwargs = {
             'account': self.instance.account,
@@ -139,12 +139,11 @@ class FieldSetRuleSetService(BaseModelService):
             create_kwargs['api_name'] = api_name
 
         group_or = FieldSetRuleGroupOr.objects.create(**create_kwargs)
-        and_objects = [
-            self._build_group_and(group_or=group_or, data=and_item)
-            for and_item in groups_and_data
-        ]
-        if and_objects:
-            FieldSetRuleGroupAnd.objects.bulk_create(and_objects)
+        for group_and_data in groups_and_data:
+            self._create_group_and(
+                group_or=group_or,
+                data=group_and_data,
+            )
         return group_or
 
     def _create_related(
@@ -179,10 +178,11 @@ class FieldSetRuleSetService(BaseModelService):
                 if field.is_required:
                     values_exists = True
             else:
-                with contextlib.suppress(
-                    ValueError, TypeError, DecimalException,
-                ):
+                try:
                     total += Decimal(field.value)
+                except (ValueError, TypeError, DecimalException):
+                    # Skipping the value lets the sum match on a partial set.
+                    raise FieldsetServiceException(MSG_FS_0003) from None
                 values_exists = True
         return total, values_exists
 

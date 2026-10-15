@@ -7,6 +7,7 @@ from src.processes.enums import (
 )
 from src.processes.messages.fieldset import (
     MSG_FS_0002,
+    MSG_FS_0003,
     MSG_FS_0012,
 )
 from src.processes.models.templates.fields import FieldTemplate
@@ -238,6 +239,62 @@ def test_validate__sum_equal_failed__raises_exception():
         service.validate()
 
     assert ex.value.message == MSG_FS_0002('100')
+
+
+def test_validate__non_numeric_value__raises_exception():
+
+    """ A non-numeric field value fails the sum instead of being skipped """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user)
+    fieldset = FieldSet.objects.create(
+        account=account,
+        workflow=workflow,
+        name='Finances',
+    )
+    field = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+        name='Part 1',
+        type=FieldType.NUMBER,
+        value='40',
+    )
+    bad_field = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+        name='Part 2',
+        type=FieldType.NUMBER,
+        value='abc',
+    )
+    ruleset = FieldSetRuleSet.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+    )
+    ruleset.fields.add(field, bad_field)
+    group_or = FieldSetRuleGroupOr.objects.create(
+        account=account,
+        workflow=workflow,
+        ruleset=ruleset,
+    )
+    FieldSetRuleGroupAnd.objects.create(
+        account=account,
+        workflow=workflow,
+        group_or=group_or,
+        operator=FieldSetRuleOperator.SUM_EQUAL,
+        value='40',
+    )
+    service = FieldSetRuleSetService(user=user, instance=ruleset)
+
+    # act & assert
+    with pytest.raises(FieldsetServiceException) as ex:
+        service.validate()
+
+    assert ex.value.message == MSG_FS_0003
 
 
 def test_validate__multiple_predicates_failed__raises_msg_fs_0012():
