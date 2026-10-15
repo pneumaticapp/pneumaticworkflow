@@ -103,7 +103,7 @@ class FieldSetService(BaseModelService):
                 )
                 service.validate()
         elif self.instance.rules.exists():
-            rules = list(self.instance.rules.order_by('id').all())
+            rules = list(self.instance.rules.order_by('type', 'id').all())
             for _, group in groupby(rules, key=lambda r: r.type):
                 group_rules = list(group)
                 if len(group_rules) == 1:
