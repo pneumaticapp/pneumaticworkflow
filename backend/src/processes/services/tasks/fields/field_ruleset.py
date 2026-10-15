@@ -69,23 +69,19 @@ class FieldRuleSetService(BaseModelService):
             ),
         )
         groups_and = group_or_template.groups_and.all()
-        and_objects = [
-            self._build_group_and(
+        for group_and_template in groups_and:
+            self._create_group_and(
                 group_or=group_or,
                 group_and_template=group_and_template,
             )
-            for group_and_template in groups_and
-        ]
-        if and_objects:
-            FieldRuleGroupAnd.objects.bulk_create(and_objects)
         return group_or
 
-    def _build_group_and(
+    def _create_group_and(
         self,
         group_or: FieldRuleGroupOr,
         group_and_template: FieldTemplateRuleGroupAnd,
     ) -> FieldRuleGroupAnd:
-        return FieldRuleGroupAnd(
+        return FieldRuleGroupAnd.objects.create(
             account=self.instance.account,
             workflow_id=self.instance.workflow_id,
             group_or=group_or,
