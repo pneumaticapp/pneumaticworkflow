@@ -32,7 +32,10 @@
   &__list {
     display: flex;
     flex-direction: column;
+    padding: 0;
+    margin: 0;
     overflow: hidden;
+    list-style: none;
     border: 0.1rem solid var(--pneumatic-color-black16);
     border-radius: 0.6rem;
   }
@@ -58,6 +61,7 @@
   }
 
   &__item-name {
+    margin: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: 1.4rem;
@@ -67,6 +71,7 @@
   }
 
   &__item-url {
+    margin: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: 1.2rem;
@@ -75,6 +80,7 @@
   }
 
   &__item-key {
+    margin: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     font-family: monospace;
@@ -85,6 +91,7 @@
   }
 
   &__item-usage {
+    margin: 0;
     font-size: 1.2rem;
     color: var(--pneumatic-color-black32);
   }

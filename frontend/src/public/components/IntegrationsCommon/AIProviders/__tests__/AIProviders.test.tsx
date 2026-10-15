@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -12,9 +12,9 @@ jest.mock('../AIProvidersSkeleton', () => ({
   AIProvidersSkeleton: () => <div data-testid="ai-providers-skeleton" />,
 }));
 
-jest.mock('../../../UI', () => ({
-  Tooltip: ({ children, content }: any) => (
-    <div data-testid="tooltip" data-content={content}>
+jest.mock('../../../UI/Tooltip', () => ({
+  Tooltip: ({ children, content, disabled }: any) => (
+    <div data-testid="tooltip" data-content={content} data-disabled={disabled}>
       {children}
     </div>
   ),
@@ -51,10 +51,6 @@ jest.mock('../../../UI/DropdownList', () => {
     },
   };
 });
-
-jest.mock('../../../UI/Typeography/Header', () => ({
-  Header: ({ children, className }: any) => <p className={className}>{children}</p>,
-}));
 
 jest.mock('../../../UI/Modal/Modal', () => ({
   Modal: ({ children, isOpen }: any) => (isOpen ? <div role="dialog">{children}</div> : null),
@@ -111,6 +107,15 @@ describe('AIProviders', () => {
     expect(screen.getByText('OpenRouter')).toBeInTheDocument();
     expect(screen.getByText('https://openrouter.ai/api/v1')).toBeInTheDocument();
     expect(screen.getByText(/sk-or-v1-01234/)).toBeInTheDocument();
+    expect(
+      screen.getByRole('region', { name: intlMock.formatMessage({ id: 'ai-providers.title' }) }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
+      intlMock.formatMessage({ id: 'ai-providers.title' }),
+    );
+    expect(within(screen.getByRole('list')).getByRole('listitem')).toHaveAttribute('data-testid', 'ai-provider-1');
+    expect(screen.getByRole('heading', { level: 3, name: 'OpenRouter' })).toBeInTheDocument();
+    expect(screen.getByText(/sk-or-v1-01234/).tagName).toBe('CODE');
   });
 
   it('deletes an unused provider through the confirmation modal', () => {
@@ -120,8 +125,15 @@ describe('AIProviders', () => {
 
     const deleteButton = screen.getByTestId('delete-ai-provider-1');
     expect(deleteButton).toBeEnabled();
+    expect(screen.getByTestId('tooltip')).toHaveAttribute('data-disabled', 'true');
 
     userEvent.click(deleteButton);
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: intlMock.formatMessage({ id: 'ai-providers.delete-modal-title' }),
+      }),
+    ).toBeInTheDocument();
     userEvent.click(screen.getByTestId('confirm-delete-ai-provider'));
 
     expect(mockDispatch).toHaveBeenCalledWith(deleteAIProvider(1));
@@ -140,6 +152,7 @@ describe('AIProviders', () => {
     render(<AIProviders />);
 
     expect(screen.getByTestId('delete-ai-provider-1')).toBeDisabled();
+    expect(screen.getByTestId('tooltip')).toHaveAttribute('data-disabled', 'false');
     expect(screen.getByTestId('tooltip')).toHaveAttribute(
       'data-content',
       intlMock.formatMessage(
@@ -148,6 +161,9 @@ describe('AIProviders', () => {
       ),
     );
     expect(screen.getByTestId('ai-provider-usage-1')).toHaveTextContent('Research assistant, Support bot');
+    userEvent.click(screen.getByTestId('delete-ai-provider-1'));
+    expect(screen.queryByTestId('delete-ai-provider-modal')).not.toBeInTheDocument();
+    expect(mockDispatch).not.toHaveBeenCalledWith(deleteAIProvider(1));
   });
 
   it('opens the create modal on the add button', () => {

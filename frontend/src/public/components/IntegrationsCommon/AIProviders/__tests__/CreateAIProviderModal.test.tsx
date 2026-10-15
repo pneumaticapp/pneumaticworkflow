@@ -36,12 +36,6 @@ jest.mock('../../../UI/Fields/InputField', () => {
   };
 });
 
-jest.mock('../../../UI/Typeography/Header', () => ({
-  Header: ({ children, className }: { children: React.ReactNode; className?: string }) => (
-    <p className={className}>{children}</p>
-  ),
-}));
-
 jest.mock('../../../UI/Modal/Modal', () => ({
   Modal: ({ children, isOpen }: { children: React.ReactNode; isOpen: boolean }) =>
     isOpen ? <div role="dialog">{children}</div> : null,
@@ -108,6 +102,7 @@ describe('CreateAIProviderModal', () => {
     renderModal();
 
     expect(mockDispatch).toHaveBeenCalledWith(loadAIVendors());
+    expect(screen.getByRole('heading', { level: 2, name: t('ai-providers.create-modal-title') })).toBeInTheDocument();
   });
 
   it('creates a provider by vendor from the default tab', async () => {

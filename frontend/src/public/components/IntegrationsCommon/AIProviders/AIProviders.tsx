@@ -2,79 +2,16 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { IAIProvider } from '../../../types/ai';
 import { Button } from '../../UI/Buttons/Button';
 import { Header } from '../../UI/Typeography/Header';
 import { Modal } from '../../UI/Modal/Modal';
-import { Tooltip } from '../../UI';
 import { deleteAIProvider, loadAIProviders } from '../../../redux/ai/slice';
 import { getAIProvidersState } from '../../../redux/selectors/ai';
 
 import { CreateAIProviderModal } from './CreateAIProviderModal';
 import { AIProvidersSkeleton } from './AIProvidersSkeleton';
+import { AIProviderListItem } from './AIProviderListItem';
 import styles from './AIProviders.css';
-
-const KEY_MASK = '••••••••';
-
-interface IAIProviderListItemProps {
-  provider: IAIProvider;
-  onDelete: (id: number) => void;
-}
-
-const AIProviderListItem = React.memo(({ provider, onDelete }: IAIProviderListItemProps) => {
-  const { formatMessage } = useIntl();
-  const isUsed = provider.usage.length > 0;
-
-  const handleDelete = React.useCallback(() => {
-    onDelete(provider.id);
-  }, [provider.id, onDelete]);
-
-  const deleteButton = (
-    <Button
-      type="button"
-      className={styles['providers__delete-btn']}
-      onClick={handleDelete}
-      size="sm"
-      buttonStyle="transparent-black"
-      disabled={isUsed}
-      label={formatMessage({ id: 'ai-providers.delete' })}
-      data-testid={`delete-ai-provider-${provider.id}`}
-    />
-  );
-
-  return (
-    <div className={styles['providers__item']} data-testid={`ai-provider-${provider.id}`}>
-      <div className={styles['providers__item-info']}>
-        <span className={styles['providers__item-name']}>{provider.name}</span>
-        <span className={styles['providers__item-url']}>{provider.baseUrl}</span>
-        <span className={styles['providers__item-key']}>
-          {provider.apiKeyPrefix}
-          {KEY_MASK}
-        </span>
-        {isUsed && (
-          <span className={styles['providers__item-usage']} data-testid={`ai-provider-usage-${provider.id}`}>
-            {formatMessage({ id: 'ai-providers.usage' }, { agents: provider.usage.map(({ name }) => name).join(', ') })}
-          </span>
-        )}
-      </div>
-      <div className={styles['providers__item-actions']}>
-        {isUsed ? (
-          <Tooltip
-            content={formatMessage(
-              { id: 'ai-providers.delete-disabled-tooltip' },
-              { agents: provider.usage.map(({ name }) => name).join(', ') },
-            )}
-          >
-            <div data-testid={`delete-ai-provider-guard-${provider.id}`}>{deleteButton}</div>
-          </Tooltip>
-        ) : (
-          deleteButton
-        )}
-      </div>
-    </div>
-  );
-});
-AIProviderListItem.displayName = 'AIProviderListItem';
 
 export function AIProviders() {
   const { formatMessage } = useIntl();
@@ -101,9 +38,11 @@ export function AIProviders() {
   const providerToDelete = providers.find(({ id }) => id === confirmDeleteId);
 
   return (
-    <div className={styles['providers']} data-testid="ai-providers-section">
-      <div className={styles['providers__header']}>
-        <p className={styles['providers__title']}>{formatMessage({ id: 'ai-providers.title' })}</p>
+    <section className={styles['providers']} aria-labelledby="ai-providers-title" data-testid="ai-providers-section">
+      <header className={styles['providers__header']}>
+        <h2 id="ai-providers-title" className={styles['providers__title']}>
+          {formatMessage({ id: 'ai-providers.title' })}
+        </h2>
         <Button
           className={styles['providers__create-btn']}
           type="button"
@@ -113,7 +52,7 @@ export function AIProviders() {
           label={formatMessage({ id: 'ai-providers.add' })}
           data-testid="create-ai-provider-btn"
         />
-      </div>
+      </header>
 
       {isLoading && <AIProvidersSkeleton />}
 
@@ -124,18 +63,18 @@ export function AIProviders() {
       )}
 
       {providers.length > 0 && (
-        <div className={styles['providers__list']} data-testid="ai-providers-list">
+        <ul className={styles['providers__list']} data-testid="ai-providers-list">
           {providers.map((provider) => (
             <AIProviderListItem key={provider.id} provider={provider} onDelete={setConfirmDeleteId} />
           ))}
-        </div>
+        </ul>
       )}
 
       <CreateAIProviderModal isOpen={isCreateModalOpen} onClose={closeCreateModal} />
 
       <Modal isOpen={confirmDeleteId !== null} onClose={() => setConfirmDeleteId(null)} width="sm">
         <div data-testid="delete-ai-provider-modal">
-          <Header tag="p" size="6" className={styles['create-modal__title']}>
+          <Header tag="h2" size="6" className={styles['create-modal__title']}>
             {formatMessage({ id: 'ai-providers.delete-modal-title' })}
           </Header>
           <p className={styles['create-modal__warning']}>
@@ -161,6 +100,6 @@ export function AIProviders() {
           </div>
         </div>
       </Modal>
-    </div>
+    </section>
   );
 }

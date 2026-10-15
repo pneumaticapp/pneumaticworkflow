@@ -78,7 +78,7 @@ export function CreateAIProviderModal({ isOpen, onClose }: ICreateAIProviderModa
   return (
     <Modal isOpen={isOpen} onClose={onClose} width="sm">
       <div data-testid="create-ai-provider-modal">
-        <Header tag="p" size="6" className={styles['create-modal__title']}>
+        <Header tag="h2" size="6" className={styles['create-modal__title']}>
           {formatMessage({ id: 'ai-providers.create-modal-title' })}
         </Header>
         <p className={styles['create-modal__description']}>

@@ -1,3 +1,10 @@
+import type { IAIProvider } from '../../../types/ai';
+
+export interface IAIProviderListItemProps {
+  provider: IAIProvider;
+  onDelete: (id: number) => void;
+}
+
 export interface ICreateAIProviderModalProps {
   isOpen: boolean;
   onClose(): void;
