@@ -37,3 +37,12 @@ MSG_AI_0010 = lambda attempts: format_lazy(
     _('The agent failed to complete the task in {attempts} attempts.'),
     attempts=attempts,
 )
+MSG_AI_0011 = lambda attempts, error: format_lazy(
+    _(
+        'I could not complete the task in {attempts} attempts. '
+        'Please complete it manually or check the agent provider settings. '
+        'Error: {error}',
+    ),
+    attempts=attempts,
+    error=error,
+)

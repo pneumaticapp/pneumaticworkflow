@@ -13,7 +13,7 @@ from src.ai.exceptions import (
     AIAgentAttemptsExceededException,
     AIAgentNameNotUniqueException,
 )
-from src.ai.messages import MSG_AI_0009, MSG_AI_0010
+from src.ai.messages import MSG_AI_0009, MSG_AI_0010, MSG_AI_0011
 from src.ai.models import AIAgent, AIAgentAction, AIProvider
 from src.ai.services.provider import AIProviderService
 from src.ai.services.response import TaskResponseService
@@ -32,6 +32,8 @@ from src.storage.enums import AccessType, SourceType
 from src.storage.services import FileServiceClient
 
 UserModel = get_user_model()
+
+MAX_RUN_FAILURES = 3
 
 
 class AIAgentService(BaseModelService):
@@ -321,7 +323,7 @@ class AIAgentService(BaseModelService):
             errors_stack with the values {'phone-1': 'call me'} and
             the error '- `phone-1`: Value should be a string.'
             -> a report file, a comment with a link to it,
-               the action 'error' and
+               the action 'task_attempts_exceeded' and
                AIAgentAttemptsExceededException """
 
         text = self._get_report_text(errors_stack=errors_stack)
@@ -342,7 +344,7 @@ class AIAgentService(BaseModelService):
             account_id=self.instance.account_id,
             agent_id=self.instance.id,
             task_id=task.id,
-            action=AIAgentActionType.ERROR,
+            action=AIAgentActionType.TASK_ATTEMPTS_EXCEEDED,
             text=f'{message}\n{url}',
         )
         raise AIAgentAttemptsExceededException(message=message)
@@ -476,6 +478,43 @@ class AIAgentService(BaseModelService):
 
         return fields_values
 
+    def _handle_run_failure(self, task: Task, ex: Exception):
+
+        """ Logs a run interrupted by an unexpected error. The dispatcher
+            retries the task until the failures reach MAX_RUN_FAILURES,
+            the last failure is reported to the task performers.
+
+            AIProviderRequestFailedException on the first run
+            -> the action 'task_failed' with the error text
+
+            the same error on the third run
+            -> the action 'task_failed' and a comment on the task
+               with the error text """
+
+        error = str(ex) or ex.__class__.__name__
+        AIAgentAction.objects.create(
+            account_id=self.instance.account_id,
+            agent_id=self.instance.id,
+            task_id=task.id,
+            action=AIAgentActionType.TASK_FAILED,
+            text=error,
+        )
+        failures = (
+            AIAgentAction.objects
+            .by_agent(self.instance.id)
+            .by_task(task.id)
+            .by_action(AIAgentActionType.TASK_FAILED)
+            .filter(date_created__gte=task.date_started)
+            .count()
+        )
+        if failures >= MAX_RUN_FAILURES:
+            self._create_comment(
+                task=task,
+                text=str(
+                    MSG_AI_0011(attempts=MAX_RUN_FAILURES, error=error),
+                ),
+            )
+
     def complete_task(self, task_id: int):
 
         """ Fills in the task output with an agent answer, completes
@@ -484,7 +523,11 @@ class AIAgentService(BaseModelService):
             task_id 42
             -> the task is completed, the actions 'task_in_progress' and
                'task_completed' with the text '{"phone-1": "+1 202..."}'
-               are created """
+               are created
+
+            the AI provider is unavailable
+            -> the actions 'task_in_progress' and 'task_failed',
+               the error is raised """
 
         task = Task.objects.filter(id=task_id).first()
         AIAgentAction.objects.create(
@@ -493,7 +536,13 @@ class AIAgentService(BaseModelService):
             task_id=task.id,
             action=AIAgentActionType.TASK_IN_PROGRESS,
         )
-        fields_values = self._attempt_complete_task(task=task)
+        try:
+            fields_values = self._attempt_complete_task(task=task)
+        except AIAgentAttemptsExceededException:
+            raise
+        except Exception as ex:
+            self._handle_run_failure(task=task, ex=ex)
+            raise
         AIAgentAction.objects.create(
             account_id=self.instance.account_id,
             agent_id=self.instance.id,

@@ -9,11 +9,14 @@ from django.db.models import (
     Count,
     Exists,
     F,
+    IntegerField,
     Max,
     OuterRef,
     Prefetch,
     Q,
+    Subquery,
 )
+from django.db.models.functions import Coalesce
 
 from src.accounts.enums import UserType
 from src.accounts.models import UserGroup
@@ -1242,6 +1245,44 @@ class TaskPerformerQuerySet(BaseQuerySet, BaseHardQuerySet):
             )
         )
         return (direct_users | group_users).distinct()
+
+    def _count_ai_agent_actions(self, action: str) -> Coalesce:
+
+        """ Number of the performer agent actions of the type
+            since the task was started """
+
+        from src.ai.models import AIAgentAction
+
+        actions = (
+            AIAgentAction.objects
+            .filter(
+                task_id=OuterRef('task_id'),
+                agent__user_id=OuterRef('user_id'),
+                action=action,
+                date_created__gte=OuterRef('task__date_started'),
+            )
+            .order_by()
+            .values('task_id')
+            .annotate(count=Count('id'))
+            .values('count')
+        )
+        return Coalesce(Subquery(actions, output_field=IntegerField()), 0)
+
+    def with_ai_agent_runs(self):
+
+        """ Annotates the agent runs of the task since it was started
+            and the runs that failed with an unexpected error """
+
+        from src.ai.enums import AIAgentActionType
+
+        return self.annotate(
+            ai_agent_runs=self._count_ai_agent_actions(
+                AIAgentActionType.TASK_IN_PROGRESS,
+            ),
+            ai_agent_failures=self._count_ai_agent_actions(
+                AIAgentActionType.TASK_FAILED,
+            ),
+        )
 
 
 class ChecklistTemplateQuerySet(BaseQuerySet):

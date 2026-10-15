@@ -1,12 +1,11 @@
 from celery import shared_task
-from django.db.models import Exists, OuterRef
+from django.db.models import F
 from src.accounts.enums import NotificationType
 from src.accounts.models import Notification
-from src.ai.services.agent import AIAgentService
+from src.ai.services.agent import AIAgentService, MAX_RUN_FAILURES
 from src.celery_app import periodic_lock
 
-from src.ai.models import AIAgentAction, AIAgent
-from src.ai.enums import AIAgentActionType
+from src.ai.models import AIAgent
 from src.processes.enums import (
     TaskStatus,
     WorkflowStatus,
@@ -25,15 +24,12 @@ def complete_ai_agent_task(task_id: int, agent_id: int) -> None:
 @shared_task(ignore_result=True)
 def dispatch_ai_agent_new_tasks() -> None:
 
+    """ Dispatch to AI agents the new tasks and the tasks whose
+        every run failed, until the failures reach MAX_RUN_FAILURES """
+
     with periodic_lock('dispatch_ai_agent_tasks') as acquired:
         if not acquired:
             return
-        already_claimed = AIAgentAction.objects.filter(
-            task_id=OuterRef('task_id'),
-            agent__user_id=OuterRef('user_id'),
-            action=AIAgentActionType.TASK_IN_PROGRESS,
-            date_created__gte=OuterRef('task__date_started'),
-        )
         performers = (
             TaskPerformer.objects
             .type_user()
@@ -45,8 +41,11 @@ def dispatch_ai_agent_new_tasks() -> None:
                 task__status=TaskStatus.ACTIVE,
                 task__workflow__status=WorkflowStatus.RUNNING,
             )
-            .annotate(_already_claimed=Exists(already_claimed))
-            .filter(_already_claimed=False)
+            .with_ai_agent_runs()
+            .filter(
+                ai_agent_runs=F('ai_agent_failures'),
+                ai_agent_runs__lt=MAX_RUN_FAILURES,
+            )
             .select_related('task', 'user__ai_agent')
         )
         for performer in performers:
