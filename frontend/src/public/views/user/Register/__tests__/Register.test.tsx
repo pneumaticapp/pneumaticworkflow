@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
 
-import { Register } from '../Register';
+import { Register, IRegisterProps } from '../Register';
 import { prepareRegisterUser } from '../../../../api/prepareRegisterUser';
 import { InterceptorError } from '../../../../api/InterceptorError';
 import { handleOAuthClick } from '../../utils/handleOAuthClick';
@@ -92,22 +92,25 @@ jest.mock('../../../../components/UI', () => ({
 }));
 
 describe('Register', () => {
-  const defaultProps = {
+  const defaultProps: IRegisterProps = {
     registerUser: jest.fn(),
   };
 
+  const renderComponent = (props: Partial<IRegisterProps> = {}) =>
+    render(
+      <IntlProvider locale="en" messages={enMessages}>
+        <Register {...defaultProps} {...props} />
+      </IntlProvider>,
+    );
+
   beforeEach(() => {
     jest.clearAllMocks();
-    (prepareRegisterUser as jest.Mock).mockResolvedValue({});
+    (prepareRegisterUser as jest.Mock).mockResolvedValue({ showCaptcha: false });
   });
 
   describe('OAuth button integration', () => {
     it('calls handleOAuthClick with EOAuthType.Google when Google button is clicked', () => {
-      render(
-        <IntlProvider locale="en" messages={enMessages}>
-          <Register {...defaultProps} />
-        </IntlProvider>,
-      );
+      renderComponent();
 
       const googleButton = screen.getByRole('button', { name: /google/i });
       userEvent.click(googleButton);
@@ -123,7 +126,7 @@ describe('Register', () => {
     it('shows captcha when showCaptcha is true', async () => {
       (prepareRegisterUser as jest.Mock).mockResolvedValue({ showCaptcha: true });
 
-      render(React.createElement(Register, defaultProps));
+      renderComponent();
 
       expect(await screen.findByRole('group', { name: CAPTCHA_LABEL })).toBeInTheDocument();
     });
@@ -131,7 +134,7 @@ describe('Register', () => {
     it('does not show captcha when showCaptcha is false', async () => {
       (prepareRegisterUser as jest.Mock).mockResolvedValue({ showCaptcha: false });
 
-      render(React.createElement(Register, defaultProps));
+      renderComponent();
 
       await waitFor(() => {
         expect(prepareRegisterUser).toHaveBeenCalledTimes(1);
@@ -142,7 +145,7 @@ describe('Register', () => {
     it('does not show captcha when showCaptcha is undefined', async () => {
       (prepareRegisterUser as jest.Mock).mockResolvedValue({ showCaptcha: undefined });
 
-      render(React.createElement(Register, defaultProps));
+      renderComponent();
 
       await waitFor(() => {
         expect(prepareRegisterUser).toHaveBeenCalledTimes(1);
@@ -156,7 +159,7 @@ describe('Register', () => {
       const error = new InterceptorError('Request timeout');
       (prepareRegisterUser as jest.Mock).mockRejectedValue(error);
 
-      render(React.createElement(Register, defaultProps));
+      renderComponent();
 
       await waitFor(() => {
         expect(logger.error).toHaveBeenCalledWith(error);

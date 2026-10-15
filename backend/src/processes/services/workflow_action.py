@@ -1207,7 +1207,6 @@ class WorkflowActionService:
             if (
                 performer.type_group
                 and performer.group.type == UserGroupType.PERSONAL
-                and not performer.group.is_deleted
             ):
                 vacations = (
                     performer.group.vacation_owners
