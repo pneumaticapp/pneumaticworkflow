@@ -896,6 +896,11 @@ class FieldTemplateValuesQuerySet(BaseQuerySet):
         return self.filter(api_name__in=api_names)
 
 
+class FieldTemplateRuleSetQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
 class FieldSelectionQuerySet(BaseQuerySet):
 
     def by_ids(self, ids: List[int]):

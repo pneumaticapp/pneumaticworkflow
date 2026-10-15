@@ -14,6 +14,7 @@ from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
 from src.processes.querysets import (
     FieldTemplateQuerySet,
+    FieldTemplateRuleSetQuerySet,
     FieldTemplateValuesQuerySet,
 )
 
@@ -144,7 +145,9 @@ class FieldTemplateRuleSet(
     )
     order = models.PositiveIntegerField(default=0)
 
-    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
+    objects = BaseSoftDeleteManager.from_queryset(
+        FieldTemplateRuleSetQuerySet,
+    )()
 
     def __str__(self):
         return self.api_name
