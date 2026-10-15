@@ -81,6 +81,7 @@ class WorkflowActionService:
         auth_type: AuthTokenType.LITERALS = AuthTokenType.USER,
         sync: bool = False,
     ):
+
         """ Bind the service to a workflow and an acting user """
 
         self.workflow = workflow
@@ -435,6 +436,7 @@ class WorkflowActionService:
 
         """ Skip the task. On return go back to the parent tasks,
             otherwise start the next tasks """
+
         task_service = TaskService(
             instance=task,
             user=self.user or self.workflow.account.get_owner(),
@@ -851,12 +853,12 @@ class WorkflowActionService:
     def _complete_task_for_starter(
         self,
         task: Task,
-    ) -> Set[UserModel]:
+    ):
 
         """ Mark the starter performers as completed
             for an RCBA task with "skip for starter" """
 
-        if not (
+        if (
             task.skip_for_starter
             and not self.workflow.is_external
             and task.require_completion_by_all

@@ -7521,6 +7521,42 @@ def test_start_task__skip_on_return_false_is_returned__continue_workflow(
     continue_wf_mock.assert_called_once_with(task=task, is_returned=True)
 
 
+def test_start_task__skip_on_return_active_delay__end_delay_and_skip(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task = workflow.tasks.get(number=2)
+    task.skip_on_return = True
+    task.save(update_fields=['skip_on_return'])
+    delay = Delay.objects.create(
+        task=task,
+        workflow=workflow,
+        duration=timedelta(hours=1),
+        start_date=timezone.now(),
+    )
+    skip_task_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowActionService.skip_task',
+    )
+    delay_task_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.delay_task',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    service.start_task(task=task, is_returned=True)
+
+    # assert
+    delay.refresh_from_db()
+    assert delay.end_date is not None
+    assert task.get_active_delay() is None
+    skip_task_mock.assert_called_once_with(task=task, is_returned=True)
+    delay_task_mock.assert_not_called()
+
+
 def test__get_not_skipped_revert_task__start_action__return_task(mocker):
 
     # arrange
