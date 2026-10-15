@@ -1036,6 +1036,40 @@ def test__start_prev_tasks__action_method_none__skip(mocker):
     execute_mock.assert_called_once_with(parent_task)
 
 
+def test__get_parent_tasks__has_parents__return_parent_tasks():
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    create_test_workflow(user=owner, tasks_count=2)
+    parent_task = workflow.tasks.get(number=1)
+    task = workflow.tasks.get(number=2)
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    result = service._get_parent_tasks(task)
+
+    # assert
+    assert list(result) == [parent_task]
+
+
+def test__get_parent_tasks__no_parents__return_empty():
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task = workflow.tasks.get(number=1)
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    result = service._get_parent_tasks(task)
+
+    # assert
+    assert list(result) == []
+
+
 def test_skip_task__is_returned_has_parents__set_pending_start_prev(mocker):
 
     # arrange
@@ -6858,48 +6892,6 @@ def test_start_task__is_returned_and_skip_on_return__skip_task(mocker):
     continue_wf_mock.assert_not_called()
 
 
-def test_start_task__skip_on_return_no_parents__continue_workflow(mocker):
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    workflow = create_test_workflow(user=owner, tasks_count=2)
-    task = workflow.tasks.get(number=1)
-    task.skip_on_return = True
-    task.save(update_fields=['skip_on_return'])
-    skip_task_mock = mocker.patch(
-        'src.processes.services.workflow_action.'
-        'WorkflowActionService.skip_task',
-    )
-    mocker.patch(
-        'src.processes.services.tasks.task.TaskService.insert_fields_values',
-    )
-    mocker.patch(
-        'src.processes.services.workflow_action.Task.update_performers',
-    )
-    mocker.patch(
-        'src.processes.services.workflow_action.'
-        'reassign_restricted_permissions_for_task',
-    )
-    mocker.patch(
-        'src.processes.services.workflow_action.'
-        'WorkflowActionService._get_all_performers_users',
-        return_value=[{'id': owner.id}],
-    )
-    continue_wf_mock = mocker.patch(
-        'src.processes.services.workflow_action.'
-        'WorkflowActionService.continue_workflow',
-    )
-    service = WorkflowActionService(user=owner, workflow=workflow)
-
-    # act
-    service.start_task(task=task, is_returned=True)
-
-    # assert
-    skip_task_mock.assert_not_called()
-    continue_wf_mock.assert_called_once_with(task=task, is_returned=True)
-
-
 def test_start_task__skip_on_return_not_returned__continue_workflow(mocker):
 
     # arrange
@@ -6983,6 +6975,70 @@ def test_start_task__skip_on_return_false_is_returned__continue_workflow(
     assert task.skip_on_return is False
     skip_task_mock.assert_not_called()
     continue_wf_mock.assert_called_once_with(task=task, is_returned=True)
+
+
+def test_start_task__skip_on_return_no_parents__skip_task(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task = workflow.tasks.get(number=1)
+    task.skip_on_return = True
+    task.save(update_fields=['skip_on_return'])
+    skip_task_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowActionService.skip_task',
+    )
+    continue_wf_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowActionService.continue_workflow',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    service.start_task(task=task, is_returned=True)
+
+    # assert
+    assert task.parents == []
+    skip_task_mock.assert_called_once_with(task=task, is_returned=True)
+    continue_wf_mock.assert_not_called()
+
+
+def test_start_task__skip_on_return_active_delay__end_delay_and_skip(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task = workflow.tasks.get(number=2)
+    task.skip_on_return = True
+    task.save(update_fields=['skip_on_return'])
+    delay = Delay.objects.create(
+        task=task,
+        workflow=workflow,
+        duration=timedelta(hours=1),
+        start_date=timezone.now(),
+    )
+    skip_task_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowActionService.skip_task',
+    )
+    delay_task_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.delay_task',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    service.start_task(task=task, is_returned=True)
+
+    # assert
+    delay.refresh_from_db()
+    assert delay.end_date is not None
+    assert task.get_active_delay() is None
+    skip_task_mock.assert_called_once_with(task=task, is_returned=True)
+    delay_task_mock.assert_not_called()
 
 
 def test__get_not_skipped_revert_task__start_action__return_task(mocker):
@@ -7147,8 +7203,8 @@ def test__revert_is_possible__recursive_valid__return_true(mocker):
     # assert
     assert result is True
     revert_possible_spy.assert_has_calls([
-        mocker.call(service, [task]),
-        mocker.call(service, [child_task]),
+        mocker.call(service, revert_to_tasks=[task]),
+        mocker.call(service, revert_to_tasks=[child_task], root_tasks=[]),
     ])
 
 
@@ -7221,7 +7277,10 @@ def test__validate_revert_is_possible__next_depth_possible__true(mocker):
 
     # assert
     assert result is True
-    revert_possible_mock.assert_called_once_with([child_task])
+    revert_possible_mock.assert_called_once_with(
+        revert_to_tasks=[child_task],
+        root_tasks=[],
+    )
 
 
 def test__validate_revert_is_possible__next_depth_not_possible__raise(
@@ -7280,6 +7339,193 @@ def test__validate_revert_is_possible__no_depth_not_possible__raise(
     # act / assert
     with pytest.raises(exceptions.RevertToSkippedTask):
         service._validate_revert_is_possible(revert_to_tasks)
+
+
+def test__revert_is_possible__start_action_skip_on_return__return_false(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner)
+    task = workflow.tasks.get(number=1)
+    task.skip_on_return = True
+    task.save(update_fields=['skip_on_return'])
+    mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.execute_conditions',
+        return_value=(
+            mocker.Mock(__name__=ConditionAction.START_TASK), False,
+        ),
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.Task.get_revert_tasks',
+        return_value=[],
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+    root_tasks = []
+
+    # act
+    result = service._revert_is_possible(
+        revert_to_tasks=[task],
+        root_tasks=root_tasks,
+    )
+
+    # assert
+    assert result is False
+    assert root_tasks == [task]
+
+
+def test__revert_is_possible__no_revert_tasks__add_to_root_tasks(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner)
+    task_1 = workflow.tasks.get(number=1)
+    task_2 = workflow.tasks.get(number=2)
+    mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.execute_conditions',
+        return_value=(None, False),
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.Task.get_revert_tasks',
+        side_effect=[[task_1], []],
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+    root_tasks = []
+
+    # act
+    result = service._revert_is_possible(
+        revert_to_tasks=[task_2],
+        root_tasks=root_tasks,
+    )
+
+    # assert
+    assert result is False
+    assert root_tasks == [task_1]
+
+
+def test__validate_revert_is_possible__start_action_skip_on_return__raise(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner)
+    task = workflow.tasks.get(number=1)
+    task.skip_on_return = True
+    task.save(update_fields=['skip_on_return'])
+    mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.execute_conditions',
+        return_value=(
+            mocker.Mock(__name__=ConditionAction.START_TASK), False,
+        ),
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.Task.get_revert_tasks',
+        return_value=[],
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    with pytest.raises(exceptions.RevertToSkippedTask) as ex:
+        service._validate_revert_is_possible([task])
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0092(task.name)
+
+
+def test__validate_revert_is_possible__root_skip_on_return_with_parents__raise(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner)
+    task = workflow.tasks.get(number=2)
+    task.skip_on_return = True
+    task.save(update_fields=['skip_on_return'])
+    mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.execute_conditions',
+        return_value=(None, False),
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.Task.get_revert_tasks',
+        return_value=[],
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    with pytest.raises(exceptions.RevertToSkippedTask) as ex:
+        service._validate_revert_is_possible([task])
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0079(task.name)
+
+
+def test__validate_revert_is_possible__next_depth_root_skipped__raise(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=3)
+    task_1 = workflow.tasks.get(number=1)
+    task_1.skip_on_return = True
+    task_1.save(update_fields=['skip_on_return'])
+    task_2 = workflow.tasks.get(number=2)
+    mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.execute_conditions',
+        return_value=(None, False),
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.Task.get_revert_tasks',
+        side_effect=[[task_1], []],
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    with pytest.raises(exceptions.RevertToSkippedTask) as ex:
+        service._validate_revert_is_possible([task_2])
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0092(task_1.name)
+
+
+def test__validate_revert_is_possible__next_depth_root_not_skipped__raise(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=3)
+    task_1 = workflow.tasks.get(number=1)
+    task_2 = workflow.tasks.get(number=2)
+    mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.execute_conditions',
+        return_value=(None, False),
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.Task.get_revert_tasks',
+        side_effect=[[task_1], []],
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    with pytest.raises(exceptions.RevertToSkippedTask) as ex:
+        service._validate_revert_is_possible([task_2])
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0080(task_2.name)
 
 
 def test__deactivate_task__no_action_delayed_direct_status__end_delay(mocker):
@@ -8313,6 +8559,52 @@ def test_return_to__action_skip_task__raise_exception(mocker, action):
     # assert
     assert ex.value.message == str(messages.MSG_PW_0079(revert_to_task.name))
     execute_conditions_mock.assert_called_once_with(revert_to_task)
+    workflow_revert_event_mock.assert_not_called()
+    workflow_returned_mock.assert_not_called()
+    return_workflow_to_task_mock.assert_not_called()
+
+
+def test_return_to__skip_on_return__raise_exception(mocker):
+
+    # arrange
+    account = create_test_account()
+    create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(user, active_task_number=2)
+    revert_to_task = workflow.tasks.get(number=1)
+    revert_to_task.skip_on_return = True
+    revert_to_task.save(update_fields=['skip_on_return'])
+
+    mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.execute_conditions',
+        return_value=(WorkflowActionService.start_task, False),
+    )
+    validate_revert_is_possible_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._validate_revert_is_possible',
+    )
+    workflow_revert_event_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowEventService'
+        '.workflow_revert_event',
+    )
+    workflow_returned_mock = mocker.patch(
+        'src.processes.services.workflow_action.AnalyticService'
+        '.workflow_returned',
+    )
+    return_workflow_to_task_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._return_workflow_to_task',
+    )
+    service = WorkflowActionService(user=user, workflow=workflow)
+
+    # act
+    with pytest.raises(exceptions.RevertToSkippedTask) as ex:
+        service.return_to(revert_to_task=revert_to_task)
+
+    # assert
+    assert ex.value.message == str(messages.MSG_PW_0093(revert_to_task.name))
+    validate_revert_is_possible_mock.assert_not_called()
     workflow_revert_event_mock.assert_not_called()
     workflow_returned_mock.assert_not_called()
     return_workflow_to_task_mock.assert_not_called()
