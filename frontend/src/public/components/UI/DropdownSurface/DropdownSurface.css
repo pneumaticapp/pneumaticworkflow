@@ -1,0 +1,7 @@
+.dropdown-surface {
+  padding: 0.4rem;
+  background: var(--pneumatic-color-white);
+  border: 0;
+  border-radius: 0.8rem;
+  box-shadow: 0 0.8rem 1.6rem var(--pneumatic-color-black95);
+}

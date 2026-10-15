@@ -370,10 +370,7 @@ const FieldsetDetails = ({
                 (option.data as { value: string }).value?.toLowerCase().includes(inputValue.toLowerCase()) ?? true
               }
               placement="left"
-              classNames={{
-                menuList: () => styles['usage-banner__menu-list'],
-                option: () => styles['usage-banner__option'],
-              }}
+              menuClassName={styles['usage-banner__menu-list']}
             />
           </div>
         </div>

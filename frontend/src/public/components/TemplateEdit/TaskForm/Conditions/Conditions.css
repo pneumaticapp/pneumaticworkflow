@@ -69,10 +69,6 @@
   }
 
   :global {
-    .react-select .react-select__control {
-      min-height: 4rem;
-    }
-
     .react-datepicker-wrapper {
       .react-datepicker__input-container {
         input {
@@ -204,8 +200,4 @@
 
 .condition__dropdown-option-is-selected {
   color: var(--pneumatic-color-black32);
-}
-
-.condition__value-field-select-option {
-  @mixin text-overflow;
 }

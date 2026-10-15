@@ -6,9 +6,7 @@ import { enMessages } from '../../../../../lang/locales/en_US';
 import { EUserStatus } from '../../../../../types/user';
 import { EOptionTypes, UsersDropdownComponent } from '../UsersDropdown';
 
-jest.mock('../../..', () => ({
-  Avatar: () => null,
-  Checkbox: ({ title }: { title: React.ReactNode }) => <span>{title}</span>,
+jest.mock('../../../DropdownList', () => ({
   DropdownList: ({ options, formatOptionLabel }: any) => (
     <div>
       {options.map((option: any) => (
@@ -16,6 +14,12 @@ jest.mock('../../..', () => ({
       ))}
     </div>
   ),
+}));
+
+jest.mock('../../..', () => ({
+  Avatar: () => null,
+  Checkbox: ({ title }: { title: React.ReactNode }) => <span>{title}</span>,
+  DropdownOption: ({ label }: { label: React.ReactNode }) => <span>{label}</span>,
 }));
 
 describe('UsersDropdownComponent', () => {
