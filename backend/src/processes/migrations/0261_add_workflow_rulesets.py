@@ -6,7 +6,6 @@ import src.generics.mixins.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0146_auto_20260814_2002'),
         ('processes', '0260_add_template_rulesets'),
     ]
 
@@ -99,11 +98,6 @@ class Migration(migrations.Migration):
             name='type',
             field=models.CharField(choices=[('sum_equal', 'Sum equal'), ('validator', 'Validator')], max_length=50),
         ),
-        migrations.AlterField(
-            model_name='workflowevent',
-            name='type',
-            field=models.IntegerField(choices=[(0, 'Workflow started'), (1, 'Workflow completed'), (2, 'Task started'), (3, 'Task completed'), (4, 'Task reverted'), (9, 'Task skipped'), (5, 'New comment'), (6, 'Workflow ended'), (7, 'Workflow snoozed from template'), (17, 'Workflow snoozed'), (8, 'Workflow reverted'), (10, 'Workflow ended by condition'), (11, 'Workflow is urgent'), (12, 'Workflow is not urgent'), (13, 'Task skipped as no performers were assigned'), (14, 'Performer added to task'), (15, 'Performer deleted from task'), (16, 'Workflow resumed'), (18, 'Due date changed'), (20, 'Performer group added to task'), (21, 'Performer group deleted from task'), (22, 'Task snoozed from template'), (23, 'Task delegated')], verbose_name='type'),
-        ),
         migrations.AddField(
             model_name='fieldsetruleset',
             name='account',
@@ -131,7 +125,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='fieldsetrulegroupor',
-            name='fieldset_rule',
+            name='ruleset',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='groups_or', to='processes.FieldSetRuleSet'),
         ),
         migrations.AddField(

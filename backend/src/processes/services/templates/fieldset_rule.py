@@ -185,7 +185,7 @@ class FieldsetTemplateRuleSetService(RuleGroupsSyncMixin, BaseModelService):
         group_or_data_dict = dict(group_or_data)
         groups_and_data = group_or_data_dict.pop('groups_and', None)
         create_kwargs = {
-            'fieldset_rule': self.instance,
+            'ruleset': self.instance,
             'account': self.account,
             'template_id': self.instance.template_id,
         }

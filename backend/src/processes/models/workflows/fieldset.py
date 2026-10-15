@@ -122,7 +122,7 @@ class FieldSetRuleGroupOr(
         on_delete=models.CASCADE,
         related_name='fieldset_ruleset_groups_or',
     )
-    fieldset_rule = models.ForeignKey(
+    ruleset = models.ForeignKey(
         FieldSetRuleSet,
         on_delete=models.CASCADE,
         related_name='groups_or',

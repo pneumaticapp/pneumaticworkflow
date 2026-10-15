@@ -4,62 +4,22 @@ import django.db.models.deletion
 import src.generics.mixins.models
 
 
-def migrate_fieldset_template_rules(apps, schema_editor):
-    OldRule = apps.get_model('processes', 'FieldsetTemplateRule')
-    RuleSet = apps.get_model('processes', 'FieldSetTemplateRuleSet')
-    GroupOr = apps.get_model('processes', 'FieldSetTemplateRuleGroupOr')
-    GroupAnd = apps.get_model('processes', 'FieldSetTemplateRuleGroupAnd')
-
-    order_by_fieldset = {}
-    rules = (
-        OldRule.objects
-        .select_related('fieldset')
-        .prefetch_related('fields')
-        .order_by('fieldset_id', 'id')
+def _nulls_not_distinct_index(name, table, columns):
+    column_list = ', '.join(columns)
+    return migrations.RunSQL(
+        sql=(
+            f'CREATE UNIQUE INDEX {name} '
+            f'ON {table} ({column_list}) '
+            'NULLS NOT DISTINCT '
+            'WHERE NOT is_deleted'
+        ),
+        reverse_sql=f'DROP INDEX IF EXISTS {name}',
     )
-    for rule in rules:
-        if RuleSet.objects.filter(
-            fieldset_id=rule.fieldset_id,
-            api_name=rule.api_name,
-        ).exists():
-            continue
-
-        order_in_fieldset = order_by_fieldset.get(rule.fieldset_id, 0)
-        order_by_fieldset[rule.fieldset_id] = order_in_fieldset + 1
-        template_id = rule.fieldset.template_id
-
-        ruleset = RuleSet.objects.create(
-            api_name=rule.api_name,
-            message=None,
-            order=order_in_fieldset,
-            fieldset_id=rule.fieldset_id,
-            template_id=template_id,
-            account_id=rule.account_id,
-            is_deleted=rule.is_deleted,
-        )
-        group_or = GroupOr.objects.create(
-            api_name=f'{rule.api_name}-group-or',
-            fieldset_rule=ruleset,
-            template_id=template_id,
-            account_id=rule.account_id,
-            is_deleted=rule.is_deleted,
-        )
-        GroupAnd.objects.create(
-            api_name=f'{rule.api_name}-group-and',
-            group_or=group_or,
-            template_id=template_id,
-            account_id=rule.account_id,
-            operator=rule.type,
-            value=rule.value,
-            is_deleted=rule.is_deleted,
-        )
-        ruleset.fields.set(rule.fields.all())
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0146_auto_20260814_2002'),
         ('processes', '0259_populate_fieldset_title_from_name'),
     ]
 
@@ -160,13 +120,15 @@ class Migration(migrations.Migration):
             name='type',
             field=models.CharField(choices=[('sum_equal', 'Sum equal'), ('validator', 'Validator')], max_length=50),
         ),
-        migrations.AddConstraint(
-            model_name='fieldsettemplate',
-            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('api_name', 'template', 'is_shared', 'account'), name='fieldsettemplate_template_api_name_is_shared_unique'),
+        _nulls_not_distinct_index(
+            'fieldsettemplate_template_api_name_is_shared_unique',
+            'processes_fieldsettemplate',
+            ('api_name', 'template_id', 'is_shared', 'account_id'),
         ),
-        migrations.AddConstraint(
-            model_name='fieldtemplate',
-            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('template', 'api_name', 'account'), name='processes_fieldtemplate_template_api_name_unique'),
+        _nulls_not_distinct_index(
+            'processes_fieldtemplate_template_api_name_unique',
+            'processes_fieldtemplate',
+            ('template_id', 'api_name', 'account_id'),
         ),
         migrations.AddField(
             model_name='fieldtemplateruleset',
@@ -240,7 +202,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='fieldsettemplaterulegroupor',
-            name='fieldset_rule',
+            name='ruleset',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='groups_or', to='processes.FieldSetTemplateRuleSet'),
         ),
         migrations.AddField(
@@ -263,32 +225,182 @@ class Migration(migrations.Migration):
             name='template',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fieldset_rules_group_and', to='processes.Template'),
         ),
-        migrations.AddConstraint(
-            model_name='fieldtemplateruleset',
-            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('template', 'api_name', 'account'), name='fieldtemplateruleset_field_api_name_unique'),
+        migrations.RemoveConstraint(
+            model_name='fieldtemplateselection',
+            name=(
+                'processes_fieldtemplateselection'
+                '_template_api_name_unique'
+            ),
         ),
-        migrations.AddConstraint(
-            model_name='fieldtemplaterulegroupor',
-            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('api_name', 'template', 'account'), name='rulegroupor_field_rule_api_name_unique'),
+        _nulls_not_distinct_index(
+            'fieldtemplateruleset_field_api_name_unique',
+            'processes_fieldtemplateruleset',
+            ('template_id', 'api_name', 'account_id'),
         ),
-        migrations.AddConstraint(
-            model_name='fieldtemplaterulegroupand',
-            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('template', 'api_name', 'account'), name='rulegroupand_group_or_api_name_unique'),
+        _nulls_not_distinct_index(
+            'rulegroupor_field_rule_api_name_unique',
+            'processes_fieldtemplaterulegroupor',
+            ('api_name', 'template_id', 'account_id'),
         ),
-        migrations.AddConstraint(
-            model_name='fieldsettemplateruleset',
-            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('template', 'api_name', 'account'), name='fieldsetruleset_fieldset_api_name_unique'),
+        _nulls_not_distinct_index(
+            'rulegroupand_group_or_api_name_unique',
+            'processes_fieldtemplaterulegroupand',
+            ('template_id', 'api_name', 'account_id'),
         ),
-        migrations.AddConstraint(
-            model_name='fieldsettemplaterulegroupor',
-            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('api_name', 'template', 'account'), name='fieldset_rulegroupor_field_rule_api_name_unique'),
+        _nulls_not_distinct_index(
+            'fieldsetruleset_fieldset_api_name_unique',
+            'processes_fieldsettemplateruleset',
+            ('template_id', 'api_name', 'account_id'),
         ),
-        migrations.AddConstraint(
-            model_name='fieldsettemplaterulegroupand',
-            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('template', 'api_name', 'account'), name='fieldset_rulegroupand_group_or_api_name_unique'),
+        _nulls_not_distinct_index(
+            'fieldset_rulegroupor_field_rule_api_name_unique',
+            'processes_fieldsettemplaterulegroupor',
+            ('api_name', 'template_id', 'account_id'),
         ),
-        migrations.RunPython(
-            migrate_fieldset_template_rules,
-            migrations.RunPython.noop,
+        _nulls_not_distinct_index(
+            'fieldset_rulegroupand_group_or_api_name_unique',
+            'processes_fieldsettemplaterulegroupand',
+            ('template_id', 'api_name', 'account_id'),
+        ),
+        _nulls_not_distinct_index(
+            'processes_fieldtemplateselection_template_api_name_unique',
+            'processes_fieldtemplateselection',
+            ('template_id', 'api_name'),
+        ),
+        # Irreversible: old rules stay, copied rows are not deleted.
+        migrations.RunSQL(
+            sql=[
+                """
+                INSERT INTO processes_fieldsettemplateruleset (
+                    api_name, message, "order", fieldset_id,
+                    template_id, account_id, is_deleted
+                )
+                SELECT
+                    r.api_name,
+                    NULL,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY r.fieldset_id
+                        ORDER BY r.id
+                    ) - 1,
+                    r.fieldset_id,
+                    f.template_id,
+                    r.account_id,
+                    r.is_deleted
+                FROM processes_fieldsettemplaterule r
+                JOIN processes_fieldsettemplate f
+                    ON f.id = r.fieldset_id
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM processes_fieldsettemplateruleset existing
+                    WHERE existing.fieldset_id = r.fieldset_id
+                      AND existing.api_name = r.api_name
+                )
+                """,
+                """
+                INSERT INTO processes_fieldsettemplaterulegroupor (
+                    api_name, is_deleted, ruleset_id,
+                    template_id, account_id
+                )
+                SELECT
+                    r.api_name || '-group-or',
+                    r.is_deleted,
+                    rs.id,
+                    f.template_id,
+                    r.account_id
+                FROM processes_fieldsettemplaterule r
+                JOIN processes_fieldsettemplate f
+                    ON f.id = r.fieldset_id
+                JOIN processes_fieldsettemplateruleset rs
+                    ON rs.fieldset_id = r.fieldset_id
+                    AND rs.api_name = r.api_name
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM processes_fieldsettemplaterulegroupor grp
+                    WHERE grp.ruleset_id = rs.id
+                      AND grp.api_name = (
+                          r.api_name || '-group-or'
+                      )
+                )
+                """,
+                """
+                INSERT INTO processes_fieldsettemplaterulegroupand (
+                    api_name, is_deleted, operator, value,
+                    group_or_id, template_id, account_id
+                )
+                SELECT
+                    r.api_name || '-group-and',
+                    r.is_deleted,
+                    r.type,
+                    r.value,
+                    grp.id,
+                    f.template_id,
+                    r.account_id
+                FROM processes_fieldsettemplaterule r
+                JOIN processes_fieldsettemplate f
+                    ON f.id = r.fieldset_id
+                JOIN processes_fieldsettemplateruleset rs
+                    ON rs.fieldset_id = r.fieldset_id
+                    AND rs.api_name = r.api_name
+                JOIN processes_fieldsettemplaterulegroupor grp
+                    ON grp.ruleset_id = rs.id
+                    AND grp.api_name = (
+                        r.api_name || '-group-or'
+                    )
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM processes_fieldsettemplaterulegroupand item
+                    WHERE item.group_or_id = grp.id
+                      AND item.api_name = (
+                          r.api_name || '-group-and'
+                      )
+                )
+                """,
+                """
+                INSERT INTO processes_fieldsettemplateruleset_fields (
+                    fieldsettemplateruleset_id,
+                    fieldtemplate_id
+                )
+                SELECT
+                    rs.id,
+                    link.fieldtemplate_id
+                FROM processes_fieldsettemplaterule r
+                JOIN processes_fieldsettemplateruleset rs
+                    ON rs.fieldset_id = r.fieldset_id
+                    AND rs.api_name = r.api_name
+                JOIN processes_fieldtemplate_rules link
+                    ON link.fieldsettemplaterule_id = r.id
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM
+                        processes_fieldsettemplateruleset_fields
+                        existing
+                    WHERE existing.fieldsettemplateruleset_id
+                        = rs.id
+                      AND existing.fieldtemplate_id
+                        = link.fieldtemplate_id
+                )
+                """,
+                """
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1
+                        FROM processes_fieldsettemplaterule r
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM
+                                processes_fieldsettemplateruleset
+                                rs
+                            WHERE rs.fieldset_id = r.fieldset_id
+                              AND rs.api_name = r.api_name
+                        )
+                    ) THEN
+                        RAISE EXCEPTION
+                            'fieldset template rule was not migrated';
+                    END IF;
+                END $$;
+                """,
+            ],
+            reverse_sql=migrations.RunSQL.noop,
         ),
     ]

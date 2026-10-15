@@ -74,7 +74,7 @@ def test_create__from_template__creates_ruleset_tree():
     group_or_template = FieldSetTemplateRuleGroupOr.objects.create(
         account=account,
         template=template,
-        fieldset_rule=ruleset_template,
+        ruleset=ruleset_template,
         api_name='group-or-1',
     )
     FieldSetTemplateRuleGroupAnd.objects.create(
@@ -174,7 +174,7 @@ def test_validate__sum_equal_satisfied__ok():
     group_or = FieldSetRuleGroupOr.objects.create(
         account=account,
         workflow=workflow,
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
     )
     FieldSetRuleGroupAnd.objects.create(
         account=account,
@@ -222,7 +222,7 @@ def test_validate__sum_equal_failed__raises_exception():
     group_or = FieldSetRuleGroupOr.objects.create(
         account=account,
         workflow=workflow,
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
     )
     FieldSetRuleGroupAnd.objects.create(
         account=account,
@@ -271,7 +271,7 @@ def test_validate__multiple_predicates_failed__raises_msg_fs_0012():
     group_or_1 = FieldSetRuleGroupOr.objects.create(
         account=account,
         workflow=workflow,
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         api_name='group-or-1',
     )
     FieldSetRuleGroupAnd.objects.create(
@@ -284,7 +284,7 @@ def test_validate__multiple_predicates_failed__raises_msg_fs_0012():
     group_or_2 = FieldSetRuleGroupOr.objects.create(
         account=account,
         workflow=workflow,
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         api_name='group-or-2',
     )
     FieldSetRuleGroupAnd.objects.create(
@@ -334,7 +334,7 @@ def test_validate__custom_message__raises_exception():
     group_or = FieldSetRuleGroupOr.objects.create(
         account=account,
         workflow=workflow,
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
     )
     FieldSetRuleGroupAnd.objects.create(
         account=account,
@@ -382,7 +382,7 @@ def test_validate__sum_greater_than__satisfied__ok():
     group_or = FieldSetRuleGroupOr.objects.create(
         account=account,
         workflow=workflow,
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
     )
     FieldSetRuleGroupAnd.objects.create(
         account=account,
@@ -430,7 +430,7 @@ def test_validate__sum_less_than__satisfied__ok():
     group_or = FieldSetRuleGroupOr.objects.create(
         account=account,
         workflow=workflow,
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
     )
     FieldSetRuleGroupAnd.objects.create(
         account=account,
@@ -479,7 +479,7 @@ def test_validate__no_values_exist__validation_skipped_ok():
     group_or = FieldSetRuleGroupOr.objects.create(
         account=account,
         workflow=workflow,
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
     )
     FieldSetRuleGroupAnd.objects.create(
         account=account,
@@ -568,14 +568,14 @@ def test_create__soft_deleted_fields_and_groups__ignored():
     group_or_active = FieldSetTemplateRuleGroupOr.objects.create(
         account=account,
         template=template,
-        fieldset_rule=ruleset_template,
+        ruleset=ruleset_template,
         api_name='fs-group-or-active',
         is_deleted=False,
     )
     FieldSetTemplateRuleGroupOr.objects.create(
         account=account,
         template=template,
-        fieldset_rule=ruleset_template,
+        ruleset=ruleset_template,
         api_name='fs-group-or-deleted',
         is_deleted=True,
     )

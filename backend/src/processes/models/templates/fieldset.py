@@ -25,13 +25,8 @@ class FieldsetTemplate(
 
     class Meta:
         ordering = ['-id']
-        constraints = [
-            UniqueConstraint(
-                fields=['api_name', 'template', 'is_shared', 'account'],
-                condition=Q(is_deleted=False),
-                name='fieldsettemplate_template_api_name_is_shared_unique',
-            ),
-        ]
+        # Unique index is raw SQL in 0260:
+        # NULLS NOT DISTINCT, WHERE NOT is_deleted.
 
     api_name_prefix = 'fieldset'
 
@@ -117,13 +112,8 @@ class FieldSetTemplateRuleSet(
 
     class Meta:
         ordering = ['order', 'id']
-        constraints = [
-            UniqueConstraint(
-                fields=['template', 'api_name', 'account'],
-                condition=Q(is_deleted=False),
-                name='fieldsetruleset_fieldset_api_name_unique',
-            ),
-        ]
+        # Unique index is raw SQL in 0260:
+        # NULLS NOT DISTINCT, WHERE NOT is_deleted.
 
     api_name_prefix = 'fieldset-ruleset'
     template = models.ForeignKey(
@@ -163,13 +153,8 @@ class FieldSetTemplateRuleGroupOr(
 
     class Meta:
         ordering = ['id']
-        constraints = [
-            UniqueConstraint(
-                fields=['api_name', 'template', 'account'],
-                condition=Q(is_deleted=False),
-                name='fieldset_rulegroupor_field_rule_api_name_unique',
-            ),
-        ]
+        # Unique index is raw SQL in 0260:
+        # NULLS NOT DISTINCT, WHERE NOT is_deleted.
 
     api_name_prefix = 'fieldset-rule-group-or'
     template = models.ForeignKey(
@@ -179,7 +164,7 @@ class FieldSetTemplateRuleGroupOr(
         blank=True,
         related_name='fieldset_ruleset_groups_or',
     )
-    fieldset_rule = models.ForeignKey(
+    ruleset = models.ForeignKey(
         FieldSetTemplateRuleSet,
         on_delete=models.CASCADE,
         related_name='groups_or',
@@ -198,13 +183,8 @@ class FieldSetTemplateRuleGroupAnd(
 
     class Meta:
         ordering = ['id']
-        constraints = [
-            UniqueConstraint(
-                fields=['template', 'api_name', 'account'],
-                condition=Q(is_deleted=False),
-                name='fieldset_rulegroupand_group_or_api_name_unique',
-            ),
-        ]
+        # Unique index is raw SQL in 0260:
+        # NULLS NOT DISTINCT, WHERE NOT is_deleted.
 
     api_name_prefix = 'fieldset-rule-group-and'
     template = models.ForeignKey(

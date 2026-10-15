@@ -377,7 +377,7 @@ def test__create_rules__with_template__ok(mocker):
         api_name='ruleset-1',
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         api_name='group-or-1',
     )
@@ -566,7 +566,7 @@ def test_validate_rules__two_same_type_rules__first_value_matches__ok():
     rule_10.fields.add(field)
     group_or_0 = FieldSetRuleGroupOr.objects.create(
         workflow=workflow,
-        fieldset_rule=rule_10,
+        ruleset=rule_10,
         account=account,
         api_name='group-or-0',
     )
@@ -613,7 +613,7 @@ def test_validate_rules__two_same_type_rules__second_value_matches__ok():
     rule_100.fields.add(field)
     group_or_10 = FieldSetRuleGroupOr.objects.create(
         workflow=workflow,
-        fieldset_rule=rule_100,
+        ruleset=rule_100,
         account=account,
         api_name='group-or-10',
     )
@@ -662,7 +662,7 @@ def test_validate_rules__two_same_type_rules__none_matches__raise():
     rule_100.fields.add(field)
     group_or_0 = FieldSetRuleGroupOr.objects.create(
         workflow=workflow,
-        fieldset_rule=rule_100,
+        ruleset=rule_100,
         account=account,
         api_name='group-or-0',
     )

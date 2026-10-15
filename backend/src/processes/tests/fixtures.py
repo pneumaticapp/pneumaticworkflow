@@ -939,7 +939,7 @@ def create_test_shared_fieldset(
             message=rule_message,
         )
         group_or = FieldSetTemplateRuleGroupOr.objects.create(
-            fieldset_rule=ruleset,
+            ruleset=ruleset,
             account=account,
             api_name=f'{fieldset.api_name}-group-or-1',
         )
@@ -1035,7 +1035,7 @@ def create_test_fieldset_template(
         )
         for shared_group_or in shared_ruleset.groups_or.all():
             group_or = FieldSetTemplateRuleGroupOr.objects.create(
-                fieldset_rule=ruleset,
+                ruleset=ruleset,
                 account=account,
                 api_name=f'{fieldset.api_name}-group-or-1',
             )
@@ -1107,7 +1107,7 @@ def create_test_fieldset(
         )
         group_or = FieldSetRuleGroupOr.objects.create(
             workflow=workflow,
-            fieldset_rule=ruleset,
+            ruleset=ruleset,
             account=account,
             api_name=f'{fieldset.api_name}-group-or-1',
         )

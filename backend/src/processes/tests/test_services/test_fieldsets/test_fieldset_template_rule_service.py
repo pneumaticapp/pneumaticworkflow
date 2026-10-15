@@ -54,7 +54,7 @@ def test__validate_sum__default_params__ok():
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -109,7 +109,7 @@ def test__validate_sum__falsy_value__raise_exception():
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -156,7 +156,7 @@ def test__validate_sum__invalid_decimal__raise_exception():
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -203,7 +203,7 @@ def test__validate_sum__non_number_fields__raise_exception():
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -259,7 +259,7 @@ def test__validate_sum__all_fields_are_number__ok():
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -308,7 +308,7 @@ def test_validate__all_valid__ok():
     )
     ruleset.fields.add(field_1)
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -354,7 +354,7 @@ def test_validate__sum_rule_field_not_number__raises():
     )
     ruleset.fields.add(field_1)
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -754,7 +754,7 @@ def test__validate__default_params__ok(mocker):
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -805,7 +805,7 @@ def test__validate__operator_not_in_sum_operators__ok(mocker):
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -856,7 +856,7 @@ def test__validate__operator_not_a_sum_operator__ok(mocker):
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1075,7 +1075,7 @@ def test__create_group_and__default_params__ok(mocker):
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1130,7 +1130,7 @@ def test__create_group_and__api_name_provided__ok(mocker):
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1182,7 +1182,7 @@ def test__create_group_and__api_name_omitted__ok(mocker):
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1233,7 +1233,7 @@ def test__create_group_and__value_provided__ok(mocker):
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1285,7 +1285,7 @@ def test__update_group_and__default_params__ok(mocker):
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1343,7 +1343,7 @@ def test__update_group_and__operator_in_payload__ok(mocker):
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1404,7 +1404,7 @@ def test__update_group_and__value_in_payload__ok(mocker):
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1465,7 +1465,7 @@ def test__update_group_and__operator_and_value_in_payload__ok(mocker):
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1528,7 +1528,7 @@ def test__update_group_and__no_operator_or_value__ok(mocker):
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1588,7 +1588,7 @@ def test__set_groups_and__default_params__ok(mocker):
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1649,7 +1649,7 @@ def test__set_groups_and__matching_api_name__ok(mocker):
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1718,7 +1718,7 @@ def test__set_groups_and__unknown_or_missing_api_name__ok(mocker):
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1788,7 +1788,7 @@ def test__set_groups_and__mixed_payload__ok(mocker):
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1890,7 +1890,7 @@ def test__create_group_or__default_params__ok(mocker):
     result = service._create_group_or(group_or_data=group_or_data)
 
     # assert
-    assert result.fieldset_rule_id == ruleset.id
+    assert result.ruleset_id == ruleset.id
     assert result.account_id == account.id
     assert result.template_id == template.id
     assert result.api_name.startswith('fieldset-rule-group-or')
@@ -2067,7 +2067,7 @@ def test__create_group_or__groups_and_is_not_none__ok(mocker):
     result = service._create_group_or(group_or_data=group_or_data)
 
     # assert
-    assert result.fieldset_rule_id == ruleset.id
+    assert result.ruleset_id == ruleset.id
     create_group_and_mock.assert_called_once_with(
         group_or=result,
         group_and_data=group_and_data_1,
@@ -2095,7 +2095,7 @@ def test__update_group_or__default_params__ok(mocker):
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
         api_name='group-or-1',
@@ -2145,7 +2145,7 @@ def test__update_group_or__groups_and_omitted__ok(mocker):
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
         api_name='group-or-1',
@@ -2205,7 +2205,7 @@ def test__update_group_or__groups_and_is_not_none__ok(mocker):
         template=template,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
         api_name='group-or-1',
@@ -2265,7 +2265,7 @@ def test__set_groups_or__default_params__ok(mocker):
         template=template,
     )
     group_or_1 = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
         api_name='group-or-1',
@@ -2316,7 +2316,7 @@ def test__set_groups_or__matching_api_name__ok(mocker):
         template=template,
     )
     group_or_1 = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
         api_name='group-or-1',
@@ -2374,7 +2374,7 @@ def test__set_groups_or__unknown_or_missing_api_name__ok(mocker):
         template=template,
     )
     group_or_1 = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
         api_name='group-or-1',
@@ -2432,13 +2432,13 @@ def test__set_groups_or__mixed_payload__ok(mocker):
         template=template,
     )
     group_or_1 = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
         api_name='group-or-1',
     )
     group_or_2 = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
         api_name='group-or-2',

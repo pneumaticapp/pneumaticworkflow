@@ -26,13 +26,8 @@ class FieldTemplate(
 
     class Meta:
         ordering = ['-order']
-        constraints = [
-            UniqueConstraint(
-                fields=['template', 'api_name', 'account'],
-                condition=Q(is_deleted=False),
-                name='processes_fieldtemplate_template_api_name_unique',
-            ),
-        ]
+        # Unique index is raw SQL in 0260:
+        # NULLS NOT DISTINCT, WHERE NOT is_deleted.
 
     api_name_prefix = 'field'
 
@@ -80,15 +75,9 @@ class FieldTemplateSelection(
 
     class Meta:
         ordering = ['pk']
+        # Unique index (template, api_name) is raw SQL in 0260:
+        # NULLS NOT DISTINCT, WHERE NOT is_deleted.
         constraints = [
-            UniqueConstraint(
-                fields=['template', 'api_name'],
-                condition=Q(is_deleted=False),
-                name=(
-                    'processes_fieldtemplateselection'
-                    '_template_api_name_unique'
-                ),
-            ),
             UniqueConstraint(
                 fields=['field_template', 'value'],
                 condition=Q(is_deleted=False),
@@ -127,13 +116,8 @@ class FieldTemplateRuleSet(
 
     class Meta:
         ordering = ['order', 'id']
-        constraints = [
-            UniqueConstraint(
-                fields=['template', 'api_name', 'account'],
-                condition=Q(is_deleted=False),
-                name='fieldtemplateruleset_field_api_name_unique',
-            ),
-        ]
+        # Unique index is raw SQL in 0260:
+        # NULLS NOT DISTINCT, WHERE NOT is_deleted.
 
     api_name_prefix = 'field-ruleset'
     template = models.ForeignKey(
@@ -173,13 +157,8 @@ class FieldTemplateRuleGroupOr(
 
     class Meta:
         ordering = ['id']
-        constraints = [
-            UniqueConstraint(
-                fields=['api_name', 'template', 'account'],
-                condition=Q(is_deleted=False),
-                name='rulegroupor_field_rule_api_name_unique',
-            ),
-        ]
+        # Unique index is raw SQL in 0260:
+        # NULLS NOT DISTINCT, WHERE NOT is_deleted.
 
     api_name_prefix = 'field-rule-group-or'
     template = models.ForeignKey(
@@ -208,13 +187,8 @@ class FieldTemplateRuleGroupAnd(
 
     class Meta:
         ordering = ['id']
-        constraints = [
-            UniqueConstraint(
-                fields=['template', 'api_name', 'account'],
-                condition=Q(is_deleted=False),
-                name='rulegroupand_group_or_api_name_unique',
-            ),
-        ]
+        # Unique index is raw SQL in 0260:
+        # NULLS NOT DISTINCT, WHERE NOT is_deleted.
 
     api_name_prefix = 'field-rule-group-and'
     group_or = models.ForeignKey(

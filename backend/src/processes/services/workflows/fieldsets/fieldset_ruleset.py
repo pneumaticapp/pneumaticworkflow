@@ -133,7 +133,7 @@ class FieldSetRuleSetService(BaseModelService):
         create_kwargs = {
             'account': self.instance.account,
             'workflow_id': self.instance.workflow_id,
-            'fieldset_rule': self.instance,
+            'ruleset': self.instance,
         }
         if api_name:
             create_kwargs['api_name'] = api_name
@@ -286,7 +286,7 @@ class FieldSetRuleSetVersionService(BaseUpdateVersionService):
         api_names = set()
         for group_or_data in groups_or_data:
             group_or, _ = FieldSetRuleGroupOr.objects.update_or_create(
-                fieldset_rule=self.instance,
+                ruleset=self.instance,
                 api_name=group_or_data['api_name'],
                 defaults={
                     'account_id': self.instance.account_id,

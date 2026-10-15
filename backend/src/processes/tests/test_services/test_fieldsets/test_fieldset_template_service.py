@@ -560,7 +560,7 @@ def test__validate_rulesets__invalid_sum_rule__raises():
     )
     ruleset.fields.add(field)
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -603,7 +603,7 @@ def test_partial_update__field_type_changed_to_text_with_sum_rule__raises():
     )
     ruleset.fields.add(field)
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
         api_name='or-1',
@@ -901,7 +901,7 @@ def test_update_rules__existing_rule__ok(mocker):
         api_name='ruleset-1',
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         api_name='group-or-1',
     )
@@ -1033,7 +1033,7 @@ def test_update_rules__orphan_rules__deleted():
         api_name='ruleset-1',
     )
     group_or_1 = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset_1,
+        ruleset=ruleset_1,
         account=account,
         api_name='group-or-1',
     )
@@ -1050,7 +1050,7 @@ def test_update_rules__orphan_rules__deleted():
         api_name='ruleset-2',
     )
     group_or_2 = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset_2,
+        ruleset=ruleset_2,
         account=account,
         api_name='group-or-2',
     )
