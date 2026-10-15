@@ -23,12 +23,22 @@ describe('isExpectedClientError', () => {
     expect(isExpectedClientError({ detail: 'You do not have permission to perform this action.' })).toBe(true);
   });
 
+  it('returns true for "Permission denied"', () => {
+    expect(isExpectedClientError({ detail: 'Permission denied. You are not a template owner or viewer.' })).toBe(true);
+  });
+
   it('returns true for throttled request', () => {
     expect(isExpectedClientError('Request was throttled. Expected available in 30 seconds.')).toBe(true);
   });
 
   it('returns true for invalid login or password', () => {
     expect(isExpectedClientError({ detail: 'Invalid login or password.' })).toBe(true);
+  });
+
+  it('returns true for expired subscription 403 response', () => {
+    const responseData = { detail: 'Your subscription has already expired. Renew subscription or contact support.' };
+
+    expect(isExpectedClientError(responseData)).toBe(true);
   });
 
   it('returns true for validation error pattern', () => {
@@ -41,5 +51,19 @@ describe('isExpectedClientError', () => {
 
   it('returns false for object without any expected pattern', () => {
     expect(isExpectedClientError({ detail: 'Not found', status: 404 })).toBe(false);
+  });
+
+  it('returns true for circular object containing an expected marker', () => {
+    const circular: Record<string, unknown> = { detail: 'token_not_valid' };
+    circular.self = circular;
+
+    expect(isExpectedClientError(circular)).toBe(true);
+  });
+
+  it('returns false for circular object without any expected pattern', () => {
+    const circular: Record<string, unknown> = { detail: 'some error' };
+    circular.self = circular;
+
+    expect(isExpectedClientError(circular)).toBe(false);
   });
 });
