@@ -187,3 +187,7 @@ MSG_PW_0092 = lambda task_name: format_lazy(
     ),
     task_name=task_name,
 )
+MSG_PW_0093 = lambda task_name: format_lazy(
+    _('Unable return to "{task_name}" because it is skipped on return.'),
+    task_name=task_name,
+)

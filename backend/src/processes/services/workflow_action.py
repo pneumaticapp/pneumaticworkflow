@@ -1227,7 +1227,7 @@ class WorkflowActionService:
     ):
 
         """ Validate and save the output fields, then complete the task
-            for the current user or fully if it can be completed """
+            for the current user or fully if it can be completed  """
 
         if self.workflow.is_delayed:
             raise exceptions.CompleteDelayedWorkflow
@@ -1632,7 +1632,9 @@ class WorkflowActionService:
                 messages.MSG_PW_0079(revert_to_task.name),
             )
         if revert_to_task.skip_on_return:
-            self._validate_revert_is_possible([revert_to_task])
+            raise exceptions.RevertToSkippedTask(
+                messages.MSG_PW_0093(revert_to_task.name),
+            )
 
         # validate revert from tasks
         revert_from_tasks = list(self.workflow.tasks.active_or_delayed())
