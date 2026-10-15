@@ -39,12 +39,8 @@ class RuleSetVersionMixin:
         parent_kwarg: str,
     ):
 
-        # Absent key = snapshot predates rulesets, keep as-is.
-        # Empty list = no rulesets, delete all.
-        if rulesets_data is None:
-            return
         api_names = set()
-        for ruleset_data in rulesets_data:
+        for ruleset_data in rulesets_data or []:
             service = service_cls(
                 user=self.user,
                 is_superuser=self.is_superuser,

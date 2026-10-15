@@ -276,9 +276,9 @@ def test__update_field_selections__empty__skip():
     ).exists() is True
 
 
-def test__update_fieldset_rulesets__no_key__keep():
+def test__update_fieldset_rulesets__no_key__clear():
 
-    """ A snapshot taken before rulesets carries no such key """
+    """ A missing rulesets key clears the fieldset rulesets """
 
     # arrange
     account = create_test_account()
@@ -306,7 +306,7 @@ def test__update_fieldset_rulesets__no_key__keep():
     service._update_fieldset_rulesets(fieldset=fieldset, version=1)
 
     # assert
-    assert fieldset.rulesets.get().id == existing_ruleset.id
+    assert not fieldset.rulesets.filter(id=existing_ruleset.id).exists()
 
 
 def test__update_fieldset_rulesets__empty_list__delete_all():

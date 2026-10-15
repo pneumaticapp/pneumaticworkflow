@@ -2345,12 +2345,9 @@ def test__update_field__fieldset_polluted_task_fk__cleared():
     assert field.value == 'keep me'
 
 
-def test__update_fieldset_rulesets__data_none__keep():
+def test__update_fieldset_rulesets__data_none__clear():
 
-    """
-    A snapshot taken before rulesets existed carries no such key.
-    Absent means "nothing is known" — existing rulesets survive.
-    """
+    """ None clears the fieldset rulesets, same as an empty list """
 
     # arrange
     user = create_test_owner()
@@ -2378,7 +2375,9 @@ def test__update_fieldset_rulesets__data_none__keep():
     )
 
     # assert
-    assert FieldSetRuleSet.objects.filter(id=existing_ruleset.id).exists()
+    assert not FieldSetRuleSet.objects.filter(
+        id=existing_ruleset.id,
+    ).exists()
 
 
 def test__update_fieldset_rulesets__data_empty__clear():
@@ -2945,12 +2944,9 @@ def test__update_field_rulesets__data_empty__clear():
     assert not FieldRuleSet.objects.filter(id=existing_ruleset.id).exists()
 
 
-def test__update_field_rulesets__key_missing__keep():
+def test__update_field_rulesets__data_none__clear():
 
-    """
-    A snapshot taken before rulesets existed carries no such key.
-    Absent means "nothing is known" — existing rulesets survive.
-    """
+    """ None clears the field rulesets, same as an empty list """
 
     # arrange
     user = create_test_owner()
@@ -2980,8 +2976,8 @@ def test__update_field_rulesets__key_missing__keep():
     # act
     service._update_field_rulesets(field=field, rulesets_data=None, version=1)
 
-    # assert — None means "nothing known", existing rulesets are kept
-    assert FieldRuleSet.objects.filter(id=existing_ruleset.id).exists()
+    # assert
+    assert not FieldRuleSet.objects.filter(id=existing_ruleset.id).exists()
 
 
 def test__update_field_rulesets__multiple__ok():
