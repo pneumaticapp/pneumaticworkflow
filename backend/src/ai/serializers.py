@@ -6,6 +6,7 @@ from rest_framework.serializers import (
 from src.ai.enums import AIVendor
 from src.ai.models import AIAgent, AIProvider
 from src.generics.fields import (
+    AccountPrimaryKeyRelatedField,
     DocBooleanField,
     DocCharField,
     DocChoiceField,
@@ -196,7 +197,9 @@ class AIAgentSerializer(
         help_text='Whether the agent is enabled',
         example=True,
     )
-    provider_id = DocIntegerField(
+    provider_id = AccountPrimaryKeyRelatedField(
+        source='provider',
+        queryset=AIProvider.objects.all(),
         help_text='Identifier of the AI provider this agent uses',
         example=1,
     )

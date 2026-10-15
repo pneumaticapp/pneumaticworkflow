@@ -1550,7 +1550,7 @@ def test_create_instance__default_parameters__ok(mocker):
         name='Operator',
         model='gpt-4o',
         system_prompt='You are an operator.',
-        provider_id=provider.id,
+        provider=provider,
     )
 
     # assert
@@ -1626,7 +1626,7 @@ def test_create_instance__all_parameters__ok(mocker):
         system_prompt='You are an operator.',
         is_active=False,
         photo=photo,
-        provider_id=provider.id,
+        provider=provider,
     )
 
     # assert
@@ -1696,7 +1696,7 @@ def test_create_instance__name_not_unique__raise_exception(mocker):
             name='Operator',
             model='gpt-4o',
             system_prompt='You are an operator.',
-            provider_id=provider.id,
+            provider=provider,
         )
 
     # assert
@@ -1762,7 +1762,7 @@ def test_create_instance__same_name_in_another_account__ok(mocker):
         name='Operator',
         model='gpt-4o',
         system_prompt='You are an operator.',
-        provider_id=provider.id,
+        provider=provider,
     )
 
     # assert
@@ -1834,7 +1834,7 @@ def test_create_instance__same_name_as_deleted_agent__ok(mocker):
         name='Operator',
         model='gpt-4o',
         system_prompt='You are an operator.',
-        provider_id=provider.id,
+        provider=provider,
     )
 
     # assert

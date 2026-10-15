@@ -14,7 +14,7 @@ from src.ai.exceptions import (
     AIAgentNameNotUniqueException,
 )
 from src.ai.messages import MSG_AI_0009, MSG_AI_0010
-from src.ai.models import AIAgent, AIAgentAction
+from src.ai.models import AIAgent, AIAgentAction, AIProvider
 from src.ai.services.provider import AIProviderService
 from src.ai.services.response import TaskResponseService
 from src.ai.services.user_message import TaskUserMessageService
@@ -59,16 +59,16 @@ class AIAgentService(BaseModelService):
         name: str,
         model: str,
         system_prompt: str,
+        provider: AIProvider,
         is_active: bool = True,
         photo: Optional[str] = None,
-        provider_id: Optional[int] = None,
         **kwargs,
     ):
 
         """ Creates the agent along with the user it acts on behalf of.
             The user is an admin with all the subscriptions disabled.
 
-            name 'Operator', model 'gpt-4o', provider_id 3
+            name 'Operator', model 'gpt-4o', provider <AIProvider 3>
             -> AIAgent 'Operator' with a user 'Operator' (is_ai=True)
 
             the account already has an agent 'Operator'
@@ -103,7 +103,7 @@ class AIAgentService(BaseModelService):
                     is_active=is_active,
                     system_prompt=system_prompt,
                     photo=photo,
-                    provider_id=provider_id,
+                    provider=provider,
                     user=agent_user,
                 )
             except IntegrityError as ex:
