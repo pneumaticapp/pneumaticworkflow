@@ -1340,7 +1340,6 @@ class WorkflowActionService:
                 return revert_to_task
         return None
 
-
     def _revert_is_possible(
         self,
         revert_to_tasks: Iterable[Task],
