@@ -8564,7 +8564,7 @@ def test_return_to__action_skip_task__raise_exception(mocker, action):
     return_workflow_to_task_mock.assert_not_called()
 
 
-def test_return_to__skip_on_return_first_task__raise_exception(mocker):
+def test_return_to__skip_on_return__raise_exception(mocker):
 
     # arrange
     account = create_test_account()
@@ -8580,9 +8580,9 @@ def test_return_to__skip_on_return_first_task__raise_exception(mocker):
         '.execute_conditions',
         return_value=(WorkflowActionService.start_task, False),
     )
-    validate_revert_is_possible_spy = mocker.spy(
-        WorkflowActionService,
-        '_validate_revert_is_possible',
+    validate_revert_is_possible_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._validate_revert_is_possible',
     )
     workflow_revert_event_mock = mocker.patch(
         'src.processes.services.workflow_action.WorkflowEventService'
@@ -8603,11 +8603,8 @@ def test_return_to__skip_on_return_first_task__raise_exception(mocker):
         service.return_to(revert_to_task=revert_to_task)
 
     # assert
-    assert ex.value.message == str(messages.MSG_PW_0092(revert_to_task.name))
-    validate_revert_is_possible_spy.assert_called_once_with(
-        service,
-        [revert_to_task],
-    )
+    assert ex.value.message == str(messages.MSG_PW_0093(revert_to_task.name))
+    validate_revert_is_possible_mock.assert_not_called()
     workflow_revert_event_mock.assert_not_called()
     workflow_returned_mock.assert_not_called()
     return_workflow_to_task_mock.assert_not_called()
