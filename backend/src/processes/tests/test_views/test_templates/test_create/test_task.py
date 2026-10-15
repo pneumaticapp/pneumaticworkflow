@@ -92,6 +92,7 @@ class TestCreateTemplateTask:
             len(request_data['raw_performers'])
         )
         assert response_data['require_completion_by_all'] is False
+        assert response_data['skip_on_return'] is False
         assert response_data['delay'] is None
         assert response_data['fields'] == []
         assert response_data['parents'] == []
@@ -106,6 +107,7 @@ class TestCreateTemplateTask:
             request_data['raw_performers'],
         )
         assert task.require_completion_by_all is False
+        assert task.skip_on_return is False
         assert task.delay is None
         assert task.fields.count() == 0
         assert task.account_id == user.account_id
@@ -125,6 +127,7 @@ class TestCreateTemplateTask:
             'api_name': 'task-1',
             'description': 'Desc',
             'require_completion_by_all': True,
+            'skip_on_return': True,
             'delay': None,
             'raw_due_date': {
                 'api_name': 'raw-due-date-bwybf0',
@@ -194,6 +197,7 @@ class TestCreateTemplateTask:
         assert response_data['require_completion_by_all'] == (
             request_data['require_completion_by_all']
         )
+        assert response_data['skip_on_return'] is True
 
         task = TaskTemplate.objects.get(api_name=response_data['api_name'])
         assert task.name == request_data['name']
@@ -207,6 +211,7 @@ class TestCreateTemplateTask:
         assert task.require_completion_by_all == (
             request_data['require_completion_by_all']
         )
+        assert task.skip_on_return is True
 
     def test_create__tasks_not_provided__validation_error(
         self,
