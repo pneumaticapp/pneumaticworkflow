@@ -1130,7 +1130,10 @@ class TaskPerformerQuerySet(BaseQuerySet, BaseHardQuerySet):
         return self.filter(user_id=user_id)
 
     def by_user_or_group(self, user_id):
-        return self.filter(Q(user_id=user_id) | Q(group__users__id=user_id))
+        return self.filter(
+            Q(user_id=user_id) |
+            Q(group__users__id=user_id, group__is_deleted=False),
+        )
 
     def completed(self):
         return self.filter(is_completed=True)
