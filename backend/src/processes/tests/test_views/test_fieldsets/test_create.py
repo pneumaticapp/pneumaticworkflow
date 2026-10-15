@@ -525,8 +525,8 @@ def test_create__service_exception__validation_error(
 def test_create__rule_invalid_operator__validation_error(api_client, mocker):
 
     """
-    Create fieldset with operator 'equal' (FieldRuleOperator) which is
-    not valid for FieldSetRuleOperator and verify 400 is returned.
+    Create fieldset with operator 'equal', which is not a
+    FieldSetRuleOperator, and verify 400 is returned.
     """
 
     # arrange

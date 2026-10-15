@@ -803,14 +803,14 @@ class FieldRuleType:
 
 class FieldRuleOperator:
 
-    EQUAL = 'equal'
-    NOT_EQUAL = 'not_equals'
-    EXIST = 'exists'
-    NOT_EXIST = 'not_exists'
-    GREATER_THAN = 'greater_than'
-    LESS_THAN = 'less_than'
-    CONTAIN = 'contains'
-    NOT_CONTAIN = 'not_contains'
+    EQUAL = PredicateOperator.EQUAL
+    NOT_EQUAL = PredicateOperator.NOT_EQUAL
+    EXIST = PredicateOperator.EXIST
+    NOT_EXIST = PredicateOperator.NOT_EXIST
+    GREATER_THAN = PredicateOperator.MORE_THAN
+    LESS_THAN = PredicateOperator.LESS_THAN
+    CONTAIN = PredicateOperator.CONTAIN
+    NOT_CONTAIN = PredicateOperator.NOT_CONTAIN
 
     # Aliases for consistency with PredicateOperator (ZEN-7)
     EQUALS = EQUAL
