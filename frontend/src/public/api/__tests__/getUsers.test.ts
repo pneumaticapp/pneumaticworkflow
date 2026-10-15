@@ -8,6 +8,16 @@ jest.mock('../../utils/getConfig', () => ({
 }));
 
 describe('getUsersQueryString', () => {
+  const originalURLSearchParams = global.URLSearchParams;
+
+  beforeAll(() => {
+    Object.defineProperty(global, 'URLSearchParams', { value: NodeURLSearchParams, writable: true });
+  });
+
+  afterAll(() => {
+    global.URLSearchParams = originalURLSearchParams;
+  });
+
   it('sends is_ai=false so AI agents are excluded from the team list', () => {
     const query = getUsersQueryString({
       type: 'user',
@@ -32,7 +42,13 @@ describe('getUsersQueryString', () => {
     expect(getUsersQueryString()).toBe('');
   });
 
+  it('returns an empty string without query parameters', () => {
+    expect(getUsersQueryString({})).toBe('');
+    expect(getUsersQueryString({ status: [] })).toBe('');
+  });
+
   it('escapes values in query parameters', () => {
     expect(getUsersQueryString({ type: 'user & admin' as 'user' })).toBe('?type=user+%26+admin');
   });
 });
+import { URLSearchParams as NodeURLSearchParams } from 'url';

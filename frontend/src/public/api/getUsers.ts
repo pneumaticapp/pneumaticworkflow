@@ -33,6 +33,5 @@ export function getUsersQueryString(config?: IGetUsersConfig) {
   if (isArrayWithItems(status)) params.set('status', status.join(','));
   if (typeof isAi === 'boolean') params.set('is_ai', String(isAi));
 
-  const queryString = params.toString();
-  return queryString ? `?${queryString}` : '';
+  return params.size ? `?${params}` : '';
 }
