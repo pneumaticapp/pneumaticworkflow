@@ -1052,7 +1052,7 @@ class WorkflowActionService:
     ):
 
         """ Validate and save the output fields, then complete the task
-            for the current user or fully if it can be completed """
+            for the current user or fully if it can be completed  """
 
         if self.workflow.is_delayed:
             raise exceptions.CompleteDelayedWorkflow
