@@ -15,6 +15,7 @@ export function resetPasswordSet(body: IConfirmResetPassword) {
     },
     {
       type: 'local',
+      shouldThrow: true,
     },
   );
 }
