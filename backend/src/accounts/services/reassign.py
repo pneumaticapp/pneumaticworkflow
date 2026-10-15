@@ -82,9 +82,13 @@ class ReassignService:
         new_group: Optional[UserGroup] = None,
         is_superuser: bool = False,
         auth_type: AuthTokenType.LITERALS = AuthTokenType.USER,
+        request_user: Optional[UserModel] = None,
     ):
         self.is_superuser = is_superuser
         self.auth_type = auth_type
+        # Whoever asked for the reassignment: a vacation switched off
+        # by it is journalled as their doing, not as the system's.
+        self.request_user = request_user
         self.old_user = old_user
         self.new_user = new_user
         self.old_group = old_group
@@ -650,7 +654,11 @@ class ReassignService:
         """
         if not self.old_user:
             return
-        VacationDelegationService.clear_substitute_groups(self.old_user)
+        VacationDelegationService.clear_substitute_groups(
+            self.old_user,
+            request_user=self.request_user,
+            auth_type=self.auth_type,
+        )
 
     def reassign_everywhere(self):
         with transaction.atomic():

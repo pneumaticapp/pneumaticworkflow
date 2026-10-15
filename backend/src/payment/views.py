@@ -12,6 +12,7 @@ from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
 from src.generics.permissions import UserIsAuthenticated
+from src.logs.events import AuditEventService
 from src.payment import messages
 from src.payment.models import (
     Price,
@@ -214,6 +215,10 @@ class SubscriptionViewSet(
         except StripeServiceException as ex:
             raise_validation_error(message=ex.message)
         else:
+            AuditEventService.subscription_cancelled(
+                user=request.user,
+                auth_type=request.token_type,
+            )
             return self.response_ok()
 
 

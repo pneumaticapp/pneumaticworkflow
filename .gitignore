@@ -22,4 +22,5 @@ frontend/test-results
 .agents/
 .agent/
 .antigravity/
+.claude/
 GEMINI.md

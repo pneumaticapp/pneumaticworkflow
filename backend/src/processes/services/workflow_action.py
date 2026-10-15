@@ -11,6 +11,7 @@ from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.executor import RawSqlExecutor
+from src.logs.events import AuditEventService
 from src.notifications.tasks import (
     send_task_completed_notification,
     send_task_completed_websocket,
@@ -204,6 +205,12 @@ class WorkflowActionService:
                 user=self.user,
                 delay=delay,
             )
+            AuditEventService.workflow_snooze(
+                user=self.user,
+                auth_type=self.auth_type,
+                workflow=self.workflow,
+                snooze_until=date,
+            )
 
             AnalyticService.workflow_delayed(
                 user=self.user,
@@ -251,6 +258,11 @@ class WorkflowActionService:
                 workflow=self.workflow,
                 user=self.user,
             )
+            AuditEventService.workflow_resume(
+                user=self.user,
+                auth_type=self.auth_type,
+                workflow=self.workflow,
+            )
             for task in self.workflow.tasks.delayed():
                 send_resumed_workflow_notification.delay(
                     logging=self.account.log_api_requests,
@@ -288,6 +300,11 @@ class WorkflowActionService:
             auth_type=self.auth_type,
         )
         self.workflow.delete()
+        AuditEventService.workflow_terminated(
+            user=self.user,
+            auth_type=self.auth_type,
+            workflow=self.workflow,
+        )
 
     def _complete_workflow(self):
 
@@ -337,6 +354,11 @@ class WorkflowActionService:
             workflow=self.workflow,
             user=self.user,
         )
+        AuditEventService.workflow_finish(
+            user=self.user,
+            auth_type=self.auth_type,
+            workflow=self.workflow,
+        )
         for task in self.workflow.tasks.active():
             recipients = self._get_incompleted_recipients(
                 task=task,
@@ -366,12 +388,24 @@ class WorkflowActionService:
                 task=task,
                 user=self.user,
             )
+            AuditEventService.workflow_ended_by_condition(
+                user=self.user,
+                auth_type=self.auth_type,
+                workflow=self.workflow,
+                task=task,
+            )
         elif by_complete_task:
             self._complete_workflow()
             WorkflowEventService.workflow_complete_event(
                 workflow=self.workflow,
                 task=task,
                 user=self.user,
+            )
+            AuditEventService.workflow_complete(
+                user=self.user,
+                auth_type=self.auth_type,
+                workflow=self.workflow,
+                task=task,
             )
             AnalyticService.workflow_completed(
                 user=self.user,
@@ -400,6 +434,7 @@ class WorkflowActionService:
         task_service.insert_fields_values(fields_values=fields_values)
 
         WorkflowEventService.task_skip_event(task)
+        AuditEventService.task_skip(task=task)
         if is_returned and task.parents:
             task.status = TaskStatus.PENDING
             task.save(update_fields=['status'])
@@ -491,11 +526,21 @@ class WorkflowActionService:
             workflow=self.workflow,
             user=self.user,
         )
+        AuditEventService.workflow_run(
+            user=self.user,
+            auth_type=self.auth_type,
+            workflow=self.workflow,
+        )
         if self.workflow.ancestor_task:
             WorkflowEventService.sub_workflow_run_event(
                 workflow=self.workflow.ancestor_task.workflow,
                 sub_workflow=self.workflow,
                 user=self.user,
+            )
+            AuditEventService.sub_workflow_run(
+                user=self.user,
+                auth_type=self.auth_type,
+                sub_workflow=self.workflow,
             )
         self._start_next_tasks()
         self.check_delay_workflow()
@@ -567,6 +612,7 @@ class WorkflowActionService:
         # but if task returned then
         if not task_start_event_already_exist:
             WorkflowEventService.task_started_event(task)
+            AuditEventService.task_start(task=task)
 
         # Skip any "onboarding" workflow with a template
         skip_sending_notification = (
@@ -739,6 +785,7 @@ class WorkflowActionService:
             task=task,
             delay=delay,
         )
+        AuditEventService.task_delay(task=task)
 
     def _task_skip_for_starter(
         self,
@@ -749,6 +796,7 @@ class WorkflowActionService:
         """ Skip the task by the "skip for starter" rule """
 
         WorkflowEventService.task_skip_event(task)
+        AuditEventService.task_skip(task=task)
         if is_returned and task.parents:
             task.status = TaskStatus.PENDING
             task.save(update_fields=['status'])
@@ -768,6 +816,7 @@ class WorkflowActionService:
             to the previous or next tasks """
 
         WorkflowEventService.task_skip_no_performers_event(task)
+        AuditEventService.task_skip_no_performers(task=task)
         task.status = TaskStatus.SKIPPED
         task.save(update_fields=('status',))
         if is_returned:
@@ -1116,6 +1165,11 @@ class WorkflowActionService:
                 task=task,
                 user=self.user,
             )
+            AuditEventService.task_complete(
+                user=self.user,
+                auth_type=self.auth_type,
+                task=task,
+            )
             if task_performers:
                 if task.can_be_completed(by_user=self.user):
                     self.complete_task(task=task)
@@ -1416,6 +1470,11 @@ class WorkflowActionService:
                     text=comment,
                     clear_text=clear_comment,
                 )
+                AuditEventService.task_revert(
+                    user=self.user,
+                    auth_type=self.auth_type,
+                    task=revert_to_task,
+                )
             AnalyticService.task_returned(
                 user=self.user,
                 task=revert_from_task,
@@ -1461,6 +1520,11 @@ class WorkflowActionService:
             WorkflowEventService.workflow_revert_event(
                 task=revert_to_task,
                 user=self.user,
+            )
+            AuditEventService.workflow_return(
+                user=self.user,
+                auth_type=self.auth_type,
+                task=revert_to_task,
             )
             AnalyticService.workflow_returned(
                 user=self.user,

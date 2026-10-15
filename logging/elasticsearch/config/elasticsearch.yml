@@ -1,0 +1,67 @@
+# Elasticsearch node of the Pneumatic audit journal.
+# ${VAR} is substituted from the container environment (docker-compose.yml).
+
+cluster.name: ${CLUSTER_NAME}
+node.name: ${NODE_NAME}
+
+network.host: 0.0.0.0
+http.port: 9200
+transport.port: 9300
+
+# One node holds every shard, so there is nothing to elect and nothing to
+# discover. For a second and third node: delete this line and add
+#   discovery.seed_hosts: [es-01, es-02, es-03]
+#   cluster.initial_master_nodes: [pneumatic-es-01, pneumatic-es-02, pneumatic-es-03]
+# on the very first start only. Never run two nodes - a two node cluster
+# cannot elect a master when one of them is down.
+discovery.type: single-node
+
+# The heap must not end up in swap: a page fault inside a garbage collection
+# pause turns milliseconds into seconds. Needs ulimits.memlock=-1 and the
+# IPC_LOCK capability, both set in docker-compose.yml.
+bootstrap.memory_lock: ${MEMORY_LOCK}
+
+path.repo:
+  - /snapshots
+
+# --- Security ---------------------------------------------------------------
+xpack.security.enabled: true
+xpack.security.authc.api_key.enabled: true
+
+xpack.security.http.ssl.enabled: true
+xpack.security.http.ssl.key: certs/es/es.key
+xpack.security.http.ssl.certificate: certs/es/es.crt
+xpack.security.http.ssl.certificate_authorities:
+  - certs/ca/ca.crt
+# The collector and Kibana authenticate with an API key and a password, not
+# with a client certificate. Asking for one here would lock both of them out.
+xpack.security.http.ssl.client_authentication: none
+
+xpack.security.transport.ssl.enabled: true
+xpack.security.transport.ssl.verification_mode: certificate
+xpack.security.transport.ssl.key: certs/es/es.key
+xpack.security.transport.ssl.certificate: certs/es/es.crt
+xpack.security.transport.ssl.certificate_authorities:
+  - certs/ca/ca.crt
+
+# DELETE /* and DELETE /_all are refused. Deleting the journal now takes the
+# full index name, which no wildcard typo can produce.
+action.destructive_requires_name: true
+
+# Elasticsearch own audit log - who read and who wrote the journal. It is a
+# subscription feature (Platinum); on the free basic licence the node starts
+# but writes nothing. Uncomment together with a licence:
+# xpack.security.audit.enabled: true
+# xpack.security.audit.logfile.events.include: [access_denied, authentication_failed, run_as_denied, tampered_request, connection_denied, security_config_change]
+
+# --- Licence ----------------------------------------------------------------
+# Pinned on purpose. A trial started by accident from the UI expires after 30
+# days and takes ILM, security and snapshots down with it.
+xpack.license.self_generated.type: basic
+
+# --- No outbound calls ------------------------------------------------------
+# The storage machine has no business reaching the internet, and a firewall
+# that blocks it would otherwise produce a warning every few hours.
+xpack.security.enrollment.enabled: false
+ingest.geoip.downloader.enabled: false
+xpack.profiling.enabled: false

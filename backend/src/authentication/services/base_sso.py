@@ -29,6 +29,7 @@ from src.authentication.services.user_auth import AuthService
 from src.authentication.tokens import PneumaticToken
 from src.authentication.views.mixins import SignUpMixin
 from src.generics.mixins.services import CacheMixin, EncryptionMixin
+from src.logs.events import AuditEventService
 
 UserModel = get_user_model()
 
@@ -276,7 +277,10 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
         existing_user = (
             UserModel.objects.filter(email=user_data['email']).first()
         )
-        if existing_user and existing_user.status != UserStatus.INACTIVE:
+        is_returning = bool(
+            existing_user and existing_user.status != UserStatus.INACTIVE,
+        )
+        if is_returning:
             if existing_user.status == UserStatus.ACTIVE:
                 user = existing_user
             else:
@@ -295,6 +299,11 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
             auth_type=AuthTokenType.USER,
             source=self.source,
         )
+        if is_returning:
+            AuditEventService.user_logged_in(
+                user=user,
+                source=self.source,
+            )
         return user, token
 
     def _activate_invited_user(

@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 
 from src.authentication.enums import AuthTokenType
+from src.logs.events import AuditEventService
 from src.processes.entities import (
     LibraryTemplateData,
 )
@@ -63,6 +64,7 @@ class SystemTemplateService:
 
         """ Create or update library templates by name """
 
+        templates_count = len(data)
         category_by_name = self._get_categories_dict(data)
         data_by_name = {elem['name'].strip(): elem for elem in data}
 
@@ -104,3 +106,8 @@ class SystemTemplateService:
                     ),
                 )
             SystemTemplate.objects.bulk_create(sys_templates, batch_size=1000)
+        AuditEventService.library_templates_imported(
+            user=self.user,
+            auth_type=self.auth_type,
+            templates_count=templates_count,
+        )
