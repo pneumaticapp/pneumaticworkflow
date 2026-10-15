@@ -1,17 +1,23 @@
 import * as React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { IntlProvider } from 'react-intl';
 
-import { Register } from '../Register';
+import { Register, IRegisterProps } from '../Register';
 import { prepareRegisterUser } from '../../../../api/prepareRegisterUser';
 import { InterceptorError } from '../../../../api/InterceptorError';
 import { logger } from '../../../../utils/logger';
+import { handleOAuthClick } from '../../utils/handleOAuthClick';
+import { EOAuthType } from '../../../../types/auth';
+import { enMessages } from '../../../../lang/locales/en_US';
+
+const mockOAuthClickHandler = jest.fn();
+jest.mock('../../utils/handleOAuthClick', () => ({
+  handleOAuthClick: jest.fn(() => mockOAuthClickHandler),
+}));
 
 jest.mock('../../../../api/prepareRegisterUser', () => ({
   prepareRegisterUser: jest.fn(),
-}));
-
-jest.mock('../../../../api/getGoogleAuthUrl', () => ({
-  getOAuthUrl: jest.fn(),
 }));
 
 jest.mock('../../../../utils/logger', () => ({
@@ -19,11 +25,15 @@ jest.mock('../../../../utils/logger', () => ({
 }));
 
 jest.mock('../../../../utils/getConfig', () => ({
-  getBrowserConfigEnv: () => ({ recaptchaSecret: 'test-secret' }),
+  getBrowserConfigEnv: jest.fn(() => ({
+    recaptchaSecret: 'mock-secret',
+  })),
 }));
 
 jest.mock('../../../../utils/history', () => ({
-  history: { location: { search: '' } },
+  history: {
+    location: { search: '' },
+  },
   getQueryStringParams: jest.fn(() => ({})),
 }));
 
@@ -41,10 +51,10 @@ jest.mock('../utils/templateName', () => ({
 
 jest.mock('../../../../constants/enviroment', () => ({
   isEnvCaptcha: true,
-  isEnvGoogleAuth: false,
+  isEnvGoogleAuth: true,
   isEnvMsAuth: false,
   isEnvSSOAuth: false,
-  envSSOProvider: undefined,
+  envSSOProvider: 'Auth0',
 }));
 
 jest.mock('react-google-recaptcha', () => ({
@@ -52,33 +62,37 @@ jest.mock('react-google-recaptcha', () => ({
   default: () => React.createElement('div', { role: 'group', 'aria-label': 'captcha' }),
 }));
 
-jest.mock('../../../../components/IntlMessages', () => ({
-  IntlMessages: () => null,
-}));
-
 jest.mock('../../../../components/NavLink', () => ({
-  NavLink: ({ children }: { children: React.ReactNode }) => React.createElement('a', null, children),
-}));
-
-jest.mock('../../../../components/OAuthButtons', () => ({
-  GoogleButton: () => null,
-  MicrosoftButton: () => null,
-  SSOButton: () => null,
-}));
-
-jest.mock('../../../../components/UI/FormikFields', () => ({
-  Phone: () => null,
-}));
-
-jest.mock('../../../../components/UI', () => ({
-  Button: (properties: { label: string }) => React.createElement('button', { type: 'submit' }, properties.label),
-  Header: ({ children }: { children: React.ReactNode }) => React.createElement('h2', null, children),
-  InputField: (properties: { name: string }) => React.createElement('input', { name: properties.name }),
+  NavLink: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 }));
 
 describe('Register', () => {
+  const defaultProps: IRegisterProps = {
+    registerUser: jest.fn(),
+  };
+
+  const renderComponent = (props: Partial<IRegisterProps> = {}) =>
+    render(
+      <IntlProvider locale="en" messages={enMessages}>
+        <Register {...defaultProps} {...props} />
+      </IntlProvider>,
+    );
+
   beforeEach(() => {
     jest.clearAllMocks();
+    (prepareRegisterUser as jest.Mock).mockResolvedValue({ showCaptcha: false });
+  });
+
+  describe('OAuth button integration', () => {
+    it('calls handleOAuthClick with EOAuthType.Google when Google button is clicked', () => {
+      renderComponent();
+
+      const googleButton = screen.getByRole('button', { name: /google/i });
+      userEvent.click(googleButton);
+
+      expect(handleOAuthClick).toHaveBeenCalledWith(EOAuthType.Google, expect.any(Function));
+      expect(mockOAuthClickHandler).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('captcha visibility by showCaptcha field', () => {
@@ -87,7 +101,7 @@ describe('Register', () => {
     it('shows captcha when showCaptcha is true', async () => {
       (prepareRegisterUser as jest.Mock).mockResolvedValue({ showCaptcha: true });
 
-      render(React.createElement(Register, { registerUser: jest.fn() }));
+      renderComponent();
 
       expect(await screen.findByRole('group', { name: CAPTCHA_LABEL })).toBeInTheDocument();
     });
@@ -95,7 +109,7 @@ describe('Register', () => {
     it('does not show captcha when showCaptcha is false', async () => {
       (prepareRegisterUser as jest.Mock).mockResolvedValue({ showCaptcha: false });
 
-      render(React.createElement(Register, { registerUser: jest.fn() }));
+      renderComponent();
 
       await waitFor(() => {
         expect(prepareRegisterUser).toHaveBeenCalledTimes(1);
@@ -106,7 +120,7 @@ describe('Register', () => {
     it('does not show captcha when showCaptcha is undefined', async () => {
       (prepareRegisterUser as jest.Mock).mockResolvedValue({ showCaptcha: undefined });
 
-      render(React.createElement(Register, { registerUser: jest.fn() }));
+      renderComponent();
 
       await waitFor(() => {
         expect(prepareRegisterUser).toHaveBeenCalledTimes(1);
@@ -120,7 +134,7 @@ describe('Register', () => {
       const error = new InterceptorError('Request timeout');
       (prepareRegisterUser as jest.Mock).mockRejectedValue(error);
 
-      render(React.createElement(Register, { registerUser: jest.fn() }));
+      renderComponent();
 
       await waitFor(() => {
         expect(logger.error).toHaveBeenCalledWith(error);
