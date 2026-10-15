@@ -1,4 +1,4 @@
-FROM python:3.9.25-bookworm
+FROM python:3.12.15-bookworm
 
 LABEL org.opencontainers.image.title="Pneumatic API" \
       org.opencontainers.image.source="https://github.com/pneumaticapp/pneumaticworkflow/backend" \
@@ -18,7 +18,7 @@ RUN apt-get update && apt-get -y install postgresql-client
 # The enviroment variable ensures that the python output is set straight
 # to the terminal with out buffering it first
 
-RUN pip install poetry==1.5.1
+RUN pip install poetry==2.2.1
 
 COPY ./pyproject.toml ./poetry.lock /tmp/
 

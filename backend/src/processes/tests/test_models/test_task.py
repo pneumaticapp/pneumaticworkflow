@@ -207,7 +207,7 @@ def test_get_raw_performer__with_user__ok():
     assert result.user == user
 
 
-def test_get_raw_performer__with_user_id__ok(mocker):
+def test_get_raw_performer__with_user_id__ok():
     """
     Creates RawPerformer with user_id
     """
@@ -221,32 +221,27 @@ def test_get_raw_performer__with_user_id__ok(mocker):
     )
     task = workflow.tasks.get(number=1)
     api_name = 'rp-test-2'
-    raw_performer_init_mock = mocker.patch(
-        'src.processes.models.workflows.raw_performer'
-        '.RawPerformer.__init__',
-        return_value=None,
-    )
 
     # act
-    task._get_raw_performer(
+    result = task._get_raw_performer(
         api_name=api_name,
         performer_type=PerformerType.USER,
         user_id=user.id,
     )
 
     # assert
-    raw_performer_init_mock.assert_called_once_with(
-        account=task.account,
-        task=task,
-        workflow=task.workflow,
-        field=None,
-        api_name=api_name,
-        type=PerformerType.USER,
-        source_task_api_name=None,
-    )
+    assert result.pk is None
+    assert result.account == task.account
+    assert result.task == task
+    assert result.workflow == workflow
+    assert result.api_name == api_name
+    assert result.type == PerformerType.USER
+    assert result.user_id == user.id
+    assert result.field is None
+    assert result.source_task_api_name is None
 
 
-def test_get_raw_performer__with_group_id__ok(mocker):
+def test_get_raw_performer__with_group_id__ok():
     """
     Creates RawPerformer with group_id
     """
@@ -261,29 +256,24 @@ def test_get_raw_performer__with_group_id__ok(mocker):
     task = workflow.tasks.get(number=1)
     api_name = 'rp-test-3'
     group_id = 99
-    raw_performer_init_mock = mocker.patch(
-        'src.processes.models.workflows.raw_performer'
-        '.RawPerformer.__init__',
-        return_value=None,
-    )
 
     # act
-    task._get_raw_performer(
+    result = task._get_raw_performer(
         api_name=api_name,
         performer_type=PerformerType.GROUP,
         group_id=group_id,
     )
 
     # assert
-    raw_performer_init_mock.assert_called_once_with(
-        account=task.account,
-        task=task,
-        workflow=task.workflow,
-        field=None,
-        api_name=api_name,
-        type=PerformerType.GROUP,
-        source_task_api_name=None,
-    )
+    assert result.pk is None
+    assert result.account == task.account
+    assert result.task == task
+    assert result.workflow == workflow
+    assert result.api_name == api_name
+    assert result.type == PerformerType.GROUP
+    assert result.group_id == group_id
+    assert result.field is None
+    assert result.source_task_api_name is None
 
 
 def test_get_raw_performer__with_field__ok(mocker):

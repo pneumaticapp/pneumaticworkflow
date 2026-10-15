@@ -412,11 +412,11 @@ def test_create_selections__ok(
     )
 
     # assert
-    selection_service_init_mock.has_calls([
+    selection_service_init_mock.assert_has_calls([
         mocker.call(user=user),
         mocker.call(user=user),
     ])
-    create_selection_mock.has_calls([
+    create_selection_mock.assert_has_calls([
         mocker.call(
             instance_template=selection_1,
             field_id=task_field.id,

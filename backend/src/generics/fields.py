@@ -1,6 +1,6 @@
 from datetime import datetime
 
-import pytz
+from zoneinfo import ZoneInfo
 from django.conf import settings
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -166,7 +166,7 @@ class TimeStampField(serializers.DateTimeField):
                 raise ValidationError(detail=MSG_GE_0007) from ex
         elif not isinstance(value, int) and not isinstance(value, float):
             raise ValidationError(detail=MSG_GE_0007)
-        tz = pytz.timezone(settings.TIME_ZONE)
+        tz = ZoneInfo(settings.TIME_ZONE)
         try:
             return datetime.fromtimestamp(value, tz=tz)
         except (OverflowError, OSError, ValueError) as ex:

@@ -1,0 +1,54 @@
+{
+  "policy": {
+    "_meta": {
+      "description": "Pneumatic audit journal. SOC LOG-03 asks for at least twelve months; real retention is __RETENTION__ counted from the moment the index stopped being written to, so up to __ROLLOVER_AGE__ more.",
+      "managed_by": "logging/elasticsearch/scripts/bootstrap.sh"
+    },
+    "phases": {
+      "hot": {
+        "min_age": "0ms",
+        "actions": {
+          "rollover": {
+            "max_primary_shard_size": "__ROLLOVER_SIZE__",
+            "max_age": "__ROLLOVER_AGE__"
+          },
+          "set_priority": {
+            "priority": 100
+          }
+        }
+      },
+      "warm": {
+        "min_age": "7d",
+        "actions": {
+          "readonly": {},
+          "forcemerge": {
+            "max_num_segments": 1
+          },
+          "set_priority": {
+            "priority": 50
+          },
+          "migrate": {
+            "enabled": false
+          }
+        }
+      },
+      "cold": {
+        "min_age": "90d",
+        "actions": {
+          "set_priority": {
+            "priority": 0
+          },
+          "migrate": {
+            "enabled": false
+          }
+        }
+      },
+      "delete": {
+        "min_age": "__RETENTION__",
+        "actions": {
+          "delete": {}
+        }
+      }
+    }
+  }
+}

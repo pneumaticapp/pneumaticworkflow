@@ -603,6 +603,10 @@ def test_set_due_date_directly__ok(mocker):
         'src.processes.services.events.WorkflowEventService.'
         'due_date_changed_event',
     )
+    task_due_date_changed_mock = mocker.patch(
+        'src.processes.services.tasks.task.AuditEventService.'
+        'task_due_date_changed',
+    )
     service = TaskService(instance=task, user=user)
 
     # act
@@ -621,6 +625,11 @@ def test_set_due_date_directly__ok(mocker):
         logo_lg=user.account.logo_lg,
     )
     due_date_changed_event_mock.assert_called_once_with(task=task, user=user)
+    task_due_date_changed_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        task=task,
+    )
 
 
 def test_insert_fields_values__description_template_used__ok(mocker):
@@ -2069,6 +2078,10 @@ def test_set_due_date_directly__default__ok(mocker):
         'src.processes.services.events.WorkflowEventService'
         '.due_date_changed_event',
     )
+    task_due_date_changed_mock = mocker.patch(
+        'src.processes.services.tasks.task.AuditEventService'
+        '.task_due_date_changed',
+    )
     service = TaskService(user=user, instance=task)
 
     # act
@@ -2089,6 +2102,11 @@ def test_set_due_date_directly__default__ok(mocker):
     due_date_changed_event_mock.assert_called_once_with(
         task=task,
         user=user,
+    )
+    task_due_date_changed_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        task=task,
     )
 
 

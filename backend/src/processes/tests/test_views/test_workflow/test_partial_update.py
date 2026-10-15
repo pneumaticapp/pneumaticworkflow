@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 
 import pytest
-import pytz
+from zoneinfo import ZoneInfo
 from django.utils import timezone
 from django.test import override_settings
 
@@ -1589,7 +1589,7 @@ class TestPartialUpdateWorkflow:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC'),
+            tzinfo=ZoneInfo('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -1649,7 +1649,7 @@ class TestPartialUpdateWorkflow:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC'),
+            tzinfo=ZoneInfo('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -2241,6 +2241,7 @@ def test_partial_update__is_urgent_changed__urgent_service_called__ok(
     urgent_service_resolve_mock.assert_called_once_with(
         workflow=workflow,
         user=user,
+        auth_type=AuthTokenType.USER,
     )
 
 
@@ -2533,6 +2534,7 @@ def test_partial_update__kickoff_and_is_urgent__all_task_services_called__ok(
     urgent_service_resolve_mock.assert_called_once_with(
         workflow=workflow,
         user=user,
+        auth_type=AuthTokenType.USER,
     )
     assert task_partial_update_mock.call_count == 1
     task_partial_update_mock.assert_has_calls(

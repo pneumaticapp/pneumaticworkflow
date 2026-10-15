@@ -61,6 +61,7 @@ class WebHookViewSet(
         service = WebhookService(
             user=request.user,
             is_superuser=request.is_superuser,
+            auth_type=request.token_type,
         )
         service.subscribe(**slz.validated_data)
         return self.response_ok()
@@ -80,6 +81,7 @@ class WebHookViewSet(
         service = WebhookService(
             user=request.user,
             is_superuser=request.is_superuser,
+            auth_type=request.token_type,
         )
         service.unsubscribe()
         return self.response_ok()
