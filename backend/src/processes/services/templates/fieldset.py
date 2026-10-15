@@ -31,7 +31,7 @@ from src.processes.services.exceptions import (
     FieldsetTemplateServiceException,
     FieldsetTemplateRuleSetServiceException,
 )
-from src.processes.services.fieldsets.fieldset_rule import (
+from src.processes.services.templates.fieldset_rule import (
     FieldsetTemplateRuleSetService,
 )
 from src.processes.services.templates.field_template import (

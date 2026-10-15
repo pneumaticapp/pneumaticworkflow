@@ -26,7 +26,7 @@ from src.processes.services.exceptions import (
 from src.processes.services.templates.field_template import (
     FieldTemplateService,
 )
-from src.processes.services.fieldsets.fieldset import (
+from src.processes.services.templates.fieldset import (
     FieldSetTemplateService,
 )
 from src.processes.tests.fixtures import (
@@ -391,11 +391,11 @@ def test__create_related__default_params__ok(mocker):
 
     # mock
     create_rules_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService.create_rulesets',
     )
     create_fields_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService._create_fields',
     )
 
@@ -438,11 +438,11 @@ def test__create_related__rulesets_provided__ok(mocker):
 
     # mock
     create_rules_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService.create_rulesets',
     )
     create_fields_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService._create_fields',
     )
 
@@ -472,11 +472,11 @@ def test__create_related__fields_provided__ok(mocker):
 
     # mock
     create_rules_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService.create_rulesets',
     )
     create_fields_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService._create_fields',
     )
 
@@ -520,11 +520,11 @@ def test__create_related__both_provided__ok(mocker):
 
     # mock
     create_rules_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService.create_rulesets',
     )
     create_fields_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService._create_fields',
     )
 
@@ -920,11 +920,11 @@ def test_update_rules__existing_rule__ok(mocker):
     )
 
     partial_update_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldsetTemplateRuleSetService.partial_update',
     )
     create_ruleset_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService.create_ruleset',
     )
     ruleset_data = {
@@ -971,13 +971,13 @@ def test_update_rules__new_rule__ok(mocker):
     group_and_api_name = 'ga-1'
 
     partial_update_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldsetTemplateRuleSetService.partial_update',
     )
     ruleset_mock = mocker.Mock()
     ruleset_mock.api_name = rule_api_name
     create_ruleset_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService.create_ruleset',
         return_value=ruleset_mock,
     )
@@ -1201,11 +1201,11 @@ def test_partial_update_name__ok(mocker):
         template=template,
     )
     mock_update_fields = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService._update_fields',
     )
     mock_update_rules = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService.update_rulesets',
     )
     service = FieldSetTemplateService(instance=fieldset, user=owner)
@@ -1235,11 +1235,11 @@ def test_partial_update_fields_ok(mocker):
     service = FieldSetTemplateService(user=owner, instance=fieldset)
 
     mock_update_fields = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService._update_fields',
     )
     mock_update_rules = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService.update_rulesets',
     )
     mock_super_partial_update = mocker.patch(
@@ -1279,11 +1279,11 @@ def test_partial_update__rulesets__ok(mocker):
         'BaseModelService.partial_update',
     )
     mock_update_fields = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService._update_fields',
     )
     mock_update_rules = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService.update_rulesets',
     )
     service = FieldSetTemplateService(user=owner, instance=fieldset)
@@ -1599,7 +1599,7 @@ def test__replace_api_names__fields_and_rules__ok(mocker):
     new_group_or_api = 'new-group-or-1'
     new_group_and_api = 'new-group-and-1'
     create_api_name_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.create_api_name',
+        'src.processes.services.templates.fieldset.create_api_name',
 
         side_effect=[
             new_fs_api,
@@ -1663,7 +1663,7 @@ def test__replace_api_names__no_fields_key__ok(mocker):
     )
     shared_fieldset_data = {'api_name': 'old-fs'}
     create_api_name_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.create_api_name',
+        'src.processes.services.templates.fieldset.create_api_name',
         return_value='new-fs-1',
     )
 
@@ -1695,7 +1695,7 @@ def test__replace_api_names__empty_fields__ok(mocker):
     )
     shared_fieldset_data = {'api_name': 'old-fs', 'fields': []}
     create_api_name_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.create_api_name',
+        'src.processes.services.templates.fieldset.create_api_name',
         return_value='new-fs-1',
     )
 
@@ -1727,7 +1727,7 @@ def test__replace_api_names__no_rules_key__ok(mocker):
     )
     shared_fieldset_data = {'api_name': 'old-fs', 'fields': []}
     create_api_name_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.create_api_name',
+        'src.processes.services.templates.fieldset.create_api_name',
         return_value='new-fs-1',
     )
 
@@ -1759,7 +1759,7 @@ def test__replace_api_names__empty_rules__ok(mocker):
     )
     shared_fieldset_data = {'api_name': 'old-fs', 'rulesets': []}
     create_api_name_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.create_api_name',
+        'src.processes.services.templates.fieldset.create_api_name',
         return_value='new-fs-1',
     )
 
@@ -1796,7 +1796,7 @@ def test__replace_api_names__original_not_mutated__ok(mocker):
         'rulesets': [],
     }
     create_api_name_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.create_api_name',
+        'src.processes.services.templates.fieldset.create_api_name',
         side_effect=['new-fs', 'new-field'],
     )
 
@@ -1825,7 +1825,7 @@ def test__get_new_fieldset_data__default_params__ok(mocker):
     )
     shared_fieldset_data = {'api_name': 'old-fs'}
     replace_api_names_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService._replace_api_names',
         return_value={'api_name': 'mocked-api', 'order': 3},
     )
@@ -1857,7 +1857,7 @@ def test__get_new_fieldset_data__api_name_provided__ok(mocker):
     shared_fieldset_data = {'api_name': 'old-fs'}
     override_api_name = 'custom-api'
     replace_api_names_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService._replace_api_names',
         return_value={'api_name': 'mocked-api'},
     )
@@ -1890,7 +1890,7 @@ def test__get_new_fieldset_data__api_name_omitted__ok(mocker):
     shared_fieldset_data = {'api_name': 'old-fs'}
     mocked_api_name = 'mocked-api'
     replace_api_names_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService._replace_api_names',
         return_value={'api_name': mocked_api_name},
     )
@@ -1922,7 +1922,7 @@ def test__get_new_fieldset_data__title_provided__ok(mocker):
     shared_fieldset_data = {'api_name': 'old-fs'}
     override_title = 'Custom Title'
     replace_api_names_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService._replace_api_names',
         return_value={'api_name': 'api', 'title': 'Original'},
     )
@@ -1955,7 +1955,7 @@ def test__get_new_fieldset_data__title_omitted__ok(mocker):
     shared_fieldset_data = {'api_name': 'old-fs'}
     original_title = 'Original Title'
     replace_api_names_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService._replace_api_names',
         return_value={'api_name': 'api', 'title': original_title},
     )
@@ -1986,7 +1986,7 @@ def test__get_new_fieldset_data__title_empty_string__ok(mocker):
     )
     shared_fieldset_data = {'api_name': 'old-fs'}
     replace_api_names_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService._replace_api_names',
         return_value={'api_name': 'api', 'title': 'Original'},
     )
@@ -2019,7 +2019,7 @@ def test__get_new_fieldset_data__description_provided__ok(mocker):
     shared_fieldset_data = {'api_name': 'old-fs'}
     override_description = 'New description'
     replace_api_names_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService._replace_api_names',
         return_value={'api_name': 'api', 'description': 'Old desc'},
     )
@@ -2052,7 +2052,7 @@ def test__get_new_fieldset_data__description_omitted__ok(mocker):
     shared_fieldset_data = {'api_name': 'old-fs'}
     original_description = 'Original description'
     replace_api_names_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService._replace_api_names',
         return_value={'api_name': 'api', 'description': original_description},
     )
@@ -2083,7 +2083,7 @@ def test__get_new_fieldset_data__description_empty_string__ok(mocker):
     )
     shared_fieldset_data = {'api_name': 'old-fs'}
     replace_api_names_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService._replace_api_names',
         return_value={'api_name': 'api', 'description': 'Old desc'},
     )
@@ -2115,7 +2115,7 @@ def test__get_new_fieldset_data__order_present__removed(mocker):
     )
     shared_fieldset_data = {'api_name': 'old-fs', 'order': 5}
     replace_api_names_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService._replace_api_names',
         return_value={'api_name': 'api', 'order': 5},
     )
@@ -2146,7 +2146,7 @@ def test__get_new_fieldset_data__no_order__ok(mocker):
     )
     shared_fieldset_data = {'api_name': 'old-fs'}
     replace_api_names_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService._replace_api_names',
         return_value={'api_name': 'api'},
     )
@@ -2180,12 +2180,12 @@ def test__create_from_shared__default_params__ok(mocker):
     shared_fieldset_id = 42
     fieldset_data_from_mock = {'api_name': 'new-fs', 'name': 'Fieldset'}
     get_new_fieldset_data_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService.get_new_fieldset_data',
         return_value=fieldset_data_from_mock,
     )
     create_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService.create',
         return_value=mocker.Mock(),
     )
@@ -2242,12 +2242,12 @@ def test__create_from_shared__all_params__ok(mocker):
     order = 3
     fieldset_data_from_mock = {'api_name': api_name, 'name': 'Fieldset'}
     get_new_fieldset_data_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService.get_new_fieldset_data',
         return_value=fieldset_data_from_mock,
     )
     create_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService.create',
         return_value=mocker.Mock(),
     )
@@ -2382,17 +2382,17 @@ def test__get_clone__ok(mocker):
 
     clone = mocker.Mock()
     to_json_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService.to_json',
         return_value=instance_data,
     )
     get_new_fieldset_data_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService.get_new_fieldset_data',
         return_value=result_data,
     )
     create_shared_fieldset_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
+        'src.processes.services.templates.fieldset.'
         'FieldSetTemplateService.create_shared_fieldset',
         return_value=clone,
     )
