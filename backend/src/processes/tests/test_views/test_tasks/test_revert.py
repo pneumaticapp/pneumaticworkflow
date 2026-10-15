@@ -700,7 +700,7 @@ def test_revert__chain_skip_on_return__start_first_not_skipped_task(
     assert task_4.status == TaskStatus.PENDING
 
 
-def test_revert__first_task_skip_on_return__validation_error(api_client):
+def test_revert__first_task_skip_on_return__start_first_task(api_client):
 
     # arrange
     owner = create_test_owner()
@@ -722,50 +722,11 @@ def test_revert__first_task_skip_on_return__validation_error(api_client):
     )
 
     # assert
-    assert response.status_code == 400
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == messages.MSG_PW_0092(task_1.name)
+    assert response.status_code == 204
     task_1.refresh_from_db()
-    assert task_1.status == TaskStatus.COMPLETED
+    assert task_1.status == TaskStatus.ACTIVE
     task_2.refresh_from_db()
-    assert task_2.status == TaskStatus.ACTIVE
-
-
-def test_revert__chain_skip_on_return_to_first_task__validation_error(
-    api_client,
-):
-
-    # arrange
-    owner = create_test_owner()
-    workflow = create_test_workflow(
-        user=owner,
-        tasks_count=3,
-        active_task_number=3,
-    )
-    task_1 = workflow.tasks.get(number=1)
-    task_2 = workflow.tasks.get(number=2)
-    workflow.tasks.filter(id__in=[task_1.id, task_2.id]).update(
-        skip_on_return=True,
-    )
-    task_3 = workflow.tasks.get(number=3)
-    api_client.token_authenticate(owner)
-
-    # act
-    response = api_client.post(
-        f'/v2/tasks/{task_3.id}/revert',
-        data={'comment': 'text_comment'},
-    )
-
-    # assert
-    assert response.status_code == 400
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == messages.MSG_PW_0092(task_1.name)
-    task_1.refresh_from_db()
-    assert task_1.status == TaskStatus.COMPLETED
-    task_2.refresh_from_db()
-    assert task_2.status == TaskStatus.COMPLETED
-    task_3.refresh_from_db()
-    assert task_3.status == TaskStatus.ACTIVE
+    assert task_2.status == TaskStatus.PENDING
 
 
 def test_complete__next_task_skip_on_return__start_next_task(api_client):

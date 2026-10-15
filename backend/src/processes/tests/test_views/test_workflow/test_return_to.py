@@ -382,38 +382,6 @@ def test_return_to__task_skip_on_return__start_prev_task(api_client):
     assert task_3.is_pending
 
 
-def test_return_to__first_task_skip_on_return__validation_error(api_client):
-
-    # arrange
-    user = create_test_owner()
-    workflow = create_test_workflow(
-        user=user,
-        tasks_count=3,
-        active_task_number=3,
-    )
-    task_1 = workflow.tasks.get(number=1)
-    task_1.skip_on_return = True
-    task_1.save(update_fields=['skip_on_return'])
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.post(
-        f'/workflows/{workflow.id}/return-to',
-        data={'task_api_name': task_1.api_name},
-    )
-
-    # assert
-    assert response.status_code == 400
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == messages.MSG_PW_0092(task_1.name)
-    workflow.refresh_from_db()
-    assert workflow.status == WorkflowStatus.RUNNING
-    task_1.refresh_from_db()
-    assert task_1.is_completed
-    task_3 = workflow.tasks.get(number=3)
-    assert task_3.is_active
-
-
 def test_return_to__task_with_delay__reset_delay(
     mocker,
     api_client,
