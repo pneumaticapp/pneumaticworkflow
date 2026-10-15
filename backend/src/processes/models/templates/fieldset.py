@@ -114,8 +114,9 @@ class FieldSetTemplateRuleSet(
 
     class Meta:
         ordering = ['order', 'id']
-        # Unique index is raw SQL in 0260:
-        # NULLS NOT DISTINCT, WHERE NOT is_deleted.
+        # Partial unique indexes are raw SQL in 0260.
+        # NOT is_deleted AND template_id IS NOT NULL,
+        # or NOT is_deleted AND template_id IS NULL.
 
     api_name_prefix = 'fieldset-ruleset'
     template = models.ForeignKey(
@@ -157,8 +158,9 @@ class FieldSetTemplateRuleGroupOr(
 
     class Meta:
         ordering = ['id']
-        # Unique index is raw SQL in 0260:
-        # NULLS NOT DISTINCT, WHERE NOT is_deleted.
+        # Partial unique indexes are raw SQL in 0260.
+        # NOT is_deleted AND template_id IS NOT NULL,
+        # or NOT is_deleted AND template_id IS NULL.
 
     api_name_prefix = 'fieldset-rule-group-or'
     template = models.ForeignKey(
@@ -189,8 +191,9 @@ class FieldSetTemplateRuleGroupAnd(
 
     class Meta:
         ordering = ['id']
-        # Unique index is raw SQL in 0260:
-        # NULLS NOT DISTINCT, WHERE NOT is_deleted.
+        # Partial unique indexes are raw SQL in 0260.
+        # NOT is_deleted AND template_id IS NOT NULL,
+        # or NOT is_deleted AND template_id IS NULL.
 
     api_name_prefix = 'fieldset-rule-group-and'
     template = models.ForeignKey(

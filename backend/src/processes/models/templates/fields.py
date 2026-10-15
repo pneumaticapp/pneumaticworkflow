@@ -28,8 +28,9 @@ class FieldTemplate(
 
     class Meta:
         ordering = ['-order']
-        # Unique index is raw SQL in 0260:
-        # NULLS NOT DISTINCT, WHERE NOT is_deleted.
+        # Partial unique indexes are raw SQL in 0260.
+        # NOT is_deleted AND template_id IS NOT NULL,
+        # or NOT is_deleted AND template_id IS NULL.
 
     api_name_prefix = 'field'
 
@@ -77,8 +78,9 @@ class FieldTemplateSelection(
 
     class Meta:
         ordering = ['pk']
-        # Unique index (template, api_name) is raw SQL in 0260:
-        # NULLS NOT DISTINCT, WHERE NOT is_deleted.
+        # Partial unique indexes are raw SQL in 0260.
+        # NOT is_deleted AND template_id IS NOT NULL,
+        # or NOT is_deleted AND template_id IS NULL.
         constraints = [
             UniqueConstraint(
                 fields=['field_template', 'value'],
@@ -118,8 +120,9 @@ class FieldTemplateRuleSet(
 
     class Meta:
         ordering = ['order', 'id']
-        # Unique index is raw SQL in 0260:
-        # NULLS NOT DISTINCT, WHERE NOT is_deleted.
+        # Partial unique indexes are raw SQL in 0260.
+        # NOT is_deleted AND template_id IS NOT NULL,
+        # or NOT is_deleted AND template_id IS NULL.
 
     api_name_prefix = 'field-ruleset'
     template = models.ForeignKey(
@@ -161,8 +164,9 @@ class FieldTemplateRuleGroupOr(
 
     class Meta:
         ordering = ['id']
-        # Unique index is raw SQL in 0260:
-        # NULLS NOT DISTINCT, WHERE NOT is_deleted.
+        # Partial unique indexes are raw SQL in 0260.
+        # NOT is_deleted AND template_id IS NOT NULL,
+        # or NOT is_deleted AND template_id IS NULL.
 
     api_name_prefix = 'field-rule-group-or'
     template = models.ForeignKey(
@@ -193,8 +197,9 @@ class FieldTemplateRuleGroupAnd(
 
     class Meta:
         ordering = ['id']
-        # Unique index is raw SQL in 0260:
-        # NULLS NOT DISTINCT, WHERE NOT is_deleted.
+        # Partial unique indexes are raw SQL in 0260.
+        # NOT is_deleted AND template_id IS NOT NULL,
+        # or NOT is_deleted AND template_id IS NULL.
 
     api_name_prefix = 'field-rule-group-and'
     group_or = models.ForeignKey(

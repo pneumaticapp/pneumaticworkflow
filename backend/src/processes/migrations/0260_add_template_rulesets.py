@@ -17,6 +17,38 @@ def _nulls_not_distinct_index(name, table, columns):
     )
 
 
+def _partial_unique_index(name, table, columns, where):
+    column_list = ', '.join(columns)
+    return migrations.RunSQL(
+        sql=(
+            f'CREATE UNIQUE INDEX {name} '
+            f'ON {table} ({column_list}) '
+            f'WHERE {where}'
+        ),
+        reverse_sql=f'DROP INDEX IF EXISTS {name}',
+    )
+
+
+def _template_and_shared_indexes(
+    name,
+    table,
+    template_columns,
+    shared_name,
+    shared_columns,
+):
+    present = 'NOT is_deleted AND template_id IS NOT NULL'
+    missing = 'NOT is_deleted AND template_id IS NULL'
+    return [
+        _partial_unique_index(name, table, template_columns, present),
+        _partial_unique_index(
+            shared_name,
+            table,
+            shared_columns,
+            missing,
+        ),
+    ]
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -125,10 +157,12 @@ class Migration(migrations.Migration):
             'processes_fieldsettemplate',
             ('api_name', 'template_id', 'is_shared', 'account_id'),
         ),
-        _nulls_not_distinct_index(
+        *_template_and_shared_indexes(
             'processes_fieldtemplate_template_api_name_unique',
             'processes_fieldtemplate',
             ('template_id', 'api_name', 'account_id'),
+            'processes_fieldtemplate_shared_api_name_unique',
+            ('fieldset_id', 'api_name', 'account_id'),
         ),
         migrations.AddField(
             model_name='fieldtemplateruleset',
@@ -232,40 +266,54 @@ class Migration(migrations.Migration):
                 '_template_api_name_unique'
             ),
         ),
-        _nulls_not_distinct_index(
+        *_template_and_shared_indexes(
             'fieldtemplateruleset_field_api_name_unique',
             'processes_fieldtemplateruleset',
             ('template_id', 'api_name', 'account_id'),
+            'fieldtemplateruleset_shared_api_name_unique',
+            ('field_id', 'api_name', 'account_id'),
         ),
-        _nulls_not_distinct_index(
+        *_template_and_shared_indexes(
             'rulegroupor_field_rule_api_name_unique',
             'processes_fieldtemplaterulegroupor',
             ('api_name', 'template_id', 'account_id'),
+            'rulegroupor_shared_api_name_unique',
+            ('ruleset_id', 'api_name', 'account_id'),
         ),
-        _nulls_not_distinct_index(
+        *_template_and_shared_indexes(
             'rulegroupand_group_or_api_name_unique',
             'processes_fieldtemplaterulegroupand',
             ('template_id', 'api_name', 'account_id'),
+            'rulegroupand_shared_api_name_unique',
+            ('group_or_id', 'api_name', 'account_id'),
         ),
-        _nulls_not_distinct_index(
+        *_template_and_shared_indexes(
             'fieldsetruleset_fieldset_api_name_unique',
             'processes_fieldsettemplateruleset',
             ('template_id', 'api_name', 'account_id'),
+            'fieldsetruleset_shared_api_name_unique',
+            ('fieldset_id', 'api_name', 'account_id'),
         ),
-        _nulls_not_distinct_index(
+        *_template_and_shared_indexes(
             'fieldset_rulegroupor_field_rule_api_name_unique',
             'processes_fieldsettemplaterulegroupor',
             ('api_name', 'template_id', 'account_id'),
+            'fieldset_rulegroupor_shared_api_name_unique',
+            ('ruleset_id', 'api_name', 'account_id'),
         ),
-        _nulls_not_distinct_index(
+        *_template_and_shared_indexes(
             'fieldset_rulegroupand_group_or_api_name_unique',
             'processes_fieldsettemplaterulegroupand',
             ('template_id', 'api_name', 'account_id'),
+            'fieldset_rulegroupand_shared_api_name_unique',
+            ('group_or_id', 'api_name', 'account_id'),
         ),
-        _nulls_not_distinct_index(
+        *_template_and_shared_indexes(
             'processes_fieldtemplateselection_template_api_name_unique',
             'processes_fieldtemplateselection',
             ('template_id', 'api_name'),
+            'processes_fieldtemplateselection_shared_api_name_unique',
+            ('field_template_id', 'api_name'),
         ),
         # Irreversible: old rules stay, copied rows are not deleted.
         migrations.RunSQL(
