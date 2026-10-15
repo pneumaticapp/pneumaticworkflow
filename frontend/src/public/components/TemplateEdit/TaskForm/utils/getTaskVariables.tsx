@@ -67,7 +67,7 @@ function getVariablesFromSelectedFieldsets(
     const subtitle = getSubtitle(taskFieldset);
     const richSubtitle = getRichSubtitle(taskFieldset);
 
-    return taskFieldset.fields.map((field) => getVariableFromField(field, subtitle, richSubtitle));
+    return (taskFieldset.fields || []).map((field) => getVariableFromField(field, subtitle, richSubtitle));
   });
 }
 
@@ -94,7 +94,7 @@ export function getFieldVariables({ kickoff, tasks, templateId }: TGetVariablesP
     const taskName = task.name || '';
     const richTaskName = templateId ? <StepName initialStepName={taskName} templateId={templateId} /> : taskName;
 
-    const fromTaskFields = task.fields.map((field) => getVariableFromField(field, taskName, richTaskName));
+    const fromTaskFields = (task.fields || []).map((field) => getVariableFromField(field, taskName, richTaskName));
 
     const fromTaskFieldsets = getVariablesFromSelectedFieldsets(
       task.fieldsets,
@@ -124,7 +124,7 @@ export function getKickoffVariables(
     fieldsets?: (IFieldsetBindingClient | TTemplateFieldFieldset)[];
   },
 ) {
-  const fromFields = kickoff?.fields.map((field) => getVariableFromField(field, 'Kick-off form')) ?? [];
+  const fromFields = (kickoff?.fields || []).map((field) => getVariableFromField(field, 'Kick-off form'));
   const fromFieldsets = getVariablesFromSelectedFieldsets(
     kickoff?.fieldsets,
     (fieldset) => `Kick-off form · ${fieldset.name}`,
