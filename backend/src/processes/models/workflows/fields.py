@@ -141,6 +141,14 @@ class FieldRuleSet(
 
     objects = BaseSoftDeleteManager.from_queryset(FieldRuleSetQuerySet)()
 
+    @property
+    def type_show(self) -> bool:
+        return self.type == FieldRuleType.SHOW
+
+    @property
+    def type_validator(self) -> bool:
+        return self.type == FieldRuleType.VALIDATOR
+
     def __str__(self):
         return self.api_name
 

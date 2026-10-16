@@ -570,6 +570,95 @@ class TestFieldRuleCheckService:
             timezone_name=user.timezone,
         )
 
+    def test_validator_rule__hidden_by_show__skipped(self):
+
+        """ A show rule that hides the field in this call skips its
+            validator. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+        source_field = TaskField.objects.create(
+            name='Source Field',
+            api_name='source-field',
+            type=FieldType.STRING,
+            value='rejected',
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        target_field = TaskField.objects.create(
+            name='Target Field',
+            api_name='target-field',
+            type=FieldType.NUMBER,
+            value='10',
+            workflow=workflow,
+            task=task,
+            account=account,
+            is_hidden=False,
+        )
+        show_ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=target_field,
+            name='Show target',
+            type=FieldRuleType.SHOW,
+            order=1,
+            api_name='ruleset-show',
+        )
+        show_group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=show_ruleset,
+            api_name='group-or-show',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=show_group_or,
+            field=source_field.api_name,
+            operator=FieldRuleOperator.EQUAL,
+            value='approved',
+            api_name='group-and-show',
+        )
+        validator_ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=target_field,
+            name='Target must be > 100',
+            type=FieldRuleType.VALIDATOR,
+            message='Should not fail because show hid the field',
+            order=2,
+            api_name='ruleset-validator',
+        )
+        validator_group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=validator_ruleset,
+            api_name='group-or-validator',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=validator_group_or,
+            field=target_field.api_name,
+            operator=FieldRuleOperator.GREATER_THAN,
+            value='100',
+            api_name='group-and-validator',
+        )
+
+        # act
+        FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
+            [show_ruleset, validator_ruleset],
+            timezone_name=user.timezone,
+        )
+
+        # assert
+        target_field.refresh_from_db()
+        assert target_field.is_hidden is True
+
     def test_show_rule__same_local_day__field_is_visible(self):
 
         """ Date rule compares the calendar day in the user timezone. """

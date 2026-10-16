@@ -291,8 +291,6 @@ class FieldRuleCheckService:
 
     def _apply_validator(self, ruleset: FieldRuleSet):
         field = self._get_field(ruleset)
-        if field.is_hidden:
-            return
         is_satisfied = self._check_ruleset_condition(ruleset)
         if not is_satisfied:
             raise FieldRuleCheckServiceException(
@@ -323,7 +321,7 @@ class FieldRuleCheckService:
         self._timezone_name = timezone_name
         self._show_results = {}
         for ruleset in rulesets:
-            if ruleset.type == FieldRuleType.SHOW:
+            if ruleset.type_show:
                 self.apply_ruleset(ruleset)
 
         fields_to_update = []
@@ -335,5 +333,6 @@ class FieldRuleCheckService:
             TaskField.objects.bulk_update(fields_to_update, ['is_hidden'])
 
         for ruleset in rulesets:
-            if ruleset.type == FieldRuleType.VALIDATOR:
+            field = self._get_field(ruleset)
+            if ruleset.type_validator and not field.is_hidden:
                 self.apply_ruleset(ruleset)
