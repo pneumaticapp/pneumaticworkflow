@@ -1,4 +1,10 @@
 from typing import Any, List, Optional
+
+from src.ai.exceptions import (
+    AIHandlerException,
+    AIProviderInvalidResponseException,
+)
+from src.ai.messages import MSG_AI_0012
 from src.ai.services.handlers.base import BaseHandler
 
 
@@ -134,9 +140,27 @@ class GeminiHandler(BaseHandler):
                 ]
             }
 
+        A blocked prompt has no candidates:
+
+            {
+                "promptFeedback": {"blockReason": "SAFETY"}
+            }
+
         """
+        candidates = payload.get('candidates')
+        if not candidates:
+            feedback = payload.get('promptFeedback') or {}
+            block_reason = feedback.get('blockReason')
+            if block_reason:
+                raise AIHandlerException(
+                    message=MSG_AI_0012(reason=block_reason),
+                )
+            raise AIProviderInvalidResponseException
+        content = candidates[0].get('content') or {}
+        parts = content.get('parts')
+        if not isinstance(parts, list):
+            raise AIProviderInvalidResponseException
         texts = []
-        parts = payload['candidates'][0]['content']['parts']
         for part in parts:
             if 'text' in part:
                 texts.append(part['text'])
