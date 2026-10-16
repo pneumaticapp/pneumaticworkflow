@@ -336,7 +336,7 @@ class Task(
         if new_raw_performers:
             RawPerformer.objects.bulk_create(new_raw_performers)
         if deleted_raw_performer_api_names:
-            RawPerformer.objects.filter(
+            self.raw_performers.filter(
                 api_name__in=deleted_raw_performer_api_names,
             ).delete()
 
