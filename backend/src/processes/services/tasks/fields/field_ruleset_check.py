@@ -293,8 +293,6 @@ class FieldRuleCheckService:
         fields_by_api_name: Dict[str, TaskField],
     ) -> bool:
         groups_and = list(group_or.groups_and.all())
-        if not groups_and:
-            return False
         return all(
             self._check_group_and(
                 predicate,

@@ -225,6 +225,50 @@ class TestFieldRuleCheckService:
         # assert
         assert target_field.is_hidden is True
 
+    def test_show_rule__empty_groups_and__field_is_visible(self):
+
+        """ An OR group with no AND predicates shows the field. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+        target_field = TaskField.objects.create(
+            name='Target Field',
+            api_name='target-field',
+            type=FieldType.STRING,
+            workflow=workflow,
+            task=task,
+            account=account,
+            is_hidden=True,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=target_field,
+            name='Show target',
+            type=FieldRuleType.SHOW,
+            order=1,
+            api_name='ruleset-empty-and',
+        )
+        FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-empty-and',
+        )
+
+        # act
+        FieldRuleCheckService(ruleset.field).apply_rulesets(
+            [ruleset],
+            timezone_name=user.timezone,
+            fields_by_api_name=field_map(target_field),
+        )
+
+        # assert
+        assert target_field.is_hidden is False
+
     def test_show_rule__multiple_rulesets__any_satisfied_shows_field(self):
         # arrange
         account = create_test_account()
@@ -415,6 +459,48 @@ class TestFieldRuleCheckService:
             operator=FieldRuleOperator.GREATER_THAN,
             value='17',
             api_name='group-and-v1',
+        )
+
+        # act & assert: does not raise
+        FieldRuleCheckService(ruleset.field).apply_rulesets(
+            [ruleset],
+            timezone_name=user.timezone,
+            fields_by_api_name=field_map(field),
+        )
+
+    def test_validator_rule__empty_groups_and__passes(self):
+
+        """ An OR group with no AND predicates satisfies the validator. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+        field = TaskField.objects.create(
+            name='Age Field',
+            api_name='age-field',
+            type=FieldType.NUMBER,
+            value='16',
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=field,
+            name='Age validator',
+            type=FieldRuleType.VALIDATOR,
+            message='Age must be greater than 17',
+            order=1,
+            api_name='ruleset-empty-and',
+        )
+        FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-empty-and',
         )
 
         # act & assert: does not raise
