@@ -163,6 +163,10 @@ class WorkflowViewSet(
         ):
             extra_fields = [
                 'kickoff__output__selections',
+                'kickoff__output__rulesets__groups_or__groups_and',
+                'kickoff__fieldsets__rulesets__groups_or__groups_and',
+                'kickoff__fieldsets__rulesets__fields',
+                'kickoff__fieldsets__fields__rulesets__groups_or__groups_and',
             ]
         else:
             extra_fields = None

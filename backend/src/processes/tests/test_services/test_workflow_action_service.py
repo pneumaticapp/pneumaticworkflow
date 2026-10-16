@@ -30,7 +30,7 @@ from src.processes.models.workflows.task import Delay, TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.models.workflows.fields import TaskField
 from src.processes.services import exceptions
-from src.processes.services.tasks.field import TaskFieldService
+from src.processes.services.tasks.fields.field import TaskFieldService
 from src.processes.services.tasks.task import TaskService
 from src.processes.services.workflow_action import WorkflowActionService
 from src.processes.tests.fixtures import (
@@ -3571,7 +3571,7 @@ def test_complete_task_for_user__one_user_performer__ok(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     send_task_completed_websocket_mock = mocker.patch(
@@ -3664,7 +3664,7 @@ def test_complete_task_for_user__with_fields_values__ok(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     send_task_completed_websocket_mock = mocker.patch(
@@ -3747,7 +3747,7 @@ def test_complete_task_for_user__workflow_delayed__raise_exception(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     complete_task_mock = mocker.patch(
@@ -3818,7 +3818,7 @@ def test_complete_task_for_user__workflow_completed__raise_exception(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     complete_task_mock = mocker.patch(
@@ -3901,7 +3901,7 @@ def test_complete_task_for_user__task_inactive__raise_exception(
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     complete_task_mock = mocker.patch(
@@ -3978,7 +3978,7 @@ def test_complete_task_for_user__user_not_performer__raise(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     complete_task_mock = mocker.patch(
@@ -4062,7 +4062,7 @@ def test_complete_task_for_user__checklist_incomplete__raise_exception(
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     complete_task_mock = mocker.patch(
@@ -4143,7 +4143,7 @@ def test_complete_task_for_user__sub_wf_running__raise_exception(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     complete_task_mock = mocker.patch(
@@ -4218,7 +4218,7 @@ def test_complete_task_for_user__account_owner_no_performer__force_complete(
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     complete_task_mock = mocker.patch(
@@ -4303,7 +4303,7 @@ def test_complete_task_for_user__user_performer_last_completion__ok(
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     task_can_be_completed_mock = mocker.patch(
@@ -4389,7 +4389,7 @@ def test_complete_task_for_user__user_performer_first_completion__ok(
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     task_can_be_completed_mock = mocker.patch(
@@ -4491,7 +4491,7 @@ def test_complete_task_for_user__guest_performer_first_completion__ok(
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     task_can_be_completed_mock = mocker.patch(
@@ -4595,7 +4595,7 @@ def test_complete_task_for_user__group_performer_one_user__ok(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     send_task_completed_websocket_mock = mocker.patch(
@@ -4684,7 +4684,7 @@ def test_complete_task_for_user__group_user__checklist_incomplete__raise(
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     complete_task_mock = mocker.patch(
@@ -4792,7 +4792,7 @@ def test_complete_task_for_user__group_with_output__ok(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     send_task_completed_websocket_mock = mocker.patch(
@@ -4887,7 +4887,7 @@ def test_complete_task_for_user__group_can_complete__ok(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     send_task_completed_websocket_mock = mocker.patch(
@@ -4986,7 +4986,7 @@ def test_complete_task_for_user__rcba_and_guest_first_completion__ok(
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     can_be_completed_mock = mocker.patch(
@@ -5086,7 +5086,7 @@ def test_complete_task_for_user__account_owner_not_performer__ok(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     send_task_completed_websocket_mock = mocker.patch(
@@ -5175,7 +5175,7 @@ def test_complete_task_for_user__user_and_group_performer__ok(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     send_task_completed_websocket_mock = mocker.patch(
@@ -5273,7 +5273,7 @@ def test_complete_task_for_user__rcba_user_and_group_performer__ok(mocker):
         return_value=None,
     )
     mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     can_be_completed_mock = mocker.patch(
@@ -5381,7 +5381,7 @@ def test_complete_task_for_user__rcba_user_and_group_already_completed__raise(
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     can_be_completed_mock = mocker.patch(
@@ -5467,7 +5467,7 @@ def test_complete_task_for_user__account_owner_in_group__ok(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     send_task_completed_websocket_mock = mocker.patch(

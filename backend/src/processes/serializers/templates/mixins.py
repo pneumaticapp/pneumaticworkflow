@@ -1,4 +1,6 @@
 import contextlib
+from datetime import datetime
+from datetime import timezone as tz
 from typing import Any, Dict, List, Optional, Set
 
 from django.contrib.auth import get_user_model
@@ -7,12 +9,16 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.serializers import Serializer
 
 from src.processes.messages.fieldset import MSG_FS_0013
-from src.processes.messages.template import MSG_PT_0041
+from src.processes.messages.template import (
+    MSG_PT_0041,
+    MSG_PT_0075,
+    MSG_PT_0080,
+)
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
 from src.processes.models.templates.fieldset import FieldsetTemplate
-from src.processes.services.fieldsets.fieldset import (
+from src.processes.services.templates.fieldset import (
     FieldSetTemplateService,
 )
 from src.utils.validation import raise_validation_error
@@ -229,6 +235,44 @@ class CreateOrUpdateRelatedMixin:
                 slz.save()
 
 
+def validate_date_timestamp(value, api_name: Optional[str] = None) -> None:
+    try:
+        datetime.fromtimestamp(int(value), tz=tz.utc)
+    except (TypeError, ValueError):
+        raise_validation_error(
+            message=MSG_PT_0080,
+            api_name=api_name,
+        )
+
+
+class FieldRuleApiNameMixin:
+
+    def _save_ruleset_instance(
+        self,
+        validated_data: Dict[str, Any],
+        extra: Dict[str, Any],
+        instance=None,
+    ):
+        task = self.context.get('task')
+        kickoff = self.context.get('kickoff')
+        field = self.context['field']
+        task_name = 'Kickoff' if kickoff else task.name
+        return self.create_or_update_instance(
+            instance=instance,
+            validated_data={
+                'template': self.context['template'],
+                'account': self.context['account'],
+                **extra,
+                **validated_data,
+            },
+            not_unique_exception_msg=MSG_PT_0075(
+                task_name=task_name,
+                field_name=field.name,
+                api_name=validated_data.get('api_name'),
+            ),
+        )
+
+
 class CustomValidationApiNameMixin:
 
     def additional_validate_api_name(
@@ -265,10 +309,10 @@ class FieldsetMixin:
         """ Sync fieldsets for kickoff/task when activating a template.
 
             Existing fieldsets are matched by api_name and partially updated.
-            New ones with non-empty fields/rules are created as-is (preserves
-            draft api_names); compact shared_fieldset_id references are cloned
-            via create_from_shared. Fieldsets missing from the payload are
-            deleted. """
+            New ones with non-empty fields/rulesets are created as-is
+            (preserves draft api_names); compact shared_fieldset_id
+            references are cloned via create_from_shared. Fieldsets missing
+            from the payload are deleted. """
 
         instance = task or kickoff
         existing_fieldsets = {f.api_name: f for f in instance.fieldsets.all()}
@@ -290,7 +334,7 @@ class FieldsetMixin:
                         instance=fieldset,
                         user=user,
                     )
-                    service.partial_update_instance(
+                    service.partial_update(
                         order=fieldset_data['order'],
                         title=fieldset_data.get('title'),
                         description=fieldset_data.get('description'),
@@ -303,12 +347,12 @@ class FieldsetMixin:
                 # — create as-is to preserve field/rule api_names.
                 # Otherwise clone from shared.
                 try:
-                    # validated_data always has fields/rules defaults ([]).
+                    # validated_data always has fields/rulesets defaults ([]).
                     # Non-empty means payload is expanded — create as-is.
                     # Otherwise clone from shared (compact reference).
                     if (
                         fieldset_data.get('fields')
-                        or fieldset_data.get('rules')
+                        or fieldset_data.get('rulesets')
                     ):
                         fieldset = service.create(
                             name=(
@@ -333,7 +377,7 @@ class FieldsetMixin:
                                 or shared_fieldset.layout
                             ),
                             fields=fieldset_data.get('fields') or [],
-                            rules=fieldset_data.get('rules') or [],
+                            rulesets=fieldset_data.get('rulesets') or [],
                             order=fieldset_data['order'],
                             is_shared=False,
                             shared_fieldset_id=shared_fieldset.id,

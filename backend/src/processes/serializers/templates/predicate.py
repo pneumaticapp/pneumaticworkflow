@@ -31,6 +31,7 @@ from src.processes.models.templates.conditions import PredicateTemplate
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
     CustomValidationApiNameMixin,
+    validate_date_timestamp,
 )
 from src.utils.validation import raise_validation_error
 
@@ -227,6 +228,8 @@ class PredicateTemplateSerializer(
                         message=MSG_PT_0063,
                         api_name=api_name,
                     )
+            elif field_type == FieldType.DATE:
+                validate_date_timestamp(value, api_name)
 
     def create(self, validated_data):
         self.additional_validate(validated_data)

@@ -23,7 +23,9 @@ from src.authentication.enums import AuthTokenType
 from src.generics.messages import MSG_GE_0007
 from src.processes.enums import (
     DueDateRule,
-    FieldSetRuleType,
+    FieldRuleOperator,
+    FieldRuleType,
+    FieldSetRuleOperator,
     FieldType,
     OwnerRole,
     OwnerType,
@@ -43,7 +45,12 @@ from src.processes.models.templates.fields import (
 )
 from src.processes.models.templates.raw_due_date import RawDueDateTemplate
 
-from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.fields import (
+    FieldRuleGroupAnd,
+    FieldRuleGroupOr,
+    FieldRuleSet,
+    TaskField,
+)
 from src.processes.models.workflows.task import (
     TaskPerformer,
 )
@@ -552,7 +559,7 @@ class TestPartialUpdateWorkflow:
         self,
     ):
         """
-        Field updates and fieldset rule validation run in one transaction.
+        Field updates and fieldset ruleset validation run in one transaction.
         If validate_rules fails, earlier TaskField values are not persisted.
         """
         # arrange
@@ -563,7 +570,7 @@ class TestPartialUpdateWorkflow:
         fieldset = create_test_fieldset(
             workflow=workflow,
             kickoff=kickoff,
-            rule_type=FieldSetRuleType.SUM_EQUAL,
+            rule_operator=FieldSetRuleOperator.SUM_EQUAL,
             rule_value='100',
             api_name='kickoff-fieldset',
         )
@@ -580,8 +587,8 @@ class TestPartialUpdateWorkflow:
             api_name='kickoff-fieldset-field-2',
             value='40',
         )
-        rule = fieldset.rules.first()
-        rule.fields.add(field_1, field_2)
+        ruleset = fieldset.rulesets.first()
+        ruleset.fields.add(field_1, field_2)
         serializer = KickoffValueSerializer(
             instance=kickoff,
             data={
@@ -605,6 +612,137 @@ class TestPartialUpdateWorkflow:
         field_2.refresh_from_db()
         assert field_1.value == '60'
         assert field_2.value == '40'
+
+    def test_partial_update__field_ruleset_validator_failed__validation_error(
+        self,
+        api_client,
+    ):
+        # arrange
+        user = create_test_owner()
+        workflow = create_test_workflow(user=user)
+        kickoff = workflow.kickoff_instance
+        field = TaskField.objects.create(
+            name='Score',
+            api_name='score-field',
+            type=FieldType.NUMBER,
+            value='5',
+            workflow=workflow,
+            kickoff=kickoff,
+            account=user.account,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=user.account,
+            workflow=workflow,
+            field=field,
+            name='Score validator',
+            type=FieldRuleType.VALIDATOR,
+            message='Score must be greater than 10',
+            order=1,
+            api_name='ruleset-score',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=user.account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-s',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=user.account,
+            workflow=workflow,
+            group_or=group_or,
+            field=field.api_name,
+            operator=FieldRuleOperator.GREATER_THAN,
+            value='10',
+            api_name='group-and-s',
+        )
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.patch(
+            f'/workflows/{workflow.id}',
+            data={
+                'kickoff': {
+                    field.api_name: 7,
+                },
+            },
+        )
+
+        # assert
+        assert response.status_code == 400
+        assert response.data['message'] == 'Score must be greater than 10'
+        assert response.data['details']['api_name'] == 'score-field'
+        field.refresh_from_db()
+        assert field.value == '5'
+
+    def test_partial_update__field_ruleset_show_rule__updates_is_hidden(
+        self,
+        api_client,
+    ):
+        # arrange
+        user = create_test_owner()
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        kickoff = workflow.kickoff_instance
+        task = workflow.tasks.first()
+        source_field = TaskField.objects.create(
+            name='Choice',
+            api_name='choice-field',
+            type=FieldType.STRING,
+            value='no',
+            workflow=workflow,
+            kickoff=kickoff,
+            account=user.account,
+        )
+        target_field = TaskField.objects.create(
+            name='Dependent Field',
+            api_name='dep-field',
+            type=FieldType.STRING,
+            workflow=workflow,
+            task=task,
+            account=user.account,
+            is_hidden=True,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=user.account,
+            workflow=workflow,
+            field=target_field,
+            name='Show dependent when Choice is yes',
+            type=FieldRuleType.SHOW,
+            order=1,
+            api_name='ruleset-show-dep',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=user.account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-dep',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=user.account,
+            workflow=workflow,
+            group_or=group_or,
+            field=source_field.api_name,
+            operator=FieldRuleOperator.EQUAL,
+            value='yes',
+            api_name='group-and-dep',
+        )
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.patch(
+            f'/workflows/{workflow.id}',
+            data={
+                'kickoff': {
+                    source_field.api_name: 'yes',
+                },
+            },
+        )
+
+        # assert
+        assert response.status_code == 200
+        target_field.refresh_from_db()
+        assert target_field.is_hidden is False
+        source_field.refresh_from_db()
+        assert source_field.value == 'yes'
 
     def test_partial_update__required_field__validation_error(
         self,

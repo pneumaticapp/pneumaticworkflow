@@ -9,6 +9,9 @@ from django.test import override_settings
 
 from src.accounts.enums import BillingPlanType
 from src.processes.enums import (
+    FieldRuleOperator,
+    FieldRuleType,
+    FieldSetRuleOperator,
     FieldType,
     OwnerRole,
     OwnerType,
@@ -22,7 +25,12 @@ from src.processes.models.templates.fields import (
 )
 from src.processes.models.templates.owner import TemplateOwner
 
-from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.fields import (
+    FieldRuleGroupAnd,
+    FieldRuleGroupOr,
+    FieldRuleSet,
+    TaskField,
+)
 from src.processes.models.workflows.task import (
     Delay,
     TaskPerformer,
@@ -31,12 +39,14 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
+    create_test_dataset,
+    create_test_fieldset,
     create_test_group,
     create_test_not_admin,
     create_test_owner,
     create_test_template,
     create_test_user,
-    create_test_workflow, create_test_dataset,
+    create_test_workflow,
 )
 from src.permissions.enums import PermissionSource
 from src.processes.services.workflow_permissions import (
@@ -891,3 +901,130 @@ def test_workflow_retrieve__template_starter__is_read_only_viewer_true(
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert data['is_read_only_viewer'] is True
+
+
+def test_retrieve__kickoff_field_and_fieldset_rulesets__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    kickoff = workflow.kickoff_instance
+
+    # 1. Kickoff output field with rulesets
+    field = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        kickoff=kickoff,
+        name='Score',
+        type=FieldType.NUMBER,
+        api_name='score-field',
+        order=1,
+    )
+    ruleset = FieldRuleSet.objects.create(
+        account=account,
+        workflow=workflow,
+        field=field,
+        name='Score show rule',
+        type=FieldRuleType.SHOW,
+        message='Score rule message',
+        order=0,
+        api_name='ruleset-score-1',
+    )
+    group_or = FieldRuleGroupOr.objects.create(
+        account=account,
+        workflow=workflow,
+        ruleset=ruleset,
+        api_name='group-or-kickoff-1',
+    )
+    FieldRuleGroupAnd.objects.create(
+        account=account,
+        workflow=workflow,
+        group_or=group_or,
+        field=field.api_name,
+        operator=FieldRuleOperator.GREATER_THAN,
+        value='5',
+        api_name='group-and-kickoff-1',
+    )
+
+    # 2. Kickoff fieldset with rulesets and field with rulesets
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        kickoff=kickoff,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='50',
+        rule_message='Sum must equal 50',
+    )
+    fieldset_field = fieldset.fields.first()
+    fieldset.rulesets.first().fields.add(fieldset_field)
+    fs_field_ruleset = FieldRuleSet.objects.create(
+        account=account,
+        workflow=workflow,
+        field=fieldset_field,
+        name='Kickoff fieldset field validator',
+        type=FieldRuleType.VALIDATOR,
+        message='Must exist',
+        order=0,
+        api_name='fs-ko-field-ruleset-1',
+    )
+    fs_group_or = FieldRuleGroupOr.objects.create(
+        account=account,
+        workflow=workflow,
+        ruleset=fs_field_ruleset,
+        api_name='fs-ko-group-or-1',
+    )
+    FieldRuleGroupAnd.objects.create(
+        account=account,
+        workflow=workflow,
+        group_or=fs_group_or,
+        field=fieldset_field.api_name,
+        operator=FieldRuleOperator.EXIST,
+        value=None,
+        api_name='fs-ko-group-and-1',
+    )
+
+    # act
+    response = api_client.get(f'/workflows/{workflow.id}')
+
+    # assert
+    assert response.status_code == 200
+    kickoff_data = response.data['kickoff']
+    assert kickoff_data is not None
+
+    # check kickoff output field rulesets
+    ko_fields = kickoff_data['output']
+    task_field_data = next(
+        f for f in ko_fields if f['api_name'] == field.api_name
+    )
+    assert len(task_field_data['rulesets']) == 1
+    rs_data = task_field_data['rulesets'][0]
+    assert rs_data['api_name'] == ruleset.api_name
+    assert rs_data['name'] == ruleset.name
+    assert rs_data['type'] == FieldRuleType.SHOW
+    assert len(rs_data['groups_or']) == 1
+    assert rs_data['groups_or'][0]['groups_and'][0]['operator'] == (
+        FieldRuleOperator.GREATER_THAN
+    )
+
+    # check kickoff fieldsets and rulesets
+    fieldsets = kickoff_data['fieldsets']
+    assert len(fieldsets) == 1
+    fs_data = fieldsets[0]
+    assert fs_data['id'] == fieldset.id
+    assert len(fs_data['rulesets']) == 1
+    fs_rs_data = fs_data['rulesets'][0]
+    assert fs_rs_data['api_name'] == f'{fieldset.api_name}-rule-1'
+    assert fs_rs_data['fields'] == [fieldset_field.api_name]
+    assert fs_rs_data['groups_or'][0]['groups_and'][0]['operator'] == (
+        FieldSetRuleOperator.SUM_EQUAL
+    )
+
+    # check fieldset field rulesets
+    assert len(fs_data['fields']) == 1
+    fs_field_data = fs_data['fields'][0]
+    assert len(fs_field_data['rulesets']) == 1
+    assert fs_field_data['rulesets'][0]['api_name'] == (
+        fs_field_ruleset.api_name
+    )
+    assert fs_field_data['rulesets'][0]['type'] == FieldRuleType.VALIDATOR

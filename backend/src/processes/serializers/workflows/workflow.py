@@ -403,6 +403,7 @@ class WorkflowDetailsSerializer(
                 queryset=DatasetItem.objects.order_by('order'),
                 to_attr='dataset_values',
             ),
+            'rulesets__groups_or__groups_and',
         ]
         kickoff = (
             KickoffValue.objects
@@ -420,6 +421,8 @@ class WorkflowDetailsSerializer(
                         *field_prefetches,
                     ),
                 ),
+                'fieldsets__rulesets__groups_or__groups_and',
+                'fieldsets__rulesets__fields',
             ).first()
         )
         if kickoff:

@@ -112,6 +112,7 @@ from src.processes.services.clone import (
     CloneService,
 )
 from src.processes.services.exceptions import (
+    FieldRuleCheckServiceException,
     OpenAiServiceException,
     TemplatePresetServiceException,
     TemplateServiceException,
@@ -695,6 +696,11 @@ class TemplateViewSet(
             )
         except WorkflowServiceException as ex:
             raise_validation_error(ex.message)
+        except FieldRuleCheckServiceException as ex:
+            raise_validation_error(
+                message=ex.message,
+                api_name=ex.field_api_name,
+            )
 
         workflow_action_service = WorkflowActionService(
             workflow=workflow,

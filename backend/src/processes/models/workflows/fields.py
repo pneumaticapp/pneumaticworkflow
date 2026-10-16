@@ -4,6 +4,9 @@ from django.db import models
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
+from src.generics.querysets import AccountBaseQuerySet
+from src.processes.enums import FieldRuleType, FieldRuleOperator
+from src.processes.models.base import BaseApiNameModel
 from src.processes.models.mixins import (
     ApiNameMixin,
     FieldMixin,
@@ -13,6 +16,7 @@ from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.fieldset import FieldSet
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.querysets import (
+    FieldRuleSetQuerySet,
     FieldSelectionQuerySet,
     TaskFieldQuerySet,
 )
@@ -102,3 +106,109 @@ class FieldSelection(
 
     def __str__(self):
         return self.value
+
+
+class FieldRuleSet(
+    BaseApiNameModel,
+    AccountBaseMixin,
+):
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    api_name_prefix = 'field-ruleset'
+    workflow = models.ForeignKey(
+        Workflow,
+        on_delete=models.CASCADE,
+        related_name='field_rulesets',
+    )
+    field = models.ForeignKey(
+        TaskField,
+        on_delete=models.CASCADE,
+        related_name='rulesets',
+    )
+    name = models.CharField(max_length=200)
+    type = models.CharField(
+        max_length=50,
+        choices=FieldRuleType.CHOICES,
+    )
+    message = models.TextField(
+        null=True,
+        blank=True,
+        help_text='custom error message for a type="validator"',
+    )
+    order = models.PositiveIntegerField(default=0)
+
+    objects = BaseSoftDeleteManager.from_queryset(FieldRuleSetQuerySet)()
+
+    @property
+    def type_show(self) -> bool:
+        return self.type == FieldRuleType.SHOW
+
+    @property
+    def type_validator(self) -> bool:
+        return self.type == FieldRuleType.VALIDATOR
+
+    def __str__(self):
+        return self.api_name
+
+
+class FieldRuleGroupOr(
+    BaseApiNameModel,
+    AccountBaseMixin,
+):
+
+    class Meta:
+        ordering = ['id']
+
+    api_name_prefix = 'field-rule-group-or'
+    workflow = models.ForeignKey(
+        Workflow,
+        on_delete=models.CASCADE,
+        related_name='field_ruleset_groups_or',
+    )
+    ruleset = models.ForeignKey(
+        FieldRuleSet,
+        on_delete=models.CASCADE,
+        related_name='groups_or',
+    )
+
+    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
+
+    def __str__(self):
+        return self.api_name
+
+
+class FieldRuleGroupAnd(
+    BaseApiNameModel,
+    AccountBaseMixin,
+):
+
+    class Meta:
+        ordering = ['id']
+
+    api_name_prefix = 'field-rule-group-and'
+    group_or = models.ForeignKey(
+        FieldRuleGroupOr,
+        on_delete=models.CASCADE,
+        related_name='groups_and',
+    )
+    workflow = models.ForeignKey(
+        Workflow,
+        on_delete=models.CASCADE,
+        related_name='field_rules_group_and',
+    )
+    operator = models.CharField(
+        max_length=50,
+        choices=FieldRuleOperator.CHOICES,
+    )
+    value = models.CharField(max_length=200, null=True, blank=True)
+    field = models.CharField(
+        max_length=200,
+        null=True,
+    )
+
+    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
+
+    def __str__(self):
+        return self.api_name
