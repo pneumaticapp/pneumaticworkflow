@@ -270,7 +270,7 @@ export function* registerWithInvite({ payload }: TRegisterUserInvited) {
 function* handleLogoutUnsubscribing({ shouldExpireToken }: { shouldExpireToken: boolean }) {
   yield call(stopWatchWsEvents);
   yield put(clearAppFilters());
-  resetFirebaseDeviceToken();
+  yield call(resetFirebaseDeviceToken);
   resetSuperuserToken();
   analytics.reset();
 
