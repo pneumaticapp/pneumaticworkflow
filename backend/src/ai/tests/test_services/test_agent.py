@@ -23,6 +23,7 @@ from src.ai.messages import (
     MSG_AI_0009,
     MSG_AI_0010,
     MSG_AI_0011,
+    MSG_AI_0013,
 )
 from src.ai.models import AIAgent, AIAgentAction
 from src.ai.services.agent import AIAgentService, MAX_RUN_FAILURES
@@ -2347,7 +2348,7 @@ def test_complete_task__attempts_exceeded__not_task_failed(mocker):
         side_effect=AIAgentAttemptsExceededException(message='Failed'),
     )
     handle_run_failure_mock = mocker.patch(
-        'src.ai.services.agent.AIAgentService._handle_run_failure',
+        'src.ai.services.agent.AIAgentService._handle_task_complete_failure',
     )
     service = AIAgentService(user=agent.user, instance=agent)
 
@@ -2578,11 +2579,17 @@ def test_reply_to_comment__notification_exists__ok():
     # assert
     notification.refresh_from_db()
     assert notification.status == NotificationStatus.READ
-    action = AIAgentAction.objects.get(notification=notification)
-    assert action.account_id == account.id
-    assert action.agent_id == agent.id
-    assert action.task_id == task.id
-    assert action.action == AIAgentActionType.MENTION_IN_PROGRESS
+    actions = AIAgentAction.objects.filter(
+        notification=notification,
+    ).order_by('id')
+    assert [action.action for action in actions] == [
+        AIAgentActionType.MENTION_IN_PROGRESS,
+        AIAgentActionType.MENTION_COMPLETED,
+    ]
+    for action in actions:
+        assert action.account_id == account.id
+        assert action.agent_id == agent.id
+        assert action.task_id == task.id
 
 
 def test_reply_to_comment__notification_not_found__skip():
@@ -2635,3 +2642,194 @@ def test_reply_to_comment__already_handled__skip():
     notification.refresh_from_db()
     assert notification.status == NotificationStatus.NEW
     assert AIAgentAction.objects.filter(agent=agent).count() == 1
+
+
+def test_reply_to_comment__previous_run_failed__ok(mocker):
+
+    """ The previous reply failed: a new run starts """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    notification = Notification.objects.create(
+        account=account,
+        user=agent.user,
+        author=owner,
+        task=task,
+        type=NotificationType.MENTION,
+        text='Please call the customer.',
+    )
+    for action in (
+        AIAgentActionType.MENTION_IN_PROGRESS,
+        AIAgentActionType.MENTION_FAILED,
+    ):
+        AIAgentAction.objects.create(
+            account=account,
+            agent=agent,
+            task=task,
+            notification=notification,
+            action=action,
+        )
+    attempt_reply_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_reply_to_comment',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.reply_to_comment(notification_id=notification.id)
+
+    # assert
+    assert AIAgentAction.objects.filter(
+        notification=notification,
+        action=AIAgentActionType.MENTION_IN_PROGRESS,
+    ).count() == 2
+    attempt_reply_mock.assert_called_once_with(notification=notification)
+
+
+def test_reply_to_comment__max_run_failures_reached__skip(mocker):
+
+    """ All allowed replies failed: the duplicate does nothing """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    notification = Notification.objects.create(
+        account=account,
+        user=agent.user,
+        author=owner,
+        task=task,
+        type=NotificationType.MENTION,
+        text='Please call the customer.',
+    )
+    for _ in range(MAX_RUN_FAILURES):
+        for action in (
+            AIAgentActionType.MENTION_IN_PROGRESS,
+            AIAgentActionType.MENTION_FAILED,
+        ):
+            AIAgentAction.objects.create(
+                account=account,
+                agent=agent,
+                task=task,
+                notification=notification,
+                action=action,
+            )
+    attempt_reply_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_reply_to_comment',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.reply_to_comment(notification_id=notification.id)
+
+    # assert
+    assert AIAgentAction.objects.filter(
+        notification=notification,
+    ).count() == MAX_RUN_FAILURES * 2
+    attempt_reply_mock.assert_not_called()
+
+
+def test_reply_to_comment__unexpected_error__mention_failed(mocker):
+
+    """ Unexpected error: the failure is logged """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    notification = Notification.objects.create(
+        account=account,
+        user=agent.user,
+        author=owner,
+        task=task,
+        type=NotificationType.MENTION,
+        text='Please call the customer.',
+    )
+    mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_reply_to_comment',
+        side_effect=AIProviderRequestFailedException(),
+    )
+    create_comment_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._create_comment',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    with pytest.raises(AIProviderRequestFailedException):
+        service.reply_to_comment(notification_id=notification.id)
+
+    # assert
+    failed_action = AIAgentAction.objects.get(
+        action=AIAgentActionType.MENTION_FAILED,
+    )
+    assert failed_action.account_id == account.id
+    assert failed_action.agent_id == agent.id
+    assert failed_action.task_id == task.id
+    assert failed_action.notification_id == notification.id
+    assert failed_action.text == str(MSG_AI_0002)
+    assert not AIAgentAction.objects.filter(
+        action=AIAgentActionType.MENTION_COMPLETED,
+    ).exists()
+    create_comment_mock.assert_not_called()
+
+
+def test_reply_to_comment__max_run_failures__comment(mocker):
+
+    """ The last allowed reply fails: the task gets a comment """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    notification = Notification.objects.create(
+        account=account,
+        user=agent.user,
+        author=owner,
+        task=task,
+        type=NotificationType.MENTION,
+        text='Please call the customer.',
+    )
+    for _ in range(MAX_RUN_FAILURES - 1):
+        for action in (
+            AIAgentActionType.MENTION_IN_PROGRESS,
+            AIAgentActionType.MENTION_FAILED,
+        ):
+            AIAgentAction.objects.create(
+                account=account,
+                agent=agent,
+                task=task,
+                notification=notification,
+                action=action,
+            )
+    mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_reply_to_comment',
+        side_effect=AIProviderRequestFailedException(),
+    )
+    create_comment_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._create_comment',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    with pytest.raises(AIProviderRequestFailedException):
+        service.reply_to_comment(notification_id=notification.id)
+
+    # assert
+    assert AIAgentAction.objects.filter(
+        action=AIAgentActionType.MENTION_FAILED,
+    ).count() == MAX_RUN_FAILURES
+    create_comment_mock.assert_called_once_with(
+        task=task,
+        text=str(
+            MSG_AI_0013(attempts=MAX_RUN_FAILURES, error=str(MSG_AI_0002)),
+        ),
+    )

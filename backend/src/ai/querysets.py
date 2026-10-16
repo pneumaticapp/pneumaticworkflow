@@ -38,5 +38,8 @@ class AIAgentActionQuerySet(QuerySet):
     def by_task(self, task_id: int):
         return self.filter(task_id=task_id)
 
+    def by_notification(self, notification_id: int):
+        return self.filter(notification_id=notification_id)
+
     def by_action(self, action: str):
         return self.filter(action=action)

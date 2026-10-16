@@ -69,7 +69,8 @@ def execute_ai_agent_reply(notification_id: int, agent_id: int) -> None:
 @shared_task(ignore_result=True)
 def dispatch_ai_agent_new_notifications() -> None:
 
-    """ Dispatch unread mention notifications to AI agents """
+    """ Dispatch to AI agents the new mentions and the mentions whose
+        every run failed, until the failures reach MAX_RUN_FAILURES """
 
     with periodic_lock('dispatch_ai_agent_new_notifications') as acquired:
         if not acquired:
@@ -78,9 +79,13 @@ def dispatch_ai_agent_new_notifications() -> None:
             Notification.objects
             .filter(
                 type=NotificationType.MENTION,
-                ai_agent_action__isnull=True,
                 user__is_ai=True,
                 user__ai_agent__is_active=True,
+            )
+            .with_ai_agent_runs()
+            .filter(
+                ai_agent_runs=F('ai_agent_failures'),
+                ai_agent_runs__lt=MAX_RUN_FAILURES,
             )
             .select_related('user__ai_agent')
         )

@@ -281,12 +281,12 @@ class AIAgentAction(
         on_delete=models.CASCADE,
         related_name='ai_agent_actions',
     )
-    notification = models.OneToOneField(
+    notification = models.ForeignKey(
         'accounts.Notification',
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name='ai_agent_action',
+        related_name='ai_agent_actions',
     )
     action = models.CharField(
         max_length=50,

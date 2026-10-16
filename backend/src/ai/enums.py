@@ -77,11 +77,16 @@ class AIAgentActionType:
     TASK_COMPLETED = 'task_completed'
     TASK_FAILED = 'task_failed'
     TASK_ATTEMPTS_EXCEEDED = 'task_attempts_exceeded'
+
     AI_REQUEST = 'ai_request'
     AI_RESPONSE = 'ai_response'
     READING_DESCRIPTION = 'reading_description'
     REQUEST = 'request'
+
     MENTION_IN_PROGRESS = 'mention_in_progress'
+    MENTION_FAILED = 'mention_failed'
+    MENTION_ATTEMPTS_EXCEEDED = 'mention_attempts_exceeded'
+    MENTION_COMPLETED = 'mention_completed'
 
     CHOICES = (
         (AI_RESPONSE, 'AI response'),
@@ -93,6 +98,9 @@ class AIAgentActionType:
         (REQUEST, 'Request'),
         (TASK_ATTEMPTS_EXCEEDED, 'Task attempts exceeded'),
         (MENTION_IN_PROGRESS, 'Mention in progress'),
+        (MENTION_FAILED, 'Mention failed'),
+        (MENTION_ATTEMPTS_EXCEEDED, 'Mention attempts exceeded'),
+        (MENTION_COMPLETED, 'Mention completed'),
     )
     LITERALS = Literal[
         TASK_IN_PROGRESS,
@@ -104,4 +112,7 @@ class AIAgentActionType:
         REQUEST,
         TASK_ATTEMPTS_EXCEEDED,
         MENTION_IN_PROGRESS,
+        MENTION_FAILED,
+        MENTION_ATTEMPTS_EXCEEDED,
+        MENTION_COMPLETED,
     ]

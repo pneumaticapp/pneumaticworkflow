@@ -55,12 +55,12 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('is_deleted', models.BooleanField(default=False)),
-                ('action', models.CharField(choices=[('ai_response', 'AI response'), ('ai_request', 'AI request user message'), ('task_in_progress', 'Task in progress'), ('task_completed', 'Task completed'), ('task_failed', 'Task failed'), ('reading_description', 'Reading task description'), ('request', 'Request'), ('task_attempts_exceeded', 'Task attempts exceeded'), ('mention_in_progress', 'Mention in progress')], max_length=50)),
+                ('action', models.CharField(choices=[('ai_response', 'AI response'), ('ai_request', 'AI request user message'), ('task_in_progress', 'Task in progress'), ('task_completed', 'Task completed'), ('task_failed', 'Task failed'), ('reading_description', 'Reading task description'), ('request', 'Request'), ('task_attempts_exceeded', 'Task attempts exceeded'), ('mention_in_progress', 'Mention in progress'), ('mention_failed', 'Mention failed'), ('mention_attempts_exceeded', 'Mention attempts exceeded'), ('mention_completed', 'Mention completed')], max_length=50)),
                 ('text', models.TextField(blank=True, null=True)),
                 ('date_created', models.DateTimeField(auto_now_add=True)),
                 ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='accounts.Account')),
                 ('agent', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='actions', to='ai.AIAgent')),
-                ('notification', models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='ai_agent_action', to='accounts.Notification')),
+                ('notification', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='ai_agent_actions', to='accounts.Notification')),
                 ('task', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='ai_agent_actions', to='processes.Task')),
             ],
             options={

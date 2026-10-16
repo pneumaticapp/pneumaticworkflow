@@ -50,3 +50,11 @@ MSG_AI_0012 = lambda reason: format_lazy(
     _('The AI provider blocked the request ({reason}).'),
     reason=reason,
 )
+MSG_AI_0013 = lambda attempts, error: format_lazy(
+    _(
+        'I could not reply to the comment in {attempts} attempts. '
+        'Error: {error}',
+    ),
+    attempts=attempts,
+    error=error,
+)
