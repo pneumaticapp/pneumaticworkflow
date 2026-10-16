@@ -977,10 +977,14 @@ class WorkflowActionService:
                 .for_task(task.id)
                 .with_groups()
             )
+            user = self.user or self.workflow.account.get_owner()
             service = FieldRuleCheckService(
                 workflow_id=self.workflow.id,
             )
-            service.apply_rulesets(rulesets)
+            service.apply_rulesets(
+                rulesets,
+                timezone_name=user.timezone,
+            )
 
             AnalyticService.task_completed(
                 user=self.user,

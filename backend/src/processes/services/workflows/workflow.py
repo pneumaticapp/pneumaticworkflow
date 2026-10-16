@@ -214,10 +214,14 @@ class WorkflowService(
             .for_kickoff()
             .with_groups()
         )
+        user = self.user or self.instance.account.get_owner()
         service = FieldRuleCheckService(
             workflow_id=self.instance.id,
         )
-        service.apply_rulesets(rulesets)
+        service.apply_rulesets(
+            rulesets,
+            timezone_name=user.timezone,
+        )
 
     def _create_actions(self, **kwargs):
         if kwargs.get('anonymous_id'):

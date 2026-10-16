@@ -1,3 +1,5 @@
+from datetime import datetime
+from datetime import timezone as dt_timezone
 from decimal import Decimal
 import pytest
 from django.contrib.auth import get_user_model
@@ -152,6 +154,7 @@ class TestFieldRuleCheckService:
         # act
         FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
             [ruleset],
+            timezone_name=user.timezone,
         )
 
         # assert
@@ -211,6 +214,7 @@ class TestFieldRuleCheckService:
         # act
         FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
             [ruleset],
+            timezone_name=user.timezone,
         )
 
         # assert
@@ -305,6 +309,7 @@ class TestFieldRuleCheckService:
         # act
         FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
             [ruleset_1, ruleset_2],
+            timezone_name=user.timezone,
         )
 
         # assert
@@ -355,6 +360,7 @@ class TestFieldRuleCheckService:
         # act
         FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
             [ruleset],
+            timezone_name=user.timezone,
         )
 
         # assert
@@ -406,6 +412,7 @@ class TestFieldRuleCheckService:
         # act & assert: does not raise
         FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
             [ruleset],
+            timezone_name=user.timezone,
         )
 
     def test_validator_rule__not_satisfied__raises_exception(self):
@@ -454,6 +461,7 @@ class TestFieldRuleCheckService:
         with pytest.raises(FieldRuleCheckServiceException) as exc_info:
             FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
                 [ruleset],
+                timezone_name=user.timezone,
             )
 
         assert exc_info.value.field_api_name == 'age-field'
@@ -507,6 +515,7 @@ class TestFieldRuleCheckService:
         with pytest.raises(FieldRuleCheckServiceException) as exc_info:
             FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
                 [ruleset],
+                timezone_name=user.timezone,
             )
 
         assert exc_info.value.field_api_name == 'age-field'
@@ -558,7 +567,137 @@ class TestFieldRuleCheckService:
         # act & assert: does not raise because field is hidden
         FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
             [ruleset],
+            timezone_name=user.timezone,
         )
+
+    def test_show_rule__same_local_day__field_is_visible(self):
+
+        """ Date rule compares the calendar day in the user timezone. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(
+            account=account,
+            tz='America/Los_Angeles',
+        )
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+        utc_early = datetime(2026, 1, 15, 7, 30, tzinfo=dt_timezone.utc)
+        utc_noon = datetime(2026, 1, 14, 20, 0, tzinfo=dt_timezone.utc)
+        date_field = TaskField.objects.create(
+            name='Date Field',
+            api_name='date-field',
+            type=FieldType.DATE,
+            value=str(int(utc_early.timestamp())),
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        target_field = TaskField.objects.create(
+            name='Target Field',
+            api_name='target-field',
+            type=FieldType.STRING,
+            workflow=workflow,
+            task=task,
+            account=account,
+            is_hidden=True,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=target_field,
+            name='Show on local day',
+            type=FieldRuleType.SHOW,
+            order=1,
+            api_name='ruleset-date',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-date',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=group_or,
+            field=date_field.api_name,
+            operator=FieldRuleOperator.EQUAL,
+            value=str(int(utc_noon.timestamp())),
+            api_name='group-and-date',
+        )
+
+        # act
+        FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
+            [ruleset],
+            timezone_name=user.timezone,
+        )
+
+        # assert
+        target_field.refresh_from_db()
+        assert target_field.is_hidden is False
+
+    def test_show_rule__bad_date__field_stays_hidden(self):
+
+        """ A stored value that is not a timestamp fails the predicate. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+        date_field = TaskField.objects.create(
+            name='Date Field',
+            api_name='date-field',
+            type=FieldType.DATE,
+            value='1e20',
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        target_field = TaskField.objects.create(
+            name='Target Field',
+            api_name='target-field',
+            type=FieldType.STRING,
+            workflow=workflow,
+            task=task,
+            account=account,
+            is_hidden=True,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=target_field,
+            name='Show on date',
+            type=FieldRuleType.SHOW,
+            order=1,
+            api_name='ruleset-bad-date',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-bad-date',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=group_or,
+            field=date_field.api_name,
+            operator=FieldRuleOperator.EQUAL,
+            value='1700000000',
+            api_name='group-and-bad-date',
+        )
+
+        # act
+        FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
+            [ruleset],
+            timezone_name=user.timezone,
+        )
+
+        # assert
+        target_field.refresh_from_db()
+        assert target_field.is_hidden is True
 
 
 class TestFieldRuleActionIntegration:
@@ -852,7 +991,10 @@ class TestFieldRuleActionIntegration:
         # act
         FieldRuleCheckService(
             workflow_id=workflow.id,
-        ).apply_rulesets([ruleset])
+        ).apply_rulesets(
+            [ruleset],
+            timezone_name=user.timezone,
+        )
 
         # assert
         target_field.refresh_from_db()
@@ -911,7 +1053,10 @@ class TestFieldRuleActionIntegration:
         # act
         FieldRuleCheckService(
             workflow_id=workflow.id,
-        ).apply_rulesets([ruleset])
+        ).apply_rulesets(
+            [ruleset],
+            timezone_name=user.timezone,
+        )
 
         # assert
         target_field.refresh_from_db()
@@ -971,7 +1116,10 @@ class TestFieldRuleActionIntegration:
         # act
         FieldRuleCheckService(
             workflow_id=workflow.id,
-        ).apply_rulesets([ruleset])
+        ).apply_rulesets(
+            [ruleset],
+            timezone_name=user.timezone,
+        )
 
         # assert
         target_field.refresh_from_db()
@@ -1031,7 +1179,10 @@ class TestFieldRuleActionIntegration:
         # act
         FieldRuleCheckService(
             workflow_id=workflow.id,
-        ).apply_rulesets([ruleset])
+        ).apply_rulesets(
+            [ruleset],
+            timezone_name=user.timezone,
+        )
 
         # assert
         target_field.refresh_from_db()

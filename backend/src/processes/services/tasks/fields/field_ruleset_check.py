@@ -1,6 +1,3 @@
-import contextlib
-from datetime import datetime
-from datetime import timezone as tz
 from decimal import Decimal, InvalidOperation
 from typing import (
     Any,
@@ -27,14 +24,7 @@ from src.processes.models.workflows.fields import (
 from src.processes.services.exceptions import (
     FieldRuleCheckServiceException,
 )
-
-
-def _parse_date(value: Optional[str]) -> Optional[datetime]:
-    if value is None:
-        return None
-    with contextlib.suppress(ValueError, TypeError, OSError):
-        return datetime.fromtimestamp(float(value), tz=tz.utc)
-    return None
+from src.utils.dates import calendar_date_from_tsp
 
 
 class FieldRuleOperations:
@@ -172,7 +162,16 @@ class FieldRuleCheckService:
             return field_val, rule_val
 
         if source.type == FieldType.DATE:
-            return _parse_date(source.value), _parse_date(raw_value)
+            return (
+                calendar_date_from_tsp(
+                    raw_value=source.value,
+                    timezone_name=self._timezone_name,
+                ),
+                calendar_date_from_tsp(
+                    raw_value=raw_value,
+                    timezone_name=self._timezone_name,
+                ),
+            )
 
         if source.type == FieldType.CHECKBOX:
             field_val = {
@@ -310,13 +309,18 @@ class FieldRuleCheckService:
         apply_method = self.APPLY_MAP[ruleset.type]
         apply_method(self, ruleset)
 
-    def apply_rulesets(self, rulesets: Iterable[FieldRuleSet]):
+    def apply_rulesets(
+        self,
+        rulesets: Iterable[FieldRuleSet],
+        timezone_name: str,
+    ):
 
         """ Show rulesets go first: a field stays visible while at least
             one of its show rulesets passes, and validators skip hidden
             fields. """
 
         rulesets = list(rulesets)
+        self._timezone_name = timezone_name
         self._show_results = {}
         for ruleset in rulesets:
             if ruleset.type == FieldRuleType.SHOW:
