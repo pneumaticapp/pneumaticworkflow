@@ -4,7 +4,6 @@ from typing import (
     Dict,
     Iterable,
     Optional,
-    Tuple,
 )
 
 from src.processes.enums import (
@@ -114,25 +113,26 @@ class FieldRuleCheckService:
         FieldRuleOperator.NOT_EQUAL,
     }
 
-    def __init__(self, workflow_id: int):
-        self.workflow_id = workflow_id
+    def __init__(self, field: TaskField):
+        self.field = field
+        self.account = field.account
+        self.workflow = field.workflow
         self._source_fields: Optional[Dict[str, TaskField]] = None
-        self._show_results: Dict[str, Tuple[TaskField, bool]] = {}
 
     @property
     def source_fields(self) -> Dict[str, TaskField]:
         if self._source_fields is None:
-            self._source_fields = self._get_source_fields(self.workflow_id)
+            self._source_fields = self._get_source_fields()
         return self._source_fields
 
-    def _get_source_fields(self, workflow_id: int) -> Dict[str, TaskField]:
+    def _get_source_fields(self) -> Dict[str, TaskField]:
 
         """ Load all workflow fields (kickoff + tasks) in 1 SQL query. """
 
         return {
             field.api_name: field
             for field in TaskField.objects.filter(
-                workflow_id=workflow_id,
+                workflow_id=self.workflow.id,
             ).prefetch_related('storage_attachments')
         }
 
@@ -277,29 +277,15 @@ class FieldRuleCheckService:
             for group_or in groups_or
         )
 
-    def _get_field(self, ruleset: FieldRuleSet) -> TaskField:
-        return self.source_fields.get(
-            ruleset.field.api_name,
-            ruleset.field,
-        )
-
-    def _apply_show(self, ruleset: FieldRuleSet):
-        field = self._get_field(ruleset)
-        is_satisfied = self._check_ruleset_condition(ruleset)
-        _, is_shown = self._show_results.get(field.api_name, (field, False))
-        self._show_results[field.api_name] = (field, is_shown or is_satisfied)
-
     def _apply_validator(self, ruleset: FieldRuleSet):
-        field = self._get_field(ruleset)
         is_satisfied = self._check_ruleset_condition(ruleset)
         if not is_satisfied:
             raise FieldRuleCheckServiceException(
-                field_api_name=field.api_name,
+                field_api_name=self.field.api_name,
                 message=ruleset.message or MSG_PW_0092,
             )
 
     APPLY_MAP = {
-        FieldRuleType.SHOW: _apply_show,
         FieldRuleType.VALIDATOR: _apply_validator,
     }
 
@@ -319,20 +305,17 @@ class FieldRuleCheckService:
 
         rulesets = list(rulesets)
         self._timezone_name = timezone_name
-        self._show_results = {}
+        has_show = False
+        is_shown = False
         for ruleset in rulesets:
-            if ruleset.type_show:
-                self.apply_ruleset(ruleset)
-
-        fields_to_update = []
-        for field, is_shown in self._show_results.values():
-            if field.is_hidden == is_shown:
-                field.is_hidden = not is_shown
-                fields_to_update.append(field)
-        if fields_to_update:
-            TaskField.objects.bulk_update(fields_to_update, ['is_hidden'])
-
+            if not ruleset.type_show:
+                continue
+            has_show = True
+            is_shown = is_shown or self._check_ruleset_condition(ruleset)
+        if has_show and self.field.is_hidden == is_shown:
+            self.field.is_hidden = not is_shown
+        if self.field.is_hidden:
+            return
         for ruleset in rulesets:
-            field = self._get_field(ruleset)
-            if ruleset.type_validator and not field.is_hidden:
+            if ruleset.type_validator:
                 self.apply_ruleset(ruleset)

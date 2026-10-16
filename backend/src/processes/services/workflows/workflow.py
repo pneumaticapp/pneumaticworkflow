@@ -1,5 +1,5 @@
 
-from typing import Optional
+from typing import Iterable, Optional
 
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -12,6 +12,7 @@ from src.authentication.enums import AuthTokenType
 from src.processes.consts import WORKFLOW_NAME_LENGTH
 from src.processes.utils.common import get_workflow_starter_name
 from src.processes.models.templates.template import Template
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.workflows.kickoff_value import (
     KickoffValueSerializer,
@@ -202,26 +203,43 @@ class WorkflowService(
         # Update attachments for workflow
         refresh_attachments(self.instance, self.user)
 
-    def apply_field_rulesets(self):
+    def apply_field_rulesets(
+        self,
+        rulesets: Optional[Iterable] = None,
+    ):
 
         """ Call inside the transaction that saved the kickoff values and
             before the workflow event: a failed kickoff validator must roll
             the change back. Task field validators are checked on complete.
         """
 
-        rulesets = (
-            self.instance.field_rulesets
-            .for_kickoff()
-            .with_groups()
-        )
+        if rulesets is None:
+            rulesets = (
+                self.instance.field_rulesets
+                .for_kickoff()
+                .with_groups()
+            )
+        rulesets = list(rulesets)
         user = self.user or self.instance.account.get_owner()
-        service = FieldRuleCheckService(
-            workflow_id=self.instance.id,
-        )
-        service.apply_rulesets(
-            rulesets,
-            timezone_name=user.timezone,
-        )
+        rules_by_field: dict = {}
+        for ruleset in rulesets:
+            rules_by_field.setdefault(ruleset.field_id, []).append(ruleset)
+
+        fields_to_update = []
+        for field_rules in rules_by_field.values():
+            field = field_rules[0].field
+            was_hidden = field.is_hidden
+            FieldRuleCheckService(field).apply_rulesets(
+                field_rules,
+                timezone_name=user.timezone,
+            )
+            if field.is_hidden != was_hidden:
+                fields_to_update.append(field)
+        if fields_to_update:
+            TaskField.objects.bulk_update(
+                fields_to_update,
+                ['is_hidden'],
+            )
 
     def _create_actions(self, **kwargs):
         if kwargs.get('anonymous_id'):

@@ -49,9 +49,7 @@ from src.processes.services.events import (
 from src.processes.services.tasks.fields.field import (
     TaskFieldService,
 )
-from src.processes.services.tasks.fields.field_ruleset_check import (
-    FieldRuleCheckService,
-)
+from src.processes.services.workflows.workflow import WorkflowService
 from src.processes.services.tasks.task import TaskService
 from src.processes.services.workflows.fieldsets.fieldset import FieldSetService
 from src.processes.tasks.webhooks import (
@@ -977,14 +975,12 @@ class WorkflowActionService:
                 .for_task(task.id)
                 .with_groups()
             )
-            user = self.user or self.workflow.account.get_owner()
-            service = FieldRuleCheckService(
-                workflow_id=self.workflow.id,
-            )
-            service.apply_rulesets(
-                rulesets,
-                timezone_name=user.timezone,
-            )
+            WorkflowService(
+                user=self.user,
+                auth_type=self.auth_type,
+                is_superuser=self.is_superuser,
+                instance=self.workflow,
+            ).apply_field_rulesets(rulesets=rulesets)
 
             AnalyticService.task_completed(
                 user=self.user,

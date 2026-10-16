@@ -152,13 +152,12 @@ class TestFieldRuleCheckService:
         )
 
         # act
-        FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
+        FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
         )
 
         # assert
-        target_field.refresh_from_db()
         assert target_field.is_hidden is False
 
     def test_show_rule__not_satisfied__field_is_hidden(self):
@@ -212,13 +211,12 @@ class TestFieldRuleCheckService:
         )
 
         # act
-        FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
+        FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
         )
 
         # assert
-        target_field.refresh_from_db()
         assert target_field.is_hidden is True
 
     def test_show_rule__multiple_rulesets__any_satisfied_shows_field(self):
@@ -307,13 +305,12 @@ class TestFieldRuleCheckService:
         )
 
         # act
-        FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
+        FieldRuleCheckService(ruleset_1.field).apply_rulesets(
             [ruleset_1, ruleset_2],
             timezone_name=user.timezone,
         )
 
         # assert
-        target_field.refresh_from_db()
         assert target_field.is_hidden is False
 
     def test_show_rule__source_field_missing__field_is_hidden(self):
@@ -358,13 +355,12 @@ class TestFieldRuleCheckService:
         )
 
         # act
-        FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
+        FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
         )
 
         # assert
-        target_field.refresh_from_db()
         assert target_field.is_hidden is True
 
     def test_validator_rule__satisfied__passes(self):
@@ -410,7 +406,7 @@ class TestFieldRuleCheckService:
         )
 
         # act & assert: does not raise
-        FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
+        FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
         )
@@ -459,7 +455,7 @@ class TestFieldRuleCheckService:
 
         # act & assert
         with pytest.raises(FieldRuleCheckServiceException) as exc_info:
-            FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
+            FieldRuleCheckService(ruleset.field).apply_rulesets(
                 [ruleset],
                 timezone_name=user.timezone,
             )
@@ -513,7 +509,7 @@ class TestFieldRuleCheckService:
 
         # act & assert
         with pytest.raises(FieldRuleCheckServiceException) as exc_info:
-            FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
+            FieldRuleCheckService(ruleset.field).apply_rulesets(
                 [ruleset],
                 timezone_name=user.timezone,
             )
@@ -565,7 +561,7 @@ class TestFieldRuleCheckService:
         )
 
         # act & assert: does not raise because field is hidden
-        FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
+        FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
         )
@@ -650,13 +646,12 @@ class TestFieldRuleCheckService:
         )
 
         # act
-        FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
+        FieldRuleCheckService(show_ruleset.field).apply_rulesets(
             [show_ruleset, validator_ruleset],
             timezone_name=user.timezone,
         )
 
         # assert
-        target_field.refresh_from_db()
         assert target_field.is_hidden is True
 
     def test_show_rule__same_local_day__field_is_visible(self):
@@ -717,13 +712,12 @@ class TestFieldRuleCheckService:
         )
 
         # act
-        FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
+        FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
         )
 
         # assert
-        target_field.refresh_from_db()
         assert target_field.is_hidden is False
 
     def test_show_rule__bad_date__field_stays_hidden(self):
@@ -779,13 +773,12 @@ class TestFieldRuleCheckService:
         )
 
         # act
-        FieldRuleCheckService(workflow_id=workflow.id).apply_rulesets(
+        FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
         )
 
         # assert
-        target_field.refresh_from_db()
         assert target_field.is_hidden is True
 
 
@@ -1078,15 +1071,12 @@ class TestFieldRuleActionIntegration:
         )
 
         # act
-        FieldRuleCheckService(
-            workflow_id=workflow.id,
-        ).apply_rulesets(
+        FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
         )
 
         # assert
-        target_field.refresh_from_db()
         assert target_field.is_hidden is False
 
     def test_show_rule__checkbox_comma_space__equal_all_options(self):
@@ -1140,15 +1130,12 @@ class TestFieldRuleActionIntegration:
         )
 
         # act
-        FieldRuleCheckService(
-            workflow_id=workflow.id,
-        ).apply_rulesets(
+        FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
         )
 
         # assert
-        target_field.refresh_from_db()
         assert target_field.is_hidden is False
 
     def test_show_rule__user_field_with_group_id__equal(self):
@@ -1203,15 +1190,12 @@ class TestFieldRuleActionIntegration:
         )
 
         # act
-        FieldRuleCheckService(
-            workflow_id=workflow.id,
-        ).apply_rulesets(
+        FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
         )
 
         # assert
-        target_field.refresh_from_db()
         assert target_field.is_hidden is False
 
     def test_show_rule__user_field_with_group_id__not_equal(self):
@@ -1266,13 +1250,10 @@ class TestFieldRuleActionIntegration:
         )
 
         # act
-        FieldRuleCheckService(
-            workflow_id=workflow.id,
-        ).apply_rulesets(
+        FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
         )
 
         # assert
-        target_field.refresh_from_db()
         assert target_field.is_hidden is False
