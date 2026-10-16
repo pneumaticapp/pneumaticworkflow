@@ -11,6 +11,12 @@ export default defineConfig(
     ignores: ['**/dist/**', 'src/**/*.stories.tsx', 'src/**/*.test.ts', 'src/**/*.test.tsx'],
   },
 
+  {
+    linterOptions: {
+      reportUnusedDisableDirectives: 'error',
+    },
+  },
+
   // Shared: client + server
   {
     files: ['src/**/*.{ts,tsx}'],
