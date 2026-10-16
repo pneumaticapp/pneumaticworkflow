@@ -478,6 +478,16 @@ class AIAgentService(BaseModelService):
 
         return fields_values
 
+    def _count_task_actions(self, task: Task, action: str) -> int:
+        return (
+            AIAgentAction.objects
+            .by_agent(self.instance.id)
+            .by_task(task.id)
+            .by_action(action)
+            .filter(date_created__gte=task.date_started)
+            .count()
+        )
+
     def _handle_run_failure(self, task: Task, ex: Exception):
 
         """ Logs a run interrupted by an unexpected error. The dispatcher
@@ -499,13 +509,9 @@ class AIAgentService(BaseModelService):
             action=AIAgentActionType.TASK_FAILED,
             text=error,
         )
-        failures = (
-            AIAgentAction.objects
-            .by_agent(self.instance.id)
-            .by_task(task.id)
-            .by_action(AIAgentActionType.TASK_FAILED)
-            .filter(date_created__gte=task.date_started)
-            .count()
+        failures = self._count_task_actions(
+            task=task,
+            action=AIAgentActionType.TASK_FAILED,
         )
         if failures >= MAX_RUN_FAILURES:
             self._create_comment(
@@ -514,6 +520,38 @@ class AIAgentService(BaseModelService):
                     MSG_AI_0011(attempts=MAX_RUN_FAILURES, error=error),
                 ),
             )
+
+    def _get_task(self, task_id: int) -> Optional[Task]:
+
+        """ Allow start a complete task if the task is not in progress:
+            locks the task and checks the runs like the dispatcher does.
+
+        """
+
+        with transaction.atomic():
+            # select_for_update prevents the task from being run again
+            task = Task.objects.select_for_update().filter(id=task_id).first()
+            if not task:
+                return None
+            runs = self._count_task_actions(
+                task=task,
+                action=AIAgentActionType.TASK_IN_PROGRESS,
+            )
+            failures = self._count_task_actions(
+                task=task,
+                action=AIAgentActionType.TASK_FAILED,
+            )
+            # Check that the task is not already being handled
+            # by another AI agent
+            if runs != failures or runs >= MAX_RUN_FAILURES:
+                return None
+            AIAgentAction.objects.create(
+                account_id=self.instance.account_id,
+                agent_id=self.instance.id,
+                task_id=task.id,
+                action=AIAgentActionType.TASK_IN_PROGRESS,
+            )
+        return task
 
     def complete_task(self, task_id: int):
 
@@ -527,15 +565,14 @@ class AIAgentService(BaseModelService):
 
             the AI provider is unavailable
             -> the actions 'task_in_progress' and 'task_failed',
-               the error is raised """
+               the error is raised
 
-        task = Task.objects.filter(id=task_id).first()
-        AIAgentAction.objects.create(
-            account_id=self.instance.account_id,
-            agent_id=self.instance.id,
-            task_id=task.id,
-            action=AIAgentActionType.TASK_IN_PROGRESS,
-        )
+            the task is already in progress or completed
+            -> nothing """
+
+        task = self._get_task(task_id)
+        if not task:
+            return
         try:
             fields_values = self._attempt_complete_task(task=task)
         except AIAgentAttemptsExceededException:

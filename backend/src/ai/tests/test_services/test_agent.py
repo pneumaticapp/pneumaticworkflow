@@ -2365,6 +2365,193 @@ def test_complete_task__attempts_exceeded__not_task_failed(mocker):
     handle_run_failure_mock.assert_not_called()
 
 
+def test_complete_task__already_in_progress__skip(mocker):
+
+    """ A run is in progress: the duplicate does nothing """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    AIAgentAction.objects.create(
+        account=account,
+        agent=agent,
+        task=task,
+        action=AIAgentActionType.TASK_IN_PROGRESS,
+    )
+    attempt_complete_task_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_complete_task',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.complete_task(task_id=task.id)
+
+    # assert
+    assert AIAgentAction.objects.filter(task=task).count() == 1
+    attempt_complete_task_mock.assert_not_called()
+
+
+def test_complete_task__already_completed__skip(mocker):
+
+    """ The task is completed: the duplicate does nothing """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    for action in (
+        AIAgentActionType.TASK_IN_PROGRESS,
+        AIAgentActionType.TASK_COMPLETED,
+    ):
+        AIAgentAction.objects.create(
+            account=account,
+            agent=agent,
+            task=task,
+            action=action,
+        )
+    attempt_complete_task_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_complete_task',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.complete_task(task_id=task.id)
+
+    # assert
+    assert AIAgentAction.objects.filter(task=task).count() == 2
+    attempt_complete_task_mock.assert_not_called()
+
+
+def test_complete_task__previous_run_failed__ok(mocker):
+
+    """ The previous run failed: a new run starts """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    for action in (
+        AIAgentActionType.TASK_IN_PROGRESS,
+        AIAgentActionType.TASK_FAILED,
+    ):
+        AIAgentAction.objects.create(
+            account=account,
+            agent=agent,
+            task=task,
+            action=action,
+        )
+    attempt_complete_task_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_complete_task',
+        return_value={},
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.complete_task(task_id=task.id)
+
+    # assert
+    assert AIAgentAction.objects.filter(
+        task=task,
+        action=AIAgentActionType.TASK_IN_PROGRESS,
+    ).count() == 2
+    attempt_complete_task_mock.assert_called_once_with(task=task)
+
+
+def test_complete_task__max_run_failures_reached__skip(mocker):
+
+    """ All allowed runs failed: the duplicate does nothing """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    for _ in range(MAX_RUN_FAILURES):
+        for action in (
+            AIAgentActionType.TASK_IN_PROGRESS,
+            AIAgentActionType.TASK_FAILED,
+        ):
+            AIAgentAction.objects.create(
+                account=account,
+                agent=agent,
+                task=task,
+                action=action,
+            )
+    attempt_complete_task_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_complete_task',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.complete_task(task_id=task.id)
+
+    # assert
+    assert AIAgentAction.objects.filter(
+        task=task,
+    ).count() == MAX_RUN_FAILURES * 2
+    attempt_complete_task_mock.assert_not_called()
+
+
+def test_complete_task__run_before_task_started__ok(mocker):
+
+    """ A run of the previous task start does not block """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    AIAgentAction.objects.create(
+        account=account,
+        agent=agent,
+        task=task,
+        action=AIAgentActionType.TASK_IN_PROGRESS,
+    )
+    AIAgentAction.objects.update(
+        date_created=task.date_started - timedelta(hours=1),
+    )
+    attempt_complete_task_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_complete_task',
+        return_value={},
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.complete_task(task_id=task.id)
+
+    # assert
+    attempt_complete_task_mock.assert_called_once_with(task=task)
+
+
+def test_complete_task__task_not_found__skip(mocker):
+
+    """ Task not found """
+
+    # arrange
+    account = create_test_account()
+    agent = create_test_agent(account=account)
+    attempt_complete_task_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_complete_task',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.complete_task(task_id=999999)
+
+    # assert
+    assert AIAgentAction.objects.filter(agent=agent).exists() is False
+    attempt_complete_task_mock.assert_not_called()
+
+
 def test_reply_to_comment__notification_exists__ok():
 
     """ Notification exists """
@@ -2412,3 +2599,39 @@ def test_reply_to_comment__notification_not_found__skip():
 
     # assert
     assert AIAgentAction.objects.filter(agent=agent).exists() is False
+
+
+def test_reply_to_comment__already_handled__skip():
+
+    """ The mention is already handled: the duplicate does nothing """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    notification = Notification.objects.create(
+        account=account,
+        user=agent.user,
+        author=owner,
+        task=task,
+        type=NotificationType.MENTION,
+        text='Please call the customer.',
+    )
+    AIAgentAction.objects.create(
+        account=account,
+        agent=agent,
+        task=task,
+        action=AIAgentActionType.MENTION_IN_PROGRESS,
+        notification=notification,
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.reply_to_comment(notification_id=notification.id)
+
+    # assert
+    notification.refresh_from_db()
+    assert notification.status == NotificationStatus.NEW
+    assert AIAgentAction.objects.filter(agent=agent).count() == 1
