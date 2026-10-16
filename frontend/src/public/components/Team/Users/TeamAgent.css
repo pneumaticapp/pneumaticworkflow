@@ -1,0 +1,110 @@
+.agent-card {
+  display: flex;
+  gap: 1.6rem;
+  align-items: center;
+  padding: 1.6rem 2.4rem;
+  background: var(--pneumatic-color-white);
+  border: 0.1rem solid var(--pneumatic-color-black16);
+  border-radius: 2.4rem;
+
+  &__avatar {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 4.8rem;
+    height: 4.8rem;
+    overflow: hidden;
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: var(--pneumatic-color-black48);
+    background: var(--pneumatic-color-black8);
+    border-radius: 50%;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__info {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  &__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--pneumatic-color-black100);
+    white-space: nowrap;
+  }
+
+  &__meta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 1.3rem;
+    color: var(--pneumatic-color-black48);
+    white-space: nowrap;
+  }
+
+  &__inactive {
+    font-size: 1.2rem;
+    color: var(--pneumatic-color-warning);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0.8rem;
+    align-items: center;
+  }
+
+  &__toggle {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+    font-size: 1.1rem;
+    font-weight: bold;
+    line-height: 1.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__more {
+    color: var(--pneumatic-color-black16);
+    cursor: pointer;
+
+    &:hover,
+    &_active {
+      color: var(--pneumatic-color-black48);
+    }
+  }
+}
+
+.delete-modal {
+  &__title {
+    margin-bottom: 0.8rem;
+  }
+
+  &__text {
+    margin-bottom: 1.6rem;
+    font-size: 1.4rem;
+    color: var(--pneumatic-color-black72);
+  }
+
+  &__footer {
+    display: flex;
+    gap: 1.6rem;
+    align-items: center;
+    margin-top: 2.4rem;
+  }
+}

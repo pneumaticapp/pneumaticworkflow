@@ -27,6 +27,13 @@ export const EMPTY_RULE: IRule = {
   isInvalid: () => false,
 };
 
+export const REQUIRED_RULES: IRule[] = [
+  {
+    message: 'validation.field-required',
+    isInvalid: isEmpty,
+  },
+];
+
 export const EMAIL_RULES: IRule[] = [
   {
     message: 'validation.email-empty',
@@ -270,6 +277,7 @@ export const validateZipCode = validateFieldCreator(ZIP_CODE_RULES);
 export const validateAddress = validateFieldCreator(ADDRESS_CODE_RULES);
 export const validateCity = validateFieldCreator(CITY_RULES);
 export const validateRegion = validateFieldCreator(REGION_RULES);
+export const validateRequired = validateFieldCreator(REQUIRED_RULES);
 export const validateKickoffFieldName = validateFieldCreator(KICKOFF_FIELD_NAME_RULES);
 export const validateKickoffFieldDescription = validateFieldCreator(KICKOFF_FIELD_DESCRIPTION_RULES);
 export const validateRegistrationPassword = validateFieldCreator(REGISTRATION_PASSWORD_RULES);

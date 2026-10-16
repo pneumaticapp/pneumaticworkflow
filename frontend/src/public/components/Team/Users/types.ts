@@ -1,35 +1,15 @@
-import {
-  IChangeUserAdminProps,
-  ITeamFetchStartedProps,
-  TOpenDeleteUserModalPayload,
-} from '../../../redux/accounts/types';
-import { EUserListSorting, TUserListItem } from '../../../types/user';
+import type { IAIAgent } from '../../../types/ai';
+import type { EUserListSorting, TUserListItem } from '../../../types/user';
 
 export interface IUsersProps {
-  currentUserId: number;
-  isLoading?: boolean;
-  sorting?: EUserListSorting;
-  users: TUserListItem[];
-  isTeamInvitesOpened?: boolean;
-  isSubscribed?: boolean;
-  trialEnded: boolean | null;
   userListSorting: EUserListSorting;
-  fetchUsers(payload: ITeamFetchStartedProps): void;
-  loadChangeUserAdmin(payload: IChangeUserAdminProps): void;
-  openModal(params: TOpenDeleteUserModalPayload): void;
-  openTeamInvitesPopup(): void;
-  loadInvitesUsers(): void;
-  setGeneralLoaderVisibility(isVisible: boolean): void;
-  loadChangeUserManager(payload: {
-    id: number;
-    managerId: number | null;
-    onSuccess?: () => void;
-    onError?: () => void;
-  }): void;
-  loadChangeUserReports(payload: {
-    id: number;
-    reportIds: number[];
-    onSuccess?: () => void;
-    onError?: () => void;
-  }): void;
+}
+
+export type TTeamListItem = { kind: 'user'; user: TUserListItem } | { kind: 'agent'; agent: IAIAgent };
+
+export interface ITeamUserCardProps {
+  user: TUserListItem;
+  currentUserId: number;
+  isSubscribed: boolean;
+  onOpenVacationModal(user: TUserListItem): void;
 }

@@ -15,6 +15,7 @@ import {
 import { ITask, ITaskListItem, ITasksSettings } from './tasks';
 import { EPermissionObjectType, TObjectPermissionsById } from './permissions';
 import { IApiKeyItem, IIntegrationDetailed, IIntegrationListItem } from './integrations';
+import { IAIAgent, IAIModel, IAIProvider, IAIVendor } from './ai';
 import { ESettingsTabs } from './profile';
 import { IHighlightsItem, EHighlightsDateFilter } from './highlights';
 import { EDashboardTimeRange, IGettingStartedChecklist } from './dashboard';
@@ -64,6 +65,7 @@ export interface IApplicationState {
   task: IStoreTask;
   team: ITeamStore;
   groups: IGroupsStore;
+  ai: IAIStore;
   tenants: ITenantsStore;
   datasets: IDatasetsStore;
   fieldsets: IFieldsetsStore;
@@ -352,6 +354,35 @@ export type ITeamStore = {
   recentInvitedUsers: TUserListItem[];
   invitesUsersList: UserInvite[];
 };
+
+export interface IAIStore {
+  providers: {
+    isLoading: boolean;
+    list: IAIProvider[];
+  };
+  createProvider: {
+    status: 'idle' | 'pending' | 'succeeded' | 'failed';
+    requestId: number | null;
+  };
+  createAgent: {
+    status: 'idle' | 'pending' | 'succeeded' | 'failed';
+    requestId: number | null;
+  };
+  agents: {
+    isLoading: boolean;
+    list: IAIAgent[];
+  };
+  vendors: {
+    isLoading: boolean;
+    list: IAIVendor[];
+  };
+  models: {
+    isLoading: boolean;
+    providerId: number | null;
+    list: IAIModel[];
+  };
+  isSaving: boolean;
+}
 
 export type IGroupsStore = {
   isLoading: boolean;

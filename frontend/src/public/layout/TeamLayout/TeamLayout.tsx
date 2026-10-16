@@ -26,13 +26,14 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
   const page = useSelector(getTeamPage);
 
   useEffect(() => {
-    dispatch(
-      updateTeamActiveTab(
-        checkSomeRouteIsActive(ERoutes.Groups) || checkSomeRouteIsActive(ERoutes.GroupDetails)
-          ? TeamPages.Groups
-          : TeamPages.Users,
-      ),
-    );
+    const getActiveTabByRoute = () => {
+      if (checkSomeRouteIsActive(ERoutes.Groups, ERoutes.GroupDetails)) {
+        return TeamPages.Groups;
+      }
+      return TeamPages.Users;
+    };
+
+    dispatch(updateTeamActiveTab(getActiveTabByRoute()));
 
     return () => {
       dispatch(resetUsers());

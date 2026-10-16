@@ -34,7 +34,7 @@ export const TeamView = () => {
         <Switch>
           <Route path={ERoutes.GroupDetails} component={GroupDetails} />
           <Route path={ERoutes.Groups} component={Groups} />
-          <Route path={ERoutes.Team} component={Users} />
+          <Route exact path={ERoutes.Team} component={Users} />
           <Redirect to={ERoutes.Error} />
         </Switch>
       </React.Suspense>
