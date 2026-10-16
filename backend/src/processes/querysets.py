@@ -961,6 +961,16 @@ class TaskFieldQuerySet(BaseFieldQuerySet):
     def only_values(self):
         return self.values_list('value', flat=True)
 
+    def for_rules_check(self, workflow_id: int):
+        return self.filter(
+            workflow_id=workflow_id,
+        ).select_related(
+            'account',
+            'workflow',
+        ).prefetch_related(
+            'storage_attachments',
+        )
+
 
 # TODO remove legacy model after migration to file service.
 # DEPRECATED: This queryset will be removed after full migration.

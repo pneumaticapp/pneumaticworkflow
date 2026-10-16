@@ -117,24 +117,15 @@ class FieldRuleCheckService:
         self.field = field
         self.account = field.account
         self.workflow = field.workflow
-        self._source_fields: Optional[Dict[str, TaskField]] = None
 
-    @property
-    def source_fields(self) -> Dict[str, TaskField]:
-        if self._source_fields is None:
-            self._source_fields = self._get_source_fields()
-        return self._source_fields
-
-    def _get_source_fields(self) -> Dict[str, TaskField]:
-
-        """ Load all workflow fields (kickoff + tasks) in 1 SQL query. """
-
-        return {
-            field.api_name: field
-            for field in TaskField.objects.filter(
-                workflow_id=self.workflow.id,
-            ).prefetch_related('storage_attachments')
-        }
+    def _get_source(
+        self,
+        group_and: FieldRuleGroupAnd,
+        fields_by_api_name: Dict[str, TaskField],
+    ) -> Optional[TaskField]:
+        if group_and.field:
+            return fields_by_api_name.get(group_and.field)
+        return self.field
 
     def _prepare_values(
         self,
@@ -224,18 +215,9 @@ class FieldRuleCheckService:
     def _check_predicate(
         self,
         predicate: FieldRuleGroupAnd,
-        ruleset: Optional[FieldRuleSet] = None,
+        fields_by_api_name: Dict[str, TaskField],
     ) -> bool:
-        if predicate.field:
-            source = self.source_fields.get(predicate.field)
-        elif ruleset and ruleset.field:
-            source = self.source_fields.get(
-                ruleset.field.api_name,
-                ruleset.field,
-            )
-        else:
-            source = None
-
+        source = self._get_source(predicate, fields_by_api_name)
         if source is None:
             return False
 
@@ -255,30 +237,41 @@ class FieldRuleCheckService:
     def _check_group_or(
         self,
         group_or: FieldRuleGroupOr,
-        ruleset: Optional[FieldRuleSet] = None,
+        fields_by_api_name: Dict[str, TaskField],
     ) -> bool:
         groups_and = list(group_or.groups_and.all())
         if not groups_and:
             return False
         return all(
-            self._check_predicate(predicate, ruleset=ruleset)
+            self._check_predicate(
+                predicate,
+                fields_by_api_name,
+            )
             for predicate in groups_and
         )
 
     def _check_ruleset_condition(
         self,
         ruleset: FieldRuleSet,
+        fields_by_api_name: Dict[str, TaskField],
     ) -> bool:
         groups_or = list(ruleset.groups_or.all())
         if not groups_or:
             return False
         return any(
-            self._check_group_or(group_or, ruleset=ruleset)
+            self._check_group_or(group_or, fields_by_api_name)
             for group_or in groups_or
         )
 
-    def _apply_validator(self, ruleset: FieldRuleSet):
-        is_satisfied = self._check_ruleset_condition(ruleset)
+    def _apply_validator(
+        self,
+        ruleset: FieldRuleSet,
+        fields_by_api_name: Dict[str, TaskField],
+    ):
+        is_satisfied = self._check_ruleset_condition(
+            ruleset,
+            fields_by_api_name,
+        )
         if not is_satisfied:
             raise FieldRuleCheckServiceException(
                 field_api_name=self.field.api_name,
@@ -289,14 +282,19 @@ class FieldRuleCheckService:
         FieldRuleType.VALIDATOR: _apply_validator,
     }
 
-    def apply_ruleset(self, ruleset: FieldRuleSet):
+    def apply_ruleset(
+        self,
+        ruleset: FieldRuleSet,
+        fields_by_api_name: Dict[str, TaskField],
+    ):
         apply_method = self.APPLY_MAP[ruleset.type]
-        apply_method(self, ruleset)
+        apply_method(self, ruleset, fields_by_api_name)
 
     def apply_rulesets(
         self,
         rulesets: Iterable[FieldRuleSet],
         timezone_name: str,
+        fields_by_api_name: Dict[str, TaskField],
     ):
 
         """ Show rulesets go first: a field stays visible while at least
@@ -311,11 +309,14 @@ class FieldRuleCheckService:
             if not ruleset.type_show:
                 continue
             has_show = True
-            is_shown = is_shown or self._check_ruleset_condition(ruleset)
+            is_shown = is_shown or self._check_ruleset_condition(
+                ruleset,
+                fields_by_api_name,
+            )
         if has_show and self.field.is_hidden == is_shown:
             self.field.is_hidden = not is_shown
         if self.field.is_hidden:
             return
         for ruleset in rulesets:
             if ruleset.type_validator:
-                self.apply_ruleset(ruleset)
+                self.apply_ruleset(ruleset, fields_by_api_name)

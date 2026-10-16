@@ -221,17 +221,24 @@ class WorkflowService(
             )
         rulesets = list(rulesets)
         user = self.user or self.instance.account.get_owner()
+        fields_by_api_name = {
+            item.api_name: item
+            for item in TaskField.objects.for_rules_check(
+                self.instance.id,
+            )
+        }
         rules_by_field: dict = {}
         for ruleset in rulesets:
             rules_by_field.setdefault(ruleset.field_id, []).append(ruleset)
 
         fields_to_update = []
         for field_rules in rules_by_field.values():
-            field = field_rules[0].field
+            field = fields_by_api_name[field_rules[0].field.api_name]
             was_hidden = field.is_hidden
             FieldRuleCheckService(field).apply_rulesets(
                 field_rules,
                 timezone_name=user.timezone,
+                fields_by_api_name=fields_by_api_name,
             )
             if field.is_hidden != was_hidden:
                 fields_to_update.append(field)

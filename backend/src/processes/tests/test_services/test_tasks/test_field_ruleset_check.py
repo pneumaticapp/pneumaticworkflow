@@ -38,6 +38,10 @@ UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
 
 
+def field_map(*fields):
+    return {field.api_name: field for field in fields}
+
+
 class TestFieldRuleOperations:
 
     def test_equal(self):
@@ -155,6 +159,7 @@ class TestFieldRuleCheckService:
         FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
+            fields_by_api_name=field_map(source_field, target_field),
         )
 
         # assert
@@ -214,6 +219,7 @@ class TestFieldRuleCheckService:
         FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
+            fields_by_api_name=field_map(source_field, target_field),
         )
 
         # assert
@@ -308,6 +314,11 @@ class TestFieldRuleCheckService:
         FieldRuleCheckService(ruleset_1.field).apply_rulesets(
             [ruleset_1, ruleset_2],
             timezone_name=user.timezone,
+            fields_by_api_name=field_map(
+                source_1,
+                source_2,
+                target_field,
+            ),
         )
 
         # assert
@@ -358,6 +369,7 @@ class TestFieldRuleCheckService:
         FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
+            fields_by_api_name=field_map(target_field),
         )
 
         # assert
@@ -409,6 +421,7 @@ class TestFieldRuleCheckService:
         FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
+            fields_by_api_name=field_map(field),
         )
 
     def test_validator_rule__not_satisfied__raises_exception(self):
@@ -458,6 +471,7 @@ class TestFieldRuleCheckService:
             FieldRuleCheckService(ruleset.field).apply_rulesets(
                 [ruleset],
                 timezone_name=user.timezone,
+                fields_by_api_name=field_map(field),
             )
 
         assert exc_info.value.field_api_name == 'age-field'
@@ -512,6 +526,7 @@ class TestFieldRuleCheckService:
             FieldRuleCheckService(ruleset.field).apply_rulesets(
                 [ruleset],
                 timezone_name=user.timezone,
+                fields_by_api_name=field_map(field),
             )
 
         assert exc_info.value.field_api_name == 'age-field'
@@ -564,6 +579,7 @@ class TestFieldRuleCheckService:
         FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
+            fields_by_api_name=field_map(field),
         )
 
     def test_validator_rule__hidden_by_show__skipped(self):
@@ -649,6 +665,7 @@ class TestFieldRuleCheckService:
         FieldRuleCheckService(show_ruleset.field).apply_rulesets(
             [show_ruleset, validator_ruleset],
             timezone_name=user.timezone,
+            fields_by_api_name=field_map(source_field, target_field),
         )
 
         # assert
@@ -715,6 +732,7 @@ class TestFieldRuleCheckService:
         FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
+            fields_by_api_name=field_map(date_field, target_field),
         )
 
         # assert
@@ -776,6 +794,7 @@ class TestFieldRuleCheckService:
         FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
+            fields_by_api_name=field_map(date_field, target_field),
         )
 
         # assert
@@ -1074,6 +1093,7 @@ class TestFieldRuleActionIntegration:
         FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
+            fields_by_api_name=field_map(source_field, target_field),
         )
 
         # assert
@@ -1133,6 +1153,7 @@ class TestFieldRuleActionIntegration:
         FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
+            fields_by_api_name=field_map(source_field, target_field),
         )
 
         # assert
@@ -1193,6 +1214,7 @@ class TestFieldRuleActionIntegration:
         FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
+            fields_by_api_name=field_map(source_field, target_field),
         )
 
         # assert
@@ -1253,6 +1275,7 @@ class TestFieldRuleActionIntegration:
         FieldRuleCheckService(ruleset.field).apply_rulesets(
             [ruleset],
             timezone_name=user.timezone,
+            fields_by_api_name=field_map(source_field, target_field),
         )
 
         # assert
