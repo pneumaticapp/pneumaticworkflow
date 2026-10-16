@@ -195,7 +195,6 @@ class AIProvider(
         choices=AIVendor.CHOICES,
         help_text='Detected type of the provider API',
     )
-    is_active = models.BooleanField(default=True)
 
     objects = BaseSoftDeleteManager.from_queryset(AIProviderQuerySet)()
 

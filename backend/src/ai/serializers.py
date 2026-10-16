@@ -53,7 +53,6 @@ class AIProviderSerializer(
             'api_key',
             'api_key_prefix',
             'vendor',
-            'is_active',
             'usage',
         )
 
@@ -79,12 +78,6 @@ class AIProviderSerializer(
             'Write-only — never returned in responses'
         ),
         example='sk-or-v1-example',
-    )
-    is_active = DocBooleanField(
-        required=False,
-        default=True,
-        help_text='Whether the provider is enabled',
-        example=True,
     )
     api_key_prefix = DocCharField(
         read_only=True,

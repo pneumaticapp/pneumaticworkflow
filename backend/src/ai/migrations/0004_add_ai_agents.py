@@ -43,7 +43,6 @@ class Migration(migrations.Migration):
                 ('base_url', models.URLField(max_length=1024)),
                 ('api_key_encrypted', models.TextField()),
                 ('vendor', models.CharField(choices=[('openai', 'OpenAI'), ('openrouter', 'OpenRouter'), ('anthropic', 'Anthropic'), ('gemini', 'Gemini'), ('groq', 'Groq'), ('deepseek', 'DeepSeek')], help_text='Detected type of the provider API', max_length=50)),
-                ('is_active', models.BooleanField(default=True)),
                 ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='accounts.Account')),
             ],
             options={

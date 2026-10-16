@@ -45,7 +45,6 @@ def test_list__ok(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -63,7 +62,6 @@ def test_list__ok(api_client):
     assert response.data[0]['id'] == provider.id
     assert response.data[0]['name'] == provider.name
     assert response.data[0]['base_url'] == provider.base_url
-    assert response.data[0]['is_active'] == provider.is_active
     assert response.data[0]['usage'] == []
     assert 'api_key' not in response.data[0]
 
@@ -79,7 +77,6 @@ def test_list__usage__ok(api_client):
         account=account,
         name='Provider 1',
         base_url='https://provider-1.example.com',
-        is_active=True,
     )
     provider_1.api_key = 'sk-or-v1-example-1'
     provider_1.save()
@@ -87,7 +84,6 @@ def test_list__usage__ok(api_client):
         account=account,
         name='Provider 2',
         base_url='https://provider-2.example.com',
-        is_active=True,
     )
     provider_2.api_key = 'sk-or-v1-example-2'
     provider_2.save()
@@ -127,7 +123,6 @@ def test_list__non_admin__ok(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -157,7 +152,6 @@ def test_list__another_account__ok(api_client):
         account=account_1,
         name='Provider 1',
         base_url='https://provider-1.example.com',
-        is_active=True,
     )
     provider_1.api_key = 'sk-or-v1-example-1'
     provider_1.save()
@@ -166,7 +160,6 @@ def test_list__another_account__ok(api_client):
         account=account_2,
         name='Provider 2',
         base_url='https://provider-2.example.com',
-        is_active=True,
     )
     provider_2.api_key = 'sk-or-v1-example-2'
     provider_2.save()
@@ -197,7 +190,6 @@ def test_list__soft_deleted__ok(api_client):
         account=account,
         name='Active provider',
         base_url='https://active.example.com',
-        is_active=True,
     )
     provider_1.api_key = 'sk-or-v1-example-1'
     provider_1.save()
@@ -205,7 +197,6 @@ def test_list__soft_deleted__ok(api_client):
         account=account,
         name='Deleted provider',
         base_url='https://deleted.example.com',
-        is_active=True,
     )
     provider_2.api_key = 'sk-or-v1-example-2'
     provider_2.save()
@@ -256,7 +247,6 @@ def test_list__pagination__ok(api_client):
         account=account,
         name='Provider 1',
         base_url='https://provider-1.example.com',
-        is_active=True,
     )
     provider_1.api_key = 'sk-or-v1-example-1'
     provider_1.save()
@@ -264,7 +254,6 @@ def test_list__pagination__ok(api_client):
         account=account,
         name='Provider 2',
         base_url='https://provider-2.example.com',
-        is_active=True,
     )
     provider_2.api_key = 'sk-or-v1-example-2'
     provider_2.save()
@@ -272,7 +261,6 @@ def test_list__pagination__ok(api_client):
         account=account,
         name='Provider 3',
         base_url='https://provider-3.example.com',
-        is_active=True,
     )
     provider_3.api_key = 'sk-or-v1-example-3'
     provider_3.save()
@@ -303,7 +291,6 @@ def test_list__unauthenticated__unauthorized(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()

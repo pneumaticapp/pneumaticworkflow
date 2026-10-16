@@ -50,7 +50,6 @@ def test_destroy__ok(api_client, mocker):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -92,7 +91,6 @@ def test_destroy__used_by_agent__validation_error(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -127,7 +125,6 @@ def test_destroy__unauthenticated__unauthorized(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -155,7 +152,6 @@ def test_destroy__guest__permission_denied(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -207,7 +203,6 @@ def test_destroy__non_admin__permission_denied(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -259,7 +254,6 @@ def test_destroy__another_account__not_found(api_client):
         account=account_2,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -288,7 +282,6 @@ def test_destroy__soft_deleted__not_found(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -318,7 +311,6 @@ def test_destroy__service_exception__validation_error(api_client, mocker):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()

@@ -921,7 +921,7 @@ def test_partial_update__base_url__delete_models_cache(mocker):
     delete_cache_mock.assert_called_once_with(key=provider.id)
 
 
-def test_partial_update__name_and_is_active__cache_not_deleted(mocker):
+def test_partial_update__name__cache_not_deleted(mocker):
 
     """ Credentials not changed """
 
@@ -935,7 +935,7 @@ def test_partial_update__name_and_is_active__cache_not_deleted(mocker):
     service = AIProviderService(user=owner, instance=provider)
 
     # act
-    service.partial_update(name='New name', is_active=False)
+    service.partial_update(name='New name')
 
     # assert
     delete_cache_mock.assert_not_called()

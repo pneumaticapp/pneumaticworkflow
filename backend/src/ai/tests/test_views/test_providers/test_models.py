@@ -30,7 +30,6 @@ def test_models__ok(api_client, mocker):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -88,7 +87,6 @@ def test_models__non_admin__ok(api_client, mocker):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -139,7 +137,6 @@ def test_models__unauthenticated__unauthorized(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -167,7 +164,6 @@ def test_models__guest__permission_denied(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -242,7 +238,6 @@ def test_models__another_account__not_found(api_client):
         account=account_2,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -271,7 +266,6 @@ def test_models__soft_deleted__not_found(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -301,7 +295,6 @@ def test_models__service_exception__validation_error(api_client, mocker):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()

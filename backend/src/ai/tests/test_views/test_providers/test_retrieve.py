@@ -45,7 +45,6 @@ def test_retrieve__ok(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -62,7 +61,6 @@ def test_retrieve__ok(api_client):
     assert response.data['id'] == provider.id
     assert response.data['name'] == provider.name
     assert response.data['base_url'] == provider.base_url
-    assert response.data['is_active'] == provider.is_active
     assert response.data['api_key_prefix'] == provider.api_key[:14]
     assert response.data['usage'] == []
     assert 'api_key' not in response.data
@@ -79,7 +77,6 @@ def test_retrieve__usage__ok(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -87,7 +84,6 @@ def test_retrieve__usage__ok(api_client):
         account=account,
         name='Other',
         base_url='https://other.example.com',
-        is_active=True,
     )
     other_provider.api_key = 'sk-or-v1-other'
     other_provider.save()
@@ -136,7 +132,6 @@ def test_retrieve__soft_deleted_agent__not_in_usage(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -179,7 +174,6 @@ def test_retrieve__non_admin__ok(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -207,7 +201,6 @@ def test_retrieve__unauthenticated__unauthorized(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -235,7 +228,6 @@ def test_retrieve__guest__permission_denied(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -310,7 +302,6 @@ def test_retrieve__another_account__not_found(api_client):
         account=account_2,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -339,7 +330,6 @@ def test_retrieve__soft_deleted__not_found(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
