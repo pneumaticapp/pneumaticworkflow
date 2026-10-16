@@ -8,7 +8,6 @@ from typing import (
 
 from src.processes.enums import (
     FieldRuleOperator,
-    FieldRuleType,
     FieldType,
 )
 from src.processes.messages.workflow import (
@@ -278,18 +277,6 @@ class FieldRuleCheckService:
                 message=ruleset.message or MSG_PW_0092,
             )
 
-    APPLY_MAP = {
-        FieldRuleType.VALIDATOR: _apply_validator,
-    }
-
-    def apply_ruleset(
-        self,
-        ruleset: FieldRuleSet,
-        fields_by_api_name: Dict[str, TaskField],
-    ):
-        apply_method = self.APPLY_MAP[ruleset.type]
-        apply_method(self, ruleset, fields_by_api_name)
-
     def apply_rulesets(
         self,
         rulesets: Iterable[FieldRuleSet],
@@ -319,4 +306,4 @@ class FieldRuleCheckService:
             return
         for ruleset in rulesets:
             if ruleset.type_validator:
-                self.apply_ruleset(ruleset, fields_by_api_name)
+                self._apply_validator(ruleset, fields_by_api_name)
