@@ -265,7 +265,7 @@ class FieldRuleCheckService:
         )
         return getter(self, source, operator, raw_value)
 
-    def _check_predicate(
+    def _check_group_and(
         self,
         predicate: FieldRuleGroupAnd,
         fields_by_api_name: Dict[str, TaskField],
@@ -296,7 +296,7 @@ class FieldRuleCheckService:
         if not groups_and:
             return False
         return all(
-            self._check_predicate(
+            self._check_group_and(
                 predicate,
                 fields_by_api_name,
             )
