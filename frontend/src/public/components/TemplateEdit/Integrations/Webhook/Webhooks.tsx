@@ -10,7 +10,7 @@ export function Webhooks() {
   return (
     <>
       {Object.entries(webhooksData).map(([event, { status, url }]) => {
-        return <WebhookItem url={url} status={status} event={event as EWebhooksTypeEvent} />;
+        return <WebhookItem key={event} url={url} status={status} event={event as EWebhooksTypeEvent} />;
       })}
     </>
   );
