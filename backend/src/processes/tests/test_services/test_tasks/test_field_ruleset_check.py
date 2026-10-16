@@ -269,6 +269,44 @@ class TestFieldRuleCheckService:
         # assert
         assert target_field.is_hidden is False
 
+    def test_show_rule__empty_groups_or__field_is_visible(self):
+
+        """ A show ruleset with no OR groups shows the field. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+        target_field = TaskField.objects.create(
+            name='Target Field',
+            api_name='target-field',
+            type=FieldType.STRING,
+            workflow=workflow,
+            task=task,
+            account=account,
+            is_hidden=True,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=target_field,
+            name='Show target',
+            type=FieldRuleType.SHOW,
+            order=1,
+            api_name='ruleset-empty-or',
+        )
+
+        # act
+        FieldRuleCheckService(ruleset.field).apply_rulesets(
+            [ruleset],
+            timezone_name=user.timezone,
+            fields_by_api_name=field_map(target_field),
+        )
+
+        # assert
+        assert target_field.is_hidden is False
+
     def test_show_rule__multiple_rulesets__any_satisfied_shows_field(self):
         # arrange
         account = create_test_account()
@@ -501,6 +539,42 @@ class TestFieldRuleCheckService:
             workflow=workflow,
             ruleset=ruleset,
             api_name='group-or-empty-and',
+        )
+
+        # act & assert: does not raise
+        FieldRuleCheckService(ruleset.field).apply_rulesets(
+            [ruleset],
+            timezone_name=user.timezone,
+            fields_by_api_name=field_map(field),
+        )
+
+    def test_validator_rule__empty_groups_or__passes(self):
+
+        """ A validator with no OR groups does not raise. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+        field = TaskField.objects.create(
+            name='Age Field',
+            api_name='age-field',
+            type=FieldType.NUMBER,
+            value='16',
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=field,
+            name='Age validator',
+            type=FieldRuleType.VALIDATOR,
+            message='Age must be greater than 17',
+            order=1,
+            api_name='ruleset-empty-or',
         )
 
         # act & assert: does not raise

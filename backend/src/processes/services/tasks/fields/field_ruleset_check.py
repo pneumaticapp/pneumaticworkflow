@@ -308,7 +308,7 @@ class FieldRuleCheckService:
     ) -> bool:
         groups_or = list(ruleset.groups_or.all())
         if not groups_or:
-            return False
+            return True
         return any(
             self._check_group_or(group_or, fields_by_api_name)
             for group_or in groups_or
