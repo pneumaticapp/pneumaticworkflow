@@ -1,9 +1,12 @@
+from datetime import date
 from decimal import Decimal, InvalidOperation
 from typing import (
     Any,
     Dict,
     Iterable,
     Optional,
+    Set,
+    Tuple,
 )
 
 from src.processes.enums import (
@@ -126,90 +129,141 @@ class FieldRuleCheckService:
             return fields_by_api_name.get(group_and.field)
         return self.field
 
+    def _decimal_or_none(self, raw: Optional[str]) -> Optional[Decimal]:
+        try:
+            if raw is None or raw == '':
+                return None
+            return Decimal(raw)
+        except (InvalidOperation, TypeError, ValueError):
+            # Stored value is not a decimal. The predicate fails.
+            return None
+
+    def _get_number_value(
+        self,
+        source: TaskField,
+        operator: str,
+        raw_value: Optional[str],
+    ) -> Tuple[Optional[Decimal], Optional[Decimal]]:
+        return (
+            self._decimal_or_none(source.value),
+            self._decimal_or_none(raw_value),
+        )
+
+    def _get_date_value(
+        self,
+        source: TaskField,
+        operator: str,
+        raw_value: Optional[str],
+    ) -> Tuple[Optional[date], Optional[date]]:
+        return (
+            calendar_date_from_tsp(
+                raw_value=source.value,
+                timezone_name=self._timezone_name,
+            ),
+            calendar_date_from_tsp(
+                raw_value=raw_value,
+                timezone_name=self._timezone_name,
+            ),
+        )
+
+    def _get_checkbox_value(
+        self,
+        source: TaskField,
+        operator: str,
+        raw_value: Optional[str],
+    ) -> Tuple[Set[str], Optional[Any]]:
+        if source.value:
+            field_val = {
+                item.strip()
+                for item in source.value.split(',')
+                if item.strip()
+            }
+        else:
+            field_val = set()
+        if operator in self.EQUALITY_OPERATORS:
+            if raw_value:
+                rule_val = {
+                    item.strip()
+                    for item in raw_value.split(',')
+                    if item.strip()
+                }
+            else:
+                rule_val = set()
+        elif operator in self.UNARY_OPERATORS:
+            rule_val = None
+        elif isinstance(raw_value, str):
+            rule_val = raw_value.strip()
+        else:
+            rule_val = raw_value
+        return field_val, rule_val
+
+    def _get_string_value(
+        self,
+        source: TaskField,
+        operator: str,
+        raw_value: Optional[str],
+    ) -> Tuple[Optional[str], Optional[str]]:
+        if operator in self.UNARY_OPERATORS:
+            return (source.value or None), None
+        return (source.value or ''), (raw_value or '')
+
+    def _get_user_value(
+        self,
+        source: TaskField,
+        operator: str,
+        raw_value: Optional[str],
+    ) -> Tuple[Optional[int], Optional[int]]:
+        field_val = source.user_id or source.group_id or None
+        if operator in self.UNARY_OPERATORS:
+            return field_val, None
+        try:
+            rule_val = int(raw_value) if raw_value else None
+        except (ValueError, TypeError):
+            rule_val = None
+        return field_val, rule_val
+
+    def _get_file_value(
+        self,
+        source: TaskField,
+        operator: str,
+        raw_value: Optional[str],
+    ) -> Tuple[Optional[bool], None]:
+        has_files = bool(source.storage_attachments.all())
+        field_val = True if has_files else None
+        return field_val, None
+
+    def _get_selection_value(
+        self,
+        source: TaskField,
+        operator: str,
+        raw_value: Optional[str],
+    ) -> Tuple[Optional[str], Optional[str]]:
+        return source.value or None, raw_value
+
+    VALUE_GETTERS = {
+        FieldType.NUMBER: _get_number_value,
+        FieldType.DATE: _get_date_value,
+        FieldType.CHECKBOX: _get_checkbox_value,
+        FieldType.STRING: _get_string_value,
+        FieldType.TEXT: _get_string_value,
+        FieldType.URL: _get_string_value,
+        FieldType.RADIO: _get_selection_value,
+        FieldType.DROPDOWN: _get_selection_value,
+        FieldType.USER: _get_user_value,
+        FieldType.FILE: _get_file_value,
+    }
+
     def _prepare_values(
         self,
         source: TaskField,
         operator: str,
         raw_value: Optional[str],
-    ) -> tuple:
-        if source.type == FieldType.NUMBER:
-            try:
-                field_val = (
-                    Decimal(source.value)
-                    if source.value is not None and source.value != ''
-                    else None
-                )
-            except (InvalidOperation, TypeError, ValueError):
-                field_val = None
-            try:
-                rule_val = (
-                    Decimal(raw_value)
-                    if raw_value is not None and raw_value != ''
-                    else None
-                )
-            except (InvalidOperation, TypeError, ValueError):
-                rule_val = None
-            return field_val, rule_val
-
-        if source.type == FieldType.DATE:
-            return (
-                calendar_date_from_tsp(
-                    raw_value=source.value,
-                    timezone_name=self._timezone_name,
-                ),
-                calendar_date_from_tsp(
-                    raw_value=raw_value,
-                    timezone_name=self._timezone_name,
-                ),
-            )
-
-        if source.type == FieldType.CHECKBOX:
-            field_val = {
-                v.strip() for v in source.value.split(',') if v.strip()
-            } if source.value else set()
-            if operator in self.EQUALITY_OPERATORS:
-                rule_val = {
-                    v.strip() for v in raw_value.split(',') if v.strip()
-                } if raw_value else set()
-            elif operator in self.UNARY_OPERATORS:
-                rule_val = None
-            else:
-                rule_val = (
-                    raw_value.strip()
-                    if isinstance(raw_value, str)
-                    else raw_value
-                )
-            return field_val, rule_val
-
-        if source.type == FieldType.USER:
-            field_val = source.user_id or source.group_id or None
-            if operator in self.UNARY_OPERATORS:
-                return field_val, None
-            try:
-                rule_val = int(raw_value) if raw_value else None
-            except (ValueError, TypeError):
-                rule_val = None
-            return field_val, rule_val
-
-        if source.type == FieldType.FILE:
-            has_files = bool(source.storage_attachments.all())
-            field_val = True if has_files else None
-            return field_val, None
-
-        if source.type in {
-            FieldType.STRING,
-            FieldType.TEXT,
-            FieldType.URL,
-        }:
-            if operator in self.UNARY_OPERATORS:
-                return (source.value or None), None
-            field_val = source.value or ''
-            rule_val = raw_value or ''
-            return field_val, rule_val
-
-        field_val = source.value or None
-        rule_val = raw_value
-        return field_val, rule_val
+    ) -> Tuple[Any, Any]:
+        getter = self.VALUE_GETTERS.get(
+            source.type,
+            FieldRuleCheckService._get_selection_value,
+        )
+        return getter(self, source, operator, raw_value)
 
     def _check_predicate(
         self,

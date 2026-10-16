@@ -800,6 +800,74 @@ class TestFieldRuleCheckService:
         # assert
         assert target_field.is_hidden is True
 
+    def test_number_value__blank_and_invalid__none(self):
+
+        """ A stored value that is not a decimal fails the predicate. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+        field = TaskField.objects.create(
+            name='Age',
+            api_name='age-field',
+            type=FieldType.NUMBER,
+            value='',
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        service = FieldRuleCheckService(field)
+
+        # act
+        blank = service._get_number_value(
+            field,
+            FieldRuleOperator.EQUAL,
+            '',
+        )
+        field.value = 'nope'
+        invalid = service._get_number_value(
+            field,
+            FieldRuleOperator.EQUAL,
+            '12x',
+        )
+
+        # assert
+        assert blank == (None, None)
+        assert invalid == (None, None)
+
+    def test_prepare_values__unknown_type__raw_comparison(self):
+
+        """ A type outside the map keeps the raw comparison. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+        field = TaskField.objects.create(
+            name='Custom',
+            api_name='custom-field',
+            type=FieldType.STRING,
+            value='raw',
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        field.type = 'custom'
+        service = FieldRuleCheckService(field)
+
+        # act
+        values = service._prepare_values(
+            source=field,
+            operator=FieldRuleOperator.EQUAL,
+            raw_value='',
+        )
+
+        # assert
+        assert values == ('raw', '')
+
 
 class TestFieldRuleActionIntegration:
 
