@@ -666,8 +666,11 @@ class AIAgentService(BaseModelService):
                the error is raised
 
             the task is already in progress or completed
+            or the agent is inactive
             -> nothing """
 
+        if not self.instance.is_active:
+            return
         task = self._get_task(task_id)
         if task:
             try:
@@ -694,8 +697,13 @@ class AIAgentService(BaseModelService):
 
             the attempts to reply are exceeded
             -> the actions 'mention_in_progress' and 'mention_failed',
-               the error is raised """
+               the error is raised
 
+            the agent is inactive
+            -> nothing """
+
+        if not self.instance.is_active:
+            return
         notification = self._get_notification(notification_id)
         if notification:
             try:

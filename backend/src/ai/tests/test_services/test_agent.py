@@ -1443,8 +1443,8 @@ def test_attempt_complete_task__attempts_exceeded__raise_exception(mocker):
 
     # assert
     assert str(ex.value.message) == 'Attempts exceeded.'
-    errors_stack = [(fields_values, error)] * 10
-    assert get_fields_values_mock.call_count == 10
+    errors_stack = [(fields_values, error)] * 5
+    assert get_fields_values_mock.call_count == 5
     get_fields_values_mock.assert_has_calls(
         [
             mocker.call(task=task, errors_stack=None),
@@ -1452,14 +1452,14 @@ def test_attempt_complete_task__attempts_exceeded__raise_exception(mocker):
         ],
         any_order=True,
     )
-    assert complete_task_mock.call_count == 10
+    assert complete_task_mock.call_count == 5
     complete_task_mock.assert_has_calls(
         [
             mocker.call(task=task, fields_values=fields_values),
         ],
         any_order=True,
     )
-    assert convert_ex_to_markdown_mock.call_count == 10
+    assert convert_ex_to_markdown_mock.call_count == 5
     convert_ex_to_markdown_mock.assert_has_calls(
         [
             mocker.call(validation_error),
@@ -2430,6 +2430,64 @@ def test_complete_task__already_in_progress__skip(mocker):
     # assert
     assert AIAgentAction.objects.filter(task=task).count() == 1
     attempt_complete_task_mock.assert_not_called()
+
+
+def test_complete_task__agent_inactive__skip(mocker):
+
+    """ The agent is disabled after the run is queued: nothing """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account, is_active=False)
+    attempt_complete_task_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_complete_task',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.complete_task(task_id=task.id)
+
+    # assert
+    assert not AIAgentAction.objects.filter(task=task).exists()
+    attempt_complete_task_mock.assert_not_called()
+
+
+def test_reply_to_comment__agent_inactive__skip(mocker):
+
+    """ The agent is disabled after the reply is queued: nothing """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account, is_active=False)
+    notification = Notification.objects.create(
+        account=account,
+        user=agent.user,
+        author=owner,
+        task=task,
+        type=NotificationType.MENTION,
+        text='Please call the customer.',
+    )
+    attempt_reply_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_reply_to_comment',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.reply_to_comment(notification_id=notification.id)
+
+    # assert
+    assert not AIAgentAction.objects.filter(
+        notification=notification,
+    ).exists()
+    notification.refresh_from_db()
+    assert notification.status == NotificationStatus.NEW
+    attempt_reply_mock.assert_not_called()
 
 
 def test_complete_task__already_completed__skip(mocker):
