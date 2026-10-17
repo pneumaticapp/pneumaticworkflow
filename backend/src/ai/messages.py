@@ -58,3 +58,12 @@ MSG_AI_0013 = lambda attempts, error: format_lazy(
     attempts=attempts,
     error=error,
 )
+MSG_AI_0014 = lambda model, error: format_lazy(
+    _(
+        'None of the provider models responded to the test request, '
+        'the last model "{model}" failed ({error}). '
+        'Check the provider settings.',
+    ),
+    model=model,
+    error=error,
+)

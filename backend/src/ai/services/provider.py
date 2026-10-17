@@ -5,7 +5,11 @@ from src.ai.exceptions import (
     AIProviderException,
     AIProviderInUseException,
 )
-from src.ai.messages import MSG_AI_0006, MSG_AI_0007, MSG_AI_0008
+from src.ai.messages import (
+    MSG_AI_0006,
+    MSG_AI_0008,
+    MSG_AI_0014,
+)
 from src.ai.models import AIAgent, AIProvider
 from src.ai.serializers import AIModelSerializer
 from src.ai.services.handlers import BaseHandler
@@ -40,8 +44,8 @@ class AIProviderService(
             api_key_encrypted=self.encrypt(api_key),
             vendor=vendor or AIVendor.CUSTOM,
         )
-        model = self._get_first_model()
-        self._create_first_completion(model=model)
+        models = self.get_models()
+        self._create_first_completion(models)
         self.instance.save()
         return self.instance
 
@@ -94,32 +98,35 @@ class AIProviderService(
             return AIVendor.OPENAI
         return self.instance.vendor
 
-    def _get_first_model(self) -> str:
-        try:
-            models = self.get_models()
-        except AIHandlerException as ex:
-            raise AIProviderException(
-                message=MSG_AI_0006(error=str(ex)),
-            ) from ex
-        if not models:
-            raise AIProviderException(message=MSG_AI_0006(error='empty list'))
-        return models[0]['slug']
+    def _create_first_completion(self, models: List[dict]):
 
-    def _create_first_completion(self, model: str):
-        try:
-            response = self.get_completion(
-                system_message='You are a office employee.',
-                user_message='Say "Hello world"',
-                model=model,
-            )
-        except AIHandlerException as ex:
-            raise AIProviderException(
-                message=MSG_AI_0007(error=str(ex)),
-            ) from ex
-        if not response:
-            raise AIProviderException(
-                message=MSG_AI_0008(model=model),
-            )
+        """ Checks the provider with a test request to its models
+            one by one until a model answers.
+
+            the first model fails, the second answers 'Hello world'
+            -> nothing
+
+            every model fails or answers with an empty response
+            -> AIProviderException with the last model and its error """
+
+        error = None
+        for model in models:
+            try:
+                response = self.get_completion(
+                    system_message='You are a office employee.',
+                    user_message='Say "Hello world"',
+                    model=model['slug'],
+                )
+                if not response:
+                    raise AIProviderException(
+                        message=MSG_AI_0008(model=model['slug']),
+                    )
+                return
+            except (AIHandlerException, AIProviderException) as ex:
+                error = ex
+        raise AIProviderException(
+            message=MSG_AI_0014(model=model['slug'], error=str(error)),
+        )
 
     def _get_handler(
         self,
@@ -143,7 +150,16 @@ class AIProviderService(
             models = self._get_cache(key=self.instance.id, default=[])
         if not models:
             handler = self._get_handler()
-            models = handler.get_models()
+            try:
+                models = handler.get_models()
+            except AIHandlerException as ex:
+                raise AIProviderException(
+                    message=MSG_AI_0006(error=str(ex)),
+                ) from ex
+            if not models:
+                raise AIProviderException(
+                    message=MSG_AI_0006(error='empty list'),
+                )
             self._set_cache(key=self.instance.id, value=models)
         return models
 
