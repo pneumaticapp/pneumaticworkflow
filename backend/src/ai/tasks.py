@@ -6,7 +6,8 @@ from src.ai.services.agent import AIAgentService, MAX_RUN_FAILURES
 from src.celery_app import periodic_lock
 
 from src.ai.models import AIAgent
-from src.processes.models.workflows.task import TaskPerformer
+from src.ai.queries import AIAgentNewTasksQuery
+from src.executor import RawSqlExecutor
 
 
 @shared_task(ignore_result=True)
@@ -28,22 +29,12 @@ def dispatch_ai_agent_new_tasks() -> None:
     with periodic_lock('dispatch_ai_agent_tasks') as acquired:
         if not acquired:
             return
-        assignments = set()
-        for performers in (
-            TaskPerformer.objects.ai_agent_user_assignments(),
-            TaskPerformer.objects.ai_agent_group_assignments(),
-        ):
-            assignments.update(
-                performers
-                .with_ai_agent_runs()
-                .filter(
-                    ai_agent_runs=F('ai_agent_failures'),
-                    ai_agent_runs__lt=MAX_RUN_FAILURES,
-                )
-                .values_list('task_id', 'ai_agent_id'),
+        query = AIAgentNewTasksQuery(max_run_failures=MAX_RUN_FAILURES)
+        for row in RawSqlExecutor.fetch(*query.get_sql()):
+            complete_ai_agent_task.delay(
+                task_id=row['task_id'],
+                agent_id=row['agent_id'],
             )
-        for task_id, agent_id in sorted(assignments):
-            complete_ai_agent_task.delay(task_id=task_id, agent_id=agent_id)
 
 
 @shared_task(ignore_result=True)

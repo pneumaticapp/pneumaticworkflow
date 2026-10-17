@@ -3,7 +3,7 @@ from contextlib import contextmanager
 import pytest
 
 from src.accounts.enums import NotificationType
-from src.accounts.models import Notification
+from src.accounts.models import Notification, UserGroup
 from src.ai.enums import AIAgentActionType
 from src.ai.models import AIAgentAction
 from src.ai.services.agent import MAX_RUN_FAILURES
@@ -301,6 +301,76 @@ def test_dispatch_ai_agent_new_tasks__group_member_completed__skip(mocker):
         type=PerformerType.GROUP_USER,
         is_completed=True,
     )
+    delay_mock = mocker.patch(
+        'src.ai.tasks.complete_ai_agent_task.delay',
+    )
+
+    # act
+    dispatch_ai_agent_new_tasks()
+
+    # assert
+    delay_mock.assert_not_called()
+
+
+def test_dispatch_ai_agent_new_tasks__run_failed__dispatched(mocker):
+
+    """ A task whose every run failed is dispatched again """
+
+    # arrange
+    task, agent = _create_agent_task(mocker)
+    for action in (
+        AIAgentActionType.TASK_IN_PROGRESS,
+        AIAgentActionType.TASK_FAILED,
+    ):
+        AIAgentAction.objects.create(
+            account=agent.account,
+            agent=agent,
+            task=task,
+            action=action,
+        )
+    delay_mock = mocker.patch(
+        'src.ai.tasks.complete_ai_agent_task.delay',
+    )
+
+    # act
+    dispatch_ai_agent_new_tasks()
+
+    # assert
+    delay_mock.assert_called_once_with(task_id=task.id, agent_id=agent.id)
+
+
+def test_dispatch_ai_agent_new_tasks__group_completed__skip(mocker):
+
+    """ The group completed the task: not dispatched """
+
+    # arrange
+    task, _ = _create_agent_task(mocker, via_user=False, via_group=True)
+    TaskPerformer.objects.filter(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+    ).update(is_completed=True)
+    delay_mock = mocker.patch(
+        'src.ai.tasks.complete_ai_agent_task.delay',
+    )
+
+    # act
+    dispatch_ai_agent_new_tasks()
+
+    # assert
+    delay_mock.assert_not_called()
+
+
+def test_dispatch_ai_agent_new_tasks__group_deleted__skip(mocker):
+
+    """ The group with the agent is deleted: not dispatched """
+
+    # arrange
+    task, _ = _create_agent_task(mocker, via_user=False, via_group=True)
+    group_id = TaskPerformer.objects.get(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+    ).group_id
+    UserGroup.objects.filter(id=group_id).update(is_deleted=True)
     delay_mock = mocker.patch(
         'src.ai.tasks.complete_ai_agent_task.delay',
     )
