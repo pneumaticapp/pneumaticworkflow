@@ -1246,10 +1246,65 @@ class TaskPerformerQuerySet(BaseQuerySet, BaseHardQuerySet):
         )
         return (direct_users | group_users).distinct()
 
+    def _ai_agent_assignments(self, user_path: str):
+
+        """ Not completed assignments of the active AI agents
+            to the active tasks of the running workflows.
+            user_path is the path to the agent user from the performer. """
+
+        return (
+            self.not_completed()
+            .exclude_directly_deleted()
+            .filter(
+                task__status=TaskStatus.ACTIVE,
+                task__workflow__status=WorkflowStatus.RUNNING,
+                **{
+                    f'{user_path}__is_ai': True,
+                    f'{user_path}__ai_agent__is_active': True,
+                },
+            )
+            .annotate(
+                ai_agent_id=F(f'{user_path}__ai_agent__id'),
+                ai_agent_user_id=F(f'{user_path}__id'),
+            )
+        )
+
+    def ai_agent_user_assignments(self):
+
+        """ The tasks assigned to the AI agents directly,
+            annotated with ai_agent_id """
+
+        return self.type_user()._ai_agent_assignments(user_path='user')
+
+    def ai_agent_group_assignments(self):
+
+        """ The tasks assigned to the groups with the AI agents,
+            one row per agent annotated with ai_agent_id.
+            Excludes the agents that completed their part of the task
+            that requires completion by all. """
+
+        from src.processes.models.workflows.task import TaskPerformer
+
+        agent_completed = (
+            TaskPerformer.objects
+            .type_group_user()
+            .completed()
+            .filter(
+                task_id=OuterRef('task_id'),
+                user_id=OuterRef('ai_agent_user_id'),
+            )
+        )
+        return (
+            self.type_group()
+            ._ai_agent_assignments(user_path='group__users')
+            .annotate(ai_agent_completed=Exists(agent_completed))
+            .filter(ai_agent_completed=False)
+        )
+
     def _count_ai_agent_actions(self, action: str) -> Coalesce:
 
-        """ Number of the performer agent actions of the type
-            since the task was started """
+        """ Number of the assigned agent actions of the type
+            since the task was started, requires ai_agent_id """
 
         from src.ai.models import AIAgentAction
 
@@ -1257,7 +1312,7 @@ class TaskPerformerQuerySet(BaseQuerySet, BaseHardQuerySet):
             AIAgentAction.objects
             .filter(
                 task_id=OuterRef('task_id'),
-                agent__user_id=OuterRef('user_id'),
+                agent_id=OuterRef('ai_agent_id'),
                 action=action,
                 date_created__gte=OuterRef('task__date_started'),
             )
@@ -1271,7 +1326,9 @@ class TaskPerformerQuerySet(BaseQuerySet, BaseHardQuerySet):
     def with_ai_agent_runs(self):
 
         """ Annotates the agent runs of the task since it was started
-            and the runs that failed with an unexpected error """
+            and the runs that failed with an unexpected error.
+            Applies to ai_agent_user_assignments and
+            ai_agent_group_assignments """
 
         from src.ai.enums import AIAgentActionType
 
