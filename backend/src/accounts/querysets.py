@@ -1,7 +1,8 @@
 import datetime
 from typing import List, Optional, Tuple
 
-from django.db.models import Count, Q
+from django.db.models import Count, IntegerField, OuterRef, Q, Subquery
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from src.accounts.enums import (
@@ -300,6 +301,38 @@ class NotificationsQuerySet(AccountBaseQuerySet):
             datetime__lt=not_read_timeout_date,
             is_notified_about_not_read=False,
             user_id__in=user_ids,
+        )
+
+    def _count_ai_agent_actions(self, action: str) -> Coalesce:
+
+        """ Number of the agent actions of the type for the notification """
+
+        from src.ai.models import AIAgentAction  # noqa: PLC0415
+
+        actions = (
+            AIAgentAction.objects
+            .filter(notification_id=OuterRef('id'), action=action)
+            .order_by()
+            .values('notification_id')
+            .annotate(count=Count('id'))
+            .values('count')
+        )
+        return Coalesce(Subquery(actions, output_field=IntegerField()), 0)
+
+    def with_ai_agent_runs(self):
+
+        """ Annotates the agent runs of the mention
+            and the runs that failed with an unexpected error """
+
+        from src.ai.enums import AIAgentActionType  # noqa: PLC0415
+
+        return self.annotate(
+            ai_agent_runs=self._count_ai_agent_actions(
+                AIAgentActionType.MENTION_IN_PROGRESS,
+            ),
+            ai_agent_failures=self._count_ai_agent_actions(
+                AIAgentActionType.MENTION_FAILED,
+            ),
         )
 
 
