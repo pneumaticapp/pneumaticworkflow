@@ -208,7 +208,10 @@ class AIProvider(
 
     @property
     def api_key_prefix(self) -> str:
-        return self.api_key[:self.API_KEY_PREFIX_DISPLAY_LENGTH]
+        api_key = self.api_key
+        if len(api_key) <= self.API_KEY_PREFIX_DISPLAY_LENGTH:
+            return '*' * len(api_key)
+        return api_key[:self.API_KEY_PREFIX_DISPLAY_LENGTH]
 
     def __str__(self):
         return self.name
