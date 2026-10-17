@@ -478,7 +478,7 @@ class AIAgentService(BaseModelService):
             errors_stack = errors_stack or []
             errors_stack.append((fields_values, error))
             new_attempt = attempt + 1
-            if new_attempt > 10:
+            if new_attempt > 5:
                 self._raise_attempt_error(
                     task=task,
                     errors_stack=errors_stack,
@@ -661,6 +661,10 @@ class AIAgentService(BaseModelService):
             -> the actions 'task_in_progress' and 'task_failed',
                the error is raised
 
+            the attempts to complete the task are exceeded
+            -> the actions 'task_attempts_exceeded' and 'task_failed',
+               the error is raised
+
             the task is already in progress or completed
             -> nothing """
 
@@ -668,8 +672,6 @@ class AIAgentService(BaseModelService):
         if task:
             try:
                 fields_values = self._attempt_complete_task(task=task)
-            except AIAgentAttemptsExceededException:
-                raise
             except Exception as ex:
                 self._handle_task_complete_failure(task=task, ex=ex)
                 raise
@@ -688,14 +690,16 @@ class AIAgentService(BaseModelService):
 
             notification_id 7
             -> the notification is read, the action
-               'mention_in_progress' is created """
+               'mention_in_progress' is created
+
+            the attempts to reply are exceeded
+            -> the actions 'mention_in_progress' and 'mention_failed',
+               the error is raised """
 
         notification = self._get_notification(notification_id)
         if notification:
             try:
                 self._attempt_reply_to_comment(notification=notification)
-            except AIAgentAttemptsExceededException:
-                raise
             except Exception as ex:
                 self._handle_reply_to_comment_failure(
                     notification=notification,
