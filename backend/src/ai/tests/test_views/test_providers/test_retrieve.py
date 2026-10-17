@@ -61,7 +61,7 @@ def test_retrieve__ok(api_client):
     assert response.data['id'] == provider.id
     assert response.data['name'] == provider.name
     assert response.data['base_url'] == provider.base_url
-    assert response.data['api_key_prefix'] == provider.api_key[:14]
+    assert response.data['api_key_prefix'] == provider.api_key[:10]
     assert response.data['usage'] == []
     assert 'api_key' not in response.data
 
