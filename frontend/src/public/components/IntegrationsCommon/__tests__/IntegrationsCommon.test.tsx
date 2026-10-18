@@ -1,18 +1,19 @@
-// <reference types="jest" />
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useDispatch, useSelector } from 'react-redux';
-import { intlMock } from '../../__stubs__/intlMock';
-import { IntegrationsCommon } from './IntegrationsCommon';
-import { loadApiKeys, createApiKey, deleteApiKey, clearNewlyCreatedKey } from '../../redux/actions';
-import { copyToClipboard } from '../../utils/helpers';
+import { IntlProvider } from 'react-intl';
+import { enMessages } from '../../../lang/locales/en_US';
+import { IntegrationsCommon } from '../IntegrationsCommon';
+import { loadApiKeys, createApiKey, deleteApiKey, clearNewlyCreatedKey } from '../../../redux/actions';
+import { copyToClipboard } from '../../../utils/helpers';
+import { NotificationManager } from '../../UI/Notifications';
 
-jest.mock('../../utils/helpers', () => ({
+jest.mock('../../../utils/helpers', () => ({
   copyToClipboard: jest.fn(),
 }));
 
-jest.mock('../UI/Buttons/Button', () => ({
+jest.mock('../../UI/Buttons/Button', () => ({
   Button: ({ label, onClick, 'data-testid': testId, className, type }: any) => (
     <button onClick={onClick} data-testid={testId} className={className} type={type}>
       {label}
@@ -20,33 +21,50 @@ jest.mock('../UI/Buttons/Button', () => ({
   ),
 }));
 
-jest.mock('../UI/Fields/InputField', () => ({
+jest.mock('../../UI/Fields/InputField', () => ({
   InputField: ({ value, onChange, placeholder, 'data-testid': testId, autoFocus }: any) => (
     <input value={value} onChange={onChange} placeholder={placeholder} data-testid={testId} autoFocus={autoFocus} />
   ),
 }));
 
-jest.mock('../UI/Typeography/Header', () => ({
+jest.mock('../../UI/Typeography/Header', () => ({
   Header: ({ children, className }: any) => <p className={className}>{children}</p>,
 }));
 
-jest.mock('../PageTitle/PageTitle', () => ({
+jest.mock('../../PageTitle/PageTitle', () => ({
   PageTitle: () => <div>Page Title</div>,
 }));
 
+jest.mock('../../UI/Modal/Modal', () => ({
+  Modal: ({ isOpen, children }: { isOpen: boolean; children: React.ReactNode }) =>
+    isOpen ? <div>{children}</div> : null,
+}));
+
+jest.mock('../../UI/Notifications', () => ({
+  NotificationManager: { success: jest.fn() },
+}));
+
+jest.mock('../AIProviders', () => ({
+  AIProviders: () => <section data-testid="ai-providers-section" />,
+}));
+
+const renderPage = () =>
+  render(
+    <IntlProvider locale="en-US" messages={enMessages}>
+      <IntegrationsCommon />
+    </IntlProvider>,
+  );
+
 describe('IntegrationsCommon', () => {
   const mockDispatch = jest.fn();
-  const t = (id: string) => intlMock.formatMessage({ id });
+  const t = (id: keyof typeof enMessages) => enMessages[id];
   const TEXT = {
     loading: t('integrations.loading-api-key'),
     neverUsed: t('integrations.api-key-never-used'),
     deleteConfirm: t('integrations.delete-api-key-confirm'),
-    copied: t('integrations.api-key-copied'),
     createBtn: t('integrations.create-api-key'),
     doneBtn: t('integrations.api-key-done'),
-    copyBtn: t('integrations.api-key-copy'),
     revokeBtn: t('integrations.api-key-revoke'),
-    cancelBtn: t('integrations.cancel'),
   };
 
   beforeEach(() => {
@@ -54,7 +72,6 @@ describe('IntegrationsCommon', () => {
     (copyToClipboard as jest.Mock).mockClear();
     mockDispatch.mockClear();
 
-    // Default mock state for useSelector
     (useSelector as unknown as jest.Mock).mockImplementation((selectorFn) => {
       return selectorFn({
         integrations: {
@@ -81,14 +98,15 @@ describe('IntegrationsCommon', () => {
       });
     });
 
-    render(<IntegrationsCommon />);
+    renderPage();
     expect(screen.getByText(TEXT.loading)).toBeInTheDocument();
     expect(mockDispatch).toHaveBeenCalledWith(loadApiKeys());
   });
 
   it('renders empty state correctly', () => {
-    render(<IntegrationsCommon />);
+    renderPage();
     expect(screen.getByTestId('empty-keys-message')).toBeInTheDocument();
+    expect(screen.getByTestId('ai-providers-section')).toBeInTheDocument();
   });
 
   it('renders api keys list', () => {
@@ -105,7 +123,7 @@ describe('IntegrationsCommon', () => {
       });
     });
 
-    render(<IntegrationsCommon />);
+    renderPage();
 
     expect(screen.getByTestId('api-keys-list')).toBeInTheDocument();
     expect(screen.getByText('Key 1')).toBeInTheDocument();
@@ -114,11 +132,11 @@ describe('IntegrationsCommon', () => {
 
     expect(screen.getByText('Key 2')).toBeInTheDocument();
     expect(screen.getByText('pn_live_222••••••••')).toBeInTheDocument();
-    expect(screen.getByText(/integrations.api-key-last-used/)).toBeInTheDocument();
+    expect(screen.getByText(/Last used:/)).toBeInTheDocument();
   });
 
   it('handles create api key flow', () => {
-    render(<IntegrationsCommon />);
+    renderPage();
 
     userEvent.click(screen.getByRole('button', { name: TEXT.createBtn }));
     expect(screen.getByTestId('create-key-modal')).toBeInTheDocument();
@@ -126,7 +144,7 @@ describe('IntegrationsCommon', () => {
     const input = screen.getByTestId('api-key-name-input');
     userEvent.type(input, 'New Test Key');
 
-    userEvent.click(screen.getByRole('button', { name: TEXT.createBtn }));
+    userEvent.click(screen.getByTestId('submit-create-key'));
     expect(mockDispatch).toHaveBeenCalledWith(createApiKey({ name: 'New Test Key' }));
     expect(screen.queryByTestId('create-key-modal')).not.toBeInTheDocument();
   });
@@ -141,14 +159,12 @@ describe('IntegrationsCommon', () => {
       });
     });
 
-    render(<IntegrationsCommon />);
+    renderPage();
 
-    // Click revoke (shows confirmation)
     userEvent.click(screen.getByRole('button', { name: TEXT.revokeBtn }));
     expect(screen.getByText(TEXT.deleteConfirm)).toBeInTheDocument();
 
-    // Click confirm revoke
-    userEvent.click(screen.getByRole('button', { name: TEXT.revokeBtn }));
+    userEvent.click(screen.getByTestId('confirm-revoke-btn'));
     expect(mockDispatch).toHaveBeenCalledWith(deleteApiKey({ id: 1 }));
   });
 
@@ -161,16 +177,68 @@ describe('IntegrationsCommon', () => {
       });
     });
 
-    render(<IntegrationsCommon />);
+    renderPage();
 
     expect(screen.getByTestId('new-key-modal')).toBeInTheDocument();
     expect(screen.getByTestId('raw-key-value')).toHaveTextContent('pn_live_secret_key_abc');
 
-    userEvent.click(screen.getByRole('button', { name: TEXT.copyBtn }));
+    userEvent.click(screen.getByTestId('copy-inline-btn'));
     expect(copyToClipboard).toHaveBeenCalledWith('pn_live_secret_key_abc');
-    expect(screen.getByRole('button', { name: TEXT.copied })).toBeInTheDocument();
+    expect(NotificationManager.success).toHaveBeenCalledWith({ message: 'integrations.api-key-copied' });
 
     userEvent.click(screen.getByRole('button', { name: TEXT.doneBtn }));
+    expect(mockDispatch).toHaveBeenCalledWith(clearNewlyCreatedKey());
+  });
+
+  it('clears the key name when creation is cancelled', () => {
+    renderPage();
+
+    userEvent.click(screen.getByTestId('create-api-key-btn'));
+    userEvent.type(screen.getByTestId('api-key-name-input'), 'Discarded key');
+    userEvent.click(screen.getByTestId('cancel-create-key'));
+    userEvent.click(screen.getByTestId('create-api-key-btn'));
+
+    expect(screen.getByTestId('api-key-name-input')).toHaveValue('');
+    expect(mockDispatch).not.toHaveBeenCalledWith(createApiKey({ name: 'Discarded key' }));
+  });
+
+  it('creates an unnamed key without an empty name', () => {
+    renderPage();
+
+    userEvent.click(screen.getByTestId('create-api-key-btn'));
+    userEvent.click(screen.getByTestId('submit-create-key'));
+
+    expect(mockDispatch).toHaveBeenCalledWith(createApiKey({ name: undefined }));
+    expect(screen.queryByTestId('create-key-modal')).not.toBeInTheDocument();
+  });
+
+  it('cancels key revocation without deleting the key', () => {
+    (useSelector as unknown as jest.Mock).mockImplementation((selectorFn) =>
+      selectorFn({
+        integrations: {
+          apiKeys: {
+            data: [{ id: 1, name: 'Key 1', prefix: 'pn_live_111', lastUsedAt: null }],
+            isLoading: false,
+            newlyCreatedKey: null,
+          },
+        },
+      }),
+    );
+    renderPage();
+
+    userEvent.click(screen.getByTestId('revoke-1'));
+    userEvent.click(screen.getByTestId('cancel-revoke-btn'));
+
+    expect(screen.queryByTestId('revoke-key-modal')).not.toBeInTheDocument();
+    expect(mockDispatch).not.toHaveBeenCalledWith(deleteApiKey({ id: 1 }));
+  });
+
+  it('clears the newly created key when the page is unmounted', () => {
+    const { unmount } = renderPage();
+    mockDispatch.mockClear();
+
+    unmount();
+
     expect(mockDispatch).toHaveBeenCalledWith(clearNewlyCreatedKey());
   });
 });
