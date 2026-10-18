@@ -5,6 +5,7 @@ import Select, { components } from 'react-select';
 import { FieldHookConfig, useField } from 'formik';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import OutsideClickHandler from 'react-outside-click-handler';
+import { useIntl } from 'react-intl';
 
 import { ArrowDropdownIcon, ExpandIcon, RoundClearIconMd } from '../../icons';
 
@@ -264,7 +265,9 @@ const Option = (props: any) => {
 
 export function FormikDropdownList(props: IDropdownListProps<TDropdownOptionBase> & FieldHookConfig<string>) {
   const { name, onBlur: handleBlur, options, type } = props;
+  const { messages, formatMessage } = useIntl();
   const [field, meta, { setTouched, setValue }] = useField(name);
+  const errorMessage = meta.error && messages[meta.error] ? formatMessage({ id: meta.error }) : meta.error;
 
   const onChange = ({ value }: any) => setValue(value);
   const onBlur = (event: React.FocusEvent<HTMLInputElement>) => {
@@ -280,7 +283,7 @@ export function FormikDropdownList(props: IDropdownListProps<TDropdownOptionBase
       onBlur={onBlur}
       // null, not undefined: with undefined react-select keeps displaying its previous internal selection.
       value={options.find((option) => option.value === field.value) ?? null}
-      {...(meta.touched && meta.error && type !== 'hidden' && { errorMessage: meta.error })}
+      {...(meta.touched && errorMessage && type !== 'hidden' && { errorMessage })}
     />
   );
 }

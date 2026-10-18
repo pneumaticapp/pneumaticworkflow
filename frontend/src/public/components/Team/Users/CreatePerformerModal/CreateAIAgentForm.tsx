@@ -12,6 +12,7 @@ import { FormikDropdownList } from '../../../UI/DropdownList';
 import { FormikInputField } from '../../../UI/Fields/InputField';
 import { FormikTextareaField } from '../../../UI/Fields/TextareaField';
 import { ModalBody, ModalFooter } from '../../../UI/BaseModal';
+import { getErrorsObject } from '../../../../utils/formik/getErrorsObject';
 import { validateRequired } from '../../../../utils/validators';
 import { uploadUserAvatar } from '../../../../utils/uploadFiles';
 import { getAIProviderModelsState, getAIProviders } from '../../../../redux/selectors/ai';
@@ -57,17 +58,14 @@ export function CreateAIAgentForm({
       innerRef={formikRef}
       initialValues={initialValues}
       validateOnMount
-      validate={(values) => {
-        const providerError = validateRequired(values.providerId);
-        const modelError = validateRequired(values.model);
-
-        return {
-          ...(validateRequired(values.name) && { name: validateRequired(values.name) }),
-          ...(providerError && { providerId: formatMessage({ id: providerError }) }),
-          ...(modelError && { model: formatMessage({ id: modelError }) }),
-          ...(validateRequired(values.systemPrompt) && { systemPrompt: validateRequired(values.systemPrompt) }),
-        };
-      }}
+      validate={(values) =>
+        getErrorsObject(values, {
+          name: validateRequired,
+          providerId: validateRequired,
+          model: validateRequired,
+          systemPrompt: validateRequired,
+        })
+      }
       onSubmit={onSubmit}
     >
       {({ dirty, handleSubmit, isValid, setFieldValue, values }) => {
