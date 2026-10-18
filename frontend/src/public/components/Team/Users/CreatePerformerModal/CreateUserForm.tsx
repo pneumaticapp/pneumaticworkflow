@@ -26,7 +26,7 @@ const formatStatusOption = (
   selectedValue: IStatusOption['value'],
 ) => {
   if (context === 'menu' && value === selectedValue) {
-    return <span className={styles['modal__option--selected']}>{label}</span>;
+    return <span className={styles['modal__option_selected']}>{label}</span>;
   }
   return label;
 };
