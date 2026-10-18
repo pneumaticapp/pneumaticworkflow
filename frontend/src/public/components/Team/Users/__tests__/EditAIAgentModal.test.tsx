@@ -50,12 +50,6 @@ describe('EditAIAgentModal', () => {
     (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
   });
 
-  it('renders nothing without an agent', () => {
-    const { container } = render(<EditAIAgentModal agent={null} onClose={onClose} />);
-
-    expect(container).toBeEmptyDOMElement();
-  });
-
   it('maps the agent to form initial values', () => {
     render(<EditAIAgentModal agent={buildAgent()} onClose={onClose} />);
 

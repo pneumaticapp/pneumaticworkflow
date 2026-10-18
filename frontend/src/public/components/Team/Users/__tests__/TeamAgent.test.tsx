@@ -75,8 +75,9 @@ jest.mock('rc-switch', () => ({ checked, onChange, disabled }: ISwitchMockProps)
 ));
 
 jest.mock('../EditAIAgentModal', () => ({
-  EditAIAgentModal: ({ agent }: { agent: IAIAgent | null }) =>
-    agent ? <div data-testid="edit-ai-agent-modal" data-agent-id={agent.id} /> : null,
+  EditAIAgentModal: ({ agent }: { agent: IAIAgent }) => (
+    <div data-testid="edit-ai-agent-modal" data-agent-id={agent.id} />
+  ),
 }));
 
 const buildAgent = (overrides: Partial<IAIAgent> = {}): IAIAgent => ({

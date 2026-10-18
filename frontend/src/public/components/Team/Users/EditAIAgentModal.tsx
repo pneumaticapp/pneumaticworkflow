@@ -2,26 +2,17 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
-import type { IAIAgent } from '../../../api/ai/types';
 import { BaseModal, ModalHeader } from '../../UI/BaseModal';
 import { updateAIAgent } from '../../../redux/ai/slice';
 import { CreateAIAgentForm } from './CreatePerformerModal/CreateAIAgentForm';
 import type { IAIAgentFormValues } from './CreatePerformerModal/types';
+import type { IEditAIAgentModalProps } from './types';
 
 import modalStyles from './CreatePerformerModal/CreatePerformerModal.css';
-
-export interface IEditAIAgentModalProps {
-  agent: IAIAgent | null;
-  onClose(): void;
-}
 
 export function EditAIAgentModal({ agent, onClose }: IEditAIAgentModalProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-
-  if (!agent) {
-    return null;
-  }
 
   const initialValues: IAIAgentFormValues = {
     name: agent.name,

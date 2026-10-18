@@ -13,3 +13,13 @@ export interface ITeamUserCardProps {
   isSubscribed: boolean;
   onOpenVacationModal(user: TUserListItem): void;
 }
+
+export interface ITeamAgentProps {
+  agent: IAIAgent;
+  providerName?: string;
+}
+
+export interface IEditAIAgentModalProps {
+  agent: IAIAgent;
+  onClose(): void;
+}

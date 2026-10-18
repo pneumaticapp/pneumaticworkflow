@@ -5,7 +5,6 @@ import Switch from 'rc-switch';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type { IAIAgent } from '../../../api/ai/types';
 import { Dropdown } from '../../UI';
 import type { TDropdownOption } from '../../UI';
 import { Button } from '../../UI/Buttons/Button';
@@ -16,13 +15,9 @@ import { deleteAIAgent, updateAIAgent } from '../../../redux/ai/slice';
 import { getIsAISaving } from '../../../redux/selectors/ai';
 import { EditAIAgentModal } from './EditAIAgentModal';
 import { getAgentInitials } from './getAgentInitials';
+import type { ITeamAgentProps } from './types';
 
 import styles from './TeamAgent.css';
-
-export interface ITeamAgentProps {
-  agent: IAIAgent;
-  providerName?: string;
-}
 
 export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
   const { formatMessage } = useIntl();
