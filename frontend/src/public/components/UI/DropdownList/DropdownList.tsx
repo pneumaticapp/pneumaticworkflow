@@ -47,8 +47,11 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
   isMulti,
   ...restProps
 }: IDropdownListProps<TOption>) {
+  const { messages, formatMessage } = useIntl();
   const [isOpen, setIsOpen] = useState(false);
   const [filterValue, setFilterValue] = useState('');
+  const { errorMessage } = restProps;
+  const errorText = errorMessage && messages[errorMessage] ? formatMessage({ id: errorMessage }) : errorMessage;
 
   const handleInputChange = (inputValue: string, action: any) => {
     if (action.action === 'set-value') {
@@ -100,11 +103,11 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
             classNamePrefix="react-select"
             components={componentsMap[controlSize]}
             onInputChange={handleInputChange}
-            className={classnames(restProps.errorMessage && styles['has-error'])}
+            className={classnames(errorMessage && styles['has-error'])}
             {...restProps}
           />
 
-          {restProps.errorMessage && <p className={styles['error-text']}>{restProps.errorMessage}</p>}
+          {errorText && <p className={styles['error-text']}>{errorText}</p>}
         </div>
       </div>
     );
@@ -142,7 +145,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
           {...(restProps.staticMenu && { menuIsOpen: true })}
         />
       </OutsideClickHandler>
-      {restProps.errorMessage && <p className={styles['error-text']}>{restProps.errorMessage}</p>}
+      {errorText && <p className={styles['error-text']}>{errorText}</p>}
     </div>
   );
 }
@@ -266,9 +269,7 @@ const Option = (props: any) => {
 
 export function FormikDropdownList(props: IDropdownListProps<TDropdownOptionBase> & FieldHookConfig<string>) {
   const { name, onBlur: handleBlur, options, type } = props;
-  const { messages, formatMessage } = useIntl();
   const [field, meta, { setTouched, setValue }] = useField(name);
-  const errorMessage = meta.error && messages[meta.error] ? formatMessage({ id: meta.error }) : meta.error;
 
   const onChange = ({ value }: any) => setValue(value);
   const onBlur = (event: React.FocusEvent<HTMLInputElement>) => {
@@ -284,7 +285,7 @@ export function FormikDropdownList(props: IDropdownListProps<TDropdownOptionBase
       onBlur={onBlur}
       // null, not undefined: with undefined react-select keeps displaying its previous internal selection.
       value={options.find((option) => option.value === field.value) ?? null}
-      {...(meta.touched && errorMessage && type !== 'hidden' && { errorMessage })}
+      {...(meta.touched && meta.error && type !== 'hidden' && { errorMessage: meta.error })}
     />
   );
 }

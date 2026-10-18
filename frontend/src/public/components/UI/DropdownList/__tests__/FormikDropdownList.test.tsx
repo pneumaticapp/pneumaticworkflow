@@ -2,7 +2,7 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { Formik } from 'formik';
 
-import { FormikDropdownList } from '../DropdownList';
+import { DropdownList, FormikDropdownList } from '../DropdownList';
 
 const renderWithError = (error: string) =>
   render(
@@ -28,5 +28,11 @@ describe('FormikDropdownList', () => {
     renderWithError('Select a vendor');
 
     expect(screen.getByText('Select a vendor')).toBeInTheDocument();
+  });
+
+  it('translates a message id passed straight to DropdownList', () => {
+    render(<DropdownList label="Vendor" options={[]} errorMessage="validation.field-required" />);
+
+    expect(screen.getByText('This field is required')).toBeInTheDocument();
   });
 });
