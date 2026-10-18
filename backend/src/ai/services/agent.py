@@ -11,10 +11,18 @@ from src.accounts.models import Notification
 from src.accounts.services.user import UserService
 from src.ai.exceptions import (
     AIAgentAttemptsExceededException,
+    AIAgentException,
     AIAgentNameNotUniqueException,
+    AIProviderException,
 )
-from src.ai.messages import MSG_AI_0009, MSG_AI_0010
-from src.ai.models import AIAgent, AIAgentAction
+from src.ai.messages import (
+    MSG_AI_0009,
+    MSG_AI_0010,
+    MSG_AI_0011,
+    MSG_AI_0013,
+    MSG_AI_0015,
+)
+from src.ai.models import AIAgent, AIAgentAction, AIProvider
 from src.ai.services.provider import AIProviderService
 from src.ai.services.response import TaskResponseService
 from src.ai.services.user_message import TaskUserMessageService
@@ -32,6 +40,8 @@ from src.storage.enums import AccessType, SourceType
 from src.storage.services import FileServiceClient
 
 UserModel = get_user_model()
+
+MAX_RUN_FAILURES = 3
 
 
 class AIAgentService(BaseModelService):
@@ -59,21 +69,34 @@ class AIAgentService(BaseModelService):
         name: str,
         model: str,
         system_prompt: str,
+        provider: AIProvider,
         is_active: bool = True,
         photo: Optional[str] = None,
-        provider_id: Optional[int] = None,
         **kwargs,
     ):
 
         """ Creates the agent along with the user it acts on behalf of.
             The user is an admin with all the subscriptions disabled.
 
-            name 'Operator', model 'gpt-4o', provider_id 3
+            name 'Operator', model 'gpt-4o', provider <AIProvider 3>
             -> AIAgent 'Operator' with a user 'Operator' (is_ai=True)
 
             the account already has an agent 'Operator'
-            -> AIAgentNameNotUniqueException """
+            -> AIAgentNameNotUniqueException
 
+            the model does not respond to a test request
+            -> AIAgentException, nothing is created """
+
+        provider_service = AIProviderService(
+            user=self.user,
+            instance=provider,
+            is_superuser=self.is_superuser,
+            auth_type=self.auth_type,
+        )
+        try:
+            provider_service._create_first_completion(models=[{'slug': model}])
+        except AIProviderException as ex:
+            raise AIAgentException(message=MSG_AI_0015(model=model)) from ex
         user_service = UserService(
             user=self.user,
             is_superuser=self.is_superuser,
@@ -103,7 +126,7 @@ class AIAgentService(BaseModelService):
                     is_active=is_active,
                     system_prompt=system_prompt,
                     photo=photo,
-                    provider_id=provider_id,
+                    provider=provider,
                     user=agent_user,
                 )
             except IntegrityError as ex:
@@ -321,7 +344,7 @@ class AIAgentService(BaseModelService):
             errors_stack with the values {'phone-1': 'call me'} and
             the error '- `phone-1`: Value should be a string.'
             -> a report file, a comment with a link to it,
-               the action 'error' and
+               the action 'task_attempts_exceeded' and
                AIAgentAttemptsExceededException """
 
         text = self._get_report_text(errors_stack=errors_stack)
@@ -342,7 +365,7 @@ class AIAgentService(BaseModelService):
             account_id=self.instance.account_id,
             agent_id=self.instance.id,
             task_id=task.id,
-            action=AIAgentActionType.ERROR,
+            action=AIAgentActionType.TASK_ATTEMPTS_EXCEEDED,
             text=f'{message}\n{url}',
         )
         raise AIAgentAttemptsExceededException(message=message)
@@ -440,6 +463,14 @@ class AIAgentService(BaseModelService):
             for name, message in errors
         )
 
+    def _attempt_reply_to_comment(
+        self,
+        notification: Notification,
+        errors_stack: Optional[List[Tuple[dict, str]]] = None,
+        attempt: int = 1,
+    ):
+        pass
+
     def _attempt_complete_task(
         self,
         task: Task,
@@ -463,7 +494,7 @@ class AIAgentService(BaseModelService):
             errors_stack = errors_stack or []
             errors_stack.append((fields_values, error))
             new_attempt = attempt + 1
-            if new_attempt > 10:
+            if new_attempt > 5:
                 self._raise_attempt_error(
                     task=task,
                     errors_stack=errors_stack,
@@ -476,6 +507,154 @@ class AIAgentService(BaseModelService):
 
         return fields_values
 
+    def _handle_task_complete_failure(self, task: Task, ex: Exception):
+
+        """ Logs a run interrupted by an unexpected error. The dispatcher
+            retries the task until the failures reach MAX_RUN_FAILURES,
+            the last failure is reported to the task performers.
+
+            AIProviderRequestFailedException on the first run
+            -> the action 'task_failed' with the error text
+
+            the same error on the third run
+            -> the action 'task_failed' and a comment on the task
+               with the error text """
+
+        error = str(ex) or ex.__class__.__name__
+        AIAgentAction.objects.create(
+            account_id=self.instance.account_id,
+            agent_id=self.instance.id,
+            task_id=task.id,
+            action=AIAgentActionType.TASK_FAILED,
+            text=error,
+        )
+        failures = (
+            AIAgentAction.objects
+            .by_agent(self.instance.id)
+            .by_task(task.id)
+            .by_action(AIAgentActionType.TASK_FAILED)
+            .filter(date_created__gte=task.date_started)
+            .count()
+        )
+        if failures >= MAX_RUN_FAILURES:
+            self._create_comment(
+                task=task,
+                text=str(
+                    MSG_AI_0011(attempts=MAX_RUN_FAILURES, error=error),
+                ),
+            )
+
+    def _handle_reply_to_comment_failure(
+        self,
+        notification: Notification,
+        ex: Exception,
+    ):
+
+        """ Logs a reply interrupted by an unexpected error. The dispatcher
+            retries the mention until the failures reach MAX_RUN_FAILURES,
+            the last failure is reported in the task comments.
+
+            AIProviderRequestFailedException on the first run
+            -> the action 'mention_failed' with the error text
+
+            the same error on the third run
+            -> the action 'mention_failed' and a comment on the task
+               with the error text """
+
+        error = str(ex) or ex.__class__.__name__
+        AIAgentAction.objects.create(
+            account_id=self.instance.account_id,
+            agent_id=self.instance.id,
+            task_id=notification.task_id,
+            notification_id=notification.id,
+            action=AIAgentActionType.MENTION_FAILED,
+            text=error,
+        )
+        failures = (
+            AIAgentAction.objects
+            .by_agent(self.instance.id)
+            .by_notification(notification.id)
+            .by_action(AIAgentActionType.MENTION_FAILED)
+            .count()
+        )
+        if failures >= MAX_RUN_FAILURES:
+            self._create_comment(
+                task=notification.task,
+                text=str(
+                    MSG_AI_0013(attempts=MAX_RUN_FAILURES, error=error),
+                ),
+            )
+
+    def _get_notification(
+        self,
+        notification_id: int,
+    ) -> Optional[Notification]:
+
+        """ Allow start a reply if the mention is not in progress:
+            locks the notification and checks the runs like
+            the dispatcher does. """
+
+        with transaction.atomic():
+            notification = (
+                Notification.objects
+                .select_for_update()
+                .filter(id=notification_id)
+                .first()
+            )
+            if not notification:
+                return None
+            notification_is_blocked = (
+                AIAgentAction.objects
+                .by_agent(self.instance.id)
+                .by_notification(notification.id)
+                .type_notification()
+                .exists()
+            )
+            if notification_is_blocked:
+                return None
+            notification.status = NotificationStatus.READ
+            notification.save(update_fields=['status'])
+            AIAgentAction.objects.create(
+                account_id=self.instance.account_id,
+                agent_id=self.instance.id,
+                task_id=notification.task_id,
+                notification_id=notification.id,
+                action=AIAgentActionType.MENTION_IN_PROGRESS,
+            )
+        return notification
+
+    def _get_task(self, task_id: int) -> Optional[Task]:
+
+        """ Allow start a complete task if the task is not in progress:
+            locks the task and checks the runs like the dispatcher does.
+
+        """
+
+        with transaction.atomic():
+            # select_for_update prevents the task from being run again
+            task = Task.objects.select_for_update().filter(id=task_id).first()
+            if not task:
+                return None
+            task_is_blocked = (
+                AIAgentAction.objects
+                .by_agent(self.instance.id)
+                .by_task(task.id)
+                .type_task()
+                .filter(date_created__gte=task.date_started)
+                .exists()
+            )
+            # Check that the task is not already being handled
+            # by another AI agent
+            if task_is_blocked:
+                return None
+            AIAgentAction.objects.create(
+                account_id=self.instance.account_id,
+                agent_id=self.instance.id,
+                task_id=task.id,
+                action=AIAgentActionType.TASK_IN_PROGRESS,
+            )
+        return task
+
     def complete_task(self, task_id: int):
 
         """ Fills in the task output with an agent answer, completes
@@ -484,23 +663,36 @@ class AIAgentService(BaseModelService):
             task_id 42
             -> the task is completed, the actions 'task_in_progress' and
                'task_completed' with the text '{"phone-1": "+1 202..."}'
-               are created """
+               are created
 
-        task = Task.objects.filter(id=task_id).first()
-        AIAgentAction.objects.create(
-            account_id=self.instance.account_id,
-            agent_id=self.instance.id,
-            task_id=task.id,
-            action=AIAgentActionType.TASK_IN_PROGRESS,
-        )
-        fields_values = self._attempt_complete_task(task=task)
-        AIAgentAction.objects.create(
-            account_id=self.instance.account_id,
-            agent_id=self.instance.id,
-            task_id=task.id,
-            action=AIAgentActionType.TASK_COMPLETED,
-            text=json.dumps(fields_values, ensure_ascii=False),
-        )
+            the AI provider is unavailable
+            -> the actions 'task_in_progress' and 'task_failed',
+               the error is raised
+
+            the attempts to complete the task are exceeded
+            -> the actions 'task_attempts_exceeded' and 'task_failed',
+               the error is raised
+
+            the task is already in progress or completed
+            or the agent is inactive
+            -> nothing """
+
+        if not self.instance.is_active:
+            return
+        task = self._get_task(task_id)
+        if task:
+            try:
+                fields_values = self._attempt_complete_task(task=task)
+            except Exception as ex:
+                self._handle_task_complete_failure(task=task, ex=ex)
+                raise
+            AIAgentAction.objects.create(
+                account_id=self.instance.account_id,
+                agent_id=self.instance.id,
+                task_id=task.id,
+                action=AIAgentActionType.TASK_COMPLETED,
+                text=json.dumps(fields_values, ensure_ascii=False),
+            )
 
     def reply_to_comment(self, notification_id: int):
 
@@ -509,16 +701,32 @@ class AIAgentService(BaseModelService):
 
             notification_id 7
             -> the notification is read, the action
-               'mention_in_progress' is created """
+               'mention_in_progress' is created
 
-        notification = Notification.objects.filter(id=notification_id).first()
+            the attempts to reply are exceeded
+            -> the actions 'mention_in_progress' and 'mention_failed',
+               the error is raised
+
+            the mention is already in progress, completed or failed
+            or the agent is inactive
+            -> nothing """
+
+        if not self.instance.is_active:
+            return
+        notification = self._get_notification(notification_id)
         if notification:
-            notification.status = NotificationStatus.READ
-            notification.save(update_fields=['status'])
+            try:
+                self._attempt_reply_to_comment(notification=notification)
+            except Exception as ex:
+                self._handle_reply_to_comment_failure(
+                    notification=notification,
+                    ex=ex,
+                )
+                raise
             AIAgentAction.objects.create(
                 account_id=notification.account_id,
                 agent_id=self.instance.id,
                 task=notification.task,
-                action=AIAgentActionType.MENTION_IN_PROGRESS,
+                action=AIAgentActionType.MENTION_COMPLETED,
                 notification_id=notification_id,
             )

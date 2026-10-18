@@ -1,6 +1,6 @@
 from django.db.models import QuerySet
 
-from src.ai.enums import OpenAIPromptTarget
+from src.ai.enums import OpenAIPromptTarget, AIAgentActionType
 from src.generics.querysets import AccountBaseQuerySet
 
 
@@ -38,5 +38,26 @@ class AIAgentActionQuerySet(QuerySet):
     def by_task(self, task_id: int):
         return self.filter(task_id=task_id)
 
+    def by_notification(self, notification_id: int):
+        return self.filter(notification_id=notification_id)
+
     def by_action(self, action: str):
         return self.filter(action=action)
+
+    def type_task(self):
+        return self.filter(
+            action__in=(
+                AIAgentActionType.TASK_IN_PROGRESS,
+                AIAgentActionType.TASK_COMPLETED,
+                AIAgentActionType.TASK_FAILED,
+            ),
+        )
+
+    def type_notification(self):
+        return self.filter(
+            action__in=(
+                AIAgentActionType.MENTION_IN_PROGRESS,
+                AIAgentActionType.MENTION_COMPLETED,
+                AIAgentActionType.MENTION_FAILED,
+            ),
+        )

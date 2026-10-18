@@ -1,6 +1,11 @@
 import pytest
 
 from src.ai.enums import AIVendor
+from src.ai.exceptions import (
+    AIHandlerException,
+    AIProviderInvalidResponseException,
+)
+from src.ai.messages import MSG_AI_0003, MSG_AI_0012
 from src.ai.services.config import AI_VENDORS_CONFIG
 from src.ai.services.handlers import GeminiHandler
 from src.ai.tests.fixtures import create_test_provider
@@ -209,6 +214,58 @@ def test_parse_completion__empty_parts__empty_string():
 
     # assert
     assert result == ''
+
+
+def test_parse_completion__prompt_blocked__raise_exception():
+
+    """ Blocked prompt has no candidates """
+
+    # arrange
+    account = create_test_account()
+    provider = create_test_provider(account=account)
+    handler = GeminiHandler(
+        provider=provider,
+        account=account,
+        config=AI_VENDORS_CONFIG[AIVendor.GEMINI],
+    )
+    payload = {'promptFeedback': {'blockReason': 'SAFETY'}}
+
+    # act
+    with pytest.raises(AIHandlerException) as ex:
+        handler._parse_completion(payload=payload)
+
+    # assert
+    assert ex.value.message == MSG_AI_0012(reason='SAFETY')
+
+
+@pytest.mark.parametrize(
+    'payload',
+    (
+        {},
+        {'candidates': []},
+        {'candidates': [{'finishReason': 'SAFETY'}]},
+        {'candidates': [{'content': {'role': 'model'}}]},
+    ),
+)
+def test_parse_completion__invalid_payload__raise_exception(payload):
+
+    """ No candidates or candidate without parts """
+
+    # arrange
+    account = create_test_account()
+    provider = create_test_provider(account=account)
+    handler = GeminiHandler(
+        provider=provider,
+        account=account,
+        config=AI_VENDORS_CONFIG[AIVendor.GEMINI],
+    )
+
+    # act
+    with pytest.raises(AIProviderInvalidResponseException) as ex:
+        handler._parse_completion(payload=payload)
+
+    # assert
+    assert ex.value.message == MSG_AI_0003
 
 
 def test_parse_error__gemini_error_body__ok():

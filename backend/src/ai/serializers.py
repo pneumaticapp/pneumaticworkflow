@@ -6,6 +6,7 @@ from rest_framework.serializers import (
 from src.ai.enums import AIVendor
 from src.ai.models import AIAgent, AIProvider
 from src.generics.fields import (
+    AccountPrimaryKeyRelatedField,
     DocBooleanField,
     DocCharField,
     DocChoiceField,
@@ -52,7 +53,6 @@ class AIProviderSerializer(
             'api_key',
             'api_key_prefix',
             'vendor',
-            'is_active',
             'usage',
         )
 
@@ -78,12 +78,6 @@ class AIProviderSerializer(
             'Write-only — never returned in responses'
         ),
         example='sk-or-v1-example',
-    )
-    is_active = DocBooleanField(
-        required=False,
-        default=True,
-        help_text='Whether the provider is enabled',
-        example=True,
     )
     api_key_prefix = DocCharField(
         read_only=True,
@@ -196,7 +190,9 @@ class AIAgentSerializer(
         help_text='Whether the agent is enabled',
         example=True,
     )
-    provider_id = DocIntegerField(
+    provider_id = AccountPrimaryKeyRelatedField(
+        source='provider',
+        queryset=AIProvider.objects.all(),
         help_text='Identifier of the AI provider this agent uses',
         example=1,
     )

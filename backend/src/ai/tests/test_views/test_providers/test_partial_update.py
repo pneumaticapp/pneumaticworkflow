@@ -1,5 +1,5 @@
 import pytest
-from rest_framework.fields import BooleanField, CharField, URLField
+from rest_framework.fields import CharField, URLField
 
 from src.ai.exceptions import AIProviderException
 from src.ai.models import AIProvider
@@ -31,21 +31,19 @@ def test_partial_update__minimal_data__ok(api_client, mocker):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
     updated_provider = AIProvider(
         account=account,
-        name='OpenRouter',
+        name='Updated name',
         base_url='https://openrouter.ai/api/v1',
-        is_active=False,
     )
     updated_provider.api_key = 'sk-or-v1-example'
     updated_provider.save()
     path = f'/ai/providers/{provider.id}'
     data = {
-        'is_active': False,
+        'name': 'Updated name',
     }
     ai_provider_service_init_mock = mocker.patch.object(
         AIProviderService,
@@ -67,7 +65,7 @@ def test_partial_update__minimal_data__ok(api_client, mocker):
     # assert
     assert response.status_code == 200
     assert response.data['id'] == updated_provider.id
-    assert response.data['is_active'] is False
+    assert response.data['name'] == 'Updated name'
     assert 'api_key' not in response.data
     ai_provider_service_init_mock.assert_called_once_with(
         user=user,
@@ -76,7 +74,7 @@ def test_partial_update__minimal_data__ok(api_client, mocker):
         auth_type=AuthTokenType.USER,
     )
     partial_update_mock.assert_called_once_with(
-        is_active=False,
+        name='Updated name',
     )
 
 
@@ -91,7 +89,6 @@ def test_partial_update__full_data__ok(api_client, mocker):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -101,15 +98,14 @@ def test_partial_update__full_data__ok(api_client, mocker):
         account=account,
         name='OpenAI compatible',
         base_url=updated_base_url,
-        is_active=False,
     )
     updated_provider.api_key = updated_api_key
     updated_provider.save()
     path = f'/ai/providers/{provider.id}'
     data = {
+        'name': 'OpenAI compatible',
         'base_url': updated_base_url,
         'api_key': updated_api_key,
-        'is_active': False,
     }
     ai_provider_service_init_mock = mocker.patch.object(
         AIProviderService,
@@ -133,7 +129,6 @@ def test_partial_update__full_data__ok(api_client, mocker):
     assert response.data['id'] == updated_provider.id
     assert response.data['name'] == updated_provider.name
     assert response.data['base_url'] == updated_base_url
-    assert response.data['is_active'] is False
     assert 'api_key' not in response.data
     ai_provider_service_init_mock.assert_called_once_with(
         user=user,
@@ -142,9 +137,9 @@ def test_partial_update__full_data__ok(api_client, mocker):
         auth_type=AuthTokenType.USER,
     )
     partial_update_mock.assert_called_once_with(
+        name='OpenAI compatible',
         base_url=updated_base_url,
         api_key=updated_api_key,
-        is_active=False,
     )
 
 
@@ -158,7 +153,6 @@ def test_partial_update__unauthenticated__unauthorized(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -190,7 +184,6 @@ def test_partial_update__guest__permission_denied(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -246,7 +239,6 @@ def test_partial_update__non_admin__permission_denied(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -306,7 +298,6 @@ def test_partial_update__another_account__not_found(api_client):
         account=account_2,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -339,7 +330,6 @@ def test_partial_update__soft_deleted__not_found(api_client):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -373,7 +363,6 @@ def test_partial_update__empty_api_key__validation_error(api_client, mocker):
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -422,7 +411,6 @@ def test_partial_update__invalid_base_url__validation_error(
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -471,7 +459,6 @@ def test_partial_update__base_url_too_long__validation_error(
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
@@ -506,55 +493,6 @@ def test_partial_update__base_url_too_long__validation_error(
     partial_update_mock.assert_not_called()
 
 
-def test_partial_update__invalid_is_active__validation_error(
-    api_client,
-    mocker,
-):
-
-    """ Invalid is_active """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    provider = AIProvider(
-        account=account,
-        name='OpenRouter',
-        base_url='https://openrouter.ai/api/v1',
-        is_active=True,
-    )
-    provider.api_key = 'sk-or-v1-example'
-    provider.save()
-    path = f'/ai/providers/{provider.id}'
-    data = {
-        'is_active': 'not-a-boolean',
-    }
-    ai_provider_service_init_mock = mocker.patch.object(
-        AIProviderService,
-        attribute='__init__',
-        return_value=None,
-    )
-    partial_update_mock = mocker.patch(
-        'src.ai.views.AIProviderService.partial_update',
-    )
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.patch(
-        path=path,
-        data=data,
-    )
-
-    # assert
-    assert response.status_code == 400
-    assert response.data['message'] == str(
-        BooleanField.default_error_messages['invalid'],
-    )
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['details']['name'] == 'is_active'
-    ai_provider_service_init_mock.assert_not_called()
-    partial_update_mock.assert_not_called()
-
-
 def test_partial_update__service_exception__validation_error(
     api_client,
     mocker,
@@ -569,13 +507,12 @@ def test_partial_update__service_exception__validation_error(
         account=account,
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
     path = f'/ai/providers/{provider.id}'
     data = {
-        'is_active': False,
+        'name': 'Updated name',
     }
     error_message = 'AI service error'
     ai_provider_service_init_mock = mocker.patch.object(
@@ -606,5 +543,5 @@ def test_partial_update__service_exception__validation_error(
         auth_type=AuthTokenType.USER,
     )
     partial_update_mock.assert_called_once_with(
-        is_active=False,
+        name='Updated name',
     )

@@ -9,8 +9,8 @@ from src.ai.exceptions import (
 from src.ai.messages import (
     MSG_AI_0005,
     MSG_AI_0006,
-    MSG_AI_0007,
     MSG_AI_0008,
+    MSG_AI_0014,
 )
 from src.ai.models import AIProvider
 from src.ai.services.config import AI_VENDORS_CONFIG
@@ -194,7 +194,7 @@ def test_get_models__cache_hit__return_cached_models(mocker):
     # assert
     assert result == models
     get_cache_mock.assert_called_once_with(
-        key=f'{owner.id}_{provider.name}',
+        key=provider.id,
         default=[],
     )
     get_handler_mock.assert_not_called()
@@ -231,20 +231,20 @@ def test_get_models__cache_miss__return_handler_models(mocker):
     # assert
     assert result == models
     get_cache_mock.assert_called_once_with(
-        key=f'{owner.id}_{provider.name}',
+        key=provider.id,
         default=[],
     )
     get_handler_mock.assert_called_once_with()
     get_models_mock.assert_called_once_with()
     set_cache_mock.assert_called_once_with(
-        key=f'{owner.id}_{provider.name}',
+        key=provider.id,
         value=models,
     )
 
 
-def test_get_models__cache_miss_handler_empty__return_empty_list(mocker):
+def test_get_models__cache_miss_handler_empty__raise_exception(mocker):
 
-    """ Cache miss, handler empty """
+    """ Cache miss, handler empty: nothing is cached """
 
     # arrange
     account = create_test_account()
@@ -266,20 +266,93 @@ def test_get_models__cache_miss_handler_empty__return_empty_list(mocker):
     service = AIProviderService(user=owner, instance=provider)
 
     # act
-    result = service.get_models()
+    with pytest.raises(AIProviderException) as ex:
+        service.get_models()
 
     # assert
-    assert result == []
+    assert str(ex.value) == str(MSG_AI_0006(error='empty list'))
     get_cache_mock.assert_called_once_with(
-        key=f'{owner.id}_{provider.name}',
+        key=provider.id,
         default=[],
     )
     get_handler_mock.assert_called_once_with()
     get_models_mock.assert_called_once_with()
-    set_cache_mock.assert_called_once_with(
-        key=f'{owner.id}_{provider.name}',
-        value=[],
+    set_cache_mock.assert_not_called()
+
+
+def test_get_models__handler_error__raise_exception(mocker):
+
+    """ Handler error: nothing is cached """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    provider = create_test_provider(account=account)
+    error_message = 'Connection error'
+    mocker.patch(
+        'src.ai.services.provider.AIProviderService._get_cache',
+        return_value=[],
     )
+    get_models_mock = mocker.Mock(
+        side_effect=AIHandlerException(message=error_message),
+    )
+    handler = mocker.Mock(get_models=get_models_mock)
+    mocker.patch(
+        'src.ai.services.provider.AIProviderService._get_handler',
+        return_value=handler,
+    )
+    set_cache_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._set_cache',
+    )
+    service = AIProviderService(user=owner, instance=provider)
+
+    # act
+    with pytest.raises(AIProviderException) as ex:
+        service.get_models()
+
+    # assert
+    assert str(ex.value) == str(MSG_AI_0006(error=error_message))
+    get_models_mock.assert_called_once_with()
+    set_cache_mock.assert_not_called()
+
+
+def test_get_models__unsaved_provider__skip_cache_read(mocker):
+
+    """ Provider not saved yet """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    provider = AIProvider(
+        account=account,
+        name='OpenAI',
+        base_url='https://api.openai.com/v1',
+        vendor=AIVendor.OPENAI,
+    )
+    models = [{'slug': 'gpt-4o', 'name': 'gpt-4o'}]
+    get_cache_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._get_cache',
+    )
+    get_models_mock = mocker.Mock(return_value=models)
+    handler = mocker.Mock(get_models=get_models_mock)
+    get_handler_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._get_handler',
+        return_value=handler,
+    )
+    set_cache_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._set_cache',
+    )
+    service = AIProviderService(user=owner, instance=provider)
+
+    # act
+    result = service.get_models()
+
+    # assert
+    assert result == models
+    get_cache_mock.assert_not_called()
+    get_handler_mock.assert_called_once_with()
+    get_models_mock.assert_called_once_with()
+    set_cache_mock.assert_called_once_with(key=None, value=models)
 
 
 def test_get_completion__default_params__ok(mocker):
@@ -361,86 +434,15 @@ def test_get_completion__with_agent_and_task__ok(mocker):
     )
 
 
-def test_get_first_model__models_found__return_first_slug(mocker):
-
-    """ Models found """
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    provider = create_test_provider(account=account)
-    model_1 = {'slug': 'gpt-4o', 'name': 'gpt-4o'}
-    model_2 = {'slug': 'gpt-4o-mini', 'name': 'gpt-4o-mini'}
-    get_models_mock = mocker.patch(
-        'src.ai.services.provider.AIProviderService.get_models',
-        return_value=[model_1, model_2],
-    )
-    service = AIProviderService(user=owner, instance=provider)
-
-    # act
-    result = service._get_first_model()
-
-    # assert
-    assert result == 'gpt-4o'
-    get_models_mock.assert_called_once_with()
-
-
-def test_get_first_model__handler_error__raise_exception(mocker):
-
-    """ Handler error """
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    provider = create_test_provider(account=account)
-    error_message = 'Connection error'
-    get_models_mock = mocker.patch(
-        'src.ai.services.provider.AIProviderService.get_models',
-        side_effect=AIHandlerException(message=error_message),
-    )
-    service = AIProviderService(user=owner, instance=provider)
-
-    # act
-    with pytest.raises(AIProviderException) as ex:
-        service._get_first_model()
-
-    # assert
-    assert str(ex.value) == str(MSG_AI_0006(error=error_message))
-    get_models_mock.assert_called_once_with()
-
-
-def test_get_first_model__empty_list__raise_exception(mocker):
-
-    """ Empty models list """
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    provider = create_test_provider(account=account)
-    get_models_mock = mocker.patch(
-        'src.ai.services.provider.AIProviderService.get_models',
-        return_value=[],
-    )
-    service = AIProviderService(user=owner, instance=provider)
-
-    # act
-    with pytest.raises(AIProviderException) as ex:
-        service._get_first_model()
-
-    # assert
-    assert str(ex.value) == str(MSG_AI_0006(error='empty list'))
-    get_models_mock.assert_called_once_with()
-
-
 def test_create_first_completion__completion_received__ok(mocker):
 
-    """ Completion received """
+    """ The first model answers: the other models are not requested """
 
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
     provider = create_test_provider(account=account)
-    model = 'gpt-4o'
+    models = [{'slug': 'gpt-4o'}, {'slug': 'gpt-4o-mini'}]
     get_completion_mock = mocker.patch(
         'src.ai.services.provider.AIProviderService.get_completion',
         return_value='Hello world',
@@ -448,97 +450,107 @@ def test_create_first_completion__completion_received__ok(mocker):
     service = AIProviderService(user=owner, instance=provider)
 
     # act
-    service._create_first_completion(model=model)
+    service._create_first_completion(models)
 
     # assert
     get_completion_mock.assert_called_once_with(
         system_message='You are a office employee.',
         user_message='Say "Hello world"',
-        model=model,
+        model='gpt-4o',
     )
 
 
-def test_create_first_completion__handler_error__raise_exception(mocker):
+def test_create_first_completion__first_model_failed__next_model(mocker):
 
-    """ Handler error """
+    """ The first model fails: the next model answers """
 
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
     provider = create_test_provider(account=account)
-    model = 'gpt-4o'
+    models = [{'slug': 'gpt-4o'}, {'slug': 'gpt-4o-mini'}]
+    get_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService.get_completion',
+        side_effect=[
+            AIHandlerException(message='Request failed'),
+            'Hello world',
+        ],
+    )
+    service = AIProviderService(user=owner, instance=provider)
+
+    # act
+    service._create_first_completion(models)
+
+    # assert
+    assert get_completion_mock.call_count == 2
+    get_completion_mock.assert_called_with(
+        system_message='You are a office employee.',
+        user_message='Say "Hello world"',
+        model='gpt-4o-mini',
+    )
+
+
+def test_create_first_completion__all_models_failed__raise_exception(
+    mocker,
+):
+
+    """ Every model fails: the last error is raised """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    provider = create_test_provider(account=account)
+    models = [{'slug': 'gpt-4o'}, {'slug': 'gpt-4o-mini'}]
     error_message = 'Request failed'
     get_completion_mock = mocker.patch(
         'src.ai.services.provider.AIProviderService.get_completion',
-        side_effect=AIHandlerException(message=error_message),
+        side_effect=[
+            AIHandlerException(message=error_message),
+            '',
+        ],
     )
     service = AIProviderService(user=owner, instance=provider)
 
     # act
     with pytest.raises(AIProviderException) as ex:
-        service._create_first_completion(model=model)
+        service._create_first_completion(models)
 
     # assert
-    assert str(ex.value) == str(MSG_AI_0007(error=error_message))
-    get_completion_mock.assert_called_once_with(
-        system_message='You are a office employee.',
-        user_message='Say "Hello world"',
-        model=model,
-    )
+    error = MSG_AI_0008(model='gpt-4o-mini')
+    assert str(ex.value) == str(MSG_AI_0014(model='gpt-4o-mini', error=error))
+    assert get_completion_mock.call_count == 2
 
 
-def test_create_first_completion__empty_completion__raise_exception(mocker):
+def test_create__ok(mocker):
 
-    """ Empty completion """
+    """ Create provider """
 
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
     provider = create_test_provider(account=account)
-    model = 'gpt-4o'
-    get_completion_mock = mocker.patch(
-        'src.ai.services.provider.AIProviderService.get_completion',
-        return_value='',
+    service = AIProviderService(user=owner)
+    kwargs = {
+        'name': 'OpenAI',
+        'base_url': 'https://api.openai.com/v1',
+        'api_key': 'sk-example',
+        'vendor': AIVendor.OPENAI,
+    }
+
+    def create_instance(**_kwargs):
+        service.instance = provider
+
+    create_instance_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_instance',
+        side_effect=create_instance,
     )
-    service = AIProviderService(user=owner, instance=provider)
 
     # act
-    with pytest.raises(AIProviderException) as ex:
-        service._create_first_completion(model=model)
+    result = service.create(**kwargs)
 
     # assert
-    assert str(ex.value) == str(MSG_AI_0008(model=model))
-    get_completion_mock.assert_called_once_with(
-        system_message='You are a office employee.',
-        user_message='Say "Hello world"',
-        model=model,
-    )
-
-
-def test_create_actions__provider_check__ok(mocker):
-
-    """ Provider check """
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    provider = create_test_provider(account=account)
-    model = 'gpt-4o'
-    get_first_model_mock = mocker.patch(
-        'src.ai.services.provider.AIProviderService._get_first_model',
-        return_value=model,
-    )
-    create_first_completion_mock = mocker.patch(
-        'src.ai.services.provider.AIProviderService._create_first_completion',
-    )
-    service = AIProviderService(user=owner, instance=provider)
-
-    # act
-    service._create_actions(name='OpenAI')
-
-    # assert
-    get_first_model_mock.assert_called_once_with()
-    create_first_completion_mock.assert_called_once_with(model=model)
+    assert result == provider
+    create_instance_mock.assert_called_once_with(**kwargs)
 
 
 def test_create_instance__with_vendor__ok(mocker):
@@ -551,9 +563,17 @@ def test_create_instance__with_vendor__ok(mocker):
     name = 'OpenAI'
     base_url = 'https://api.openai.com/v1'
     api_key = 'sk-example'
+    models = [{'slug': 'gpt-4o', 'name': 'gpt-4o'}]
     encrypt_mock = mocker.patch(
         'src.ai.services.provider.AIProviderService.encrypt',
         return_value='encrypted-key',
+    )
+    get_models_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService.get_models',
+        return_value=models,
+    )
+    create_first_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_first_completion',
     )
     service = AIProviderService(user=owner)
 
@@ -574,6 +594,8 @@ def test_create_instance__with_vendor__ok(mocker):
     assert provider.vendor == AIVendor.OPENAI
     assert service.instance == provider
     encrypt_mock.assert_called_once_with(api_key)
+    get_models_mock.assert_called_once_with()
+    create_first_completion_mock.assert_called_once_with(models)
 
 
 def test_create_instance__default_vendor__create_custom(mocker):
@@ -584,9 +606,17 @@ def test_create_instance__default_vendor__create_custom(mocker):
     account = create_test_account()
     owner = create_test_owner(account=account)
     api_key = 'sk-example'
+    models = [{'slug': 'gpt-4o', 'name': 'gpt-4o'}]
     encrypt_mock = mocker.patch(
         'src.ai.services.provider.AIProviderService.encrypt',
         return_value='encrypted-key',
+    )
+    get_models_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService.get_models',
+        return_value=models,
+    )
+    create_first_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_first_completion',
     )
     service = AIProviderService(user=owner)
 
@@ -601,6 +631,8 @@ def test_create_instance__default_vendor__create_custom(mocker):
     provider = AIProvider.objects.get(id=result.id)
     assert provider.vendor == AIVendor.CUSTOM
     encrypt_mock.assert_called_once_with(api_key)
+    get_models_mock.assert_called_once_with()
+    create_first_completion_mock.assert_called_once_with(models)
 
 
 def test_create_instance__extra_kwargs__ignore_kwargs(mocker):
@@ -612,9 +644,17 @@ def test_create_instance__extra_kwargs__ignore_kwargs(mocker):
     owner = create_test_owner(account=account)
     name = 'OpenAI'
     api_key = 'sk-example'
+    models = [{'slug': 'gpt-4o', 'name': 'gpt-4o'}]
     encrypt_mock = mocker.patch(
         'src.ai.services.provider.AIProviderService.encrypt',
         return_value='encrypted-key',
+    )
+    get_models_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService.get_models',
+        return_value=models,
+    )
+    create_first_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_first_completion',
     )
     service = AIProviderService(user=owner)
 
@@ -631,6 +671,51 @@ def test_create_instance__extra_kwargs__ignore_kwargs(mocker):
     provider = AIProvider.objects.get(id=result.id)
     assert provider.name == name
     encrypt_mock.assert_called_once_with(api_key)
+    get_models_mock.assert_called_once_with()
+    create_first_completion_mock.assert_called_once_with(models)
+
+
+def test_create_instance__check_failed__not_saved(mocker):
+
+    """ Provider check failed """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    models = [{'slug': 'gpt-4o', 'name': 'gpt-4o'}]
+    error_message = MSG_AI_0014(
+        model='gpt-4o',
+        error=MSG_AI_0008(model='gpt-4o'),
+    )
+    mocker.patch(
+        'src.ai.services.provider.AIProviderService.encrypt',
+        return_value='encrypted-key',
+    )
+    get_models_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService.get_models',
+        return_value=models,
+    )
+    create_first_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_first_completion',
+        side_effect=AIProviderException(message=error_message),
+    )
+    service = AIProviderService(user=owner)
+
+    # act
+    with pytest.raises(AIProviderException) as ex:
+        service._create_instance(
+            name='OpenAI',
+            base_url='https://api.openai.com/v1',
+            api_key='sk-example',
+            vendor=AIVendor.OPENAI,
+        )
+
+    # assert
+    assert str(ex.value) == str(error_message)
+    assert not AIProvider.objects.filter(account=account).exists()
+    assert service.instance.pk is None
+    get_models_mock.assert_called_once_with()
+    create_first_completion_mock.assert_called_once_with(models)
 
 
 def test_create_by_vendor__known_vendor__ok(mocker):
@@ -760,6 +845,72 @@ def test_partial_update__not_force_save__not_saved(mocker):
     encrypt_mock.assert_not_called()
 
 
+def test_partial_update__api_key__delete_models_cache(mocker):
+
+    """ Api key changed """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    provider = create_test_provider(account=account)
+    mocker.patch(
+        'src.ai.services.provider.AIProviderService.encrypt',
+        return_value='encrypted-new-key',
+    )
+    delete_cache_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._delete_cache',
+    )
+    service = AIProviderService(user=owner, instance=provider)
+
+    # act
+    service.partial_update(api_key='sk-new-key')
+
+    # assert
+    delete_cache_mock.assert_called_once_with(key=provider.id)
+
+
+def test_partial_update__base_url__delete_models_cache(mocker):
+
+    """ Base url changed """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    provider = create_test_provider(account=account)
+    delete_cache_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._delete_cache',
+    )
+    service = AIProviderService(user=owner, instance=provider)
+
+    # act
+    service.partial_update(base_url='https://example.com/v1')
+
+    # assert
+    provider.refresh_from_db()
+    assert provider.base_url == 'https://example.com/v1'
+    delete_cache_mock.assert_called_once_with(key=provider.id)
+
+
+def test_partial_update__name__cache_not_deleted(mocker):
+
+    """ Credentials not changed """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    provider = create_test_provider(account=account)
+    delete_cache_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._delete_cache',
+    )
+    service = AIProviderService(user=owner, instance=provider)
+
+    # act
+    service.partial_update(name='New name')
+
+    # assert
+    delete_cache_mock.assert_not_called()
+
+
 def test_delete__not_in_use__ok(mocker):
 
     """ Provider not in use """
@@ -780,7 +931,7 @@ def test_delete__not_in_use__ok(mocker):
     provider.refresh_from_db()
     assert provider.is_deleted is True
     delete_cache_mock.assert_called_once_with(
-        key=f'{owner.id}_{provider.name}',
+        key=provider.id,
     )
 
 

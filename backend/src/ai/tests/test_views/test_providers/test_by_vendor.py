@@ -55,7 +55,6 @@ def test_by_vendor__all_fields__ok(api_client, mocker):
         provider.api_key_prefix
     )
     assert response.data['vendor'] == provider.vendor
-    assert response.data['is_active'] is True
     assert response.data['usage'] == []
     assert 'api_key' not in response.data
     ai_provider_service_init_mock.assert_called_once_with(

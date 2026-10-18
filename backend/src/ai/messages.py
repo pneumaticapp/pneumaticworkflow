@@ -37,3 +37,40 @@ MSG_AI_0010 = lambda attempts: format_lazy(
     _('The agent failed to complete the task in {attempts} attempts.'),
     attempts=attempts,
 )
+MSG_AI_0011 = lambda attempts, error: format_lazy(
+    _(
+        'I could not complete the task in {attempts} attempts. '
+        'Please complete it manually or check the agent provider settings. '
+        'Error: {error}',
+    ),
+    attempts=attempts,
+    error=error,
+)
+MSG_AI_0012 = lambda reason: format_lazy(
+    _('The AI provider blocked the request ({reason}).'),
+    reason=reason,
+)
+MSG_AI_0013 = lambda attempts, error: format_lazy(
+    _(
+        'I could not reply to the comment in {attempts} attempts. '
+        'Error: {error}',
+    ),
+    attempts=attempts,
+    error=error,
+)
+MSG_AI_0014 = lambda model, error: format_lazy(
+    _(
+        'None of the provider models responded to the test request, '
+        'the last model "{model}" failed ({error}). '
+        'Check the provider settings.',
+    ),
+    model=model,
+    error=error,
+)
+MSG_AI_0015 = lambda model: format_lazy(
+    _(
+        'The selected model "{model}" returned an error. '
+        'Try choosing another model.',
+    ),
+    model=model,
+)
