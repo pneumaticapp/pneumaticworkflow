@@ -38,6 +38,7 @@
   }
 
   &__name {
+    margin: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: 1.6rem;
@@ -47,6 +48,7 @@
   }
 
   &__meta {
+    margin: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: 1.3rem;

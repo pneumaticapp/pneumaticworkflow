@@ -41,15 +41,15 @@ export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
   ];
 
   return (
-    <div className={styles['agent-card']} data-testid={`ai-agent-${agent.id}`}>
+    <article className={styles['agent-card']} data-testid={`ai-agent-${agent.id}`}>
       <div className={styles['agent-card__avatar']}>{agent.photo ? <img src={agent.photo} alt="" /> : initials}</div>
       <div className={styles['agent-card__info']}>
-        <span className={styles['agent-card__name']}>{agent.name}</span>
-        <span className={styles['agent-card__meta']}>
+        <h3 className={styles['agent-card__name']}>{agent.name}</h3>
+        <p className={styles['agent-card__meta']}>
           {providerName ?? formatMessage({ id: 'team.ai-agents.unknown-provider' })}
           {' · '}
           {agent.model}
-        </span>
+        </p>
         {!agent.isActive && (
           <span className={styles['agent-card__inactive']} data-testid={`ai-agent-inactive-${agent.id}`}>
             {formatMessage({ id: 'team.ai-agents.inactive' })}
@@ -82,7 +82,7 @@ export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
 
       <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} width="sm">
         <div data-testid="delete-ai-agent-modal">
-          <Header tag="p" size="6" className={styles['delete-modal__title']}>
+          <Header tag="h2" size="6" className={styles['delete-modal__title']}>
             {formatMessage({ id: 'team.ai-agents.delete-modal-title' })}
           </Header>
           <p className={styles['delete-modal__text']}>
@@ -111,6 +111,6 @@ export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
           </div>
         </div>
       </Modal>
-    </div>
+    </article>
   );
 }

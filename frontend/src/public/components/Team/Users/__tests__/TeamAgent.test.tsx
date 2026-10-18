@@ -56,7 +56,7 @@ jest.mock('../../../UI/Buttons/Button', () => ({
 }));
 
 jest.mock('../../../UI/Typeography/Header', () => ({
-  Header: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
+  Header: ({ children, tag: Tag = 'p' }: { children: React.ReactNode; tag?: 'p' | 'h2' }) => <Tag>{children}</Tag>,
 }));
 
 jest.mock('../../../UI/Modal/Modal', () => ({
@@ -103,7 +103,8 @@ describe('TeamAgent', () => {
   it('renders the agent with its provider name, model and inactive badge', () => {
     render(<TeamAgent agent={buildAgent({ isActive: false })} providerName="OpenRouter" />);
 
-    expect(screen.getByText('Research assistant')).toBeInTheDocument();
+    expect(screen.getByRole('article')).toHaveAttribute('data-testid', 'ai-agent-10');
+    expect(screen.getByRole('heading', { level: 3, name: 'Research assistant' })).toBeInTheDocument();
     expect(screen.getByText(/OpenRouter/)).toBeInTheDocument();
     expect(screen.getByText(/openai\/gpt-4o/)).toBeInTheDocument();
     expect(screen.getByTestId('ai-agent-inactive-10')).toBeInTheDocument();
@@ -137,6 +138,7 @@ describe('TeamAgent', () => {
 
     userEvent.click(screen.getByTestId('ai-agent-more-10'));
     userEvent.click(screen.getByText(t('team.ai-agents.delete')));
+    expect(screen.getByRole('heading', { level: 2, name: t('team.ai-agents.delete-modal-title') })).toBeInTheDocument();
     userEvent.click(screen.getByTestId('confirm-delete-ai-agent'));
 
     expect(mockDispatch).toHaveBeenCalledWith(deleteAIAgent(10));
