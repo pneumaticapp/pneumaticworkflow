@@ -3,7 +3,7 @@ import { useState } from 'react';
 import classnames from 'classnames';
 import Switch from 'rc-switch';
 import { useIntl } from 'react-intl';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 
 import { Dropdown } from '../../UI';
 import type { TDropdownOption } from '../../UI';
@@ -12,7 +12,6 @@ import { Header } from '../../UI/Typeography/Header';
 import { Modal } from '../../UI/Modal/Modal';
 import { MoreIcon } from '../../icons';
 import { deleteAIAgent, updateAIAgent } from '../../../redux/ai/slice';
-import { getIsAISaving } from '../../../redux/selectors/ai';
 import { EditAIAgentModal } from './EditAIAgentModal';
 import { getAgentInitials } from './getAgentInitials';
 import type { ITeamAgentProps } from './types';
@@ -22,7 +21,6 @@ import styles from './TeamAgent.css';
 export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const isSaving = useSelector(getIsAISaving);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -64,7 +62,6 @@ export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
           <div data-testid={`ai-agent-toggle-${agent.id}`}>
             <Switch
               checked={agent.isActive}
-              disabled={isSaving}
               onChange={(checked) => dispatch(updateAIAgent({ id: agent.id, isActive: checked }))}
               checkedChildren={null}
               unCheckedChildren={null}

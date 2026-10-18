@@ -3,8 +3,13 @@ import { Formik } from 'formik';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { createAIProvider, createAIProviderByVendor, loadAIVendors } from '../../../redux/ai/slice';
-import { getAICreateProviderState, getAIVendorsState, getIsAISaving } from '../../../redux/selectors/ai';
+import {
+  closeCreateAIProviderModal,
+  createAIProvider,
+  createAIProviderByVendor,
+  loadAIVendors,
+} from '../../../redux/ai/slice';
+import { getAICreateProviderModalState, getAIVendorsState } from '../../../redux/selectors/ai';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
 import { validateRequired } from '../../../utils/validators';
 import { Button } from '../../UI/Buttons/Button';
@@ -13,7 +18,7 @@ import { Header } from '../../UI/Typeography/Header';
 import { Modal } from '../../UI/Modal/Modal';
 import { Tabs } from '../../UI/Tabs';
 import { FormikDropdownList } from '../../UI/DropdownList';
-import type { ICreateAIProviderModalProps, ICreateAIProviderFormValues } from './types';
+import type { ICreateAIProviderFormValues } from './types';
 
 import styles from './AIProviders.css';
 
@@ -26,15 +31,13 @@ const INITIAL_VALUES: ICreateAIProviderFormValues = {
   apiKey: '',
 };
 
-export function CreateAIProviderModal({ isOpen, onClose }: ICreateAIProviderModalProps) {
+export function CreateAIProviderModal() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const isSaving = useSelector(getIsAISaving);
-  const createProviderState = useSelector(getAICreateProviderState);
+  const { isOpen, isLoading: isCreating } = useSelector(getAICreateProviderModalState);
   const { list: vendors } = useSelector(getAIVendorsState);
 
   const [activeTab, setActiveTab] = React.useState<TCreateTab>('vendor');
-  const [pendingRequestId, setPendingRequestId] = React.useState<number | null>(null);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -42,38 +45,18 @@ export function CreateAIProviderModal({ isOpen, onClose }: ICreateAIProviderModa
     }
   }, [isOpen, dispatch]);
 
-  React.useEffect(() => {
-    if (!isOpen) setPendingRequestId(null);
-  }, [isOpen]);
-
-  React.useEffect(() => {
-    if (
-      isOpen &&
-      pendingRequestId !== null &&
-      createProviderState.requestId === pendingRequestId &&
-      createProviderState.status === 'succeeded'
-    ) {
-      onClose();
-    }
-  }, [isOpen, pendingRequestId, createProviderState, onClose]);
+  const onClose = () => dispatch(closeCreateAIProviderModal());
 
   const handleSubmit = ({ vendor, name, baseUrl, apiKey }: ICreateAIProviderFormValues) => {
     if (activeTab === 'vendor') {
-      const action = createAIProviderByVendor({ vendor, apiKey: apiKey.trim() });
-      setPendingRequestId(action.meta.requestId);
-      dispatch(action);
+      dispatch(createAIProviderByVendor({ vendor, apiKey: apiKey.trim() }));
     } else {
-      const action = createAIProvider({ name: name.trim(), baseUrl: baseUrl.trim(), apiKey: apiKey.trim() });
-      setPendingRequestId(action.meta.requestId);
-      dispatch(action);
+      dispatch(createAIProvider({ name: name.trim(), baseUrl: baseUrl.trim(), apiKey: apiKey.trim() }));
     }
   };
 
   const vendorOptions = vendors.map(({ slug, name: vendorName }) => ({ value: slug, label: vendorName }));
   const isVendorTab = activeTab === 'vendor';
-  const isCreating =
-    pendingRequestId !== null &&
-    (createProviderState.requestId !== pendingRequestId || createProviderState.status !== 'failed');
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} width="sm">
@@ -172,7 +155,7 @@ export function CreateAIProviderModal({ isOpen, onClose }: ICreateAIProviderModa
                   type="submit"
                   size="md"
                   buttonStyle="yellow"
-                  disabled={!isValid || isSaving || isCreating}
+                  disabled={!isValid || isCreating}
                   isLoading={isCreating}
                   label={formatMessage({ id: 'ai-providers.add' })}
                   data-testid="submit-create-ai-provider"

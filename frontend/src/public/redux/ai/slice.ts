@@ -1,7 +1,7 @@
 import { createAction, createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
-import type { IAIStore } from './types';
+import type { IAIStore, TUpdateAIAgentPayload } from './types';
 import type {
   IAIAgent,
   IAIModel,
@@ -17,8 +17,8 @@ const initialState: IAIStore = {
     isLoading: true,
     list: [],
   },
-  createProvider: { status: 'idle', requestId: null },
-  createAgent: { status: 'idle', requestId: null },
+  createProviderModal: { isOpen: false, isLoading: false },
+  createAgent: { isLoading: false },
   agents: {
     isLoading: true,
     list: [],
@@ -32,29 +32,18 @@ const initialState: IAIStore = {
     providerId: null,
     list: [],
   },
-  isSaving: false,
 };
 
 export const loadAIProviders = createAction<void>('ai/loadAIProviders');
-let lastCreateRequestId = 0;
-export const createAIProvider = createAction('ai/createAIProvider', (payload: ICreateAIProviderRequest) => ({
-  payload,
-  meta: { requestId: ++lastCreateRequestId },
-}));
-export const createAIProviderByVendor = createAction(
-  'ai/createAIProviderByVendor',
-  (payload: ICreateAIProviderByVendorRequest) => ({ payload, meta: { requestId: ++lastCreateRequestId } }),
-);
+export const createAIProvider = createAction<ICreateAIProviderRequest>('ai/createAIProvider');
+export const createAIProviderByVendor = createAction<ICreateAIProviderByVendorRequest>('ai/createAIProviderByVendor');
 export const deleteAIProvider = createAction<number>('ai/deleteAIProvider');
 export const loadAIProviderModels = createAction<number>('ai/loadAIProviderModels');
 export const loadAIVendors = createAction<void>('ai/loadAIVendors');
 
 export const loadAIAgents = createAction<void>('ai/loadAIAgents');
-export const createAIAgent = createAction('ai/createAIAgent', (payload: ICreateAIAgentRequest) => ({
-  payload,
-  meta: { requestId: ++lastCreateRequestId },
-}));
-export const updateAIAgent = createAction<{ id: number } & Partial<ICreateAIAgentRequest>>('ai/updateAIAgent');
+export const createAIAgent = createAction<ICreateAIAgentRequest>('ai/createAIAgent');
+export const updateAIAgent = createAction<TUpdateAIAgentPayload>('ai/updateAIAgent');
 export const deleteAIAgent = createAction<number>('ai/deleteAIAgent');
 
 const aiSlice = createSlice({
@@ -71,23 +60,30 @@ const aiSlice = createSlice({
       state.providers.isLoading = false;
     },
 
-    createAIProviderStarted: (state, action: PayloadAction<number>) => {
-      state.createProvider = { status: 'pending', requestId: action.payload };
+    openCreateAIProviderModal: (state) => {
+      state.createProviderModal.isOpen = true;
     },
-    createAIProviderSucceeded: (state, action: PayloadAction<number>) => {
-      if (state.createProvider.requestId === action.payload) state.createProvider.status = 'succeeded';
+    closeCreateAIProviderModal: (state) => {
+      state.createProviderModal.isOpen = false;
     },
-    createAIProviderFailed: (state, action: PayloadAction<number>) => {
-      if (state.createProvider.requestId === action.payload) state.createProvider.status = 'failed';
+    createAIProviderStarted: (state) => {
+      state.createProviderModal.isLoading = true;
     },
-    createAIAgentStarted: (state, action: PayloadAction<number>) => {
-      state.createAgent = { status: 'pending', requestId: action.payload };
+    createAIProviderSuccess: (state) => {
+      state.createProviderModal = { isOpen: false, isLoading: false };
     },
-    createAIAgentSucceeded: (state, action: PayloadAction<number>) => {
-      if (state.createAgent.requestId === action.payload) state.createAgent.status = 'succeeded';
+    createAIProviderFailed: (state) => {
+      state.createProviderModal.isLoading = false;
     },
-    createAIAgentFailed: (state, action: PayloadAction<number>) => {
-      if (state.createAgent.requestId === action.payload) state.createAgent.status = 'failed';
+
+    createAIAgentStarted: (state) => {
+      state.createAgent.isLoading = true;
+    },
+    createAIAgentSuccess: (state) => {
+      state.createAgent.isLoading = false;
+    },
+    createAIAgentFailed: (state) => {
+      state.createAgent.isLoading = false;
     },
 
     loadAIAgentsStarted: (state) => {
@@ -126,13 +122,6 @@ const aiSlice = createSlice({
       state.models.isLoading = false;
       state.models.providerId = null;
     },
-
-    savingStarted: (state) => {
-      state.isSaving = true;
-    },
-    savingFinished: (state) => {
-      state.isSaving = false;
-    },
   },
 });
 
@@ -140,11 +129,13 @@ export const {
   loadAIProvidersStarted,
   loadAIProvidersSuccess,
   loadAIProvidersFailed,
+  openCreateAIProviderModal,
+  closeCreateAIProviderModal,
   createAIProviderStarted,
-  createAIProviderSucceeded,
+  createAIProviderSuccess,
   createAIProviderFailed,
   createAIAgentStarted,
-  createAIAgentSucceeded,
+  createAIAgentSuccess,
   createAIAgentFailed,
   loadAIAgentsStarted,
   loadAIAgentsSuccess,
@@ -155,8 +146,6 @@ export const {
   loadAIProviderModelsStarted,
   loadAIProviderModelsSuccess,
   loadAIProviderModelsFailed,
-  savingStarted,
-  savingFinished,
 } = aiSlice.actions;
 
 export default aiSlice.reducer;

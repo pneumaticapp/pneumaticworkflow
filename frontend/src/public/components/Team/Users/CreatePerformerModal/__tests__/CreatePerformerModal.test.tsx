@@ -118,7 +118,7 @@ describe('CreatePerformerModal', () => {
     { name: 'GPT-4o', slug: 'openai/gpt-4o' },
     { name: 'Claude Sonnet', slug: 'anthropic/claude-sonnet' },
   ];
-  let createAgentState: { status: string; requestId: number | null };
+  let createAgentState: { isLoading: boolean };
 
   const mockAIState = ({
     providers = [OPENROUTER_PROVIDER],
@@ -132,7 +132,6 @@ describe('CreatePerformerModal', () => {
           createAgent: createAgentState,
           agents: { isLoading: false, list: [] },
           models,
-          isSaving: false,
         },
       }),
     );
@@ -159,7 +158,7 @@ describe('CreatePerformerModal', () => {
   beforeEach(() => {
     jest.useRealTimers();
     jest.clearAllMocks();
-    createAgentState = { status: 'idle', requestId: null };
+    createAgentState = { isLoading: false };
     (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
     (uploadUserAvatar as jest.Mock).mockResolvedValue([
       { id: 'file-1', name: 'avatar.png', url: 'https://files.example.com/avatar.png', size: 1 },
@@ -554,7 +553,7 @@ describe('CreatePerformerModal', () => {
       expect(screen.queryByText('GPT-4o')).not.toBeInTheDocument();
     });
 
-    it('closes only after agent creation succeeds', async () => {
+    it('dispatches agent creation and leaves closing to the saga', async () => {
       const { rerender } = render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
 
@@ -582,11 +581,10 @@ describe('CreatePerformerModal', () => {
         },
       });
       expect(mockOnClose).not.toHaveBeenCalled();
-      expect(submitButton).toBeDisabled();
 
-      createAgentState = { status: 'succeeded', requestId: action.meta.requestId };
+      createAgentState = { isLoading: true };
       rerender(<CreatePerformerModal isOpen onClose={mockOnClose} />);
-      expect(mockOnClose).toHaveBeenCalled();
+      expect(getAgentSubmitButton()).toBeDisabled();
     });
 
     it('keeps the agent draft after an API failure and permits retry', async () => {
@@ -598,10 +596,9 @@ describe('CreatePerformerModal', () => {
       await waitFor(() =>
         expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: createAIAgent.type })),
       );
-      const action = mockDispatch.mock.calls
-        .map(([dispatched]) => dispatched)
-        .find(({ type }) => type === createAIAgent.type);
-      createAgentState = { status: 'failed', requestId: action.meta.requestId };
+      createAgentState = { isLoading: true };
+      rerender(<CreatePerformerModal isOpen onClose={mockOnClose} />);
+      createAgentState = { isLoading: false };
       rerender(<CreatePerformerModal isOpen onClose={mockOnClose} />);
 
       expect(mockOnClose).not.toHaveBeenCalled();

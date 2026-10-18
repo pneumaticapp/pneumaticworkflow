@@ -13,21 +13,30 @@ import {
   getAIVendors as getAIVendorsApi,
   updateAIAgent as updateAIAgentApi,
 } from '../../api/ai';
-import type { IAIAgent, IAIModel, IAIProvider, ICreateAIAgentRequest, IAIVendor } from '../../api/ai/types';
+import type {
+  IAIAgent,
+  IAIModel,
+  IAIProvider,
+  IAIVendor,
+  ICreateAIAgentRequest,
+  ICreateAIProviderByVendorRequest,
+  ICreateAIProviderRequest,
+} from '../../api/ai/types';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { logger } from '../../utils/logger';
+import { closeCreateUserModal } from '../accounts/slice';
 
 import {
   createAIAgent,
   createAIAgentFailed,
   createAIAgentStarted,
-  createAIAgentSucceeded,
+  createAIAgentSuccess,
   createAIProvider,
   createAIProviderByVendor,
   createAIProviderFailed,
   createAIProviderStarted,
-  createAIProviderSucceeded,
+  createAIProviderSuccess,
   deleteAIAgent,
   deleteAIProvider,
   loadAIAgents,
@@ -46,10 +55,9 @@ import {
   loadAIVendorsFailed,
   loadAIVendorsStarted,
   loadAIVendorsSuccess,
-  savingFinished,
-  savingStarted,
   updateAIAgent,
 } from './slice';
+import type { TUpdateAIAgentPayload } from './types';
 
 let latestProvidersRequestId = 0;
 
@@ -124,49 +132,32 @@ function* fetchAIProviderModels({ payload: providerId }: PayloadAction<number>) 
   }
 }
 
-export function* createAIProviderSaga({ payload, meta }: ReturnType<typeof createAIProvider>) {
-  yield put(savingStarted());
-  yield put(createAIProviderStarted(meta.requestId));
+function* createProvider(createRequest: () => Promise<unknown>) {
+  yield put(createAIProviderStarted());
 
   try {
-    yield createAIProviderApi(payload);
-    yield put(createAIProviderSucceeded(meta.requestId));
+    yield createRequest();
+    yield put(createAIProviderSuccess());
     const isRefreshed: boolean = yield fetchAIProviders();
     if (isRefreshed) {
       NotificationManager.success({ message: 'ai-providers.created' });
     }
   } catch (error) {
-    yield put(createAIProviderFailed(meta.requestId));
+    yield put(createAIProviderFailed());
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to create AI provider', error);
-  } finally {
-    yield put(savingFinished());
   }
 }
 
-export function* createAIProviderByVendorSaga({ payload, meta }: ReturnType<typeof createAIProviderByVendor>) {
-  yield put(savingStarted());
-  yield put(createAIProviderStarted(meta.requestId));
+export function* createAIProviderSaga({ payload }: PayloadAction<ICreateAIProviderRequest>) {
+  yield createProvider(() => createAIProviderApi(payload));
+}
 
-  try {
-    yield createAIProviderByVendorApi(payload);
-    yield put(createAIProviderSucceeded(meta.requestId));
-    const isRefreshed: boolean = yield fetchAIProviders();
-    if (isRefreshed) {
-      NotificationManager.success({ message: 'ai-providers.created' });
-    }
-  } catch (error) {
-    yield put(createAIProviderFailed(meta.requestId));
-    NotificationManager.warning({ message: getErrorMessage(error) });
-    logger.error('failed to create AI provider by vendor', error);
-  } finally {
-    yield put(savingFinished());
-  }
+export function* createAIProviderByVendorSaga({ payload }: PayloadAction<ICreateAIProviderByVendorRequest>) {
+  yield createProvider(() => createAIProviderByVendorApi(payload));
 }
 
 function* deleteAIProviderSaga({ payload: id }: PayloadAction<number>) {
-  yield put(savingStarted());
-
   try {
     yield deleteAIProviderApi(id);
     const isRefreshed: boolean = yield fetchAIProviders();
@@ -176,73 +167,51 @@ function* deleteAIProviderSaga({ payload: id }: PayloadAction<number>) {
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to delete AI provider', error);
-  } finally {
-    yield put(savingFinished());
   }
 }
 
-export function* createAIAgentSaga({ payload, meta }: ReturnType<typeof createAIAgent>) {
-  yield put(savingStarted());
-  yield put(createAIAgentStarted(meta.requestId));
+function* refreshAgentsAndProviders(successMessage: string) {
+  const [areAgentsRefreshed, areProvidersRefreshed]: [boolean, boolean] = yield all([
+    fetchAIAgents(),
+    fetchAIProviders(),
+  ]);
+  if (areAgentsRefreshed && areProvidersRefreshed) {
+    NotificationManager.success({ message: successMessage });
+  }
+}
+
+export function* createAIAgentSaga({ payload }: PayloadAction<ICreateAIAgentRequest>) {
+  yield put(createAIAgentStarted());
 
   try {
     yield createAIAgentApi(payload);
-    yield put(createAIAgentSucceeded(meta.requestId));
-    const [areAgentsRefreshed, areProvidersRefreshed]: [boolean, boolean] = yield all([
-      fetchAIAgents(),
-      fetchAIProviders(),
-    ]);
-    if (areAgentsRefreshed && areProvidersRefreshed) {
-      NotificationManager.success({ message: 'team.ai-agents.created' });
-    }
+    yield put(createAIAgentSuccess());
+    yield put(closeCreateUserModal());
+    yield refreshAgentsAndProviders('team.ai-agents.created');
   } catch (error) {
-    yield put(createAIAgentFailed(meta.requestId));
+    yield put(createAIAgentFailed());
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to create AI agent', error);
-  } finally {
-    yield put(savingFinished());
   }
 }
 
-function* updateAIAgentSaga({
-  payload: { id, ...data },
-}: PayloadAction<{ id: number } & Partial<ICreateAIAgentRequest>>) {
-  yield put(savingStarted());
-
+function* updateAIAgentSaga({ payload: { id, ...data } }: PayloadAction<TUpdateAIAgentPayload>) {
   try {
     yield updateAIAgentApi(id, data);
-    const [areAgentsRefreshed, areProvidersRefreshed]: [boolean, boolean] = yield all([
-      fetchAIAgents(),
-      fetchAIProviders(),
-    ]);
-    if (areAgentsRefreshed && areProvidersRefreshed) {
-      NotificationManager.success({ message: 'team.ai-agents.updated' });
-    }
+    yield refreshAgentsAndProviders('team.ai-agents.updated');
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to update AI agent', error);
-  } finally {
-    yield put(savingFinished());
   }
 }
 
 function* deleteAIAgentSaga({ payload: id }: PayloadAction<number>) {
-  yield put(savingStarted());
-
   try {
     yield deleteAIAgentApi(id);
-    const [areAgentsRefreshed, areProvidersRefreshed]: [boolean, boolean] = yield all([
-      fetchAIAgents(),
-      fetchAIProviders(),
-    ]);
-    if (areAgentsRefreshed && areProvidersRefreshed) {
-      NotificationManager.success({ message: 'team.ai-agents.deleted' });
-    }
+    yield refreshAgentsAndProviders('team.ai-agents.deleted');
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to delete AI agent', error);
-  } finally {
-    yield put(savingFinished());
   }
 }
 

@@ -11,12 +11,13 @@ import { createAIAgentSaga, createAIProviderByVendorSaga, createAIProviderSaga }
 import {
   createAIAgent,
   createAIAgentFailed,
-  createAIAgentSucceeded,
+  createAIAgentSuccess,
   createAIProvider,
   createAIProviderByVendor,
   createAIProviderFailed,
-  createAIProviderSucceeded,
+  createAIProviderSuccess,
 } from '../slice';
+import { closeCreateUserModal } from '../../accounts/slice';
 
 jest.mock('../../../api/ai', () => ({
   createAIAgent: jest.fn(),
@@ -69,8 +70,9 @@ describe('AI creation sagas', () => {
     const request = createAIAgent(agentData);
     await run(createAIAgentSaga, request);
 
-    expect(actions).toContainEqual(createAIAgentSucceeded(request.meta.requestId));
-    expect(actions).not.toContainEqual(createAIAgentFailed(request.meta.requestId));
+    expect(actions).toContainEqual(createAIAgentSuccess());
+    expect(actions).toContainEqual(closeCreateUserModal());
+    expect(actions).not.toContainEqual(createAIAgentFailed());
     expect(createAIAgentApi).toHaveBeenCalledTimes(1);
   });
 
@@ -79,8 +81,9 @@ describe('AI creation sagas', () => {
     const request = createAIAgent(agentData);
     await run(createAIAgentSaga, request);
 
-    expect(actions).toContainEqual(createAIAgentFailed(request.meta.requestId));
-    expect(actions).not.toContainEqual(createAIAgentSucceeded(request.meta.requestId));
+    expect(actions).toContainEqual(createAIAgentFailed());
+    expect(actions).not.toContainEqual(createAIAgentSuccess());
+    expect(actions).not.toContainEqual(closeCreateUserModal());
   });
 
   it('marks vendor provider creation successful even when refreshing providers fails', async () => {
@@ -88,8 +91,8 @@ describe('AI creation sagas', () => {
     const request = createAIProviderByVendor({ vendor: 'openrouter', apiKey: 'secret' });
     await run(createAIProviderByVendorSaga, request);
 
-    expect(actions).toContainEqual(createAIProviderSucceeded(request.meta.requestId));
-    expect(actions).not.toContainEqual(createAIProviderFailed(request.meta.requestId));
+    expect(actions).toContainEqual(createAIProviderSuccess());
+    expect(actions).not.toContainEqual(createAIProviderFailed());
     expect(createAIProviderByVendorApi).toHaveBeenCalledTimes(1);
   });
 
@@ -98,7 +101,7 @@ describe('AI creation sagas', () => {
     const request = createAIProvider({ name: 'Custom', baseUrl: 'https://example.com', apiKey: 'secret' });
     await run(createAIProviderSaga, request);
 
-    expect(actions).toContainEqual(createAIProviderFailed(request.meta.requestId));
-    expect(actions).not.toContainEqual(createAIProviderSucceeded(request.meta.requestId));
+    expect(actions).toContainEqual(createAIProviderFailed());
+    expect(actions).not.toContainEqual(createAIProviderSuccess());
   });
 });

@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { AIProviders } from '../AIProviders';
-import { deleteAIProvider, loadAIProviders } from '../../../../redux/ai/slice';
+import { deleteAIProvider, loadAIProviders, openCreateAIProviderModal } from '../../../../redux/ai/slice';
 import { EAIVendor } from '../../../../api/ai/types';
 import type { IAIProvider } from '../../../../api/ai/types';
 
@@ -76,11 +76,10 @@ describe('AIProviders', () => {
       selectorFn({
         ai: {
           providers: { isLoading, list: providers },
-          createProvider: { status: 'idle', requestId: null },
+          createProviderModal: { isOpen: false, isLoading: false },
           agents: { isLoading: false, list: [] },
           vendors: { isLoading: false, list: [] },
           models: { isLoading: false, providerId: null, list: [] },
-          isSaving: false,
           ...extra,
         },
       }),
@@ -173,6 +172,13 @@ describe('AIProviders', () => {
     expect(screen.queryByTestId('create-ai-provider-modal')).not.toBeInTheDocument();
 
     userEvent.click(screen.getByTestId('create-ai-provider-btn'));
+
+    expect(mockDispatch).toHaveBeenCalledWith(openCreateAIProviderModal());
+  });
+
+  it('renders the create modal when the store opens it', () => {
+    mockAIState([], { createProviderModal: { isOpen: true, isLoading: false } });
+    render(<AIProviders />);
 
     expect(screen.getByTestId('create-ai-provider-modal')).toBeInTheDocument();
   });

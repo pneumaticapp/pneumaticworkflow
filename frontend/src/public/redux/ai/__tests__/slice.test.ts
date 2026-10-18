@@ -1,13 +1,15 @@
 import reducer, {
+  closeCreateAIProviderModal,
   createAIAgentFailed,
   createAIAgentStarted,
-  createAIAgentSucceeded,
+  createAIAgentSuccess,
   createAIProviderFailed,
   createAIProviderStarted,
-  createAIProviderSucceeded,
+  createAIProviderSuccess,
   loadAIProvidersFailed,
   loadAIProvidersStarted,
   loadAIProvidersSuccess,
+  openCreateAIProviderModal,
 } from '../slice';
 import { EAIVendor } from '../../../api/ai/types';
 
@@ -43,20 +45,25 @@ describe('AI request state', () => {
     expect(failed.providers).toEqual({ isLoading: false, list: [provider] });
   });
 
-  it('ignores completion of an old agent request after a retry starts', () => {
+  it('tracks agent creation with isLoading', () => {
     const initial = reducer(undefined, { type: 'init' });
-    const pending = reducer(reducer(initial, createAIAgentStarted(1)), createAIAgentStarted(2));
+    const pending = reducer(initial, createAIAgentStarted());
 
-    expect(reducer(pending, createAIAgentSucceeded(1)).createAgent).toEqual({ status: 'pending', requestId: 2 });
-    expect(reducer(pending, createAIAgentFailed(1)).createAgent).toEqual({ status: 'pending', requestId: 2 });
-    expect(reducer(pending, createAIAgentSucceeded(2)).createAgent.status).toBe('succeeded');
+    expect(pending.createAgent).toEqual({ isLoading: true });
+    expect(reducer(pending, createAIAgentSuccess()).createAgent).toEqual({ isLoading: false });
+    expect(reducer(pending, createAIAgentFailed()).createAgent).toEqual({ isLoading: false });
   });
 
-  it('tracks both provider creation paths by the current request ID', () => {
+  it('closes the provider modal only when creation succeeds', () => {
     const initial = reducer(undefined, { type: 'init' });
-    const pending = reducer(reducer(initial, createAIProviderStarted(3)), createAIProviderStarted(4));
+    const pending = reducer(reducer(initial, openCreateAIProviderModal()), createAIProviderStarted());
 
-    expect(reducer(pending, createAIProviderSucceeded(3)).createProvider.status).toBe('pending');
-    expect(reducer(pending, createAIProviderFailed(4)).createProvider).toEqual({ status: 'failed', requestId: 4 });
+    expect(pending.createProviderModal).toEqual({ isOpen: true, isLoading: true });
+    expect(reducer(pending, createAIProviderFailed()).createProviderModal).toEqual({ isOpen: true, isLoading: false });
+    expect(reducer(pending, createAIProviderSuccess()).createProviderModal).toEqual({
+      isOpen: false,
+      isLoading: false,
+    });
+    expect(reducer(pending, closeCreateAIProviderModal()).createProviderModal.isOpen).toBe(false);
   });
 });

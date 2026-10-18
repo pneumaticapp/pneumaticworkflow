@@ -5,11 +5,6 @@ export interface IAIProviderListItemProps {
   onDelete: (id: number) => void;
 }
 
-export interface ICreateAIProviderModalProps {
-  isOpen: boolean;
-  onClose(): void;
-}
-
 export interface ICreateAIProviderFormValues {
   vendor: string;
   name: string;

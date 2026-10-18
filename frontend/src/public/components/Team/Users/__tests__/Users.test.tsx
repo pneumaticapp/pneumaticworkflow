@@ -102,7 +102,6 @@ describe('Users', () => {
         ai: {
           agents: { isLoading: areAgentsLoading, list: agents },
           providers: { isLoading: false, list: providers },
-          isSaving: false,
         },
       }),
     );

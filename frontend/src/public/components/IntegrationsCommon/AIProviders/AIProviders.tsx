@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '../../UI/Buttons/Button';
 import { Header } from '../../UI/Typeography/Header';
 import { Modal } from '../../UI/Modal/Modal';
-import { deleteAIProvider, loadAIProviders } from '../../../redux/ai/slice';
+import { deleteAIProvider, loadAIProviders, openCreateAIProviderModal } from '../../../redux/ai/slice';
 import { getAIProvidersState } from '../../../redux/selectors/ai';
 
 import { CreateAIProviderModal } from './CreateAIProviderModal';
@@ -20,13 +20,10 @@ export function AIProviders() {
   const { list: providers, isLoading } = useSelector(getAIProvidersState);
 
   const [confirmDeleteId, setConfirmDeleteId] = React.useState<number | null>(null);
-  const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
 
   React.useEffect(() => {
     dispatch(loadAIProviders());
   }, [dispatch]);
-
-  const closeCreateModal = React.useCallback(() => setIsCreateModalOpen(false), []);
 
   const handleDelete = React.useCallback(() => {
     if (confirmDeleteId !== null) {
@@ -46,7 +43,7 @@ export function AIProviders() {
         <Button
           className={styles['providers__create-btn']}
           type="button"
-          onClick={() => setIsCreateModalOpen(true)}
+          onClick={() => dispatch(openCreateAIProviderModal())}
           size="sm"
           buttonStyle="yellow"
           label={formatMessage({ id: 'ai-providers.add' })}
@@ -70,7 +67,7 @@ export function AIProviders() {
         </ul>
       )}
 
-      <CreateAIProviderModal isOpen={isCreateModalOpen} onClose={closeCreateModal} />
+      <CreateAIProviderModal />
 
       <Modal isOpen={confirmDeleteId !== null} onClose={() => setConfirmDeleteId(null)} width="sm">
         <div data-testid="delete-ai-provider-modal">

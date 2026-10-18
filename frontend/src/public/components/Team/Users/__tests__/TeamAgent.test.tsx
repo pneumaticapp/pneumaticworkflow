@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { TeamAgent } from '../TeamAgent';
@@ -98,11 +98,6 @@ describe('TeamAgent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
-    (useSelector as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({
-        ai: { isSaving: false },
-      }),
-    );
   });
 
   it('renders the agent with its provider name, model and inactive badge', () => {

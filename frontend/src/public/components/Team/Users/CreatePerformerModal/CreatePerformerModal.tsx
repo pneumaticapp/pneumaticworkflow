@@ -25,41 +25,27 @@ export function CreatePerformerModal({
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState(initialTab);
-  const [pendingRequestId, setPendingRequestId] = useState<number | null>(null);
   const { isLoading: isLoadingProviders, list: providers } = useSelector(getAIProvidersState);
-  const createAgentState = useSelector(getAICreateAgentState);
+  const { isLoading: isCreatingAgent } = useSelector(getAICreateAgentState);
 
   useEffect(() => {
     if (isOpen) {
       setActiveTab(initialTab);
       dispatch(loadAIProviders());
-    } else {
-      setPendingRequestId(null);
     }
   }, [dispatch, isOpen, initialTab]);
 
-  useEffect(() => {
-    if (
-      isOpen &&
-      pendingRequestId !== null &&
-      createAgentState.requestId === pendingRequestId &&
-      createAgentState.status === 'succeeded'
-    ) {
-      onClose();
-    }
-  }, [isOpen, pendingRequestId, createAgentState, onClose]);
-
   const handleCreateAIAgent = (values: IAIAgentFormValues) => {
-    const action = createAIAgent({
-      name: values.name.trim(),
-      providerId: Number(values.providerId),
-      model: values.model,
-      systemPrompt: values.systemPrompt,
-      photo: values.photo || null,
-      isActive: true,
-    });
-    setPendingRequestId(action.meta.requestId);
-    dispatch(action);
+    dispatch(
+      createAIAgent({
+        name: values.name.trim(),
+        providerId: Number(values.providerId),
+        model: values.model,
+        systemPrompt: values.systemPrompt,
+        photo: values.photo || null,
+        isActive: true,
+      }),
+    );
   };
 
   const handleGoToIntegrations = () => {
@@ -68,9 +54,6 @@ export function CreatePerformerModal({
   };
 
   const hasProviders = providers.length > 0;
-  const isCreating =
-    pendingRequestId !== null &&
-    (createAgentState.requestId !== pendingRequestId || createAgentState.status !== 'failed');
 
   return (
     <BaseModal
@@ -117,7 +100,7 @@ export function CreatePerformerModal({
       <CreateAIAgentForm
         isActive={activeTab === ECreatePerformerModalTab.AIAgent && hasProviders}
         isOpen={isOpen}
-        isSubmitting={isCreating}
+        isSubmitting={isCreatingAgent}
         submitLabel={formatMessage({ id: 'team.create-ai-agent-modal.submit' })}
         onSubmit={handleCreateAIAgent}
       />

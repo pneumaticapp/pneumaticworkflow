@@ -1,17 +1,16 @@
-import type { IAIAgent, IAIModel, IAIProvider, IAIVendor } from '../../api/ai/types';
+import type { IAIAgent, IAIModel, IAIProvider, IAIVendor, TUpdateAIAgentRequest } from '../../api/ai/types';
 
 export interface IAIStore {
   providers: {
     isLoading: boolean;
     list: IAIProvider[];
   };
-  createProvider: {
-    status: 'idle' | 'pending' | 'succeeded' | 'failed';
-    requestId: number | null;
+  createProviderModal: {
+    isOpen: boolean;
+    isLoading: boolean;
   };
   createAgent: {
-    status: 'idle' | 'pending' | 'succeeded' | 'failed';
-    requestId: number | null;
+    isLoading: boolean;
   };
   agents: {
     isLoading: boolean;
@@ -26,5 +25,6 @@ export interface IAIStore {
     providerId: number | null;
     list: IAIModel[];
   };
-  isSaving: boolean;
 }
+
+export type TUpdateAIAgentPayload = { id: number } & TUpdateAIAgentRequest;
