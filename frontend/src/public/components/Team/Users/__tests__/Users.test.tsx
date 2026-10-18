@@ -9,8 +9,8 @@ import { TeamAgent } from '../TeamAgent';
 import { TeamUserSkeleton } from '../../TeamUserSkeleton';
 import { generateUser, mockLastNameUsers } from '../../../../__stubs__/users';
 import { EUserListSorting } from '../../../../types/user';
-import { EAIVendor } from '../../../../types/ai';
-import type { IAIAgent, IAIProvider } from '../../../../types/ai';
+import { EAIVendor } from '../../../../api/ai/types';
+import type { IAIAgent, IAIProvider } from '../../../../api/ai/types';
 import type { TUserListItem } from '../../../../types/user';
 
 jest.mock('../DeleteTeamUserPopup', () => ({

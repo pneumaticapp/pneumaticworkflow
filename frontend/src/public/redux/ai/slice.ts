@@ -1,7 +1,7 @@
 import { createAction, createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
-import type { IAIStore } from '../../types/redux';
+import type { IAIStore } from './types';
 import type {
   IAIAgent,
   IAIModel,
@@ -10,7 +10,7 @@ import type {
   ICreateAIProviderByVendorRequest,
   ICreateAIProviderRequest,
   IAIVendor,
-} from '../../types/ai';
+} from '../../api/ai/types';
 
 const initialState: IAIStore = {
   providers: {

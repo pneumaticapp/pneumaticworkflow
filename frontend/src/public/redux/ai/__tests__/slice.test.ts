@@ -9,7 +9,7 @@ import reducer, {
   loadAIProvidersStarted,
   loadAIProvidersSuccess,
 } from '../slice';
-import { EAIVendor } from '../../../types/ai';
+import { EAIVendor } from '../../../api/ai/types';
 
 describe('AI request state', () => {
   it('uses isLoading until the provider request succeeds or fails', () => {

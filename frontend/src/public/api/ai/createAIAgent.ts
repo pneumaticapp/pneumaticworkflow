@@ -1,7 +1,7 @@
 import { commonRequest } from '../commonRequest';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { mapRequestBody } from '../../utils/mappers';
-import { IAIAgent, ICreateAIAgentRequest } from '../../types/ai';
+import type { IAIAgent, ICreateAIAgentRequest } from './types';
 
 export function createAIAgent(data: ICreateAIAgentRequest) {
   const {

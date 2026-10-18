@@ -1,7 +1,7 @@
 import { commonRequest } from '../commonRequest';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { mapRequestBody } from '../../utils/mappers';
-import { IAIAgent, TUpdateAIAgentRequest } from '../../types/ai';
+import type { IAIAgent, TUpdateAIAgentRequest } from './types';
 
 export function updateAIAgent(id: number, data: TUpdateAIAgentRequest) {
   const {

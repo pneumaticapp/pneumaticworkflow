@@ -1,4 +1,4 @@
-import type { IAIProvider } from '../../../types/ai';
+import type { IAIProvider } from '../../../api/ai/types';
 
 export interface IAIProviderListItemProps {
   provider: IAIProvider;

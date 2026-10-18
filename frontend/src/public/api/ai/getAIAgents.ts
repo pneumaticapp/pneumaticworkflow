@@ -1,6 +1,6 @@
 import { commonRequest } from '../commonRequest';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
-import { IAIAgent } from '../../types/ai';
+import type { IAIAgent } from './types';
 
 export function getAIAgents() {
   const {

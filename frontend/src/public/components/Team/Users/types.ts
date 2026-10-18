@@ -1,4 +1,4 @@
-import type { IAIAgent } from '../../../types/ai';
+import type { IAIAgent } from '../../../api/ai/types';
 import type { EUserListSorting, TUserListItem } from '../../../types/user';
 
 export interface IUsersProps {

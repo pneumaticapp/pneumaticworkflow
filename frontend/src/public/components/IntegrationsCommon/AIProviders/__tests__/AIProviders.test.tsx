@@ -6,7 +6,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { AIProviders } from '../AIProviders';
 import { deleteAIProvider, loadAIProviders } from '../../../../redux/ai/slice';
-import { EAIVendor, IAIProvider } from '../../../../types/ai';
+import { EAIVendor } from '../../../../api/ai/types';
+import type { IAIProvider } from '../../../../api/ai/types';
 
 jest.mock('../AIProvidersSkeleton', () => ({
   AIProvidersSkeleton: () => <div data-testid="ai-providers-skeleton" />,

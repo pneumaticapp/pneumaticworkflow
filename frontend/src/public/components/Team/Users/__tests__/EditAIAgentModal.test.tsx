@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 
 import { EditAIAgentModal } from '../EditAIAgentModal';
 import { updateAIAgent } from '../../../../redux/ai/slice';
-import type { IAIAgent } from '../../../../types/ai';
+import type { IAIAgent } from '../../../../api/ai/types';
 import type { IAIAgentFormValues } from '../CreatePerformerModal/types';
 
 jest.mock('../../../UI/BaseModal', () => ({

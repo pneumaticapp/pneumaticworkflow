@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { TeamAgent } from '../TeamAgent';
 import { deleteAIAgent, updateAIAgent } from '../../../../redux/ai/slice';
-import type { IAIAgent } from '../../../../types/ai';
+import type { IAIAgent } from '../../../../api/ai/types';
 
 interface IDropdownMockProps {
   renderToggle(isOpen: boolean): React.ReactNode;

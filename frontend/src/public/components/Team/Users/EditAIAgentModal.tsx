@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
-import type { IAIAgent } from '../../../types/ai';
+import type { IAIAgent } from '../../../api/ai/types';
 import { BaseModal, ModalHeader } from '../../UI/BaseModal';
 import { updateAIAgent } from '../../../redux/ai/slice';
 import { CreateAIAgentForm } from './CreatePerformerModal/CreateAIAgentForm';

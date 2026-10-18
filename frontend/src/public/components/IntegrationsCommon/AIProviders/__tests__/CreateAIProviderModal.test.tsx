@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { CreateAIProviderModal } from '../CreateAIProviderModal';
 import { createAIProvider, createAIProviderByVendor, loadAIVendors } from '../../../../redux/ai/slice';
-import { IAIVendor } from '../../../../types/ai';
+import type { IAIVendor } from '../../../../api/ai/types';
 
 interface IMockButtonProps {
   label: string;

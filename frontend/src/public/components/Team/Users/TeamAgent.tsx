@@ -5,7 +5,7 @@ import Switch from 'rc-switch';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type { IAIAgent } from '../../../types/ai';
+import type { IAIAgent } from '../../../api/ai/types';
 import { Dropdown } from '../../UI';
 import type { TDropdownOption } from '../../UI';
 import { Button } from '../../UI/Buttons/Button';

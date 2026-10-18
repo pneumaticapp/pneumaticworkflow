@@ -13,7 +13,7 @@ import {
   getAIVendors as getAIVendorsApi,
   updateAIAgent as updateAIAgentApi,
 } from '../../api/ai';
-import type { IAIAgent, IAIModel, IAIProvider, ICreateAIAgentRequest, IAIVendor } from '../../types/ai';
+import type { IAIAgent, IAIModel, IAIProvider, ICreateAIAgentRequest, IAIVendor } from '../../api/ai/types';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { logger } from '../../utils/logger';
