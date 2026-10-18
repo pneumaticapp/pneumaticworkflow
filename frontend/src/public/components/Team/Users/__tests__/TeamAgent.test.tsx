@@ -24,7 +24,6 @@ interface IButtonMockProps {
 interface ISwitchMockProps {
   checked: boolean;
   onChange(checked: boolean): void;
-  disabled?: boolean;
 }
 
 jest.mock('../../../UI', () => ({
@@ -64,14 +63,8 @@ jest.mock('../../../UI/Modal/Modal', () => ({
     isOpen ? <div role="dialog">{children}</div> : null,
 }));
 
-jest.mock('rc-switch', () => ({ checked, onChange, disabled }: ISwitchMockProps) => (
-  <input
-    type="checkbox"
-    data-testid="active-switch"
-    checked={checked}
-    disabled={disabled}
-    onChange={(e) => onChange(e.target.checked)}
-  />
+jest.mock('rc-switch', () => ({ checked, onChange }: ISwitchMockProps) => (
+  <input type="checkbox" data-testid="active-switch" checked={checked} onChange={(e) => onChange(e.target.checked)} />
 ));
 
 jest.mock('../EditAIAgentModal', () => ({
