@@ -126,9 +126,6 @@ const aiSlice = createSlice({
       state.models.isLoading = false;
       state.models.providerId = null;
     },
-    resetAIProviderModels: (state) => {
-      state.models = { isLoading: false, providerId: null, list: [] };
-    },
 
     savingStarted: (state) => {
       state.isSaving = true;
@@ -158,7 +155,6 @@ export const {
   loadAIProviderModelsStarted,
   loadAIProviderModelsSuccess,
   loadAIProviderModelsFailed,
-  resetAIProviderModels,
   savingStarted,
   savingFinished,
 } = aiSlice.actions;

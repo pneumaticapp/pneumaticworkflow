@@ -174,7 +174,6 @@ function* deleteAIProviderSaga({ payload: id }: PayloadAction<number>) {
       NotificationManager.success({ message: 'ai-providers.deleted' });
     }
   } catch (error) {
-    // The API refuses to delete a provider still referenced by an agent (MSG_AI_0005).
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to delete AI provider', error);
   } finally {
@@ -189,7 +188,6 @@ export function* createAIAgentSaga({ payload, meta }: ReturnType<typeof createAI
   try {
     yield createAIAgentApi(payload);
     yield put(createAIAgentSucceeded(meta.requestId));
-    // Providers carry a usage list, which the new agent has just changed.
     const [areAgentsRefreshed, areProvidersRefreshed]: [boolean, boolean] = yield all([
       fetchAIAgents(),
       fetchAIProviders(),
