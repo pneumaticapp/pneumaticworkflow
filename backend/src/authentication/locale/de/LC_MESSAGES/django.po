@@ -86,3 +86,6 @@ msgstr "Dieses Konto verwendet keine SSO-Authentifizierung. Bitte wenden Sie sic
 
 msgid "Format field is required"
 msgstr ""
+
+msgid "This user has been deactivated. Please contact your account administrator."
+msgstr "Dieser Benutzer wurde deaktiviert. Bitte wenden Sie sich an Ihren Kontoadministrator."

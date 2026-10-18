@@ -163,17 +163,6 @@ MSG_PW_0080 = lambda task_name: format_lazy(
     ),
     task_name=task_name,
 )
-MSG_PW_0092 = lambda task_name: format_lazy(
-    _(
-        'Unable return to "{task_name}" because it is skipped on return '
-        'and there are no tasks before it.',
-    ),
-    task_name=task_name,
-)
-MSG_PW_0093 = lambda task_name: format_lazy(
-    _('Unable return to "{task_name}" because it is skipped on return.'),
-    task_name=task_name,
-)
 MSG_PW_0081 = _("A workflow can't return to a later task.")
 MSG_PW_0082 = _("There is no group with the specified ID.")
 MSG_PW_0083 = _("You must supply a comment.")
