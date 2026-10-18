@@ -1,9 +1,11 @@
 import * as React from 'react';
+import { useRef, useState } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
-import { FieldHookConfig, useField } from 'formik';
+import type { FieldHookConfig } from 'formik';
+import { useField } from 'formik';
 
-import { TForegroundColor } from '../common/types';
+import type { TForegroundColor } from '../common/types';
 import { getForegroundClass } from '../common/utils/getForegroundClass';
 
 import styles from './TextareaField.css';
@@ -33,9 +35,9 @@ export function TextareaField({
   showErrorIfTouched = false,
   ...props
 }: TTextareaFieldProps) {
-  const [touched, setTouched] = React.useState(false);
+  const [touched, setTouched] = useState(false);
   const { messages } = useIntl();
-  const textareaIdRef = React.useRef<string | null>(null);
+  const textareaIdRef = useRef<string | null>(null);
 
   if (!textareaIdRef.current) {
     textareaIdRef.current = `textarea-${Math.random().toString(36).slice(2, 9)}`;

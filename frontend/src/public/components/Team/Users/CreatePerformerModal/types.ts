@@ -1,4 +1,4 @@
-import { ICreateUserRequest } from '../../../../types/user';
+import type { ICreateUserRequest } from '../../../../types/user';
 
 export interface ICreatePerformerModalProps {
   isOpen: boolean;

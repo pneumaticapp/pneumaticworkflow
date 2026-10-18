@@ -1,4 +1,4 @@
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../../types/redux';
 
 export const getAIProviders = (state: IApplicationState) => state.ai.providers.list;
 

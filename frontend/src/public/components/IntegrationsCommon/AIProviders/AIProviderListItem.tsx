@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useCallback } from 'react';
 import { useIntl } from 'react-intl';
 
 import { Button } from '../../UI/Buttons/Button';
@@ -14,7 +15,7 @@ export const AIProviderListItem = React.memo(({ provider, onDelete }: IAIProvide
   const isUsed = provider.usage.length > 0;
   const agentNames = provider.usage.map(({ name }) => name).join(', ');
 
-  const handleDelete = React.useCallback(() => {
+  const handleDelete = useCallback(() => {
     onDelete(provider.id);
   }, [provider.id, onDelete]);
 

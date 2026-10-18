@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useEffect, useState } from 'react';
 import { Formik } from 'formik';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
@@ -37,9 +38,9 @@ export function CreateAIProviderModal() {
   const { isOpen, isLoading: isCreating } = useSelector(getAICreateProviderModalState);
   const { list: vendors } = useSelector(getAIVendorsState);
 
-  const [activeTab, setActiveTab] = React.useState<TCreateTab>('vendor');
+  const [activeTab, setActiveTab] = useState<TCreateTab>('vendor');
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       dispatch(loadAIVendors());
     }

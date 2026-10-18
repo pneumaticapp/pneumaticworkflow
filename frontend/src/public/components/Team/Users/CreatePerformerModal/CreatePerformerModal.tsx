@@ -13,7 +13,8 @@ import { getAICreateAgentState, getAIProvidersState } from '../../../../redux/se
 
 import { CreateAIAgentForm } from './CreateAIAgentForm';
 import { CreateUserForm } from './CreateUserForm';
-import { ECreatePerformerModalTab, IAIAgentFormValues, ICreatePerformerModalProps } from './types';
+import type { IAIAgentFormValues, ICreatePerformerModalProps } from './types';
+import { ECreatePerformerModalTab } from './types';
 
 import styles from './CreatePerformerModal.css';
 

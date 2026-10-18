@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -19,13 +20,13 @@ export function AIProviders() {
 
   const { list: providers, isLoading } = useSelector(getAIProvidersState);
 
-  const [confirmDeleteId, setConfirmDeleteId] = React.useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     dispatch(loadAIProviders());
   }, [dispatch]);
 
-  const handleDelete = React.useCallback(() => {
+  const handleDelete = useCallback(() => {
     if (confirmDeleteId !== null) {
       dispatch(deleteAIProvider(confirmDeleteId));
       setConfirmDeleteId(null);

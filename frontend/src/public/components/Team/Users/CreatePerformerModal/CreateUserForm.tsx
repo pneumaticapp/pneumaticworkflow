@@ -15,7 +15,8 @@ import { createPassword } from '../../../../utils/createPassword';
 import { NotificationManager } from '../../../UI/Notifications';
 import { createUser } from '../../../../redux/accounts/slice';
 
-import { EUserRole, ICreateUserFormProps, ICreateUserFormValues, IStatusOption } from './types';
+import type { ICreateUserFormProps, ICreateUserFormValues, IStatusOption } from './types';
+import { EUserRole } from './types';
 
 import styles from './CreatePerformerModal.css';
 
