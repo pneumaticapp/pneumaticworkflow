@@ -9,12 +9,14 @@ from src.accounts.enums import (
     NotificationType,
     UserStatus,
 )
-from src.accounts.models import Notification
+from src.accounts.models import Notification, User
 from src.accounts.services.user import UserService
 from src.ai.enums import AIAgentActionType
 from src.ai.exceptions import (
     AIAgentAttemptsExceededException,
+    AIAgentException,
     AIAgentNameNotUniqueException,
+    AIProviderException,
     AIProviderRequestFailedException,
 )
 from src.ai.messages import (
@@ -24,6 +26,7 @@ from src.ai.messages import (
     MSG_AI_0010,
     MSG_AI_0011,
     MSG_AI_0013,
+    MSG_AI_0015,
 )
 from src.ai.models import AIAgent, AIAgentAction
 from src.ai.services.agent import AIAgentService, MAX_RUN_FAILURES
@@ -1556,6 +1559,9 @@ def test_create_instance__default_parameters__ok(mocker):
         'src.ai.services.agent.AIAgentService._get_agent_email',
         return_value=email,
     )
+    create_first_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_first_completion',
+    )
     service = AIAgentService(user=owner)
 
     # act
@@ -1598,6 +1604,9 @@ def test_create_instance__default_parameters__ok(mocker):
         is_comments_mentions_subscriber=False,
     )
     get_agent_email_mock.assert_called_once_with()
+    create_first_completion_mock.assert_called_once_with(
+        models=[{'slug': 'gpt-4o'}],
+    )
 
 
 def test_create_instance__all_parameters__ok(mocker):
@@ -1629,6 +1638,9 @@ def test_create_instance__all_parameters__ok(mocker):
     get_agent_email_mock = mocker.patch(
         'src.ai.services.agent.AIAgentService._get_agent_email',
         return_value=email,
+    )
+    create_first_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_first_completion',
     )
     service = AIAgentService(user=owner)
 
@@ -1670,6 +1682,45 @@ def test_create_instance__all_parameters__ok(mocker):
         is_comments_mentions_subscriber=False,
     )
     get_agent_email_mock.assert_called_once_with()
+    create_first_completion_mock.assert_called_once_with(
+        models=[{'slug': 'gpt-4o'}],
+    )
+
+
+def test_create_instance__model_unavailable__raise_exception(mocker):
+
+    """ The model does not respond: nothing is created """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    provider = create_test_provider(account=account)
+    create_first_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_first_completion',
+        side_effect=AIProviderException(message='Failed'),
+    )
+    user_create_mock = mocker.patch(
+        'src.ai.services.agent.UserService.create',
+    )
+    service = AIAgentService(user=owner)
+
+    # act
+    with pytest.raises(AIAgentException) as ex:
+        service._create_instance(
+            name='Operator',
+            model='gpt-4o',
+            system_prompt='You are an operator.',
+            provider=provider,
+        )
+
+    # assert
+    assert str(ex.value.message) == str(MSG_AI_0015(model='gpt-4o'))
+    assert not AIAgent.objects.filter(account=account).exists()
+    assert not User.objects.filter(account=account, is_ai=True).exists()
+    create_first_completion_mock.assert_called_once_with(
+        models=[{'slug': 'gpt-4o'}],
+    )
+    user_create_mock.assert_not_called()
 
 
 def test_create_instance__name_not_unique__raise_exception(mocker):
@@ -1700,6 +1751,9 @@ def test_create_instance__name_not_unique__raise_exception(mocker):
     get_agent_email_mock = mocker.patch(
         'src.ai.services.agent.AIAgentService._get_agent_email',
         return_value=email,
+    )
+    create_first_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_first_completion',
     )
     service = AIAgentService(user=owner)
 
@@ -1736,6 +1790,9 @@ def test_create_instance__name_not_unique__raise_exception(mocker):
         is_comments_mentions_subscriber=False,
     )
     get_agent_email_mock.assert_called_once_with()
+    create_first_completion_mock.assert_called_once_with(
+        models=[{'slug': 'gpt-4o'}],
+    )
 
 
 def test_create_instance__same_name_in_another_account__ok(mocker):
@@ -1767,6 +1824,9 @@ def test_create_instance__same_name_in_another_account__ok(mocker):
     get_agent_email_mock = mocker.patch(
         'src.ai.services.agent.AIAgentService._get_agent_email',
         return_value=email,
+    )
+    create_first_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_first_completion',
     )
     service = AIAgentService(user=owner)
 
@@ -1804,6 +1864,9 @@ def test_create_instance__same_name_in_another_account__ok(mocker):
         is_comments_mentions_subscriber=False,
     )
     get_agent_email_mock.assert_called_once_with()
+    create_first_completion_mock.assert_called_once_with(
+        models=[{'slug': 'gpt-4o'}],
+    )
 
 
 def test_create_instance__same_name_as_deleted_agent__ok(mocker):
@@ -1840,6 +1903,9 @@ def test_create_instance__same_name_as_deleted_agent__ok(mocker):
         'src.ai.services.agent.AIAgentService._get_agent_email',
         return_value=email,
     )
+    create_first_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_first_completion',
+    )
     service = AIAgentService(user=owner)
 
     # act
@@ -1876,6 +1942,9 @@ def test_create_instance__same_name_as_deleted_agent__ok(mocker):
         is_comments_mentions_subscriber=False,
     )
     get_agent_email_mock.assert_called_once_with()
+    create_first_completion_mock.assert_called_once_with(
+        models=[{'slug': 'gpt-4o'}],
+    )
 
 
 def test_partial_update__name__ok(mocker):

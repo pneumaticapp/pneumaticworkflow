@@ -67,3 +67,10 @@ MSG_AI_0014 = lambda model, error: format_lazy(
     model=model,
     error=error,
 )
+MSG_AI_0015 = lambda model: format_lazy(
+    _(
+        'The selected model "{model}" returned an error. '
+        'Try choosing another model.',
+    ),
+    model=model,
+)

@@ -11,13 +11,16 @@ from src.accounts.models import Notification
 from src.accounts.services.user import UserService
 from src.ai.exceptions import (
     AIAgentAttemptsExceededException,
+    AIAgentException,
     AIAgentNameNotUniqueException,
+    AIProviderException,
 )
 from src.ai.messages import (
     MSG_AI_0009,
     MSG_AI_0010,
     MSG_AI_0011,
     MSG_AI_0013,
+    MSG_AI_0015,
 )
 from src.ai.models import AIAgent, AIAgentAction, AIProvider
 from src.ai.services.provider import AIProviderService
@@ -79,8 +82,21 @@ class AIAgentService(BaseModelService):
             -> AIAgent 'Operator' with a user 'Operator' (is_ai=True)
 
             the account already has an agent 'Operator'
-            -> AIAgentNameNotUniqueException """
+            -> AIAgentNameNotUniqueException
 
+            the model does not respond to a test request
+            -> AIAgentException, nothing is created """
+
+        provider_service = AIProviderService(
+            user=self.user,
+            instance=provider,
+            is_superuser=self.is_superuser,
+            auth_type=self.auth_type,
+        )
+        try:
+            provider_service._create_first_completion(models=[{'slug': model}])
+        except AIProviderException as ex:
+            raise AIAgentException(message=MSG_AI_0015(model=model)) from ex
         user_service = UserService(
             user=self.user,
             is_superuser=self.is_superuser,
