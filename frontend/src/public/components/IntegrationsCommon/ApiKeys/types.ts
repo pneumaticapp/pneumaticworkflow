@@ -1,4 +1,3 @@
-import type { ChangeEvent, FormEvent } from 'react';
 import type { IApiKeyItem } from '../../../types/integrations';
 
 export interface IApiKeyListItemProps {
@@ -8,10 +7,12 @@ export interface IApiKeyListItemProps {
 
 export interface ICreateApiKeyModalProps {
   isOpen: boolean;
-  name: string;
-  onNameChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSubmit: (name: string) => void;
   onClose: () => void;
+}
+
+export interface ICreateApiKeyFormValues {
+  name: string;
 }
 
 export interface INewApiKeyModalProps {

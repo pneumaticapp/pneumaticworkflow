@@ -5,7 +5,7 @@ import { useIntl, FormattedDate } from 'react-intl';
 import { Button } from '../../UI/Buttons/Button';
 import type { IApiKeyListItemProps } from './types';
 
-import styles from '../IntegrationsCommon.css';
+import styles from './ApiKeys.css';
 
 const keyMask = '••••••••';
 
@@ -17,21 +17,21 @@ export const ApiKeyListItem = memo(({ apiKey, onRevoke }: IApiKeyListItemProps) 
   }, [apiKey.id, onRevoke]);
 
   return (
-    <div className={styles['api-keys__item']} data-testid={`api-key-${apiKey.id}`}>
+    <li className={styles['api-keys__item']} data-testid={`api-key-${apiKey.id}`}>
       <div className={styles['api-keys__item-info']}>
-        <span className={styles['api-keys__item-name']}>{apiKey.name}</span>
-        <span className={styles['api-keys__item-prefix']}>
+        <h3 className={styles['api-keys__item-name']}>{apiKey.name}</h3>
+        <code className={styles['api-keys__item-prefix']}>
           {apiKey.prefix}
           {keyMask}
-        </span>
-        <span className={styles['api-keys__item-meta']}>
+        </code>
+        <p className={styles['api-keys__item-meta']}>
           {apiKey.lastUsedAt
             ? formatMessage(
                 { id: 'integrations.api-key-last-used' },
                 { date: <FormattedDate value={new Date(apiKey.lastUsedAt)} /> },
               )
             : formatMessage({ id: 'integrations.api-key-never-used' })}
-        </span>
+        </p>
       </div>
       <div className={styles['api-keys__item-actions']}>
         <Button
@@ -43,7 +43,7 @@ export const ApiKeyListItem = memo(({ apiKey, onRevoke }: IApiKeyListItemProps) 
           data-testid={`revoke-${apiKey.id}`}
         />
       </div>
-    </div>
+    </li>
   );
 });
 ApiKeyListItem.displayName = 'ApiKeyListItem';

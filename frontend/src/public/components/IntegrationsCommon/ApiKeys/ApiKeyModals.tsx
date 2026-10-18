@@ -1,13 +1,19 @@
 import * as React from 'react';
+import { Formik } from 'formik';
 import { useIntl } from 'react-intl';
 
 import { Button } from '../../UI/Buttons/Button';
-import { InputField } from '../../UI/Fields/InputField';
+import { FormikInputField } from '../../UI/Fields/InputField';
 import { Header } from '../../UI/Typeography/Header';
 import { Modal } from '../../UI/Modal/Modal';
-import type { ICreateApiKeyModalProps, INewApiKeyModalProps, IRevokeApiKeyModalProps } from './types';
+import type {
+  ICreateApiKeyFormValues,
+  ICreateApiKeyModalProps,
+  INewApiKeyModalProps,
+  IRevokeApiKeyModalProps,
+} from './types';
 
-import styles from '../IntegrationsCommon.css';
+import styles from './ApiKeys.css';
 
 export function NewApiKeyModal({ apiKey, onClose, onCopy }: INewApiKeyModalProps) {
   const { formatMessage } = useIntl();
@@ -15,26 +21,24 @@ export function NewApiKeyModal({ apiKey, onClose, onCopy }: INewApiKeyModalProps
   return (
     <Modal isOpen={!!apiKey} onClose={onClose} width="sm">
       <div data-testid="new-key-modal">
-        <Header tag="p" size="6" className={styles['create-modal__title']}>
+        <Header tag="h2" size="6" className={styles['key-modal__title']}>
           {formatMessage({ id: 'integrations.api-key-created-title' })}
         </Header>
-        <p className={styles['api-keys__modal-warning']}>
-          {formatMessage({ id: 'integrations.api-key-created-warning' })}
-        </p>
-        <div className={styles['api-keys__modal-key']}>
-          <code className={styles['api-keys__modal-key-value']} data-testid="raw-key-value">
+        <p className={styles['key-modal__warning']}>{formatMessage({ id: 'integrations.api-key-created-warning' })}</p>
+        <div className={styles['key-modal__key']}>
+          <code className={styles['key-modal__key-value']} data-testid="raw-key-value">
             {apiKey}
           </code>
           <button
             type="button"
-            className={styles['api-keys__modal-copy-btn']}
+            className={styles['key-modal__copy-btn']}
             onClick={onCopy}
             data-testid="copy-inline-btn"
           >
             {formatMessage({ id: 'team.create-user-modal.copy' })}
           </button>
         </div>
-        <div className={styles['create-modal__footer']}>
+        <div className={styles['key-modal__footer']}>
           <Button
             type="button"
             onClick={onClose}
@@ -54,13 +58,11 @@ export function RevokeApiKeyModal({ isOpen, onClose, onConfirm }: IRevokeApiKeyM
   return (
     <Modal isOpen={isOpen} onClose={onClose} width="sm">
       <div data-testid="revoke-key-modal">
-        <Header tag="p" size="6" className={styles['create-modal__title']}>
+        <Header tag="h2" size="6" className={styles['key-modal__title']}>
           {formatMessage({ id: 'integrations.revoke-modal-title' })}
         </Header>
-        <p className={styles['api-keys__modal-warning']}>
-          {formatMessage({ id: 'integrations.delete-api-key-confirm' })}
-        </p>
-        <div className={styles['create-modal__footer']}>
+        <p className={styles['key-modal__warning']}>{formatMessage({ id: 'integrations.delete-api-key-confirm' })}</p>
+        <div className={styles['key-modal__footer']}>
           <Button
             type="button"
             onClick={onConfirm}
@@ -78,40 +80,43 @@ export function RevokeApiKeyModal({ isOpen, onClose, onConfirm }: IRevokeApiKeyM
   );
 }
 
-export function CreateApiKeyModal({ isOpen, name, onNameChange, onSubmit, onClose }: ICreateApiKeyModalProps) {
+export function CreateApiKeyModal({ isOpen, onSubmit, onClose }: ICreateApiKeyModalProps) {
   const { formatMessage } = useIntl();
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} width="sm">
       <div data-testid="create-key-modal">
-        <Header tag="p" size="6" className={styles['create-modal__title']}>
+        <Header tag="h2" size="6" className={styles['key-modal__title']}>
           {formatMessage({ id: 'integrations.create-api-key-modal-title' })}
         </Header>
-        <p className={styles['create-modal__description']}>
+        <p className={styles['key-modal__description']}>
           {formatMessage({ id: 'integrations.create-api-key-modal-description' })}
         </p>
-        <form onSubmit={onSubmit} data-autofocus-first-field>
-          <InputField
-            autoFocus
-            value={name}
-            onChange={onNameChange}
-            placeholder={formatMessage({ id: 'integrations.api-key-name-placeholder' })}
-            fieldSize="md"
-            data-testid="api-key-name-input"
-          />
-          <div className={styles['create-modal__footer']}>
-            <Button
-              type="submit"
-              size="md"
-              buttonStyle="yellow"
-              label={formatMessage({ id: 'integrations.create-api-key' })}
-              data-testid="submit-create-key"
-            />
-            <button type="button" className="cancel-button" onClick={onClose} data-testid="cancel-create-key">
-              {formatMessage({ id: 'integrations.cancel' })}
-            </button>
-          </div>
-        </form>
+        <Formik<ICreateApiKeyFormValues> initialValues={{ name: '' }} onSubmit={({ name }) => onSubmit(name.trim())}>
+          {({ handleSubmit }) => (
+            <form onSubmit={handleSubmit} data-autofocus-first-field>
+              <FormikInputField
+                autoFocus
+                name="name"
+                placeholder={formatMessage({ id: 'integrations.api-key-name-placeholder' })}
+                fieldSize="md"
+                data-testid="api-key-name-input"
+              />
+              <div className={styles['key-modal__footer']}>
+                <Button
+                  type="submit"
+                  size="md"
+                  buttonStyle="yellow"
+                  label={formatMessage({ id: 'integrations.create-api-key' })}
+                  data-testid="submit-create-key"
+                />
+                <button type="button" className="cancel-button" onClick={onClose} data-testid="cancel-create-key">
+                  {formatMessage({ id: 'integrations.cancel' })}
+                </button>
+              </div>
+            </form>
+          )}
+        </Formik>
       </div>
     </Modal>
   );

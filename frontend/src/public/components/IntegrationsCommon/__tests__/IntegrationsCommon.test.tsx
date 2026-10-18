@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useDispatch, useSelector } from 'react-redux';
 import { IntlProvider } from 'react-intl';
@@ -21,14 +21,20 @@ jest.mock('../../UI/Buttons/Button', () => ({
   ),
 }));
 
-jest.mock('../../UI/Fields/InputField', () => ({
-  InputField: ({ value, onChange, placeholder, 'data-testid': testId, autoFocus }: any) => (
-    <input value={value} onChange={onChange} placeholder={placeholder} data-testid={testId} autoFocus={autoFocus} />
-  ),
-}));
+jest.mock('../../UI/Fields/InputField', () => {
+  const { useField } = jest.requireActual('formik');
+
+  return {
+    FormikInputField: ({ name, placeholder, 'data-testid': testId }: any) => {
+      const [field] = useField(name);
+
+      return <input {...field} placeholder={placeholder} data-testid={testId} />;
+    },
+  };
+});
 
 jest.mock('../../UI/Typeography/Header', () => ({
-  Header: ({ children, className }: any) => <p className={className}>{children}</p>,
+  Header: ({ children, className, tag: Tag = 'p' }: any) => <Tag className={className}>{children}</Tag>,
 }));
 
 jest.mock('../../PageTitle/PageTitle', () => ({
@@ -133,19 +139,26 @@ describe('IntegrationsCommon', () => {
     expect(screen.getByText('Key 2')).toBeInTheDocument();
     expect(screen.getByText('pn_live_222••••••••')).toBeInTheDocument();
     expect(screen.getByText(/Last used:/)).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: t('integrations.api-keys-title') })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: t('integrations.api-keys-title') })).toBeInTheDocument();
+    expect(within(screen.getByTestId('api-keys-list')).getAllByRole('listitem')).toHaveLength(2);
+    expect(screen.getByRole('heading', { level: 3, name: 'Key 1' })).toBeInTheDocument();
   });
 
-  it('handles create api key flow', () => {
+  it('handles create api key flow', async () => {
     renderPage();
 
     userEvent.click(screen.getByRole('button', { name: TEXT.createBtn }));
     expect(screen.getByTestId('create-key-modal')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 2, name: t('integrations.create-api-key-modal-title') }),
+    ).toBeInTheDocument();
 
     const input = screen.getByTestId('api-key-name-input');
-    userEvent.type(input, 'New Test Key');
+    userEvent.type(input, ' New Test Key ');
 
     userEvent.click(screen.getByTestId('submit-create-key'));
-    expect(mockDispatch).toHaveBeenCalledWith(createApiKey({ name: 'New Test Key' }));
+    await waitFor(() => expect(mockDispatch).toHaveBeenCalledWith(createApiKey({ name: 'New Test Key' })));
     expect(screen.queryByTestId('create-key-modal')).not.toBeInTheDocument();
   });
 
@@ -202,13 +215,13 @@ describe('IntegrationsCommon', () => {
     expect(mockDispatch).not.toHaveBeenCalledWith(createApiKey({ name: 'Discarded key' }));
   });
 
-  it('creates an unnamed key without an empty name', () => {
+  it('creates an unnamed key without an empty name', async () => {
     renderPage();
 
     userEvent.click(screen.getByTestId('create-api-key-btn'));
     userEvent.click(screen.getByTestId('submit-create-key'));
 
-    expect(mockDispatch).toHaveBeenCalledWith(createApiKey({ name: undefined }));
+    await waitFor(() => expect(mockDispatch).toHaveBeenCalledWith(createApiKey({ name: undefined })));
     expect(screen.queryByTestId('create-key-modal')).not.toBeInTheDocument();
   });
 

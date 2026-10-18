@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import type { ChangeEvent, FormEvent } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -13,7 +12,7 @@ import { getApiKeys, getAreApiKeysLoading, getNewlyCreatedApiKey } from '../../.
 import { ApiKeyListItem } from './ApiKeyListItem';
 import { CreateApiKeyModal, NewApiKeyModal, RevokeApiKeyModal } from './ApiKeyModals';
 
-import styles from '../IntegrationsCommon.css';
+import styles from './ApiKeys.css';
 
 export function ApiKeys() {
   const { formatMessage } = useIntl();
@@ -24,7 +23,6 @@ export function ApiKeys() {
   const newlyCreatedKey = useSelector(getNewlyCreatedApiKey);
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
-  const [newKeyName, setNewKeyName] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   useEffect(() => {
@@ -35,18 +33,12 @@ export function ApiKeys() {
     };
   }, [dispatch]);
 
-  const handleCreate = useCallback(() => {
-    dispatch(createApiKey({ name: newKeyName || undefined }));
-    setNewKeyName('');
-    setShowCreateForm(false);
-  }, [newKeyName, dispatch]);
-
-  const handleCreateSubmit = useCallback(
-    (e: FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      handleCreate();
+  const handleCreate = useCallback(
+    (name: string) => {
+      dispatch(createApiKey({ name: name || undefined }));
+      setShowCreateForm(false);
     },
-    [handleCreate],
+    [dispatch],
   );
 
   const handleDelete = useCallback(() => {
@@ -74,7 +66,6 @@ export function ApiKeys() {
 
   const handleHideCreateForm = useCallback(() => {
     setShowCreateForm(false);
-    setNewKeyName('');
   }, []);
 
   const handleCopyNewlyCreatedKey = useCallback(() => {
@@ -84,15 +75,13 @@ export function ApiKeys() {
     }
   }, [newlyCreatedKey]);
 
-  const handleNameChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    setNewKeyName(e.target.value);
-  }, []);
-
   return (
     <>
-      <div className={styles['api-keys']} data-testid="api-keys-section">
-        <div className={styles['api-keys__header']}>
-          <p className={styles['api-keys__title']}>{formatMessage({ id: 'integrations.api-keys-title' })}</p>
+      <section className={styles['api-keys']} aria-labelledby="api-keys-title" data-testid="api-keys-section">
+        <header className={styles['api-keys__header']}>
+          <h2 id="api-keys-title" className={styles['api-keys__title']}>
+            {formatMessage({ id: 'integrations.api-keys-title' })}
+          </h2>
           <Button
             className={styles['api-keys__create-btn']}
             type="button"
@@ -102,7 +91,7 @@ export function ApiKeys() {
             label={formatMessage({ id: 'integrations.create-api-key' })}
             data-testid="create-api-key-btn"
           />
-        </div>
+        </header>
 
         {isLoading && (
           <p className={styles['api-keys__loading']}>{formatMessage({ id: 'integrations.loading-api-key' })}</p>
@@ -115,13 +104,13 @@ export function ApiKeys() {
         )}
 
         {!isLoading && apiKeys.length > 0 && (
-          <div className={styles['api-keys__list']} data-testid="api-keys-list">
+          <ul className={styles['api-keys__list']} data-testid="api-keys-list">
             {apiKeys.map((key) => (
               <ApiKeyListItem key={key.id} apiKey={key} onRevoke={handleConfirmDeleteStart} />
             ))}
-          </div>
+          </ul>
         )}
-      </div>
+      </section>
 
       <NewApiKeyModal apiKey={newlyCreatedKey} onClose={handleCloseNewKeyModal} onCopy={handleCopyNewlyCreatedKey} />
       <RevokeApiKeyModal
@@ -129,13 +118,7 @@ export function ApiKeys() {
         onClose={handleConfirmDeleteCancel}
         onConfirm={handleDelete}
       />
-      <CreateApiKeyModal
-        isOpen={showCreateForm}
-        name={newKeyName}
-        onNameChange={handleNameChange}
-        onSubmit={handleCreateSubmit}
-        onClose={handleHideCreateForm}
-      />
+      <CreateApiKeyModal isOpen={showCreateForm} onSubmit={handleCreate} onClose={handleHideCreateForm} />
     </>
   );
 }
