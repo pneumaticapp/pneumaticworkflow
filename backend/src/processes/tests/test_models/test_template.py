@@ -1,6 +1,5 @@
 import pytest
 from django.contrib.auth import get_user_model
-from django.utils import timezone
 
 from src.processes.enums import (
     FieldType,
@@ -177,7 +176,6 @@ class TestTemplate:
             description=template.description,
             account_id=template.account_id,
             template=template,
-            status_updated=timezone.now(),
         )
         template_id = template.id
 
@@ -208,7 +206,6 @@ class TestTemplate:
             description=template.description,
             account_id=template.account_id,
             template=template,
-            status_updated=timezone.now(),
         )
         template_id = template.id
 
