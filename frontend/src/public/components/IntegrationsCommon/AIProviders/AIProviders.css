@@ -9,9 +9,12 @@
   }
 
   &__title {
+    @mixin font-text;
+
     margin: 0;
     font-size: 1.1rem;
     font-weight: bold;
+    line-height: inherit;
     color: var(--pneumatic-color-black100);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -61,11 +64,14 @@
   }
 
   &__item-name {
+    @mixin font-text;
+
     margin: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: 1.4rem;
     font-weight: 600;
+    line-height: inherit;
     color: var(--pneumatic-color-black100);
     white-space: nowrap;
   }
