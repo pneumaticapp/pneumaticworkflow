@@ -4,7 +4,10 @@ import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { BaseModal, ModalHeader, ModalBody } from '../../../UI/BaseModal';
+import { Button } from '../../../UI/Buttons/Button';
 import { Tabs } from '../../../UI/Tabs';
+import { ERoutes } from '../../../../constants/routes';
+import { history } from '../../../../utils/history';
 import { createAIAgent, loadAIProviders } from '../../../../redux/ai/slice';
 import { getAICreateAgentState, getAIProvidersState } from '../../../../redux/selectors/ai';
 
@@ -59,6 +62,11 @@ export function CreatePerformerModal({
     dispatch(action);
   };
 
+  const handleGoToIntegrations = () => {
+    onClose();
+    history.push(ERoutes.Integrations);
+  };
+
   const hasProviders = providers.length > 0;
   const isCreating =
     pendingRequestId !== null &&
@@ -91,10 +99,18 @@ export function CreatePerformerModal({
       </ModalHeader>
 
       {activeTab === ECreatePerformerModalTab.AIAgent && !isLoadingProviders && !hasProviders && (
-        <ModalBody className={styles['modal__body']}>
+        <ModalBody className={styles['modal__no-providers']}>
           <p className={styles['modal__no-providers-hint']} data-testid="ai-agent-no-providers-hint">
             {formatMessage({ id: 'team.create-ai-agent-modal.no-providers-hint' })}
           </p>
+          <Button
+            type="button"
+            size="md"
+            buttonStyle="yellow"
+            label={formatMessage({ id: 'team.create-ai-agent-modal.go-to-integrations' })}
+            onClick={handleGoToIntegrations}
+            data-testid="go-to-integrations"
+          />
         </ModalBody>
       )}
 

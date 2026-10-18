@@ -17,6 +17,15 @@
   height: auto;
 }
 
+.modal__no-providers {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  align-items: center;
+  padding-top: 1.6rem;
+  text-align: center;
+}
+
 .modal__body {
   padding-top: 1.6rem;
   overflow: visible;

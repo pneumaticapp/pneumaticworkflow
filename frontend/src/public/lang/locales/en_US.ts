@@ -377,6 +377,7 @@ export const enMessages = {
   'team.create-ai-agent-modal.model-loading': 'Loading models…',
   'team.create-ai-agent-modal.no-providers-hint':
     'No AI providers are registered yet. Add one on the Integrations page first.',
+  'team.create-ai-agent-modal.go-to-integrations': 'Go to Integrations',
   'team.create-ai-agent-modal.save': 'Save',
   'team.create-ai-agent-modal.parameters': 'Parameters',
   'team.create-ai-agent-modal.model': 'AI model',

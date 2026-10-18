@@ -11,6 +11,12 @@ import { NotificationManager } from '../../../../UI/Notifications';
 import { copyToClipboard } from '../../../../../utils/helpers';
 import { createPassword } from '../../../../../utils/createPassword';
 import { intlMock } from '../../../../../__stubs__/intlMock';
+import { history } from '../../../../../utils/history';
+import { ERoutes } from '../../../../../constants/routes';
+
+jest.mock('../../../../../utils/history', () => ({
+  history: { push: jest.fn() },
+}));
 
 jest.mock('react-dom', () => {
   const actualReactDOM = jest.requireActual('react-dom');
@@ -247,6 +253,19 @@ describe('CreatePerformerModal', () => {
 
       expect(screen.getByTestId('ai-agent-no-providers-hint')).toBeInTheDocument();
       expect(screen.queryByLabelText(getTranslatedText('team.create-ai-agent-modal.name'))).not.toBeInTheDocument();
+    });
+
+    it('closes the modal and opens Integrations from the no-providers hint', async () => {
+      mockAIState({ providers: [] });
+      render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+      await openAIAgentTab();
+
+      await userEvent.click(
+        screen.getByRole('button', { name: getTranslatedText('team.create-ai-agent-modal.go-to-integrations') }),
+      );
+
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
+      expect(history.push).toHaveBeenCalledWith(ERoutes.Integrations);
     });
 
     it('does not show the no-providers hint while providers are loading', async () => {

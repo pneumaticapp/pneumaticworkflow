@@ -344,6 +344,7 @@ export const ruMessages = {
   'team.create-ai-agent-modal.model-loading': 'Загрузка моделей…',
   'team.create-ai-agent-modal.no-providers-hint':
     'AI-провайдеры ещё не зарегистрированы. Сначала добавьте провайдера в разделе «Интеграции».',
+  'team.create-ai-agent-modal.go-to-integrations': 'Перейти в интеграции',
   'team.create-ai-agent-modal.save': 'Сохранить',
   'team.create-ai-agent-modal.parameters': 'Параметры',
   'team.create-ai-agent-modal.model': 'Модель ИИ',
