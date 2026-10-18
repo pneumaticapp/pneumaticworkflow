@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from datetime import timedelta
 
 import pytest
 
@@ -127,14 +128,12 @@ def test_dispatch_ai_agent_new_notifications__in_progress__skip(mocker):
     delay_mock.assert_not_called()
 
 
-def test_dispatch_ai_agent_new_notifications__run_failed__dispatched(
-    mocker,
-):
+def test_dispatch_ai_agent_new_notifications__run_failed__skip(mocker):
 
-    """ A mention whose run failed is dispatched again """
+    """ A mention whose run failed is not dispatched again """
 
     # arrange
-    notification, agent = _create_mention(mocker, runs=1, failures=1)
+    _create_mention(mocker, runs=1, failures=1)
     delay_mock = mocker.patch(
         'src.ai.tasks.execute_ai_agent_reply.delay',
     )
@@ -143,10 +142,7 @@ def test_dispatch_ai_agent_new_notifications__run_failed__dispatched(
     dispatch_ai_agent_new_notifications()
 
     # assert
-    delay_mock.assert_called_once_with(
-        notification_id=notification.id,
-        agent_id=agent.id,
-    )
+    delay_mock.assert_not_called()
 
 
 def test_dispatch_ai_agent_new_notifications__max_run_failures__skip(
@@ -161,6 +157,108 @@ def test_dispatch_ai_agent_new_notifications__max_run_failures__skip(
         runs=MAX_RUN_FAILURES,
         failures=MAX_RUN_FAILURES,
     )
+    delay_mock = mocker.patch(
+        'src.ai.tasks.execute_ai_agent_reply.delay',
+    )
+
+    # act
+    dispatch_ai_agent_new_notifications()
+
+    # assert
+    delay_mock.assert_not_called()
+
+
+def test_dispatch_ai_agent_new_notifications__completed__skip(mocker):
+
+    """ A completed mention is not dispatched again """
+
+    # arrange
+    notification, agent = _create_mention(mocker, runs=1)
+    AIAgentAction.objects.create(
+        account=agent.account,
+        agent=agent,
+        task=notification.task,
+        notification=notification,
+        action=AIAgentActionType.MENTION_COMPLETED,
+    )
+    delay_mock = mocker.patch(
+        'src.ai.tasks.execute_ai_agent_reply.delay',
+    )
+
+    # act
+    dispatch_ai_agent_new_notifications()
+
+    # assert
+    delay_mock.assert_not_called()
+
+
+def test_dispatch_ai_agent_new_notifications__not_run_event__dispatched(
+    mocker,
+):
+
+    """ An action that is not a run event does not block """
+
+    # arrange
+    notification, agent = _create_mention(mocker)
+    AIAgentAction.objects.create(
+        account=agent.account,
+        agent=agent,
+        task=notification.task,
+        notification=notification,
+        action=AIAgentActionType.MENTION_ATTEMPTS_EXCEEDED,
+    )
+    delay_mock = mocker.patch(
+        'src.ai.tasks.execute_ai_agent_reply.delay',
+    )
+
+    # act
+    dispatch_ai_agent_new_notifications()
+
+    # assert
+    delay_mock.assert_called_once_with(
+        notification_id=notification.id,
+        agent_id=agent.id,
+    )
+
+
+def test_dispatch_ai_agent_new_notifications__other_agent_run__dispatched(
+    mocker,
+):
+
+    """ A run event of another agent does not block """
+
+    # arrange
+    notification, agent = _create_mention(mocker)
+    other_agent = create_test_agent(account=agent.account, name='Courier')
+    AIAgentAction.objects.create(
+        account=agent.account,
+        agent=other_agent,
+        task=notification.task,
+        notification=notification,
+        action=AIAgentActionType.MENTION_IN_PROGRESS,
+    )
+    delay_mock = mocker.patch(
+        'src.ai.tasks.execute_ai_agent_reply.delay',
+    )
+
+    # act
+    dispatch_ai_agent_new_notifications()
+
+    # assert
+    delay_mock.assert_called_once_with(
+        notification_id=notification.id,
+        agent_id=agent.id,
+    )
+
+
+def test_dispatch_ai_agent_new_notifications__agent_deleted__skip(mocker):
+
+    """ A mention of a deleted agent is not dispatched """
+
+    # arrange
+    _, agent = _create_mention(mocker)
+    agent.is_deleted = True
+    agent.save(update_fields=['is_deleted'])
     delay_mock = mocker.patch(
         'src.ai.tasks.execute_ai_agent_reply.delay',
     )
@@ -312,22 +410,101 @@ def test_dispatch_ai_agent_new_tasks__group_member_completed__skip(mocker):
     delay_mock.assert_not_called()
 
 
-def test_dispatch_ai_agent_new_tasks__run_failed__dispatched(mocker):
+@pytest.mark.parametrize(
+    'action',
+    (
+        AIAgentActionType.TASK_IN_PROGRESS,
+        AIAgentActionType.TASK_COMPLETED,
+        AIAgentActionType.TASK_FAILED,
+    ),
+)
+def test_dispatch_ai_agent_new_tasks__run_event_exists__skip(mocker, action):
 
-    """ A task whose every run failed is dispatched again """
+    """ A task with a run event since the start is not dispatched """
 
     # arrange
     task, agent = _create_agent_task(mocker)
-    for action in (
-        AIAgentActionType.TASK_IN_PROGRESS,
-        AIAgentActionType.TASK_FAILED,
-    ):
-        AIAgentAction.objects.create(
-            account=agent.account,
-            agent=agent,
-            task=task,
-            action=action,
-        )
+    AIAgentAction.objects.create(
+        account=agent.account,
+        agent=agent,
+        task=task,
+        action=action,
+    )
+    delay_mock = mocker.patch(
+        'src.ai.tasks.complete_ai_agent_task.delay',
+    )
+
+    # act
+    dispatch_ai_agent_new_tasks()
+
+    # assert
+    delay_mock.assert_not_called()
+
+
+def test_dispatch_ai_agent_new_tasks__run_before_task_started__dispatched(
+    mocker,
+):
+
+    """ A run event of the previous task start does not block """
+
+    # arrange
+    task, agent = _create_agent_task(mocker)
+    AIAgentAction.objects.create(
+        account=agent.account,
+        agent=agent,
+        task=task,
+        action=AIAgentActionType.TASK_COMPLETED,
+    )
+    AIAgentAction.objects.update(
+        date_created=task.date_started - timedelta(hours=1),
+    )
+    delay_mock = mocker.patch(
+        'src.ai.tasks.complete_ai_agent_task.delay',
+    )
+
+    # act
+    dispatch_ai_agent_new_tasks()
+
+    # assert
+    delay_mock.assert_called_once_with(task_id=task.id, agent_id=agent.id)
+
+
+def test_dispatch_ai_agent_new_tasks__not_run_event__dispatched(mocker):
+
+    """ An action that is not a run event does not block """
+
+    # arrange
+    task, agent = _create_agent_task(mocker)
+    AIAgentAction.objects.create(
+        account=agent.account,
+        agent=agent,
+        task=task,
+        action=AIAgentActionType.TASK_ATTEMPTS_EXCEEDED,
+    )
+    delay_mock = mocker.patch(
+        'src.ai.tasks.complete_ai_agent_task.delay',
+    )
+
+    # act
+    dispatch_ai_agent_new_tasks()
+
+    # assert
+    delay_mock.assert_called_once_with(task_id=task.id, agent_id=agent.id)
+
+
+def test_dispatch_ai_agent_new_tasks__other_agent_run__dispatched(mocker):
+
+    """ A run event of another agent does not block """
+
+    # arrange
+    task, agent = _create_agent_task(mocker)
+    other_agent = create_test_agent(account=agent.account, name='Courier')
+    AIAgentAction.objects.create(
+        account=agent.account,
+        agent=other_agent,
+        task=task,
+        action=AIAgentActionType.TASK_IN_PROGRESS,
+    )
     delay_mock = mocker.patch(
         'src.ai.tasks.complete_ai_agent_task.delay',
     )

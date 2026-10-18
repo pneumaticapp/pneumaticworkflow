@@ -2319,7 +2319,7 @@ def test_complete_task__error_without_message__class_name(mocker):
     assert failed_action.text == 'KeyError'
 
 
-def test_complete_task__max_run_failures__comment(mocker):
+def test_handle_task_complete_failure__max_run_failures__comment(mocker):
 
     """ The last allowed run fails: the performers get a comment """
 
@@ -2340,18 +2340,16 @@ def test_complete_task__max_run_failures__comment(mocker):
                 task=task,
                 action=action,
             )
-    mocker.patch(
-        'src.ai.services.agent.AIAgentService._attempt_complete_task',
-        side_effect=AIProviderRequestFailedException(),
-    )
     create_comment_mock = mocker.patch(
         'src.ai.services.agent.AIAgentService._create_comment',
     )
     service = AIAgentService(user=agent.user, instance=agent)
 
     # act
-    with pytest.raises(AIProviderRequestFailedException):
-        service.complete_task(task_id=task.id)
+    service._handle_task_complete_failure(
+        task=task,
+        ex=AIProviderRequestFailedException(),
+    )
 
     # assert
     assert AIAgentAction.objects.filter(
@@ -2437,9 +2435,9 @@ def test_complete_task__attempts_exceeded__task_failed(mocker):
     create_comment_mock.assert_not_called()
 
 
-def test_complete_task__attempts_exceeded__retry_allowed(mocker):
+def test_complete_task__attempts_exceeded__retry_skip(mocker):
 
-    """ Validation attempts exceeded: the next run takes the task """
+    """ Validation attempts exceeded: the next run does nothing """
 
     # arrange
     account = create_test_account()
@@ -2459,17 +2457,16 @@ def test_complete_task__attempts_exceeded__retry_allowed(mocker):
         service.complete_task(task_id=task.id)
 
     # act
-    with pytest.raises(AIAgentAttemptsExceededException):
-        service.complete_task(task_id=task.id)
+    service.complete_task(task_id=task.id)
 
     # assert
-    assert attempt_complete_task_mock.call_count == 2
+    attempt_complete_task_mock.assert_called_once_with(task=task)
     assert AIAgentAction.objects.filter(
         action=AIAgentActionType.TASK_IN_PROGRESS,
-    ).count() == 2
+    ).count() == 1
     assert AIAgentAction.objects.filter(
         action=AIAgentActionType.TASK_FAILED,
-    ).count() == 2
+    ).count() == 1
 
 
 def test_complete_task__already_in_progress__skip(mocker):
@@ -2592,9 +2589,9 @@ def test_complete_task__already_completed__skip(mocker):
     attempt_complete_task_mock.assert_not_called()
 
 
-def test_complete_task__previous_run_failed__ok(mocker):
+def test_complete_task__previous_run_failed__skip(mocker):
 
-    """ The previous run failed: a new run starts """
+    """ The previous run failed: the duplicate does nothing """
 
     # arrange
     account = create_test_account()
@@ -2614,7 +2611,6 @@ def test_complete_task__previous_run_failed__ok(mocker):
         )
     attempt_complete_task_mock = mocker.patch(
         'src.ai.services.agent.AIAgentService._attempt_complete_task',
-        return_value={},
     )
     service = AIAgentService(user=agent.user, instance=agent)
 
@@ -2622,11 +2618,8 @@ def test_complete_task__previous_run_failed__ok(mocker):
     service.complete_task(task_id=task.id)
 
     # assert
-    assert AIAgentAction.objects.filter(
-        task=task,
-        action=AIAgentActionType.TASK_IN_PROGRESS,
-    ).count() == 2
-    attempt_complete_task_mock.assert_called_once_with(task=task)
+    assert AIAgentAction.objects.filter(task=task).count() == 2
+    attempt_complete_task_mock.assert_not_called()
 
 
 def test_complete_task__max_run_failures_reached__skip(mocker):
@@ -2808,9 +2801,9 @@ def test_reply_to_comment__already_handled__skip():
     assert AIAgentAction.objects.filter(agent=agent).count() == 1
 
 
-def test_reply_to_comment__previous_run_failed__ok(mocker):
+def test_reply_to_comment__previous_run_failed__skip(mocker):
 
-    """ The previous reply failed: a new run starts """
+    """ The previous reply failed: the duplicate does nothing """
 
     # arrange
     account = create_test_account()
@@ -2848,9 +2841,8 @@ def test_reply_to_comment__previous_run_failed__ok(mocker):
     # assert
     assert AIAgentAction.objects.filter(
         notification=notification,
-        action=AIAgentActionType.MENTION_IN_PROGRESS,
     ).count() == 2
-    attempt_reply_mock.assert_called_once_with(notification=notification)
+    attempt_reply_mock.assert_not_called()
 
 
 def test_reply_to_comment__max_run_failures_reached__skip(mocker):
@@ -2990,7 +2982,7 @@ def test_reply_to_comment__attempts_exceeded__mention_failed(mocker):
     create_comment_mock.assert_not_called()
 
 
-def test_reply_to_comment__max_run_failures__comment(mocker):
+def test_handle_reply_to_comment_failure__max_run_failures__comment(mocker):
 
     """ The last allowed reply fails: the task gets a comment """
 
@@ -3020,18 +3012,16 @@ def test_reply_to_comment__max_run_failures__comment(mocker):
                 notification=notification,
                 action=action,
             )
-    mocker.patch(
-        'src.ai.services.agent.AIAgentService._attempt_reply_to_comment',
-        side_effect=AIProviderRequestFailedException(),
-    )
     create_comment_mock = mocker.patch(
         'src.ai.services.agent.AIAgentService._create_comment',
     )
     service = AIAgentService(user=agent.user, instance=agent)
 
     # act
-    with pytest.raises(AIProviderRequestFailedException):
-        service.reply_to_comment(notification_id=notification.id)
+    service._handle_reply_to_comment_failure(
+        notification=notification,
+        ex=AIProviderRequestFailedException(),
+    )
 
     # assert
     assert AIAgentAction.objects.filter(

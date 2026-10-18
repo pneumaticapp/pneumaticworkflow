@@ -603,18 +603,14 @@ class AIAgentService(BaseModelService):
             )
             if not notification:
                 return None
-            actions = (
+            notification_is_blocked = (
                 AIAgentAction.objects
                 .by_agent(self.instance.id)
                 .by_notification(notification.id)
+                .type_notification()
+                .exists()
             )
-            runs = actions.by_action(
-                AIAgentActionType.MENTION_IN_PROGRESS,
-            ).count()
-            failures = actions.by_action(
-                AIAgentActionType.MENTION_FAILED,
-            ).count()
-            if runs != failures or runs >= MAX_RUN_FAILURES:
+            if notification_is_blocked:
                 return None
             notification.status = NotificationStatus.READ
             notification.save(update_fields=['status'])
@@ -639,21 +635,17 @@ class AIAgentService(BaseModelService):
             task = Task.objects.select_for_update().filter(id=task_id).first()
             if not task:
                 return None
-            actions = (
+            task_is_blocked = (
                 AIAgentAction.objects
                 .by_agent(self.instance.id)
                 .by_task(task.id)
+                .type_task()
                 .filter(date_created__gte=task.date_started)
+                .exists()
             )
-            runs = actions.by_action(
-                AIAgentActionType.TASK_IN_PROGRESS,
-            ).count()
-            failures = actions.by_action(
-                AIAgentActionType.TASK_FAILED,
-            ).count()
             # Check that the task is not already being handled
             # by another AI agent
-            if runs != failures or runs >= MAX_RUN_FAILURES:
+            if task_is_blocked:
                 return None
             AIAgentAction.objects.create(
                 account_id=self.instance.account_id,
@@ -715,7 +707,8 @@ class AIAgentService(BaseModelService):
             -> the actions 'mention_in_progress' and 'mention_failed',
                the error is raised
 
-            the agent is inactive
+            the mention is already in progress, completed or failed
+            or the agent is inactive
             -> nothing """
 
         if not self.instance.is_active:
