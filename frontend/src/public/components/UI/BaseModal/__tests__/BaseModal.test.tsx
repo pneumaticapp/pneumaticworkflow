@@ -32,4 +32,36 @@ describe('BaseModal', () => {
 
     expect(document.body.style.overflow).toBe('');
   });
+
+  it('keeps the page locked when a closed modal mounts and unmounts under an open one', () => {
+    jest.useFakeTimers();
+    render(<BaseModal isOpen>outer</BaseModal>);
+
+    const { unmount } = render(<BaseModal isOpen={false}>closed popup</BaseModal>);
+    act(() => {
+      jest.advanceTimersByTime(150);
+    });
+    expect(document.body.style.overflow).toBe('hidden');
+
+    unmount();
+    expect(document.body.style.overflow).toBe('hidden');
+  });
+
+  it('keeps the page locked until the last open modal closes', () => {
+    jest.useFakeTimers();
+    const outer = render(<BaseModal isOpen>outer</BaseModal>);
+    const inner = render(<BaseModal isOpen>inner</BaseModal>);
+
+    inner.rerender(<BaseModal isOpen={false}>inner</BaseModal>);
+    act(() => {
+      jest.advanceTimersByTime(150);
+    });
+    expect(document.body.style.overflow).toBe('hidden');
+
+    outer.rerender(<BaseModal isOpen={false}>outer</BaseModal>);
+    act(() => {
+      jest.advanceTimersByTime(150);
+    });
+    expect(document.body.style.overflow).toBe('');
+  });
 });

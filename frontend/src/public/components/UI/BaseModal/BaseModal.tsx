@@ -5,6 +5,7 @@ import classnames from 'classnames';
 
 import styles from './BaseModal.css';
 import { ClearIcon } from '../../icons';
+import { lockPageScroll, unlockPageScroll } from './pageScrollLock';
 
 interface IBaseModalProps {
   isOpen: boolean;
@@ -34,11 +35,21 @@ export function BaseModal({
   const [isVisible, setIsVisible] = useState(false);
   const [showClass, setShowClass] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  const hasScrollLockRef = useRef(false);
+
+  const releaseScrollLock = useCallback(() => {
+    if (!hasScrollLockRef.current) return;
+    hasScrollLockRef.current = false;
+    unlockPageScroll();
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
       setIsVisible(true);
-      document.body.style.overflow = 'hidden';
+      if (!hasScrollLockRef.current) {
+        hasScrollLockRef.current = true;
+        lockPageScroll();
+      }
       const timer = setTimeout(() => {
         setShowClass(true);
       }, 10);
@@ -48,17 +59,12 @@ export function BaseModal({
     setShowClass(false);
     const timer = setTimeout(() => {
       setIsVisible(false);
-      document.body.style.overflow = '';
+      releaseScrollLock();
     }, 150);
     return () => clearTimeout(timer);
-  }, [isOpen]);
+  }, [isOpen, releaseScrollLock]);
 
-  useEffect(
-    () => () => {
-      document.body.style.overflow = '';
-    },
-    [],
-  );
+  useEffect(() => releaseScrollLock, [releaseScrollLock]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
