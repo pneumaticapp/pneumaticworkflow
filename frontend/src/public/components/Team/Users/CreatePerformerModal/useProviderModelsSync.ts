@@ -6,7 +6,7 @@ import { loadAIProviderModels } from '../../../../redux/ai/slice';
 import { getAIProviderModelsState, getAIProviders } from '../../../../redux/selectors/ai';
 import type { IAIAgentFormValues } from './types';
 
-export function ProviderModelsSync() {
+export function useProviderModelsSync() {
   const dispatch = useDispatch();
   const providers = useSelector(getAIProviders);
   const modelsState = useSelector(getAIProviderModelsState);
@@ -33,6 +33,4 @@ export function ProviderModelsSync() {
       dispatch(loadAIProviderModels(Number(values.providerId)));
     }
   }, [values.providerId, values.model, modelsState.providerId, dispatch, setFieldValue]);
-
-  return null;
 }

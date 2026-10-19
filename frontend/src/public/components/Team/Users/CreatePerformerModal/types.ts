@@ -46,3 +46,8 @@ export interface IAIAgentFormProps {
   submitLabel: string;
   onSubmit(values: IAIAgentFormValues): void;
 }
+
+export interface IAIAgentFormFieldsProps {
+  isSubmitting: boolean;
+  submitLabel: string;
+}
