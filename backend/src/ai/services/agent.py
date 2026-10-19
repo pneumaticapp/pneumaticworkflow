@@ -133,6 +133,10 @@ class AIAgentService(BaseModelService):
                 raise AIAgentNameNotUniqueException from ex
         return self.instance
 
+    def create(self, **kwargs) -> AIAgent:
+        self._create_instance(**kwargs)
+        return self.instance
+
     def partial_update(
         self,
         force_save=True,

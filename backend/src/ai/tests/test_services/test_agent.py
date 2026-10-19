@@ -1947,6 +1947,43 @@ def test_create_instance__same_name_as_deleted_agent__ok(mocker):
     )
 
 
+def test_create__ok(mocker):
+
+    """ Create agent without an outer transaction """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    provider = create_test_provider(account=account)
+    agent = create_test_agent(account=account, provider=provider)
+    service = AIAgentService(user=owner)
+    kwargs = {
+        'name': 'Operator',
+        'model': 'gpt-4o',
+        'system_prompt': 'You are an operator.',
+        'provider': provider,
+    }
+
+    def create_instance(**_kwargs):
+        service.instance = agent
+
+    create_instance_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._create_instance',
+        side_effect=create_instance,
+    )
+    atomic_mock = mocker.patch(
+        'src.generics.base.service.transaction.atomic',
+    )
+
+    # act
+    result = service.create(**kwargs)
+
+    # assert
+    assert result == agent
+    create_instance_mock.assert_called_once_with(**kwargs)
+    atomic_mock.assert_not_called()
+
+
 def test_partial_update__name__ok(mocker):
 
     """ Update name """
