@@ -40,14 +40,6 @@ export interface IAIAgentFormValues {
   photo: string;
 }
 
-export const EMPTY_AI_AGENT_FORM_VALUES: IAIAgentFormValues = {
-  name: '',
-  providerId: '',
-  model: '',
-  systemPrompt: '',
-  photo: '',
-};
-
 export interface IAIAgentFormProps {
   isActive: boolean;
   isOpen: boolean;

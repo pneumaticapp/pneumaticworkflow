@@ -15,7 +15,7 @@ import { getErrorsObject } from '../../../../utils/formik/getErrorsObject';
 import { validateRequired } from '../../../../utils/validators';
 import { cancelAIAgentAvatarUpload, uploadAIAgentAvatar } from '../../../../redux/ai/slice';
 import { getAIAgentAvatarUploadState, getAIProviderModelsState, getAIProviders } from '../../../../redux/selectors/ai';
-import { EMPTY_AI_AGENT_FORM_VALUES } from './types';
+import { EMPTY_AI_AGENT_FORM_VALUES } from './constants';
 import type { IAIAgentFormProps, IAIAgentFormValues } from './types';
 import { ProviderModelsSync } from './ProviderModelsSync';
 import { getAgentInitials } from '../getAgentInitials';
