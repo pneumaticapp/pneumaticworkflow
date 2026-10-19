@@ -134,6 +134,7 @@
   @mixin text-base;
   @mixin text-truncate;
 
+  display: block;
   max-width: 100%;
   color: var(--pneumatic-color-black72);
 }
