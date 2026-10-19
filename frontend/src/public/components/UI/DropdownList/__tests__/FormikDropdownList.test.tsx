@@ -2,7 +2,7 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { Formik } from 'formik';
 
-import { DropdownList, FormikDropdownList } from '../DropdownList';
+import { DropdownList, FormikDropdownList } from '..';
 
 const renderWithError = (error: string) =>
   render(
