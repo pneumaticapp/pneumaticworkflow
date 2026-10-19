@@ -124,16 +124,15 @@ describe('Users', () => {
 
     const wrapper = renderUsers();
 
-    const renderedOrder = wrapper
-      .find('.cards')
-      .children()
-      .map((child) => {
-        if (child.is(TeamUserCard)) {
-          return `user:${child.prop('user').id}`;
-        }
+    const listItems = wrapper.find('ul.cards__list').children('li');
+    const renderedOrder = listItems.map((item) => {
+      const userCard = item.find(TeamUserCard);
+      if (userCard.exists()) {
+        return `user:${userCard.prop('user').id}`;
+      }
 
-        return `agent:${child.find(TeamAgent).prop('agent').id}`;
-      });
+      return `agent:${item.find(TeamAgent).prop('agent').id}`;
+    });
 
     expect(renderedOrder).toEqual(['agent:10', 'user:1', 'agent:11', 'user:2']);
   });

@@ -118,25 +118,26 @@ export function Users({ userListSorting }: IUsersProps) {
       return Array.from([1, 2, 3], (key) => <TeamUserSkeleton key={key} />);
     }
 
-    return getVisibleItems().map((item) => {
-      if (item.kind === 'user') {
-        return (
-          <TeamUserCard
-            key={`user:${item.user.id}`}
-            user={item.user}
-            currentUserId={currentUserId}
-            isSubscribed={accessConditions}
-            onOpenVacationModal={setVacationModalUser}
-          />
-        );
-      }
-
-      return (
-        <div key={`agent:${item.agent.id}`} className={styles['card-wrapper']}>
-          <TeamAgent agent={item.agent} providerName={providerNameById.get(item.agent.providerId)} />
-        </div>
-      );
-    });
+    return (
+      <ul className={styles['cards__list']}>
+        {getVisibleItems().map((item) =>
+          item.kind === 'user' ? (
+            <li key={`user:${item.user.id}`}>
+              <TeamUserCard
+                user={item.user}
+                currentUserId={currentUserId}
+                isSubscribed={accessConditions}
+                onOpenVacationModal={setVacationModalUser}
+              />
+            </li>
+          ) : (
+            <li key={`agent:${item.agent.id}`}>
+              <TeamAgent agent={item.agent} providerName={providerNameById.get(item.agent.providerId)} />
+            </li>
+          ),
+        )}
+      </ul>
+    );
   };
 
   return (

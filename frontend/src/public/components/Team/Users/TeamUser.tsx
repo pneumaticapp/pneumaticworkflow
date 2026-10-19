@@ -186,12 +186,10 @@ export function TeamUser(props: ITeamUserProps) {
 
   return (
     <>
-      <div className={styles['card-wrapper']}>
-        <div className={classnames(styles['card'])}>
-          <Avatar user={user} containerClassName={styles['card-avatar']} size="lg" />
-          {renderDetails()}
-          {renderControllers()}
-        </div>
+      <div className={classnames(styles['card'])}>
+        <Avatar user={user} containerClassName={styles['card-avatar']} size="lg" />
+        {renderDetails()}
+        {renderControllers()}
       </div>
       {isManagerModalOpen && (
         <SelectManagerModal
