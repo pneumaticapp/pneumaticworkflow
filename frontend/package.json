@@ -120,7 +120,6 @@
     "throttle-debounce": "^2.3.0",
     "timezones-list": "^3.0.3",
     "tlds": "^1.231.0",
-    "webpack-dev-server": "^4.15.1",
     "webpack-hot-middleware": "^2.26.0"
   },
   "devDependencies": {
