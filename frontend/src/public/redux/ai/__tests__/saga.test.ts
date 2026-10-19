@@ -1,4 +1,5 @@
-import { runSaga } from 'redux-saga';
+import { runSaga, stdChannel } from 'redux-saga';
+import { takeLatest } from 'redux-saga/effects';
 
 import {
   createAIAgent as createAIAgentApi,
@@ -7,7 +8,12 @@ import {
   getAIAgents as getAIAgentsApi,
   getAIProviders as getAIProvidersApi,
 } from '../../../api/ai';
-import { createAIAgentSaga, createAIProviderByVendorSaga, createAIProviderSaga } from '../saga';
+import {
+  createAIAgentSaga,
+  createAIProviderByVendorSaga,
+  createAIProviderSaga,
+  uploadAIAgentAvatarSaga,
+} from '../saga';
 import {
   createAIAgent,
   createAIAgentFailed,
@@ -16,7 +22,12 @@ import {
   createAIProviderByVendor,
   createAIProviderFailed,
   createAIProviderSuccess,
+  cancelAIAgentAvatarUpload,
+  uploadAIAgentAvatar,
+  uploadAIAgentAvatarFinished,
 } from '../slice';
+import { uploadUserAvatar } from '../../../utils/uploadFiles';
+import { NotificationManager } from '../../../components/UI/Notifications';
 import { closeCreateUserModal } from '../../accounts/slice';
 
 jest.mock('../../../api/ai', () => ({
@@ -30,6 +41,7 @@ jest.mock('../../../components/UI/Notifications', () => ({
   NotificationManager: { success: jest.fn(), warning: jest.fn() },
 }));
 jest.mock('../../../utils/logger', () => ({ logger: { error: jest.fn() } }));
+jest.mock('../../../utils/uploadFiles', () => ({ uploadUserAvatar: jest.fn() }));
 
 describe('AI creation sagas', () => {
   const agentData = {
@@ -103,5 +115,96 @@ describe('AI creation sagas', () => {
 
     expect(actions).toContainEqual(createAIProviderFailed());
     expect(actions).not.toContainEqual(createAIProviderSuccess());
+  });
+});
+
+describe('AI agent avatar upload saga', () => {
+  const dispatched: unknown[] = [];
+  const pendingUploads: ((value: unknown) => void)[] = [];
+  const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+  const startWatcher = () => {
+    const channel = stdChannel();
+    runSaga(
+      {
+        channel,
+        dispatch: (action) => {
+          dispatched.push(action);
+        },
+        getState: () => ({}),
+      },
+      function* watcher() {
+        yield takeLatest([uploadAIAgentAvatar, cancelAIAgentAvatarUpload], uploadAIAgentAvatarSaga);
+      },
+    );
+
+    return channel;
+  };
+
+  const buildFile = (name: string) => new File([name], name, { type: 'image/png' });
+
+  beforeEach(() => {
+    dispatched.length = 0;
+    pendingUploads.length = 0;
+    jest.clearAllMocks();
+    (uploadUserAvatar as jest.Mock).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          pendingUploads.push(resolve);
+        }),
+    );
+  });
+
+  it('applies only the latest avatar upload', async () => {
+    const channel = startWatcher();
+    const onOld = jest.fn();
+    const onNew = jest.fn();
+
+    channel.put(uploadAIAgentAvatar({ file: buildFile('old.png'), onSuccess: onOld }));
+    channel.put(uploadAIAgentAvatar({ file: buildFile('new.png'), onSuccess: onNew }));
+    pendingUploads[0]([{ id: 'old', url: 'https://files.example.com/old.png', size: 1 }]);
+    pendingUploads[1]([{ id: 'new', url: 'https://files.example.com/new.png', size: 1 }]);
+    await flush();
+
+    expect(onOld).not.toHaveBeenCalled();
+    expect(onNew).toHaveBeenCalledWith('https://files.example.com/new.png');
+    expect(dispatched[dispatched.length - 1]).toEqual(uploadAIAgentAvatarFinished());
+  });
+
+  it('drops a pending upload after cancellation', async () => {
+    const channel = startWatcher();
+    const onSuccess = jest.fn();
+
+    channel.put(uploadAIAgentAvatar({ file: buildFile('old.png'), onSuccess }));
+    channel.put(cancelAIAgentAvatarUpload());
+    pendingUploads[0]([{ id: 'old', url: 'https://files.example.com/old.png', size: 1 }]);
+    await flush();
+
+    expect(onSuccess).not.toHaveBeenCalled();
+    expect(dispatched).toContainEqual(uploadAIAgentAvatarFinished());
+  });
+
+  it('warns and finishes when the upload fails', async () => {
+    (uploadUserAvatar as jest.Mock).mockRejectedValue(new Error('Compression failed'));
+    const channel = startWatcher();
+    const onSuccess = jest.fn();
+
+    channel.put(uploadAIAgentAvatar({ file: buildFile('avatar.png'), onSuccess }));
+    await flush();
+
+    expect(onSuccess).not.toHaveBeenCalled();
+    expect(NotificationManager.warning).toHaveBeenCalledWith({ message: 'file-service.upload-failed' });
+    expect(dispatched).toContainEqual(uploadAIAgentAvatarFinished());
+  });
+
+  it('ignores an upload result marked with an error', async () => {
+    const channel = startWatcher();
+    const onSuccess = jest.fn();
+
+    channel.put(uploadAIAgentAvatar({ file: buildFile('big.png'), onSuccess }));
+    pendingUploads[0]([{ id: 'big', url: '', size: 1, error: 'Max file size exceeded' }]);
+    await flush();
+
+    expect(onSuccess).not.toHaveBeenCalled();
   });
 });

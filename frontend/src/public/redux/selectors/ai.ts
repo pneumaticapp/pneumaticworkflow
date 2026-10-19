@@ -13,3 +13,5 @@ export const getAIAgentsState = (state: IApplicationState) => state.ai.agents;
 export const getAIVendorsState = (state: IApplicationState) => state.ai.vendors;
 
 export const getAIProviderModelsState = (state: IApplicationState) => state.ai.models;
+
+export const getAIAgentAvatarUploadState = (state: IApplicationState) => state.ai.agentAvatarUpload;

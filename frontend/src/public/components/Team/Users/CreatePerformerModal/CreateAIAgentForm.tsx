@@ -1,21 +1,20 @@
 import * as React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ChangeEvent } from 'react';
 import { Formik } from 'formik';
 import type { FormikProps } from 'formik';
 import { useIntl } from 'react-intl';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { Button } from '../../../UI/Buttons/Button';
-import { NotificationManager } from '../../../UI/Notifications';
 import { FormikDropdownList } from '../../../UI/DropdownList';
 import { FormikInputField } from '../../../UI/Fields/InputField';
 import { FormikTextareaField } from '../../../UI/Fields/TextareaField';
 import { ModalBody, ModalFooter } from '../../../UI/BaseModal';
 import { getErrorsObject } from '../../../../utils/formik/getErrorsObject';
 import { validateRequired } from '../../../../utils/validators';
-import { uploadUserAvatar } from '../../../../utils/uploadFiles';
-import { getAIProviderModelsState, getAIProviders } from '../../../../redux/selectors/ai';
+import { cancelAIAgentAvatarUpload, uploadAIAgentAvatar } from '../../../../redux/ai/slice';
+import { getAIAgentAvatarUploadState, getAIProviderModelsState, getAIProviders } from '../../../../redux/selectors/ai';
 import { EMPTY_AI_AGENT_FORM_VALUES } from './types';
 import type { IAIAgentFormProps, IAIAgentFormValues } from './types';
 import { ProviderModelsSync } from './ProviderModelsSync';
@@ -32,8 +31,8 @@ export function CreateAIAgentForm({
   onSubmit,
 }: IAIAgentFormProps) {
   const { formatMessage } = useIntl();
-  const latestAvatarActionRef = useRef(0);
-  const [isAvatarUploading, setIsAvatarUploading] = useState(false);
+  const dispatch = useDispatch();
+  const { isLoading: isAvatarUploading } = useSelector(getAIAgentAvatarUploadState);
   const providers = useSelector(getAIProviders);
   const modelsState = useSelector(getAIProviderModelsState);
   const formikRef = useRef<FormikProps<IAIAgentFormValues> | null>(null);
@@ -41,12 +40,11 @@ export function CreateAIAgentForm({
 
   useEffect(() => {
     if (isOpen && !wasOpenRef.current) {
-      latestAvatarActionRef.current += 1;
-      setIsAvatarUploading(false);
+      dispatch(cancelAIAgentAvatarUpload());
       formikRef.current?.resetForm();
     }
     wasOpenRef.current = isOpen;
-  }, [isOpen]);
+  }, [dispatch, isOpen]);
 
   const providerOptions = providers.map((provider) => ({
     label: `${provider.name} — ${provider.apiKeyPrefix}`,
@@ -71,29 +69,12 @@ export function CreateAIAgentForm({
       {({ dirty, handleSubmit, isValid, setFieldValue, values }) => {
         const initials = getAgentInitials(values.name);
 
-        const handleAvatarUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+        const handleAvatarUpload = (event: ChangeEvent<HTMLInputElement>) => {
           const file = event.target.files?.[0];
           if (!file) return;
 
-          latestAvatarActionRef.current += 1;
-          const actionId = latestAvatarActionRef.current;
           event.currentTarget.value = '';
-
-          setIsAvatarUploading(true);
-          try {
-            const [uploaded] = await uploadUserAvatar(file);
-            if (actionId === latestAvatarActionRef.current && uploaded && !uploaded.error) {
-              await setFieldValue('photo', uploaded.url);
-            }
-          } catch {
-            if (actionId === latestAvatarActionRef.current) {
-              NotificationManager.warning({ message: 'file-service.upload-failed' });
-            }
-          } finally {
-            if (actionId === latestAvatarActionRef.current) {
-              setIsAvatarUploading(false);
-            }
-          }
+          dispatch(uploadAIAgentAvatar({ file, onSuccess: (url) => setFieldValue('photo', url) }));
         };
 
         const isModelSelectDisabled = !values.providerId || modelsState.isLoading;
@@ -128,8 +109,7 @@ export function CreateAIAgentForm({
                   <button
                     type="button"
                     onClick={() => {
-                      latestAvatarActionRef.current += 1;
-                      setIsAvatarUploading(false);
+                      dispatch(cancelAIAgentAvatarUpload());
                       setFieldValue('photo', '');
                     }}
                   >

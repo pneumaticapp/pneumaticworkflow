@@ -1,7 +1,7 @@
 import { createAction, createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
-import type { IAIStore, TUpdateAIAgentPayload } from './types';
+import type { IAIStore, IUploadAIAgentAvatarPayload, TUpdateAIAgentPayload } from './types';
 import type {
   IAIAgent,
   IAIModel,
@@ -19,6 +19,7 @@ const initialState: IAIStore = {
   },
   createProviderModal: { isOpen: false, isLoading: false },
   createAgent: { isLoading: false },
+  agentAvatarUpload: { isLoading: false },
   agents: {
     isLoading: true,
     list: [],
@@ -45,6 +46,8 @@ export const loadAIAgents = createAction<void>('ai/loadAIAgents');
 export const createAIAgent = createAction<ICreateAIAgentRequest>('ai/createAIAgent');
 export const updateAIAgent = createAction<TUpdateAIAgentPayload>('ai/updateAIAgent');
 export const deleteAIAgent = createAction<number>('ai/deleteAIAgent');
+export const uploadAIAgentAvatar = createAction<IUploadAIAgentAvatarPayload>('ai/uploadAIAgentAvatar');
+export const cancelAIAgentAvatarUpload = createAction<void>('ai/cancelAIAgentAvatarUpload');
 
 const aiSlice = createSlice({
   name: 'ai',
@@ -84,6 +87,13 @@ const aiSlice = createSlice({
     },
     createAIAgentFailed: (state) => {
       state.createAgent.isLoading = false;
+    },
+
+    uploadAIAgentAvatarStarted: (state) => {
+      state.agentAvatarUpload.isLoading = true;
+    },
+    uploadAIAgentAvatarFinished: (state) => {
+      state.agentAvatarUpload.isLoading = false;
     },
 
     loadAIAgentsStarted: (state) => {
@@ -137,6 +147,8 @@ export const {
   createAIAgentStarted,
   createAIAgentSuccess,
   createAIAgentFailed,
+  uploadAIAgentAvatarStarted,
+  uploadAIAgentAvatarFinished,
   loadAIAgentsStarted,
   loadAIAgentsSuccess,
   loadAIAgentsFailed,

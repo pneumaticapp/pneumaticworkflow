@@ -1,4 +1,4 @@
-import { all, fork, put, takeEvery, takeLatest } from 'redux-saga/effects';
+import { all, call, fork, put, takeEvery, takeLatest } from 'redux-saga/effects';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
 import {
@@ -25,6 +25,8 @@ import type {
 import { NotificationManager } from '../../components/UI/Notifications';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { logger } from '../../utils/logger';
+import { uploadUserAvatar } from '../../utils/uploadFiles';
+import type { TUploadedFile } from '../../utils/uploadFiles';
 import { closeCreateUserModal } from '../accounts/slice';
 
 import {
@@ -56,6 +58,10 @@ import {
   loadAIVendorsStarted,
   loadAIVendorsSuccess,
   updateAIAgent,
+  uploadAIAgentAvatar,
+  cancelAIAgentAvatarUpload,
+  uploadAIAgentAvatarStarted,
+  uploadAIAgentAvatarFinished,
 } from './slice';
 import type { TUpdateAIAgentPayload } from './types';
 
@@ -215,6 +221,27 @@ function* deleteAIAgentSaga({ payload: id }: PayloadAction<number>) {
   }
 }
 
+export function* uploadAIAgentAvatarSaga(
+  action: ReturnType<typeof uploadAIAgentAvatar> | ReturnType<typeof cancelAIAgentAvatarUpload>,
+) {
+  if (!uploadAIAgentAvatar.match(action)) return;
+
+  const { file, onSuccess } = action.payload;
+  yield put(uploadAIAgentAvatarStarted());
+
+  try {
+    const [uploaded]: TUploadedFile[] = yield call(uploadUserAvatar, file);
+    if (uploaded?.url && !uploaded.error) {
+      onSuccess(uploaded.url);
+    }
+  } catch (error) {
+    NotificationManager.warning({ message: 'file-service.upload-failed' });
+    logger.error('failed to upload AI agent avatar', error);
+  } finally {
+    yield put(uploadAIAgentAvatarFinished());
+  }
+}
+
 export function* watchAIProviders() {
   yield takeEvery(loadAIVendors, fetchAIVendors);
   yield takeEvery(loadAIProviders, fetchAIProviders);
@@ -229,6 +256,7 @@ export function* watchAIAgents() {
   yield takeEvery(createAIAgent, createAIAgentSaga);
   yield takeEvery(updateAIAgent, updateAIAgentSaga);
   yield takeEvery(deleteAIAgent, deleteAIAgentSaga);
+  yield takeLatest([uploadAIAgentAvatar, cancelAIAgentAvatarUpload], uploadAIAgentAvatarSaga);
 }
 
 export function* rootSaga() {

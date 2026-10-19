@@ -12,6 +12,9 @@ export interface IAIStore {
   createAgent: {
     isLoading: boolean;
   };
+  agentAvatarUpload: {
+    isLoading: boolean;
+  };
   agents: {
     isLoading: boolean;
     list: IAIAgent[];
@@ -28,3 +31,8 @@ export interface IAIStore {
 }
 
 export type TUpdateAIAgentPayload = { id: number } & TUpdateAIAgentRequest;
+
+export interface IUploadAIAgentAvatarPayload {
+  file: File;
+  onSuccess(url: string): void;
+}
