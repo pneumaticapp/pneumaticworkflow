@@ -1,4 +1,3 @@
-/* prettier-ignore */
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 
@@ -23,10 +22,12 @@ export function FileOutput({ name, attachments, markdownValue }: IExtraField) {
   };
 
   return (
-    <p className={styles['output']}>
-      <span className={styles['output__name']}>{name}</span>
+    <div className={styles['output']}>
+      <span className={styles['output__name']}>
+        {name}
+      </span>
 
       {renderValue()}
-    </p>
+    </div>
   );
 }

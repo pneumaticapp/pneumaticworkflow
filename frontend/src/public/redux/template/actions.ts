@@ -1,7 +1,7 @@
-/* prettier-ignore */
 import { ETemplateStatus, ITypedReduxAction } from '../../types/redux';
 import { actionGenerator } from '../../utils/redux';
 import { ITemplateClient, ITemplateTaskClient, TAITemplateGenerationStatus } from '../../types/template';
+import { TAutosavePersistRequest } from './persistRequest';
 
 export const enum ETemplateActions {
   Load = 'LOAD_TEMPLATE',
@@ -54,6 +54,8 @@ export type TSaveTemplatePayload =
   | {
       onSuccess?(): void;
       onFailed?(): void;
+      requestId?: TAutosavePersistRequest;
+      templateSnapshot?: ITemplateClient;
     }
   | undefined;
 export type TSaveTemplate = ITypedReduxAction<ETemplateActions.Save, TSaveTemplatePayload>;
@@ -96,6 +98,8 @@ export type TPatchTemplatePayload = {
   changedFields: Partial<ITemplateClient>;
   onSuccess?(): void;
   onFailed?(): void;
+  requestId?: TAutosavePersistRequest;
+  templateSnapshot?: ITemplateClient;
 };
 export type TPatchTemplate = ITypedReduxAction<ETemplateActions.PatchTemplate, TPatchTemplatePayload>;
 export const patchTemplate: (payload: TPatchTemplatePayload) => TPatchTemplate = actionGenerator<

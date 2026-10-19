@@ -97,6 +97,24 @@ export const setPerformersCounts = <T extends { rawPerformers: ITemplateTaskPerf
   return uniqueSourceIdSet.size;
 };
 
+export function haveSameKickoffFields(
+  nextFields: ITemplateKickoffClient['fields'] | undefined,
+  previousFields: ITemplateKickoffClient['fields'] | undefined,
+): boolean {
+  const next = nextFields ?? [];
+  const previous = previousFields ?? [];
+
+  if (next === previous) {
+    return true;
+  }
+
+  if (next.length !== previous.length) {
+    return false;
+  }
+
+  return next.every((field, index) => field === previous[index]);
+}
+
 export const getNormalizedTemplateOwners = (
   initialTemplateOwners: ITemplate['owners'],
   isSubscribed: boolean,

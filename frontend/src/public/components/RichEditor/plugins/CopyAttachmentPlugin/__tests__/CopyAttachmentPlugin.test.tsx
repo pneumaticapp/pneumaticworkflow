@@ -1,4 +1,4 @@
-import React, { createRef, type MutableRefObject, type ReactElement } from 'react';
+import React, { createElement, createRef } from 'react';
 import { render, waitFor, act } from '@testing-library/react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
@@ -13,10 +13,14 @@ import {
   $createRangeSelection,
   $setSelection,
 } from 'lexical';
+import type { MutableRefObject, ReactElement } from 'react';
 import type { LexicalEditor } from 'lexical';
 import { CopyAttachmentPlugin } from '../CopyAttachmentPlugin';
 import { SetEditorRefPlugin } from '../../SetEditorRefPlugin';
-import { ImageAttachmentNode, $createImageAttachmentNode } from '../../../nodes/attachments/ImageAttachmentNode';
+import {
+  ImageAttachmentNode,
+  $createImageAttachmentNode,
+} from '../../../nodes/attachments/ImageAttachmentNode';
 import { LEXICAL_NODES } from '../../../nodes';
 import { lexicalTheme } from '../../../theme';
 
@@ -27,23 +31,19 @@ interface SerializedNode {
 }
 
 function collectTypes(nodes: SerializedNode[]): string[] {
-  return nodes.reduce<string[]>(
-    (types, node) => [...types, node.type, ...(node.children ? collectTypes(node.children) : [])],
-    [],
-  );
+  return nodes.flatMap((node) => [node.type, ...collectTypes(node.children ?? [])]);
 }
 
 function findNodeDeep(nodes: SerializedNode[], type: string): SerializedNode | undefined {
-  return nodes.reduce<SerializedNode | undefined>((found, node) => {
-    if (found || node.type === type) return found ?? node;
-    return node.children ? findNodeDeep(node.children, type) : undefined;
-  }, undefined);
+  return nodes
+    .map((node) => (node.type === type ? node : findNodeDeep(node.children ?? [], type)))
+    .find((node): node is SerializedNode => node !== undefined);
 }
 
 beforeAll(() => {
   jest
     .spyOn(ImageAttachmentNode.prototype, 'decorate')
-    .mockReturnValue(React.createElement('div', { 'data-testid': 'mock-img' }));
+    .mockReturnValue(createElement('div', { 'data-testid': 'mock-img' }));
 });
 
 afterAll(() => {
@@ -88,10 +88,17 @@ function createClipboardEvent(type: 'copy' | 'cut'): ClipboardEvent {
   } as unknown as ClipboardEvent;
 }
 
-function TestHarness({ editorRef }: { editorRef: MutableRefObject<LexicalEditor | null> }): ReactElement {
+function TestHarness({
+  editorRef,
+}: {
+  editorRef: MutableRefObject<LexicalEditor | null>;
+}): ReactElement {
   return (
     <LexicalComposer initialConfig={initialConfig}>
-      <RichTextPlugin contentEditable={<ContentEditable />} ErrorBoundary={LexicalErrorBoundary} />
+      <RichTextPlugin
+        contentEditable={<ContentEditable />}
+        ErrorBoundary={LexicalErrorBoundary}
+      />
       <SetEditorRefPlugin editorRef={editorRef} />
       <CopyAttachmentPlugin />
     </LexicalComposer>
@@ -115,7 +122,11 @@ function selectAll(editor: LexicalEditor): void {
 
       const selection = $createRangeSelection();
       selection.anchor.set(firstChild.getKey(), 0, 'text');
-      selection.focus.set(lastChild.getKey(), lastChild.getTextContentSize?.() ?? 0, 'text');
+      selection.focus.set(
+        lastChild.getKey(),
+        lastChild.getTextContentSize?.() ?? 0,
+        'text',
+      );
       $setSelection(selection);
     },
     { discrete: true },
@@ -219,17 +230,8 @@ describe('CopyAttachmentPlugin', () => {
     const event = createClipboardEvent('cut');
     let result: boolean | undefined;
 
-    await act(async () => {
-      let removeUpdateListener = () => {};
-      const reconciled = new Promise<void>((resolve) => {
-        removeUpdateListener = editor.registerUpdateListener(() => {
-          removeUpdateListener();
-          resolve();
-        });
-      });
-
+    act(() => {
       result = editor.dispatchCommand(CUT_COMMAND, event);
-      await reconciled;
     });
 
     expect(result).toBe(true);
@@ -242,8 +244,10 @@ describe('CopyAttachmentPlugin', () => {
     expect(allTypes).toContain('image-attachment');
 
     let textAfterCut = '';
-    editor.read(() => {
-      textAfterCut = $getRoot().getTextContent();
+    act(() => {
+      editor.read(() => {
+        textAfterCut = $getRoot().getTextContent();
+      });
     });
     expect(textAfterCut.trim()).toBe('');
   });

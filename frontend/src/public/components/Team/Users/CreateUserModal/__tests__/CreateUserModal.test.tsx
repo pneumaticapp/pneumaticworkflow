@@ -1,5 +1,7 @@
-import * as React from 'react';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+/// <reference types="jest" />
+import React from 'react';
+import type { ReactNode } from 'react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useDispatch } from 'react-redux';
 
@@ -12,12 +14,12 @@ import { intlMock } from '../../../../../__stubs__/intlMock';
 
 jest.mock('react-dom', () => {
   const actualReactDOM = jest.requireActual('react-dom');
-
+  
   return {
     ...actualReactDOM,
     default: {
       ...actualReactDOM.default,
-      createPortal: (element: React.ReactNode) => element,
+      createPortal: (element: ReactNode) => element,
     },
   };
 });
@@ -45,7 +47,7 @@ jest.mock('../../../../../utils/createPassword', () => ({
 }));
 
 jest.mock('react-perfect-scrollbar', () => {
-  const MockScrollbar = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
+  const MockScrollbar = ({ children }: { children: ReactNode }) => <div>{children}</div>;
   return {
     __esModule: true,
     default: MockScrollbar,
@@ -55,6 +57,28 @@ jest.mock('react-perfect-scrollbar', () => {
 describe('CreateUserModal', () => {
   const mockDispatch = jest.fn();
   const mockOnClose = jest.fn();
+
+  const renderModal = async (isOpen = true) => {
+    let renderResult: ReturnType<typeof render> | undefined;
+
+    await act(async () => {
+      renderResult = render(<CreateUserModal isOpen={isOpen} onClose={mockOnClose} />);
+    });
+
+    return renderResult!;
+  };
+
+  const setInputValue = async (input: HTMLInputElement, value: string) => {
+    await act(async () => {
+      fireEvent.change(input, { target: { value } });
+    });
+  };
+
+  const clickElement = async (element: HTMLElement) => {
+    await act(async () => {
+      userEvent.click(element);
+    });
+  };
 
   const getTranslatedText = (id: string) => intlMock.formatMessage({ id });
 
@@ -69,8 +93,7 @@ describe('CreateUserModal', () => {
     passwordInput: screen.getByLabelText(getTranslatedText('team.create-user-modal.password')) as HTMLInputElement,
   });
 
-  const getSubmitButton = () =>
-    screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.submit') });
+  const getSubmitButton = () => screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.submit') });
 
   const getCopyButton = () => screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.copy') });
 
@@ -80,42 +103,26 @@ describe('CreateUserModal', () => {
     return dropdownContainer.querySelector('.react-select__control') as HTMLElement;
   };
 
-  const fillInput = (input: HTMLInputElement, value: string) => {
-    fireEvent.change(input, { target: { value } });
-    fireEvent.blur(input);
-  };
-
-  const openModal = async () => {
-    render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
-    await screen.findByTestId('create-user-modal-header');
-  };
-
   beforeEach(() => {
-    jest.useRealTimers();
     jest.clearAllMocks();
     (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
   });
 
-  afterEach(() => {
-    cleanup();
-    document.body.style.overflow = '';
-  });
-
   describe('Rendering', () => {
-    it('does not render when isOpen=false', () => {
-      render(<CreateUserModal isOpen={false} onClose={mockOnClose} />);
+    it('does not render when isOpen=false', async () => {
+      await renderModal(false);
 
       expect(screen.queryByTestId('create-user-modal-header')).not.toBeInTheDocument();
     });
 
     it('renders when isOpen=true', async () => {
-      await openModal();
+      await renderModal();
 
       expect(screen.getByTestId('create-user-modal-header')).toBeInTheDocument();
     });
 
     it('displays all form fields', async () => {
-      await openModal();
+      await renderModal();
 
       expect(screen.getByLabelText(getTranslatedText('team.create-user-modal.first-name'))).toBeInTheDocument();
       expect(screen.getByLabelText(getTranslatedText('team.create-user-modal.last-name'))).toBeInTheDocument();
@@ -125,25 +132,21 @@ describe('CreateUserModal', () => {
     });
 
     it('displays submit button', async () => {
-      await openModal();
+      await renderModal();
 
-      expect(
-        screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.submit') }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.submit') })).toBeInTheDocument();
     });
 
     it('displays password copy button', async () => {
-      await openModal();
+      await renderModal();
 
-      expect(
-        screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.copy') }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.copy') })).toBeInTheDocument();
     });
   });
 
   describe('Form validation', () => {
     it('submit button is disabled when form is empty (dirty=false)', async () => {
-      await openModal();
+      await renderModal();
 
       const { firstNameInput, lastNameInput, emailInput } = getFormFields();
       const submitButton = getSubmitButton();
@@ -155,67 +158,86 @@ describe('CreateUserModal', () => {
     });
 
     it('submit button is disabled when only one field is filled', async () => {
-      await openModal();
+      await renderModal();
 
       const { firstNameInput, lastNameInput, emailInput } = getFormFields();
-      fillInput(firstNameInput, 'John');
+
+      await setInputValue(firstNameInput, 'John');
+      const submitButton = getSubmitButton();
 
       await waitFor(() => {
         expect(firstNameInput.value).toBe('John');
         expect(lastNameInput.value).toBe('');
         expect(emailInput.value).toBe('');
-        expect(getSubmitButton()).toBeDisabled();
+        expect(submitButton).toBeDisabled();
       });
     });
 
     it('submit button is disabled with invalid email (dirty=true, isValid=false)', async () => {
-      await openModal();
+      await renderModal();
 
       const { emailInput } = getFormFields();
-      fillInput(emailInput, 'invalid-email');
+      const submitButton = getSubmitButton();
+
+      await setInputValue(emailInput, 'invalid-email');
+      await act(async () => {
+        fireEvent.blur(emailInput);
+      });
 
       await waitFor(() => {
         expect(emailInput.value).toBe('invalid-email');
-        expect(getSubmitButton()).toBeDisabled();
+        expect(submitButton).toBeDisabled();
       });
     });
 
     it('submit button is disabled with invalid password (dirty=true, isValid=false due to password)', async () => {
-      await openModal();
+      await renderModal();
 
       const { passwordInput } = getFormFields();
-      fillInput(passwordInput, '12345');
+      const submitButton = getSubmitButton();
+
+      await setInputValue(passwordInput, '12345');
+      await act(async () => {
+        fireEvent.blur(passwordInput);
+      });
 
       await waitFor(() => {
-        expect(getSubmitButton()).toBeDisabled();
+        expect(submitButton).toBeDisabled();
       });
     });
 
     it('submit button is enabled with valid form (dirty=true, isValid=true)', async () => {
-      await openModal();
+      await renderModal();
 
       const { firstNameInput, lastNameInput, emailInput, passwordInput } = getFormFields();
-      fillInput(firstNameInput, 'John');
-      fillInput(lastNameInput, 'Doe');
-      fillInput(emailInput, 'john.doe@example.com');
-      fillInput(passwordInput, 'valid-password-123');
+      const submitButton = getSubmitButton();
+
+      await setInputValue(firstNameInput, 'John');
+      await setInputValue(lastNameInput, 'Doe');
+      await setInputValue(emailInput, 'john.doe@example.com');
+      await setInputValue(passwordInput, 'valid-password-123');
+      await act(async () => {
+        fireEvent.blur(passwordInput);
+      });
 
       await waitFor(() => {
         expect(firstNameInput.value).toBe('John');
         expect(lastNameInput.value).toBe('Doe');
         expect(emailInput.value).toBe('john.doe@example.com');
         expect(passwordInput.value).toBe('valid-password-123');
-        expect(getSubmitButton()).not.toBeDisabled();
+        expect(submitButton).not.toBeDisabled();
       });
     });
   });
 
   describe('Password copying', () => {
     it('copies password to clipboard on button click', async () => {
-      await openModal();
+      await renderModal();
 
       const { passwordInput } = getFormFields();
-      await userEvent.click(getCopyButton());
+      const copyButton = getCopyButton();
+
+      await clickElement(copyButton);
 
       expect(copyToClipboard).toHaveBeenCalledWith(passwordInput.value);
       expect(NotificationManager.success).toHaveBeenCalledWith({
@@ -224,17 +246,18 @@ describe('CreateUserModal', () => {
     });
 
     it('copies changed password on button click', async () => {
-      await openModal();
+      await renderModal();
 
       const { passwordInput } = getFormFields();
       const newPassword = 'my-custom-password-123';
-      fillInput(passwordInput, newPassword);
 
+      await setInputValue(passwordInput, newPassword);
       await waitFor(() => {
         expect(passwordInput.value).toBe(newPassword);
       });
 
-      await userEvent.click(getCopyButton());
+      const copyButton = getCopyButton();
+      await clickElement(copyButton);
 
       expect(copyToClipboard).toHaveBeenCalledWith(newPassword);
       expect(NotificationManager.success).toHaveBeenCalledWith({
@@ -245,17 +268,19 @@ describe('CreateUserModal', () => {
 
   describe('Form submission', () => {
     it('calls createUser with correct data on submit', async () => {
-      await openModal();
+      await renderModal();
 
       const { firstNameInput, lastNameInput, emailInput, passwordInput } = getFormFields();
-      fillInput(firstNameInput, 'John');
-      fillInput(lastNameInput, 'Doe');
-      fillInput(emailInput, 'john.doe@example.com');
+      const submitButton = getSubmitButton();
+
+      await setInputValue(firstNameInput, 'John');
+      await setInputValue(lastNameInput, 'Doe');
+      await setInputValue(emailInput, 'john.doe@example.com');
 
       await waitFor(() => {
-        expect(getSubmitButton()).not.toBeDisabled();
+        expect(submitButton).not.toBeDisabled();
       });
-      await userEvent.click(getSubmitButton());
+      await clickElement(submitButton);
 
       await waitFor(() => {
         expect(mockDispatch).toHaveBeenCalledWith(
@@ -271,21 +296,25 @@ describe('CreateUserModal', () => {
     });
 
     it('sends isAdmin=true when Admin role is selected', async () => {
-      await openModal();
+      await renderModal();
 
       const { firstNameInput, lastNameInput, emailInput, passwordInput } = getFormFields();
-      fillInput(firstNameInput, 'Admin');
-      fillInput(lastNameInput, 'User');
-      fillInput(emailInput, 'admin@example.com');
 
-      await userEvent.click(getRoleDropdown());
-      await userEvent.click(await screen.findByText(ADMIN_OPTION_TEXT));
+      await setInputValue(firstNameInput, 'Admin');
+      await setInputValue(lastNameInput, 'User');
+      await setInputValue(emailInput, 'admin@example.com');
 
+      const roleDropdown = getRoleDropdown();
+      await clickElement(roleDropdown);
+      const adminOption = await screen.findByText(ADMIN_OPTION_TEXT);
+      await clickElement(adminOption);
+
+      const submitButton = getSubmitButton();
       await waitFor(() => {
-        expect(getSubmitButton()).not.toBeDisabled();
+        expect(submitButton).not.toBeDisabled();
       });
 
-      await userEvent.click(getSubmitButton());
+      await clickElement(submitButton);
 
       await waitFor(() => {
         expect(mockDispatch).toHaveBeenCalledWith(
@@ -301,18 +330,19 @@ describe('CreateUserModal', () => {
     });
 
     it('dispatch is called only once on submit', async () => {
-      await openModal();
+      await renderModal();
 
       const { firstNameInput, lastNameInput, emailInput } = getFormFields();
-      fillInput(firstNameInput, 'John');
-      fillInput(lastNameInput, 'Doe');
-      fillInput(emailInput, 'john.doe@example.com');
+      const submitButton = getSubmitButton();
 
+      await setInputValue(firstNameInput, 'John');
+      await setInputValue(lastNameInput, 'Doe');
+      await setInputValue(emailInput, 'john.doe@example.com');
       await waitFor(() => {
-        expect(getSubmitButton()).not.toBeDisabled();
+        expect(submitButton).not.toBeDisabled();
       });
 
-      await userEvent.click(getSubmitButton());
+      await clickElement(submitButton);
       await waitFor(() => {
         expect(mockDispatch).toHaveBeenCalledTimes(1);
       });
@@ -321,53 +351,53 @@ describe('CreateUserModal', () => {
 
   describe('Form reinitialization', () => {
     it('form resets and password is regenerated on reopen', async () => {
-      const { unmount } = render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
-      await screen.findByTestId('create-user-modal-header');
+      const { unmount } = await renderModal();
 
       const { firstNameInput, lastNameInput, emailInput } = getFormFields();
-      fillInput(firstNameInput, 'John');
-      fillInput(lastNameInput, 'Doe');
-      fillInput(emailInput, 'john.doe@example.com');
+      await setInputValue(firstNameInput, 'John');
+      await setInputValue(lastNameInput, 'Doe');
+      await setInputValue(emailInput, 'john.doe@example.com');
 
-      await userEvent.click(getRoleDropdown());
-      await userEvent.click(await screen.findByText(ADMIN_OPTION_TEXT));
+      const roleDropdown = getRoleDropdown();
+      await clickElement(roleDropdown);
+      const adminOption = await screen.findByText(ADMIN_OPTION_TEXT);
+      await clickElement(adminOption);
 
       await waitFor(() => {
-        expect(getSubmitButton()).not.toBeDisabled();
+        const submitButton = getSubmitButton();
+        expect(submitButton).not.toBeDisabled();
       });
 
       unmount();
       jest.clearAllMocks();
 
-      await openModal();
+      await renderModal();
 
       await waitFor(() => {
         expect(createPassword).toHaveBeenCalled();
       });
 
       await waitFor(() => {
-        const {
-          firstNameInput: newFirstNameInput,
-          lastNameInput: newLastNameInput,
-          emailInput: newEmailInput,
-        } = getFormFields();
+        const { firstNameInput: newFirstNameInput, lastNameInput: newLastNameInput, emailInput: newEmailInput } = getFormFields();
         expect(newFirstNameInput.value).toBe('');
         expect(newLastNameInput.value).toBe('');
         expect(newEmailInput.value).toBe('');
       });
 
-      expect(getSubmitButton()).toBeDisabled();
-      expect(getRoleDropdown()).toHaveTextContent(USER_OPTION_TEXT);
+      const submitButton = getSubmitButton();
+      expect(submitButton).toBeDisabled();
+      const roleDropdownAfterReset = getRoleDropdown();
+      expect(roleDropdownAfterReset).toHaveTextContent(USER_OPTION_TEXT);
     });
   });
 
   describe('Modal closing', () => {
     it('calls onClose on close', async () => {
-      await openModal();
+      await renderModal();
       const closeButtons = screen.getAllByRole('button', { name: 'Close modal' });
       const headerCloseButton = closeButtons.find((button) => button.classList.contains('close-button'));
       expect(headerCloseButton).toBeInTheDocument();
-      await userEvent.click(headerCloseButton!);
+      await clickElement(headerCloseButton!);
 
       expect(mockOnClose).toHaveBeenCalled();
     });
