@@ -5,7 +5,7 @@ import Switch from 'rc-switch';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
-import { Dropdown } from '../../UI';
+import { Dropdown, Header } from '../../UI';
 import type { TDropdownOption } from '../../UI';
 import { WarningPopup } from '../../UI/WarningPopup';
 import { MoreIcon } from '../../icons';
@@ -42,7 +42,9 @@ export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
     <article className={styles['agent-card']} data-testid={`ai-agent-${agent.id}`}>
       <div className={styles['agent-card__avatar']}>{agent.photo ? <img src={agent.photo} alt="" /> : initials}</div>
       <div className={styles['agent-card__info']}>
-        <h3 className={styles['agent-card__name']}>{agent.name}</h3>
+        <Header tag="h3" size="6" className={styles['agent-card__name']}>
+          {agent.name}
+        </Header>
         <p className={styles['agent-card__meta']}>
           {providerName ?? formatMessage({ id: 'team.ai-agents.unknown-provider' })}
           {' · '}
