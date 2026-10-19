@@ -1,63 +1,41 @@
 import * as React from 'react';
+import { useMemo, useState } from 'react';
 import classnames from 'classnames';
 import Switch from 'rc-switch';
 import { debounce } from 'throttle-debounce';
 import { useIntl } from 'react-intl';
 
-import { EUserStatus, TUserListItem, isUserAbsent } from '../../../types/user';
+import { EUserStatus } from '../../../types/user';
 import { IntlMessages } from '../../IntlMessages';
 import { Avatar } from '../../UI/Avatar';
-import { getUserFullName } from '../../../utils/users';
-import { getDate } from '../../../utils/strings';
-import { Dropdown, Header, TDropdownOption } from '../../UI';
+import { Dropdown } from '../../UI';
+import type { TDropdownOption } from '../../UI';
 import { AddUserIcon, MoreIcon, RemoveUserIcon, TrashIcon } from '../../icons';
-import { SelectManagerModal } from '../SelectManagerModal';
-import { SelectReportsModal } from '../SelectReportsModal';
+import { TeamUserDetails } from './TeamUserDetails';
+import { TeamUserRelationsModals } from './TeamUserRelationsModals';
+import type { ITeamUserProps } from './types';
 
 import styles from './Users.css';
 
-export interface ITeamUserProps {
-  user: TUserListItem;
-  isCurrentUser?: boolean;
-  isSubscribed?: boolean;
-  resendInvite(): void;
-  handleToggleAdmin(user: TUserListItem): () => Promise<void>;
-  handleChangeUserManager(
-    userId: number,
-    managerId: number | null,
-    callbacks?: { onSuccess?: () => void; onError?: () => void },
-  ): void;
-  handleChangeUserReports(
-    userId: number,
-    reportIds: number[],
-    callbacks?: { onSuccess?: () => void; onError?: () => void },
-  ): void;
-  openModal(): void;
-  openVacationModal(): void;
-}
-
-export function TeamUser(props: ITeamUserProps) {
-  const {
-    user,
-    user: { isAdmin, isAccountOwner, status, email, invite },
-    handleToggleAdmin,
-    resendInvite,
-    isCurrentUser,
-    isSubscribed,
-    handleChangeUserManager,
-    handleChangeUserReports,
-    openModal,
-    openVacationModal,
-  } = props;
+export function TeamUser({
+  user,
+  handleToggleAdmin,
+  resendInvite,
+  isCurrentUser,
+  isSubscribed,
+  handleChangeUserManager,
+  handleChangeUserReports,
+  openModal,
+  openVacationModal,
+}: ITeamUserProps) {
+  const { isAdmin, isAccountOwner, status } = user;
 
   const { formatMessage } = useIntl();
-  const [isManagerModalOpen, setIsManagerModalOpen] = React.useState(false);
-  const [isReportsModalOpen, setIsReportsModalOpen] = React.useState(false);
-  const [isManagerSaving, setIsManagerSaving] = React.useState(false);
-  const [isReportsSaving, setIsReportsSaving] = React.useState(false);
+  const [isManagerModalOpen, setIsManagerModalOpen] = useState(false);
+  const [isReportsModalOpen, setIsReportsModalOpen] = useState(false);
   const isUserActive = status === EUserStatus.Active;
 
-  const resendInviteDebounced = React.useCallback(debounce(700, resendInvite), [resendInvite]);
+  const resendInviteDebounced = useMemo(() => debounce(700, resendInvite), [resendInvite]);
 
   const dropdownOptions: TDropdownOption[] = [
     {
@@ -80,7 +58,6 @@ export function TeamUser(props: ITeamUserProps) {
       label: formatMessage({ id: 'team.card-vacation-settings' }),
       onClick: openVacationModal,
       isHidden: !isUserActive,
-      Icon: undefined, // Or a suitable icon from standard library
     },
     {
       label: isUserActive
@@ -92,53 +69,6 @@ export function TeamUser(props: ITeamUserProps) {
       withUpperline: !isUserActive,
     },
   ];
-
-  const renderDetails = () => {
-    const detailsMap: { [key in string]: JSX.Element } = {
-      [EUserStatus.Active]: (
-        <>
-          <Header size="6" tag="p" className={styles['card-header']}>
-            {getUserFullName(user)}
-            {isUserAbsent(user) && (
-              <span className={styles['card-absent-badge']} data-testid="absent-badge">
-                {formatMessage({ id: 'team.card-absent-badge' })}
-              </span>
-            )}
-          </Header>
-          <p className={styles['card-subheader']}>
-            <strong>{formatMessage({ id: 'team.user-id' }, { id: user.id })}</strong>{' '}
-            {formatMessage({ id: 'team.user-email' }, { email: user.email })}
-          </p>
-        </>
-      ),
-      [EUserStatus.Invited]: (
-        <>
-          <Header size="6" tag="p" className={styles['card-header']}>
-            {email}
-          </Header>
-          <p className={styles['card-subheader']}>
-            {formatMessage(
-              {
-                id: 'team.user-invited',
-              },
-              {
-                date: getDate(invite?.dateCreated),
-                username: invite?.byUsername,
-              },
-            )}
-          </p>
-        </>
-      ),
-    };
-
-    const details = detailsMap[status];
-
-    if (!details) {
-      return null;
-    }
-
-    return <div>{details}</div>;
-  };
 
   const renderControllers = () => {
     const controllersMap = [
@@ -188,59 +118,18 @@ export function TeamUser(props: ITeamUserProps) {
     <>
       <div className={classnames(styles['card'])}>
         <Avatar user={user} containerClassName={styles['card-avatar']} size="lg" />
-        {renderDetails()}
+        <TeamUserDetails user={user} />
         {renderControllers()}
       </div>
-      {isManagerModalOpen && (
-        <SelectManagerModal
-          isOpen={isManagerModalOpen}
-          onClose={() => {
-            if (!isManagerSaving) {
-              setIsManagerModalOpen(false);
-            }
-          }}
-          onConfirm={(managerId) => {
-            setIsManagerSaving(true);
-            handleChangeUserManager(user.id, managerId, {
-              onSuccess: () => {
-                setIsManagerSaving(false);
-                setIsManagerModalOpen(false);
-              },
-              onError: () => {
-                setIsManagerSaving(false);
-              },
-            });
-          }}
-          currentUserId={user.id}
-          currentManagerId={user.managerId || null}
-          isLoading={isManagerSaving}
-        />
-      )}
-      {isReportsModalOpen && (
-        <SelectReportsModal
-          isOpen={isReportsModalOpen}
-          onClose={() => {
-            if (!isReportsSaving) {
-              setIsReportsModalOpen(false);
-            }
-          }}
-          onConfirm={(reportIds) => {
-            setIsReportsSaving(true);
-            handleChangeUserReports(user.id, reportIds, {
-              onSuccess: () => {
-                setIsReportsSaving(false);
-                setIsReportsModalOpen(false);
-              },
-              onError: () => {
-                setIsReportsSaving(false);
-              },
-            });
-          }}
-          currentUserId={user.id}
-          currentReportIds={user.reportIds || []}
-          isLoading={isReportsSaving}
-        />
-      )}
+      <TeamUserRelationsModals
+        user={user}
+        isManagerModalOpen={isManagerModalOpen}
+        isReportsModalOpen={isReportsModalOpen}
+        onCloseManagerModal={() => setIsManagerModalOpen(false)}
+        onCloseReportsModal={() => setIsReportsModalOpen(false)}
+        handleChangeUserManager={handleChangeUserManager}
+        handleChangeUserReports={handleChangeUserReports}
+      />
     </>
   );
 }

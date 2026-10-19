@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 
 import {
@@ -14,9 +15,9 @@ import type { ITeamUserCardProps } from './types';
 export function TeamUserCard({ user, currentUserId, isSubscribed, onOpenVacationModal }: ITeamUserCardProps) {
   const dispatch = useDispatch();
 
-  const resendInviteHandler = () => {
+  const resendInviteHandler = useCallback(() => {
     if (user.id) dispatch(resendUserInvite(user.id));
-  };
+  }, [dispatch, user.id]);
 
   const handleToggleUserAdmin = (targetUser: ITeamUserCardProps['user']) => async () => {
     const { id, isAdmin, email } = targetUser;
