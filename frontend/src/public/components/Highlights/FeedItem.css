@@ -11,7 +11,6 @@
 }
 
 .feed-item__body {
-  display: flex;
   padding: 1.6rem 2.4rem 1.6rem 1.6rem;
   margin: 0 -1.6rem;
   cursor: pointer;
@@ -77,7 +76,6 @@
   flex: 65 1 auto;
   flex-flow: column;
   align-self: auto;
-  min-width: 0;
 }
 
 .feed-item__header {
