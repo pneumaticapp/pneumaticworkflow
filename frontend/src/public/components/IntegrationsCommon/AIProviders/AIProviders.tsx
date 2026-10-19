@@ -5,11 +5,11 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { Button } from '../../UI/Buttons/Button';
 import { WarningPopup } from '../../UI/WarningPopup';
+import { TokenList, TokenListSkeleton } from '../TokenList';
 import { deleteAIProvider, loadAIProviders, openCreateAIProviderModal } from '../../../redux/ai/slice';
 import { getAIProvidersState } from '../../../redux/selectors/ai';
 
 import { CreateAIProviderModal } from './CreateAIProviderModal';
-import { AIProvidersSkeleton } from './AIProvidersSkeleton';
 import { AIProviderListItem } from './AIProviderListItem';
 import styles from './AIProviders.css';
 
@@ -52,7 +52,7 @@ export function AIProviders() {
         />
       </header>
 
-      {isLoading && <AIProvidersSkeleton />}
+      {isLoading && <TokenListSkeleton data-testid="ai-providers-skeleton" />}
 
       {!isLoading && providers.length === 0 && (
         <p className={styles['providers__empty']} data-testid="empty-ai-providers-message">
@@ -61,11 +61,11 @@ export function AIProviders() {
       )}
 
       {providers.length > 0 && (
-        <ul className={styles['providers__list']} data-testid="ai-providers-list">
+        <TokenList data-testid="ai-providers-list">
           {providers.map((provider) => (
             <AIProviderListItem key={provider.id} provider={provider} onDelete={setConfirmDeleteId} />
           ))}
-        </ul>
+        </TokenList>
       )}
 
       <CreateAIProviderModal />

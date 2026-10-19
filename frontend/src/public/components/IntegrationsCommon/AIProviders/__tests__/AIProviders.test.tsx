@@ -10,10 +10,6 @@ import { EAIVendor } from '../../../../api/ai/types';
 import type { IAIProvider } from '../../../../api/ai/types';
 import type { IWarningPopupProps } from '../../../UI/WarningPopup';
 
-jest.mock('../AIProvidersSkeleton', () => ({
-  AIProvidersSkeleton: () => <div data-testid="ai-providers-skeleton" />,
-}));
-
 jest.mock('../../../UI/Tooltip', () => ({
   Tooltip: ({ children, content, disabled }: any) => (
     <div data-testid="tooltip" data-content={content} data-disabled={disabled}>
@@ -191,7 +187,11 @@ describe('AIProviders', () => {
         { agents: 'Research assistant, Support bot' },
       ),
     );
-    expect(screen.getByTestId('ai-provider-usage-1')).toHaveTextContent('Research assistant, Support bot');
+    expect(
+      screen.getByText(
+        intlMock.formatMessage({ id: 'ai-providers.usage' }, { agents: 'Research assistant, Support bot' }),
+      ),
+    ).toBeInTheDocument();
     userEvent.click(screen.getByTestId('delete-ai-provider-1'));
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     expect(mockDispatch).not.toHaveBeenCalledWith(deleteAIProvider(1));

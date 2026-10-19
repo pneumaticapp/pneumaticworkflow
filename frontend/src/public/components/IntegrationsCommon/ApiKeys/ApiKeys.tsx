@@ -9,6 +9,7 @@ import { NotificationManager } from '../../UI/Notifications';
 import { loadApiKeys, createApiKey, deleteApiKey, clearNewlyCreatedKey } from '../../../redux/actions';
 import { getApiKeys, getAreApiKeysLoading, getNewlyCreatedApiKey } from '../../../redux/selectors/integrations';
 
+import { TokenList } from '../TokenList';
 import { ApiKeyListItem } from './ApiKeyListItem';
 import { CreateApiKeyModal, NewApiKeyModal, RevokeApiKeyModal } from './ApiKeyModals';
 
@@ -103,11 +104,11 @@ export function ApiKeys() {
         )}
 
         {!isLoading && apiKeys.length > 0 && (
-          <ul className={styles['api-keys__list']} data-testid="api-keys-list">
+          <TokenList data-testid="api-keys-list">
             {apiKeys.map((key) => (
               <ApiKeyListItem key={key.id} apiKey={key} onRevoke={handleConfirmDeleteStart} />
             ))}
-          </ul>
+          </TokenList>
         )}
       </section>
 
