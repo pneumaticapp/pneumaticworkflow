@@ -53,6 +53,13 @@ export function BaseModal({
     return () => clearTimeout(timer);
   }, [isOpen]);
 
+  useEffect(
+    () => () => {
+      document.body.style.overflow = '';
+    },
+    [],
+  );
+
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isOpen && backdrop !== 'static' && toggle) {
