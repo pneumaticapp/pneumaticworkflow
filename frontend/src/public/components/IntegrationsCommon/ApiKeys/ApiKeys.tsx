@@ -9,7 +9,7 @@ import { NotificationManager } from '../../UI/Notifications';
 import { loadApiKeys, createApiKey, deleteApiKey, clearNewlyCreatedKey } from '../../../redux/actions';
 import { getApiKeys, getAreApiKeysLoading, getNewlyCreatedApiKey } from '../../../redux/selectors/integrations';
 
-import { TokenList } from '../TokenList';
+import { TokenList, TokenListSkeleton } from '../TokenList';
 import { ApiKeyListItem } from './ApiKeyListItem';
 import { CreateApiKeyModal, NewApiKeyModal, RevokeApiKeyModal } from './ApiKeyModals';
 
@@ -93,9 +93,7 @@ export function ApiKeys() {
           />
         </header>
 
-        {isLoading && (
-          <p className={styles['api-keys__loading']}>{formatMessage({ id: 'integrations.loading-api-key' })}</p>
-        )}
+        {isLoading && <TokenListSkeleton data-testid="api-keys-skeleton" />}
 
         {!isLoading && apiKeys.length === 0 && (
           <p className={styles['api-keys__empty']} data-testid="empty-keys-message">

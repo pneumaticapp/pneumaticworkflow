@@ -65,7 +65,6 @@ describe('IntegrationsCommon', () => {
   const mockDispatch = jest.fn();
   const t = (id: keyof typeof enMessages) => enMessages[id];
   const TEXT = {
-    loading: t('integrations.loading-api-key'),
     neverUsed: t('integrations.api-key-never-used'),
     deleteConfirm: t('integrations.delete-api-key-confirm'),
     createBtn: t('integrations.create-api-key'),
@@ -105,7 +104,8 @@ describe('IntegrationsCommon', () => {
     });
 
     renderPage();
-    expect(screen.getByText(TEXT.loading)).toBeInTheDocument();
+    expect(screen.getByTestId('api-keys-skeleton')).toBeInTheDocument();
+    expect(screen.queryByTestId('empty-keys-message')).not.toBeInTheDocument();
     expect(mockDispatch).toHaveBeenCalledWith(loadApiKeys());
   });
 

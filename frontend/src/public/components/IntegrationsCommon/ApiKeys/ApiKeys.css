@@ -25,7 +25,6 @@
     line-height: 1.6rem;
   }
 
-  &__loading,
   &__empty {
     padding: 2.4rem 0;
     font-size: 1.4rem;
