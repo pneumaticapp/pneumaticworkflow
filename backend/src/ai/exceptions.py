@@ -4,6 +4,7 @@ from src.ai.messages import (
     MSG_AI_0003,
     MSG_AI_0004,
     MSG_AI_0005,
+    MSG_AI_0014,
     MSG_AI_0016,
     MSG_AI_0017,
 )
@@ -65,6 +66,11 @@ class AIAgentNameNotUniqueException(AIAgentException):
 class AIProviderInUseException(AIProviderException):
 
     default_message = MSG_AI_0005
+
+
+class AIProviderModelsNotResponded(AIProviderException):
+
+    default_message = MSG_AI_0014
 
 
 class AIAgentAttemptsExceededException(AIAgentException):
