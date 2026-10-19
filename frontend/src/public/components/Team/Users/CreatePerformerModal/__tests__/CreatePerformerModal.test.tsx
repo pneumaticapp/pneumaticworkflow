@@ -430,6 +430,17 @@ describe('CreatePerformerModal', () => {
       expect(document.querySelector('.modal__avatar-preview img')).not.toBeInTheDocument();
     });
 
+    it('cancels a pending avatar upload when the agent form unmounts', async () => {
+      const { unmount } = render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+      await openAIAgentTab();
+      await uploadAvatar();
+      mockDispatch.mockClear();
+
+      unmount();
+
+      expect(mockDispatch).toHaveBeenCalledWith(cancelAIAgentAvatarUpload());
+    });
+
     it('clears the picked model and reloads the list when the provider changes', async () => {
       mockAIState({
         providers: [OPENROUTER_PROVIDER, INTERNAL_PROVIDER],

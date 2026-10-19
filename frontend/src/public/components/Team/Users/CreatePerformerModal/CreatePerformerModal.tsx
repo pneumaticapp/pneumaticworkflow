@@ -8,7 +8,7 @@ import { Button } from '../../../UI/Buttons/Button';
 import { Tabs } from '../../../UI/Tabs';
 import { ERoutes } from '../../../../constants/routes';
 import { history } from '../../../../utils/history';
-import { cancelAIAgentAvatarUpload, createAIAgent, loadAIProviders } from '../../../../redux/ai/slice';
+import { createAIAgent, loadAIProviders } from '../../../../redux/ai/slice';
 import { getAICreateAgentState, getAIProvidersState } from '../../../../redux/selectors/ai';
 
 import { CreateAIAgentForm } from './CreateAIAgentForm';
@@ -34,7 +34,6 @@ export function CreatePerformerModal({
     if (isOpen) {
       setActiveTab(initialTab);
       setFormsKey((key) => key + 1);
-      dispatch(cancelAIAgentAvatarUpload());
       dispatch(loadAIProviders());
     }
   }, [dispatch, isOpen, initialTab]);
