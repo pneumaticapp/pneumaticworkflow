@@ -2,13 +2,15 @@ from typing import List, Optional
 from src.ai.enums import AIVendor
 from src.ai.exceptions import (
     AIHandlerException,
+    AIHandlerPermissionDenied,
+    AIHandlerUnauthorized,
     AIProviderException,
     AIProviderInUseException,
+    AIProviderModelsNotResponded,
 )
 from src.ai.messages import (
     MSG_AI_0006,
-    MSG_AI_0008,
-    MSG_AI_0014,
+    MSG_AI_0007,
 )
 from src.ai.models import AIAgent, AIProvider
 from src.ai.serializers import AIModelSerializer
@@ -101,32 +103,39 @@ class AIProviderService(
     def _create_first_completion(self, models: List[dict]):
 
         """ Checks the provider with a test request to its models
-            one by one until a model answers.
+            one by one. A model access error (403) or an empty response
+            moves on to the next model, any other error stops the check.
 
-            the first model fails, the second answers 'Hello world'
-            -> nothing
+            the first model is forbidden or answers with an empty response,
+            the second answers 'Hello world'
+            -> 'Hello world'
 
-            every model fails or answers with an empty response
-            -> AIProviderException with the last model and its error """
+            the first model fails with a non-403 error
+            -> AIProviderException, the next models are not requested
 
-        error = None
+            every model is forbidden or answers with an empty response
+            -> AIProviderModelsNotResponded """
+
+        handler = self._get_handler()
         for model in models:
             try:
-                response = self.get_completion(
+                response = handler.get_completion(
                     system_message='You are a office employee.',
                     user_message='Say "Hello world"',
                     model=model['slug'],
                 )
-                if not response:
-                    raise AIProviderException(
-                        message=MSG_AI_0008(model=model['slug']),
-                    )
-                return
-            except (AIHandlerException, AIProviderException) as ex:
-                error = ex
-        raise AIProviderException(
-            message=MSG_AI_0014(model=model['slug'], error=str(error)),
-        )
+            except AIHandlerPermissionDenied:
+                continue
+            except AIHandlerUnauthorized as ex:
+                raise AIProviderException(message=ex.message) from ex
+            except AIHandlerException as ex:
+                raise AIProviderException(
+                    message=MSG_AI_0007(error=ex.message),
+                ) from ex
+            if not response:
+                continue
+            return response
+        raise AIProviderModelsNotResponded
 
     def _get_handler(
         self,
@@ -152,9 +161,11 @@ class AIProviderService(
             handler = self._get_handler()
             try:
                 models = handler.get_models()
+            except (AIHandlerPermissionDenied, AIHandlerUnauthorized) as ex:
+                raise AIProviderException(message=ex.message) from ex
             except AIHandlerException as ex:
                 raise AIProviderException(
-                    message=MSG_AI_0006(error=str(ex)),
+                    message=MSG_AI_0006(error=ex.message),
                 ) from ex
             if not models:
                 raise AIProviderException(
@@ -172,8 +183,15 @@ class AIProviderService(
         task: Optional[Task] = None,
     ) -> str:
         handler = self._get_handler(agent=agent, task=task)
-        return handler.get_completion(
-            system_message=system_message,
-            user_message=user_message,
-            model=model,
-        )
+        try:
+            return handler.get_completion(
+                system_message=system_message,
+                user_message=user_message,
+                model=model,
+            )
+        except (AIHandlerPermissionDenied, AIHandlerUnauthorized) as ex:
+            raise AIProviderException(message=ex.message) from ex
+        except AIHandlerException as ex:
+            raise AIProviderException(
+                message=MSG_AI_0007(error=ex.message),
+            ) from ex

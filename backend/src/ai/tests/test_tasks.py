@@ -7,7 +7,7 @@ from src.accounts.enums import NotificationType
 from src.accounts.models import Notification, UserGroup
 from src.ai.enums import AIAgentActionType
 from src.ai.models import AIAgentAction
-from src.ai.services.agent import MAX_RUN_FAILURES
+from src.ai.services.agent import MAX_ATTEMPTS
 from src.ai.tasks import (
     dispatch_ai_agent_new_notifications,
     dispatch_ai_agent_new_tasks,
@@ -154,8 +154,8 @@ def test_dispatch_ai_agent_new_notifications__max_run_failures__skip(
     # arrange
     _create_mention(
         mocker,
-        runs=MAX_RUN_FAILURES,
-        failures=MAX_RUN_FAILURES,
+        runs=MAX_ATTEMPTS,
+        failures=MAX_ATTEMPTS,
     )
     delay_mock = mocker.patch(
         'src.ai.tasks.execute_ai_agent_reply.delay',

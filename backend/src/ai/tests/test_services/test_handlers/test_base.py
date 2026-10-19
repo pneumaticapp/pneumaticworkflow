@@ -5,12 +5,13 @@ import requests
 
 from src.ai.enums import AIAgentActionType, AIVendor
 from src.ai.exceptions import (
-    AIHandlerException,
-    AIProviderConnectionException,
-    AIProviderInvalidResponseException,
-    AIProviderRequestFailedException,
+    AIHandlerConnectionException,
+    AIHandlerInvalidResponse,
+    AIHandlerPermissionDenied,
+    AIHandlerRequestFailed,
+    AIHandlerUnauthorized,
 )
-from src.ai.messages import MSG_AI_0001, MSG_AI_0002, MSG_AI_0003
+from src.ai.messages import MSG_AI_0002, MSG_AI_0016, MSG_AI_0017
 from src.ai.models import AIAgentAction
 from src.ai.services.config import AI_VENDORS_CONFIG
 from src.ai.services.entities import ProviderConfig
@@ -578,7 +579,6 @@ def test_request__success__ok(mocker):
     )
     url = 'https://api.openai.com/v1/chat/completions'
     headers = {'Authorization': 'Bearer sk-example'}
-    safe_headers = {'Authorization': '***'}
     data = {'model': 'gpt-4o'}
     params = {'limit': 10}
     response_data = {'id': 'chatcmpl-1'}
@@ -597,7 +597,6 @@ def test_request__success__ok(mocker):
     )
     get_safe_headers_mock = mocker.patch(
         'src.ai.services.handlers.base.BaseHandler._get_safe_headers',
-        return_value=safe_headers,
     )
 
     # act
@@ -624,23 +623,8 @@ def test_request__success__ok(mocker):
     json_mock.assert_called_once_with()
     get_proxies_mock.assert_called_once_with()
     parse_error_mock.assert_not_called()
-    get_safe_headers_mock.assert_called_once_with(headers)
-    action = AIAgentAction.objects.get(account=account)
-    assert action.action == AIAgentActionType.REQUEST
-    assert action.agent is None
-    assert action.task is None
-    assert json.loads(action.text) == {
-        'method': 'POST',
-        'url': url,
-        'scheme': 'https',
-        'http_status': 200,
-        'headers': safe_headers,
-        'data': data,
-        'params': params,
-        'timeout': 15,
-        'proxies': False,
-        'response_data': response_data,
-    }
+    get_safe_headers_mock.assert_not_called()
+    assert not AIAgentAction.objects.filter(account=account).exists()
 
 
 def test_request__default_params__ok(mocker):
@@ -692,20 +676,8 @@ def test_request__default_params__ok(mocker):
     json_mock.assert_called_once_with()
     get_proxies_mock.assert_called_once_with()
     parse_error_mock.assert_not_called()
-    get_safe_headers_mock.assert_called_once_with(None)
-    action = AIAgentAction.objects.get(account=account)
-    assert json.loads(action.text) == {
-        'method': 'GET',
-        'url': url,
-        'scheme': 'https',
-        'http_status': 200,
-        'headers': {},
-        'data': {},
-        'params': {},
-        'timeout': handler.request_timeout,
-        'proxies': False,
-        'response_data': response_data,
-    }
+    get_safe_headers_mock.assert_not_called()
+    assert not AIAgentAction.objects.filter(account=account).exists()
 
 
 def test_request__custom_timeout__ok(mocker):
@@ -757,9 +729,8 @@ def test_request__custom_timeout__ok(mocker):
     json_mock.assert_called_once_with()
     get_proxies_mock.assert_called_once_with()
     parse_error_mock.assert_not_called()
-    get_safe_headers_mock.assert_called_once_with(None)
-    action = AIAgentAction.objects.get(account=account)
-    assert json.loads(action.text)['timeout'] == 200
+    get_safe_headers_mock.assert_not_called()
+    assert not AIAgentAction.objects.filter(account=account).exists()
 
 
 def test_request__proxies_configured__ok(mocker):
@@ -815,14 +786,13 @@ def test_request__proxies_configured__ok(mocker):
     json_mock.assert_called_once_with()
     get_proxies_mock.assert_called_once_with()
     parse_error_mock.assert_not_called()
-    get_safe_headers_mock.assert_called_once_with(None)
-    action = AIAgentAction.objects.get(account=account)
-    assert json.loads(action.text)['proxies'] is True
+    get_safe_headers_mock.assert_not_called()
+    assert not AIAgentAction.objects.filter(account=account).exists()
 
 
-def test_request__agent_and_task__action_linked(mocker):
+def test_request__failed_with_agent_and_task__action_linked(mocker):
 
-    """ Agent and task linked """
+    """ Failed request with agent and task """
 
     # arrange
     account = create_test_account()
@@ -839,9 +809,9 @@ def test_request__agent_and_task__action_linked(mocker):
         task=task,
     )
     url = 'https://api.openai.com/v1/models'
-    response_data = {'data': []}
+    response_data = {'detail': 'Internal error'}
     json_mock = mocker.Mock(return_value=response_data)
-    response = mocker.Mock(status_code=200, json=json_mock)
+    response = mocker.Mock(status_code=500, json=json_mock)
     request_mock = mocker.patch(
         'src.ai.services.handlers.base.requests.request',
         return_value=response,
@@ -852,6 +822,7 @@ def test_request__agent_and_task__action_linked(mocker):
     )
     parse_error_mock = mocker.patch(
         'src.ai.services.handlers.openai.OpenAIHandler._parse_error',
+        return_value=None,
     )
     get_safe_headers_mock = mocker.patch(
         'src.ai.services.handlers.base.BaseHandler._get_safe_headers',
@@ -859,7 +830,8 @@ def test_request__agent_and_task__action_linked(mocker):
     )
 
     # act
-    handler._request(method='GET', url=url)
+    with pytest.raises(AIHandlerRequestFailed):
+        handler._request(method='GET', url=url)
 
     # assert
     request_mock.assert_called_once_with(
@@ -873,10 +845,13 @@ def test_request__agent_and_task__action_linked(mocker):
     )
     json_mock.assert_called_once_with()
     get_proxies_mock.assert_called_once_with()
-    parse_error_mock.assert_not_called()
+    parse_error_mock.assert_called_once_with(
+        http_status=500,
+        response_data=response_data,
+    )
     get_safe_headers_mock.assert_called_once_with(None)
     action = AIAgentAction.objects.get(account=account)
-    assert action.action == AIAgentActionType.REQUEST
+    assert action.action == AIAgentActionType.REQUEST_FAILED
     assert action.agent == agent
     assert action.task == task
 
@@ -911,11 +886,11 @@ def test_request__connection_error__raise_exception(mocker):
     )
 
     # act
-    with pytest.raises(AIProviderConnectionException) as ex:
+    with pytest.raises(AIHandlerConnectionException) as ex:
         handler._request(method='GET', url=url)
 
     # assert
-    assert str(ex.value.message) == str(MSG_AI_0001)
+    assert ex.value.message == 'Connection refused'
     request_mock.assert_called_once_with(
         method='GET',
         url=url,
@@ -929,9 +904,20 @@ def test_request__connection_error__raise_exception(mocker):
     parse_error_mock.assert_not_called()
     get_safe_headers_mock.assert_called_once_with(None)
     action = AIAgentAction.objects.get(account=account)
-    log = json.loads(action.text)
-    assert log['http_status'] == 0
-    assert log['response_data'] == {'error': 'Connection refused'}
+    assert action.action == AIAgentActionType.REQUEST_FAILED
+    assert action.agent is None
+    assert action.task is None
+    assert json.loads(action.text) == {
+        'method': 'GET',
+        'url': url,
+        'http_status': 0,
+        'headers': {},
+        'request_data': {},
+        'request_params': {},
+        'timeout': handler.request_timeout,
+        'proxies': False,
+        'response_data': {'error': 'Connection refused'},
+    }
 
 
 def test_request__non_2xx_with_error_message__raise_exception(mocker):
@@ -969,7 +955,7 @@ def test_request__non_2xx_with_error_message__raise_exception(mocker):
     )
 
     # act
-    with pytest.raises(AIHandlerException) as ex:
+    with pytest.raises(AIHandlerRequestFailed) as ex:
         handler._request(method='GET', url=url)
 
     # assert
@@ -1030,7 +1016,7 @@ def test_request__non_2xx_without_error_message__raise_exception(mocker):
     )
 
     # act
-    with pytest.raises(AIProviderRequestFailedException) as ex:
+    with pytest.raises(AIHandlerRequestFailed) as ex:
         handler._request(method='GET', url=url)
 
     # assert
@@ -1054,6 +1040,143 @@ def test_request__non_2xx_without_error_message__raise_exception(mocker):
     action = AIAgentAction.objects.get(account=account)
     log = json.loads(action.text)
     assert log['http_status'] == 500
+    assert log['response_data'] == response_data
+
+
+def test_request__401_with_error_message__raise_exception(mocker):
+
+    """ 401 with error message """
+
+    # arrange
+    account = create_test_account()
+    provider = create_test_provider(account=account)
+    handler = OpenAIHandler(
+        provider=provider,
+        account=account,
+        config=AI_VENDORS_CONFIG[AIVendor.OPENAI],
+    )
+    url = 'https://api.openai.com/v1/models'
+    headers = {'Authorization': 'Bearer sk-example'}
+    safe_headers = {'Authorization': '***'}
+    error_message = 'Incorrect API key provided.'
+    response_data = {'error': {'message': error_message}}
+    json_mock = mocker.Mock(return_value=response_data)
+    response = mocker.Mock(
+        status_code=401,
+        json=json_mock,
+        reason='Unauthorized',
+    )
+    request_mock = mocker.patch(
+        'src.ai.services.handlers.base.requests.request',
+        return_value=response,
+    )
+    get_proxies_mock = mocker.patch(
+        'src.ai.services.handlers.base.BaseHandler._get_proxies',
+        return_value=None,
+    )
+    parse_error_mock = mocker.patch(
+        'src.ai.services.handlers.openai.OpenAIHandler._parse_error',
+        return_value=error_message,
+    )
+    get_safe_headers_mock = mocker.patch(
+        'src.ai.services.handlers.base.BaseHandler._get_safe_headers',
+        return_value=safe_headers,
+    )
+
+    # act
+    with pytest.raises(AIHandlerUnauthorized) as ex:
+        handler._request(method='GET', url=url, headers=headers)
+
+    # assert
+    assert str(ex.value) == str(MSG_AI_0016(error=error_message))
+    request_mock.assert_called_once_with(
+        method='GET',
+        url=url,
+        headers=headers,
+        json=None,
+        params=None,
+        timeout=handler.request_timeout,
+        proxies=None,
+    )
+    json_mock.assert_called_once_with()
+    get_proxies_mock.assert_called_once_with()
+    parse_error_mock.assert_called_once_with(
+        http_status=401,
+        response_data=response_data,
+    )
+    get_safe_headers_mock.assert_called_once_with(headers)
+    action = AIAgentAction.objects.get(account=account)
+    assert action.action == AIAgentActionType.REQUEST_FAILED
+    log = json.loads(action.text)
+    assert log['http_status'] == 401
+    assert log['headers'] == safe_headers
+    assert log['response_data'] == response_data
+
+
+def test_request__403_with_error_message__raise_exception(mocker):
+
+    """ 403 with error message """
+
+    # arrange
+    account = create_test_account()
+    provider = create_test_provider(account=account)
+    handler = OpenAIHandler(
+        provider=provider,
+        account=account,
+        config=AI_VENDORS_CONFIG[AIVendor.OPENAI],
+    )
+    url = 'https://api.openai.com/v1/models'
+    error_message = 'Project does not have access to model.'
+    response_data = {'error': {'message': error_message}}
+    json_mock = mocker.Mock(return_value=response_data)
+    response = mocker.Mock(
+        status_code=403,
+        json=json_mock,
+        reason='Forbidden',
+    )
+    request_mock = mocker.patch(
+        'src.ai.services.handlers.base.requests.request',
+        return_value=response,
+    )
+    get_proxies_mock = mocker.patch(
+        'src.ai.services.handlers.base.BaseHandler._get_proxies',
+        return_value=None,
+    )
+    parse_error_mock = mocker.patch(
+        'src.ai.services.handlers.openai.OpenAIHandler._parse_error',
+        return_value=error_message,
+    )
+    get_safe_headers_mock = mocker.patch(
+        'src.ai.services.handlers.base.BaseHandler._get_safe_headers',
+        return_value=None,
+    )
+
+    # act
+    with pytest.raises(AIHandlerPermissionDenied) as ex:
+        handler._request(method='GET', url=url)
+
+    # assert
+    assert str(ex.value) == str(MSG_AI_0017(error=error_message))
+    request_mock.assert_called_once_with(
+        method='GET',
+        url=url,
+        headers=None,
+        json=None,
+        params=None,
+        timeout=handler.request_timeout,
+        proxies=None,
+    )
+    json_mock.assert_called_once_with()
+    get_proxies_mock.assert_called_once_with()
+    parse_error_mock.assert_called_once_with(
+        http_status=403,
+        response_data=response_data,
+    )
+    get_safe_headers_mock.assert_called_once_with(None)
+    action = AIAgentAction.objects.get(account=account)
+    assert action.action == AIAgentActionType.REQUEST_FAILED
+    log = json.loads(action.text)
+    assert log['http_status'] == 403
     assert log['response_data'] == response_data
 
 
@@ -1086,7 +1209,6 @@ def test_request__non_2xx_non_json_body__raise_exception(mocker):
     )
     parse_error_mock = mocker.patch(
         'src.ai.services.handlers.openai.OpenAIHandler._parse_error',
-        return_value=None,
     )
     get_safe_headers_mock = mocker.patch(
         'src.ai.services.handlers.base.BaseHandler._get_safe_headers',
@@ -1094,11 +1216,11 @@ def test_request__non_2xx_non_json_body__raise_exception(mocker):
     )
 
     # act
-    with pytest.raises(AIProviderRequestFailedException) as ex:
+    with pytest.raises(AIHandlerInvalidResponse) as ex:
         handler._request(method='GET', url=url)
 
     # assert
-    assert str(ex.value.message) == str(MSG_AI_0002)
+    assert ex.value.message == 'Bad gateway'
     request_mock.assert_called_once_with(
         method='GET',
         url=url,
@@ -1110,10 +1232,7 @@ def test_request__non_2xx_non_json_body__raise_exception(mocker):
     )
     json_mock.assert_called_once_with()
     get_proxies_mock.assert_called_once_with()
-    parse_error_mock.assert_called_once_with(
-        http_status=502,
-        response_data={'body': 'Bad gateway'},
-    )
+    parse_error_mock.assert_not_called()
     get_safe_headers_mock.assert_called_once_with(None)
     action = AIAgentAction.objects.get(account=account)
     log = json.loads(action.text)
@@ -1157,11 +1276,11 @@ def test_request__2xx_invalid_json__raise_exception(mocker):
     )
 
     # act
-    with pytest.raises(AIProviderInvalidResponseException) as ex:
+    with pytest.raises(AIHandlerInvalidResponse) as ex:
         handler._request(method='GET', url=url)
 
     # assert
-    assert str(ex.value.message) == str(MSG_AI_0003)
+    assert ex.value.message == 'not json'
     request_mock.assert_called_once_with(
         method='GET',
         url=url,

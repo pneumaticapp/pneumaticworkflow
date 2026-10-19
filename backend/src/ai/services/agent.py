@@ -41,7 +41,7 @@ from src.storage.services import FileServiceClient
 
 UserModel = get_user_model()
 
-MAX_RUN_FAILURES = 3
+MAX_ATTEMPTS = 3
 
 
 class AIAgentService(BaseModelService):
@@ -131,6 +131,10 @@ class AIAgentService(BaseModelService):
                 )
             except IntegrityError as ex:
                 raise AIAgentNameNotUniqueException from ex
+        return self.instance
+
+    def create(self, **kwargs) -> AIAgent:
+        self._create_instance(**kwargs)
         return self.instance
 
     def partial_update(
@@ -494,7 +498,7 @@ class AIAgentService(BaseModelService):
             errors_stack = errors_stack or []
             errors_stack.append((fields_values, error))
             new_attempt = attempt + 1
-            if new_attempt > 5:
+            if new_attempt > MAX_ATTEMPTS:
                 self._raise_attempt_error(
                     task=task,
                     errors_stack=errors_stack,
@@ -510,10 +514,10 @@ class AIAgentService(BaseModelService):
     def _handle_task_complete_failure(self, task: Task, ex: Exception):
 
         """ Logs a run interrupted by an unexpected error. The dispatcher
-            retries the task until the failures reach MAX_RUN_FAILURES,
+            retries the task until the failures reach MAX_ATTEMPTS,
             the last failure is reported to the task performers.
 
-            AIProviderRequestFailedException on the first run
+            AIHandlerRequestFailed on the first run
             -> the action 'task_failed' with the error text
 
             the same error on the third run
@@ -528,21 +532,12 @@ class AIAgentService(BaseModelService):
             action=AIAgentActionType.TASK_FAILED,
             text=error,
         )
-        failures = (
-            AIAgentAction.objects
-            .by_agent(self.instance.id)
-            .by_task(task.id)
-            .by_action(AIAgentActionType.TASK_FAILED)
-            .filter(date_created__gte=task.date_started)
-            .count()
+        self._create_comment(
+            task=task,
+            text=str(
+                MSG_AI_0011(attempts=MAX_ATTEMPTS, error=error),
+            ),
         )
-        if failures >= MAX_RUN_FAILURES:
-            self._create_comment(
-                task=task,
-                text=str(
-                    MSG_AI_0011(attempts=MAX_RUN_FAILURES, error=error),
-                ),
-            )
 
     def _handle_reply_to_comment_failure(
         self,
@@ -551,10 +546,10 @@ class AIAgentService(BaseModelService):
     ):
 
         """ Logs a reply interrupted by an unexpected error. The dispatcher
-            retries the mention until the failures reach MAX_RUN_FAILURES,
+            retries the mention until the failures reach MAX_ATTEMPTS,
             the last failure is reported in the task comments.
 
-            AIProviderRequestFailedException on the first run
+            AIHandlerRequestFailed on the first run
             -> the action 'mention_failed' with the error text
 
             the same error on the third run
@@ -570,20 +565,12 @@ class AIAgentService(BaseModelService):
             action=AIAgentActionType.MENTION_FAILED,
             text=error,
         )
-        failures = (
-            AIAgentAction.objects
-            .by_agent(self.instance.id)
-            .by_notification(notification.id)
-            .by_action(AIAgentActionType.MENTION_FAILED)
-            .count()
+        self._create_comment(
+            task=notification.task,
+            text=str(
+                MSG_AI_0013(attempts=MAX_ATTEMPTS, error=error),
+            ),
         )
-        if failures >= MAX_RUN_FAILURES:
-            self._create_comment(
-                task=notification.task,
-                text=str(
-                    MSG_AI_0013(attempts=MAX_RUN_FAILURES, error=error),
-                ),
-            )
 
     def _get_notification(
         self,
@@ -683,7 +670,7 @@ class AIAgentService(BaseModelService):
         if task:
             try:
                 fields_values = self._attempt_complete_task(task=task)
-            except Exception as ex:
+            except AIAgentAttemptsExceededException as ex:
                 self._handle_task_complete_failure(task=task, ex=ex)
                 raise
             AIAgentAction.objects.create(

@@ -1,7 +1,6 @@
 import json
 from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple, Any
-from urllib.parse import urlparse
 
 import requests
 from django.conf import settings
@@ -11,9 +10,11 @@ from src.accounts.models import Account
 from src.ai.enums import AIAgentActionType
 from src.ai.exceptions import (
     AIHandlerException,
-    AIProviderConnectionException,
-    AIProviderInvalidResponseException,
-    AIProviderRequestFailedException,
+    AIHandlerConnectionException,
+    AIHandlerInvalidResponse,
+    AIHandlerPermissionDenied,
+    AIHandlerRequestFailed,
+    AIHandlerUnauthorized,
 )
 from src.ai.models import AIAgent, AIAgentAction, AIProvider
 from src.ai.services.entities import ProviderConfig
@@ -140,6 +141,40 @@ class BaseHandler(ABC):
             return error
         return None
 
+    def _log_failed_request(
+        self,
+        method: str,
+        url: str,
+        http_status: int,
+        headers: dict,
+        request_data: dict,
+        request_params: dict,
+        timeout: int,
+        proxies: bool,
+        response_data: dict,
+    ):
+        message = json.dumps(
+            {
+                'method': method,
+                'url': url,
+                'http_status': http_status,
+                'headers': headers,
+                'request_data': request_data,
+                'request_params': request_params,
+                'timeout': timeout,
+                'proxies': bool(proxies),
+                'response_data': response_data,
+            },
+            default=str,
+        )
+        AIAgentAction.objects.create(
+            account=self.account,
+            agent=self.agent,
+            task=self.task,
+            action=AIAgentActionType.REQUEST_FAILED,
+            text=message,
+        )
+
     def _request(
         self,
         method: str,
@@ -156,7 +191,6 @@ class BaseHandler(ABC):
             timeout = self.request_timeout
         http_status = 0
         response_data = None
-        parsed = urlparse(url)
         proxies = self._get_proxies()
         try:
             try:
@@ -171,47 +205,38 @@ class BaseHandler(ABC):
                 )
             except requests.RequestException as ex:
                 response_data = {'error': str(ex)}
-                raise AIProviderConnectionException from ex
+                raise AIHandlerConnectionException(message=str(ex)) from ex
             http_status = response.status_code
-            if not 200 <= http_status < 300:
-                try:
-                    response_data = response.json()
-                except ValueError:
-                    response_data = {'body': response.text}
-                error_message = self._parse_error(
-                    http_status=http_status,
-                    response_data=response_data,
-                )
-                if error_message is None:
-                    raise AIProviderRequestFailedException
-                message = f'"{error_message}" ({http_status})'
-                raise AIHandlerException(message=message)
             try:
                 response_data = response.json()
             except ValueError as ex:
                 response_data = {'body': response.text}
-                raise AIProviderInvalidResponseException from ex
-            return http_status, response_data
-        finally:
-            message = json.dumps(
-                {
-                    'method': method,
-                    'url': url,
-                    'scheme': parsed.scheme,
-                    'http_status': http_status,
-                    'headers': self._get_safe_headers(headers) or {},
-                    'data': data or {},
-                    'params': params or {},
-                    'timeout': timeout,
-                    'proxies': bool(proxies),
-                    'response_data': response_data or {},
-                },
-                default=str,
+                raise AIHandlerInvalidResponse(message=response.text) from ex
+            if 200 <= http_status < 300:
+                return http_status, response_data
+            error_message = self._parse_error(
+                http_status=http_status,
+                response_data=response_data,
             )
-            AIAgentAction.objects.create(
-                account=self.account,
-                agent=self.agent,
-                task=self.task,
-                action=AIAgentActionType.REQUEST,
-                text=message,
+            if http_status == 401:
+                raise AIHandlerUnauthorized(error=error_message)
+            if http_status == 403:
+                raise AIHandlerPermissionDenied(error=error_message)
+            if error_message is None:
+                raise AIHandlerRequestFailed
+            raise AIHandlerRequestFailed(
+                message=f'"{error_message}" ({http_status})',
             )
+        except AIHandlerException:
+            self._log_failed_request(
+                method=method,
+                url=url,
+                http_status=http_status,
+                headers=self._get_safe_headers(headers) or {},
+                request_data=data or {},
+                request_params=params or {},
+                timeout=timeout,
+                proxies=bool(proxies),
+                response_data=response_data or {},
+            )
+            raise

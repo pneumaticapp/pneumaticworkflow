@@ -58,14 +58,9 @@ MSG_AI_0013 = lambda attempts, error: format_lazy(
     attempts=attempts,
     error=error,
 )
-MSG_AI_0014 = lambda model, error: format_lazy(
-    _(
-        'None of the provider models responded to the test request, '
-        'the last model "{model}" failed ({error}). '
-        'Check the provider settings.',
-    ),
-    model=model,
-    error=error,
+MSG_AI_0014 = _(
+    'None of the provider models responded to the test request. '
+    'Check the provider settings.',
 )
 MSG_AI_0015 = lambda model: format_lazy(
     _(
@@ -73,4 +68,17 @@ MSG_AI_0015 = lambda model: format_lazy(
         'Try choosing another model.',
     ),
     model=model,
+)
+MSG_AI_0016 = lambda error: format_lazy(
+    _(
+        'The AI provider rejected the credentials. Error: {error}',
+    ),
+    error=error,
+)
+MSG_AI_0017 = lambda error: format_lazy(
+    _(
+        'The AI provider denied access to the requested resource. '
+        'Error: {error}',
+    ),
+    error=error,
 )

@@ -81,7 +81,7 @@ class AIAgentActionType:
     AI_REQUEST = 'ai_request'
     AI_RESPONSE = 'ai_response'
     READING_DESCRIPTION = 'reading_description'
-    REQUEST = 'request'
+    REQUEST_FAILED = 'request_failed'
 
     MENTION_IN_PROGRESS = 'mention_in_progress'
     MENTION_FAILED = 'mention_failed'
@@ -95,7 +95,7 @@ class AIAgentActionType:
         (TASK_COMPLETED, 'Task completed'),
         (TASK_FAILED, 'Task failed'),
         (READING_DESCRIPTION, 'Reading task description'),
-        (REQUEST, 'Request'),
+        (REQUEST_FAILED, 'Request failed'),
         (TASK_ATTEMPTS_EXCEEDED, 'Task attempts exceeded'),
         (MENTION_IN_PROGRESS, 'Mention in progress'),
         (MENTION_FAILED, 'Mention failed'),
@@ -109,7 +109,7 @@ class AIAgentActionType:
         READING_DESCRIPTION,
         AI_RESPONSE,
         AI_REQUEST,
-        REQUEST,
+        REQUEST_FAILED,
         TASK_ATTEMPTS_EXCEEDED,
         MENTION_IN_PROGRESS,
         MENTION_FAILED,

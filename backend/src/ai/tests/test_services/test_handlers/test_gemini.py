@@ -3,7 +3,7 @@ import pytest
 from src.ai.enums import AIVendor
 from src.ai.exceptions import (
     AIHandlerException,
-    AIProviderInvalidResponseException,
+    AIHandlerInvalidResponse,
 )
 from src.ai.messages import MSG_AI_0003, MSG_AI_0012
 from src.ai.services.config import AI_VENDORS_CONFIG
@@ -261,7 +261,7 @@ def test_parse_completion__invalid_payload__raise_exception(payload):
     )
 
     # act
-    with pytest.raises(AIProviderInvalidResponseException) as ex:
+    with pytest.raises(AIHandlerInvalidResponse) as ex:
         handler._parse_completion(payload=payload)
 
     # assert
