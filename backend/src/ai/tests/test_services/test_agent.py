@@ -29,7 +29,7 @@ from src.ai.messages import (
     MSG_AI_0015,
 )
 from src.ai.models import AIAgent, AIAgentAction
-from src.ai.services.agent import AIAgentService, MAX_RUN_FAILURES
+from src.ai.services.agent import AIAgentService, MAX_ATTEMPTS
 from src.ai.services.provider import AIProviderService
 from src.ai.services.response import TaskResponseService
 from src.ai.services.user_message import TaskUserMessageService
@@ -1446,8 +1446,8 @@ def test_attempt_complete_task__attempts_exceeded__raise_exception(mocker):
 
     # assert
     assert str(ex.value.message) == 'Attempts exceeded.'
-    errors_stack = [(fields_values, error)] * 5
-    assert get_fields_values_mock.call_count == 5
+    errors_stack = [(fields_values, error)] * MAX_ATTEMPTS
+    assert get_fields_values_mock.call_count == MAX_ATTEMPTS
     get_fields_values_mock.assert_has_calls(
         [
             mocker.call(task=task, errors_stack=None),
@@ -1455,14 +1455,14 @@ def test_attempt_complete_task__attempts_exceeded__raise_exception(mocker):
         ],
         any_order=True,
     )
-    assert complete_task_mock.call_count == 5
+    assert complete_task_mock.call_count == MAX_ATTEMPTS
     complete_task_mock.assert_has_calls(
         [
             mocker.call(task=task, fields_values=fields_values),
         ],
         any_order=True,
     )
-    assert convert_ex_to_markdown_mock.call_count == 5
+    assert convert_ex_to_markdown_mock.call_count == MAX_ATTEMPTS
     convert_ex_to_markdown_mock.assert_has_calls(
         [
             mocker.call(validation_error),
@@ -2288,9 +2288,10 @@ def test_complete_task__non_ascii_values__ok(mocker):
     attempt_complete_task_mock.assert_called_once_with(task=task)
 
 
-def test_complete_task__unexpected_error__task_failed(mocker):
+def test_complete_task__unexpected_error__raise_exception(mocker):
 
-    """ Unexpected error: the failure is logged, the claim is kept """
+    """ Unexpected error: the error is raised, the claim is kept,
+        the failure is not logged """
 
     # arrange
     account = create_test_account()
@@ -2302,8 +2303,8 @@ def test_complete_task__unexpected_error__task_failed(mocker):
         'src.ai.services.agent.AIAgentService._attempt_complete_task',
         side_effect=AIHandlerRequestFailed(),
     )
-    create_comment_mock = mocker.patch(
-        'src.ai.services.agent.AIAgentService._create_comment',
+    handle_failure_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._handle_task_complete_failure',
     )
     service = AIAgentService(user=agent.user, instance=agent)
 
@@ -2316,67 +2317,25 @@ def test_complete_task__unexpected_error__task_failed(mocker):
         action=AIAgentActionType.TASK_IN_PROGRESS,
     )
     assert in_progress_action.task_id == task.id
-    failed_action = AIAgentAction.objects.get(
-        action=AIAgentActionType.TASK_FAILED,
-    )
-    assert failed_action.account_id == account.id
-    assert failed_action.agent_id == agent.id
-    assert failed_action.task_id == task.id
-    assert failed_action.text == str(MSG_AI_0002)
     assert not AIAgentAction.objects.filter(
-        action=AIAgentActionType.TASK_COMPLETED,
-    ).exists()
-    create_comment_mock.assert_not_called()
-
-
-def test_complete_task__error_without_message__class_name(mocker):
-
-    """ Error without a message: the class name is logged """
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    workflow = create_test_workflow(user=owner, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    agent = create_test_agent(account=account)
-    mocker.patch(
-        'src.ai.services.agent.AIAgentService._attempt_complete_task',
-        side_effect=KeyError(),
-    )
-    service = AIAgentService(user=agent.user, instance=agent)
-
-    # act
-    with pytest.raises(KeyError):
-        service.complete_task(task_id=task.id)
-
-    # assert
-    failed_action = AIAgentAction.objects.get(
-        action=AIAgentActionType.TASK_FAILED,
-    )
-    assert failed_action.text == 'KeyError'
-
-
-def test_handle_task_complete_failure__max_run_failures__comment(mocker):
-
-    """ The last allowed run fails: the performers get a comment """
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    workflow = create_test_workflow(user=owner, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    agent = create_test_agent(account=account)
-    for _ in range(MAX_RUN_FAILURES - 1):
-        for action in (
-            AIAgentActionType.TASK_IN_PROGRESS,
+        action__in=(
             AIAgentActionType.TASK_FAILED,
-        ):
-            AIAgentAction.objects.create(
-                account=account,
-                agent=agent,
-                task=task,
-                action=action,
-            )
+            AIAgentActionType.TASK_COMPLETED,
+        ),
+    ).exists()
+    handle_failure_mock.assert_not_called()
+
+
+def test_handle_task_complete_failure__error__comment(mocker):
+
+    """ The failure is logged, the performers get a comment """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
     create_comment_mock = mocker.patch(
         'src.ai.services.agent.AIAgentService._create_comment',
     )
@@ -2389,20 +2348,26 @@ def test_handle_task_complete_failure__max_run_failures__comment(mocker):
     )
 
     # assert
-    assert AIAgentAction.objects.filter(
+    failed_action = AIAgentAction.objects.get(
         action=AIAgentActionType.TASK_FAILED,
-    ).count() == MAX_RUN_FAILURES
+    )
+    assert failed_action.account_id == account.id
+    assert failed_action.agent_id == agent.id
+    assert failed_action.task_id == task.id
+    assert failed_action.text == str(MSG_AI_0002)
     create_comment_mock.assert_called_once_with(
         task=task,
         text=str(
-            MSG_AI_0011(attempts=MAX_RUN_FAILURES, error=str(MSG_AI_0002)),
+            MSG_AI_0011(attempts=MAX_ATTEMPTS, error=str(MSG_AI_0002)),
         ),
     )
 
 
-def test_complete_task__failures_before_task_started__not_counted(mocker):
+def test_handle_task_complete_failure__error_without_message__class_name(
+    mocker,
+):
 
-    """ Failures of the previous task start are not counted """
+    """ Error without a message: the class name is logged """
 
     # arrange
     account = create_test_account()
@@ -2410,36 +2375,29 @@ def test_complete_task__failures_before_task_started__not_counted(mocker):
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
     agent = create_test_agent(account=account)
-    for _ in range(MAX_RUN_FAILURES):
-        AIAgentAction.objects.create(
-            account=account,
-            agent=agent,
-            task=task,
-            action=AIAgentActionType.TASK_FAILED,
-        )
-    AIAgentAction.objects.update(
-        date_created=task.date_started - timedelta(hours=1),
-    )
-    mocker.patch(
-        'src.ai.services.agent.AIAgentService._attempt_complete_task',
-        side_effect=AIHandlerRequestFailed(),
-    )
     create_comment_mock = mocker.patch(
         'src.ai.services.agent.AIAgentService._create_comment',
     )
     service = AIAgentService(user=agent.user, instance=agent)
 
     # act
-    with pytest.raises(AIHandlerRequestFailed):
-        service.complete_task(task_id=task.id)
+    service._handle_task_complete_failure(task=task, ex=KeyError())
 
     # assert
-    create_comment_mock.assert_not_called()
+    failed_action = AIAgentAction.objects.get(
+        action=AIAgentActionType.TASK_FAILED,
+    )
+    assert failed_action.text == 'KeyError'
+    create_comment_mock.assert_called_once_with(
+        task=task,
+        text=str(MSG_AI_0011(attempts=MAX_ATTEMPTS, error='KeyError')),
+    )
 
 
 def test_complete_task__attempts_exceeded__task_failed(mocker):
 
-    """ Validation attempts exceeded: the run failure is logged """
+    """ Validation attempts exceeded: the run failure is logged,
+        the performers get a comment """
 
     # arrange
     account = create_test_account()
@@ -2469,7 +2427,10 @@ def test_complete_task__attempts_exceeded__task_failed(mocker):
     )
     assert failed_action.task_id == task.id
     assert failed_action.text == 'Failed'
-    create_comment_mock.assert_not_called()
+    create_comment_mock.assert_called_once_with(
+        task=task,
+        text=str(MSG_AI_0011(attempts=MAX_ATTEMPTS, error='Failed')),
+    )
 
 
 def test_complete_task__attempts_exceeded__retry_skip(mocker):
@@ -2669,7 +2630,7 @@ def test_complete_task__max_run_failures_reached__skip(mocker):
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
     agent = create_test_agent(account=account)
-    for _ in range(MAX_RUN_FAILURES):
+    for _ in range(MAX_ATTEMPTS):
         for action in (
             AIAgentActionType.TASK_IN_PROGRESS,
             AIAgentActionType.TASK_FAILED,
@@ -2691,7 +2652,7 @@ def test_complete_task__max_run_failures_reached__skip(mocker):
     # assert
     assert AIAgentAction.objects.filter(
         task=task,
-    ).count() == MAX_RUN_FAILURES * 2
+    ).count() == MAX_ATTEMPTS * 2
     attempt_complete_task_mock.assert_not_called()
 
 
@@ -2900,7 +2861,7 @@ def test_reply_to_comment__max_run_failures_reached__skip(mocker):
         type=NotificationType.MENTION,
         text='Please call the customer.',
     )
-    for _ in range(MAX_RUN_FAILURES):
+    for _ in range(MAX_ATTEMPTS):
         for action in (
             AIAgentActionType.MENTION_IN_PROGRESS,
             AIAgentActionType.MENTION_FAILED,
@@ -2923,13 +2884,13 @@ def test_reply_to_comment__max_run_failures_reached__skip(mocker):
     # assert
     assert AIAgentAction.objects.filter(
         notification=notification,
-    ).count() == MAX_RUN_FAILURES * 2
+    ).count() == MAX_ATTEMPTS * 2
     attempt_reply_mock.assert_not_called()
 
 
 def test_reply_to_comment__unexpected_error__mention_failed(mocker):
 
-    """ Unexpected error: the failure is logged """
+    """ Unexpected error: the failure is logged, the task gets a comment """
 
     # arrange
     account = create_test_account()
@@ -2970,12 +2931,18 @@ def test_reply_to_comment__unexpected_error__mention_failed(mocker):
     assert not AIAgentAction.objects.filter(
         action=AIAgentActionType.MENTION_COMPLETED,
     ).exists()
-    create_comment_mock.assert_not_called()
+    create_comment_mock.assert_called_once_with(
+        task=task,
+        text=str(
+            MSG_AI_0013(attempts=MAX_ATTEMPTS, error=str(MSG_AI_0002)),
+        ),
+    )
 
 
 def test_reply_to_comment__attempts_exceeded__mention_failed(mocker):
 
-    """ Reply attempts exceeded: the run failure is logged """
+    """ Reply attempts exceeded: the run failure is logged,
+        the task gets a comment """
 
     # arrange
     account = create_test_account()
@@ -3016,12 +2983,15 @@ def test_reply_to_comment__attempts_exceeded__mention_failed(mocker):
     assert not AIAgentAction.objects.filter(
         action=AIAgentActionType.MENTION_COMPLETED,
     ).exists()
-    create_comment_mock.assert_not_called()
+    create_comment_mock.assert_called_once_with(
+        task=task,
+        text=str(MSG_AI_0013(attempts=MAX_ATTEMPTS, error='Failed')),
+    )
 
 
-def test_handle_reply_to_comment_failure__max_run_failures__comment(mocker):
+def test_handle_reply_to_comment_failure__error__comment(mocker):
 
-    """ The last allowed reply fails: the task gets a comment """
+    """ The failure is logged, the task gets a comment """
 
     # arrange
     account = create_test_account()
@@ -3037,18 +3007,6 @@ def test_handle_reply_to_comment_failure__max_run_failures__comment(mocker):
         type=NotificationType.MENTION,
         text='Please call the customer.',
     )
-    for _ in range(MAX_RUN_FAILURES - 1):
-        for action in (
-            AIAgentActionType.MENTION_IN_PROGRESS,
-            AIAgentActionType.MENTION_FAILED,
-        ):
-            AIAgentAction.objects.create(
-                account=account,
-                agent=agent,
-                task=task,
-                notification=notification,
-                action=action,
-            )
     create_comment_mock = mocker.patch(
         'src.ai.services.agent.AIAgentService._create_comment',
     )
@@ -3061,12 +3019,17 @@ def test_handle_reply_to_comment_failure__max_run_failures__comment(mocker):
     )
 
     # assert
-    assert AIAgentAction.objects.filter(
+    failed_action = AIAgentAction.objects.get(
         action=AIAgentActionType.MENTION_FAILED,
-    ).count() == MAX_RUN_FAILURES
+    )
+    assert failed_action.account_id == account.id
+    assert failed_action.agent_id == agent.id
+    assert failed_action.task_id == task.id
+    assert failed_action.notification_id == notification.id
+    assert failed_action.text == str(MSG_AI_0002)
     create_comment_mock.assert_called_once_with(
         task=task,
         text=str(
-            MSG_AI_0013(attempts=MAX_RUN_FAILURES, error=str(MSG_AI_0002)),
+            MSG_AI_0013(attempts=MAX_ATTEMPTS, error=str(MSG_AI_0002)),
         ),
     )
