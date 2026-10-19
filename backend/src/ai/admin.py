@@ -97,20 +97,26 @@ class AIAgentActionAdmin(ModelAdmin):
         'account',
         'agent',
         'action',
+        'task',
+        'notification',
         'date_created',
     )
     list_filter = (
+        'account',
         'action',
-        'date_created',
     )
     search_fields = (
+        'task__name',
+        'notification__text',
         'agent__name',
         'text',
     )
     readonly_fields = (
+        'account',
         'agent',
-        'task',
         'action',
+        'task',
+        'notification',
         'text',
         'date_created',
     )
@@ -120,15 +126,17 @@ class AIAgentActionAdmin(ModelAdmin):
         'action',
         'task',
         'notification',
-        'date_created',
         'text',
+        'date_created',
     )
     date_hierarchy = 'date_created'
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
+            'account',
             'agent',
             'task',
+            'notification',
         )
 
     def has_add_permission(self, request):

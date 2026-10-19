@@ -82,3 +82,7 @@ MSG_AI_0017 = lambda error: format_lazy(
     ),
     error=error,
 )
+MSG_AI_0018 = _(
+    'The provider address is not allowed: '
+    'only public internet addresses can be used.',
+)

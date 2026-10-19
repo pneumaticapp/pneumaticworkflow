@@ -1,7 +1,11 @@
+import socket
+
 import pytest
+from django.conf import settings
 from rest_framework.fields import CharField, Field, URLField
 
 from src.ai.exceptions import AIProviderException
+from src.ai.messages import MSG_AI_0001, MSG_AI_0018
 from src.ai.services.provider import AIProviderService
 from src.ai.tests.fixtures import create_test_provider
 from src.authentication.enums import AuthTokenType
@@ -364,6 +368,164 @@ def test_create__invalid_base_url__validation_error(api_client, mocker):
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['details']['name'] == 'base_url'
     ai_provider_service_init_mock.assert_not_called()
+    create_mock.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    'ip',
+    (
+        '127.0.0.1',
+        '10.0.0.5',
+        '172.18.0.7',
+        '192.168.1.1',
+        '169.254.169.254',
+        '100.64.0.1',
+        '0.0.0.0',
+        '::1',
+        'fe80::1%eth0',
+        'fc00::1',
+        '::ffff:127.0.0.1',
+    ),
+)
+def test_create__base_url_not_public_ip__validation_error(
+    ip,
+    api_client,
+    mocker,
+    getaddrinfo_mock,
+):
+
+    """ base_url resolves to a non-public address """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    path = '/ai/providers'
+    data = {
+        'name': 'Internal',
+        'base_url': 'http://internal.example.com:8888/dir?x=',
+        'api_key': 'sk-or-v1-example',
+    }
+    family = socket.AF_INET6 if ':' in ip else socket.AF_INET
+    getaddrinfo_mock.return_value = [
+        (family, socket.SOCK_STREAM, 6, '', (ip, 0)),
+    ]
+    create_mock = mocker.patch(
+        'src.ai.views.AIProviderService.create',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post(path=path, data=data)
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == str(MSG_AI_0018)
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['details']['name'] == 'base_url'
+    getaddrinfo_mock.assert_called_once_with('internal.example.com', None)
+    create_mock.assert_not_called()
+
+
+def test_create__base_url_public_and_private_ip__validation_error(
+    api_client,
+    mocker,
+    getaddrinfo_mock,
+):
+
+    """ base_url resolves to a public and a private address """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    path = '/ai/providers'
+    data = {
+        'name': 'Rebind',
+        'base_url': 'https://rebind.example.com/v1',
+        'api_key': 'sk-or-v1-example',
+    }
+    getaddrinfo_mock.return_value = [
+        (socket.AF_INET, socket.SOCK_STREAM, 6, '', ('8.8.8.8', 0)),
+        (socket.AF_INET, socket.SOCK_STREAM, 6, '', ('10.0.0.5', 0)),
+    ]
+    create_mock = mocker.patch(
+        'src.ai.views.AIProviderService.create',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post(path=path, data=data)
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == str(MSG_AI_0018)
+    assert response.data['details']['name'] == 'base_url'
+    create_mock.assert_not_called()
+
+
+def test_create__base_url_allowed_host__validation_error(
+    api_client,
+    mocker,
+    getaddrinfo_mock,
+):
+
+    """ base_url points to one of the Pneumatic hosts """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    path = '/ai/providers'
+    host = settings.ALLOWED_HOSTS[0]
+    data = {
+        'name': 'Pneumatic',
+        'base_url': f'https://{host}/api',
+        'api_key': 'sk-or-v1-example',
+    }
+    create_mock = mocker.patch(
+        'src.ai.views.AIProviderService.create',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post(path=path, data=data)
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == str(MSG_AI_0018)
+    assert response.data['details']['name'] == 'base_url'
+    getaddrinfo_mock.assert_not_called()
+    create_mock.assert_not_called()
+
+
+def test_create__base_url_not_resolved__validation_error(
+    api_client,
+    mocker,
+    getaddrinfo_mock,
+):
+
+    """ base_url host is not resolved """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    path = '/ai/providers'
+    data = {
+        'name': 'Unknown',
+        'base_url': 'https://no-such-host.invalid/v1',
+        'api_key': 'sk-or-v1-example',
+    }
+    getaddrinfo_mock.side_effect = socket.gaierror(-2, 'Name not known')
+    create_mock = mocker.patch(
+        'src.ai.views.AIProviderService.create',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post(path=path, data=data)
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == str(MSG_AI_0001)
+    assert response.data['details']['name'] == 'base_url'
     create_mock.assert_not_called()
 
 

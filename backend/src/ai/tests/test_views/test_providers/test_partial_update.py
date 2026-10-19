@@ -1,7 +1,10 @@
+import socket
+
 import pytest
 from rest_framework.fields import CharField, URLField
 
 from src.ai.exceptions import AIProviderException
+from src.ai.messages import MSG_AI_0018
 from src.ai.models import AIProvider
 from src.ai.services.provider import AIProviderService
 from src.authentication.enums import AuthTokenType
@@ -442,6 +445,47 @@ def test_partial_update__invalid_base_url__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['details']['name'] == 'base_url'
     ai_provider_service_init_mock.assert_not_called()
+    partial_update_mock.assert_not_called()
+
+
+def test_partial_update__base_url_not_public_ip__validation_error(
+    api_client,
+    mocker,
+    getaddrinfo_mock,
+):
+
+    """ base_url resolves to a non-public address """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    provider = AIProvider(
+        account=account,
+        name='OpenRouter',
+        base_url='https://openrouter.ai/api/v1',
+    )
+    provider.api_key = 'sk-or-v1-example'
+    provider.save()
+    path = f'/ai/providers/{provider.id}'
+    data = {
+        'base_url': 'http://metadata.internal/latest',
+    }
+    getaddrinfo_mock.return_value = [
+        (socket.AF_INET, socket.SOCK_STREAM, 6, '', ('169.254.169.254', 0)),
+    ]
+    partial_update_mock = mocker.patch(
+        'src.ai.views.AIProviderService.partial_update',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.patch(path=path, data=data)
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == str(MSG_AI_0018)
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['details']['name'] == 'base_url'
     partial_update_mock.assert_not_called()
 
 
