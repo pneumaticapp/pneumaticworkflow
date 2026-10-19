@@ -16,8 +16,8 @@ from src.ai.exceptions import (
     AIAgentAttemptsExceededException,
     AIAgentException,
     AIAgentNameNotUniqueException,
+    AIHandlerRequestFailed,
     AIProviderException,
-    AIProviderRequestFailedException,
 )
 from src.ai.messages import (
     MSG_AI_0002,
@@ -2263,7 +2263,7 @@ def test_complete_task__unexpected_error__task_failed(mocker):
     agent = create_test_agent(account=account)
     mocker.patch(
         'src.ai.services.agent.AIAgentService._attempt_complete_task',
-        side_effect=AIProviderRequestFailedException(),
+        side_effect=AIHandlerRequestFailed(),
     )
     create_comment_mock = mocker.patch(
         'src.ai.services.agent.AIAgentService._create_comment',
@@ -2271,7 +2271,7 @@ def test_complete_task__unexpected_error__task_failed(mocker):
     service = AIAgentService(user=agent.user, instance=agent)
 
     # act
-    with pytest.raises(AIProviderRequestFailedException):
+    with pytest.raises(AIHandlerRequestFailed):
         service.complete_task(task_id=task.id)
 
     # assert
@@ -2348,7 +2348,7 @@ def test_handle_task_complete_failure__max_run_failures__comment(mocker):
     # act
     service._handle_task_complete_failure(
         task=task,
-        ex=AIProviderRequestFailedException(),
+        ex=AIHandlerRequestFailed(),
     )
 
     # assert
@@ -2385,7 +2385,7 @@ def test_complete_task__failures_before_task_started__not_counted(mocker):
     )
     mocker.patch(
         'src.ai.services.agent.AIAgentService._attempt_complete_task',
-        side_effect=AIProviderRequestFailedException(),
+        side_effect=AIHandlerRequestFailed(),
     )
     create_comment_mock = mocker.patch(
         'src.ai.services.agent.AIAgentService._create_comment',
@@ -2393,7 +2393,7 @@ def test_complete_task__failures_before_task_started__not_counted(mocker):
     service = AIAgentService(user=agent.user, instance=agent)
 
     # act
-    with pytest.raises(AIProviderRequestFailedException):
+    with pytest.raises(AIHandlerRequestFailed):
         service.complete_task(task_id=task.id)
 
     # assert
@@ -2910,7 +2910,7 @@ def test_reply_to_comment__unexpected_error__mention_failed(mocker):
     )
     mocker.patch(
         'src.ai.services.agent.AIAgentService._attempt_reply_to_comment',
-        side_effect=AIProviderRequestFailedException(),
+        side_effect=AIHandlerRequestFailed(),
     )
     create_comment_mock = mocker.patch(
         'src.ai.services.agent.AIAgentService._create_comment',
@@ -2918,7 +2918,7 @@ def test_reply_to_comment__unexpected_error__mention_failed(mocker):
     service = AIAgentService(user=agent.user, instance=agent)
 
     # act
-    with pytest.raises(AIProviderRequestFailedException):
+    with pytest.raises(AIHandlerRequestFailed):
         service.reply_to_comment(notification_id=notification.id)
 
     # assert
@@ -3020,7 +3020,7 @@ def test_handle_reply_to_comment_failure__max_run_failures__comment(mocker):
     # act
     service._handle_reply_to_comment_failure(
         notification=notification,
-        ex=AIProviderRequestFailedException(),
+        ex=AIHandlerRequestFailed(),
     )
 
     # assert

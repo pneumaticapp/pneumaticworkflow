@@ -513,7 +513,7 @@ class AIAgentService(BaseModelService):
             retries the task until the failures reach MAX_RUN_FAILURES,
             the last failure is reported to the task performers.
 
-            AIProviderRequestFailedException on the first run
+            AIHandlerRequestFailed on the first run
             -> the action 'task_failed' with the error text
 
             the same error on the third run
@@ -554,7 +554,7 @@ class AIAgentService(BaseModelService):
             retries the mention until the failures reach MAX_RUN_FAILURES,
             the last failure is reported in the task comments.
 
-            AIProviderRequestFailedException on the first run
+            AIHandlerRequestFailed on the first run
             -> the action 'mention_failed' with the error text
 
             the same error on the third run

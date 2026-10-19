@@ -4,6 +4,8 @@ from src.ai.messages import (
     MSG_AI_0003,
     MSG_AI_0004,
     MSG_AI_0005,
+    MSG_AI_0016,
+    MSG_AI_0017,
 )
 from src.generics.exceptions import BaseServiceException
 
@@ -28,17 +30,29 @@ class AIAgentException(AIServiceException):
     pass
 
 
-class AIProviderConnectionException(AIHandlerException):
+class AIHandlerConnectionException(AIHandlerException):
 
     default_message = MSG_AI_0001
 
 
-class AIProviderRequestFailedException(AIHandlerException):
+class AIHandlerRequestFailed(AIHandlerException):
 
     default_message = MSG_AI_0002
 
 
-class AIProviderInvalidResponseException(AIHandlerException):
+class AIHandlerUnauthorized(AIHandlerException):
+
+    def __init__(self, error: str):
+        super().__init__(message=MSG_AI_0016(error=error))
+
+
+class AIHandlerPermissionDenied(AIHandlerException):
+
+    def __init__(self, error: str):
+        super().__init__(message=MSG_AI_0017(error=error))
+
+
+class AIHandlerInvalidResponse(AIHandlerException):
 
     default_message = MSG_AI_0003
 

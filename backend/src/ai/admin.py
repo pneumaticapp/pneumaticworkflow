@@ -94,8 +94,8 @@ class AIAgentActionAdmin(ModelAdmin):
 
     model = AIAgentAction
     list_display = (
+        'account',
         'agent',
-        'task',
         'action',
         'date_created',
     )
@@ -115,11 +115,13 @@ class AIAgentActionAdmin(ModelAdmin):
         'date_created',
     )
     fields = (
+        'account',
         'agent',
-        'task',
         'action',
-        'text',
+        'task',
+        'notification',
         'date_created',
+        'text',
     )
     date_hierarchy = 'date_created'
 

@@ -74,3 +74,16 @@ MSG_AI_0015 = lambda model: format_lazy(
     ),
     model=model,
 )
+MSG_AI_0016 = lambda error: format_lazy(
+    _(
+        'The AI provider rejected the credentials. Error: {error}',
+    ),
+    error=error,
+)
+MSG_AI_0017 = lambda error: format_lazy(
+    _(
+        'The AI provider denied access to the requested resource. '
+        'Error: {error}',
+    ),
+    error=error,
+)
