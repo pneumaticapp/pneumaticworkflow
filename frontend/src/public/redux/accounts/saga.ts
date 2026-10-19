@@ -29,6 +29,7 @@ import {
   changeUserManager,
   loadChangeUserReports,
   changeUserReports,
+  resendUserInvite,
 } from './slice';
 
 import {
@@ -67,6 +68,7 @@ import { getAccountPlan } from '../selectors/accounts';
 import { getAbsolutePath } from '../../utils/getAbsolutePath';
 import { createUser as createUserApi } from '../../api/createUser';
 import { editTeamUser } from '../../api/editTeamUser';
+import { resendInvite } from '../../api/resendInvite';
 
 /**
  * The backend API returns `subordinates_ids` (camelCased to `subordinatesIds`),
@@ -369,6 +371,19 @@ function* createUserSaga({ payload }: PayloadAction<ICreateUserRequest>) {
   }
 }
 
+export function* resendUserInviteSaga({ payload: userId }: PayloadAction<number>) {
+  yield put(setGeneralLoaderVisibility(true));
+  try {
+    yield call(resendInvite, userId);
+    NotificationManager.success({ message: 'team.resend-invite-success-msg' });
+  } catch (error) {
+    NotificationManager.warning({ message: getErrorMessage(error) });
+    logger.error('failed to resend invite', error);
+  } finally {
+    yield put(setGeneralLoaderVisibility(false));
+  }
+}
+
 export function* watchFetchUser() {
   yield takeEvery(usersFetchStarted.type, fetchUsers);
 }
@@ -425,6 +440,10 @@ export function* watchCreateUser() {
   yield takeEvery(createUser.type, createUserSaga);
 }
 
+export function* watchResendUserInvite() {
+  yield takeEvery(resendUserInvite.type, resendUserInviteSaga);
+}
+
 export function* rootSaga() {
   yield all([
     fork(watchFetchUser),
@@ -441,5 +460,6 @@ export function* rootSaga() {
     fork(watchCreateUser),
     fork(watchChangeUserManager),
     fork(watchChangeUserReports),
+    fork(watchResendUserInvite),
   ]);
 }

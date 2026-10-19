@@ -20,7 +20,7 @@ export interface ITeamUserProps {
   user: TUserListItem;
   isCurrentUser?: boolean;
   isSubscribed?: boolean;
-  resendInvite(): Promise<void>;
+  resendInvite(): void;
   handleToggleAdmin(user: TUserListItem): () => Promise<void>;
   handleChangeUserManager(
     userId: number,

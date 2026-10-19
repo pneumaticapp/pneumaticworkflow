@@ -1,34 +1,21 @@
 import * as React from 'react';
 import { useDispatch } from 'react-redux';
 
-import { resendInvite } from '../../../api/resendInvite';
-import { getErrorMessage } from '../../../utils/getErrorMessage';
-import { setGeneralLoaderVisibility } from '../../../redux/actions';
 import {
   loadChangeUserAdmin,
   loadChangeUserManager,
   loadChangeUserReports,
   openDeleteUserModal,
+  resendUserInvite,
 } from '../../../redux/accounts/slice';
-import { NotificationManager } from '../../UI/Notifications';
 import { TeamUser } from './TeamUser';
 import type { ITeamUserCardProps } from './types';
 
 export function TeamUserCard({ user, currentUserId, isSubscribed, onOpenVacationModal }: ITeamUserCardProps) {
   const dispatch = useDispatch();
 
-  const resendInviteHandler = async () => {
-    if (user.id) {
-      try {
-        dispatch(setGeneralLoaderVisibility(true));
-        await resendInvite(user.id);
-        NotificationManager.success({ message: 'team.resend-invite-success-msg' });
-      } catch (err) {
-        NotificationManager.warning({ message: getErrorMessage(err) });
-      } finally {
-        dispatch(setGeneralLoaderVisibility(false));
-      }
-    }
+  const resendInviteHandler = () => {
+    if (user.id) dispatch(resendUserInvite(user.id));
   };
 
   const handleToggleUserAdmin = (targetUser: ITeamUserCardProps['user']) => async () => {
