@@ -7,9 +7,7 @@ import { useDispatch } from 'react-redux';
 
 import { Dropdown } from '../../UI';
 import type { TDropdownOption } from '../../UI';
-import { Button } from '../../UI/Buttons/Button';
-import { Header } from '../../UI/Typeography/Header';
-import { Modal } from '../../UI/Modal/Modal';
+import { WarningPopup } from '../../UI/WarningPopup';
 import { MoreIcon } from '../../icons';
 import { deleteAIAgent, updateAIAgent } from '../../../redux/ai/slice';
 import { EditAIAgentModal } from './EditAIAgentModal';
@@ -80,37 +78,16 @@ export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
 
       {isEditModalOpen && <EditAIAgentModal agent={agent} onClose={() => setIsEditModalOpen(false)} />}
 
-      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} width="sm">
-        <div data-testid="delete-ai-agent-modal">
-          <Header tag="h2" size="6" className={styles['delete-modal__title']}>
-            {formatMessage({ id: 'team.ai-agents.delete-modal-title' })}
-          </Header>
-          <p className={styles['delete-modal__text']}>
-            {formatMessage({ id: 'team.ai-agents.delete-confirm' }, { name: agent.name })}
-          </p>
-          <div className={styles['delete-modal__footer']}>
-            <Button
-              type="button"
-              onClick={() => {
-                dispatch(deleteAIAgent(agent.id));
-                setIsDeleteModalOpen(false);
-              }}
-              size="md"
-              buttonStyle="yellow"
-              label={formatMessage({ id: 'team.ai-agents.delete' })}
-              data-testid="confirm-delete-ai-agent"
-            />
-            <button
-              type="button"
-              className="cancel-button"
-              onClick={() => setIsDeleteModalOpen(false)}
-              data-testid="cancel-delete-ai-agent"
-            >
-              {formatMessage({ id: 'integrations.cancel' })}
-            </button>
-          </div>
-        </div>
-      </Modal>
+      <WarningPopup
+        isOpen={isDeleteModalOpen}
+        title={formatMessage({ id: 'team.ai-agents.delete-modal-title' })}
+        message={formatMessage({ id: 'team.ai-agents.delete-confirm' }, { name: agent.name })}
+        acceptTitle={formatMessage({ id: 'team.ai-agents.delete' })}
+        declineTitle={formatMessage({ id: 'integrations.cancel' })}
+        onConfirm={() => dispatch(deleteAIAgent(agent.id))}
+        onReject={() => setIsDeleteModalOpen(false)}
+        closeModal={() => setIsDeleteModalOpen(false)}
+      />
     </article>
   );
 }

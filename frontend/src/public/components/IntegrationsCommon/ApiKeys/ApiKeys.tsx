@@ -44,7 +44,6 @@ export function ApiKeys() {
   const handleDelete = useCallback(() => {
     if (confirmDeleteId !== null) {
       dispatch(deleteApiKey({ id: confirmDeleteId }));
-      setConfirmDeleteId(null);
     }
   }, [confirmDeleteId, dispatch]);
 

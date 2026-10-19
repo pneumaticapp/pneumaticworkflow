@@ -163,12 +163,6 @@
     color: var(--pneumatic-color-black48);
   }
 
-  &__warning {
-    margin-bottom: 1.6rem;
-    font-size: 1.4rem;
-    color: var(--pneumatic-color-black72);
-  }
-
   &__footer {
     display: flex;
     gap: 1.6rem;

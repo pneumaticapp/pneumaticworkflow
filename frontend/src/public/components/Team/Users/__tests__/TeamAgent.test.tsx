@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useDispatch } from 'react-redux';
 
@@ -7,18 +7,12 @@ import { intlMock } from '../../../../__stubs__/intlMock';
 import { TeamAgent } from '../TeamAgent';
 import { deleteAIAgent, updateAIAgent } from '../../../../redux/ai/slice';
 import type { IAIAgent } from '../../../../api/ai/types';
+import type { IWarningPopupProps } from '../../../UI/WarningPopup';
 
 interface IDropdownMockProps {
   renderToggle(isOpen: boolean): React.ReactNode;
   options: { label: string; onClick(): void }[];
   toggleProps?: { 'data-testid'?: string };
-}
-
-interface IButtonMockProps {
-  label: string;
-  onClick(): void;
-  disabled?: boolean;
-  'data-testid'?: string;
 }
 
 interface ISwitchMockProps {
@@ -46,21 +40,34 @@ jest.mock('../../../UI', () => ({
   },
 }));
 
-jest.mock('../../../UI/Buttons/Button', () => ({
-  Button: ({ label, onClick, 'data-testid': testId, disabled }: IButtonMockProps) => (
-    <button onClick={onClick} data-testid={testId} disabled={disabled}>
-      {label}
-    </button>
-  ),
-}));
-
-jest.mock('../../../UI/Typeography/Header', () => ({
-  Header: ({ children, tag: Tag = 'p' }: { children: React.ReactNode; tag?: 'p' | 'h2' }) => <Tag>{children}</Tag>,
-}));
-
-jest.mock('../../../UI/Modal/Modal', () => ({
-  Modal: ({ children, isOpen }: { children: React.ReactNode; isOpen: boolean }) =>
-    isOpen ? <div role="dialog">{children}</div> : null,
+jest.mock('../../../UI/WarningPopup', () => ({
+  WarningPopup: ({
+    isOpen,
+    title,
+    message,
+    acceptTitle,
+    declineTitle,
+    onConfirm,
+    onReject,
+    closeModal,
+  }: IWarningPopupProps) =>
+    isOpen ? (
+      <div role="alertdialog" aria-label={title}>
+        <p>{message}</p>
+        <button
+          type="button"
+          onClick={() => {
+            onConfirm();
+            closeModal();
+          }}
+        >
+          {acceptTitle}
+        </button>
+        <button type="button" onClick={onReject}>
+          {declineTitle}
+        </button>
+      </div>
+    ) : null,
 }));
 
 jest.mock('rc-switch', () => ({ checked, onChange }: ISwitchMockProps) => (
@@ -131,10 +138,11 @@ describe('TeamAgent', () => {
 
     userEvent.click(screen.getByTestId('ai-agent-more-10'));
     userEvent.click(screen.getByText(t('team.ai-agents.delete')));
-    expect(screen.getByRole('heading', { level: 2, name: t('team.ai-agents.delete-modal-title') })).toBeInTheDocument();
-    userEvent.click(screen.getByTestId('confirm-delete-ai-agent'));
+    const dialog = screen.getByRole('alertdialog', { name: t('team.ai-agents.delete-modal-title') });
+    userEvent.click(within(dialog).getByRole('button', { name: t('team.ai-agents.delete') }));
 
     expect(mockDispatch).toHaveBeenCalledWith(deleteAIAgent(10));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   });
 
   it('closes the delete modal on cancel without dispatching', () => {
@@ -142,9 +150,9 @@ describe('TeamAgent', () => {
 
     userEvent.click(screen.getByTestId('ai-agent-more-10'));
     userEvent.click(screen.getByText(t('team.ai-agents.delete')));
-    userEvent.click(screen.getByTestId('cancel-delete-ai-agent'));
+    userEvent.click(screen.getByRole('button', { name: t('integrations.cancel') }));
 
-    expect(screen.queryByTestId('delete-ai-agent-modal')).not.toBeInTheDocument();
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     expect(mockDispatch).not.toHaveBeenCalledWith(deleteAIAgent(10));
   });
 });

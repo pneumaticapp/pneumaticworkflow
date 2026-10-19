@@ -8,6 +8,7 @@ import { AIProviders } from '../AIProviders';
 import { deleteAIProvider, loadAIProviders, openCreateAIProviderModal } from '../../../../redux/ai/slice';
 import { EAIVendor } from '../../../../api/ai/types';
 import type { IAIProvider } from '../../../../api/ai/types';
+import type { IWarningPopupProps } from '../../../UI/WarningPopup';
 
 jest.mock('../AIProvidersSkeleton', () => ({
   AIProvidersSkeleton: () => <div data-testid="ai-providers-skeleton" />,
@@ -52,6 +53,36 @@ jest.mock('../../../UI/DropdownList', () => {
     },
   };
 });
+
+jest.mock('../../../UI/WarningPopup', () => ({
+  WarningPopup: ({
+    isOpen,
+    title,
+    message,
+    acceptTitle,
+    declineTitle,
+    onConfirm,
+    onReject,
+    closeModal,
+  }: IWarningPopupProps) =>
+    isOpen ? (
+      <div role="alertdialog" aria-label={title}>
+        <p>{message}</p>
+        <button
+          type="button"
+          onClick={() => {
+            onConfirm();
+            closeModal();
+          }}
+        >
+          {acceptTitle}
+        </button>
+        <button type="button" onClick={onReject}>
+          {declineTitle}
+        </button>
+      </div>
+    ) : null,
+}));
 
 jest.mock('../../../UI/Modal/Modal', () => ({
   Modal: ({ children, isOpen }: any) => (isOpen ? <div role="dialog">{children}</div> : null),
@@ -128,15 +159,15 @@ describe('AIProviders', () => {
     expect(screen.getByTestId('tooltip')).toHaveAttribute('data-disabled', 'true');
 
     userEvent.click(deleteButton);
-    expect(
-      screen.getByRole('heading', {
-        level: 2,
-        name: intlMock.formatMessage({ id: 'ai-providers.delete-modal-title' }),
-      }),
-    ).toBeInTheDocument();
-    userEvent.click(screen.getByTestId('confirm-delete-ai-provider'));
+    const dialog = screen.getByRole('alertdialog', {
+      name: intlMock.formatMessage({ id: 'ai-providers.delete-modal-title' }),
+    });
+    userEvent.click(
+      within(dialog).getByRole('button', { name: intlMock.formatMessage({ id: 'ai-providers.delete' }) }),
+    );
 
     expect(mockDispatch).toHaveBeenCalledWith(deleteAIProvider(1));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   });
 
   it('disables deletion for a provider used by agents and names them in the tooltip', () => {
@@ -162,7 +193,7 @@ describe('AIProviders', () => {
     );
     expect(screen.getByTestId('ai-provider-usage-1')).toHaveTextContent('Research assistant, Support bot');
     userEvent.click(screen.getByTestId('delete-ai-provider-1'));
-    expect(screen.queryByTestId('delete-ai-provider-modal')).not.toBeInTheDocument();
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     expect(mockDispatch).not.toHaveBeenCalledWith(deleteAIProvider(1));
   });
 

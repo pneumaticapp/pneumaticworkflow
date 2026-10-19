@@ -8,6 +8,7 @@ import { IntegrationsCommon } from '../IntegrationsCommon';
 import { loadApiKeys, createApiKey, deleteApiKey, clearNewlyCreatedKey } from '../../../redux/actions';
 import { copyToClipboard } from '../../../utils/helpers';
 import { NotificationManager } from '../../UI/Notifications';
+import type { IWarningPopupProps } from '../../UI/WarningPopup';
 
 jest.mock('../../../utils/helpers', () => ({
   copyToClipboard: jest.fn(),
@@ -39,6 +40,36 @@ jest.mock('../../UI/Typeography/Header', () => ({
 
 jest.mock('../../PageTitle/PageTitle', () => ({
   PageTitle: () => <div>Page Title</div>,
+}));
+
+jest.mock('../../UI/WarningPopup', () => ({
+  WarningPopup: ({
+    isOpen,
+    title,
+    message,
+    acceptTitle,
+    declineTitle,
+    onConfirm,
+    onReject,
+    closeModal,
+  }: IWarningPopupProps) =>
+    isOpen ? (
+      <div role="alertdialog" aria-label={title}>
+        <p>{message}</p>
+        <button
+          type="button"
+          onClick={() => {
+            onConfirm();
+            closeModal();
+          }}
+        >
+          {acceptTitle}
+        </button>
+        <button type="button" onClick={onReject}>
+          {declineTitle}
+        </button>
+      </div>
+    ) : null,
 }));
 
 jest.mock('../../UI/Modal/Modal', () => ({
@@ -177,8 +208,10 @@ describe('IntegrationsCommon', () => {
     userEvent.click(screen.getByRole('button', { name: TEXT.revokeBtn }));
     expect(screen.getByText(TEXT.deleteConfirm)).toBeInTheDocument();
 
-    userEvent.click(screen.getByTestId('confirm-revoke-btn'));
+    const dialog = screen.getByRole('alertdialog', { name: t('integrations.revoke-modal-title') });
+    userEvent.click(within(dialog).getByRole('button', { name: TEXT.revokeBtn }));
     expect(mockDispatch).toHaveBeenCalledWith(deleteApiKey({ id: 1 }));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   });
 
   it('displays newly created key modal and handles copy', () => {
@@ -240,9 +273,9 @@ describe('IntegrationsCommon', () => {
     renderPage();
 
     userEvent.click(screen.getByTestId('revoke-1'));
-    userEvent.click(screen.getByTestId('cancel-revoke-btn'));
+    userEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: t('integrations.cancel') }));
 
-    expect(screen.queryByTestId('revoke-key-modal')).not.toBeInTheDocument();
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     expect(mockDispatch).not.toHaveBeenCalledWith(deleteApiKey({ id: 1 }));
   });
 

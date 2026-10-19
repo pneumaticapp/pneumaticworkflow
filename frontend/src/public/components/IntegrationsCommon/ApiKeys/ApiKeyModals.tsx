@@ -6,6 +6,7 @@ import { Button } from '../../UI/Buttons/Button';
 import { FormikInputField } from '../../UI/Fields/InputField';
 import { Header } from '../../UI/Typeography/Header';
 import { Modal } from '../../UI/Modal/Modal';
+import { WarningPopup } from '../../UI/WarningPopup';
 import type {
   ICreateApiKeyFormValues,
   ICreateApiKeyModalProps,
@@ -56,27 +57,16 @@ export function RevokeApiKeyModal({ isOpen, onClose, onConfirm }: IRevokeApiKeyM
   const { formatMessage } = useIntl();
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} width="sm">
-      <div data-testid="revoke-key-modal">
-        <Header tag="h2" size="6" className={styles['key-modal__title']}>
-          {formatMessage({ id: 'integrations.revoke-modal-title' })}
-        </Header>
-        <p className={styles['key-modal__warning']}>{formatMessage({ id: 'integrations.delete-api-key-confirm' })}</p>
-        <div className={styles['key-modal__footer']}>
-          <Button
-            type="button"
-            onClick={onConfirm}
-            size="md"
-            buttonStyle="yellow"
-            label={formatMessage({ id: 'integrations.api-key-revoke' })}
-            data-testid="confirm-revoke-btn"
-          />
-          <button type="button" className="cancel-button" onClick={onClose} data-testid="cancel-revoke-btn">
-            {formatMessage({ id: 'integrations.cancel' })}
-          </button>
-        </div>
-      </div>
-    </Modal>
+    <WarningPopup
+      isOpen={isOpen}
+      title={formatMessage({ id: 'integrations.revoke-modal-title' })}
+      message={formatMessage({ id: 'integrations.delete-api-key-confirm' })}
+      acceptTitle={formatMessage({ id: 'integrations.api-key-revoke' })}
+      declineTitle={formatMessage({ id: 'integrations.cancel' })}
+      onConfirm={onConfirm}
+      onReject={onClose}
+      closeModal={onClose}
+    />
   );
 }
 
