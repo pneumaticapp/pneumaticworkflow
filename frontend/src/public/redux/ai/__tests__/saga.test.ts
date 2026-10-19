@@ -23,6 +23,7 @@ import {
   createAIProviderFailed,
   createAIProviderSuccess,
   cancelAIAgentAvatarUpload,
+  closeCreateAIProviderModal,
   uploadAIAgentAvatar,
   uploadAIAgentAvatarFinished,
 } from '../slice';
@@ -206,5 +207,95 @@ describe('AI agent avatar upload saga', () => {
     await flush();
 
     expect(onSuccess).not.toHaveBeenCalled();
+  });
+});
+
+describe('AI creation sagas when the modal closes mid-request', () => {
+  const dispatched: unknown[] = [];
+  const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+  const start = (saga: (...args: any[]) => Generator, action: object) => {
+    const channel = stdChannel();
+    const task = runSaga(
+      {
+        channel,
+        dispatch: (dispatchedAction) => {
+          dispatched.push(dispatchedAction);
+        },
+        getState: () => ({}),
+      },
+      saga,
+      action,
+    );
+
+    return { channel, task };
+  };
+
+  const deferred = () => {
+    let resolve!: (value: unknown) => void;
+    let reject!: (error: Error) => void;
+    const promise = new Promise((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+
+    return { promise, resolve, reject };
+  };
+
+  beforeEach(() => {
+    dispatched.length = 0;
+    jest.clearAllMocks();
+    (getAIAgentsApi as jest.Mock).mockResolvedValue([]);
+    (getAIProvidersApi as jest.Mock).mockResolvedValue([]);
+  });
+
+  it('does not close a reopened performer modal when an earlier agent create succeeds', async () => {
+    const request = deferred();
+    (createAIAgentApi as jest.Mock).mockReturnValue(request.promise);
+    const { channel, task } = start(
+      createAIAgentSaga,
+      createAIAgent({ name: 'Agent', providerId: 1, model: 'm', systemPrompt: 'p', photo: null, isActive: true }),
+    );
+
+    channel.put(closeCreateUserModal());
+    request.resolve({});
+    await task.toPromise();
+
+    expect(dispatched).not.toContainEqual(createAIAgentSuccess());
+    expect(dispatched).not.toContainEqual(closeCreateUserModal());
+    expect(NotificationManager.success).toHaveBeenCalledWith({ message: 'team.ai-agents.created' });
+  });
+
+  it('leaves the reopened performer modal state alone when an earlier agent create fails', async () => {
+    const request = deferred();
+    (createAIAgentApi as jest.Mock).mockReturnValue(request.promise);
+    const { channel, task } = start(
+      createAIAgentSaga,
+      createAIAgent({ name: 'Agent', providerId: 1, model: 'm', systemPrompt: 'p', photo: null, isActive: true }),
+    );
+
+    channel.put(closeCreateUserModal());
+    request.reject(new Error('Invalid agent'));
+    await task.toPromise();
+    await flush();
+
+    expect(dispatched).not.toContainEqual(createAIAgentFailed());
+    expect(NotificationManager.warning).toHaveBeenCalledWith({ message: 'Invalid agent' });
+  });
+
+  it('does not close a reopened provider modal when an earlier provider create succeeds', async () => {
+    const request = deferred();
+    (createAIProviderApi as jest.Mock).mockReturnValue(request.promise);
+    const { channel, task } = start(
+      createAIProviderSaga,
+      createAIProvider({ name: 'Custom', baseUrl: 'https://example.com', apiKey: 'secret' }),
+    );
+
+    channel.put(closeCreateAIProviderModal());
+    request.resolve({});
+    await task.toPromise();
+
+    expect(dispatched).not.toContainEqual(createAIProviderSuccess());
+    expect(NotificationManager.success).toHaveBeenCalledWith({ message: 'ai-providers.created' });
   });
 });

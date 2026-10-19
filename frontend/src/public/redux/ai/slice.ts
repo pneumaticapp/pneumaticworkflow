@@ -1,6 +1,7 @@
 import { createAction, createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
+import { closeCreateUserModal } from '../accounts/slice';
 import type { IAIStore, IUploadAIAgentAvatarPayload, TUpdateAIAgentPayload } from './types';
 import type {
   IAIAgent,
@@ -67,7 +68,7 @@ const aiSlice = createSlice({
       state.createProviderModal.isOpen = true;
     },
     closeCreateAIProviderModal: (state) => {
-      state.createProviderModal.isOpen = false;
+      state.createProviderModal = { isOpen: false, isLoading: false };
     },
     createAIProviderStarted: (state) => {
       state.createProviderModal.isLoading = true;
@@ -132,6 +133,11 @@ const aiSlice = createSlice({
       state.models.isLoading = false;
       state.models.providerId = null;
     },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(closeCreateUserModal, (state) => {
+      state.createAgent.isLoading = false;
+    });
   },
 });
 

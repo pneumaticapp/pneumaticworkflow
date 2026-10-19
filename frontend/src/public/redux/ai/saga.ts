@@ -1,4 +1,5 @@
-import { all, call, fork, put, takeEvery, takeLatest } from 'redux-saga/effects';
+import { all, call, cancel, fork, put, take, takeEvery, takeLatest } from 'redux-saga/effects';
+import type { Task } from 'redux-saga';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
 import {
@@ -60,6 +61,7 @@ import {
   updateAIAgent,
   uploadAIAgentAvatar,
   cancelAIAgentAvatarUpload,
+  closeCreateAIProviderModal,
   uploadAIAgentAvatarStarted,
   uploadAIAgentAvatarFinished,
 } from './slice';
@@ -138,20 +140,31 @@ function* fetchAIProviderModels({ payload: providerId }: PayloadAction<number>) 
   }
 }
 
+function* waitForAction(actionType: string) {
+  yield take(actionType);
+}
+
 function* createProvider(createRequest: () => Promise<unknown>) {
   yield put(createAIProviderStarted());
+  const modalCloseWatcher: Task = yield fork(waitForAction, closeCreateAIProviderModal.type);
 
   try {
-    yield createRequest();
-    yield put(createAIProviderSuccess());
+    yield call(createRequest);
+    if (modalCloseWatcher.isRunning()) {
+      yield put(createAIProviderSuccess());
+    }
     const isRefreshed: boolean = yield fetchAIProviders();
     if (isRefreshed) {
       NotificationManager.success({ message: 'ai-providers.created' });
     }
   } catch (error) {
-    yield put(createAIProviderFailed());
+    if (modalCloseWatcher.isRunning()) {
+      yield put(createAIProviderFailed());
+    }
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to create AI provider', error);
+  } finally {
+    yield cancel(modalCloseWatcher);
   }
 }
 
@@ -188,16 +201,24 @@ function* refreshAgentsAndProviders(successMessage: string) {
 
 export function* createAIAgentSaga({ payload }: PayloadAction<ICreateAIAgentRequest>) {
   yield put(createAIAgentStarted());
+  const modalCloseWatcher: Task = yield fork(waitForAction, closeCreateUserModal.type);
 
   try {
-    yield createAIAgentApi(payload);
-    yield put(createAIAgentSuccess());
-    yield put(closeCreateUserModal());
+    yield call(createAIAgentApi, payload);
+    if (modalCloseWatcher.isRunning()) {
+      yield cancel(modalCloseWatcher);
+      yield put(createAIAgentSuccess());
+      yield put(closeCreateUserModal());
+    }
     yield refreshAgentsAndProviders('team.ai-agents.created');
   } catch (error) {
-    yield put(createAIAgentFailed());
+    if (modalCloseWatcher.isRunning()) {
+      yield put(createAIAgentFailed());
+    }
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to create AI agent', error);
+  } finally {
+    yield cancel(modalCloseWatcher);
   }
 }
 

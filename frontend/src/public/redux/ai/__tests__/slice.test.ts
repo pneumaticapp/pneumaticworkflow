@@ -11,6 +11,7 @@ import reducer, {
   loadAIProvidersSuccess,
   openCreateAIProviderModal,
 } from '../slice';
+import { closeCreateUserModal } from '../../accounts/slice';
 import { EAIVendor } from '../../../api/ai/types';
 
 describe('AI request state', () => {
@@ -65,5 +66,17 @@ describe('AI request state', () => {
       isLoading: false,
     });
     expect(reducer(pending, closeCreateAIProviderModal()).createProviderModal.isOpen).toBe(false);
+  });
+
+  it('releases create loading when its modal closes', () => {
+    const initial = reducer(undefined, { type: 'init' });
+    const pendingAgent = reducer(initial, createAIAgentStarted());
+    const pendingProvider = reducer(reducer(initial, openCreateAIProviderModal()), createAIProviderStarted());
+
+    expect(reducer(pendingAgent, closeCreateUserModal()).createAgent.isLoading).toBe(false);
+    expect(reducer(pendingProvider, closeCreateAIProviderModal()).createProviderModal).toEqual({
+      isOpen: false,
+      isLoading: false,
+    });
   });
 });
