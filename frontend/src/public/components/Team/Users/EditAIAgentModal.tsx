@@ -50,7 +50,6 @@ export function EditAIAgentModal({ agent, onClose }: IEditAIAgentModalProps) {
 
       <CreateAIAgentForm
         isActive
-        isOpen
         initialValues={initialValues}
         submitLabel={formatMessage({ id: 'team.create-ai-agent-modal.save' })}
         onSubmit={handleSubmit}

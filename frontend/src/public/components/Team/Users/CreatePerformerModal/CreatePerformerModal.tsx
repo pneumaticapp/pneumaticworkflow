@@ -8,7 +8,7 @@ import { Button } from '../../../UI/Buttons/Button';
 import { Tabs } from '../../../UI/Tabs';
 import { ERoutes } from '../../../../constants/routes';
 import { history } from '../../../../utils/history';
-import { createAIAgent, loadAIProviders } from '../../../../redux/ai/slice';
+import { cancelAIAgentAvatarUpload, createAIAgent, loadAIProviders } from '../../../../redux/ai/slice';
 import { getAICreateAgentState, getAIProvidersState } from '../../../../redux/selectors/ai';
 
 import { CreateAIAgentForm } from './CreateAIAgentForm';
@@ -26,12 +26,15 @@ export function CreatePerformerModal({
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [formsKey, setFormsKey] = useState(0);
   const { isLoading: isLoadingProviders, list: providers } = useSelector(getAIProvidersState);
   const { isLoading: isCreatingAgent } = useSelector(getAICreateAgentState);
 
   useEffect(() => {
     if (isOpen) {
       setActiveTab(initialTab);
+      setFormsKey((key) => key + 1);
+      dispatch(cancelAIAgentAvatarUpload());
       dispatch(loadAIProviders());
     }
   }, [dispatch, isOpen, initialTab]);
@@ -99,13 +102,13 @@ export function CreatePerformerModal({
       )}
 
       <CreateAIAgentForm
+        key={`agent-${formsKey}`}
         isActive={activeTab === ECreatePerformerModalTab.AIAgent && hasProviders}
-        isOpen={isOpen}
         isSubmitting={isCreatingAgent}
         submitLabel={formatMessage({ id: 'team.create-ai-agent-modal.submit' })}
         onSubmit={handleCreateAIAgent}
       />
-      <CreateUserForm isActive={activeTab === ECreatePerformerModalTab.User} isOpen={isOpen} />
+      <CreateUserForm key={`user-${formsKey}`} isActive={activeTab === ECreatePerformerModalTab.User} />
     </BaseModal>
   );
 }

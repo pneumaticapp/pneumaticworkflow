@@ -685,8 +685,9 @@ describe('CreatePerformerModal', () => {
 
       await userEvent.click(getSubmitButton());
       await waitFor(() => {
-        expect(mockDispatch).toHaveBeenCalledTimes(1);
+        expect(createUser).toHaveBeenCalledTimes(1);
       });
+      expect(mockDispatch.mock.calls.filter(([action]) => action.type === 'accounts/createUser')).toHaveLength(1);
     });
   });
 

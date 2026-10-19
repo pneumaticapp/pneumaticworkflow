@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useMemo } from 'react';
+import { useState } from 'react';
 import { Formik } from 'formik';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
@@ -31,7 +31,7 @@ const formatStatusOption = (
   return label;
 };
 
-export function CreateUserForm({ isActive, isOpen }: ICreateUserFormProps) {
+export function CreateUserForm({ isActive }: ICreateUserFormProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
@@ -40,16 +40,13 @@ export function CreateUserForm({ isActive, isOpen }: ICreateUserFormProps) {
     { label: formatMessage({ id: 'team.create-user-modal.status-user' }), value: EUserRole.User },
   ];
 
-  const initialValues: ICreateUserFormValues = useMemo(
-    () => ({
-      firstName: '',
-      lastName: '',
-      email: '',
-      role: EUserRole.User,
-      password: createPassword(),
-    }),
-    [isOpen],
-  );
+  const [initialValues] = useState<ICreateUserFormValues>(() => ({
+    firstName: '',
+    lastName: '',
+    email: '',
+    role: EUserRole.User,
+    password: createPassword(),
+  }));
 
   const handleSubmit = (values: ICreateUserFormValues) => {
     const { role, ...userData } = values;
@@ -59,7 +56,6 @@ export function CreateUserForm({ isActive, isOpen }: ICreateUserFormProps) {
   return (
     <Formik
       initialValues={initialValues}
-      enableReinitialize
       onSubmit={handleSubmit}
       validate={(values) => {
         const errors = getErrorsObject(values, {

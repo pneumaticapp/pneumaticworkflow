@@ -1,8 +1,6 @@
 import * as React from 'react';
-import { useEffect, useRef } from 'react';
 import type { ChangeEvent } from 'react';
 import { Formik } from 'formik';
-import type { FormikProps } from 'formik';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -16,7 +14,7 @@ import { validateRequired } from '../../../../utils/validators';
 import { cancelAIAgentAvatarUpload, uploadAIAgentAvatar } from '../../../../redux/ai/slice';
 import { getAIAgentAvatarUploadState, getAIProviderModelsState, getAIProviders } from '../../../../redux/selectors/ai';
 import { EMPTY_AI_AGENT_FORM_VALUES } from './constants';
-import type { IAIAgentFormProps, IAIAgentFormValues } from './types';
+import type { IAIAgentFormProps } from './types';
 import { ProviderModelsSync } from './ProviderModelsSync';
 import { getAgentInitials } from '../getAgentInitials';
 
@@ -24,7 +22,6 @@ import styles from './CreatePerformerModal.css';
 
 export function CreateAIAgentForm({
   isActive,
-  isOpen,
   isSubmitting = false,
   initialValues = EMPTY_AI_AGENT_FORM_VALUES,
   submitLabel,
@@ -35,17 +32,6 @@ export function CreateAIAgentForm({
   const { isLoading: isAvatarUploading } = useSelector(getAIAgentAvatarUploadState);
   const providers = useSelector(getAIProviders);
   const modelsState = useSelector(getAIProviderModelsState);
-  const formikRef = useRef<FormikProps<IAIAgentFormValues> | null>(null);
-  const wasOpenRef = useRef(isOpen);
-
-  useEffect(() => {
-    if (isOpen && !wasOpenRef.current) {
-      dispatch(cancelAIAgentAvatarUpload());
-      formikRef.current?.resetForm();
-    }
-    wasOpenRef.current = isOpen;
-  }, [dispatch, isOpen]);
-
   const providerOptions = providers.map((provider) => ({
     label: `${provider.name} — ${provider.apiKeyPrefix}`,
     value: String(provider.id),
@@ -53,7 +39,6 @@ export function CreateAIAgentForm({
 
   return (
     <Formik
-      innerRef={formikRef}
       initialValues={initialValues}
       validateOnMount
       validate={(values) =>

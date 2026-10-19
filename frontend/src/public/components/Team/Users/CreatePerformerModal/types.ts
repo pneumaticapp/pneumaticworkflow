@@ -29,7 +29,6 @@ export interface ICreateUserFormValues extends Required<
 
 export interface ICreateUserFormProps {
   isActive: boolean;
-  isOpen: boolean;
 }
 
 export interface IAIAgentFormValues {
@@ -42,7 +41,6 @@ export interface IAIAgentFormValues {
 
 export interface IAIAgentFormProps {
   isActive: boolean;
-  isOpen: boolean;
   isSubmitting?: boolean;
   initialValues?: IAIAgentFormValues;
   submitLabel: string;
