@@ -2288,10 +2288,10 @@ def test_complete_task__non_ascii_values__ok(mocker):
     attempt_complete_task_mock.assert_called_once_with(task=task)
 
 
-def test_complete_task__unexpected_error__raise_exception(mocker):
+def test_complete_task__provider_error__task_failed(mocker):
 
-    """ Unexpected error: the error is raised, the claim is kept,
-        the failure is not logged """
+    """ Provider error: the run failure is logged,
+        the performers get a comment """
 
     # arrange
     account = create_test_account()
@@ -2301,7 +2301,48 @@ def test_complete_task__unexpected_error__raise_exception(mocker):
     agent = create_test_agent(account=account)
     mocker.patch(
         'src.ai.services.agent.AIAgentService._attempt_complete_task',
-        side_effect=AIHandlerRequestFailed(),
+        side_effect=AIProviderException(message='Failed'),
+    )
+    create_comment_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._create_comment',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    with pytest.raises(AIProviderException):
+        service.complete_task(task_id=task.id)
+
+    # assert
+    assert AIAgentAction.objects.filter(
+        action=AIAgentActionType.TASK_IN_PROGRESS,
+    ).exists()
+    failed_action = AIAgentAction.objects.get(
+        action=AIAgentActionType.TASK_FAILED,
+    )
+    assert failed_action.task_id == task.id
+    assert failed_action.text == 'Failed'
+    assert not AIAgentAction.objects.filter(
+        action=AIAgentActionType.TASK_COMPLETED,
+    ).exists()
+    create_comment_mock.assert_called_once_with(
+        task=task,
+        text=str(MSG_AI_0011(attempts=MAX_ATTEMPTS, error='Failed')),
+    )
+
+
+def test_complete_task__unexpected_error__not_handled(mocker):
+
+    """ Unexpected error: the error is raised, the failure is not logged """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_complete_task',
+        side_effect=ValueError(),
     )
     handle_failure_mock = mocker.patch(
         'src.ai.services.agent.AIAgentService._handle_task_complete_failure',
@@ -2309,7 +2350,7 @@ def test_complete_task__unexpected_error__raise_exception(mocker):
     service = AIAgentService(user=agent.user, instance=agent)
 
     # act
-    with pytest.raises(AIHandlerRequestFailed):
+    with pytest.raises(ValueError):
         service.complete_task(task_id=task.id)
 
     # assert
@@ -2344,7 +2385,7 @@ def test_handle_task_complete_failure__error__comment(mocker):
     # act
     service._handle_task_complete_failure(
         task=task,
-        ex=AIHandlerRequestFailed(),
+        ex=AIProviderException(message='Request failed'),
     )
 
     # assert
@@ -2354,11 +2395,11 @@ def test_handle_task_complete_failure__error__comment(mocker):
     assert failed_action.account_id == account.id
     assert failed_action.agent_id == agent.id
     assert failed_action.task_id == task.id
-    assert failed_action.text == str(MSG_AI_0002)
+    assert failed_action.text == 'Request failed'
     create_comment_mock.assert_called_once_with(
         task=task,
         text=str(
-            MSG_AI_0011(attempts=MAX_ATTEMPTS, error=str(MSG_AI_0002)),
+            MSG_AI_0011(attempts=MAX_ATTEMPTS, error='Request failed'),
         ),
     )
 
