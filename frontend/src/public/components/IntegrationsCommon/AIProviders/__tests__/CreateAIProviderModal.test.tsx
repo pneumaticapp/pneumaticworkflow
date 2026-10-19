@@ -52,17 +52,24 @@ jest.mock('../../../UI/DropdownList', () => {
   return {
     FormikDropdownList: ({
       name,
+      label,
       options,
       'data-testid': testId,
     }: {
       name: string;
+      label?: string;
       options: { value?: string; label: React.ReactNode }[];
       'data-testid'?: string;
     }) => {
       const [field, , { setValue }] = useField(name);
 
       return (
-        <select data-testid={testId} value={field.value} onChange={(event) => setValue(event.target.value)}>
+        <select
+          aria-label={label}
+          data-testid={testId}
+          value={field.value}
+          onChange={(event) => setValue(event.target.value)}
+        >
           <option value="">Select a vendor</option>
           {options.map(({ value, label }) => (
             <option key={value} value={value}>
@@ -106,6 +113,12 @@ describe('CreateAIProviderModal', () => {
 
     expect(mockDispatch).toHaveBeenCalledWith(loadAIVendors());
     expect(screen.getByRole('heading', { level: 2, name: t('ai-providers.create-modal-title') })).toBeInTheDocument();
+  });
+
+  it('labels the vendor dropdown like other form dropdowns', () => {
+    renderModal();
+
+    expect(screen.getByLabelText(t('ai-providers.vendor-label'))).toBe(screen.getByTestId('ai-provider-vendor-select'));
   });
 
   it('creates a provider by vendor from the default tab', async () => {

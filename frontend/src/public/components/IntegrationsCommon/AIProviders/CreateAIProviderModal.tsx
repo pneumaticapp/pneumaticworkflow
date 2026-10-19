@@ -101,7 +101,7 @@ export function CreateAIProviderModal() {
                   <>
                     <FormikDropdownList
                       name="vendor"
-                      title={formatMessage({ id: 'ai-providers.vendor-label' })}
+                      label={formatMessage({ id: 'ai-providers.vendor-label' })}
                       placeholder={formatMessage({ id: 'ai-providers.vendor-placeholder' })}
                       options={vendorOptions}
                       isRequired
