@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -8,7 +8,6 @@ import { AIProviders } from '../AIProviders';
 import { deleteAIProvider, loadAIProviders, openCreateAIProviderModal } from '../../../../redux/ai/slice';
 import { EAIVendor } from '../../../../api/ai/types';
 import type { IAIProvider } from '../../../../api/ai/types';
-import type { IWarningPopupProps } from '../../../UI/WarningPopup';
 
 jest.mock('../../../UI/Tooltip', () => ({
   Tooltip: ({ children, content, disabled }: any) => (
@@ -49,36 +48,6 @@ jest.mock('../../../UI/DropdownList', () => {
     },
   };
 });
-
-jest.mock('../../../UI/WarningPopup', () => ({
-  WarningPopup: ({
-    isOpen,
-    title,
-    message,
-    acceptTitle,
-    declineTitle,
-    onConfirm,
-    onReject,
-    closeModal,
-  }: IWarningPopupProps) =>
-    isOpen ? (
-      <div role="alertdialog" aria-label={title}>
-        <p>{message}</p>
-        <button
-          type="button"
-          onClick={() => {
-            onConfirm();
-            closeModal();
-          }}
-        >
-          {acceptTitle}
-        </button>
-        <button type="button" onClick={onReject}>
-          {declineTitle}
-        </button>
-      </div>
-    ) : null,
-}));
 
 jest.mock('../../../UI/Modal/Modal', () => ({
   Modal: ({ children, isOpen }: any) => (isOpen ? <div role="dialog">{children}</div> : null),
@@ -145,7 +114,7 @@ describe('AIProviders', () => {
     expect(screen.getByText(/sk-or-v1-01234/).tagName).toBe('CODE');
   });
 
-  it('deletes an unused provider through the confirmation modal', () => {
+  it('deletes an unused provider through the confirmation modal', async () => {
     mockAIState([buildProvider()]);
 
     render(<AIProviders />);
@@ -155,15 +124,19 @@ describe('AIProviders', () => {
     expect(screen.getByTestId('tooltip')).toHaveAttribute('data-disabled', 'true');
 
     userEvent.click(deleteButton);
-    const dialog = screen.getByRole('alertdialog', {
-      name: intlMock.formatMessage({ id: 'ai-providers.delete-modal-title' }),
-    });
+    const dialog = screen
+      .getByRole('heading', { level: 2, name: intlMock.formatMessage({ id: 'ai-providers.delete-modal-title' }) })
+      .closest('.modal-content') as HTMLElement;
     userEvent.click(
       within(dialog).getByRole('button', { name: intlMock.formatMessage({ id: 'ai-providers.delete' }) }),
     );
 
     expect(mockDispatch).toHaveBeenCalledWith(deleteAIProvider(1));
-    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('heading', { name: intlMock.formatMessage({ id: 'ai-providers.delete-modal-title' }) }),
+      ).not.toBeInTheDocument(),
+    );
   });
 
   it('disables deletion for a provider used by agents and names them in the tooltip', () => {
@@ -193,7 +166,9 @@ describe('AIProviders', () => {
       ),
     ).toBeInTheDocument();
     userEvent.click(screen.getByTestId('delete-ai-provider-1'));
-    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: intlMock.formatMessage({ id: 'ai-providers.delete-modal-title' }) }),
+    ).not.toBeInTheDocument();
     expect(mockDispatch).not.toHaveBeenCalledWith(deleteAIProvider(1));
   });
 

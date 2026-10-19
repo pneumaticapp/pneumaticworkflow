@@ -8,7 +8,6 @@ import { IntegrationsCommon } from '../IntegrationsCommon';
 import { loadApiKeys, createApiKey, deleteApiKey, clearNewlyCreatedKey } from '../../../redux/actions';
 import { copyToClipboard } from '../../../utils/helpers';
 import { NotificationManager } from '../../UI/Notifications';
-import type { IWarningPopupProps } from '../../UI/WarningPopup';
 
 jest.mock('../../../utils/helpers', () => ({
   copyToClipboard: jest.fn(),
@@ -40,36 +39,6 @@ jest.mock('../../UI/Typeography/Header', () => ({
 
 jest.mock('../../PageTitle/PageTitle', () => ({
   PageTitle: () => <div>Page Title</div>,
-}));
-
-jest.mock('../../UI/WarningPopup', () => ({
-  WarningPopup: ({
-    isOpen,
-    title,
-    message,
-    acceptTitle,
-    declineTitle,
-    onConfirm,
-    onReject,
-    closeModal,
-  }: IWarningPopupProps) =>
-    isOpen ? (
-      <div role="alertdialog" aria-label={title}>
-        <p>{message}</p>
-        <button
-          type="button"
-          onClick={() => {
-            onConfirm();
-            closeModal();
-          }}
-        >
-          {acceptTitle}
-        </button>
-        <button type="button" onClick={onReject}>
-          {declineTitle}
-        </button>
-      </div>
-    ) : null,
 }));
 
 jest.mock('../../UI/Modal/Modal', () => ({
@@ -193,7 +162,7 @@ describe('IntegrationsCommon', () => {
     expect(screen.queryByTestId('create-key-modal')).not.toBeInTheDocument();
   });
 
-  it('handles revoke key flow', () => {
+  it('handles revoke key flow', async () => {
     const mockKeys = [{ id: 1, name: 'Key 1', prefix: 'pn_live_111', lastUsedAt: null }];
     (useSelector as unknown as jest.Mock).mockImplementation((selectorFn) => {
       return selectorFn({
@@ -208,10 +177,14 @@ describe('IntegrationsCommon', () => {
     userEvent.click(screen.getByRole('button', { name: TEXT.revokeBtn }));
     expect(screen.getByText(TEXT.deleteConfirm)).toBeInTheDocument();
 
-    const dialog = screen.getByRole('alertdialog', { name: t('integrations.revoke-modal-title') });
-    userEvent.click(within(dialog).getByRole('button', { name: TEXT.revokeBtn }));
+    const popup = screen
+      .getByRole('heading', { level: 2, name: t('integrations.revoke-modal-title') })
+      .closest('.modal-content') as HTMLElement;
+    userEvent.click(within(popup).getByRole('button', { name: TEXT.revokeBtn }));
     expect(mockDispatch).toHaveBeenCalledWith(deleteApiKey({ id: 1 }));
-    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByRole('heading', { name: t('integrations.revoke-modal-title') })).not.toBeInTheDocument(),
+    );
   });
 
   it('displays newly created key modal and handles copy', () => {
@@ -258,7 +231,7 @@ describe('IntegrationsCommon', () => {
     expect(screen.queryByTestId('create-key-modal')).not.toBeInTheDocument();
   });
 
-  it('cancels key revocation without deleting the key', () => {
+  it('cancels key revocation without deleting the key', async () => {
     (useSelector as unknown as jest.Mock).mockImplementation((selectorFn) =>
       selectorFn({
         integrations: {
@@ -273,9 +246,14 @@ describe('IntegrationsCommon', () => {
     renderPage();
 
     userEvent.click(screen.getByTestId('revoke-1'));
-    userEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: t('integrations.cancel') }));
+    const popup = screen
+      .getByRole('heading', { level: 2, name: t('integrations.revoke-modal-title') })
+      .closest('.modal-content') as HTMLElement;
+    userEvent.click(within(popup).getByRole('button', { name: t('integrations.cancel') }));
 
-    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByRole('heading', { name: t('integrations.revoke-modal-title') })).not.toBeInTheDocument(),
+    );
     expect(mockDispatch).not.toHaveBeenCalledWith(deleteApiKey({ id: 1 }));
   });
 

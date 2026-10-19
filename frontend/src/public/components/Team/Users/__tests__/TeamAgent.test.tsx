@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useDispatch } from 'react-redux';
 
@@ -7,7 +7,6 @@ import { intlMock } from '../../../../__stubs__/intlMock';
 import { TeamAgent } from '../TeamAgent';
 import { deleteAIAgent, updateAIAgent } from '../../../../redux/ai/slice';
 import type { IAIAgent } from '../../../../api/ai/types';
-import type { IWarningPopupProps } from '../../../UI/WarningPopup';
 
 interface IDropdownMockProps {
   renderToggle(isOpen: boolean): React.ReactNode;
@@ -21,6 +20,7 @@ interface ISwitchMockProps {
 }
 
 jest.mock('../../../UI', () => ({
+  ...jest.requireActual('../../../UI'),
   Dropdown: ({ renderToggle, options, toggleProps }: IDropdownMockProps) => {
     const [isOpen, setIsOpen] = React.useState(false);
 
@@ -38,36 +38,6 @@ jest.mock('../../../UI', () => ({
       </div>
     );
   },
-}));
-
-jest.mock('../../../UI/WarningPopup', () => ({
-  WarningPopup: ({
-    isOpen,
-    title,
-    message,
-    acceptTitle,
-    declineTitle,
-    onConfirm,
-    onReject,
-    closeModal,
-  }: IWarningPopupProps) =>
-    isOpen ? (
-      <div role="alertdialog" aria-label={title}>
-        <p>{message}</p>
-        <button
-          type="button"
-          onClick={() => {
-            onConfirm();
-            closeModal();
-          }}
-        >
-          {acceptTitle}
-        </button>
-        <button type="button" onClick={onReject}>
-          {declineTitle}
-        </button>
-      </div>
-    ) : null,
 }));
 
 jest.mock('rc-switch', () => ({ checked, onChange }: ISwitchMockProps) => (
@@ -133,26 +103,29 @@ describe('TeamAgent', () => {
     expect(screen.getByTestId('edit-ai-agent-modal')).toHaveAttribute('data-agent-id', '10');
   });
 
-  it('deletes the agent through the confirmation modal', () => {
+  it('deletes the agent through the confirmation modal', async () => {
     render(<TeamAgent agent={buildAgent()} providerName="OpenRouter" />);
 
     userEvent.click(screen.getByTestId('ai-agent-more-10'));
     userEvent.click(screen.getByText(t('team.ai-agents.delete')));
-    const dialog = screen.getByRole('alertdialog', { name: t('team.ai-agents.delete-modal-title') });
-    userEvent.click(within(dialog).getByRole('button', { name: t('team.ai-agents.delete') }));
+    const popup = screen
+      .getByRole('heading', { level: 2, name: t('team.ai-agents.delete-modal-title') })
+      .closest('.modal-content') as HTMLElement;
+    expect(popup).toHaveTextContent(t('team.ai-agents.delete-confirm').replace('{name}', 'Research assistant'));
+    userEvent.click(within(popup).getByRole('button', { name: t('team.ai-agents.delete') }));
 
     expect(mockDispatch).toHaveBeenCalledWith(deleteAIAgent(10));
-    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument());
   });
 
-  it('closes the delete modal on cancel without dispatching', () => {
+  it('closes the delete modal on cancel without dispatching', async () => {
     render(<TeamAgent agent={buildAgent()} providerName="OpenRouter" />);
 
     userEvent.click(screen.getByTestId('ai-agent-more-10'));
     userEvent.click(screen.getByText(t('team.ai-agents.delete')));
     userEvent.click(screen.getByRole('button', { name: t('integrations.cancel') }));
 
-    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument());
     expect(mockDispatch).not.toHaveBeenCalledWith(deleteAIAgent(10));
   });
 });
