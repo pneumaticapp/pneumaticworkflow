@@ -8,6 +8,10 @@
     "defaults",
     "not op_mini all"
   ],
+  "engines": {
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0",
+    "npm": ">=12.0.0"
+  },
   "dependencies": {
     "@draft-js-plugins/editor": "^4.1.0",
     "@draft-js-plugins/focus": "^4.1.3",
@@ -233,6 +237,7 @@
     "webpack-node-externals": "^1.7.2"
   },
   "scripts": {
+    "preinstall": "npx only-allow npm",
     "prettier": "prettier --write src",
     "prettier:check": "prettier --check src",
     "lint": "npm run prettier:check && npm run stylelint && npm run eslint",
