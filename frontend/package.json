@@ -179,7 +179,6 @@
     "@types/smoothscroll-polyfill": "^0.3.1",
     "@types/webpack": "^5.28.5",
     "chromatic": "^11.24.0",
-    "compression-webpack-plugin": "^11.1.0",
     "concurrently": "^7.1.0",
     "css-loader": "^3.2.1",
     "dotenv": "^16.4.5",
