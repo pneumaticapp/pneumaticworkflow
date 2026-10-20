@@ -2,7 +2,7 @@ import React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import { DropdownList } from '../../../UI';
+import { Select } from '../../../UI';
 import { getSortingSelectProps } from '../../../../utils/getSortingSelectProps';
 import { IDropdownOperator } from './utils/getDropdownOperators';
 import { CONDITION_DISABLED_OPERATOR, OPERATORS_WITHOUT_VALUE } from './utils/shared';
@@ -59,7 +59,7 @@ export function Predicate({
       {ruleIndex !== 0 && (
         <div className={styles['condition-rule__logic-operation']}>
           {rule.logicOperation && (
-            <DropdownList
+            <Select
               controlSize="sm"
               controlVariant="accent"
               controlClassName={styles['select-logic-operation']}
@@ -83,7 +83,7 @@ export function Predicate({
           )}
         >
           <div className={classnames(styles['condition-rule__setting'], styles['condition-rule__field'])}>
-            <DropdownList
+            <Select
               isDisabled={!accessConditions}
               placeholder={formatMessage({ id: 'templates.conditions.field-placeholder' })}
               isSearchable={false}
@@ -107,7 +107,7 @@ export function Predicate({
           </div>
           {isCheckIs && (
             <div className={classnames(styles['condition-rule__setting'], styles['condition-rule__operator'])}>
-              <DropdownList
+              <Select
                 isDisabled={isDisabledOperator}
                 placeholder={formatMessage({ id: 'templates.conditions.operator-placeholder' })}
                 isSearchable={false}

@@ -22,7 +22,7 @@ import { ERoutes } from '../../../constants/routes';
 
 import { ModifyDropdown, Button, Tooltip } from '../../UI';
 import { EModifyDropdownToggle } from '../../UI/ModifyDropdown/types';
-import { DropdownList } from '../../UI/DropdownList';
+import { Select } from '../../UI/Select';
 import { NotificationManager } from '../../UI/Notifications';
 import { FieldsetModal } from '../FieldsetModal/FieldsetModal';
 import { EFieldsetModalType } from '../FieldsetModal/types';
@@ -347,7 +347,7 @@ const FieldsetDetails = ({
         <div className={`${styles['usage-banner']} ${styles['usage-banner--linked']}`}>
           <div className={styles['usage-banner__row']}>
             <span>{formatMessage({ id: 'fieldsets.usage.linked' }, { count: fieldset.usage.length })}</span>
-            <DropdownList
+            <Select
               controlSize="sm"
               className={styles['usage-banner__dropdown']}
               title={formatMessage({ id: 'fieldsets.usage.show' })}
@@ -465,7 +465,7 @@ const FieldsetDetails = ({
               {formatMessage({ id: 'fieldsets.settings.label-position' })}
             </span>
             <div ref={labelPositionRef}>
-              <DropdownList
+              <Select
                 className={styles['settings-select']}
                 isDisabled={isLinked}
                 options={labelPositionOptions}
@@ -544,7 +544,7 @@ const FieldsetDetails = ({
 
         {detailFieldset.rules.map((rule, index) => (
           <div key={rule.apiName} className={styles['rule-row']}>
-            <DropdownList
+            <Select
               className={styles['settings-select']}
               isDisabled={isLinked}
               options={ruleTypeOptions}
@@ -574,7 +574,7 @@ const FieldsetDetails = ({
             <div className={styles['rule-fields-selector']}>
               <span className={styles['rule-fields-label']}>{formatMessage({ id: 'fieldsets.rule-fields' })}</span>
               <div className={styles['rule-fields-select']}>
-                <DropdownList
+                <Select
                   controlSize="sm"
                   controlVariant="accent"
                   isMulti

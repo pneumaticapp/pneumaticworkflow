@@ -2,7 +2,7 @@ import * as React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DropdownList } from '../DropdownList';
+import { Select } from '../Select';
 
 jest.mock('react-perfect-scrollbar', () => ({
   __esModule: true,
@@ -16,11 +16,11 @@ const OPTIONS = [
 
 const TestIcon = () => <svg data-testid="control-icon" />;
 
-describe('DropdownList compact control', () => {
+describe('Select compact control', () => {
   it('renders the selected label with an icon and picks an option, closing the menu', () => {
     const onChange = jest.fn();
     render(
-      <DropdownList
+      <Select
         controlSize="sm"
         controlVariant="accent"
         Icon={TestIcon}
@@ -41,7 +41,7 @@ describe('DropdownList compact control', () => {
   });
 
   it('does not open when disabled', () => {
-    render(<DropdownList controlSize="sm" isDisabled options={OPTIONS} value={OPTIONS[0]} onChange={jest.fn()} />);
+    render(<Select controlSize="sm" isDisabled options={OPTIONS} value={OPTIONS[0]} onChange={jest.fn()} />);
 
     const control = screen.getByRole('button', { name: 'By date' });
     expect(control).toBeDisabled();
@@ -54,7 +54,7 @@ describe('DropdownList compact control', () => {
   it('selects an option rendered into a portal target', () => {
     const onChange = jest.fn();
     render(
-      <DropdownList
+      <Select
         controlSize="sm"
         options={OPTIONS}
         value={OPTIONS[0]}
@@ -77,19 +77,12 @@ describe('DropdownList compact control', () => {
     const onClear = jest.fn();
     const onChange = jest.fn();
     const { rerender } = render(
-      <DropdownList controlSize="sm" isMulti options={OPTIONS} value={[]} onChange={onChange} onClear={onClear} />,
+      <Select controlSize="sm" isMulti options={OPTIONS} value={[]} onChange={onChange} onClear={onClear} />,
     );
     expect(screen.queryByRole('button', { name: 'Clear selected options' })).not.toBeInTheDocument();
 
     rerender(
-      <DropdownList
-        controlSize="sm"
-        isMulti
-        options={OPTIONS}
-        value={[OPTIONS[1]]}
-        onChange={onChange}
-        onClear={onClear}
-      />,
+      <Select controlSize="sm" isMulti options={OPTIONS} value={[OPTIONS[1]]} onChange={onChange} onClear={onClear} />,
     );
     userEvent.click(screen.getByRole('button', { name: 'Clear selected options' }));
 
@@ -100,14 +93,7 @@ describe('DropdownList compact control', () => {
   it('renders checked checkboxes for selected options and keeps a multi menu open', () => {
     const onChange = jest.fn();
     render(
-      <DropdownList
-        controlSize="sm"
-        title="Sorting"
-        isMulti
-        options={OPTIONS}
-        value={[OPTIONS[1]]}
-        onChange={onChange}
-      />,
+      <Select controlSize="sm" title="Sorting" isMulti options={OPTIONS} value={[OPTIONS[1]]} onChange={onChange} />,
     );
 
     userEvent.click(screen.getByRole('button', { name: 'Sorting' }));
@@ -121,17 +107,17 @@ describe('DropdownList compact control', () => {
   });
 
   it('shows skeleton rows instead of options while loading', () => {
-    render(<DropdownList controlSize="sm" title="Templates" isLoading options={OPTIONS} onChange={jest.fn()} />);
+    render(<Select controlSize="sm" title="Templates" isLoading options={OPTIONS} onChange={jest.fn()} />);
 
     userEvent.click(screen.getByRole('button', { name: 'Templates' }));
 
     expect(screen.queryByText('By name')).not.toBeInTheDocument();
-    expect(document.querySelectorAll('.dropdownlist-sm__skeleton')).toHaveLength(5);
+    expect(document.querySelectorAll('.select-sm__skeleton')).toHaveLength(5);
   });
 
   it('renders custom control content instead of the pill', () => {
     render(
-      <DropdownList
+      <Select
         controlSize="sm"
         controlContent={<span>Pick fieldset</span>}
         options={OPTIONS}
@@ -147,7 +133,7 @@ describe('DropdownList compact control', () => {
 
   it('renders grouped options under their headings', () => {
     render(
-      <DropdownList
+      <Select
         controlSize="sm"
         title={<span>Tasks</span>}
         isMulti
@@ -169,7 +155,7 @@ describe('DropdownList compact control', () => {
 
   it('filters options by searchByText', () => {
     render(
-      <DropdownList
+      <Select
         controlSize="sm"
         title="Users"
         isSearchable

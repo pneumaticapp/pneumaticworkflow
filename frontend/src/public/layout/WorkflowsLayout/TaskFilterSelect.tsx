@@ -7,7 +7,7 @@ import {
   cancelTemplateTasksCounters,
   setFilterTemplateTasks as setWorkflowsFilterTasks,
 } from '../../redux/workflows/slice';
-import { DropdownList } from '../../components/UI/DropdownList';
+import { Select } from '../../components/UI/Select';
 import { StepName } from '../../components/StepName';
 import { TaskFilterIcon } from '../../components/icons';
 import { ITemplateFilterItem, TTemplateStepFilter } from '../../types/workflow';
@@ -57,7 +57,7 @@ export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITe
   const flatGroupedOptions = useMemo(() => groupedSteps.flatMap((group) => group.options), [groupedSteps]);
 
   return (
-    <DropdownList
+    <Select
       controlSize="sm"
       controlVariant="accent"
       Icon={TaskFilterIcon}

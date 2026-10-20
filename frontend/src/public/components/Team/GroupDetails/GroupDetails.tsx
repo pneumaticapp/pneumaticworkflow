@@ -22,10 +22,10 @@ import { IntegrateIcon, SearchLargeIcon, AddUserIcon } from '../../icons';
 import {
   TDropdownMenuOption,
   InputField,
-  DropdownList,
+  Select,
   DropdownMenu,
   Button,
-  TDropdownOptionBase,
+  TSelectOption,
   Placeholder,
   ModifyDropdown,
 } from '../../UI';
@@ -186,7 +186,7 @@ export function GroupDetails({ match }: any) {
   };
 
   const renderSorting = () => {
-    const dropdownOptions: TDropdownOptionBase[] = [
+    const dropdownOptions: TSelectOption[] = [
       {
         label: (
           <p className={styles['dropdown__sorting']}>
@@ -214,7 +214,7 @@ export function GroupDetails({ match }: any) {
     ];
 
     return (
-      <DropdownList
+      <Select
         placement="left"
         className={styles['test']}
         controlSize="sm"

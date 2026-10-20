@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import classnames from 'classnames';
-import Select, { components } from 'react-select';
+import ReactSelect, { components } from 'react-select';
 import type { CSSObjectWithLabel, FormatOptionLabelMeta } from 'react-select';
 import { FieldHookConfig, useField } from 'formik';
 import PerfectScrollbar from 'react-perfect-scrollbar';
@@ -12,62 +12,12 @@ import { Checkbox } from '../Fields/Checkbox';
 import { Skeleton } from '../Skeleton';
 
 import '../../../assets/css/library/react-select.css';
-import styles from './DropdownList.css';
-
-type TControlSize = 'lg' | 'sm';
-type TControlVariant = 'muted' | 'accent';
-type TPlacement = 'left' | 'right';
-
-export type TDropdownOptionBase = {
-  label: string | React.ReactNode;
-  sourceId?: string | null;
-  value?: string;
-  count?: number;
-  searchByText?: string;
-  onClick?: () => void;
-};
-
-type TDropdownOptionGroup<TOption> = {
-  label: string;
-  options: TOption[];
-};
-
-interface IControlSMParams {
-  title: React.ReactNode;
-  isOpen: boolean;
-  isDisabled: boolean;
-  variant: TControlVariant;
-  className?: string;
-  Icon?(props: React.SVGAttributes<SVGElement>): JSX.Element;
-  content?: React.ReactNode;
-  onToggle(isOpen: boolean): void;
-  onClear?(): void;
-}
-
-export interface IDropdownListProps<TOption extends TDropdownOptionBase> extends Omit<
-  React.ComponentProps<typeof Select>,
-  'options' | 'onChange'
-> {
-  label?: string;
-  options: TOption[] | TDropdownOptionGroup<TOption>[];
-  title?: React.ReactNode;
-  controlSize?: TControlSize;
-  className?: string;
-  staticMenu?: boolean;
-  placement?: TPlacement;
-  onChange?: (value: any, action: any) => void;
-  errorMessage?: string;
-  isRequired?: boolean;
-  controlVariant?: TControlVariant;
-  controlClassName?: string;
-  controlContent?: React.ReactNode;
-  Icon?(props: React.SVGAttributes<SVGElement>): JSX.Element;
-  onClear?(): void;
-}
+import styles from './Select.css';
+import type { IControlSMParams, ISelectProps, TControlSize, TSelectOption } from './types';
 
 const MENU_PORTAL_STYLES = { menuPortal: (base: CSSObjectWithLabel) => ({ ...base, zIndex: 1080 }) };
 
-export function DropdownList<TOption extends TDropdownOptionBase>({
+export function Select<TOption extends TSelectOption>({
   controlSize = 'lg',
   controlVariant = 'muted',
   controlClassName,
@@ -79,7 +29,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
   className,
   isMulti,
   ...restProps
-}: IDropdownListProps<TOption>) {
+}: ISelectProps<TOption>) {
   const [isOpen, setIsOpen] = useState(false);
   const [filterValue, setFilterValue] = useState('');
 
@@ -127,15 +77,15 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
   if (label && controlSize === 'lg') {
     return (
       <div className={classnames('react-select', restProps.isDisabled && 'is-disabled', className)}>
-        <div className={classnames(styles['dropdownlist-lg__control'], label && styles['is-label'])}>
+        <div className={classnames(styles['select-lg__control'], label && styles['is-label'])}>
           {label && (
-            <p className={styles['dropdownlist-lg__label']}>
+            <p className={styles['select-lg__label']}>
               {label}
               {restProps.isRequired && <span className={styles['is-required']}>*</span>}
             </p>
           )}
 
-          <Select
+          <ReactSelect
             isMulti={isMulti}
             closeMenuOnSelect={!isMulti}
             hideSelectedOptions={false}
@@ -165,7 +115,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
       )}
     >
       {label && (
-        <p className={styles['dropdownlist-lg__label']}>
+        <p className={styles['select-lg__label']}>
           {label}
           {restProps.isRequired && <span className={styles['is-required']}>*</span>}
         </p>
@@ -175,7 +125,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
           if (!(event.target as Element | null)?.closest?.('.react-select__menu-portal')) setIsOpen(false);
         }}
       >
-        <Select
+        <ReactSelect
           isMulti={isMulti}
           closeMenuOnSelect={!isMulti}
           hideSelectedOptions={false}
@@ -223,7 +173,7 @@ function ControlSM({
           ref={props.innerRef}
           type="button"
           disabled={isDisabled}
-          className={classnames(styles['dropdownlist-sm__control-custom'], className)}
+          className={classnames(styles['select-sm__control-custom'], className)}
           onClick={() => onToggle(!isOpen)}
         >
           {content}
@@ -238,21 +188,21 @@ function ControlSM({
         disabled={isDisabled}
         className={classnames(
           'react-select_controlllll',
-          styles['dropdownlist-sm__control'],
-          variant === 'accent' && styles['dropdownlist-sm__control_accent'],
+          styles['select-sm__control'],
+          variant === 'accent' && styles['select-sm__control_accent'],
           isOpen && styles['is-open'],
           className,
         )}
         onClick={() => onToggle(!isOpen)}
       >
-        {Icon && <Icon className={styles['dropdownlist-sm__icon']} />}
-        <p className={styles['dropdownlist-sm__value']}>{title || props?.selectProps.value?.label}</p>
+        {Icon && <Icon className={styles['select-sm__icon']} />}
+        <p className={styles['select-sm__value']}>{title || props?.selectProps.value?.label}</p>
         {onClear ? (
           <span
             role="button"
             tabIndex={0}
             aria-label="Clear selected options"
-            className={styles['dropdownlist-sm__clear-value']}
+            className={styles['select-sm__clear-value']}
             onClick={(event) => {
               event.stopPropagation();
               onClear();
@@ -267,7 +217,7 @@ function ControlSM({
             <ClearIcon />
           </span>
         ) : (
-          <ExpandIcon className={classnames(styles['dropdownlist-sm__arrow'], isOpen && styles['is-open'])} />
+          <ExpandIcon className={classnames(styles['select-sm__arrow'], isOpen && styles['is-open'])} />
         )}
       </button>
     );
@@ -299,10 +249,7 @@ const MenuListLG = ({ selectProps, ...props }: any) => {
   const ScrollBar = PerfectScrollbar as unknown as Function;
 
   return (
-    <ScrollBar
-      className={styles['dropdownlist__scrollbar']}
-      options={{ suppressScrollX: true, wheelPropagation: false }}
-    >
+    <ScrollBar className={styles['select__scrollbar']} options={{ suppressScrollX: true, wheelPropagation: false }}>
       {props.children}
     </ScrollBar>
   );
@@ -313,22 +260,22 @@ const hasSelectedValue = (value: unknown) => (Array.isArray(value) ? value.lengt
 const SKELETON_ROW_WIDTHS = ['80%', '60%', '80%', '60%', '70%'];
 
 function formatCompactOptionLabel(data: unknown, { context, selectValue }: FormatOptionLabelMeta<unknown>) {
-  const option = data as TDropdownOptionBase;
+  const option = data as TSelectOption;
   if (context !== 'menu') return option.label;
 
   const content = (
-    <span className={styles['dropdownlist-sm__option']}>
-      <span className={styles['dropdownlist-sm__option-label']}>{option.label}</span>
-      {option.count !== undefined && <span className={styles['dropdownlist-sm__option-count']}>{option.count}</span>}
+    <span className={styles['select-sm__option']}>
+      <span className={styles['select-sm__option-label']}>{option.label}</span>
+      {option.count !== undefined && <span className={styles['select-sm__option-count']}>{option.count}</span>}
     </span>
   );
 
   if (!Array.isArray(selectValue) || !option.value) return content;
 
   return (
-    <span className={styles['dropdownlist-sm__option-check']}>
+    <span className={styles['select-sm__option-check']}>
       <Checkbox
-        checked={(selectValue as TDropdownOptionBase[]).some(({ value }) => value === option.value)}
+        checked={(selectValue as TSelectOption[]).some(({ value }) => value === option.value)}
         title={content}
         onChange={() => {}}
       />
@@ -337,7 +284,7 @@ function formatCompactOptionLabel(data: unknown, { context, selectValue }: Forma
 }
 
 function filterCompactOption({ label, data }: { label: string; data: unknown }, input: string) {
-  const option = data as TDropdownOptionBase;
+  const option = data as TSelectOption;
   const searchText = option.searchByText ?? (typeof option.label === 'string' ? option.label : label);
 
   return !input || searchText.toLowerCase().includes(input.toLowerCase());
@@ -355,7 +302,7 @@ const MenuListSM = ({ selectProps, ...props }: any) => {
   return (
     <div>
       {isSearchable && (
-        <div className={styles['dropdownlist-sm__search']}>
+        <div className={styles['select-sm__search']}>
           <input
             type="text"
             value={inputValue}
@@ -375,7 +322,7 @@ const MenuListSM = ({ selectProps, ...props }: any) => {
           />
           {inputValue && (
             <button
-              className={styles['dropdownlist-sm__clear']}
+              className={styles['select-sm__clear']}
               type="button"
               aria-label="button"
               onClick={() =>
@@ -390,13 +337,10 @@ const MenuListSM = ({ selectProps, ...props }: any) => {
         </div>
       )}
 
-      <ScrollBar
-        className={styles['dropdownlist__scrollbar']}
-        options={{ suppressScrollX: true, wheelPropagation: false }}
-      >
+      <ScrollBar className={styles['select__scrollbar']} options={{ suppressScrollX: true, wheelPropagation: false }}>
         {selectProps.isLoading
           ? SKELETON_ROW_WIDTHS.map((width, index) => (
-              <div key={index} className={styles['dropdownlist-sm__skeleton']}>
+              <div key={index} className={styles['select-sm__skeleton']}>
                 <Skeleton display="block" height="2.4rem" width={width} />
               </div>
             ))
@@ -413,9 +357,9 @@ const Option = (props: any) => {
   return <components.Option {...props} />;
 };
 
-export function FormikDropdownList(
-  props: Omit<IDropdownListProps<TDropdownOptionBase>, 'options'> & {
-    options: TDropdownOptionBase[];
+export function FormikSelect(
+  props: Omit<ISelectProps<TSelectOption>, 'options'> & {
+    options: TSelectOption[];
   } & FieldHookConfig<string>,
 ) {
   const { name, options, type } = props;
@@ -424,7 +368,7 @@ export function FormikDropdownList(
   const onChange = ({ value }: any) => setValue(value);
 
   return (
-    <DropdownList
+    <Select
       {...props}
       onChange={onChange}
       value={options.find((option) => option.value === field.value)}

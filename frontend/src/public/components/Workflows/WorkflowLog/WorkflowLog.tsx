@@ -17,7 +17,7 @@ import { IntlMessages } from '../../IntlMessages';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { PopupCommentFieldContainer } from './PopupCommentField';
 import { workflowLogSortingValues } from '../../../constants/sortings';
-import { DropdownList, Tabs } from '../../UI';
+import { Select, Tabs } from '../../UI';
 import { getSortingSelectProps } from '../../../utils/getSortingSelectProps';
 
 import {
@@ -116,7 +116,7 @@ export const WorkflowLog = ({
                 theme === 'beige' && styles['popup-body-controls-general__item_beige'],
               )}
             />
-            <DropdownList
+            <Select
               controlSize="sm"
               controlVariant="accent"
               className={styles['popup-body-controls-general__item']}

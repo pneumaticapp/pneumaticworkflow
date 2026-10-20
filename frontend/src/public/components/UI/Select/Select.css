@@ -1,12 +1,12 @@
 /* stylelint-disable declaration-no-important */
 
-.dropdownlist__scrollbar {
+.select__scrollbar {
   max-height: 35.2rem;
   padding-right: 0 !important;
   margin-right: 0 !important;
 }
 
-.dropdownlist-sm {
+.select-sm {
   &__control {
     display: flex;
     align-items: center;
@@ -14,8 +14,8 @@
     background-color: var(--pneumatic-color-black4);
     border-radius: 16px;
 
-    &:hover .dropdownlist-sm__value,
-    &.is-open .dropdownlist-sm__value {
+    &:hover .select-sm__value,
+    &.is-open .select-sm__value {
       color: var(--pneumatic-color-link-hover);
     }
 
@@ -29,14 +29,14 @@
     padding: 0.6rem 1.6rem;
     background-color: var(--pneumatic-color-white);
 
-    .dropdownlist-sm__value {
+    .select-sm__value {
       @mixin text-truncate;
 
       margin-right: 0.8rem;
       font-weight: bold;
     }
 
-    .dropdownlist-sm__arrow {
+    .select-sm__arrow {
       flex-shrink: 0;
       margin-left: auto;
       color: var(--pneumatic-color-black32);
@@ -145,7 +145,7 @@
   }
 }
 
-.dropdownlist-lg {
+.select-lg {
   &__control.is-label {
     position: relative;
     padding-top: 0.8rem;

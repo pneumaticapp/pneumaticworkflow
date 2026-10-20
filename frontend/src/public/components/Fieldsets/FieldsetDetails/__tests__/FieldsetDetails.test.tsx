@@ -17,7 +17,7 @@ import {
   updateFieldsetAction,
 } from '../../../../redux/fieldsets/slice';
 import { ModifyDropdown } from '../../../UI';
-import { DropdownList } from '../../../UI/DropdownList';
+import { Select } from '../../../UI/Select';
 import { NotificationManager } from '../../../UI/Notifications';
 import { ExtraFieldIntl } from '../../../TemplateEdit/ExtraFields';
 import { FieldsetModal } from '../../FieldsetModal/FieldsetModal';
@@ -71,8 +71,8 @@ jest.mock('../../../UI', () => ({
   RouteLeavingGuard: jest.fn(() => null),
 }));
 
-jest.mock('../../../UI/DropdownList', () => ({
-  DropdownList: jest.fn(
+jest.mock('../../../UI/Select', () => ({
+  Select: jest.fn(
     (props: {
       options: { value: string; label: string }[];
       value: { value: string } | { value: string }[] | null;
@@ -243,7 +243,7 @@ describe('FieldsetDetails', () => {
   const getFieldsetModalProps = () => requireJestMock(FieldsetModal, 'FieldsetModal').mock.calls[0][0];
   const getExtraFieldIntlMock = () => requireJestMock(ExtraFieldIntl, 'ExtraFieldIntl');
   const getUpdateActionMock = () => requireJestMock(updateFieldsetAction, 'updateFieldsetAction');
-  const getDropdownListMock = () => requireJestMock(DropdownList, 'DropdownList');
+  const getSelectMock = () => requireJestMock(Select, 'Select');
 
   const mockSelectorState = (state: object) => {
     requireJestMock(useSelector, 'useSelector').mockImplementation((selector: (store: object) => unknown) =>
@@ -364,7 +364,7 @@ describe('FieldsetDetails', () => {
       renderWithState(makeLoadedState({ description: 'Test desc', labelPosition: 'left' }));
       const textarea = screen.getByLabelText(formatMsg('fieldsets.settings.description'));
       expect(textarea).toHaveValue('Test desc');
-      const filterMock = getDropdownListMock();
+      const filterMock = getSelectMock();
       expect(filterMock).toHaveBeenCalledWith(
         expect.objectContaining({ value: expect.objectContaining({ value: 'left' }) }),
         {},
@@ -432,7 +432,7 @@ describe('FieldsetDetails', () => {
 
     it('enables Save after changing label position', () => {
       renderWithState(makeLoadedState());
-      const filterMock = getDropdownListMock();
+      const filterMock = getSelectMock();
       const labelPositionOnChange = filterMock.mock.calls[0][0].onChange;
       act(() => {
         labelPositionOnChange({ value: 'left' });
@@ -642,7 +642,7 @@ describe('FieldsetDetails', () => {
       const ruleInput = screen.getByPlaceholderText(RULE_VALUE_PLACEHOLDER);
       userEvent.type(ruleInput, '100');
 
-      const filterMock = getDropdownListMock();
+      const filterMock = getSelectMock();
       const lastFilterCall = filterMock.mock.calls[filterMock.mock.calls.length - 1];
       const onChange = lastFilterCall[0].onChange;
 
@@ -868,7 +868,7 @@ describe('FieldsetDetails', () => {
 
     it('disables Settings Label Position when isLinked', () => {
       renderWithState(makeLoadedState({ usage: LINKED_USAGE }));
-      const filterMock = getDropdownListMock();
+      const filterMock = getSelectMock();
       expect(filterMock).toHaveBeenCalledWith(expect.objectContaining({ isDisabled: true }), {});
     });
 
@@ -897,7 +897,7 @@ describe('FieldsetDetails', () => {
       const ruleValueInput = screen.getByDisplayValue('100');
       expect(ruleValueInput).toBeDisabled();
 
-      const filterMock = getDropdownListMock();
+      const filterMock = getSelectMock();
       const lastCall = filterMock.mock.calls[filterMock.mock.calls.length - 1];
       expect(lastCall[0]).toEqual(expect.objectContaining({ isDisabled: true }));
     });
@@ -916,14 +916,14 @@ describe('FieldsetDetails', () => {
       const fields = [makeField({ apiName: 'f1', order: 1 })];
       renderWithState(makeLoadedState({ fields, rules, usage: LINKED_USAGE }));
 
-      const mock = getDropdownListMock();
+      const mock = getSelectMock();
       const lastCall = mock.mock.calls[mock.mock.calls.length - 1];
       expect(lastCall[0].isDisabled).toBe(true);
     });
 
     it('does not set isDirty on reselecting the same label position', () => {
       renderWithState(makeLoadedState({ labelPosition: 'left' }));
-      const filterMock = getDropdownListMock();
+      const filterMock = getSelectMock();
 
       const labelPositionCall = filterMock.mock.calls.find(
         (call: [{ value?: { value?: string } | null }]) => call[0].value?.value === 'left',

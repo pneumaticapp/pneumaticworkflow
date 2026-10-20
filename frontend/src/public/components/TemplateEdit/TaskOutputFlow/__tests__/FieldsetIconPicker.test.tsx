@@ -64,7 +64,7 @@ describe('FieldsetIconPicker', () => {
     render(React.createElement(FieldsetIconPicker, makeProps({ fieldsetsCatalogLoading: true })));
     openPicker();
 
-    expect(document.querySelectorAll('.dropdownlist-sm__skeleton')).toHaveLength(5);
+    expect(document.querySelectorAll('.select-sm__skeleton')).toHaveLength(5);
   });
 
   it('fieldsetsCatalogLoading=false and empty catalog -> empty text is rendered', () => {
@@ -113,7 +113,7 @@ describe('FieldsetIconPicker', () => {
     render(React.createElement(FieldsetIconPicker, makeProps({ fieldsetsCatalogLoading: true })));
     openPicker();
 
-    expect(document.querySelectorAll('.dropdownlist-sm__skeleton')).toHaveLength(0);
+    expect(document.querySelectorAll('.select-sm__skeleton')).toHaveLength(0);
     expect(screen.getByText('My Set')).toBeInTheDocument();
   });
 

@@ -9,7 +9,7 @@ import { EOptionTypes, UsersDropdownComponent } from '../UsersDropdown';
 jest.mock('../../..', () => ({
   Avatar: () => null,
   Checkbox: ({ title }: { title: React.ReactNode }) => <span>{title}</span>,
-  DropdownList: ({ options, formatOptionLabel }: any) => (
+  Select: ({ options, formatOptionLabel }: any) => (
     <div>
       {options.map((option: any) => (
         <div key={option.value}>{formatOptionLabel(option, { context: 'menu', selectValue: [] })}</div>

@@ -3,7 +3,7 @@ import { render } from '@testing-library/react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { TemplatesLayout } from '../TemplatesLayout';
-import { DropdownList } from '../../../components/UI';
+import { Select } from '../../../components/UI';
 import { setFieldsetsListSorting } from '../../../redux/fieldsets/slice';
 import { EFieldsetsSorting } from '../../../types/fieldset';
 import { fieldsetsSortingValues } from '../../../constants/sortings';
@@ -17,7 +17,7 @@ jest.mock('../../../components/TopNav', () => ({
 }));
 
 jest.mock('../../../components/UI', () => ({
-  DropdownList: jest.fn(() => null),
+  Select: jest.fn(() => null),
   Tabs: jest.fn(() => null),
 }));
 
@@ -72,13 +72,13 @@ describe('TemplatesLayout — fieldsets sorting', () => {
   });
 
   const getFieldsetsSortingCalls = () =>
-    (DropdownList as jest.Mock).mock.calls.filter(
+    (Select as jest.Mock).mock.calls.filter(
       (call: [{ options: { value: string }[] }]) =>
         call[0].options.length === fieldsetsSortingValues.length &&
         call[0].options.every((option, index) => option.value === fieldsetsSortingValues[index]),
     );
 
-  it('renders a compact sorting DropdownList with fieldsets values on fieldsets tab', () => {
+  it('renders a compact sorting Select with fieldsets values on fieldsets tab', () => {
     setPathname(ERoutes.Fieldsets);
 
     render(React.createElement(TemplatesLayout, null, 'child'));

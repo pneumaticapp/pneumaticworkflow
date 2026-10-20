@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 import { Avatar } from '../../components/UI';
-import { DropdownList } from '../../components/UI/DropdownList';
+import { Select } from '../../components/UI/Select';
 import {
   cancelCurrentPerformersCounters,
   cancelTemplateTasksCounters,
@@ -57,7 +57,7 @@ export function StarterFilterSelect() {
   }, [activeUsers, workflowStartersCounters]);
 
   return (
-    <DropdownList
+    <Select
       controlSize="sm"
       controlVariant="accent"
       Icon={StarterFilterIcon}

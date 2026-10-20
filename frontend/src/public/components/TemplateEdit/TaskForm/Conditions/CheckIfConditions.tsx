@@ -23,7 +23,7 @@ import { ESubscriptionPlan } from '../../../../types/account';
 import { getSubscriptionPlan } from '../../../../redux/selectors/user';
 import { usePrevious } from '../../../../hooks/usePrevious';
 import { EConditionAction, TConditionRule } from './types';
-import { DropdownList, Tooltip } from '../../../UI';
+import { Select, Tooltip } from '../../../UI';
 import { getSortingSelectProps } from '../../../../utils/getSortingSelectProps';
 import { ICondition, Predicate, RichLabel } from '.';
 
@@ -203,7 +203,7 @@ export function CheckIfConditions({
             {formatMessage({ id: 'templates.conditions.add-another-rule' })}
           </button>
         )}
-        <DropdownList
+        <Select
           controlSize="sm"
           controlVariant="accent"
           controlClassName={styles['select']}

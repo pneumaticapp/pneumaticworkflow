@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 
-import { DropdownList, Placeholder, InputField } from '../../UI';
+import { Select, Placeholder, InputField } from '../../UI';
 import { getSortingSelectProps } from '../../../utils/getSortingSelectProps';
 import { SearchMediumIcon } from '../../icons';
 import { TasksPlaceholderIcon } from '../../Tasks/TasksPlaceholderIcon';
@@ -90,7 +90,7 @@ export const DatasetItemsList = ({
             onClear={() => onSearchChange('')}
           />
         </div>
-        <DropdownList
+        <Select
           controlSize="sm"
           controlVariant="accent"
           className={styles['dataset__sorting-container']}

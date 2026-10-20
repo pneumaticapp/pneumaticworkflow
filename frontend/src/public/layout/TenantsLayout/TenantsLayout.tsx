@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 
 import { TopNavContainer } from '../../components/TopNav';
-import { DropdownList } from '../../components/UI';
+import { Select } from '../../components/UI';
 import { getSortingSelectProps } from '../../utils/getSortingSelectProps';
 import { ETenantsSorting } from '../../types/tenants';
 
@@ -18,7 +18,7 @@ export function TenantsLayout({ children, sorting, changeSorting }: ITenantsLayo
 
   const renderTenantsNavContent = () => {
     return (
-      <DropdownList
+      <Select
         controlSize="sm"
         controlVariant="accent"
         {...getSortingSelectProps(sortingTitles, sorting, changeSorting, formatMessage)}

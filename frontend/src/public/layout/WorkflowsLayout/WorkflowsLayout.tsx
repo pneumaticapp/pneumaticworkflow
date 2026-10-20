@@ -10,7 +10,7 @@ import { history } from '../../utils/history';
 import { WorkflowModalContainer } from '../../components/Workflows/WorkflowModal';
 import classnames from 'classnames';
 import type { FormatOptionLabelMeta } from 'react-select';
-import { DropdownList, Tabs } from '../../components/UI';
+import { Select, Tabs } from '../../components/UI';
 import { getSortingSelectProps } from '../../utils/getSortingSelectProps';
 import { EWorkflowsSorting, EWorkflowsStatus, EWorkflowsView, ITemplateFilterItem } from '../../types/workflow';
 import { BoxesIcon, StatusTitlesIcon, TableViewIcon } from '../../components/icons';
@@ -379,7 +379,7 @@ export function WorkflowsLayoutComponent({
       <>
         <TemplateFilterSelect />
         <StarterFilterSelect />
-        <DropdownList
+        <Select
           controlSize="sm"
           controlVariant="accent"
           Icon={StatusTitlesIcon}
@@ -389,7 +389,7 @@ export function WorkflowsLayoutComponent({
         />
         <TaskFilterSelect selectedTemplates={selectedTemplates} />
         <PerformerFilterSelect />
-        <DropdownList
+        <Select
           controlSize="sm"
           controlVariant="accent"
           formatOptionLabel={renderRadioOption}

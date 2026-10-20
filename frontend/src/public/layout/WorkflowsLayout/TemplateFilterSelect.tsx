@@ -8,7 +8,7 @@ import {
   setFilterTemplate as setWorkflowsFilterTemplate,
 } from '../../redux/workflows/slice';
 
-import { DropdownList } from '../../components/UI/DropdownList';
+import { Select } from '../../components/UI/Select';
 import { FilterIcon } from '../../components/icons';
 import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
 import styles from './WorkflowsLayout.css';
@@ -42,7 +42,7 @@ export function TemplateFilterSelect() {
   }, [filterTemplates]);
 
   return (
-    <DropdownList
+    <Select
       controlSize="sm"
       controlVariant="accent"
       Icon={FilterIcon}

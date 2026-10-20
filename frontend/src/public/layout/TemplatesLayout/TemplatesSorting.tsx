@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { DropdownList } from '../../components/UI';
+import { Select } from '../../components/UI';
 import { getTemplatesListSorting } from '../../redux/selectors/templates';
 import { changeTemplatesSorting } from '../../redux/actions';
 import { workflowsSortingValues } from '../../constants/sortings';
@@ -14,7 +14,7 @@ export function TemplatesSorting() {
   const sorting = useSelector(getTemplatesListSorting);
 
   return (
-    <DropdownList
+    <Select
       controlSize="sm"
       controlVariant="accent"
       {...getSortingSelectProps(

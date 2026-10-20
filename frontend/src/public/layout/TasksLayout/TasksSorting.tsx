@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { DropdownList } from '../../components/UI';
+import { Select } from '../../components/UI';
 import { getTasksSettings } from '../../redux/selectors/tasks';
 import { changeTaskListSorting } from '../../redux/tasks/slice';
 import { processesTasksCompleteSortingValues, processesTasksSortingValues } from '../../constants/sortings';
@@ -20,7 +20,7 @@ export function TasksSorting() {
       : processesTasksSortingValues;
 
   return (
-    <DropdownList
+    <Select
       controlSize="sm"
       controlVariant="accent"
       {...getSortingSelectProps(values, sorting, (value) => dispatch(changeTaskListSorting(value)), formatMessage)}

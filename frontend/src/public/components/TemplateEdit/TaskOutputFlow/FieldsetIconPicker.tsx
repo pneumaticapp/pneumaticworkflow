@@ -7,7 +7,7 @@ import { IFieldsetCatalogItem } from '../../../types/fieldset';
 import { getFieldsetsCatalogItems } from '../../../redux/selectors/fieldsets';
 import { CustomTooltip } from '../../UI/CustomTooltip';
 import { Tooltip } from '../../UI/Tooltip';
-import { DropdownList, TDropdownOptionBase } from '../../UI/DropdownList';
+import { Select, TSelectOption } from '../../UI/Select';
 import { FieldsetIcon } from '../../icons/FieldsetIcon';
 
 import pickerStyles from './FieldsetIconPicker.css';
@@ -51,7 +51,7 @@ export const FieldsetIconPicker = ({ fieldsetsCatalogLoading, onSelectFieldset }
   const triggerRef = useRef<HTMLSpanElement>(null);
   const fieldsetsCatalogItems = useSelector(getFieldsetsCatalogItems);
 
-  const options = useMemo((): TDropdownOptionBase[] => {
+  const options = useMemo((): TSelectOption[] => {
     const rows = buildCatalogPickerRows(fieldsetsCatalogItems);
     return rows.map((row) => ({
       value: String(row.id),
@@ -76,7 +76,7 @@ export const FieldsetIconPicker = ({ fieldsetsCatalogLoading, onSelectFieldset }
   }, [fieldsetsCatalogItems]);
 
   const handleSelectFieldset = useCallback(
-    ({ value }: TDropdownOptionBase) => {
+    ({ value }: TSelectOption) => {
       const fieldsetCatalogItem = fieldsetsCatalogItems.find((item) => String(item.id) === value);
       if (fieldsetCatalogItem) {
         onSelectFieldset(fieldsetCatalogItem);
@@ -87,7 +87,7 @@ export const FieldsetIconPicker = ({ fieldsetsCatalogLoading, onSelectFieldset }
 
   return (
     <div className={flowStyles['flow__fieldset-icon-slot']}>
-      <DropdownList
+      <Select
         controlSize="sm"
         isSearchable
         options={options}

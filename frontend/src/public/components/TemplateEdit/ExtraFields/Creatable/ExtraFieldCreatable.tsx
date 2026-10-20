@@ -3,7 +3,7 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
-import { DropdownList } from '../../../UI/DropdownList';
+import { Select } from '../../../UI/Select';
 
 import { getEmptySelection } from '../../KickoffRedux/utils/getEmptySelection';
 import { fitInputWidth } from '../utils/fitInputWidth';
@@ -285,7 +285,7 @@ export function ExtraFieldCreatable({
           </div>
         )}
         <div {...(isLabelLeft && { className: inputStyles['dropdown-select-wrapper_label-left'] })}>
-          <DropdownList
+          <Select
             options={dropdownSelections}
             onChange={handleSelectableChange}
             placeholder={description}

@@ -9,7 +9,7 @@ import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
 import { FilterIcon } from '../../components/icons';
 import { Tabs, ReturnLink } from '../../components/UI';
-import { DropdownList } from '../../components/UI/DropdownList';
+import { Select } from '../../components/UI/Select';
 import { checkSomeRouteIsActive, history } from '../../utils/history';
 import { reactElementToText } from '../../utils/reactElementToText';
 import { ITopNavOwnProps } from '../../components/TopNav/TopNav';
@@ -172,7 +172,7 @@ export function TasksLayoutComponent({
             containerClassName={styles['completion-status-tabs']}
           />
           <div className={styles['template-filter']}>
-            <DropdownList
+            <Select
               controlSize="sm"
               controlVariant="accent"
               Icon={FilterIcon}
@@ -188,7 +188,7 @@ export function TasksLayoutComponent({
           </div>
           {templateIdFilter && (
             <div className={styles['step-filter']}>
-              <DropdownList
+              <Select
                 controlSize="sm"
                 controlVariant="accent"
                 Icon={FilterIcon}

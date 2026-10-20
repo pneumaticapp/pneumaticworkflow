@@ -2,7 +2,7 @@ export * from './Avatar';
 export * from './Buttons/Button';
 export * from './Buttons/AddCardButton';
 export * from './CustomTooltip';
-export * from './DropdownList';
+export * from './Select';
 export * from './Duration';
 export * from './EditableText';
 export * from './Fields/Checkbox';

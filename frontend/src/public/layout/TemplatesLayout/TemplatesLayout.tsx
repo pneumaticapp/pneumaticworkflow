@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 
 import { TemplatesSorting } from './TemplatesSorting';
 import { TopNavContainer } from '../../components/TopNav';
-import { DropdownList, Tabs } from '../../components/UI';
+import { Select, Tabs } from '../../components/UI';
 import { getSortingSelectProps } from '../../utils/getSortingSelectProps';
 import { ERoutes } from '../../constants/routes';
 import { datasetsSortingValues, fieldsetsSortingValues } from '../../constants/sortings';
@@ -103,7 +103,7 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
         <Tabs activeValueId={activeTab} values={tabValues} onChange={handleTabChange} />
         {activeTab === ETemplatesTab.Templates && <TemplatesSorting />}
         {activeTab === ETemplatesTab.Datasets && (
-          <DropdownList
+          <Select
             controlSize="sm"
             controlVariant="accent"
             {...getSortingSelectProps(
@@ -115,7 +115,7 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
           />
         )}
         {activeTab === ETemplatesTab.Fieldsets && (
-          <DropdownList
+          <Select
             controlSize="sm"
             controlVariant="accent"
             {...getSortingSelectProps(

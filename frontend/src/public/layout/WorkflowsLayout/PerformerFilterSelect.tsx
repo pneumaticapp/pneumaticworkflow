@@ -24,7 +24,7 @@ import { getAccountsUsers } from '../../redux/selectors/accounts';
 
 import { getActiveUsers, getUserFullName } from '../../utils/users';
 import { Avatar } from '../../components/UI';
-import { DropdownList } from '../../components/UI/DropdownList';
+import { Select } from '../../components/UI/Select';
 import { PerformerFilterIcon } from '../../components/icons';
 import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
 import { canFilterByTemplateStep } from '../../utils/workflows/filters';
@@ -106,7 +106,7 @@ export function PerformerFilterSelect() {
   ];
 
   return (
-    <DropdownList
+    <Select
       controlSize="sm"
       controlVariant="accent"
       Icon={PerformerFilterIcon}

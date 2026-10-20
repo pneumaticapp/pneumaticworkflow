@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { DropdownList } from '../../components/UI';
+import { Select } from '../../components/UI';
 import { getGroupsListSorting } from '../../redux/selectors/groups';
 import { changeGroupsListSorting } from '../../redux/actions';
 import { groupListSortingValues } from '../../constants/sortings';
@@ -14,7 +14,7 @@ export function GroupListSorting() {
   const sorting = useSelector(getGroupsListSorting);
 
   return (
-    <DropdownList
+    <Select
       controlSize="sm"
       controlVariant="accent"
       {...getSortingSelectProps(

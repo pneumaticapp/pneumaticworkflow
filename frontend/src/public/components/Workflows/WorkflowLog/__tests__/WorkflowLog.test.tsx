@@ -51,7 +51,7 @@ jest.mock('../PopupCommentField', () => ({
 }));
 
 jest.mock('../../../UI', () => ({
-  DropdownList: () => <div data-testid="select-menu" />,
+  Select: () => <div data-testid="select-menu" />,
   Tabs: () => <div data-testid="tabs" />,
 }));
 

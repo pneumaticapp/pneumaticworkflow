@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
-import { DropdownList, Duration } from '../../../UI';
+import { Select, Duration } from '../../../UI';
 import { TrashIcon } from '../../../icons';
 
 import { IDueDate, ITemplateKickoffClient, ITemplateTaskClient } from '../../../../types/template';
@@ -103,7 +103,7 @@ export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDue
           />
           <div className={styles['rule']}>
             <div className={styles['rule-preposition']}>
-              <DropdownList
+              <Select
                 isSearchable={false}
                 value={currentPrepositionOption}
                 onChange={(option: TRulePrepositionOption) => {
@@ -117,7 +117,7 @@ export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDue
               />
             </div>
             <div className={styles['rule-target']}>
-              <DropdownList
+              <Select
                 placeholder={formatMessage({ id: 'tasks.task-due-date-rule-placeholder' })}
                 isSearchable={false}
                 value={currentTargetOption}
