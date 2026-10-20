@@ -52,6 +52,51 @@
     margin-right: 0.4rem;
   }
 
+  &__clear-value {
+    display: flex;
+    flex-shrink: 0;
+    margin-left: auto;
+    color: var(--pneumatic-color-black32);
+    transition: color 0.1s;
+
+    &:hover {
+      color: var(--pneumatic-color-link-hover);
+    }
+  }
+
+  &__option {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+  }
+
+  &__option-label {
+    @mixin text-truncate;
+
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  &__option-count {
+    @mixin text-small-extra bold;
+
+    flex-shrink: 0;
+    color: var(--pneumatic-color-black48);
+    letter-spacing: 0.05em;
+  }
+
+  &__option-check {
+    width: 100%;
+    min-width: 0;
+    pointer-events: none;
+  }
+
+  &__skeleton {
+    padding: 0.4rem 1.2rem;
+  }
+
   &__value {
     @mixin text-small;
 

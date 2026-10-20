@@ -2,12 +2,14 @@ import * as React from 'react';
 import { useState } from 'react';
 import classnames from 'classnames';
 import Select, { components } from 'react-select';
-import type { CSSObjectWithLabel } from 'react-select';
+import type { CSSObjectWithLabel, FormatOptionLabelMeta } from 'react-select';
 import { FieldHookConfig, useField } from 'formik';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import OutsideClickHandler from 'react-outside-click-handler';
 
-import { ArrowDropdownIcon, ExpandIcon, RoundClearIconMd } from '../../icons';
+import { ArrowDropdownIcon, ClearIcon, ExpandIcon, RoundClearIconMd } from '../../icons';
+import { Checkbox } from '../Fields/Checkbox';
+import { Skeleton } from '../Skeleton';
 
 import '../../../assets/css/library/react-select.css';
 import styles from './DropdownList.css';
@@ -20,6 +22,8 @@ export type TDropdownOptionBase = {
   label: string | React.ReactNode;
   sourceId?: string | null;
   value?: string;
+  count?: number;
+  searchByText?: string;
   onClick?: () => void;
 };
 
@@ -31,6 +35,7 @@ interface IControlSMParams {
   className?: string;
   Icon?(props: React.SVGAttributes<SVGElement>): JSX.Element;
   onToggle(isOpen: boolean): void;
+  onClear?(): void;
 }
 
 export interface IDropdownListProps<TOption extends TDropdownOptionBase> extends Omit<
@@ -50,6 +55,7 @@ export interface IDropdownListProps<TOption extends TDropdownOptionBase> extends
   controlVariant?: TControlVariant;
   controlClassName?: string;
   Icon?(props: React.SVGAttributes<SVGElement>): JSX.Element;
+  onClear?(): void;
 }
 
 const MENU_PORTAL_STYLES = { menuPortal: (base: CSSObjectWithLabel) => ({ ...base, zIndex: 1080 }) };
@@ -59,6 +65,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
   controlVariant = 'muted',
   controlClassName,
   Icon,
+  onClear,
   label,
   title,
   className,
@@ -99,6 +106,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
             className: controlClassName,
             Icon,
             onToggle: setIsOpen,
+            onClear: onClear && hasSelectedValue(restProps.value) ? onClear : undefined,
           })
         : () => null,
       ...(!restProps.staticMenu && { Input: () => null }),
@@ -153,7 +161,11 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
           {restProps.isRequired && <span className={styles['is-required']}>*</span>}
         </p>
       )}
-      <OutsideClickHandler onOutsideClick={() => setIsOpen(false)}>
+      <OutsideClickHandler
+        onOutsideClick={(event: MouseEvent) => {
+          if (!(event.target as Element | null)?.closest?.('.react-select__menu-portal')) setIsOpen(false);
+        }}
+      >
         <Select
           isMulti={isMulti}
           closeMenuOnSelect={!isMulti}
@@ -166,6 +178,10 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
           inputValue={filterValue}
           onInputChange={handleInputChange}
           styles={MENU_PORTAL_STYLES}
+          {...(controlSize === 'sm' && {
+            formatOptionLabel: formatCompactOptionLabel,
+            filterOption: filterCompactOption,
+          })}
           {...restProps}
           onChange={(value: unknown, action: unknown) => {
             if (controlSize === 'sm' && !isMulti) setIsOpen(false);
@@ -180,7 +196,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
   );
 }
 
-function ControlSM({ title, isOpen, isDisabled, variant, className, Icon, onToggle }: IControlSMParams) {
+function ControlSM({ title, isOpen, isDisabled, variant, className, Icon, onToggle, onClear }: IControlSMParams) {
   return (props: any) => {
     return (
       <button
@@ -198,7 +214,28 @@ function ControlSM({ title, isOpen, isDisabled, variant, className, Icon, onTogg
       >
         {Icon && <Icon className={styles['dropdownlist-sm__icon']} />}
         <p className={styles['dropdownlist-sm__value']}>{title || props?.selectProps.value?.label}</p>
-        <ExpandIcon className={classnames(styles['dropdownlist-sm__arrow'], isOpen && styles['is-open'])} />
+        {onClear ? (
+          <span
+            role="button"
+            tabIndex={0}
+            aria-label="Clear selected options"
+            className={styles['dropdownlist-sm__clear-value']}
+            onClick={(event) => {
+              event.stopPropagation();
+              onClear();
+            }}
+            onKeyDown={(event) => {
+              if (event.key !== 'Enter' && event.key !== ' ') return;
+              event.preventDefault();
+              event.stopPropagation();
+              onClear();
+            }}
+          >
+            <ClearIcon />
+          </span>
+        ) : (
+          <ExpandIcon className={classnames(styles['dropdownlist-sm__arrow'], isOpen && styles['is-open'])} />
+        )}
       </button>
     );
   };
@@ -237,6 +274,41 @@ const MenuListLG = ({ selectProps, ...props }: any) => {
     </ScrollBar>
   );
 };
+
+const hasSelectedValue = (value: unknown) => (Array.isArray(value) ? value.length > 0 : Boolean(value));
+
+const SKELETON_ROW_WIDTHS = ['80%', '60%', '80%', '60%', '70%'];
+
+function formatCompactOptionLabel(data: unknown, { context, selectValue }: FormatOptionLabelMeta<unknown>) {
+  const option = data as TDropdownOptionBase;
+  if (context !== 'menu') return option.label;
+
+  const content = (
+    <span className={styles['dropdownlist-sm__option']}>
+      <span className={styles['dropdownlist-sm__option-label']}>{option.label}</span>
+      {option.count !== undefined && <span className={styles['dropdownlist-sm__option-count']}>{option.count}</span>}
+    </span>
+  );
+
+  if (!Array.isArray(selectValue) || !option.value) return content;
+
+  return (
+    <span className={styles['dropdownlist-sm__option-check']}>
+      <Checkbox
+        checked={(selectValue as TDropdownOptionBase[]).some(({ value }) => value === option.value)}
+        title={content}
+        onChange={() => {}}
+      />
+    </span>
+  );
+}
+
+function filterCompactOption({ label, data }: { label: string; data: unknown }, input: string) {
+  const option = data as TDropdownOptionBase;
+  const searchText = option.searchByText ?? (typeof option.label === 'string' ? option.label : label);
+
+  return !input || searchText.toLowerCase().includes(input.toLowerCase());
+}
 
 const MenuListSM = ({ selectProps, ...props }: any) => {
   const ScrollBar = PerfectScrollbar as unknown as Function;
@@ -289,7 +361,13 @@ const MenuListSM = ({ selectProps, ...props }: any) => {
         className={styles['dropdownlist__scrollbar']}
         options={{ suppressScrollX: true, wheelPropagation: false }}
       >
-        {props.children}
+        {selectProps.isLoading
+          ? SKELETON_ROW_WIDTHS.map((width, index) => (
+              <div key={index} className={styles['dropdownlist-sm__skeleton']}>
+                <Skeleton display="block" height="2.4rem" width={width} />
+              </div>
+            ))
+          : props.children}
       </ScrollBar>
     </div>
   );

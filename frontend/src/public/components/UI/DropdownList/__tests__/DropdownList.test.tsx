@@ -51,20 +51,102 @@ describe('DropdownList compact control', () => {
     expect(screen.queryByText('By name')).not.toBeInTheDocument();
   });
 
-  it('renders the menu into a portal target when one is passed', () => {
+  it('selects an option rendered into a portal target', () => {
+    const onChange = jest.fn();
     render(
       <DropdownList
         controlSize="sm"
         options={OPTIONS}
         value={OPTIONS[0]}
-        onChange={jest.fn()}
+        onChange={onChange}
         menuPortalTarget={document.body}
         menuPosition="fixed"
       />,
     );
 
     userEvent.click(screen.getByRole('button', { name: 'By date' }));
+    const option = screen.getByText('By name');
+    expect(document.body.querySelector('.react-select__menu-portal')).toContainElement(option);
 
-    expect(document.body.querySelector('.react-select__menu-portal')).toContainElement(screen.getByText('By name'));
+    userEvent.click(option);
+
+    expect(onChange).toHaveBeenCalledWith(OPTIONS[1], expect.objectContaining({ action: 'select-option' }));
+  });
+
+  it('shows a clear button instead of the arrow while something is selected', () => {
+    const onClear = jest.fn();
+    const onChange = jest.fn();
+    const { rerender } = render(
+      <DropdownList controlSize="sm" isMulti options={OPTIONS} value={[]} onChange={onChange} onClear={onClear} />,
+    );
+    expect(screen.queryByRole('button', { name: 'Clear selected options' })).not.toBeInTheDocument();
+
+    rerender(
+      <DropdownList
+        controlSize="sm"
+        isMulti
+        options={OPTIONS}
+        value={[OPTIONS[1]]}
+        onChange={onChange}
+        onClear={onClear}
+      />,
+    );
+    userEvent.click(screen.getByRole('button', { name: 'Clear selected options' }));
+
+    expect(onClear).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('By date')).not.toBeInTheDocument();
+  });
+
+  it('renders checked checkboxes for selected options and keeps a multi menu open', () => {
+    const onChange = jest.fn();
+    render(
+      <DropdownList
+        controlSize="sm"
+        title="Sorting"
+        isMulti
+        options={OPTIONS}
+        value={[OPTIONS[1]]}
+        onChange={onChange}
+      />,
+    );
+
+    userEvent.click(screen.getByRole('button', { name: 'Sorting' }));
+    const checkboxes = screen.getAllByRole('checkbox');
+    expect(checkboxes.map((checkbox) => (checkbox as HTMLInputElement).checked)).toEqual([false, true]);
+
+    userEvent.click(screen.getByText('By date'));
+
+    expect(onChange).toHaveBeenCalledWith([OPTIONS[1], OPTIONS[0]], expect.anything());
+    expect(screen.getByText('By date')).toBeInTheDocument();
+  });
+
+  it('shows skeleton rows instead of options while loading', () => {
+    render(<DropdownList controlSize="sm" title="Templates" isLoading options={OPTIONS} onChange={jest.fn()} />);
+
+    userEvent.click(screen.getByRole('button', { name: 'Templates' }));
+
+    expect(screen.queryByText('By name')).not.toBeInTheDocument();
+    expect(document.querySelectorAll('.dropdownlist-sm__skeleton')).toHaveLength(5);
+  });
+
+  it('filters options by searchByText', () => {
+    render(
+      <DropdownList
+        controlSize="sm"
+        title="Users"
+        isSearchable
+        options={[
+          { value: '1', label: 'Ada', searchByText: 'ada lovelace' },
+          { value: '2', label: 'Alan', searchByText: 'alan turing' },
+        ]}
+        onChange={jest.fn()}
+      />,
+    );
+
+    userEvent.click(screen.getByRole('button', { name: 'Users' }));
+    userEvent.type(screen.getByRole('textbox'), 'turing');
+
+    expect(screen.queryByText('Ada')).not.toBeInTheDocument();
+    expect(screen.getByText('Alan')).toBeInTheDocument();
   });
 });
