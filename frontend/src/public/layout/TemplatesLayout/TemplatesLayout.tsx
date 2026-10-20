@@ -2,9 +2,10 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector, useDispatch } from 'react-redux';
 
-import { TemplatesSortingContainer } from './TemplatesSortingContainer';
+import { TemplatesSorting } from './TemplatesSorting';
 import { TopNavContainer } from '../../components/TopNav';
-import { SelectMenu, Tabs } from '../../components/UI';
+import { DropdownList, Tabs } from '../../components/UI';
+import { getSortingSelectProps } from '../../utils/getSortingSelectProps';
 import { ERoutes } from '../../constants/routes';
 import { datasetsSortingValues, fieldsetsSortingValues } from '../../constants/sortings';
 import { setDatasetsListSorting } from '../../redux/datasets/slice';
@@ -100,23 +101,29 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
     return (
       <div className={styles['navbar-left__content']}>
         <Tabs activeValueId={activeTab} values={tabValues} onChange={handleTabChange} />
-        {activeTab === ETemplatesTab.Templates && <TemplatesSortingContainer />}
+        {activeTab === ETemplatesTab.Templates && <TemplatesSorting />}
         {activeTab === ETemplatesTab.Datasets && (
-          <SelectMenu
-            closeOnSelect
-            activeValue={datasetsSortingType}
-            values={datasetsSortingValues}
-            toggleTextClassName={styles['sorting-toggle-text']}
-            onChange={handleDatasetsSortingChange}
+          <DropdownList
+            controlSize="sm"
+            controlVariant="accent"
+            {...getSortingSelectProps(
+              datasetsSortingValues,
+              datasetsSortingType,
+              handleDatasetsSortingChange,
+              formatMessage,
+            )}
           />
         )}
         {activeTab === ETemplatesTab.Fieldsets && (
-          <SelectMenu
-            closeOnSelect
-            activeValue={fieldsetsSortingType}
-            values={fieldsetsSortingValues}
-            toggleTextClassName={styles['sorting-toggle-text']}
-            onChange={handleFieldsetsSortingChange}
+          <DropdownList
+            controlSize="sm"
+            controlVariant="accent"
+            {...getSortingSelectProps(
+              fieldsetsSortingValues,
+              fieldsetsSortingType,
+              handleFieldsetsSortingChange,
+              formatMessage,
+            )}
           />
         )}
       </div>

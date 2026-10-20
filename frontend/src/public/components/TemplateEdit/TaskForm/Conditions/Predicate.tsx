@@ -2,7 +2,8 @@ import React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import { DropdownList, SelectMenu } from '../../../UI';
+import { DropdownList } from '../../../UI';
+import { getSortingSelectProps } from '../../../../utils/getSortingSelectProps';
 import { IDropdownOperator } from './utils/getDropdownOperators';
 import { CONDITION_DISABLED_OPERATOR, OPERATORS_WITHOUT_VALUE } from './utils/shared';
 import { getFormattedDropdownOption } from './utils/getFormattedDropdownOption';
@@ -58,14 +59,18 @@ export function Predicate({
       {ruleIndex !== 0 && (
         <div className={styles['condition-rule__logic-operation']}>
           {rule.logicOperation && (
-            <SelectMenu
+            <DropdownList
+              controlSize="sm"
+              controlVariant="accent"
+              controlClassName={styles['select-logic-operation']}
               isDisabled={!accessConditions}
-              hideSelectedOption
-              activeValue={rule.logicOperation}
-              containerClassName={styles['select-logic-operation']}
-              toggleClassName={styles['select-toggle']}
-              values={Object.values(EConditionLogicOperations)}
-              onChange={(logicOperation) => changeCurrentRule({ logicOperation })}
+              hideSelectedOptions
+              {...getSortingSelectProps(
+                Object.values(EConditionLogicOperations),
+                rule.logicOperation,
+                (logicOperation) => changeCurrentRule({ logicOperation }),
+                formatMessage,
+              )}
             />
           )}
         </div>

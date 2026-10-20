@@ -3,7 +3,7 @@ import { render } from '@testing-library/react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { TemplatesLayout } from '../TemplatesLayout';
-import { SelectMenu } from '../../../components/UI';
+import { DropdownList } from '../../../components/UI';
 import { setFieldsetsListSorting } from '../../../redux/fieldsets/slice';
 import { EFieldsetsSorting } from '../../../types/fieldset';
 import { fieldsetsSortingValues } from '../../../constants/sortings';
@@ -17,7 +17,7 @@ jest.mock('../../../components/TopNav', () => ({
 }));
 
 jest.mock('../../../components/UI', () => ({
-  SelectMenu: jest.fn(() => null),
+  DropdownList: jest.fn(() => null),
   Tabs: jest.fn(() => null),
 }));
 
@@ -25,8 +25,8 @@ jest.mock('../../../components/UI/ReturnLink', () => ({
   ReturnLink: jest.fn(() => null),
 }));
 
-jest.mock('../TemplatesSortingContainer', () => ({
-  TemplatesSortingContainer: jest.fn(() => null),
+jest.mock('../TemplatesSorting', () => ({
+  TemplatesSorting: jest.fn(() => null),
 }));
 
 jest.mock('../../../utils/history', () => ({
@@ -71,21 +71,24 @@ describe('TemplatesLayout — fieldsets sorting', () => {
     (useSelector as jest.Mock).mockReturnValue(EFieldsetsSorting.DateDesc);
   });
 
-  it('renders sorting SelectMenu with fieldsets values on fieldsets tab', () => {
+  const getFieldsetsSortingCalls = () =>
+    (DropdownList as jest.Mock).mock.calls.filter(
+      (call: [{ options: { value: string }[] }]) =>
+        call[0].options.length === fieldsetsSortingValues.length &&
+        call[0].options.every((option, index) => option.value === fieldsetsSortingValues[index]),
+    );
+
+  it('renders a compact sorting DropdownList with fieldsets values on fieldsets tab', () => {
     setPathname(ERoutes.Fieldsets);
 
     render(React.createElement(TemplatesLayout, null, 'child'));
 
-    const selectMenuMock = SelectMenu as jest.Mock;
-    const fieldsetsCalls = selectMenuMock.mock.calls.filter(
-      (call: [Record<string, unknown>]) => call[0].values === fieldsetsSortingValues,
-    );
+    const fieldsetsCalls = getFieldsetsSortingCalls();
     expect(fieldsetsCalls.length).toBe(1);
     expect(fieldsetsCalls[0][0]).toEqual(
       expect.objectContaining({
-        activeValue: EFieldsetsSorting.DateDesc,
-        values: fieldsetsSortingValues,
-        closeOnSelect: true,
+        controlSize: 'sm',
+        value: expect.objectContaining({ value: EFieldsetsSorting.DateDesc }),
       }),
     );
   });
@@ -95,13 +98,10 @@ describe('TemplatesLayout — fieldsets sorting', () => {
 
     render(React.createElement(TemplatesLayout, null, 'child'));
 
-    const selectMenuMock = SelectMenu as jest.Mock;
-    const fieldsetsCall = selectMenuMock.mock.calls.find(
-      (call: [Record<string, unknown>]) => call[0].values === fieldsetsSortingValues,
-    );
-    const onChangeProp = fieldsetsCall[0].onChange as (value: EFieldsetsSorting) => void;
+    const [fieldsetsCall] = getFieldsetsSortingCalls();
+    const onChangeProp = fieldsetsCall[0].onChange as (option: { value: EFieldsetsSorting }) => void;
 
-    onChangeProp(EFieldsetsSorting.NameAsc);
+    onChangeProp({ value: EFieldsetsSorting.NameAsc });
 
     expect(setFieldsetsListSorting).toHaveBeenCalledTimes(1);
     expect(setFieldsetsListSorting).toHaveBeenCalledWith(EFieldsetsSorting.NameAsc);

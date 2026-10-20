@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 
-import { Placeholder, SelectMenu, InputField } from '../../UI';
+import { DropdownList, Placeholder, InputField } from '../../UI';
+import { getSortingSelectProps } from '../../../utils/getSortingSelectProps';
 import { SearchMediumIcon } from '../../icons';
 import { TasksPlaceholderIcon } from '../../Tasks/TasksPlaceholderIcon';
 import { DatasetRow } from '../DatasetRow/DatasetRow';
@@ -89,13 +90,17 @@ export const DatasetItemsList = ({
             onClear={() => onSearchChange('')}
           />
         </div>
-        <SelectMenu
-          closeOnSelect
-          activeValue={sorting}
-          values={datasetsSortingValues}
-          onChange={(val) => onSortingChange(val as EDatasetsSorting)}
-          containerClassName={styles['dataset__sorting-container']}
-          {...(isMobile && { activeValueLabelId: `datasets.sorting.${sorting}.mobile` })}
+        <DropdownList
+          controlSize="sm"
+          controlVariant="accent"
+          className={styles['dataset__sorting-container']}
+          {...(isMobile && { title: formatMessage({ id: `datasets.sorting.${sorting}.mobile` }) })}
+          {...getSortingSelectProps(
+            datasetsSortingValues,
+            sorting,
+            (value) => onSortingChange(value as EDatasetsSorting),
+            formatMessage,
+          )}
         />
       </div>
       {renderItems()}

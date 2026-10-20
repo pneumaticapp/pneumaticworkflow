@@ -3,7 +3,7 @@ import { matchPath } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
-import { TasksSortingContainer } from './TasksSortingContainer';
+import { TasksSorting } from './TasksSorting';
 import { loadWorkflowsList } from '../../redux/workflows/slice';
 import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
@@ -216,7 +216,7 @@ export function TasksLayoutComponent({
               />
             </div>
           )}
-          <TasksSortingContainer />
+          <TasksSorting />
           {isHasFilter && (
             <button type="button" onClick={clearFilters} className="cancel-button">
               {formatMessage({ id: 'tasks.clear-filters' })}

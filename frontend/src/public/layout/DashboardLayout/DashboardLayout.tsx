@@ -5,7 +5,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { TopNavContainer } from '../../components/TopNav';
 import { EDashboardTimeRange } from '../../types/dashboard';
 import { EDashboardModes, IApplicationState } from '../../types/redux';
-import { SelectMenu, Tabs } from '../../components/UI';
+import { DropdownList, Tabs } from '../../components/UI';
+import { getSortingSelectProps } from '../../utils/getSortingSelectProps';
 import { FilterIcon } from '../../components/icons';
 import { getCanAccessWorkflows } from '../../redux/selectors/user';
 import {
@@ -57,11 +58,11 @@ export const DashboardLayoutComponent: React.FC = ({ children }) => {
         {canAccessWorkflows && (
           <Tabs values={dashboardModes} activeValueId={dashboardMode} onChange={handleSetDashboardMode} />
         )}
-        <SelectMenu
-          values={timeRangesTitles}
-          activeValue={currentTimeRange}
-          onChange={handleSetTimeRange}
+        <DropdownList
+          controlSize="sm"
+          controlVariant="accent"
           Icon={FilterIcon}
+          {...getSortingSelectProps(timeRangesTitles, currentTimeRange, handleSetTimeRange, intl.formatMessage)}
         />
       </div>
     </div>
