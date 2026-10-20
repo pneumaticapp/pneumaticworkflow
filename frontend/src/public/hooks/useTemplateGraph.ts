@@ -49,6 +49,7 @@ export function useTemplateGraph(template: ITemplateClient): IUseTemplateGraphRe
   const nodesRef = useRef<TGraphNode[]>([]);
   const edgesRef = useRef<TGraphEdge[]>([]);
   const templateRef = useRef<ITemplateClient>(template);
+  const pendingPositionsRef = useRef<TGraphNodePositions>({});
 
   nodesRef.current = nodes as TGraphNode[];
   edgesRef.current = edges as TGraphEdge[];
@@ -64,11 +65,23 @@ export function useTemplateGraph(template: ITemplateClient): IUseTemplateGraphRe
   );
 
   useEffect(() => {
-    rebuild(getGraphNodePositions(template.id));
-    setHasCustomLayout(hasGraphNodePositions(template.id));
+    const pendingPositions = pendingPositionsRef.current;
+
+    if (template.id != null && Object.keys(pendingPositions).length > 0) {
+      Object.entries(pendingPositions).forEach(([nodeId, position]) => {
+        saveGraphNodePosition(template.id, nodeId, position);
+      });
+      pendingPositionsRef.current = {};
+    }
+
+    const positions = template.id != null ? getGraphNodePositions(template.id) : { ...pendingPositionsRef.current };
+
+    rebuild(positions);
+    setHasCustomLayout(Object.keys(positions).length > 0);
   }, [template.id, template.tasks, template.name, template.kickoff, rebuild]);
 
   const resetLayout = useCallback(() => {
+    pendingPositionsRef.current = {};
     clearGraphNodePositions(template.id);
     rebuild({});
     setHasCustomLayout(false);
@@ -141,8 +154,17 @@ export function useTemplateGraph(template: ITemplateClient): IUseTemplateGraphRe
         return;
       }
 
-      saveGraphNodePosition(template.id, movedNode.id, movedNode.position);
-      setHasCustomLayout(hasGraphNodePositions(template.id));
+      if (template.id == null) {
+        pendingPositionsRef.current = {
+          ...pendingPositionsRef.current,
+          [movedNode.id]: movedNode.position,
+        };
+        setHasCustomLayout(true);
+      } else {
+        saveGraphNodePosition(template.id, movedNode.id, movedNode.position);
+        setHasCustomLayout(hasGraphNodePositions(template.id));
+      }
+
       applyMove(movedNode);
     },
     [applyMove, template.id],

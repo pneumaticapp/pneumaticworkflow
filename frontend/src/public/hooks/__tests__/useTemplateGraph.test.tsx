@@ -4,6 +4,7 @@ import { act, render, waitFor } from '@testing-library/react';
 import { Node } from 'reactflow';
 
 import { GRAPH_SHOWCASE_TEMPLATE } from '../../components/TemplateEdit/TemplateGraphEditor/fixtures/graphShowcaseTemplate';
+import { ITemplateClient } from '../../types/template';
 import {
   GRAPH_JUNCTION_SIZE,
   GRAPH_NODE_WIDTH,
@@ -17,11 +18,14 @@ import { useTemplateGraph } from '../useTemplateGraph';
 type TTemplateGraphResult = ReturnType<typeof useTemplateGraph>;
 
 interface IHookHarnessProps {
+  template?: ITemplateClient;
   onChange: (graph: TTemplateGraphResult) => void;
 }
 
-const HookHarness = ({ onChange }: IHookHarnessProps) => {
-  const graph = useTemplateGraph({ ...GRAPH_SHOWCASE_TEMPLATE, id: 42 });
+const SAVED_TEMPLATE: ITemplateClient = { ...GRAPH_SHOWCASE_TEMPLATE, id: 42 };
+
+const HookHarness = ({ template = SAVED_TEMPLATE, onChange }: IHookHarnessProps) => {
+  const graph = useTemplateGraph(template);
 
   useEffect(() => {
     onChange(graph);
@@ -242,5 +246,55 @@ describe('useTemplateGraph', () => {
     expect(currentGraph?.edges).toHaveLength(edgeCount);
     expect(currentGraph?.nodes.some((node) => node.id === nodeId)).toBe(true);
     expect(currentGraph?.edges.some((edge) => edge.id === edgeId)).toBe(true);
+  });
+
+  it('should keep a draft layout until the template id arrives', async () => {
+    const draftTemplate: ITemplateClient = { ...GRAPH_SHOWCASE_TEMPLATE };
+    let currentGraph: TTemplateGraphResult | undefined;
+    const handleChange = jest.fn((graph: TTemplateGraphResult) => {
+      currentGraph = graph;
+    });
+
+    const { rerender } = render(<HookHarness template={draftTemplate} onChange={handleChange} />);
+
+    await waitFor(() => {
+      expect(currentGraph?.nodes.some((node) => node.id === 'task-linear')).toBe(true);
+    });
+
+    const nextPosition = { x: 900, y: 450 };
+
+    act(() => {
+      const taskNode = currentGraph!.nodes.find((node) => node.id === 'task-linear');
+
+      currentGraph!.onNodeDragStop(
+        {} as React.MouseEvent<Element>,
+        { ...taskNode!, position: nextPosition } as Node,
+        [],
+      );
+    });
+
+    await waitFor(() => {
+      expect(currentGraph?.hasCustomLayout).toBe(true);
+      expect(currentGraph?.nodes.find((node) => node.id === 'task-linear')?.position).toEqual(nextPosition);
+    });
+
+    expect(getGraphNodePositions()).toEqual({});
+
+    rerender(<HookHarness template={{ ...draftTemplate, name: 'Renamed draft' }} onChange={handleChange} />);
+
+    await waitFor(() => {
+      expect(currentGraph?.nodes.find((node) => node.id === 'task-linear')?.position).toEqual(nextPosition);
+    });
+
+    expect(getGraphNodePositions()).toEqual({});
+
+    rerender(<HookHarness template={{ ...draftTemplate, id: 77, name: 'Renamed draft' }} onChange={handleChange} />);
+
+    await waitFor(() => {
+      expect(currentGraph?.hasCustomLayout).toBe(true);
+      expect(currentGraph?.nodes.find((node) => node.id === 'task-linear')?.position).toEqual(nextPosition);
+    });
+
+    expect(getGraphNodePositions(77)['task-linear']).toEqual(nextPosition);
   });
 });
