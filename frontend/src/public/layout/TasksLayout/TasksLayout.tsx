@@ -103,10 +103,13 @@ export function TasksLayoutComponent({
     }
 
     const options = filterSteps.map(({ name, apiName }) => {
-      const stepName =
-        typeof name === 'string' ? <StepName initialStepName={name} templateId={templateIdFilter} /> : name;
+      if (typeof name !== 'string') return { value: apiName, label: name, searchByText: reactElementToText(name) };
 
-      return { value: apiName, label: stepName, searchByText: reactElementToText(stepName) };
+      return {
+        value: apiName,
+        label: <StepName initialStepName={name} templateId={templateIdFilter} />,
+        searchByText: name,
+      };
     });
 
     return taskApiNameFilter === null
