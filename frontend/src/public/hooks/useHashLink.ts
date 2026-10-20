@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { scrollToElement } from '../utils/helpers';
 import { history } from '../utils/history';
 
 type THashLinkHandler = {
@@ -23,9 +22,7 @@ export function useHashLink(settings: THashLinkHandler[]) {
 
       const { element, handle } = currentSetting;
       handle?.();
-      if (element.current) {
-        scrollToElement(element.current);
-      }
+      element.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     };
 
     handleHashLinkUrl();
