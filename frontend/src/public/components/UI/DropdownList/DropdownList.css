@@ -21,10 +21,10 @@
   }
 
   &__value {
-    @mixin text-small bold;
+    @mixin text-small;
 
     margin: 0;
-    color: var(--pneumatic-color-black72);
+    color: var(--pneumatic-color-black100);
     transition: color 0.1s ease-in-out;
   }
 
