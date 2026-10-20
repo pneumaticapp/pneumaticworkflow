@@ -21,7 +21,7 @@ export * from './Modal';
 export * from './Tooltip';
 export * from './Select';
 export * from './RouteLeavingGuard';
-export * from './Dropdown';
+export * from './DropdownMenu';
 export * from './ShowMore';
 export * from './ReturnLink';
 export * from './ModifyDropdown';

@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 import { isArrayWithItems } from '../../../../../../../utils/helpers';
 import { MoreIcon, UrgentColorIcon } from '../../../../../../icons';
-import { Dropdown, Tooltip } from '../../../../../../UI';
+import { DropdownMenu, Tooltip } from '../../../../../../UI';
 import { IWorkflowControllsProps, WorkflowControlls } from '../../../../../WorkflowControlls';
 import { TableColumns } from '../../../types';
 import { getWorkflowDetailedRoute } from '../../../../../../../utils/routes';
@@ -46,7 +46,7 @@ export function WorkflowColumn({
           }
 
           return (
-            <Dropdown
+            <DropdownMenu
               renderToggle={(isOpen) => (
                 <MoreIcon className={classnames(styles['card-more'], isOpen && styles['card-more_active'])} />
               )}

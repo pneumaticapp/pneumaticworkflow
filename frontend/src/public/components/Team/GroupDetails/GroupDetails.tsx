@@ -20,10 +20,10 @@ import { EUserListSorting, TUserListItem } from '../../../types/user';
 
 import { IntegrateIcon, SearchLargeIcon, AddUserIcon } from '../../icons';
 import {
-  TDropdownOption,
+  TDropdownMenuOption,
   InputField,
   DropdownList,
-  Dropdown,
+  DropdownMenu,
   Button,
   TDropdownOptionBase,
   Placeholder,
@@ -92,7 +92,7 @@ export function GroupDetails({ match }: any) {
   };
 
   const renderAddUsers = () => {
-    const dropdownOptionsUsers: TDropdownOption = {
+    const dropdownOptionsUsers: TDropdownMenuOption = {
       label: formatMessage({ id: 'group.add-user' }),
       customSubOption: (
         <UserSelection
@@ -128,7 +128,7 @@ export function GroupDetails({ match }: any) {
     };
 
     return (
-      <Dropdown
+      <DropdownMenu
         renderToggle={(isOpen: boolean) => (
           <Button
             size="sm"

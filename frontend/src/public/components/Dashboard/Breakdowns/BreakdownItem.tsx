@@ -33,7 +33,7 @@ import {
   WorkflowOpen,
   WorkflowMinimize,
 } from '../../icons';
-import { Dropdown, Header, Loader, TDropdownOption } from '../../UI';
+import { DropdownMenu, Header, Loader, TDropdownMenuOption } from '../../UI';
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
 import { IntegrateButton } from '../../IntegrateButton';
 
@@ -272,7 +272,7 @@ export function BreakdownItem({
     }
   };
 
-  const WorkflowsOptions: TDropdownOption[] = [
+  const WorkflowsOptions: TDropdownMenuOption[] = [
     {
       label: formatMessage({ id: 'templates.run-workflow' }),
       onClick: handleOptionClick(onRunWorkflows),
@@ -292,13 +292,13 @@ export function BreakdownItem({
       size: 'sm',
     },
   ];
-  const openButton: TDropdownOption = {
+  const openButton: TDropdownMenuOption = {
     label: formatMessage({ id: 'workflows.open' }),
     onClick: toggleBreakdownHandler,
     Icon: WorkflowOpen,
     size: 'sm',
   };
-  const minimizeButton: TDropdownOption = {
+  const minimizeButton: TDropdownMenuOption = {
     label: formatMessage({ id: 'workflows.minimize' }),
     onClick: toggleBreakdownHandler,
     Icon: WorkflowMinimize,
@@ -373,7 +373,7 @@ export function BreakdownItem({
                   </div>
                 </div>
                 {isMobile && (
-                  <Dropdown
+                  <DropdownMenu
                     isFromBreakdownItem
                     renderToggle={() => <MoreIcon className={styles['card__more']} />}
                     options={[...MobileMyTasksOptions, ...WorkflowsOptions]}
@@ -384,7 +384,7 @@ export function BreakdownItem({
               {renderCounters()}
             </div>
             {isDesktop && (
-              <Dropdown
+              <DropdownMenu
                 isFromBreakdownItem
                 renderToggle={() => <MoreIcon className={styles['card__more']} />}
                 options={WorkflowsOptions}
@@ -433,7 +433,7 @@ export function BreakdownItem({
                   </div>
                 </div>
                 {isMobile && (
-                  <Dropdown
+                  <DropdownMenu
                     isFromBreakdownItem
                     renderToggle={() => <MoreIcon className={styles['card__more']} />}
                     options={MobileMyTasksOptions}
@@ -443,7 +443,7 @@ export function BreakdownItem({
               {renderCounters()}
             </div>
             {isDesktop && (
-              <Dropdown
+              <DropdownMenu
                 isFromBreakdownItem
                 renderToggle={() => (
                   <MoreIcon className={classnames(styles['card__more_disabled'], styles['card__more'])} />
