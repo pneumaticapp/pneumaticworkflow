@@ -8,7 +8,7 @@ import {
   setFilterTemplate as setWorkflowsFilterTemplate,
 } from '../../redux/workflows/slice';
 
-import { FilterSelect } from '../../components/UI';
+import { DropdownList } from '../../components/UI/DropdownList';
 import { FilterIcon } from '../../components/icons';
 import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
 import styles from './WorkflowsLayout.css';
@@ -20,7 +20,7 @@ import {
   getWorkflowTemplatesIdsFilter,
 } from '../../redux/selectors/workflows';
 import { canFilterByTemplateStep } from '../../utils/workflows/filters';
-import { useCheckDevice } from '../../hooks/useCheckDevice';
+import { useMobileMenuPortalProps } from './useMobileMenuPortalProps';
 
 export function TemplateFilterSelect() {
   const { formatMessage } = useIntl();
@@ -30,54 +30,52 @@ export function TemplateFilterSelect() {
   const areFilterTemplatesLoading = useSelector(getWorkflowTemplateListIsLoading);
   const statusFilter = useSelector(getWorkflowsStatus);
 
-  const { isMobile } = useCheckDevice();
+  const menuPortalProps = useMobileMenuPortalProps();
 
   const templatesOptions = useMemo(() => {
     return filterTemplates.map(({ count, ...rest }) => ({
       ...rest,
+      value: String(rest.id),
+      label: rest.name,
       ...(count > 0 && { count }),
     }));
   }, [filterTemplates]);
 
   return (
-    <div className={styles['template-filter']}>
-      <FilterSelect
-        isLoading={areFilterTemplatesLoading}
-        isMultiple
-        isSearchShown
-        isWideMenu
-        placeholderText={formatMessage({ id: 'sorting.no-template-found' })}
-        searchPlaceholder={formatMessage({ id: 'sorting.search-placeholder' })}
-        selectedOptions={templatesIdsFilter}
-        options={templatesOptions}
-        optionIdKey="id"
-        optionLabelKey="name"
-        onChange={(templateIds: number[]) => {
-          sessionStorage.setItem('isInternalNavigation', 'true');
-          dispatch(setWorkflowsFilterTemplate(templateIds));
-        }}
-        resetFilter={() => {
-          sessionStorage.setItem('isInternalNavigation', 'true');
-          dispatch(setWorkflowsFilterTemplate([]));
-          dispatch(cancelTemplateFilterRequests());
-          if (!canFilterByTemplateStep(statusFilter)) {
-            dispatch(cancelCurrentPerformersCounters());
-            dispatch(cancelTemplateTasksCounters());
-          }
-        }}
-        Icon={FilterIcon}
-        renderPlaceholder={() =>
-          getRenderPlaceholder({
-            filterIds: templatesIdsFilter,
-            options: templatesOptions,
-            formatMessage,
-            type: ERenderPlaceholderType.Template,
-            severalOptionPlaceholder: 'sorting.several-templates',
-            defaultPlaceholder: 'sorting.all-templates',
-          })
+    <DropdownList
+      controlSize="sm"
+      controlVariant="accent"
+      Icon={FilterIcon}
+      isMulti
+      isSearchable
+      isLoading={areFilterTemplatesLoading}
+      title={getRenderPlaceholder({
+        filterIds: templatesIdsFilter,
+        options: templatesOptions,
+        formatMessage,
+        type: ERenderPlaceholderType.Template,
+        severalOptionPlaceholder: 'sorting.several-templates',
+        defaultPlaceholder: 'sorting.all-templates',
+      })}
+      placeholder={formatMessage({ id: 'sorting.search-placeholder' })}
+      noOptionsMessage={() => formatMessage({ id: 'sorting.no-template-found' })}
+      options={templatesOptions}
+      value={templatesOptions.filter((option) => templatesIdsFilter.includes(option.id))}
+      onChange={(selected: typeof templatesOptions) => {
+        sessionStorage.setItem('isInternalNavigation', 'true');
+        dispatch(setWorkflowsFilterTemplate(selected.map((option) => option.id)));
+      }}
+      onClear={() => {
+        sessionStorage.setItem('isInternalNavigation', 'true');
+        dispatch(setWorkflowsFilterTemplate([]));
+        dispatch(cancelTemplateFilterRequests());
+        if (!canFilterByTemplateStep(statusFilter)) {
+          dispatch(cancelCurrentPerformersCounters());
+          dispatch(cancelTemplateTasksCounters());
         }
-        positionFixed={isMobile}
-      />
-    </div>
+      }}
+      classNames={{ menuList: () => styles['wide-filter-menu'] }}
+      {...menuPortalProps}
+    />
   );
 }

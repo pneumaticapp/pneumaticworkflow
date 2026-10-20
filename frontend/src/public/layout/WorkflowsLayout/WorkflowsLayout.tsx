@@ -33,6 +33,7 @@ import { StarterFilterSelect } from './StarterFilterSelect';
 import { TemplateFilterSelect } from './TemplateFilterSelect';
 import { PerformerFilterSelect } from './PerformerFilterSelect';
 import { TaskFilterSelect } from './TaskFilterSelect';
+import { useMobileMenuPortalProps } from './useMobileMenuPortalProps';
 import { checkFilterDependenciesChanged } from '../../utils/helpers';
 
 import styles from './WorkflowsLayout.css';
@@ -355,7 +356,7 @@ export function WorkflowsLayoutComponent({
     );
   };
 
-  const menuPortalProps = isMobile ? { menuPortalTarget: document.body, menuPosition: 'fixed' as const } : {};
+  const menuPortalProps = useMobileMenuPortalProps();
 
   const renderRadioOption = (
     { value, label }: { value: string; label: string },
