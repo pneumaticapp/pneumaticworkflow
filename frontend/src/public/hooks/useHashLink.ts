@@ -22,7 +22,9 @@ export function useHashLink(settings: THashLinkHandler[]) {
 
       const { element, handle } = currentSetting;
       handle?.();
-      element.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      requestAnimationFrame(() => {
+        element.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
     };
 
     handleHashLinkUrl();
