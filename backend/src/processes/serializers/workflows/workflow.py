@@ -4,7 +4,6 @@ from typing import Any, Dict
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MinValueValidator
-from django.db import transaction
 from django.db.models import Q, Prefetch
 from django.utils import timezone
 from rest_framework import serializers
@@ -46,21 +45,11 @@ from src.processes.serializers.workflows.field import (
 from src.processes.serializers.workflows.kickoff_value import (
     KickoffValueInfoSerializer,
 )
-from src.processes.serializers.workflows.mixins import (
-    WorkflowSerializerMixin,
-)
 from src.processes.serializers.workflows.task import (
     WorkflowCurrentTaskSerializer,
 )
-from src.processes.services.urgent import (
-    UrgentService,
-)
 from src.processes.services.workflow_permissions import (
     WorkflowPermissionService,
-)
-from src.processes.utils.common import (
-    contains_fields_vars,
-    insert_fields_values_to_text,
 )
 
 UserModel = get_user_model()
@@ -141,7 +130,6 @@ class WorkflowListSerializer(WorkflowOwnersMixin, serializers.ModelSerializer):
 
 class WorkflowCreateSerializer(
     CustomValidationErrorMixin,
-    WorkflowSerializerMixin,
     serializers.ModelSerializer,
 ):
 
@@ -214,7 +202,6 @@ class WorkflowCreateSerializer(
 
 class WorkflowUpdateSerializer(
     CustomValidationErrorMixin,
-    WorkflowSerializerMixin,
     serializers.ModelSerializer,
 ):
 
@@ -241,67 +228,6 @@ class WorkflowUpdateSerializer(
         if value and value <= timezone.now():
             raise ValidationError(messages.MSG_PW_0051)
         return value
-
-    def update(
-        self,
-        instance: Workflow,
-        validated_data: Dict[str, Any],
-    ):
-        update_kickoff_kwargs = {}
-        update_tasks_kwargs = {}
-        update_instance_kwargs = {}
-
-        is_urgent = validated_data.get('is_urgent')
-        is_urgent_changed = (
-            is_urgent is not None and is_urgent != self.instance.is_urgent
-        )
-        name = validated_data.get('name')
-        kickoff_fields_data = validated_data.get('kickoff')
-        if name:
-            update_instance_kwargs['name'] = name
-            update_instance_kwargs['name_template'] = name
-
-        if (
-            'due_date_tsp' in validated_data
-            and validated_data['due_date_tsp'] != self.instance.due_date
-        ):
-            update_instance_kwargs['due_date'] = validated_data['due_date_tsp']
-
-        if is_urgent_changed:
-            update_instance_kwargs['is_urgent'] = is_urgent
-            update_tasks_kwargs['is_urgent'] = is_urgent
-        if kickoff_fields_data:
-            update_kickoff_kwargs['fields_data'] = kickoff_fields_data
-            update_tasks_kwargs['fields_data'] = kickoff_fields_data
-
-        with transaction.atomic():
-            if update_instance_kwargs:
-                self.instance = self._partial_update_workflow(
-                    **update_instance_kwargs,
-                )
-            if update_kickoff_kwargs:
-                self._update_kickoff_value(
-                    **update_kickoff_kwargs,
-                )
-                if contains_fields_vars(self.instance.name_template):
-                    fields_values = self.instance.get_kickoff_fields_values()
-                    self.instance.name = insert_fields_values_to_text(
-                        text=self.instance.name_template,
-                        fields_values=fields_values,
-                    )
-                    self.instance.save(update_fields=['name'])
-
-            if update_tasks_kwargs:
-                self._update_tasks(
-                    is_urgent=is_urgent,
-                    update_fields_values=bool(kickoff_fields_data),
-                )
-            if is_urgent_changed:
-                UrgentService.resolve(
-                    workflow=self.instance,
-                    user=self.context['user'],
-                )
-        return self.instance
 
 
 class WorkflowReturnToTaskSerializer(

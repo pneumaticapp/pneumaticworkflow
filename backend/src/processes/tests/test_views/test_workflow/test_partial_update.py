@@ -2530,11 +2530,11 @@ def test_partial_update__kickoff_with_name_vars__name_updated__ok(
         'src.analysis.services.AnalyticService.workflows_updated',
     )
     contains_fields_vars_mock = mocker.patch(
-        'src.processes.serializers.workflows.workflow.contains_fields_vars',
+        'src.processes.services.workflows.workflow.contains_fields_vars',
         return_value=True,
     )
     insert_fields_values_to_text_mock = mocker.patch(
-        'src.processes.serializers.workflows.workflow'
+        'src.processes.services.workflows.workflow'
         '.insert_fields_values_to_text',
         return_value=updated_name,
     )

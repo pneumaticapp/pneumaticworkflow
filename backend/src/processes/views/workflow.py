@@ -79,11 +79,13 @@ from src.processes.serializers.workflows.workflow import (
 from src.processes.services.events import CommentService
 from src.processes.services.exceptions import (
     CommentServiceException,
+    FieldRuleCheckServiceException,
     WorkflowActionServiceException,
 )
 
 
 from src.processes.services.workflow_action import WorkflowActionService
+from src.processes.services.workflows.workflow import WorkflowService
 from src.processes.queries import (
     WorkflowPermissionQuery,
 )
@@ -356,7 +358,17 @@ class WorkflowViewSet(
         is_urgent_changed = (
             is_urgent is not None and is_urgent != workflow.is_urgent
         )
-        workflow = serializer.save()
+        service = WorkflowService(
+            instance=workflow,
+            user=request.user,
+        )
+        try:
+            workflow = service.update(serializer.validated_data)
+        except FieldRuleCheckServiceException as ex:
+            raise_validation_error(
+                message=ex.message,
+                api_name=ex.field_api_name,
+            )
         AnalyticService.workflows_updated(
             workflow=workflow,
             auth_type=request.token_type,

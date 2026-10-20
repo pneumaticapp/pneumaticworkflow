@@ -1,7 +1,8 @@
 
-from typing import Iterable, Optional
+from typing import Any, Dict, Iterable, Optional
 
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.utils import timezone
 
 from src.analysis.actions import (
@@ -27,6 +28,7 @@ from src.processes.services.tasks.task import TaskService
 from src.processes.services.templates.integrations import (
     TemplateIntegrationsService,
 )
+from src.processes.services.urgent import UrgentService
 from src.processes.utils.common import (
     contains_fields_vars,
     contains_workflow_id_var,
@@ -39,7 +41,10 @@ from src.processes.services.workflow_permissions import (
 from src.storage.tasks import (
     schedule_sync_workflow_attachment_permissions,
 )
-from src.storage.utils import refresh_attachments
+from src.storage.utils import (
+    reassign_restricted_permissions_for_task,
+    refresh_attachments,
+)
 from src.utils.dates import date_to_user_fmt
 
 UserModel = get_user_model()
@@ -275,6 +280,133 @@ class WorkflowService(
                 template=self.instance.template,
                 user_agent=kwargs.get('user_agent'),
             )
+
+    def update(
+        self,
+        validated_data: Dict[str, Any],
+    ) -> Workflow:
+        update_kickoff_kwargs = {}
+        update_tasks_kwargs = {}
+        update_instance_kwargs = {}
+
+        is_urgent = validated_data.get('is_urgent')
+        is_urgent_changed = (
+            is_urgent is not None
+            and is_urgent != self.instance.is_urgent
+        )
+        name = validated_data.get('name')
+        kickoff_fields_data = validated_data.get('kickoff')
+        if name:
+            update_instance_kwargs['name'] = name
+            update_instance_kwargs['name_template'] = name
+
+        if (
+            'due_date_tsp' in validated_data
+            and validated_data['due_date_tsp'] != self.instance.due_date
+        ):
+            update_instance_kwargs['due_date'] = (
+                validated_data['due_date_tsp']
+            )
+
+        if is_urgent_changed:
+            update_instance_kwargs['is_urgent'] = is_urgent
+            update_tasks_kwargs['is_urgent'] = is_urgent
+        if kickoff_fields_data:
+            update_kickoff_kwargs['fields_data'] = kickoff_fields_data
+            update_tasks_kwargs['fields_data'] = kickoff_fields_data
+
+        with transaction.atomic():
+            if update_instance_kwargs:
+                self.instance = self._partial_update_workflow(
+                    **update_instance_kwargs,
+                )
+            if update_kickoff_kwargs:
+                self._update_kickoff_value(**update_kickoff_kwargs)
+                self.apply_field_rulesets()
+                if contains_fields_vars(self.instance.name_template):
+                    fields_values = (
+                        self.instance.get_kickoff_fields_values()
+                    )
+                    self.instance.name = insert_fields_values_to_text(
+                        text=self.instance.name_template,
+                        fields_values=fields_values,
+                    )
+                    self.instance.save(update_fields=['name'])
+
+            if update_tasks_kwargs:
+                self._update_tasks(
+                    is_urgent=is_urgent,
+                    update_fields_values=bool(kickoff_fields_data),
+                )
+            if is_urgent_changed:
+                UrgentService.resolve(
+                    workflow=self.instance,
+                    user=self.user,
+                )
+        return self.instance
+
+    def _update_kickoff_value(
+        self,
+        fields_data: Dict[str, Any],
+    ):
+        kickoff_slz = KickoffValueSerializer(
+            data={
+                'fields_data': fields_data,
+            },
+            instance=self.instance.kickoff_instance,
+            partial=True,
+            context={
+                'user': self.user,
+            },
+        )
+        kickoff_slz.is_valid(raise_exception=True)
+        return kickoff_slz.save()
+
+    def _partial_update_workflow(self, **kwargs) -> Workflow:
+        update_fields = []
+        if 'name' in kwargs:
+            self.instance.name = string_abbreviation(
+                name=kwargs['name'],
+                length=WORKFLOW_NAME_LENGTH,
+            )
+            self.instance.name_template = kwargs['name']
+            update_fields.append('name')
+            update_fields.append('name_template')
+        if 'is_urgent' in kwargs:
+            self.instance.is_urgent = kwargs['is_urgent']
+            update_fields.append('is_urgent')
+        if 'due_date' in kwargs:
+            self.instance.due_date = kwargs['due_date']
+            update_fields.append('due_date')
+        if update_fields:
+            self.instance.save(update_fields=update_fields)
+        return self.instance
+
+    def _update_tasks(
+        self,
+        update_fields_values: bool,
+        is_urgent: Optional[bool] = None,
+    ):
+        tasks = self.instance.tasks.exclude_pending().order_by('id')
+        if is_urgent is not None and not update_fields_values:
+            tasks.update(is_urgent=is_urgent)
+        elif update_fields_values:
+            fields_values = self.instance.get_fields_markdown_values()
+            for task in tasks:
+                task_service = TaskService(
+                    instance=task,
+                    user=self.user,
+                )
+                if is_urgent is not None:
+                    task_service.partial_update(is_urgent=is_urgent)
+                task_service.insert_fields_values(fields_values)
+                if task.is_active:
+                    task_service.set_due_date_from_template()
+                    task.update_performers()
+                    reassign_restricted_permissions_for_task(
+                        task=task,
+                        user=self.user,
+                    )
 
     def partial_update(
         self,
