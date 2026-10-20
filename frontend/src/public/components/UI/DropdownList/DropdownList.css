@@ -47,6 +47,12 @@
     }
   }
 
+  &__control-custom {
+    padding: 0;
+    background: none;
+    border: none;
+  }
+
   &__icon {
     flex-shrink: 0;
     margin-right: 0.4rem;

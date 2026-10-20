@@ -129,6 +129,22 @@ describe('DropdownList compact control', () => {
     expect(document.querySelectorAll('.dropdownlist-sm__skeleton')).toHaveLength(5);
   });
 
+  it('renders custom control content instead of the pill', () => {
+    render(
+      <DropdownList
+        controlSize="sm"
+        controlContent={<span>Pick fieldset</span>}
+        options={OPTIONS}
+        value={null}
+        onChange={jest.fn()}
+      />,
+    );
+
+    userEvent.click(screen.getByRole('button', { name: 'Pick fieldset' }));
+
+    expect(screen.getByText('By name')).toBeInTheDocument();
+  });
+
   it('filters options by searchByText', () => {
     render(
       <DropdownList

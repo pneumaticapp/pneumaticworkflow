@@ -34,6 +34,7 @@ interface IControlSMParams {
   variant: TControlVariant;
   className?: string;
   Icon?(props: React.SVGAttributes<SVGElement>): JSX.Element;
+  content?: React.ReactNode;
   onToggle(isOpen: boolean): void;
   onClear?(): void;
 }
@@ -54,6 +55,7 @@ export interface IDropdownListProps<TOption extends TDropdownOptionBase> extends
   isRequired?: boolean;
   controlVariant?: TControlVariant;
   controlClassName?: string;
+  controlContent?: React.ReactNode;
   Icon?(props: React.SVGAttributes<SVGElement>): JSX.Element;
   onClear?(): void;
 }
@@ -64,6 +66,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
   controlSize = 'lg',
   controlVariant = 'muted',
   controlClassName,
+  controlContent,
   Icon,
   onClear,
   label,
@@ -105,6 +108,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
             variant: controlVariant,
             className: controlClassName,
             Icon,
+            content: controlContent,
             onToggle: setIsOpen,
             onClear: onClear && hasSelectedValue(restProps.value) ? onClear : undefined,
           })
@@ -196,8 +200,32 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
   );
 }
 
-function ControlSM({ title, isOpen, isDisabled, variant, className, Icon, onToggle, onClear }: IControlSMParams) {
+function ControlSM({
+  title,
+  isOpen,
+  isDisabled,
+  variant,
+  className,
+  Icon,
+  content,
+  onToggle,
+  onClear,
+}: IControlSMParams) {
   return (props: any) => {
+    if (content) {
+      return (
+        <button
+          ref={props.innerRef}
+          type="button"
+          disabled={isDisabled}
+          className={classnames(styles['dropdownlist-sm__control-custom'], className)}
+          onClick={() => onToggle(!isOpen)}
+        >
+          {content}
+        </button>
+      );
+    }
+
     return (
       <button
         ref={props.innerRef}
