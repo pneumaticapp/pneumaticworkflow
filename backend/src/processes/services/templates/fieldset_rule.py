@@ -182,14 +182,13 @@ class FieldsetTemplateRuleSetService(RuleGroupsSyncMixin, BaseModelService):
         self,
         group_or_data: Dict,
     ) -> FieldSetTemplateRuleGroupOr:
-        group_or_data_dict = dict(group_or_data)
-        groups_and_data = group_or_data_dict.pop('groups_and', None)
+        groups_and_data = group_or_data.get('groups_and')
+        api_name = group_or_data.get('api_name')
         create_kwargs = {
             'ruleset': self.instance,
             'account': self.account,
             'template_id': self.instance.template_id,
         }
-        api_name = group_or_data_dict.get('api_name')
         if api_name:
             create_kwargs['api_name'] = api_name
         group_or = FieldSetTemplateRuleGroupOr.objects.create(**create_kwargs)
