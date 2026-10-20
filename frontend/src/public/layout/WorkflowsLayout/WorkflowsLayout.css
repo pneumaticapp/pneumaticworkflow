@@ -64,7 +64,7 @@
   width: 52.8rem;
 
   @media (--mobile) {
-    width: 100%;
+    width: auto;
   }
 }
 

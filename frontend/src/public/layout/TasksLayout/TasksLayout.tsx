@@ -179,6 +179,7 @@ export function TasksLayoutComponent({
               controlVariant="accent"
               Icon={FilterIcon}
               isSearchable
+              placeholder={formatMessage({ id: 'sorting.search-placeholder' })}
               isLoading={areFilterTemplatesLoading}
               title={selectedTemplateOption ? '' : formatMessage({ id: 'sorting.all-templates' })}
               noOptionsMessage={() => formatMessage({ id: 'sorting.no-template-found' })}
@@ -195,6 +196,7 @@ export function TasksLayoutComponent({
                 controlVariant="accent"
                 Icon={FilterIcon}
                 isSearchable
+                placeholder={formatMessage({ id: 'sorting.search-placeholder' })}
                 isLoading={areFilterStepsLoading}
                 title={selectedStepOption ? '' : formatMessage({ id: 'sorting.all-steps' })}
                 noOptionsMessage={() => formatMessage({ id: 'sorting.no-step-found' })}
