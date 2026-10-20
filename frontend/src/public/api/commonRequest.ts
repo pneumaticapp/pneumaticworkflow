@@ -10,16 +10,12 @@ import { getCurrentToken } from '../utils/auth';
 import { envBackendURL } from '../constants/enviroment';
 import { isRequestCanceled } from '../utils/isRequestCanceled';
 import { isExpectedClientError } from '../utils/expectedClientErrors';
+// Brings the AxiosRequestConfig augmentation into ts-node's program (it ignores tsconfig include)
+import type {} from '../../typings/axios';
 
 import { InterceptorError } from './InterceptorError';
 import { createApiError } from './utils/createApiError';
 import { bufferNetworkError } from './networkErrorBuffer';
-
-declare module 'axios' {
-  export interface AxiosRequestConfig {
-    expectedErrorStatuses?: number[];
-  }
-}
 
 export { InterceptorError };
 
