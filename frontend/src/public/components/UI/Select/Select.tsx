@@ -131,6 +131,10 @@ export function Select<TOption extends TSelectOption>({
             if (controlSize === 'sm' && !isMulti) setIsOpen(false);
             restProps.onChange?.(value, action);
           }}
+          onMenuClose={() => {
+            if (controlSize === 'sm') setIsOpen(false);
+            restProps.onMenuClose?.();
+          }}
           {...(controlSize === 'sm' && !restProps.staticMenu && { menuIsOpen: isOpen && !restProps.isDisabled })}
           {...(restProps.staticMenu && { menuIsOpen: true })}
         />
@@ -262,9 +266,9 @@ function formatCompactMultiOptionLabel(data: unknown, meta: FormatOptionLabelMet
   );
 }
 
-function filterCompactOption({ label, data }: { label: string; data: unknown }, input: string) {
+function filterCompactOption({ label, data }: { label: unknown; data: unknown }, input: string) {
   const option = data as TSelectOption;
-  const searchText = option.searchByText ?? (typeof option.label === 'string' ? option.label : label);
+  const searchText = option.searchByText ?? (typeof label === 'string' ? label : '');
 
   return !input || searchText.toLowerCase().includes(input.toLowerCase());
 }

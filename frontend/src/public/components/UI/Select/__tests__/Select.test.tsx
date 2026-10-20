@@ -198,6 +198,60 @@ describe('Select compact control', () => {
     expect(document.querySelector('.react-select__menu-list.is-multi')).not.toBeInTheDocument();
   });
 
+  it('closes the compact menu on Escape from the search', () => {
+    render(<Select controlSize="sm" title="Users" isSearchable options={OPTIONS} value={null} onChange={jest.fn()} />);
+
+    userEvent.click(screen.getByRole('button', { name: 'Users' }));
+    fireEvent.keyDown(screen.getByRole('textbox'), { key: 'Escape', code: 'Escape', keyCode: 27 });
+
+    expect(screen.queryByText('By name')).not.toBeInTheDocument();
+  });
+
+  it('selects the focused option with Enter from a portalled search without submitting the form', () => {
+    const onChange = jest.fn();
+    const onSubmit = jest.fn((event: React.FormEvent) => event.preventDefault());
+    render(
+      <form onSubmit={onSubmit}>
+        <Select
+          controlSize="sm"
+          title="Users"
+          isSearchable
+          options={OPTIONS}
+          value={null}
+          onChange={onChange}
+          menuPortalTarget={document.body}
+        />
+      </form>,
+    );
+
+    userEvent.click(screen.getByRole('button', { name: 'Users' }));
+    const search = screen.getByRole('textbox');
+    userEvent.type(search, 'name');
+    fireEvent.keyDown(search, { key: 'Enter', code: 'Enter', keyCode: 13 });
+
+    expect(onChange).toHaveBeenCalledWith(OPTIONS[1], expect.objectContaining({ action: 'select-option' }));
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('searches options with element labels without searchByText', () => {
+    render(
+      <Select
+        controlSize="sm"
+        title="Steps"
+        isSearchable
+        options={[{ value: 'a', label: <span>Alpha</span> }]}
+        value={null}
+        onChange={jest.fn()}
+      />,
+    );
+
+    userEvent.click(screen.getByRole('button', { name: 'Steps' }));
+    userEvent.type(screen.getByRole('textbox'), 'al');
+
+    expect(screen.getByRole('textbox')).toHaveValue('al');
+    expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
+  });
+
   it('filters options by searchByText', () => {
     render(
       <Select
