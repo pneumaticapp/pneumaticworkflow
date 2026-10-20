@@ -105,6 +105,14 @@ export function PerformerFilterSelect() {
     ...performersIdsFilter.map((id) => `${ETemplateOwnerType.User}-${id}`),
   ];
 
+  const handleClear = () => {
+    dispatch(setWorkflowsFilterPerfomers([]));
+    dispatch(setWorkflowsFilterPerfomersGroup([]));
+    if (!canFilterByTemplateStep(statusFilter)) {
+      dispatch(cancelTemplateTasksCounters());
+    }
+  };
+
   return (
     <Select
       controlSize="sm"
@@ -134,13 +142,7 @@ export function PerformerFilterSelect() {
         dispatch(setWorkflowsFilterPerfomers(getIds(ETemplateOwnerType.User)));
         dispatch(setWorkflowsFilterPerfomersGroup(getIds(ETemplateOwnerType.UserGroup)));
       }}
-      onClear={() => {
-        dispatch(setWorkflowsFilterPerfomers([]));
-        dispatch(setWorkflowsFilterPerfomersGroup([]));
-        if (!canFilterByTemplateStep(statusFilter)) {
-          dispatch(cancelTemplateTasksCounters());
-        }
-      }}
+      onClear={filterIds.length > 0 ? handleClear : undefined}
       {...menuPortalProps}
     />
   );

@@ -17,6 +17,7 @@ export function getSortingSelectProps<T extends string>(
   }));
 
   return {
+    isSearchable: false,
     options,
     value: options.find((option) => option.value === activeValue) ?? null,
     onChange: (option: ISortingOption<T>) => {

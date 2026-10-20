@@ -576,6 +576,7 @@ const FieldsetDetails = ({
               <div className={styles['rule-fields-select']}>
                 <Select
                   controlSize="sm"
+                  isSearchable={false}
                   controlVariant="accent"
                   isMulti
                   isDisabled={isLinked}
@@ -593,7 +594,7 @@ const FieldsetDetails = ({
                       selected.map((option) => option.value),
                     )
                   }
-                  onClear={() => handleEditRuleFields(index, [])}
+                  onClear={rule.fields?.length ? () => handleEditRuleFields(index, []) : undefined}
                 />
               </div>
             </div>

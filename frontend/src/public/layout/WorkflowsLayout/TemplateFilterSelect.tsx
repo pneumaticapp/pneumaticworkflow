@@ -41,6 +41,16 @@ export function TemplateFilterSelect() {
     }));
   }, [filterTemplates]);
 
+  const handleClear = () => {
+    sessionStorage.setItem('isInternalNavigation', 'true');
+    dispatch(setWorkflowsFilterTemplate([]));
+    dispatch(cancelTemplateFilterRequests());
+    if (!canFilterByTemplateStep(statusFilter)) {
+      dispatch(cancelCurrentPerformersCounters());
+      dispatch(cancelTemplateTasksCounters());
+    }
+  };
+
   return (
     <Select
       controlSize="sm"
@@ -65,15 +75,7 @@ export function TemplateFilterSelect() {
         sessionStorage.setItem('isInternalNavigation', 'true');
         dispatch(setWorkflowsFilterTemplate(selected.map((option) => option.id)));
       }}
-      onClear={() => {
-        sessionStorage.setItem('isInternalNavigation', 'true');
-        dispatch(setWorkflowsFilterTemplate([]));
-        dispatch(cancelTemplateFilterRequests());
-        if (!canFilterByTemplateStep(statusFilter)) {
-          dispatch(cancelCurrentPerformersCounters());
-          dispatch(cancelTemplateTasksCounters());
-        }
-      }}
+      onClear={templatesIdsFilter.length > 0 ? handleClear : undefined}
       classNames={{ menuList: () => styles['wide-filter-menu'] }}
       {...menuPortalProps}
     />

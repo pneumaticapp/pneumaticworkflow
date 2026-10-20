@@ -56,6 +56,14 @@ export function StarterFilterSelect() {
     return normalizedUsers;
   }, [activeUsers, workflowStartersCounters]);
 
+  const handleClear = () => {
+    dispatch(setWorkflowsFilterWorkflowStarters([]));
+    if (!canFilterByTemplateStep(statusFilter)) {
+      dispatch(cancelCurrentPerformersCounters());
+      dispatch(cancelTemplateTasksCounters());
+    }
+  };
+
   return (
     <Select
       controlSize="sm"
@@ -78,13 +86,7 @@ export function StarterFilterSelect() {
       onChange={(selected: typeof workflowStartersOptions) =>
         dispatch(setWorkflowsFilterWorkflowStarters(selected.map((option) => option.id)))
       }
-      onClear={() => {
-        dispatch(setWorkflowsFilterWorkflowStarters([]));
-        if (!canFilterByTemplateStep(statusFilter)) {
-          dispatch(cancelCurrentPerformersCounters());
-          dispatch(cancelTemplateTasksCounters());
-        }
-      }}
+      onClear={workflowStartersIdsFilter.length > 0 ? handleClear : undefined}
       {...menuPortalProps}
     />
   );

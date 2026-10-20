@@ -116,6 +116,8 @@ export function TasksLayoutComponent({
 
   const renderTaskListContent = () => {
     const stepOptions = getStepsFilterOptions();
+    const selectedTemplateOption = templateOptions.find((option) => option.value === String(templateIdFilter));
+    const selectedStepOption = stepOptions.find((option) => option.value === taskApiNameFilter);
 
     function mapSorting(
       taskStatus: ETaskListCompletionStatus,
@@ -178,10 +180,10 @@ export function TasksLayoutComponent({
               Icon={FilterIcon}
               isSearchable
               isLoading={areFilterTemplatesLoading}
-              title={templateIdFilter === null ? formatMessage({ id: 'sorting.all-templates' }) : ''}
+              title={selectedTemplateOption ? '' : formatMessage({ id: 'sorting.all-templates' })}
               noOptionsMessage={() => formatMessage({ id: 'sorting.no-template-found' })}
               options={templateOptions}
-              value={templateOptions.find((option) => option.value === String(templateIdFilter)) ?? null}
+              value={selectedTemplateOption ?? null}
               onChange={({ value }: { value: string }) => setFilterTemplate(value ? Number(value) : null)}
               classNames={{ menuList: () => styles['template-filter__menu'] }}
             />
@@ -194,10 +196,10 @@ export function TasksLayoutComponent({
                 Icon={FilterIcon}
                 isSearchable
                 isLoading={areFilterStepsLoading}
-                title={taskApiNameFilter === null ? formatMessage({ id: 'sorting.all-steps' }) : ''}
+                title={selectedStepOption ? '' : formatMessage({ id: 'sorting.all-steps' })}
                 noOptionsMessage={() => formatMessage({ id: 'sorting.no-step-found' })}
                 options={stepOptions}
-                value={stepOptions.find((option) => option.value === taskApiNameFilter) ?? null}
+                value={selectedStepOption ?? null}
                 onChange={({ value }: { value: string }) => setFilterStep(value || null)}
               />
             </div>

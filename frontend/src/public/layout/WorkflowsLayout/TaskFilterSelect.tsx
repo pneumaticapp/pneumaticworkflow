@@ -56,6 +56,14 @@ export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITe
 
   const flatGroupedOptions = useMemo(() => groupedSteps.flatMap((group) => group.options), [groupedSteps]);
 
+  const handleClear = () => {
+    dispatch(setWorkflowsFilterTasks([]));
+    if (!canFilterByTemplateStep(statusFilter)) {
+      dispatch(cancelCurrentPerformersCounters());
+      dispatch(cancelTemplateTasksCounters());
+    }
+  };
+
   return (
     <Select
       controlSize="sm"
@@ -81,13 +89,7 @@ export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITe
       onChange={(selected: typeof flatGroupedOptions) => {
         dispatch(setWorkflowsFilterTasks(selected.map((option) => option.apiName)));
       }}
-      onClear={() => {
-        dispatch(setWorkflowsFilterTasks([]));
-        if (!canFilterByTemplateStep(statusFilter)) {
-          dispatch(cancelCurrentPerformersCounters());
-          dispatch(cancelTemplateTasksCounters());
-        }
-      }}
+      onClear={tasksApiNamesFilter.length > 0 ? handleClear : undefined}
       {...menuPortalProps}
     />
   );
