@@ -171,6 +171,7 @@ export const TemplateGraphEditor = ({
         onPaneClick={handlePaneClick}
         nodesConnectable={false}
         edgesUpdatable={false}
+        deleteKeyCode={null}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.2}

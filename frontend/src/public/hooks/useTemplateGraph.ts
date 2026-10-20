@@ -89,7 +89,13 @@ export function useTemplateGraph(template: ITemplateClient): IUseTemplateGraphRe
 
   const handleNodesChange = useCallback(
     (changes: NodeChange[]) => {
-      const dragChange = changes.find(
+      const safeChanges = changes.filter((change) => change.type !== 'remove');
+
+      if (safeChanges.length === 0) {
+        return;
+      }
+
+      const dragChange = safeChanges.find(
         (change) => change.type === 'position' && change.dragging && Boolean(change.position),
       );
 
@@ -102,7 +108,7 @@ export function useTemplateGraph(template: ITemplateClient): IUseTemplateGraphRe
             position: dragChange.position,
             dragging: true,
           });
-          const rest = changes.filter((change) => change !== dragChange);
+          const rest = safeChanges.filter((change) => change !== dragChange);
 
           setNodes(applyNodeChanges(rest, routed.nodes as Node<TNodeData>[]) as Node<TNodeData>[]);
           setEdges(routed.edges as Edge<IConditionEdgeData>[]);
@@ -111,9 +117,22 @@ export function useTemplateGraph(template: ITemplateClient): IUseTemplateGraphRe
         }
       }
 
-      onNodesChange(changes);
+      onNodesChange(safeChanges);
     },
     [onNodesChange, setEdges, setNodes],
+  );
+
+  const handleEdgesChange = useCallback(
+    (changes: EdgeChange[]) => {
+      const safeChanges = changes.filter((change) => change.type !== 'remove');
+
+      if (safeChanges.length === 0) {
+        return;
+      }
+
+      onEdgesChange(safeChanges);
+    },
+    [onEdgesChange],
   );
 
   const onNodeDragStop = useCallback<NodeDragHandler>(
@@ -133,7 +152,7 @@ export function useTemplateGraph(template: ITemplateClient): IUseTemplateGraphRe
     nodes: nodes as TGraphNode[],
     edges: edges as TGraphEdge[],
     onNodesChange: handleNodesChange,
-    onEdgesChange,
+    onEdgesChange: handleEdgesChange,
     onNodeDragStop,
     hasCustomLayout,
     resetLayout,

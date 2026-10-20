@@ -214,4 +214,33 @@ describe('useTemplateGraph', () => {
       expect(currentGraph?.nodes.filter((node) => node.type === 'task')).toHaveLength(taskCount);
     });
   });
+
+  it('should ignore canvas removals so the graph stays tied to the template', async () => {
+    let currentGraph: TTemplateGraphResult | undefined;
+    const handleChange = jest.fn((graph: TTemplateGraphResult) => {
+      currentGraph = graph;
+    });
+
+    render(<HookHarness onChange={handleChange} />);
+
+    await waitFor(() => {
+      expect(currentGraph?.nodes.length).toBeGreaterThan(0);
+      expect(currentGraph?.edges.length).toBeGreaterThan(0);
+    });
+
+    const nodeCount = currentGraph!.nodes.length;
+    const edgeCount = currentGraph!.edges.length;
+    const nodeId = currentGraph!.nodes[0].id;
+    const edgeId = currentGraph!.edges[0].id;
+
+    act(() => {
+      currentGraph!.onNodesChange([{ id: nodeId, type: 'remove' }]);
+      currentGraph!.onEdgesChange([{ id: edgeId, type: 'remove' }]);
+    });
+
+    expect(currentGraph?.nodes).toHaveLength(nodeCount);
+    expect(currentGraph?.edges).toHaveLength(edgeCount);
+    expect(currentGraph?.nodes.some((node) => node.id === nodeId)).toBe(true);
+    expect(currentGraph?.edges.some((edge) => edge.id === edgeId)).toBe(true);
+  });
 });
