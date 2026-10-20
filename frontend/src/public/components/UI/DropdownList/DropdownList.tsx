@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useState } from 'react';
 import classnames from 'classnames';
 import Select, { components } from 'react-select';
+import type { CSSObjectWithLabel } from 'react-select';
 import { FieldHookConfig, useField } from 'formik';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import OutsideClickHandler from 'react-outside-click-handler';
@@ -12,6 +13,7 @@ import '../../../assets/css/library/react-select.css';
 import styles from './DropdownList.css';
 
 type TControlSize = 'lg' | 'sm';
+type TControlVariant = 'muted' | 'accent';
 type TPlacement = 'left' | 'right';
 
 export type TDropdownOptionBase = {
@@ -20,6 +22,16 @@ export type TDropdownOptionBase = {
   value?: string;
   onClick?: () => void;
 };
+
+interface IControlSMParams {
+  title: string;
+  isOpen: boolean;
+  isDisabled: boolean;
+  variant: TControlVariant;
+  className?: string;
+  Icon?(props: React.SVGAttributes<SVGElement>): JSX.Element;
+  onToggle(isOpen: boolean): void;
+}
 
 export interface IDropdownListProps<TOption extends TDropdownOptionBase> extends Omit<
   React.ComponentProps<typeof Select>,
@@ -35,10 +47,18 @@ export interface IDropdownListProps<TOption extends TDropdownOptionBase> extends
   onChange?: (value: any, action: any) => void;
   errorMessage?: string;
   isRequired?: boolean;
+  controlVariant?: TControlVariant;
+  controlClassName?: string;
+  Icon?(props: React.SVGAttributes<SVGElement>): JSX.Element;
 }
+
+const MENU_PORTAL_STYLES = { menuPortal: (base: CSSObjectWithLabel) => ({ ...base, zIndex: 1080 }) };
 
 export function DropdownList<TOption extends TDropdownOptionBase>({
   controlSize = 'lg',
+  controlVariant = 'muted',
+  controlClassName,
+  Icon,
   label,
   title,
   className,
@@ -70,7 +90,17 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
     sm: {
       Menu: MenuSM,
       Option,
-      Control: !restProps.staticMenu ? ControlSM(title || '', isOpen, setIsOpen) : () => null,
+      Control: !restProps.staticMenu
+        ? ControlSM({
+            title: title || '',
+            isOpen,
+            isDisabled: Boolean(restProps.isDisabled),
+            variant: controlVariant,
+            className: controlClassName,
+            Icon,
+            onToggle: setIsOpen,
+          })
+        : () => null,
       ...(!restProps.staticMenu && { Input: () => null }),
       ValueContainer: () => null,
       MenuList: MenuListSM,
@@ -135,7 +165,12 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
           components={componentsMap[controlSize]}
           inputValue={filterValue}
           onInputChange={handleInputChange}
+          styles={MENU_PORTAL_STYLES}
           {...restProps}
+          onChange={(value: unknown, action: unknown) => {
+            if (controlSize === 'sm' && !isMulti) setIsOpen(false);
+            restProps.onChange?.(value, action);
+          }}
           {...(controlSize === 'sm' && !restProps.staticMenu && { menuIsOpen: isOpen })}
           {...(restProps.staticMenu && { menuIsOpen: true })}
         />
@@ -145,19 +180,24 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
   );
 }
 
-function ControlSM(title: string, isOpen: boolean, onClick: (isOpen: boolean) => void) {
+function ControlSM({ title, isOpen, isDisabled, variant, className, Icon, onToggle }: IControlSMParams) {
   return (props: any) => {
     return (
       <button
+        ref={props.innerRef}
         type="button"
+        disabled={isDisabled}
         className={classnames(
           'react-select_controlllll',
           styles['dropdownlist-sm__control'],
+          variant === 'accent' && styles['dropdownlist-sm__control_accent'],
           isOpen && styles['is-open'],
+          className,
         )}
-        onClick={() => onClick(!isOpen)}
+        onClick={() => onToggle(!isOpen)}
       >
-        <p className={styles['dropdownlist-sm__value']}>{title || props?.selectProps.value.label}</p>
+        {Icon && <Icon className={styles['dropdownlist-sm__icon']} />}
+        <p className={styles['dropdownlist-sm__value']}>{title || props?.selectProps.value?.label}</p>
         <ExpandIcon className={classnames(styles['dropdownlist-sm__arrow'], isOpen && styles['is-open'])} />
       </button>
     );

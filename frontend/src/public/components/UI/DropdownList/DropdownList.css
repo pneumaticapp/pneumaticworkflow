@@ -18,6 +18,38 @@
     &.is-open .dropdownlist-sm__value {
       color: var(--pneumatic-color-link-hover);
     }
+
+    &:disabled {
+      pointer-events: none;
+    }
+  }
+
+  &__control_accent {
+    display: inline-flex;
+    padding: 0.6rem 1.6rem;
+    background-color: var(--pneumatic-color-white);
+
+    .dropdownlist-sm__value {
+      @mixin text-truncate;
+
+      margin-right: 0.8rem;
+      font-weight: bold;
+    }
+
+    .dropdownlist-sm__arrow {
+      flex-shrink: 0;
+      margin-left: auto;
+      color: var(--pneumatic-color-black32);
+    }
+
+    @media (--mobile) {
+      width: 100%;
+    }
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    margin-right: 0.4rem;
   }
 
   &__value {

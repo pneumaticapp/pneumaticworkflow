@@ -1,4 +1,5 @@
-.react-select {
+.react-select,
+.react-select__menu-portal {
   &.is-disabled {
     opacity: 0.32;
     cursor: not-allowed;
