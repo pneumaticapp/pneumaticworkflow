@@ -16,8 +16,8 @@ jest.mock('../../../../utils/history', () => ({
   checkSomeRouteMatchesLocation: jest.fn(() => false),
 }));
 
-jest.mock('../../../../redux/actions', () => ({
-  discardTemplateChanges: jest.fn((p) => ({ type: 'template/discardChanges', payload: p })),
+jest.mock('../../InfoWarningsModal', () => ({
+  InfoWarningsModal: () => null,
 }));
 
 jest.mock('react-router-dom', () => ({
@@ -55,16 +55,6 @@ jest.mock('../../../UI/WarningPopup', () => ({
 
 jest.mock('../../../UI/Notifications', () => ({
   NotificationManager: { warning: jest.fn() },
-}));
-
-jest.mock('../../../UI', () => ({
-  RouteLeavingGuard: jest.fn(
-    (props: {
-      onConfirm: (path: string) => void;
-      onReject: (path: string) => void;
-      renderControlls: (confirm: (p: string) => void, reject: (p: string) => void) => React.ReactNode;
-    }) => props.renderControlls(props.onConfirm, props.onReject),
-  ),
 }));
 
 jest.mock('../../TemplateOwners', () => ({
@@ -117,7 +107,7 @@ describe('TemplateControlls — fieldset logic', () => {
     patchTemplate: jest.fn(),
     deleteTemplate: jest.fn(),
     openRunWorkflowModal: jest.fn(),
-    setInfoWarnings: jest.fn(),
+    onTemplateDeleted: jest.fn(),
     ...overrides,
   });
 

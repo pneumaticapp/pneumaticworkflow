@@ -40,6 +40,7 @@ import { IDataset, IDatasetListItem, EDatasetsSorting, TDatasetItemsSortOrder } 
 import { IFieldsetCatalogItem, EFieldsetsSorting } from './fieldset';
 import { IPagesStore } from '../redux/pages/types';
 import { TeamPages, IGroup, UserInvite } from '../redux/team/types';
+import { ITemplateGraphViewState } from '../components/TemplateEdit/TemplateGraphEditor/types';
 
 export interface IApplicationState {
   general: IGeneralStore;
@@ -70,6 +71,7 @@ export interface IApplicationState {
   datasets: IDatasetsStore;
   fieldsets: IFieldsetsStore;
   permissions: IPermissionsStore;
+  templateGraphView: ITemplateGraphViewState;
 }
 
 export type IPermissionsStore = {

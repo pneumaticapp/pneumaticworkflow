@@ -125,6 +125,7 @@ describe('workflows saga', () => {
     const notificationManagerSuccessMock = jest.spyOn(NotificationManager, 'success');
     saga.next();
     saga.next();
+    saga.next();
     expect(finishWorkflowApiMock).toHaveBeenCalled();
     expect(notificationManagerSuccessMock).toHaveBeenCalled();
   });

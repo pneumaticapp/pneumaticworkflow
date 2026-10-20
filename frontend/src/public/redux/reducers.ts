@@ -32,6 +32,7 @@ import tasks from './tasks/slice';
 import datasets from './datasets/slice';
 import fieldsets from './fieldsets/slice';
 import permissions from './permissions/slice';
+import templateGraphView from './templateGraphView/slice';
 
 export const reducers = combineReducers({
   general,
@@ -60,6 +61,7 @@ export const reducers = combineReducers({
   datasets,
   fieldsets,
   permissions,
+  templateGraphView,
   pages,
 });
 
