@@ -145,6 +145,28 @@ describe('DropdownList compact control', () => {
     expect(screen.getByText('By name')).toBeInTheDocument();
   });
 
+  it('renders grouped options under their headings', () => {
+    render(
+      <DropdownList
+        controlSize="sm"
+        title={<span>Tasks</span>}
+        isMulti
+        options={[
+          { label: 'Onboarding', options: [OPTIONS[0]] },
+          { label: 'Offboarding', options: [OPTIONS[1]] },
+        ]}
+        value={[]}
+        onChange={jest.fn()}
+      />,
+    );
+
+    userEvent.click(screen.getByRole('button', { name: 'Tasks' }));
+
+    expect(screen.getByText('Onboarding')).toBeInTheDocument();
+    expect(screen.getByText('Offboarding')).toBeInTheDocument();
+    expect(screen.getAllByRole('checkbox')).toHaveLength(2);
+  });
+
   it('filters options by searchByText', () => {
     render(
       <DropdownList

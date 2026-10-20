@@ -27,8 +27,13 @@ export type TDropdownOptionBase = {
   onClick?: () => void;
 };
 
+type TDropdownOptionGroup<TOption> = {
+  label: string;
+  options: TOption[];
+};
+
 interface IControlSMParams {
-  title: string;
+  title: React.ReactNode;
   isOpen: boolean;
   isDisabled: boolean;
   variant: TControlVariant;
@@ -44,8 +49,8 @@ export interface IDropdownListProps<TOption extends TDropdownOptionBase> extends
   'options' | 'onChange'
 > {
   label?: string;
-  options: TOption[];
-  title?: string;
+  options: TOption[] | TDropdownOptionGroup<TOption>[];
+  title?: React.ReactNode;
   controlSize?: TControlSize;
   className?: string;
   staticMenu?: boolean;
@@ -408,7 +413,11 @@ const Option = (props: any) => {
   return <components.Option {...props} />;
 };
 
-export function FormikDropdownList(props: IDropdownListProps<TDropdownOptionBase> & FieldHookConfig<string>) {
+export function FormikDropdownList(
+  props: Omit<IDropdownListProps<TDropdownOptionBase>, 'options'> & {
+    options: TDropdownOptionBase[];
+  } & FieldHookConfig<string>,
+) {
   const { name, options, type } = props;
   const [field, meta, { setValue }] = useField(name);
 
