@@ -83,7 +83,6 @@ export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDue
   return (
     <div
       className={classnames(
-        styles['container'],
         stylesTaskForm['taskform__box'],
         stylesTaskForm['taskform__basket-visibility'],
         isDueDate ? stylesTaskForm['content-mt16'] : stylesTaskForm['content-mt12'],

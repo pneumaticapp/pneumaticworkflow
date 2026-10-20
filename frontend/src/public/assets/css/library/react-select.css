@@ -15,6 +15,7 @@
   }
 
   .react-select__control {
+    min-height: 4rem;
     background: transparent;
     outline: initial;
     box-shadow: none;
@@ -112,6 +113,7 @@
     overflow: hidden !important;
 
     &:hover {
+      color: var(--pneumatic-color-link-hover) !important;
       background-color: var(--pneumatic-color-beige) !important;
       border-radius: 0.4rem;
     }
