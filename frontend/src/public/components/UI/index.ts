@@ -18,7 +18,6 @@ export * from './Placeholder';
 export * from './Tabs';
 export * from './Modal';
 export * from './Tooltip';
-export * from './Select';
 export * from './RouteLeavingGuard';
 export * from './DropdownMenu';
 export * from './ShowMore';
