@@ -975,12 +975,13 @@ class WorkflowActionService:
                 .for_task(task.id)
                 .with_groups()
             )
-            WorkflowService(
+            service = WorkflowService(
                 user=self.user,
                 auth_type=self.auth_type,
                 is_superuser=self.is_superuser,
                 instance=self.workflow,
-            ).apply_field_rulesets(rulesets=rulesets)
+            )
+            service.apply_field_rulesets(rulesets=rulesets)
 
             AnalyticService.task_completed(
                 user=self.user,
