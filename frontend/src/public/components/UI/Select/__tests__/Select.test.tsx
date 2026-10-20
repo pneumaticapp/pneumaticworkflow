@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { Select } from '../Select';
+import { getSortingSelectProps } from '../../../../utils/getSortingSelectProps';
 
 jest.mock('react-perfect-scrollbar', () => ({
   __esModule: true,
@@ -73,12 +74,10 @@ describe('Select compact control', () => {
     expect(onChange).toHaveBeenCalledWith(OPTIONS[1], expect.objectContaining({ action: 'select-option' }));
   });
 
-  it('shows a clear button instead of the arrow while something is selected', () => {
+  it('shows a clear button instead of the arrow when onClear is passed', () => {
     const onClear = jest.fn();
     const onChange = jest.fn();
-    const { rerender } = render(
-      <Select controlSize="sm" isMulti options={OPTIONS} value={[]} onChange={onChange} onClear={onClear} />,
-    );
+    const { rerender } = render(<Select controlSize="sm" isMulti options={OPTIONS} value={[]} onChange={onChange} />);
     expect(screen.queryByRole('button', { name: 'Clear selected options' })).not.toBeInTheDocument();
 
     rerender(
@@ -151,6 +150,42 @@ describe('Select compact control', () => {
     expect(screen.getByText('Onboarding')).toBeInTheDocument();
     expect(screen.getByText('Offboarding')).toBeInTheDocument();
     expect(screen.getAllByRole('checkbox')).toHaveLength(2);
+  });
+
+  it('keeps the same control element while the menu opens', () => {
+    render(<Select controlSize="sm" title="Sorting" options={OPTIONS} value={OPTIONS[0]} onChange={jest.fn()} />);
+    const control = screen.getByRole('button', { name: 'Sorting' });
+
+    userEvent.click(control);
+
+    expect(screen.getByText('By name')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sorting' })).toBe(control);
+  });
+
+  it('does not show the search unless isSearchable is passed with a sorting select', () => {
+    render(
+      <Select
+        controlSize="sm"
+        title="Sorting"
+        {...getSortingSelectProps(['date', 'name'], 'date', jest.fn(), (({ id }: { id: string }) => id) as never)}
+      />,
+    );
+
+    userEvent.click(screen.getByRole('button', { name: 'Sorting' }));
+
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  });
+
+  it('keeps the search text after ticking an option in a multi select', () => {
+    render(
+      <Select controlSize="sm" title="Users" isMulti isSearchable options={OPTIONS} value={[]} onChange={jest.fn()} />,
+    );
+
+    userEvent.click(screen.getByRole('button', { name: 'Users' }));
+    userEvent.type(screen.getByRole('textbox'), 'name');
+    userEvent.click(screen.getByText('By name'));
+
+    expect(screen.getByRole('textbox')).toHaveValue('name');
   });
 
   it('filters options by searchByText', () => {

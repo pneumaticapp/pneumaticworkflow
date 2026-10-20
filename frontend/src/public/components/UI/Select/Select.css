@@ -12,7 +12,7 @@
     align-items: center;
     padding: 0.6rem 0.8rem;
     background-color: var(--pneumatic-color-black4);
-    border-radius: 16px;
+    border-radius: 1.6rem;
 
     &:hover .select-sm__value,
     &.is-open .select-sm__value {
@@ -112,7 +112,7 @@
   }
 
   &__arrow {
-    margin-left: 4px;
+    margin-left: 0.4rem;
     color: var(--pneumatic-color-black16);
 
     &.is-open {

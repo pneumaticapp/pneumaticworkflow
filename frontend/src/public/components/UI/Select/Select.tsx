@@ -34,7 +34,7 @@ export function Select<TOption extends TSelectOption>({
   const [filterValue, setFilterValue] = useState('');
 
   const handleInputChange = (inputValue: string, action: any) => {
-    if (action.action === 'set-value') {
+    if (action.action === 'set-value' && !(isMulti && controlSize === 'sm')) {
       setFilterValue('');
     }
     if (action.action === 'input-change') {
@@ -45,33 +45,17 @@ export function Select<TOption extends TSelectOption>({
     }
   };
 
-  const componentsMap: { [key in TControlSize]: any } = {
-    lg: {
-      Option,
-      DropdownIndicator,
-      MenuList: MenuListLG,
-      IndicatorSeparator: () => null,
-    },
-    sm: {
-      Menu: MenuSM,
-      Option,
-      Control: !restProps.staticMenu
-        ? ControlSM({
-            title: title || '',
-            isOpen,
-            isDisabled: Boolean(restProps.isDisabled),
-            variant: controlVariant,
-            className: controlClassName,
-            Icon,
-            content: controlContent,
-            onToggle: setIsOpen,
-            onClear: onClear && hasSelectedValue(restProps.value) ? onClear : undefined,
-          })
-        : () => null,
-      ...(!restProps.staticMenu && { Input: () => null }),
-      ValueContainer: () => null,
-      MenuList: MenuListSM,
-    },
+  const components = getComponents(controlSize, Boolean(restProps.staticMenu));
+  const controlSm: IControlSMParams = {
+    title: title || '',
+    isOpen,
+    isDisabled: Boolean(restProps.isDisabled),
+    variant: controlVariant,
+    className: controlClassName,
+    Icon,
+    content: controlContent,
+    onToggle: setIsOpen,
+    onClear,
   };
 
   if (label && controlSize === 'lg') {
@@ -93,7 +77,7 @@ export function Select<TOption extends TSelectOption>({
             tabSelectsValue={false}
             isClearable={false}
             classNamePrefix="react-select"
-            components={componentsMap[controlSize]}
+            components={components}
             onInputChange={handleInputChange}
             className={classnames(restProps.errorMessage && styles['has-error'])}
             {...restProps}
@@ -133,7 +117,7 @@ export function Select<TOption extends TSelectOption>({
           tabSelectsValue={false}
           isClearable={false}
           classNamePrefix="react-select"
-          components={componentsMap[controlSize]}
+          components={components}
           inputValue={filterValue}
           onInputChange={handleInputChange}
           styles={MENU_PORTAL_STYLES}
@@ -142,11 +126,12 @@ export function Select<TOption extends TSelectOption>({
             filterOption: filterCompactOption,
           })}
           {...restProps}
+          {...{ controlSm }}
           onChange={(value: unknown, action: unknown) => {
             if (controlSize === 'sm' && !isMulti) setIsOpen(false);
             restProps.onChange?.(value, action);
           }}
-          {...(controlSize === 'sm' && !restProps.staticMenu && { menuIsOpen: isOpen })}
+          {...(controlSize === 'sm' && !restProps.staticMenu && { menuIsOpen: isOpen && !restProps.isDisabled })}
           {...(restProps.staticMenu && { menuIsOpen: true })}
         />
       </OutsideClickHandler>
@@ -155,73 +140,64 @@ export function Select<TOption extends TSelectOption>({
   );
 }
 
-function ControlSM({
-  title,
-  isOpen,
-  isDisabled,
-  variant,
-  className,
-  Icon,
-  content,
-  onToggle,
-  onClear,
-}: IControlSMParams) {
-  return (props: any) => {
-    if (content) {
-      return (
-        <button
-          ref={props.innerRef}
-          type="button"
-          disabled={isDisabled}
-          className={classnames(styles['select-sm__control-custom'], className)}
-          onClick={() => onToggle(!isOpen)}
-        >
-          {content}
-        </button>
-      );
-    }
+function ControlSM(props: any) {
+  const { title, isOpen, isDisabled, variant, className, Icon, content, onToggle, onClear }: IControlSMParams =
+    props.selectProps.controlSm;
 
+  if (content) {
     return (
       <button
         ref={props.innerRef}
         type="button"
         disabled={isDisabled}
-        className={classnames(
-          'react-select_controlllll',
-          styles['select-sm__control'],
-          variant === 'accent' && styles['select-sm__control_accent'],
-          isOpen && styles['is-open'],
-          className,
-        )}
+        className={classnames(styles['select-sm__control-custom'], className)}
         onClick={() => onToggle(!isOpen)}
       >
-        {Icon && <Icon className={styles['select-sm__icon']} />}
-        <p className={styles['select-sm__value']}>{title || props?.selectProps.value?.label}</p>
-        {onClear ? (
-          <span
-            role="button"
-            tabIndex={0}
-            aria-label="Clear selected options"
-            className={styles['select-sm__clear-value']}
-            onClick={(event) => {
-              event.stopPropagation();
-              onClear();
-            }}
-            onKeyDown={(event) => {
-              if (event.key !== 'Enter' && event.key !== ' ') return;
-              event.preventDefault();
-              event.stopPropagation();
-              onClear();
-            }}
-          >
-            <ClearIcon />
-          </span>
-        ) : (
-          <ExpandIcon className={classnames(styles['select-sm__arrow'], isOpen && styles['is-open'])} />
-        )}
+        {content}
       </button>
     );
-  };
+  }
+
+  return (
+    <button
+      ref={props.innerRef}
+      type="button"
+      disabled={isDisabled}
+      className={classnames(
+        'react-select_controlllll',
+        styles['select-sm__control'],
+        variant === 'accent' && styles['select-sm__control_accent'],
+        isOpen && styles['is-open'],
+        className,
+      )}
+      onClick={() => onToggle(!isOpen)}
+    >
+      {Icon && <Icon className={styles['select-sm__icon']} />}
+      <p className={styles['select-sm__value']}>{title || props?.selectProps.value?.label}</p>
+      {onClear ? (
+        <span
+          role="button"
+          tabIndex={0}
+          aria-label="Clear selected options"
+          className={styles['select-sm__clear-value']}
+          onClick={(event) => {
+            event.stopPropagation();
+            onClear();
+          }}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            event.stopPropagation();
+            onClear();
+          }}
+        >
+          <ClearIcon />
+        </span>
+      ) : (
+        <ExpandIcon className={classnames(styles['select-sm__arrow'], isOpen && styles['is-open'])} />
+      )}
+    </button>
+  );
 }
 
 const DropdownIndicator = ({ isDisabled }: any) => {
@@ -254,8 +230,6 @@ const MenuListLG = ({ selectProps, ...props }: any) => {
     </ScrollBar>
   );
 };
-
-const hasSelectedValue = (value: unknown) => (Array.isArray(value) ? value.length > 0 : Boolean(value));
 
 const SKELETON_ROW_WIDTHS = ['80%', '60%', '80%', '60%', '70%'];
 
@@ -301,7 +275,7 @@ const MenuListSM = ({ selectProps, ...props }: any) => {
 
   return (
     <div>
-      {isSearchable && (
+      {isSearchable && !selectProps.isLoading && (
         <div className={styles['select-sm__search']}>
           <input
             type="text"
@@ -375,4 +349,36 @@ export function FormikSelect(
       {...(meta.touched && meta.error && type !== 'hidden' && { errorMessage: meta.error })}
     />
   );
+}
+
+const NullComponent = () => null;
+
+const LG_COMPONENTS = {
+  Option,
+  DropdownIndicator,
+  MenuList: MenuListLG,
+  IndicatorSeparator: NullComponent,
+};
+
+const SM_COMPONENTS = {
+  Menu: MenuSM,
+  Option,
+  Control: ControlSM,
+  Input: NullComponent,
+  ValueContainer: NullComponent,
+  MenuList: MenuListSM,
+};
+
+const SM_STATIC_COMPONENTS = {
+  Menu: MenuSM,
+  Option,
+  Control: NullComponent,
+  ValueContainer: NullComponent,
+  MenuList: MenuListSM,
+};
+
+function getComponents(controlSize: TControlSize, isStaticMenu: boolean) {
+  if (controlSize === 'lg') return LG_COMPONENTS;
+
+  return isStaticMenu ? SM_STATIC_COMPONENTS : SM_COMPONENTS;
 }
