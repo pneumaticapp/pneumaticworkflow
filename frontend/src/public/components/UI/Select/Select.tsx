@@ -122,7 +122,7 @@ export function Select<TOption extends TSelectOption>({
           onInputChange={handleInputChange}
           styles={MENU_PORTAL_STYLES}
           {...(controlSize === 'sm' && {
-            formatOptionLabel: formatCompactOptionLabel,
+            formatOptionLabel: isMulti ? formatCompactMultiOptionLabel : formatCompactOptionLabel,
             filterOption: filterCompactOption,
           })}
           {...restProps}
@@ -212,6 +212,7 @@ const MenuSM = ({ children, ...props }: any) => {
       className={classnames(
         'react-select__menu-list',
         props.selectProps.staticMenu ? 'is-static' : 'is-sm',
+        props.selectProps.isMulti && 'is-multi',
         props.selectProps.placement === 'left' && 'is-left',
         customClassName,
       )}
@@ -233,23 +234,27 @@ const MenuListLG = ({ selectProps, ...props }: any) => {
 
 const SKELETON_ROW_WIDTHS = ['80%', '60%', '80%', '60%', '70%'];
 
-function formatCompactOptionLabel(data: unknown, { context, selectValue }: FormatOptionLabelMeta<unknown>) {
+function formatCompactOptionLabel(data: unknown, { context }: FormatOptionLabelMeta<unknown>) {
   const option = data as TSelectOption;
   if (context !== 'menu') return option.label;
 
-  const content = (
+  return (
     <span className={styles['select-sm__option']}>
       <span className={styles['select-sm__option-label']}>{option.label}</span>
       {option.count !== undefined && <span className={styles['select-sm__option-count']}>{option.count}</span>}
     </span>
   );
+}
 
-  if (!Array.isArray(selectValue) || !option.value) return content;
+function formatCompactMultiOptionLabel(data: unknown, meta: FormatOptionLabelMeta<unknown>) {
+  const option = data as TSelectOption;
+  const content = formatCompactOptionLabel(data, meta);
+  if (meta.context !== 'menu' || !option.value) return content;
 
   return (
     <span className={styles['select-sm__option-check']}>
       <Checkbox
-        checked={(selectValue as TSelectOption[]).some(({ value }) => value === option.value)}
+        checked={(meta.selectValue as TSelectOption[]).some(({ value }) => value === option.value)}
         title={content}
         onChange={() => {}}
       />

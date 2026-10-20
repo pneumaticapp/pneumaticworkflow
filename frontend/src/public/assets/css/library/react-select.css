@@ -95,6 +95,11 @@
     }
   }
 
+  .react-select__menu-list.is-sm:not(.is-multi) .react-select__option--is-selected {
+    color: var(--pneumatic-color-black32) !important;
+    pointer-events: none;
+  }
+
   .react-select__menu-list.is-sm .react-select__menu {
     position: static !important;
   }

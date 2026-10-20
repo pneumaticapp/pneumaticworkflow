@@ -188,6 +188,16 @@ describe('Select compact control', () => {
     expect(screen.getByRole('textbox')).toHaveValue('name');
   });
 
+  it('renders single-select options without checkboxes', () => {
+    render(<Select controlSize="sm" title="Sorting" options={OPTIONS} value={OPTIONS[0]} onChange={jest.fn()} />);
+
+    userEvent.click(screen.getByRole('button', { name: 'Sorting' }));
+
+    expect(screen.getByText('By name')).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(document.querySelector('.react-select__menu-list.is-multi')).not.toBeInTheDocument();
+  });
+
   it('filters options by searchByText', () => {
     render(
       <Select
