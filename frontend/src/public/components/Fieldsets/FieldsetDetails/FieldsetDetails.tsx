@@ -20,7 +20,7 @@ import {
 import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
 
-import { ModifyDropdown, Button, FilterSelect, Tooltip } from '../../UI';
+import { ModifyDropdown, Button, Tooltip } from '../../UI';
 import { EModifyDropdownToggle } from '../../UI/ModifyDropdown/types';
 import { DropdownList } from '../../UI/DropdownList';
 import { NotificationManager } from '../../UI/Notifications';
@@ -138,8 +138,8 @@ const FieldsetDetails = ({
   const labelPositionOptions = useMemo(
     () =>
       FIELDSET_LABEL_POSITION_OPTIONS.map((option) => ({
-        id: option.value,
-        name: formatMessage({ id: option.labelKey }),
+        value: option.value,
+        label: formatMessage({ id: option.labelKey }),
       })),
     [formatMessage],
   );
@@ -147,11 +147,15 @@ const FieldsetDetails = ({
   const ruleTypeOptions = useMemo(
     () =>
       FIELDSET_RULE_TYPES.map((option) => ({
-        id: option.value,
-        name: formatMessage({ id: option.labelKey }),
+        value: option.value,
+        label: formatMessage({ id: option.labelKey }),
       })),
     [formatMessage],
   );
+
+  const fieldOptions = detailFieldset.fields.map((field) => ({ value: field.apiName, label: field.name }));
+  const getSelectedFieldOptions = (fieldApiNames: string[] = []) =>
+    fieldOptions.filter((option) => fieldApiNames.includes(option.value));
 
   const handleSettingsTitleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const title = event.target.value;
@@ -220,12 +224,8 @@ const FieldsetDetails = ({
     setDetailFieldsetChanges((prev) => ({ ...prev, rules }));
   };
 
-  const handleEditRuleFields = (index: number, fieldApiNames: (string | number | null)[]) => {
-    const rules = detailFieldset.rules.map((rule, i) =>
-      i === index
-        ? { ...rule, fields: fieldApiNames.filter((name): name is string => typeof name === 'string') }
-        : rule,
-    );
+  const handleEditRuleFields = (index: number, fieldApiNames: string[]) => {
+    const rules = detailFieldset.rules.map((rule, i) => (i === index ? { ...rule, fields: fieldApiNames } : rule));
     setDetailFieldset((prev) => ({ ...prev, rules }));
     setDetailFieldsetChanges((prev) => ({ ...prev, rules }));
   };
@@ -465,26 +465,17 @@ const FieldsetDetails = ({
               {formatMessage({ id: 'fieldsets.settings.label-position' })}
             </span>
             <div ref={labelPositionRef}>
-              <FilterSelect<'id', 'name', { id: EFieldLabelPosition; name: string }>
-                optionIdKey="id"
-                optionLabelKey="name"
+              <DropdownList
+                className={styles['settings-select']}
+                isDisabled={isLinked}
                 options={labelPositionOptions}
-                selectedOption={detailFieldset.labelPosition}
-                onChange={(key) => {
-                  if (key && key !== detailFieldset.labelPosition) {
-                    setDetailFieldset((prev) => ({ ...prev, labelPosition: key as EFieldLabelPosition }));
-                    setDetailFieldsetChanges((prev) => ({ ...prev, labelPosition: key as EFieldLabelPosition }));
+                value={labelPositionOptions.find((option) => option.value === detailFieldset.labelPosition) ?? null}
+                onChange={({ value }: { value: EFieldLabelPosition }) => {
+                  if (value !== detailFieldset.labelPosition) {
+                    setDetailFieldset((prev) => ({ ...prev, labelPosition: value }));
+                    setDetailFieldsetChanges((prev) => ({ ...prev, labelPosition: value }));
                   }
                 }}
-                resetFilter={() => {}}
-                placeholderText=""
-                isDisabled={isLinked}
-                containerClassname={styles['settings-select']}
-                toggleClassName={styles['settings-select__toggle']}
-                menuClassName={styles['settings-select__menu']}
-                renderPlaceholder={() =>
-                  labelPositionOptions.find((option) => option.id === detailFieldset.labelPosition)?.name || ''
-                }
               />
             </div>
           </div>
@@ -553,23 +544,16 @@ const FieldsetDetails = ({
 
         {detailFieldset.rules.map((rule, index) => (
           <div key={rule.apiName} className={styles['rule-row']}>
-            <FilterSelect<'id', 'name', { id: EFieldsetRuleType; name: string }>
-              optionIdKey="id"
-              optionLabelKey="name"
+            <DropdownList
+              className={styles['settings-select']}
+              isDisabled={isLinked}
               options={ruleTypeOptions}
-              selectedOption={rule.type}
-              onChange={(key) => {
-                if (key && key !== rule.type) {
-                  handleEditRuleType(index, key as EFieldsetRuleType);
+              value={ruleTypeOptions.find((option) => option.value === rule.type) ?? null}
+              onChange={({ value }: { value: EFieldsetRuleType }) => {
+                if (value !== rule.type) {
+                  handleEditRuleType(index, value);
                 }
               }}
-              resetFilter={() => {}}
-              placeholderText=""
-              isDisabled={isLinked}
-              containerClassname={styles['settings-select']}
-              toggleClassName={styles['settings-select__toggle']}
-              menuClassName={styles['settings-select__menu']}
-              renderPlaceholder={() => ruleTypeOptions.find((option) => option.id === rule.type)?.name || ''}
             />
 
             <input
@@ -590,24 +574,26 @@ const FieldsetDetails = ({
             <div className={styles['rule-fields-selector']}>
               <span className={styles['rule-fields-label']}>{formatMessage({ id: 'fieldsets.rule-fields' })}</span>
               <div className={styles['rule-fields-select']}>
-                <FilterSelect<'apiName', 'name', { apiName: string; name: string }>
-                  isMultiple
-                  optionIdKey="apiName"
-                  optionLabelKey="name"
-                  options={detailFieldset.fields.map((field) => ({ apiName: field.apiName, name: field.name }))}
-                  selectedOptions={rule.fields || []}
-                  placeholderText={formatMessage({ id: 'fieldsets.rule-fields-placeholder' })}
-                  onChange={(fieldApiNames) => handleEditRuleFields(index, fieldApiNames)}
-                  resetFilter={() => handleEditRuleFields(index, [])}
+                <DropdownList
+                  controlSize="sm"
+                  controlVariant="accent"
+                  isMulti
                   isDisabled={isLinked}
-                  renderPlaceholder={(opts) => {
-                    const selected = (rule.fields || []).length;
-                    if (selected === 0) return formatMessage({ id: 'fieldsets.rule-fields-placeholder' });
-                    const selectedNames = opts
-                      .filter((option) => (rule.fields || []).includes(option.apiName))
-                      .map((option) => option.name);
-                    return selectedNames.join(', ');
-                  }}
+                  title={
+                    getSelectedFieldOptions(rule.fields)
+                      .map((option) => option.label)
+                      .join(', ') || formatMessage({ id: 'fieldsets.rule-fields-placeholder' })
+                  }
+                  noOptionsMessage={() => formatMessage({ id: 'fieldsets.rule-fields-placeholder' })}
+                  options={fieldOptions}
+                  value={getSelectedFieldOptions(rule.fields)}
+                  onChange={(selected: { value: string }[]) =>
+                    handleEditRuleFields(
+                      index,
+                      selected.map((option) => option.value),
+                    )
+                  }
+                  onClear={() => handleEditRuleFields(index, [])}
                 />
               </div>
             </div>
