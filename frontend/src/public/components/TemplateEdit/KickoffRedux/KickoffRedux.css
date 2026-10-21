@@ -5,9 +5,14 @@
   width: 100%;
   padding: 3.2rem;
   margin-bottom: 1.6rem;
+  scroll-margin-top: 10.4rem;
   background: var(--pneumatic-color-white);
   border: none;
   border-radius: 2.4rem;
+
+  @media (--mobile) {
+    scroll-margin-top: 0;
+  }
 
   .header {
     display: flex;
