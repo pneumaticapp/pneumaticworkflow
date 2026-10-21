@@ -8,12 +8,12 @@ export const saveFirebaseDeviceToken = (token: string) => {
   localStorage.setItem(FIREBASE_DEVICE_STORAGE_KEY, token);
 };
 
-export const resetFirebaseDeviceToken = () => {
+export const resetFirebaseDeviceToken = async () => {
   const savedFirebaseDeviceToken = localStorage.getItem(FIREBASE_DEVICE_STORAGE_KEY);
   if (!savedFirebaseDeviceToken) {
     return;
   }
 
-  resetFirebaseDeviceTokenAPI(savedFirebaseDeviceToken);
-  localStorage.setItem(FIREBASE_DEVICE_STORAGE_KEY, '');
+  await resetFirebaseDeviceTokenAPI(savedFirebaseDeviceToken);
+  localStorage.removeItem(FIREBASE_DEVICE_STORAGE_KEY);
 };
