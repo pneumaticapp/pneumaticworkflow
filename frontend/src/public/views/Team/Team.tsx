@@ -27,6 +27,13 @@ const GroupDetails = loadable(
   },
 );
 
+const AIAgents = loadable(
+  () => import(/* webpackChunkName: "aiAgents", webpackPrefetch: true */ '../../components/Team/AIAgents'),
+  {
+    fallback: <Loader isLoading />,
+  },
+);
+
 export const TeamView = () => {
   return (
     <TeamLayout>
@@ -34,6 +41,7 @@ export const TeamView = () => {
         <Switch>
           <Route path={ERoutes.GroupDetails} component={GroupDetails} />
           <Route path={ERoutes.Groups} component={Groups} />
+          <Route path={ERoutes.AIAgents} component={AIAgents} />
           <Route exact path={ERoutes.Team} component={Users} />
           <Redirect to={ERoutes.Error} />
         </Switch>

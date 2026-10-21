@@ -391,6 +391,10 @@ export const enMessages = {
   'team.users': 'Users',
 
   'team.groups': 'Groups',
+  'team.ai-agents': 'AI Agents',
+  'team.ai-agents.create-button': 'Create AI Agent',
+  'team.ai-agents.create-button-caption': 'Add an AI agent that can work on tasks',
+  'team.ai-agents.empty': 'No AI agents yet',
   'team.groups.search': 'Search group',
   'team.groups.add-group.title': 'Add Group',
   'team.groups.add-group.caption': 'Create a new group and add users to boost team collaboration',
