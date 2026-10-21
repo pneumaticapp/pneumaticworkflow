@@ -29,7 +29,6 @@ export interface IAIProvider {
   baseUrl: string;
   apiKeyPrefix: string;
   vendor: EAIVendor;
-  isActive: boolean;
   usage: IAIProviderUsageItem[];
 }
 
@@ -37,7 +36,6 @@ export interface ICreateAIProviderRequest {
   name: string;
   baseUrl: string;
   apiKey: string;
-  isActive?: boolean;
 }
 
 export interface ICreateAIProviderByVendorRequest {

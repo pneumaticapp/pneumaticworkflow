@@ -54,7 +54,6 @@ const buildProvider = (overrides: Partial<IAIProvider> = {}): IAIProvider => ({
   baseUrl: 'https://openrouter.ai/api/v1',
   apiKeyPrefix: 'sk-or',
   vendor: EAIVendor.OpenRouter,
-  isActive: true,
   usage: [],
   ...overrides,
 });

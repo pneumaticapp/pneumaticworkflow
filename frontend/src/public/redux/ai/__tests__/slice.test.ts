@@ -35,7 +35,6 @@ describe('AI request state', () => {
       baseUrl: '',
       apiKeyPrefix: '',
       vendor: EAIVendor.OpenRouter,
-      isActive: true,
       usage: [],
     };
     const loaded = reducer(initial, loadAIProvidersSuccess([provider]));
