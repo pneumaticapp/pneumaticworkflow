@@ -5,6 +5,7 @@ from django.db.models import Count, Q
 from django.utils import timezone
 
 from src.accounts.enums import (
+    AbsenceStatus,
     LeaseLevel,
     NotificationStatus,
     SourceType,
@@ -330,4 +331,11 @@ class GroupQuerySet(AccountBaseQuerySet):
 
 
 class VacationQuerySet(BaseQuerySet):
-    pass
+
+    def sick_leave_or_vacation(self) -> 'VacationQuerySet':
+        return self.filter(
+            absence_status__in=(
+                AbsenceStatus.VACATION,
+                AbsenceStatus.SICK_LEAVE,
+            ),
+        )

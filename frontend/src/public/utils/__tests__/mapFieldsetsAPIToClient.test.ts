@@ -58,6 +58,17 @@ describe('mapFieldsetBindingsToClient', () => {
     expect(result.fields).toHaveLength(1);
   });
 
+  it('defaults fields to empty array when fields is missing or undefined', () => {
+    const binding = makeFieldsetBinding({
+      apiName: 'fs-no-fields',
+      fields: undefined,
+    });
+
+    const [result] = mapFieldsetBindingsToClient([binding]);
+
+    expect(result.fields).toEqual([]);
+  });
+
   it('maps multiple bindings', () => {
     const bindings = [makeFieldsetBinding({ apiName: 'fs-a' }), makeFieldsetBinding({ apiName: 'fs-b' })];
 
@@ -115,6 +126,18 @@ describe('mapFieldsetTaskAPIToRuntime', () => {
     expect(result.layout).toBe('horizontal');
     expect(result.title).toBe('Task Title');
     expect(result.fields).toHaveLength(1);
+  });
+
+  it('defaults fields to empty array when fields is missing or undefined in runtime', () => {
+    const taskFs = makeFieldsetTaskAPI({
+      id: 10,
+      apiName: 'fs-no-fields-runtime',
+      fields: undefined,
+    });
+
+    const [result] = mapFieldsetTaskAPIToRuntime([taskFs]);
+
+    expect(result.fields).toEqual([]);
   });
 
   it('maps multiple task fieldsets', () => {

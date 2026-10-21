@@ -62,6 +62,7 @@ export const getNormalizedTemplate = (
   const normalizedKickoff = {
     ...getEmptyKickoff(),
     ...(template.kickoff || {}),
+    fields: template.kickoff?.fields || [],
     fieldsets: template.kickoff ? mapFieldsetBindingsToClient(template.kickoff.fieldsets) : [],
   };
 
@@ -130,19 +131,20 @@ export const getNormalizedTask = (task: ITemplateTaskResponse, isSubscribed: boo
     uuid: createUUID(),
     conditions,
     rawDueDate,
+    fields: task.fields || [],
     fieldsets: mapFieldsetBindingsToClient(task.fieldsets),
   };
 };
 
 export const collectFieldApiNames = (
-  fields: IExtraField[],
-  fieldsets: IFieldsetBindingClient[],
+  fields: IExtraField[] = [],
+  fieldsets: IFieldsetBindingClient[] = [],
   validApiNames: Set<string>,
 ) => {
-  fields.forEach((field) => {
+  fields?.forEach((field) => {
     if (field.apiName) validApiNames.add(field.apiName);
   });
-  fieldsets.forEach((fieldset) => {
+  fieldsets?.forEach((fieldset) => {
     fieldset.fields?.forEach((field) => {
       if (field.apiName) validApiNames.add(field.apiName);
     });

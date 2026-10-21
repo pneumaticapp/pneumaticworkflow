@@ -15,8 +15,8 @@ from django.db.models import (
     Q,
 )
 
-from src.accounts.enums import UserType
-from src.accounts.models import UserGroup
+from src.accounts.enums import AbsenceStatus, UserType
+from src.accounts.models import UserGroup, UserVacation
 from src.generics.querysets import (
     AccountBaseQuerySet,
     BaseHardQuerySet,
@@ -1130,7 +1130,10 @@ class TaskPerformerQuerySet(BaseQuerySet, BaseHardQuerySet):
         return self.filter(user_id=user_id)
 
     def by_user_or_group(self, user_id):
-        return self.filter(Q(user_id=user_id) | Q(group__users__id=user_id))
+        return self.filter(
+            Q(user_id=user_id) |
+            Q(group__users__id=user_id, group__is_deleted=False),
+        )
 
     def completed(self):
         return self.filter(is_completed=True)
@@ -1186,6 +1189,28 @@ class TaskPerformerQuerySet(BaseQuerySet, BaseHardQuerySet):
             directly_status__in=(
                 DirectlyStatus.DELETED,
             ),
+        )
+
+    def exclude_active_substitute_groups(
+        self,
+        account_id: int,
+        assigned_performers: 'TaskPerformerQuerySet',
+    ) -> 'TaskPerformerQuerySet':
+        return self.exclude(
+            type=PerformerType.GROUP,
+            group_id__in=UserVacation.objects.filter(
+                Q(user__taskperformer__in=assigned_performers)
+                | Q(
+                    user__user_groups__taskperformer__in=assigned_performers,
+                    user__user_groups__is_deleted=False,
+                ),
+                account_id=account_id,
+                absence_status__in=(
+                    AbsenceStatus.VACATION,
+                    AbsenceStatus.SICK_LEAVE,
+                ),
+                substitute_group__is_deleted=False,
+            ).values_list('substitute_group_id', flat=True),
         )
 
     def user_is_subscriber(self):
