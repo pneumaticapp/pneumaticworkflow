@@ -8,8 +8,6 @@ LABEL org.opencontainers.image.title="Pneumatic web client" \
       org.opencontainers.image.documentation="https://github.com/pneumaticapp/pneumaticworkflow/wiki" \
       org.opencontainers.image.licenses="Apache-2.0"
 
-# Installation pm2
-# Install pm2 manually following instruction: https://pm2.io/docs/runtime/guide/installation/
 RUN npm install -g npm@12.2.1 pm2
 
 WORKDIR /pneumatic_frontend
