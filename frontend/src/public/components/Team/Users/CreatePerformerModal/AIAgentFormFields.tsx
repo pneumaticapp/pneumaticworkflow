@@ -9,9 +9,10 @@ import { FormikDropdownList } from '../../../UI/DropdownList';
 import { FormikInputField } from '../../../UI/Fields/InputField';
 import { FormikTextareaField } from '../../../UI/Fields/TextareaField';
 import { ModalBody, ModalFooter } from '../../../UI/BaseModal';
-import { cancelAIAgentAvatarUpload, uploadAIAgentAvatar } from '../../../../redux/ai/slice';
+import { uploadAIAgentAvatar } from '../../../../redux/ai/slice';
 import { getAIAgentAvatarUploadState, getAIProviderModelsState, getAIProviders } from '../../../../redux/selectors/ai';
 import { getAgentInitials } from '../getAgentInitials';
+import { generateAgentAvatar } from './generateAgentAvatar';
 import type { IAIAgentFormFieldsProps, IAIAgentFormValues } from './types';
 import { useProviderModelsSync } from './useProviderModelsSync';
 
@@ -32,12 +33,21 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
   }));
   const initials = getAgentInitials(values.name);
 
+  const uploadAvatar = (file: File) => {
+    dispatch(uploadAIAgentAvatar({ file, onSuccess: (url) => setFieldValue('photo', url) }));
+  };
+
   const handleAvatarUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     event.currentTarget.value = '';
-    dispatch(uploadAIAgentAvatar({ file, onSuccess: (url) => setFieldValue('photo', url) }));
+    uploadAvatar(file);
+  };
+
+  const handleAvatarGenerate = async () => {
+    const file = await generateAgentAvatar(initials);
+    if (file) uploadAvatar(file);
   };
 
   const isModelSelectDisabled = !values.providerId || modelsState.isLoading;
@@ -66,13 +76,7 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
             <span className={styles['modal__avatar-separator']} aria-hidden>
               •
             </span>
-            <button
-              type="button"
-              onClick={() => {
-                dispatch(cancelAIAgentAvatarUpload());
-                setFieldValue('photo', '');
-              }}
-            >
+            <button type="button" onClick={handleAvatarGenerate}>
               {formatMessage({ id: 'team.create-ai-agent-modal.generate' })}
             </button>
           </div>

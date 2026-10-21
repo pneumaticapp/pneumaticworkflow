@@ -35,6 +35,11 @@ jest.mock('react-dom', () => {
   };
 });
 
+const mockGenerateAgentAvatar = jest.fn();
+jest.mock('../generateAgentAvatar', () => ({
+  generateAgentAvatar: (initials: string) => mockGenerateAgentAvatar(initials),
+}));
+
 jest.mock('react-redux', () => ({
   useDispatch: jest.fn(),
   useSelector: jest.fn(),
@@ -346,22 +351,26 @@ describe('CreatePerformerModal', () => {
       );
     });
 
-    it('cancels a pending upload and falls back to initials on Generate', async () => {
+    it('uploads a generated avatar on Generate', async () => {
+      mockGenerateAgentAvatar.mockResolvedValue(new File(['png'], 'ai-agent-avatar.png', { type: 'image/png' }));
       render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
       await userEvent.type(getNameInput(), 'Ada Agent');
-      await uploadAvatar();
-      await act(async () => {
-        getAvatarUploadAction().payload.onSuccess('https://files.example.com/avatar.png');
-      });
 
       await userEvent.click(
         screen.getByRole('button', { name: getTranslatedText('team.create-ai-agent-modal.generate') }),
       );
 
-      expect(mockDispatch).toHaveBeenCalledWith(cancelAIAgentAvatarUpload());
-      expect(screen.getByText('AA')).toBeInTheDocument();
-      expect(document.querySelector('.modal__avatar-preview img')).not.toBeInTheDocument();
+      await waitFor(() => expect(getAvatarUploadAction()).toBeDefined());
+      expect(mockGenerateAgentAvatar).toHaveBeenCalledWith('AA');
+      expect(getAvatarUploadAction().payload.file.name).toBe('ai-agent-avatar.png');
+      await act(async () => {
+        getAvatarUploadAction().payload.onSuccess('https://files.example.com/generated.png');
+      });
+      expect(document.querySelector('.modal__avatar-preview img')).toHaveAttribute(
+        'src',
+        'https://files.example.com/generated.png',
+      );
     });
 
     it('preserves both forms while switching tabs', async () => {
