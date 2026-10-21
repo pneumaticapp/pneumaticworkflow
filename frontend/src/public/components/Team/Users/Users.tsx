@@ -4,7 +4,6 @@ import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { TeamUserCard } from './TeamUserCard';
-import { TeamAgent } from './TeamAgent';
 import { DeleteTeamUserPopupContainer } from './DeleteTeamUserPopup';
 import { AddGuestsBanner } from './AddGuestsBanner';
 import { CreatePerformerModal } from './CreatePerformerModal';
@@ -29,9 +28,8 @@ import {
   getUserListSorting,
 } from '../../../redux/selectors/accounts';
 import { getAuthUserId } from '../../../redux/selectors/authUser';
-import { getAIAgentsState, getAIProviders } from '../../../redux/selectors/ai';
 import { ESubscriptionPlan } from '../../../types/account';
-import type { IUsersProps, TTeamListItem } from './types';
+import type { IUsersProps } from './types';
 import {
   closeCreateUserModal,
   openCreateUserModal,
@@ -39,8 +37,6 @@ import {
   userListSortingChanged,
 } from '../../../redux/accounts/slice';
 import { loadInvitesUsers, openTeamInvitesPopup } from '../../../redux/team/slice';
-import { loadAIAgents, loadAIProviders } from '../../../redux/ai/slice';
-import { matchesSearchQuery, sortListItems } from './listUtils';
 
 import styles from './Users.css';
 
@@ -54,8 +50,6 @@ export function Users({ userListSorting }: IUsersProps) {
   const isSubscribed = useSelector(getIsUserSubsribed);
   const billingPlan = useSelector(getSubscriptionPlan);
   const isCreateUserModalOpen = useSelector(getIsCreateUserModalOpen);
-  const { list: agents, isLoading: areAgentsLoading } = useSelector(getAIAgentsState);
-  const providers = useSelector(getAIProviders);
 
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
   const accessConditions = isSubscribed || isFreePlan;
@@ -66,29 +60,21 @@ export function Users({ userListSorting }: IUsersProps) {
   useEffect(() => {
     dispatch(teamFetchStarted({}));
     dispatch(loadInvitesUsers());
-    dispatch(loadAIAgents());
-    dispatch(loadAIProviders());
     document.title = TITLES.Team;
   }, [dispatch]);
 
-  const providerNameById = new Map(providers.map((provider) => [provider.id, provider.name]));
+  const getVisibleUsers = () => {
+    if (!searchQuery) {
+      return users;
+    }
 
-  const getVisibleItems = (): TTeamListItem[] => {
-    const items: TTeamListItem[] = [
-      ...users.map((user) => ({ kind: 'user' as const, user })),
-      ...agents.map((agent) => ({ kind: 'agent' as const, agent })),
-    ];
+    const queryWords = searchQuery.split(' ').map((str) => str.toLowerCase());
+    const checkQueryWord = (queryWord: string, user: TUserListItem) =>
+      [user.firstName, user.lastName, user.email]
+        .map((str) => str.toLowerCase())
+        .some((property) => property.includes(queryWord));
 
-    const filteredItems = searchQuery
-      ? items.filter((item) =>
-          matchesSearchQuery(
-            item,
-            searchQuery.split(' ').map((str) => str.toLowerCase()),
-          ),
-        )
-      : items;
-
-    return sortListItems(filteredItems, userListSorting);
+    return users.filter((user) => queryWords.every((queryWord) => checkQueryWord(queryWord, user)));
   };
 
   const handleClickInviteButton = () => {
@@ -114,28 +100,22 @@ export function Users({ userListSorting }: IUsersProps) {
   };
 
   const renderCards = () => {
-    if (isUsersLoading || areAgentsLoading) {
+    if (isUsersLoading) {
       return Array.from([1, 2, 3], (key) => <TeamUserSkeleton key={key} />);
     }
 
     return (
       <ul className={styles['cards__list']}>
-        {getVisibleItems().map((item) =>
-          item.kind === 'user' ? (
-            <li key={`user:${item.user.id}`}>
-              <TeamUserCard
-                user={item.user}
-                currentUserId={currentUserId}
-                isSubscribed={accessConditions}
-                onOpenVacationModal={setVacationModalUser}
-              />
-            </li>
-          ) : (
-            <li key={`agent:${item.agent.id}`}>
-              <TeamAgent agent={item.agent} providerName={providerNameById.get(item.agent.providerId)} />
-            </li>
-          ),
-        )}
+        {getVisibleUsers().map((user) => (
+          <li key={user.id}>
+            <TeamUserCard
+              user={user}
+              currentUserId={currentUserId}
+              isSubscribed={accessConditions}
+              onOpenVacationModal={setVacationModalUser}
+            />
+          </li>
+        ))}
       </ul>
     );
   };

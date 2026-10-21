@@ -5,8 +5,6 @@ export interface IUsersProps {
   userListSorting: EUserListSorting;
 }
 
-export type TTeamListItem = { kind: 'user'; user: TUserListItem } | { kind: 'agent'; agent: IAIAgent };
-
 export interface ITeamUserCardProps {
   user: TUserListItem;
   currentUserId: number;
