@@ -40,6 +40,10 @@
     pointer-events: none;
   }
 
+  .react-select__single-value {
+    color: var(--pneumatic-color-black100);
+  }
+
   .react-select__placeholder {
     color: var(--pneumatic-color-black32);
     display: -webkit-box;
