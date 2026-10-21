@@ -20,12 +20,12 @@ import { EUserListSorting, TUserListItem } from '../../../types/user';
 
 import { IntegrateIcon, SearchLargeIcon, AddUserIcon } from '../../icons';
 import {
-  TDropdownOption,
+  TDropdownMenuOption,
   InputField,
-  DropdownList,
-  Dropdown,
+  Select,
+  DropdownMenu,
   Button,
-  TDropdownOptionBase,
+  TSelectOption,
   Placeholder,
   ModifyDropdown,
 } from '../../UI';
@@ -92,7 +92,7 @@ export function GroupDetails({ match }: any) {
   };
 
   const renderAddUsers = () => {
-    const dropdownOptionsUsers: TDropdownOption = {
+    const dropdownOptionsUsers: TDropdownMenuOption = {
       label: formatMessage({ id: 'group.add-user' }),
       customSubOption: (
         <UserSelection
@@ -128,7 +128,7 @@ export function GroupDetails({ match }: any) {
     };
 
     return (
-      <Dropdown
+      <DropdownMenu
         renderToggle={(isOpen: boolean) => (
           <Button
             size="sm"
@@ -186,7 +186,7 @@ export function GroupDetails({ match }: any) {
   };
 
   const renderSorting = () => {
-    const dropdownOptions: TDropdownOptionBase[] = [
+    const dropdownOptions: TSelectOption[] = [
       {
         label: (
           <p className={styles['dropdown__sorting']}>
@@ -214,7 +214,7 @@ export function GroupDetails({ match }: any) {
     ];
 
     return (
-      <DropdownList
+      <Select
         placement="left"
         className={styles['test']}
         controlSize="sm"

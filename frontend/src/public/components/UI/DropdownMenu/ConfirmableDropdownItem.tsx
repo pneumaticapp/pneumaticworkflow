@@ -4,7 +4,7 @@ import { DropdownItemProps, DropdownItem } from 'reactstrap';
 import { useIntl } from 'react-intl';
 import OutsideClickHandler from 'react-outside-click-handler';
 
-import styles from './Dropdown.css';
+import styles from './DropdownMenu.css';
 
 export type TDropdownItemState = 'option' | 'confirmation';
 

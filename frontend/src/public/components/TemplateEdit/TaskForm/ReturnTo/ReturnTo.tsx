@@ -2,7 +2,7 @@ import React, { ReactNode, useMemo, useState } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
-import { DropdownList } from '../../../UI/DropdownList';
+import { Select } from '../../../UI/Select';
 import { RichText } from '../../../RichText';
 import { TrashIcon } from '../../../icons';
 import { getFormattedDropdownOption } from '../Conditions/utils/getFormattedDropdownOption';
@@ -102,7 +102,7 @@ export function ReturnTo({ variables, tasks, currentTaskRevertTask, setCurrentTa
         </button>
       ) : (
         <div className={STYLES.dropdownContainer}>
-          <DropdownList<IDropdownTask>
+          <Select<IDropdownTask>
             placeholder={formatMessage({ id: TRANSLATIONS.placeholder })}
             value={selectedTask}
             getOptionLabel={(option: any) => option.richLabel}

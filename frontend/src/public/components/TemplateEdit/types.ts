@@ -1,6 +1,6 @@
 import React from 'react';
 import { EExtraFieldType } from '../../types/template';
-import { TDropdownOptionBase } from '../UI/DropdownList';
+import { TSelectOption } from '../UI/Select';
 import { EStartingType } from './TaskForm/Conditions/utils/getDropdownOperators';
 
 export const enum ECustomResponsibleUsers {
@@ -8,7 +8,7 @@ export const enum ECustomResponsibleUsers {
   InviteNewUserSelectorValue = 'invite-new-user-selector-option',
 }
 
-export interface ITemplateOwnerOption extends TDropdownOptionBase {
+export interface ITemplateOwnerOption extends TSelectOption {
   id: number;
 }
 

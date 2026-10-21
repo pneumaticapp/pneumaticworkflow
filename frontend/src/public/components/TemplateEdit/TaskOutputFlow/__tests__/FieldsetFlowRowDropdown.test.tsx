@@ -2,12 +2,12 @@ import * as React from 'react';
 import { render } from '@testing-library/react';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
-import { Dropdown } from '../../../UI';
-import { TDropdownOption } from '../../../UI/Dropdown/Dropdown';
+import { DropdownMenu } from '../../../UI';
+import { TDropdownMenuOption } from '../../../UI/DropdownMenu';
 import { FieldsetFlowRowDropdown, IFieldsetFlowRowDropdownProps } from '../FieldsetFlowRowDropdown';
 
 jest.mock('../../../UI', () => ({
-  Dropdown: jest.fn(() => null),
+  DropdownMenu: jest.fn(() => null),
 }));
 
 jest.mock('../../../icons', () => ({
@@ -20,8 +20,8 @@ jest.mock('../../../icons', () => ({
 
 const formatMsg = (id: string) => intlMock.formatMessage({ id });
 
-const getDropdownOptions = (): TDropdownOption[] => {
-  const calls = (Dropdown as jest.Mock).mock.calls;
+const getDropdownOptions = (): TDropdownMenuOption[] => {
+  const calls = (DropdownMenu as jest.Mock).mock.calls;
   const options = calls[calls.length - 1][0].options;
   return Array.isArray(options) ? options : [];
 };
@@ -129,13 +129,13 @@ describe('FieldsetFlowRowDropdown', () => {
     );
 
     const options = getDropdownOptions();
-    const findOption = (predicate: (o: TDropdownOption) => boolean): TDropdownOption => {
+    const findOption = (predicate: (o: TDropdownMenuOption) => boolean): TDropdownMenuOption => {
       const found = options.find(predicate);
       if (!found) throw new Error('Option not found by predicate');
       return found;
     };
 
-    const cases: Array<{ option: TDropdownOption; handler: jest.Mock }> = [
+    const cases: Array<{ option: TDropdownMenuOption; handler: jest.Mock }> = [
       { option: findOption((o) => o.label === formatMsg('template.move-up')), handler: onMoveUp },
       { option: findOption((o) => o.label === formatMsg('template.move-down')), handler: onMoveDown },
       { option: findOption((o) => o.mapKey === 'fieldset-flow-open-detail'), handler: onOpenDetail },
@@ -177,7 +177,7 @@ describe('FieldsetFlowRowDropdown', () => {
       expect.arrayContaining([expect.objectContaining({ label: formatMsg('user.avatar.delete') })]),
     );
 
-    (Dropdown as jest.Mock).mockClear();
+    (DropdownMenu as jest.Mock).mockClear();
 
     render(
       React.createElement(FieldsetFlowRowDropdown, {

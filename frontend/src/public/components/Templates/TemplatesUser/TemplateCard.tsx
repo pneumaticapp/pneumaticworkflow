@@ -19,7 +19,7 @@ import { ETemplateParts } from '../../../types/template';
 import { history } from '../../../utils/history';
 import { sanitizeText } from '../../../utils/strings';
 import { ITemplateCardProps } from './types';
-import { Dropdown, TDropdownOption } from '../../UI';
+import { DropdownMenu, TDropdownMenuOption } from '../../UI';
 import { getTemplateEditRoute } from '../../../utils/routes';
 import { getLinkToHighlightsByTemplate } from '../../../utils/routes/getLinkToHighlightsByTemplate';
 import { getLinkToWorkflows } from '../../../utils/routes/getLinkToWorkflows';
@@ -73,7 +73,7 @@ export function TemplateCard({
     history.push(getLinkToTemplate({ templateId: id, templatePart: ETemplateParts.Integrations }));
   };
 
-  const dropdownOptions: TDropdownOption[] = [
+  const dropdownOptions: TDropdownMenuOption[] = [
     {
       label: formatMessage({ id: 'templates.run-workflow' }),
       onClick: onRunWorkflow,
@@ -141,7 +141,7 @@ export function TemplateCard({
             {sanitizeText(name)}
           </Link>
           {canEdit && (
-            <Dropdown
+            <DropdownMenu
               renderToggle={(isOpen) => (
                 <MoreIcon className={classnames(styles['card__more'], isOpen && styles['is-active'])} />
               )}

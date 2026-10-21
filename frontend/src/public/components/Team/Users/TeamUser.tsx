@@ -9,7 +9,7 @@ import { IntlMessages } from '../../IntlMessages';
 import { Avatar } from '../../UI/Avatar';
 import { getUserFullName } from '../../../utils/users';
 import { getDate } from '../../../utils/strings';
-import { Dropdown, Header, TDropdownOption } from '../../UI';
+import { DropdownMenu, Header, TDropdownMenuOption } from '../../UI';
 import { AddUserIcon, MoreIcon, RemoveUserIcon, TrashIcon } from '../../icons';
 import { SelectManagerModal } from '../SelectManagerModal';
 import { SelectReportsModal } from '../SelectReportsModal';
@@ -59,7 +59,7 @@ export function TeamUser(props: ITeamUserProps) {
 
   const resendInviteDebounced = React.useCallback(debounce(700, resendInvite), [resendInvite]);
 
-  const dropdownOptions: TDropdownOption[] = [
+  const dropdownOptions: TDropdownMenuOption[] = [
     {
       label: formatMessage({ id: 'team.card-resend-invite' }),
       onClick: resendInviteDebounced,
@@ -169,7 +169,7 @@ export function TeamUser(props: ITeamUserProps) {
               />
             </div>
             <div className={styles['card-more-container']}>
-              <Dropdown
+              <DropdownMenu
                 renderToggle={(isOpen) => (
                   <MoreIcon className={classnames(styles['card-more'], isOpen && styles['card-more_active'])} />
                 )}

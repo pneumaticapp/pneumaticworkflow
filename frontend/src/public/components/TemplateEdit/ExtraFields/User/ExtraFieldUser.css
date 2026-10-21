@@ -54,7 +54,6 @@
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: #262522 !important;
     white-space: nowrap;
   }
   /* stylelint-enable */

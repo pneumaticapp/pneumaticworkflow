@@ -109,66 +109,7 @@
 .settings-select {
   width: fit-content;
   min-width: 15rem;
-  padding: 0.8rem 1.2rem;
-  background-color: var(--pneumatic-color-white);
-  border: 1px solid var(--pneumatic-color-black16);
-  border-radius: 0.8rem;
-  transition: border-color 0.2s;
-
-  &:focus-within,
-  &:hover:not(:has(:disabled)) {
-    border-color: var(--pneumatic-color-blue);
-  }
-
-  &:has(:disabled),
-  &:has(button:disabled),
-  &[class*='filter-select_disabled'] {
-    cursor: default;
-    background-color: var(--pneumatic-color-black4);
-    border: 0.1rem solid transparent;
-    opacity: 1;
-
-    button,
-    span {
-      color: var(--pneumatic-color-black72);
-    }
-
-    svg {
-      color: var(--pneumatic-color-black32);
-    }
-  }
 }
-
-/* stylelint-disable declaration-no-important */
-.settings-select__toggle {
-  @mixin text-base;
-
-  font-weight: normal !important;
-  color: var(--pneumatic-color-black100);
-
-  &:hover {
-    color: var(--pneumatic-color-black100) !important;
-  }
-}
-
-.settings-select__toggle:focus,
-.settings-select__toggle:focus-visible {
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-.settings-select__menu {
-  width: 100%;
-  margin-left: 0 !important;
-
-  button:focus,
-  button:focus-visible,
-  button:active {
-    outline: none !important;
-    box-shadow: none !important;
-  }
-}
-/* stylelint-enable declaration-no-important */
 
 .readonly-badge {
   padding: 0.2rem 0.8rem;

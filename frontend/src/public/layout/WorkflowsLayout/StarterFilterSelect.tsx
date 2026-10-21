@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
-import { Avatar, FilterSelect } from '../../components/UI';
+import { Avatar } from '../../components/UI';
+import { Select } from '../../components/UI/Select';
 import {
   cancelCurrentPerformersCounters,
   cancelTemplateTasksCounters,
@@ -18,19 +19,19 @@ import {
 } from '../../redux/selectors/workflows';
 import { getAccountsUsers } from '../../redux/selectors/accounts';
 import { canFilterByTemplateStep } from '../../utils/workflows/filters';
-import { useCheckDevice } from '../../hooks/useCheckDevice';
+import { useMobileMenuPortalProps } from './useMobileMenuPortalProps';
 
 export function StarterFilterSelect() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const { isMobile } = useCheckDevice();
+  const menuPortalProps = useMobileMenuPortalProps();
 
   const workflowStartersIdsFilter = useSelector(getWorkflowStartersIdsFilter);
   const workflowStartersCounters = useSelector(getWorkflowStartersCounters);
   const users = useSelector(getAccountsUsers);
   const statusFilter = useSelector(getWorkflowsStatus);
 
-  const activeUsers = getActiveUsers(users);
+  const activeUsers = useMemo(() => getActiveUsers(users), [users]);
 
   const workflowStartersOptions = useMemo(() => {
     const usersWithExternal = [EXTERNAL_USER, ...activeUsers];
@@ -40,7 +41,8 @@ export function StarterFilterSelect() {
       const workflowsCount = workflowStartersCounters.find(({ sourceId }) => sourceId === user.id)?.workflowsCount || 0;
       return {
         ...user,
-        displayName: (
+        value: String(user.id),
+        label: (
           <div className={styles['user']}>
             <Avatar user={user} className={styles['user-avatar']} size="sm" />
             <span className={styles['user-name']}>{userFullName}</span>
@@ -52,40 +54,40 @@ export function StarterFilterSelect() {
     });
 
     return normalizedUsers;
-  }, [users, workflowStartersCounters]);
+  }, [activeUsers, workflowStartersCounters]);
+
+  const handleClear = () => {
+    dispatch(setWorkflowsFilterWorkflowStarters([]));
+    if (!canFilterByTemplateStep(statusFilter)) {
+      dispatch(cancelCurrentPerformersCounters());
+      dispatch(cancelTemplateTasksCounters());
+    }
+  };
 
   return (
-    <div className={styles['starter-filter']}>
-      <FilterSelect
-        isMultiple
-        isSearchShown
-        placeholderText={formatMessage({ id: 'workflows.filter-no-starter' })}
-        searchPlaceholder={formatMessage({ id: 'sorting.search-placeholder' })}
-        selectedOptions={workflowStartersIdsFilter}
-        options={workflowStartersOptions}
-        optionIdKey="id"
-        optionLabelKey="displayName"
-        onChange={(workflowStarters: number[]) => dispatch(setWorkflowsFilterWorkflowStarters(workflowStarters))}
-        resetFilter={() => {
-          dispatch(setWorkflowsFilterWorkflowStarters([]));
-          if (!canFilterByTemplateStep(statusFilter)) {
-            dispatch(cancelCurrentPerformersCounters());
-            dispatch(cancelTemplateTasksCounters());
-          }
-        }}
-        Icon={StarterFilterIcon}
-        renderPlaceholder={() =>
-          getRenderPlaceholder({
-            filterIds: workflowStartersIdsFilter,
-            options: workflowStartersOptions,
-            formatMessage,
-            type: ERenderPlaceholderType.Starter,
-            severalOptionPlaceholder: 'sorting.several-starters',
-            defaultPlaceholder: 'sorting.all-starters',
-          })
-        }
-        positionFixed={isMobile}
-      />
-    </div>
+    <Select
+      controlSize="sm"
+      controlVariant="accent"
+      Icon={StarterFilterIcon}
+      isMulti
+      isSearchable
+      title={getRenderPlaceholder({
+        filterIds: workflowStartersIdsFilter,
+        options: workflowStartersOptions,
+        formatMessage,
+        type: ERenderPlaceholderType.Starter,
+        severalOptionPlaceholder: 'sorting.several-starters',
+        defaultPlaceholder: 'sorting.all-starters',
+      })}
+      placeholder={formatMessage({ id: 'sorting.search-placeholder' })}
+      noOptionsMessage={() => formatMessage({ id: 'workflows.filter-no-starter' })}
+      options={workflowStartersOptions}
+      value={workflowStartersOptions.filter((option) => workflowStartersIdsFilter.includes(option.id))}
+      onChange={(selected: typeof workflowStartersOptions) =>
+        dispatch(setWorkflowsFilterWorkflowStarters(selected.map((option) => option.id)))
+      }
+      onClear={workflowStartersIdsFilter.length > 0 ? handleClear : undefined}
+      {...menuPortalProps}
+    />
   );
 }

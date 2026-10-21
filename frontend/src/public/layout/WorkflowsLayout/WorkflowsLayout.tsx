@@ -8,7 +8,10 @@ import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
 import { history } from '../../utils/history';
 import { WorkflowModalContainer } from '../../components/Workflows/WorkflowModal';
-import { SelectMenu, Tabs } from '../../components/UI';
+import classnames from 'classnames';
+import type { FormatOptionLabelMeta } from 'react-select';
+import { Select, Tabs } from '../../components/UI';
+import { getSortingSelectProps } from '../../utils/getSortingSelectProps';
 import { EWorkflowsSorting, EWorkflowsStatus, EWorkflowsView, ITemplateFilterItem } from '../../types/workflow';
 import { BoxesIcon, StatusTitlesIcon, TableViewIcon } from '../../components/icons';
 import { IWorkflowsFiltersProps } from '../../components/Workflows/types';
@@ -30,9 +33,11 @@ import { StarterFilterSelect } from './StarterFilterSelect';
 import { TemplateFilterSelect } from './TemplateFilterSelect';
 import { PerformerFilterSelect } from './PerformerFilterSelect';
 import { TaskFilterSelect } from './TaskFilterSelect';
+import { useMobileMenuPortalProps } from './useMobileMenuPortalProps';
 import { checkFilterDependenciesChanged } from '../../utils/helpers';
 
 import styles from './WorkflowsLayout.css';
+import radioStyles from '../../components/UI/Fields/RadioButton/RadioButton.css';
 import { getWorkflowPerformersGroupsIdsFilter, getWorkflowsLoadingStatus } from '../../redux/selectors/workflows';
 
 export interface IWorkflowsLayoutComponentProps extends IWorkflowsFiltersProps {
@@ -351,27 +356,45 @@ export function WorkflowsLayoutComponent({
     );
   };
 
+  const menuPortalProps = useMobileMenuPortalProps();
+
+  const renderRadioOption = (
+    { value, label }: { value: string; label: string },
+    { context, selectValue }: FormatOptionLabelMeta<{ value: string; label: string }>,
+  ) => {
+    if (context !== 'menu') return label;
+
+    const isChecked = selectValue.some((selected) => selected.value === value);
+
+    return (
+      <span className={classnames(radioStyles['radio'], isChecked && radioStyles['select-menu__radio--checked'])}>
+        <span className={radioStyles['radio__box']} />
+        <span className={radioStyles['radio__title']}>{label}</span>
+      </span>
+    );
+  };
+
   const renderFilters = () => {
     return (
       <>
         <TemplateFilterSelect />
         <StarterFilterSelect />
-        <SelectMenu
-          values={statusTitles}
-          activeValue={statusFilter}
-          onChange={setStatusFilter}
+        <Select
+          controlSize="sm"
+          controlVariant="accent"
           Icon={StatusTitlesIcon}
-          withRadio
-          positionFixed={isMobile}
+          formatOptionLabel={renderRadioOption}
+          {...menuPortalProps}
+          {...getSortingSelectProps(statusTitles, statusFilter, setStatusFilter, formatMessage)}
         />
         <TaskFilterSelect selectedTemplates={selectedTemplates} />
         <PerformerFilterSelect />
-        <SelectMenu
-          values={sortingTitles}
-          activeValue={sorting}
-          onChange={changeWorkflowsSorting}
-          withRadio
-          positionFixed={isMobile}
+        <Select
+          controlSize="sm"
+          controlVariant="accent"
+          formatOptionLabel={renderRadioOption}
+          {...menuPortalProps}
+          {...getSortingSelectProps(sortingTitles, sorting, changeWorkflowsSorting, formatMessage)}
         />
         {areFiltersChanged && (
           <button
