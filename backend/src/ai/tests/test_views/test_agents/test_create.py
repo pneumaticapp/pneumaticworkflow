@@ -79,7 +79,7 @@ def test_create__all_fields__ok(api_client, mocker):
         name='Research assistant',
         photo='https://example.com/photo.jpg',
         is_active=True,
-        provider_id=provider.id,
+        provider=provider,
         model='openai/gpt-4o',
         system_prompt='You are helpful.',
     )
@@ -135,7 +135,7 @@ def test_create__minimal_fields__ok(api_client, mocker):
     create_mock.assert_called_once_with(
         name='Research assistant',
         is_active=True,
-        provider_id=provider.id,
+        provider=provider,
         model='openai/gpt-4o',
         system_prompt='You are helpful.',
     )
@@ -192,10 +192,51 @@ def test_create__service_exception__validation_error(
     create_mock.assert_called_once_with(
         name='Research assistant',
         is_active=True,
-        provider_id=provider.id,
+        provider=provider,
         model='openai/gpt-4o',
         system_prompt='You are helpful.',
     )
+
+
+def test_create__provider_another_account__validation_error(
+    api_client,
+    mocker,
+):
+
+    """ Create agent with a provider of another account """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    another_account = create_test_account()
+    another_provider = create_test_provider(account=another_account)
+    path = '/ai/agents'
+    data = {
+        'name': 'Research assistant',
+        'is_active': True,
+        'provider_id': another_provider.id,
+        'model': 'openai/gpt-4o',
+        'system_prompt': 'You are helpful.',
+    }
+    create_mock = mocker.patch(
+        'src.ai.views.AIAgentService.create',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post(
+        path=path,
+        data=data,
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == (
+        f'Invalid pk "{another_provider.id}" - object does not exist.'
+    )
+    assert response.data['details']['name'] == 'provider_id'
+    create_mock.assert_not_called()
 
 
 def test_create__unauthenticated__unauthorized(api_client):

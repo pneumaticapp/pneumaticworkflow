@@ -1,4 +1,5 @@
 import string
+from datetime import timedelta
 
 import pytest
 from rest_framework.exceptions import ValidationError
@@ -8,16 +9,27 @@ from src.accounts.enums import (
     NotificationType,
     UserStatus,
 )
-from src.accounts.models import Notification
+from src.accounts.models import Notification, User
 from src.accounts.services.user import UserService
 from src.ai.enums import AIAgentActionType
 from src.ai.exceptions import (
     AIAgentAttemptsExceededException,
+    AIAgentException,
     AIAgentNameNotUniqueException,
+    AIHandlerRequestFailed,
+    AIProviderException,
 )
-from src.ai.messages import MSG_AI_0004, MSG_AI_0009, MSG_AI_0010
+from src.ai.messages import (
+    MSG_AI_0002,
+    MSG_AI_0004,
+    MSG_AI_0009,
+    MSG_AI_0010,
+    MSG_AI_0011,
+    MSG_AI_0013,
+    MSG_AI_0015,
+)
 from src.ai.models import AIAgent, AIAgentAction
-from src.ai.services.agent import AIAgentService
+from src.ai.services.agent import AIAgentService, MAX_ATTEMPTS
 from src.ai.services.provider import AIProviderService
 from src.ai.services.response import TaskResponseService
 from src.ai.services.user_message import TaskUserMessageService
@@ -923,7 +935,9 @@ def test_raise_attempt_error__single_attempt__raise_exception(mocker):
     # assert
     message = str(MSG_AI_0010(attempts=1))
     assert str(ex.value.message) == message
-    action = AIAgentAction.objects.get(action=AIAgentActionType.ERROR)
+    action = AIAgentAction.objects.get(
+        action=AIAgentActionType.TASK_ATTEMPTS_EXCEEDED,
+    )
     assert action.account_id == account.id
     assert action.agent_id == agent.id
     assert action.task_id == task.id
@@ -974,7 +988,9 @@ def test_raise_attempt_error__multiple_attempts__raise_exception(mocker):
     # assert
     message = str(MSG_AI_0010(attempts=10))
     assert str(ex.value.message) == message
-    action = AIAgentAction.objects.get(action=AIAgentActionType.ERROR)
+    action = AIAgentAction.objects.get(
+        action=AIAgentActionType.TASK_ATTEMPTS_EXCEEDED,
+    )
     assert action.text == f'{message}\n{url}'
     get_report_text_mock.assert_called_once_with(errors_stack=errors_stack)
     create_report_file_mock.assert_called_once_with(
@@ -1430,8 +1446,8 @@ def test_attempt_complete_task__attempts_exceeded__raise_exception(mocker):
 
     # assert
     assert str(ex.value.message) == 'Attempts exceeded.'
-    errors_stack = [(fields_values, error)] * 10
-    assert get_fields_values_mock.call_count == 10
+    errors_stack = [(fields_values, error)] * MAX_ATTEMPTS
+    assert get_fields_values_mock.call_count == MAX_ATTEMPTS
     get_fields_values_mock.assert_has_calls(
         [
             mocker.call(task=task, errors_stack=None),
@@ -1439,14 +1455,14 @@ def test_attempt_complete_task__attempts_exceeded__raise_exception(mocker):
         ],
         any_order=True,
     )
-    assert complete_task_mock.call_count == 10
+    assert complete_task_mock.call_count == MAX_ATTEMPTS
     complete_task_mock.assert_has_calls(
         [
             mocker.call(task=task, fields_values=fields_values),
         ],
         any_order=True,
     )
-    assert convert_ex_to_markdown_mock.call_count == 10
+    assert convert_ex_to_markdown_mock.call_count == MAX_ATTEMPTS
     convert_ex_to_markdown_mock.assert_has_calls(
         [
             mocker.call(validation_error),
@@ -1543,6 +1559,9 @@ def test_create_instance__default_parameters__ok(mocker):
         'src.ai.services.agent.AIAgentService._get_agent_email',
         return_value=email,
     )
+    create_first_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_first_completion',
+    )
     service = AIAgentService(user=owner)
 
     # act
@@ -1550,7 +1569,7 @@ def test_create_instance__default_parameters__ok(mocker):
         name='Operator',
         model='gpt-4o',
         system_prompt='You are an operator.',
-        provider_id=provider.id,
+        provider=provider,
     )
 
     # assert
@@ -1585,6 +1604,9 @@ def test_create_instance__default_parameters__ok(mocker):
         is_comments_mentions_subscriber=False,
     )
     get_agent_email_mock.assert_called_once_with()
+    create_first_completion_mock.assert_called_once_with(
+        models=[{'slug': 'gpt-4o'}],
+    )
 
 
 def test_create_instance__all_parameters__ok(mocker):
@@ -1617,6 +1639,9 @@ def test_create_instance__all_parameters__ok(mocker):
         'src.ai.services.agent.AIAgentService._get_agent_email',
         return_value=email,
     )
+    create_first_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_first_completion',
+    )
     service = AIAgentService(user=owner)
 
     # act
@@ -1626,7 +1651,7 @@ def test_create_instance__all_parameters__ok(mocker):
         system_prompt='You are an operator.',
         is_active=False,
         photo=photo,
-        provider_id=provider.id,
+        provider=provider,
     )
 
     # assert
@@ -1657,6 +1682,45 @@ def test_create_instance__all_parameters__ok(mocker):
         is_comments_mentions_subscriber=False,
     )
     get_agent_email_mock.assert_called_once_with()
+    create_first_completion_mock.assert_called_once_with(
+        models=[{'slug': 'gpt-4o'}],
+    )
+
+
+def test_create_instance__model_unavailable__raise_exception(mocker):
+
+    """ The model does not respond: nothing is created """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    provider = create_test_provider(account=account)
+    create_first_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_first_completion',
+        side_effect=AIProviderException(message='Failed'),
+    )
+    user_create_mock = mocker.patch(
+        'src.ai.services.agent.UserService.create',
+    )
+    service = AIAgentService(user=owner)
+
+    # act
+    with pytest.raises(AIAgentException) as ex:
+        service._create_instance(
+            name='Operator',
+            model='gpt-4o',
+            system_prompt='You are an operator.',
+            provider=provider,
+        )
+
+    # assert
+    assert str(ex.value.message) == str(MSG_AI_0015(model='gpt-4o'))
+    assert not AIAgent.objects.filter(account=account).exists()
+    assert not User.objects.filter(account=account, is_ai=True).exists()
+    create_first_completion_mock.assert_called_once_with(
+        models=[{'slug': 'gpt-4o'}],
+    )
+    user_create_mock.assert_not_called()
 
 
 def test_create_instance__name_not_unique__raise_exception(mocker):
@@ -1688,6 +1752,9 @@ def test_create_instance__name_not_unique__raise_exception(mocker):
         'src.ai.services.agent.AIAgentService._get_agent_email',
         return_value=email,
     )
+    create_first_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_first_completion',
+    )
     service = AIAgentService(user=owner)
 
     # act
@@ -1696,7 +1763,7 @@ def test_create_instance__name_not_unique__raise_exception(mocker):
             name='Operator',
             model='gpt-4o',
             system_prompt='You are an operator.',
-            provider_id=provider.id,
+            provider=provider,
         )
 
     # assert
@@ -1723,6 +1790,9 @@ def test_create_instance__name_not_unique__raise_exception(mocker):
         is_comments_mentions_subscriber=False,
     )
     get_agent_email_mock.assert_called_once_with()
+    create_first_completion_mock.assert_called_once_with(
+        models=[{'slug': 'gpt-4o'}],
+    )
 
 
 def test_create_instance__same_name_in_another_account__ok(mocker):
@@ -1755,6 +1825,9 @@ def test_create_instance__same_name_in_another_account__ok(mocker):
         'src.ai.services.agent.AIAgentService._get_agent_email',
         return_value=email,
     )
+    create_first_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_first_completion',
+    )
     service = AIAgentService(user=owner)
 
     # act
@@ -1762,7 +1835,7 @@ def test_create_instance__same_name_in_another_account__ok(mocker):
         name='Operator',
         model='gpt-4o',
         system_prompt='You are an operator.',
-        provider_id=provider.id,
+        provider=provider,
     )
 
     # assert
@@ -1791,6 +1864,9 @@ def test_create_instance__same_name_in_another_account__ok(mocker):
         is_comments_mentions_subscriber=False,
     )
     get_agent_email_mock.assert_called_once_with()
+    create_first_completion_mock.assert_called_once_with(
+        models=[{'slug': 'gpt-4o'}],
+    )
 
 
 def test_create_instance__same_name_as_deleted_agent__ok(mocker):
@@ -1827,6 +1903,9 @@ def test_create_instance__same_name_as_deleted_agent__ok(mocker):
         'src.ai.services.agent.AIAgentService._get_agent_email',
         return_value=email,
     )
+    create_first_completion_mock = mocker.patch(
+        'src.ai.services.provider.AIProviderService._create_first_completion',
+    )
     service = AIAgentService(user=owner)
 
     # act
@@ -1834,7 +1913,7 @@ def test_create_instance__same_name_as_deleted_agent__ok(mocker):
         name='Operator',
         model='gpt-4o',
         system_prompt='You are an operator.',
-        provider_id=provider.id,
+        provider=provider,
     )
 
     # assert
@@ -1863,6 +1942,46 @@ def test_create_instance__same_name_as_deleted_agent__ok(mocker):
         is_comments_mentions_subscriber=False,
     )
     get_agent_email_mock.assert_called_once_with()
+    create_first_completion_mock.assert_called_once_with(
+        models=[{'slug': 'gpt-4o'}],
+    )
+
+
+def test_create__ok(mocker):
+
+    """ Create agent without an outer transaction """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    provider = create_test_provider(account=account)
+    agent = create_test_agent(account=account, provider=provider)
+    service = AIAgentService(user=owner)
+    kwargs = {
+        'name': 'Operator',
+        'model': 'gpt-4o',
+        'system_prompt': 'You are an operator.',
+        'provider': provider,
+    }
+
+    def create_instance(**_kwargs):
+        service.instance = agent
+
+    create_instance_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._create_instance',
+        side_effect=create_instance,
+    )
+    atomic_mock = mocker.patch(
+        'src.generics.base.service.transaction.atomic',
+    )
+
+    # act
+    result = service.create(**kwargs)
+
+    # assert
+    assert result == agent
+    create_instance_mock.assert_called_once_with(**kwargs)
+    atomic_mock.assert_not_called()
 
 
 def test_partial_update__name__ok(mocker):
@@ -2169,6 +2288,467 @@ def test_complete_task__non_ascii_values__ok(mocker):
     attempt_complete_task_mock.assert_called_once_with(task=task)
 
 
+def test_complete_task__provider_error__task_failed(mocker):
+
+    """ Provider error: the run failure is logged,
+        the performers get a comment """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_complete_task',
+        side_effect=AIProviderException(message='Failed'),
+    )
+    create_comment_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._create_comment',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    with pytest.raises(AIProviderException):
+        service.complete_task(task_id=task.id)
+
+    # assert
+    assert AIAgentAction.objects.filter(
+        action=AIAgentActionType.TASK_IN_PROGRESS,
+    ).exists()
+    failed_action = AIAgentAction.objects.get(
+        action=AIAgentActionType.TASK_FAILED,
+    )
+    assert failed_action.task_id == task.id
+    assert failed_action.text == 'Failed'
+    assert not AIAgentAction.objects.filter(
+        action=AIAgentActionType.TASK_COMPLETED,
+    ).exists()
+    create_comment_mock.assert_called_once_with(
+        task=task,
+        text=str(MSG_AI_0011(attempts=MAX_ATTEMPTS, error='Failed')),
+    )
+
+
+def test_complete_task__unexpected_error__not_handled(mocker):
+
+    """ Unexpected error: the error is raised, the failure is not logged """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_complete_task',
+        side_effect=ValueError(),
+    )
+    handle_failure_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._handle_task_complete_failure',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    with pytest.raises(ValueError):
+        service.complete_task(task_id=task.id)
+
+    # assert
+    in_progress_action = AIAgentAction.objects.get(
+        action=AIAgentActionType.TASK_IN_PROGRESS,
+    )
+    assert in_progress_action.task_id == task.id
+    assert not AIAgentAction.objects.filter(
+        action__in=(
+            AIAgentActionType.TASK_FAILED,
+            AIAgentActionType.TASK_COMPLETED,
+        ),
+    ).exists()
+    handle_failure_mock.assert_not_called()
+
+
+def test_handle_task_complete_failure__error__comment(mocker):
+
+    """ The failure is logged, the performers get a comment """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    create_comment_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._create_comment',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service._handle_task_complete_failure(
+        task=task,
+        ex=AIProviderException(message='Request failed'),
+    )
+
+    # assert
+    failed_action = AIAgentAction.objects.get(
+        action=AIAgentActionType.TASK_FAILED,
+    )
+    assert failed_action.account_id == account.id
+    assert failed_action.agent_id == agent.id
+    assert failed_action.task_id == task.id
+    assert failed_action.text == 'Request failed'
+    create_comment_mock.assert_called_once_with(
+        task=task,
+        text=str(
+            MSG_AI_0011(attempts=MAX_ATTEMPTS, error='Request failed'),
+        ),
+    )
+
+
+def test_handle_task_complete_failure__error_without_message__class_name(
+    mocker,
+):
+
+    """ Error without a message: the class name is logged """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    create_comment_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._create_comment',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service._handle_task_complete_failure(task=task, ex=KeyError())
+
+    # assert
+    failed_action = AIAgentAction.objects.get(
+        action=AIAgentActionType.TASK_FAILED,
+    )
+    assert failed_action.text == 'KeyError'
+    create_comment_mock.assert_called_once_with(
+        task=task,
+        text=str(MSG_AI_0011(attempts=MAX_ATTEMPTS, error='KeyError')),
+    )
+
+
+def test_complete_task__attempts_exceeded__task_failed(mocker):
+
+    """ Validation attempts exceeded: the run failure is logged,
+        the performers get a comment """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_complete_task',
+        side_effect=AIAgentAttemptsExceededException(message='Failed'),
+    )
+    create_comment_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._create_comment',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    with pytest.raises(AIAgentAttemptsExceededException):
+        service.complete_task(task_id=task.id)
+
+    # assert
+    assert AIAgentAction.objects.filter(
+        action=AIAgentActionType.TASK_IN_PROGRESS,
+    ).exists()
+    failed_action = AIAgentAction.objects.get(
+        action=AIAgentActionType.TASK_FAILED,
+    )
+    assert failed_action.task_id == task.id
+    assert failed_action.text == 'Failed'
+    create_comment_mock.assert_called_once_with(
+        task=task,
+        text=str(MSG_AI_0011(attempts=MAX_ATTEMPTS, error='Failed')),
+    )
+
+
+def test_complete_task__attempts_exceeded__retry_skip(mocker):
+
+    """ Validation attempts exceeded: the next run does nothing """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    attempt_complete_task_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_complete_task',
+        side_effect=AIAgentAttemptsExceededException(message='Failed'),
+    )
+    mocker.patch(
+        'src.ai.services.agent.AIAgentService._create_comment',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+    with pytest.raises(AIAgentAttemptsExceededException):
+        service.complete_task(task_id=task.id)
+
+    # act
+    service.complete_task(task_id=task.id)
+
+    # assert
+    attempt_complete_task_mock.assert_called_once_with(task=task)
+    assert AIAgentAction.objects.filter(
+        action=AIAgentActionType.TASK_IN_PROGRESS,
+    ).count() == 1
+    assert AIAgentAction.objects.filter(
+        action=AIAgentActionType.TASK_FAILED,
+    ).count() == 1
+
+
+def test_complete_task__already_in_progress__skip(mocker):
+
+    """ A run is in progress: the duplicate does nothing """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    AIAgentAction.objects.create(
+        account=account,
+        agent=agent,
+        task=task,
+        action=AIAgentActionType.TASK_IN_PROGRESS,
+    )
+    attempt_complete_task_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_complete_task',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.complete_task(task_id=task.id)
+
+    # assert
+    assert AIAgentAction.objects.filter(task=task).count() == 1
+    attempt_complete_task_mock.assert_not_called()
+
+
+def test_complete_task__agent_inactive__skip(mocker):
+
+    """ The agent is disabled after the run is queued: nothing """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account, is_active=False)
+    attempt_complete_task_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_complete_task',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.complete_task(task_id=task.id)
+
+    # assert
+    assert not AIAgentAction.objects.filter(task=task).exists()
+    attempt_complete_task_mock.assert_not_called()
+
+
+def test_reply_to_comment__agent_inactive__skip(mocker):
+
+    """ The agent is disabled after the reply is queued: nothing """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account, is_active=False)
+    notification = Notification.objects.create(
+        account=account,
+        user=agent.user,
+        author=owner,
+        task=task,
+        type=NotificationType.MENTION,
+        text='Please call the customer.',
+    )
+    attempt_reply_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_reply_to_comment',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.reply_to_comment(notification_id=notification.id)
+
+    # assert
+    assert not AIAgentAction.objects.filter(
+        notification=notification,
+    ).exists()
+    notification.refresh_from_db()
+    assert notification.status == NotificationStatus.NEW
+    attempt_reply_mock.assert_not_called()
+
+
+def test_complete_task__already_completed__skip(mocker):
+
+    """ The task is completed: the duplicate does nothing """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    for action in (
+        AIAgentActionType.TASK_IN_PROGRESS,
+        AIAgentActionType.TASK_COMPLETED,
+    ):
+        AIAgentAction.objects.create(
+            account=account,
+            agent=agent,
+            task=task,
+            action=action,
+        )
+    attempt_complete_task_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_complete_task',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.complete_task(task_id=task.id)
+
+    # assert
+    assert AIAgentAction.objects.filter(task=task).count() == 2
+    attempt_complete_task_mock.assert_not_called()
+
+
+def test_complete_task__previous_run_failed__skip(mocker):
+
+    """ The previous run failed: the duplicate does nothing """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    for action in (
+        AIAgentActionType.TASK_IN_PROGRESS,
+        AIAgentActionType.TASK_FAILED,
+    ):
+        AIAgentAction.objects.create(
+            account=account,
+            agent=agent,
+            task=task,
+            action=action,
+        )
+    attempt_complete_task_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_complete_task',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.complete_task(task_id=task.id)
+
+    # assert
+    assert AIAgentAction.objects.filter(task=task).count() == 2
+    attempt_complete_task_mock.assert_not_called()
+
+
+def test_complete_task__max_run_failures_reached__skip(mocker):
+
+    """ All allowed runs failed: the duplicate does nothing """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    for _ in range(MAX_ATTEMPTS):
+        for action in (
+            AIAgentActionType.TASK_IN_PROGRESS,
+            AIAgentActionType.TASK_FAILED,
+        ):
+            AIAgentAction.objects.create(
+                account=account,
+                agent=agent,
+                task=task,
+                action=action,
+            )
+    attempt_complete_task_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_complete_task',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.complete_task(task_id=task.id)
+
+    # assert
+    assert AIAgentAction.objects.filter(
+        task=task,
+    ).count() == MAX_ATTEMPTS * 2
+    attempt_complete_task_mock.assert_not_called()
+
+
+def test_complete_task__run_before_task_started__ok(mocker):
+
+    """ A run of the previous task start does not block """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    AIAgentAction.objects.create(
+        account=account,
+        agent=agent,
+        task=task,
+        action=AIAgentActionType.TASK_IN_PROGRESS,
+    )
+    AIAgentAction.objects.update(
+        date_created=task.date_started - timedelta(hours=1),
+    )
+    attempt_complete_task_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_complete_task',
+        return_value={},
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.complete_task(task_id=task.id)
+
+    # assert
+    attempt_complete_task_mock.assert_called_once_with(task=task)
+
+
+def test_complete_task__task_not_found__skip(mocker):
+
+    """ Task not found """
+
+    # arrange
+    account = create_test_account()
+    agent = create_test_agent(account=account)
+    attempt_complete_task_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_complete_task',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.complete_task(task_id=999999)
+
+    # assert
+    assert AIAgentAction.objects.filter(agent=agent).exists() is False
+    attempt_complete_task_mock.assert_not_called()
+
+
 def test_reply_to_comment__notification_exists__ok():
 
     """ Notification exists """
@@ -2195,11 +2775,17 @@ def test_reply_to_comment__notification_exists__ok():
     # assert
     notification.refresh_from_db()
     assert notification.status == NotificationStatus.READ
-    action = AIAgentAction.objects.get(notification=notification)
-    assert action.account_id == account.id
-    assert action.agent_id == agent.id
-    assert action.task_id == task.id
-    assert action.action == AIAgentActionType.MENTION_IN_PROGRESS
+    actions = AIAgentAction.objects.filter(
+        notification=notification,
+    ).order_by('id')
+    assert [action.action for action in actions] == [
+        AIAgentActionType.MENTION_IN_PROGRESS,
+        AIAgentActionType.MENTION_COMPLETED,
+    ]
+    for action in actions:
+        assert action.account_id == account.id
+        assert action.agent_id == agent.id
+        assert action.task_id == task.id
 
 
 def test_reply_to_comment__notification_not_found__skip():
@@ -2216,3 +2802,275 @@ def test_reply_to_comment__notification_not_found__skip():
 
     # assert
     assert AIAgentAction.objects.filter(agent=agent).exists() is False
+
+
+def test_reply_to_comment__already_handled__skip():
+
+    """ The mention is already handled: the duplicate does nothing """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    notification = Notification.objects.create(
+        account=account,
+        user=agent.user,
+        author=owner,
+        task=task,
+        type=NotificationType.MENTION,
+        text='Please call the customer.',
+    )
+    AIAgentAction.objects.create(
+        account=account,
+        agent=agent,
+        task=task,
+        action=AIAgentActionType.MENTION_IN_PROGRESS,
+        notification=notification,
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.reply_to_comment(notification_id=notification.id)
+
+    # assert
+    notification.refresh_from_db()
+    assert notification.status == NotificationStatus.NEW
+    assert AIAgentAction.objects.filter(agent=agent).count() == 1
+
+
+def test_reply_to_comment__previous_run_failed__skip(mocker):
+
+    """ The previous reply failed: the duplicate does nothing """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    notification = Notification.objects.create(
+        account=account,
+        user=agent.user,
+        author=owner,
+        task=task,
+        type=NotificationType.MENTION,
+        text='Please call the customer.',
+    )
+    for action in (
+        AIAgentActionType.MENTION_IN_PROGRESS,
+        AIAgentActionType.MENTION_FAILED,
+    ):
+        AIAgentAction.objects.create(
+            account=account,
+            agent=agent,
+            task=task,
+            notification=notification,
+            action=action,
+        )
+    attempt_reply_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_reply_to_comment',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.reply_to_comment(notification_id=notification.id)
+
+    # assert
+    assert AIAgentAction.objects.filter(
+        notification=notification,
+    ).count() == 2
+    attempt_reply_mock.assert_not_called()
+
+
+def test_reply_to_comment__max_run_failures_reached__skip(mocker):
+
+    """ All allowed replies failed: the duplicate does nothing """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    notification = Notification.objects.create(
+        account=account,
+        user=agent.user,
+        author=owner,
+        task=task,
+        type=NotificationType.MENTION,
+        text='Please call the customer.',
+    )
+    for _ in range(MAX_ATTEMPTS):
+        for action in (
+            AIAgentActionType.MENTION_IN_PROGRESS,
+            AIAgentActionType.MENTION_FAILED,
+        ):
+            AIAgentAction.objects.create(
+                account=account,
+                agent=agent,
+                task=task,
+                notification=notification,
+                action=action,
+            )
+    attempt_reply_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_reply_to_comment',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service.reply_to_comment(notification_id=notification.id)
+
+    # assert
+    assert AIAgentAction.objects.filter(
+        notification=notification,
+    ).count() == MAX_ATTEMPTS * 2
+    attempt_reply_mock.assert_not_called()
+
+
+def test_reply_to_comment__unexpected_error__mention_failed(mocker):
+
+    """ Unexpected error: the failure is logged, the task gets a comment """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    notification = Notification.objects.create(
+        account=account,
+        user=agent.user,
+        author=owner,
+        task=task,
+        type=NotificationType.MENTION,
+        text='Please call the customer.',
+    )
+    mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_reply_to_comment',
+        side_effect=AIHandlerRequestFailed(),
+    )
+    create_comment_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._create_comment',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    with pytest.raises(AIHandlerRequestFailed):
+        service.reply_to_comment(notification_id=notification.id)
+
+    # assert
+    failed_action = AIAgentAction.objects.get(
+        action=AIAgentActionType.MENTION_FAILED,
+    )
+    assert failed_action.account_id == account.id
+    assert failed_action.agent_id == agent.id
+    assert failed_action.task_id == task.id
+    assert failed_action.notification_id == notification.id
+    assert failed_action.text == str(MSG_AI_0002)
+    assert not AIAgentAction.objects.filter(
+        action=AIAgentActionType.MENTION_COMPLETED,
+    ).exists()
+    create_comment_mock.assert_called_once_with(
+        task=task,
+        text=str(
+            MSG_AI_0013(attempts=MAX_ATTEMPTS, error=str(MSG_AI_0002)),
+        ),
+    )
+
+
+def test_reply_to_comment__attempts_exceeded__mention_failed(mocker):
+
+    """ Reply attempts exceeded: the run failure is logged,
+        the task gets a comment """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    notification = Notification.objects.create(
+        account=account,
+        user=agent.user,
+        author=owner,
+        task=task,
+        type=NotificationType.MENTION,
+        text='Please call the customer.',
+    )
+    mocker.patch(
+        'src.ai.services.agent.AIAgentService._attempt_reply_to_comment',
+        side_effect=AIAgentAttemptsExceededException(message='Failed'),
+    )
+    create_comment_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._create_comment',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    with pytest.raises(AIAgentAttemptsExceededException):
+        service.reply_to_comment(notification_id=notification.id)
+
+    # assert
+    assert AIAgentAction.objects.filter(
+        action=AIAgentActionType.MENTION_IN_PROGRESS,
+    ).exists()
+    failed_action = AIAgentAction.objects.get(
+        action=AIAgentActionType.MENTION_FAILED,
+    )
+    assert failed_action.notification_id == notification.id
+    assert failed_action.text == 'Failed'
+    assert not AIAgentAction.objects.filter(
+        action=AIAgentActionType.MENTION_COMPLETED,
+    ).exists()
+    create_comment_mock.assert_called_once_with(
+        task=task,
+        text=str(MSG_AI_0013(attempts=MAX_ATTEMPTS, error='Failed')),
+    )
+
+
+def test_handle_reply_to_comment_failure__error__comment(mocker):
+
+    """ The failure is logged, the task gets a comment """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = create_test_agent(account=account)
+    notification = Notification.objects.create(
+        account=account,
+        user=agent.user,
+        author=owner,
+        task=task,
+        type=NotificationType.MENTION,
+        text='Please call the customer.',
+    )
+    create_comment_mock = mocker.patch(
+        'src.ai.services.agent.AIAgentService._create_comment',
+    )
+    service = AIAgentService(user=agent.user, instance=agent)
+
+    # act
+    service._handle_reply_to_comment_failure(
+        notification=notification,
+        ex=AIHandlerRequestFailed(),
+    )
+
+    # assert
+    failed_action = AIAgentAction.objects.get(
+        action=AIAgentActionType.MENTION_FAILED,
+    )
+    assert failed_action.account_id == account.id
+    assert failed_action.agent_id == agent.id
+    assert failed_action.task_id == task.id
+    assert failed_action.notification_id == notification.id
+    assert failed_action.text == str(MSG_AI_0002)
+    create_comment_mock.assert_called_once_with(
+        task=task,
+        text=str(
+            MSG_AI_0013(attempts=MAX_ATTEMPTS, error=str(MSG_AI_0002)),
+        ),
+    )

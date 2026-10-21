@@ -1,7 +1,11 @@
+import socket
+
 import pytest
-from rest_framework.fields import BooleanField, CharField, Field, URLField
+from django.conf import settings
+from rest_framework.fields import CharField, Field, URLField
 
 from src.ai.exceptions import AIProviderException
+from src.ai.messages import MSG_AI_0001, MSG_AI_0018
 from src.ai.services.provider import AIProviderService
 from src.ai.tests.fixtures import create_test_provider
 from src.authentication.enums import AuthTokenType
@@ -20,9 +24,9 @@ from src.utils.validation import ErrorCode
 pytestmark = pytest.mark.django_db
 
 
-def test_create__minimal_data__ok(api_client, mocker):
+def test_create__ok(api_client, mocker):
 
-    """ Minimal request data """
+    """ Create provider """
 
     # arrange
     account = create_test_account()
@@ -56,7 +60,6 @@ def test_create__minimal_data__ok(api_client, mocker):
     assert response.data['id'] == provider.id
     assert response.data['name'] == provider.name
     assert response.data['base_url'] == provider.base_url
-    assert response.data['is_active'] is True
     assert 'api_key' not in response.data
     ai_provider_service_init_mock.assert_called_once_with(
         user=user,
@@ -67,59 +70,6 @@ def test_create__minimal_data__ok(api_client, mocker):
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
         api_key='sk-or-v1-example',
-        is_active=True,
-    )
-
-
-def test_create__full_data__ok(api_client, mocker):
-
-    """ Full request data """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    path = '/ai/providers'
-    data = {
-        'name': 'OpenRouter',
-        'base_url': 'https://openrouter.ai/api/v1',
-        'api_key': 'sk-or-v1-example',
-        'is_active': False,
-    }
-    provider = create_test_provider(account=account, is_active=False)
-    ai_provider_service_init_mock = mocker.patch.object(
-        AIProviderService,
-        attribute='__init__',
-        return_value=None,
-    )
-    create_mock = mocker.patch(
-        'src.ai.views.AIProviderService.create',
-        return_value=provider,
-    )
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.post(
-        path=path,
-        data=data,
-    )
-
-    # assert
-    assert response.status_code == 201
-    assert response.data['id'] == provider.id
-    assert response.data['name'] == provider.name
-    assert response.data['base_url'] == provider.base_url
-    assert response.data['is_active'] is False
-    assert 'api_key' not in response.data
-    ai_provider_service_init_mock.assert_called_once_with(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-    create_mock.assert_called_once_with(
-        name='OpenRouter',
-        base_url='https://openrouter.ai/api/v1',
-        api_key='sk-or-v1-example',
-        is_active=False,
     )
 
 
@@ -421,6 +371,164 @@ def test_create__invalid_base_url__validation_error(api_client, mocker):
     create_mock.assert_not_called()
 
 
+@pytest.mark.parametrize(
+    'ip',
+    (
+        '127.0.0.1',
+        '10.0.0.5',
+        '172.18.0.7',
+        '192.168.1.1',
+        '169.254.169.254',
+        '100.64.0.1',
+        '0.0.0.0',
+        '::1',
+        'fe80::1%eth0',
+        'fc00::1',
+        '::ffff:127.0.0.1',
+    ),
+)
+def test_create__base_url_not_public_ip__validation_error(
+    ip,
+    api_client,
+    mocker,
+    getaddrinfo_mock,
+):
+
+    """ base_url resolves to a non-public address """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    path = '/ai/providers'
+    data = {
+        'name': 'Internal',
+        'base_url': 'http://internal.example.com:8888/dir?x=',
+        'api_key': 'sk-or-v1-example',
+    }
+    family = socket.AF_INET6 if ':' in ip else socket.AF_INET
+    getaddrinfo_mock.return_value = [
+        (family, socket.SOCK_STREAM, 6, '', (ip, 0)),
+    ]
+    create_mock = mocker.patch(
+        'src.ai.views.AIProviderService.create',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post(path=path, data=data)
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == str(MSG_AI_0018)
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['details']['name'] == 'base_url'
+    getaddrinfo_mock.assert_called_once_with('internal.example.com', None)
+    create_mock.assert_not_called()
+
+
+def test_create__base_url_public_and_private_ip__validation_error(
+    api_client,
+    mocker,
+    getaddrinfo_mock,
+):
+
+    """ base_url resolves to a public and a private address """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    path = '/ai/providers'
+    data = {
+        'name': 'Rebind',
+        'base_url': 'https://rebind.example.com/v1',
+        'api_key': 'sk-or-v1-example',
+    }
+    getaddrinfo_mock.return_value = [
+        (socket.AF_INET, socket.SOCK_STREAM, 6, '', ('8.8.8.8', 0)),
+        (socket.AF_INET, socket.SOCK_STREAM, 6, '', ('10.0.0.5', 0)),
+    ]
+    create_mock = mocker.patch(
+        'src.ai.views.AIProviderService.create',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post(path=path, data=data)
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == str(MSG_AI_0018)
+    assert response.data['details']['name'] == 'base_url'
+    create_mock.assert_not_called()
+
+
+def test_create__base_url_allowed_host__validation_error(
+    api_client,
+    mocker,
+    getaddrinfo_mock,
+):
+
+    """ base_url points to one of the Pneumatic hosts """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    path = '/ai/providers'
+    host = settings.ALLOWED_HOSTS[0]
+    data = {
+        'name': 'Pneumatic',
+        'base_url': f'https://{host}/api',
+        'api_key': 'sk-or-v1-example',
+    }
+    create_mock = mocker.patch(
+        'src.ai.views.AIProviderService.create',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post(path=path, data=data)
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == str(MSG_AI_0018)
+    assert response.data['details']['name'] == 'base_url'
+    getaddrinfo_mock.assert_not_called()
+    create_mock.assert_not_called()
+
+
+def test_create__base_url_not_resolved__validation_error(
+    api_client,
+    mocker,
+    getaddrinfo_mock,
+):
+
+    """ base_url host is not resolved """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    path = '/ai/providers'
+    data = {
+        'name': 'Unknown',
+        'base_url': 'https://no-such-host.invalid/v1',
+        'api_key': 'sk-or-v1-example',
+    }
+    getaddrinfo_mock.side_effect = socket.gaierror(-2, 'Name not known')
+    create_mock = mocker.patch(
+        'src.ai.views.AIProviderService.create',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post(path=path, data=data)
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == str(MSG_AI_0001)
+    assert response.data['details']['name'] == 'base_url'
+    create_mock.assert_not_called()
+
+
 def test_create__base_url_too_long__validation_error(api_client, mocker):
 
     """ Base URL too long """
@@ -457,47 +565,6 @@ def test_create__base_url_too_long__validation_error(api_client, mocker):
     ).format(max_length=1024)
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['details']['name'] == 'base_url'
-    ai_provider_service_init_mock.assert_not_called()
-    create_mock.assert_not_called()
-
-
-def test_create__invalid_is_active__validation_error(api_client, mocker):
-
-    """ Invalid is_active """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    path = '/ai/providers'
-    data = {
-        'name': 'OpenRouter',
-        'base_url': 'https://openrouter.ai/api/v1',
-        'api_key': 'sk-or-v1-example',
-        'is_active': 'not-a-boolean',
-    }
-    ai_provider_service_init_mock = mocker.patch.object(
-        AIProviderService,
-        attribute='__init__',
-        return_value=None,
-    )
-    create_mock = mocker.patch(
-        'src.ai.views.AIProviderService.create',
-    )
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.post(
-        path=path,
-        data=data,
-    )
-
-    # assert
-    assert response.status_code == 400
-    assert response.data['message'] == str(
-        BooleanField.default_error_messages['invalid'],
-    )
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['details']['name'] == 'is_active'
     ai_provider_service_init_mock.assert_not_called()
     create_mock.assert_not_called()
 
@@ -546,5 +613,4 @@ def test_create__service_exception__validation_error(api_client, mocker):
         name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
         api_key='sk-or-v1-example',
-        is_active=True,
     )

@@ -37,3 +37,52 @@ MSG_AI_0010 = lambda attempts: format_lazy(
     _('The agent failed to complete the task in {attempts} attempts.'),
     attempts=attempts,
 )
+MSG_AI_0011 = lambda attempts, error: format_lazy(
+    _(
+        'I could not complete the task in {attempts} attempts. '
+        'Please complete it manually or check the agent provider settings. '
+        'Error: {error}',
+    ),
+    attempts=attempts,
+    error=error,
+)
+MSG_AI_0012 = lambda reason: format_lazy(
+    _('The AI provider blocked the request ({reason}).'),
+    reason=reason,
+)
+MSG_AI_0013 = lambda attempts, error: format_lazy(
+    _(
+        'I could not reply to the comment in {attempts} attempts. '
+        'Error: {error}',
+    ),
+    attempts=attempts,
+    error=error,
+)
+MSG_AI_0014 = _(
+    'None of the provider models responded to the test request. '
+    'Check the provider settings.',
+)
+MSG_AI_0015 = lambda model: format_lazy(
+    _(
+        'The selected model "{model}" returned an error. '
+        'Try choosing another model.',
+    ),
+    model=model,
+)
+MSG_AI_0016 = lambda error: format_lazy(
+    _(
+        'The AI provider rejected the credentials. Error: {error}',
+    ),
+    error=error,
+)
+MSG_AI_0017 = lambda error: format_lazy(
+    _(
+        'The AI provider denied access to the requested resource. '
+        'Error: {error}',
+    ),
+    error=error,
+)
+MSG_AI_0018 = _(
+    'The provider address is not allowed: '
+    'only public internet addresses can be used.',
+)

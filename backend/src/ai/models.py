@@ -179,7 +179,7 @@ class AIProvider(
     EncryptionMixin,
 ):
 
-    API_KEY_PREFIX_DISPLAY_LENGTH = 14
+    API_KEY_PREFIX_DISPLAY_LENGTH = 10
 
     class Meta:
         ordering = ('id',)
@@ -195,7 +195,6 @@ class AIProvider(
         choices=AIVendor.CHOICES,
         help_text='Detected type of the provider API',
     )
-    is_active = models.BooleanField(default=True)
 
     objects = BaseSoftDeleteManager.from_queryset(AIProviderQuerySet)()
 
@@ -282,12 +281,12 @@ class AIAgentAction(
         on_delete=models.CASCADE,
         related_name='ai_agent_actions',
     )
-    notification = models.OneToOneField(
+    notification = models.ForeignKey(
         'accounts.Notification',
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name='ai_agent_action',
+        related_name='ai_agent_actions',
     )
     action = models.CharField(
         max_length=50,

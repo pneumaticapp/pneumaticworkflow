@@ -10,7 +10,6 @@ from src.accounts.permissions import (
 from src.ai.enums import AIVendor
 from src.ai.exceptions import (
     AIAgentException,
-    AIHandlerException,
     AIProviderException,
 )
 from src.ai.models import AIAgent, AIProvider
@@ -256,7 +255,7 @@ class AIProviderViewSet(
         )
         try:
             models = service.get_models()
-        except AIHandlerException as ex:
+        except AIProviderException as ex:
             raise_validation_error(message=ex.message)
         serializer = self.get_serializer(instance=models, many=True)
         return self.response_ok(serializer.data)

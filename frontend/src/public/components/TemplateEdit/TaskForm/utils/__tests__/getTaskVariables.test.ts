@@ -9,6 +9,7 @@ import {
   makeFieldsetBindingClient,
   makeFieldsetField,
 } from '../../../../../__stubs__/fieldsets.factory';
+import { makeTemplateTaskClient } from '../../../../../__stubs__/templates.factory';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { TTaskVariable } from '../../../types';
 import {
@@ -46,6 +47,7 @@ const mockTask1: ITemplateTaskClient = {
   rawPerformers: [],
   requireCompletionByAll: true,
   skipForStarter: false,
+  skipOnReturn: false,
   fields: [
     makeExtraField({
       name: 'Large Text Field',
@@ -72,6 +74,7 @@ const mockTask2: ITemplateTaskClient = {
   rawPerformers: [],
   requireCompletionByAll: false,
   skipForStarter: false,
+  skipOnReturn: false,
   fields: [
     makeExtraField({
       name: 'Reasons',
@@ -266,6 +269,22 @@ describe('getKickoffVariables with fieldsets', () => {
 
     expect(vars.map((v) => v.apiName)).toEqual(['client-name-3967', 'assignee-fs', 'kickoff-date-fs']);
   });
+
+  it('handles fieldset with undefined fields without crashing', () => {
+    const kickoff: ITemplateKickoffClient = {
+      ...mockKikoff,
+      fieldsets: [
+        makeFieldsetBindingClient({
+          apiNameBinding: 'fs-with-undefined-fields',
+          fields: undefined,
+        }),
+      ],
+    };
+
+    const taskVariables = getKickoffVariables(kickoff);
+
+    expect(taskVariables.map((variable) => variable.apiName)).toEqual(['client-name-3967']);
+  });
 });
 
 describe('getSystemVariables', () => {
@@ -316,6 +335,18 @@ describe('getVariables', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].apiName).toBe(WORKFLOW_STARTER_VARIABLE_API_NAME);
+  });
+
+  it('handles task with undefined fields without crashing', () => {
+    const task = makeTemplateTaskClient({
+      apiName: 'task-1',
+      name: 'Task 1',
+      fields: undefined,
+    });
+
+    const result = getVariables({ kickoff: mockKikoff, tasks: [task] });
+
+    expect(result.length).toBeGreaterThan(0);
   });
 });
 

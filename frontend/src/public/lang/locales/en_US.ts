@@ -101,6 +101,8 @@ export const enMessages = {
   'user.sign-in-sso': 'SSO',
   'user.sign-up-google': 'Google',
   'user.sign-in-google': 'Google',
+  'user.oauth-unavailable':
+    '{type} sign-in is temporarily unavailable. Please try again later or log in using your email.',
   'user.id': 'ID',
   'user.email': 'Email',
   'user.email-work': 'Work email',
@@ -633,6 +635,7 @@ export const enMessages = {
   'templates.title-system.tooltip': 'Pick a template from our Template Library',
   'templates.task-require-completion-by-all': 'Require completion by all',
   'templates.task-skip-for-starter': 'Skip if assigned to starter',
+  'templates.task-skip-on-return': 'Skip on return',
   'templates.assign-perfomers-to-the-following-steps': 'Please assign users to the following steps:',
   'template.no-run-allowers': 'Please add at least one template owner',
   'template.no-tasks': 'Please add at least one task',

@@ -75,6 +75,50 @@ def test_partial_update__name__ok(api_client, mocker):
     )
 
 
+def test_partial_update__provider_another_account__validation_error(
+    api_client,
+    mocker,
+):
+
+    """ Update agent with a provider of another account """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    provider = create_test_provider(account=account)
+    agent = create_test_agent(
+        account=account,
+        provider=provider,
+    )
+    another_account = create_test_account()
+    another_provider = create_test_provider(account=another_account)
+    path = f'/ai/agents/{agent.id}'
+    data = {
+        'provider_id': another_provider.id,
+    }
+    partial_update_mock = mocker.patch(
+        'src.ai.views.AIAgentService.partial_update',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.patch(
+        path=path,
+        data=data,
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == (
+        f'Invalid pk "{another_provider.id}" - object does not exist.'
+    )
+    assert response.data['details']['name'] == 'provider_id'
+    partial_update_mock.assert_not_called()
+    agent.refresh_from_db()
+    assert agent.provider_id == provider.id
+
+
 def test_partial_update__service_exc__validation_error(
     api_client,
     mocker,

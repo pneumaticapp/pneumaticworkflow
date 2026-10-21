@@ -48,13 +48,11 @@ def create_test_provider(
     name: str = 'OpenRouter',
     base_url: str = 'https://openrouter.ai/api/v1',
     api_key: str = 'sk-or-v1-example',
-    is_active: bool = True,
 ) -> AIProvider:
     provider = AIProvider(
         account=account,
         name=name,
         base_url=base_url,
-        is_active=is_active,
     )
     provider.api_key = api_key
     provider.save()

@@ -1,11 +1,19 @@
+import ipaddress
+import socket
+from urllib.parse import urlparse
+
+from django.conf import settings
 from rest_framework.serializers import (
     ModelSerializer,
     Serializer,
+    ValidationError,
 )
 
 from src.ai.enums import AIVendor
+from src.ai.messages import MSG_AI_0001, MSG_AI_0018
 from src.ai.models import AIAgent, AIProvider
 from src.generics.fields import (
+    AccountPrimaryKeyRelatedField,
     DocBooleanField,
     DocCharField,
     DocChoiceField,
@@ -52,7 +60,6 @@ class AIProviderSerializer(
             'api_key',
             'api_key_prefix',
             'vendor',
-            'is_active',
             'usage',
         )
 
@@ -79,12 +86,6 @@ class AIProviderSerializer(
         ),
         example='sk-or-v1-example',
     )
-    is_active = DocBooleanField(
-        required=False,
-        default=True,
-        help_text='Whether the provider is enabled',
-        example=True,
-    )
     api_key_prefix = DocCharField(
         read_only=True,
         help_text='Secret API key prefix for the provider',
@@ -104,6 +105,36 @@ class AIProviderSerializer(
     )
 
     def validate_base_url(self, value):
+
+        """ Allows only the provider addresses in the public internet:
+            the host must not be one of the Pneumatic hosts and every
+            address it resolves to must be global.
+
+            Params:
+              value: 'https://openrouter.ai/api/v1/'
+
+            Result:
+              'https://openrouter.ai/api/v1'
+
+            Raises:
+              ValidationError: the host is in ALLOWED_HOSTS or resolves
+                to a loopback, private, link-local or reserved address,
+                e.g. 'http://localhost:8000', 'http://10.0.0.5',
+                'http://169.254.169.254'; or the host is not resolved """
+
+        host = urlparse(value).hostname
+        if not host or host in settings.ALLOWED_HOSTS:
+            raise ValidationError(MSG_AI_0018)
+        try:
+            addresses = socket.getaddrinfo(host, None)
+        except socket.gaierror as ex:
+            raise ValidationError(MSG_AI_0001) from ex
+        for *_, sockaddr in addresses:
+            ip = ipaddress.ip_address(sockaddr[0].split('%')[0])
+            if ip.version == 6 and ip.ipv4_mapped:
+                ip = ip.ipv4_mapped
+            if not ip.is_global:
+                raise ValidationError(MSG_AI_0018)
         return value.rstrip('/')
 
 
@@ -196,7 +227,9 @@ class AIAgentSerializer(
         help_text='Whether the agent is enabled',
         example=True,
     )
-    provider_id = DocIntegerField(
+    provider_id = AccountPrimaryKeyRelatedField(
+        source='provider',
+        queryset=AIProvider.objects.all(),
         help_text='Identifier of the AI provider this agent uses',
         example=1,
     )
