@@ -96,6 +96,7 @@ class FieldTemplateRuleSetService(RuleGroupsSyncMixin, BaseModelService):
             'field': group_and_data.get('field'),
             'operator': group_and_data['operator'],
             'value': group_and_data.get('value'),
+            'value_type': group_and_data.get('value_type'),
         }
         api_name = group_and_data.get('api_name')
         if api_name:
@@ -121,6 +122,9 @@ class FieldTemplateRuleSetService(RuleGroupsSyncMixin, BaseModelService):
         if 'value' in group_and_data:
             group_and.value = group_and_data['value']
             update_fields.append('value')
+        if 'value_type' in group_and_data:
+            group_and.value_type = group_and_data['value_type']
+            update_fields.append('value_type')
         if update_fields:
             group_and.save(update_fields=update_fields)
         self._validate(group_and=group_and)

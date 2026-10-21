@@ -11,6 +11,7 @@ from typing import (
 
 from src.processes.enums import (
     FieldRuleOperator,
+    FieldRuleValueType,
     FieldType,
 )
 from src.processes.messages.workflow import (
@@ -207,13 +208,28 @@ class FieldRuleCheckService:
             return (source.value or None), None
         return (source.value or ''), (raw_value or '')
 
+    def _get_user_field_value(self, source: TaskField) -> Optional[int]:
+        return source.user_id or None
+
+    def _get_group_field_value(self, source: TaskField) -> Optional[int]:
+        return source.group_id or None
+
     def _get_user_value(
         self,
         source: TaskField,
         operator: str,
         raw_value: Optional[str],
+        value_type: Optional[str] = None,
     ) -> Tuple[Optional[int], Optional[int]]:
-        field_val = source.user_id or source.group_id or None
+        if value_type == FieldRuleValueType.GROUP:
+            field_val = self._get_group_field_value(source)
+        elif value_type == FieldRuleValueType.USER:
+            field_val = self._get_user_field_value(source)
+        else:
+            field_val = (
+                self._get_user_field_value(source)
+                or self._get_group_field_value(source)
+            )
         if operator in self.UNARY_OPERATORS:
             return field_val, None
         try:
@@ -249,7 +265,6 @@ class FieldRuleCheckService:
         FieldType.URL: _get_string_value,
         FieldType.RADIO: _get_selection_value,
         FieldType.DROPDOWN: _get_selection_value,
-        FieldType.USER: _get_user_value,
         FieldType.FILE: _get_file_value,
     }
 
@@ -258,7 +273,15 @@ class FieldRuleCheckService:
         source: TaskField,
         operator: str,
         raw_value: Optional[str],
+        value_type: Optional[str] = None,
     ) -> Tuple[Any, Any]:
+        if source.type == FieldType.USER:
+            return self._get_user_value(
+                source,
+                operator,
+                raw_value,
+                value_type,
+            )
         getter = self.VALUE_GETTERS.get(
             source.type,
             FieldRuleCheckService._get_selection_value,
@@ -282,6 +305,7 @@ class FieldRuleCheckService:
             source=source,
             operator=predicate.operator,
             raw_value=predicate.value,
+            value_type=predicate.value_type,
         )
         if predicate.operator in self.UNARY_OPERATORS:
             return op_func(field_val)

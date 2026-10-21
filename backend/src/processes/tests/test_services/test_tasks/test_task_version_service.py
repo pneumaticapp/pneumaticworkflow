@@ -10,6 +10,7 @@ from src.processes.enums import (
     DueDateRule,
     FieldRuleOperator,
     FieldRuleType,
+    FieldRuleValueType,
     FieldSetRuleOperator,
     FieldType,
     PerformerType,
@@ -2880,6 +2881,7 @@ def test__update_field_rulesets__data_provided__ok():
                                 'field': 'fs-1-field-1',
                                 'operator': FieldRuleOperator.EQUAL,
                                 'value': 'done',
+                                'value_type': FieldRuleValueType.USER,
                             },
                         ],
                     },
@@ -2904,6 +2906,7 @@ def test__update_field_rulesets__data_provided__ok():
     assert group_and.field == 'fs-1-field-1'
     assert group_and.operator == FieldRuleOperator.EQUAL
     assert group_and.value == 'done'
+    assert group_and.value_type == FieldRuleValueType.USER
 
 
 def test__update_field_rulesets__data_empty__clear():

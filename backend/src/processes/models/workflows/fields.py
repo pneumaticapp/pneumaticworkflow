@@ -5,7 +5,11 @@ from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
 from src.generics.querysets import AccountBaseQuerySet
-from src.processes.enums import FieldRuleType, FieldRuleOperator
+from src.processes.enums import (
+    FieldRuleOperator,
+    FieldRuleType,
+    FieldRuleValueType,
+)
 from src.processes.models.base import BaseApiNameModel
 from src.processes.models.mixins import (
     ApiNameMixin,
@@ -203,6 +207,12 @@ class FieldRuleGroupAnd(
         choices=FieldRuleOperator.CHOICES,
     )
     value = models.CharField(max_length=200, null=True, blank=True)
+    value_type = models.CharField(
+        max_length=20,
+        choices=FieldRuleValueType.CHOICES,
+        null=True,
+        blank=True,
+    )
     field = models.CharField(
         max_length=200,
         null=True,

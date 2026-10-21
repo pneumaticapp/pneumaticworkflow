@@ -5,6 +5,7 @@ from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     FieldRuleOperator,
     FieldRuleType,
+    FieldRuleValueType,
     FieldType,
 )
 from src.processes.models.templates.fields import (
@@ -71,6 +72,7 @@ def test_create__from_template__creates_ruleset_tree():
         field='source-field-api-name',
         operator=FieldRuleOperator.EQUAL,
         value='active',
+        value_type=FieldRuleValueType.GROUP,
         api_name='group-and-1',
     )
     workflow = create_test_workflow(user=user, template=template)
@@ -116,6 +118,7 @@ def test_create__from_template__creates_ruleset_tree():
     assert group_and.field == 'source-field-api-name'
     assert group_and.operator == FieldRuleOperator.EQUAL
     assert group_and.value == 'active'
+    assert group_and.value_type == FieldRuleValueType.GROUP
     assert group_and.account == account
     assert group_and.workflow == workflow
 

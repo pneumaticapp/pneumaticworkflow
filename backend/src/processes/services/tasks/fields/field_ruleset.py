@@ -87,6 +87,7 @@ class FieldRuleSetService(BaseModelService):
             group_or=group_or,
             operator=group_and_template.operator,
             value=group_and_template.value,
+            value_type=group_and_template.value_type,
             field=group_and_template.field,
             api_name=(
                 group_and_template.api_name
@@ -116,6 +117,7 @@ class FieldRuleSetVersionService(BaseUpdateVersionService):
                     'field': group_and_data.get('field'),
                     'operator': group_and_data['operator'],
                     'value': group_and_data.get('value'),
+                    'value_type': group_and_data.get('value_type'),
                 },
             )
             api_names.add(group_and_data['api_name'])

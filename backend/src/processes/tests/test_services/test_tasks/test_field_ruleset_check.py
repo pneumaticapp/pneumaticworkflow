@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 from src.processes.enums import (
     FieldRuleOperator,
     FieldRuleType,
+    FieldRuleValueType,
     FieldType,
 )
 from src.processes.messages.workflow import (
@@ -1497,6 +1498,134 @@ class TestFieldRuleActionIntegration:
             operator=FieldRuleOperator.NOT_EQUAL,
             value='99',
             api_name='group-and-usr-neq',
+        )
+
+        # act
+        FieldRuleCheckService(ruleset.field).apply_rulesets(
+            [ruleset],
+            timezone_name=user.timezone,
+            fields_by_api_name=field_map(source_field, target_field),
+        )
+
+        # assert
+        assert target_field.is_hidden is False
+
+    def test_show_rule__user_type__group_id_stays_hidden(self):
+
+        """ value_type=user does not match the same group id. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+        source_field = TaskField.objects.create(
+            name='User Source',
+            api_name='user-source',
+            type=FieldType.USER,
+            group_id=42,
+            user_id=None,
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        target_field = TaskField.objects.create(
+            name='Target Field',
+            api_name='target-field',
+            type=FieldType.STRING,
+            workflow=workflow,
+            task=task,
+            account=account,
+            is_hidden=True,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=target_field,
+            name='Show when user is 42',
+            type=FieldRuleType.SHOW,
+            order=1,
+            api_name='ruleset-usr-only',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-usr-only',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=group_or,
+            field=source_field.api_name,
+            operator=FieldRuleOperator.EQUAL,
+            value='42',
+            value_type=FieldRuleValueType.USER,
+            api_name='group-and-usr-only',
+        )
+
+        # act
+        FieldRuleCheckService(ruleset.field).apply_rulesets(
+            [ruleset],
+            timezone_name=user.timezone,
+            fields_by_api_name=field_map(source_field, target_field),
+        )
+
+        # assert
+        assert target_field.is_hidden is True
+
+    def test_show_rule__group_type__group_id_is_visible(self):
+
+        """ value_type=group matches group_id and ignores user_id. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+        source_field = TaskField.objects.create(
+            name='User Source',
+            api_name='user-source',
+            type=FieldType.USER,
+            group_id=42,
+            user_id=user.id,
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        target_field = TaskField.objects.create(
+            name='Target Field',
+            api_name='target-field',
+            type=FieldType.STRING,
+            workflow=workflow,
+            task=task,
+            account=account,
+            is_hidden=True,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=target_field,
+            name='Show when group is 42',
+            type=FieldRuleType.SHOW,
+            order=1,
+            api_name='ruleset-grp-only',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-grp-only',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=group_or,
+            field=source_field.api_name,
+            operator=FieldRuleOperator.EQUAL,
+            value='42',
+            value_type=FieldRuleValueType.GROUP,
+            api_name='group-and-grp-only',
         )
 
         # act

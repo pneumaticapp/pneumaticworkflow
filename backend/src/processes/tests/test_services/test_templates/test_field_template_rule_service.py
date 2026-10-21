@@ -6,6 +6,7 @@ from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     FieldRuleOperator,
     FieldRuleType,
+    FieldRuleValueType,
     FieldType,
 )
 from src.processes.messages import template as pt_messages
@@ -596,6 +597,7 @@ def test__create_group_and__field_and_value_provided__ok():
         'field': field.api_name,
         'operator': FieldRuleOperator.CONTAIN,
         'value': value,
+        'value_type': FieldRuleValueType.USER,
     }
     service = FieldTemplateRuleSetService(
         user=user,
@@ -614,6 +616,7 @@ def test__create_group_and__field_and_value_provided__ok():
     assert result.field == field.api_name
     assert result.operator == FieldRuleOperator.CONTAIN
     assert result.value == value
+    assert result.value_type == FieldRuleValueType.USER
 
 
 def test__update_group_and__default_params__ok():
@@ -905,6 +908,7 @@ def test__update_group_and__all_fields_in_payload__ok():
         'field': new_field,
         'operator': operator,
         'value': value,
+        'value_type': FieldRuleValueType.GROUP,
     }
     service = FieldTemplateRuleSetService(
         user=user,
@@ -925,6 +929,7 @@ def test__update_group_and__all_fields_in_payload__ok():
     assert group_and.field == new_field
     assert group_and.operator == operator
     assert group_and.value == value
+    assert group_and.value_type == FieldRuleValueType.GROUP
 
 
 def test__set_groups_and__default_params__ok(mocker):

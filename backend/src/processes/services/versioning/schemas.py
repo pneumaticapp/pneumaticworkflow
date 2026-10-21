@@ -90,6 +90,7 @@ class FieldRuleGroupAndSchemaV1(serializers.ModelSerializer):
             'field',
             'operator',
             'value',
+            'value_type',
         )
 
 

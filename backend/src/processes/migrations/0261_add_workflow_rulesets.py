@@ -18,6 +18,7 @@ class Migration(migrations.Migration):
                 ('api_name', models.CharField(max_length=200)),
                 ('operator', models.CharField(choices=[('equals', 'Equal'), ('not_equals', 'Not equal'), ('exists', 'Exists'), ('not_exists', 'Not exists'), ('more_than', 'More than'), ('less_than', 'Less than'), ('contains', 'Contains'), ('not_contains', 'Not contains')], max_length=50)),
                 ('value', models.CharField(blank=True, max_length=200, null=True)),
+                ('value_type', models.CharField(blank=True, choices=[('user', 'User'), ('group', 'Group')], max_length=20, null=True)),
                 ('field', models.CharField(max_length=200, null=True)),
             ],
             options={

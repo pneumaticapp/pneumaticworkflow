@@ -801,6 +801,19 @@ class FieldRuleType:
     LITERALS = Literal[SHOW, VALIDATOR]
 
 
+class FieldRuleValueType:
+
+    USER = PredicateType.USER
+    GROUP = PredicateType.GROUP
+
+    CHOICES = (
+        (USER, 'User'),
+        (GROUP, 'Group'),
+    )
+
+    LITERALS = Literal[USER, GROUP]
+
+
 class FieldRuleOperator:
 
     EQUAL = PredicateOperator.EQUAL
