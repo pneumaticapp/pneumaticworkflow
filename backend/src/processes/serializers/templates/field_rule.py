@@ -93,17 +93,6 @@ class FieldTemplateRuleGroupAndSerializer(
         ),
     )
 
-    def validate(self, attrs):
-        attrs = super().validate(attrs)
-        ruleset = self.context.get('ruleset')
-        if (
-            ruleset
-            and ruleset.type == FieldRuleType.SHOW
-            and not attrs.get('field')
-        ):
-            raise ValidationError(MSG_PT_0079)
-        return attrs
-
     def additional_validate_value(self, value, data: Dict[str, Any]):
         if not value:
             return
