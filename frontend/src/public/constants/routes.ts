@@ -42,6 +42,7 @@ export enum ERoutes {
   Team = '/team/',
   Groups = '/team/groups/',
   GroupDetails = '/team/groups/:id',
+  AIAgents = '/team/ai-agents/',
   Reports = '/reports/',
   Help = '/help/',
   Integrations = '/integrations/',

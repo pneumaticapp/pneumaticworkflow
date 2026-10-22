@@ -163,7 +163,18 @@
       "vacationDeactivate": "/accounts/user/deactivate-vacation",
       "vacationUserActivate": "/accounts/users/:id/activate-vacation",
       "vacationUserDeactivate": "/accounts/users/:id/deactivate-vacation",
-      "wsEvents": "/ws/events"
+      "wsEvents": "/ws/events",
+      "getAIProviders": "/ai/providers",
+      "createAIProvider": "/ai/providers",
+      "createAIProviderByVendor": "/ai/providers/by-vendor",
+      "getAIVendors": "/ai/vendors",
+      "updateAIProvider": "/ai/providers/:id",
+      "deleteAIProvider": "/ai/providers/:id",
+      "getAIProviderModels": "/ai/providers/:id/models",
+      "getAIAgents": "/ai/agents",
+      "createAIAgent": "/ai/agents",
+      "updateAIAgent": "/ai/agents/:id",
+      "deleteAIAgent": "/ai/agents/:id"
     }
   },
   "exposedToBrowser": [

@@ -26,13 +26,17 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
   const page = useSelector(getTeamPage);
 
   useEffect(() => {
-    dispatch(
-      updateTeamActiveTab(
-        checkSomeRouteIsActive(ERoutes.Groups) || checkSomeRouteIsActive(ERoutes.GroupDetails)
-          ? TeamPages.Groups
-          : TeamPages.Users,
-      ),
-    );
+    const getActiveTabByRoute = () => {
+      if (checkSomeRouteIsActive(ERoutes.Groups, ERoutes.GroupDetails)) {
+        return TeamPages.Groups;
+      }
+      if (checkSomeRouteIsActive(ERoutes.AIAgents)) {
+        return TeamPages.AIAgents;
+      }
+      return TeamPages.Users;
+    };
+
+    dispatch(updateTeamActiveTab(getActiveTabByRoute()));
 
     return () => {
       dispatch(resetUsers());
@@ -47,14 +51,17 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
             values={[
               { id: TeamPages.Users, label: formatMessage({ id: 'team.users' }) },
               { id: TeamPages.Groups, label: formatMessage({ id: 'team.groups' }) },
+              { id: TeamPages.AIAgents, label: formatMessage({ id: 'team.ai-agents' }) },
             ]}
             activeValueId={page}
             onChange={(activeTab) => dispatch(setTeamActivePage(activeTab))}
           />
         </div>
-        <div className={styles['top-nav__item']}>
-          {page === TeamPages.Users ? <UserListSortingContainer /> : <GroupListSortingContainer />}
-        </div>
+        {page !== TeamPages.AIAgents && (
+          <div className={styles['top-nav__item']}>
+            {page === TeamPages.Users ? <UserListSortingContainer /> : <GroupListSortingContainer />}
+          </div>
+        )}
       </div>
     );
   };
@@ -66,6 +73,7 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
   const mapLeftContent: Partial<Record<ERoutes, React.ReactNode>> = {
     [ERoutes.GroupDetails]: renderGroupDetailsLeftContent(),
     [ERoutes.Groups]: renderTeamLeftContent(),
+    [ERoutes.AIAgents]: renderTeamLeftContent(),
     [ERoutes.Team]: renderTeamLeftContent(),
   };
 
