@@ -9,7 +9,7 @@ import { ECreatePerformerModalTab } from '../../Users/CreatePerformerModal/types
 import { EAIVendor } from '../../../../api/ai/types';
 import type { IAIAgent, IAIProvider } from '../../../../api/ai/types';
 import { loadAIAgents, loadAIProviders } from '../../../../redux/ai/slice';
-import { openCreateUserModal } from '../../../../redux/accounts/slice';
+import { closeCreateUserModal, openCreateUserModal } from '../../../../redux/accounts/slice';
 import { history } from '../../../../utils/history';
 import { ERoutes } from '../../../../constants/routes';
 import { intlMock } from '../../../../__stubs__/intlMock';
@@ -96,6 +96,15 @@ describe('AIAgents', () => {
 
     expect(mockDispatch).toHaveBeenCalledWith(loadAIAgents());
     expect(mockDispatch).toHaveBeenCalledWith(loadAIProviders());
+  });
+
+  it('closes the shared create modal when leaving the tab', () => {
+    const { unmount } = render(<AIAgents />);
+    expect(mockDispatch).not.toHaveBeenCalledWith(closeCreateUserModal());
+
+    unmount();
+
+    expect(mockDispatch).toHaveBeenCalledWith(closeCreateUserModal());
   });
 
   it('lists agents sorted by name with their provider names', () => {

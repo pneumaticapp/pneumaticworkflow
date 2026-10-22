@@ -32,6 +32,10 @@ export function AIAgents() {
     dispatch(loadAIAgents());
     dispatch(loadAIProviders());
     document.title = TITLES.Team;
+
+    return () => {
+      dispatch(closeCreateUserModal());
+    };
   }, [dispatch]);
 
   const providerNameById = new Map(providers.map((provider) => [provider.id, provider.name]));

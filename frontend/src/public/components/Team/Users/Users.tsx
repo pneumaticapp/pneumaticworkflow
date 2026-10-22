@@ -61,6 +61,10 @@ export function Users({ userListSorting }: IUsersProps) {
     dispatch(teamFetchStarted({}));
     dispatch(loadInvitesUsers());
     document.title = TITLES.Team;
+
+    return () => {
+      dispatch(closeCreateUserModal());
+    };
   }, [dispatch]);
 
   const getVisibleUsers = () => {
