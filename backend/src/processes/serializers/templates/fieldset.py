@@ -249,9 +249,9 @@ class SharedFieldsetTemplateSerializer(
                     'id': child.template_id,
                     'name': child.template.name,
                 }
-            usage = sorted(usage.values(), key=lambda elem: elem['id'])
+            qst = sorted(usage.values(), key=lambda elem: elem['id'])
         else:
-            usage = (
+            qst = (
                 Template.objects.filter(
                     id__in=instance.child_fieldsets.values('template_id'),
                 )
@@ -259,4 +259,4 @@ class SharedFieldsetTemplateSerializer(
                 .distinct()
                 .values('id', 'name')
             )
-        return FieldsetUsageSerializer(usage, many=True).data
+        return FieldsetUsageSerializer(qst, many=True).data

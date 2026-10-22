@@ -21,7 +21,7 @@ from src.processes.services.exceptions import (
     FieldsetTemplateRuleSumMaxFieldsNotNumber,
     FieldsetTemplateRuleSumMaxInvalidValue,
 )
-from src.processes.services.templates.fieldset_rule import (
+from src.processes.services.fieldsets.fieldset_rule import (
     FieldsetTemplateRuleSetService,
 )
 from src.processes.tests.fixtures import (
@@ -772,7 +772,7 @@ def test__validate__default_params__ok(mocker):
         instance=ruleset,
     )
     validate_sum_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._validate_sum',
     )
 
@@ -823,7 +823,7 @@ def test__validate__operator_not_in_sum_operators__ok(mocker):
         instance=ruleset,
     )
     validate_sum_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._validate_sum',
     )
 
@@ -874,7 +874,7 @@ def test__validate__operator_not_a_sum_operator__ok(mocker):
         instance=ruleset,
     )
     validate_sum_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._validate_sum',
     )
 
@@ -924,7 +924,7 @@ def test__set_fields__default_params__ok(mocker):
         instance=ruleset,
     )
     get_valid_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._get_valid_fields',
         return_value=valid_fields,
     )
@@ -987,7 +987,7 @@ def test__set_fields__non_empty_fields_api_names__ok(mocker):
         instance=ruleset,
     )
     get_valid_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._get_valid_fields',
         return_value=valid_fields,
     )
@@ -1042,7 +1042,7 @@ def test__set_fields__empty_fields_api_names__ok(mocker):
         instance=ruleset,
     )
     get_valid_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._get_valid_fields',
     )
 
@@ -1089,7 +1089,7 @@ def test__create_group_and__default_params__ok(mocker):
         instance=ruleset,
     )
     validate_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._validate',
     )
 
@@ -1146,7 +1146,7 @@ def test__create_group_and__api_name_provided__ok(mocker):
         instance=ruleset,
     )
     validate_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._validate',
     )
 
@@ -1197,7 +1197,7 @@ def test__create_group_and__api_name_omitted__ok(mocker):
         instance=ruleset,
     )
     validate_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._validate',
     )
 
@@ -1249,7 +1249,7 @@ def test__create_group_and__value_provided__ok(mocker):
         instance=ruleset,
     )
     validate_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._validate',
     )
 
@@ -1304,7 +1304,7 @@ def test__update_group_and__default_params__ok(mocker):
         instance=ruleset,
     )
     validate_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._validate',
     )
 
@@ -1365,7 +1365,7 @@ def test__update_group_and__operator_in_payload__ok(mocker):
         instance=ruleset,
     )
     validate_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._validate',
     )
 
@@ -1426,7 +1426,7 @@ def test__update_group_and__value_in_payload__ok(mocker):
         instance=ruleset,
     )
     validate_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._validate',
     )
 
@@ -1489,7 +1489,7 @@ def test__update_group_and__operator_and_value_in_payload__ok(mocker):
         instance=ruleset,
     )
     validate_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._validate',
     )
 
@@ -1549,7 +1549,7 @@ def test__update_group_and__no_operator_or_value__ok(mocker):
         instance=ruleset,
     )
     validate_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._validate',
     )
 
@@ -1608,11 +1608,11 @@ def test__set_groups_and__default_params__ok(mocker):
         instance=ruleset,
     )
     update_group_and_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._update_group_and',
     )
     create_group_and_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._create_group_and',
     )
 
@@ -1673,12 +1673,12 @@ def test__set_groups_and__matching_api_name__ok(mocker):
         instance=ruleset,
     )
     update_group_and_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._update_group_and',
         return_value=group_and_1,
     )
     create_group_and_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._create_group_and',
     )
 
@@ -1743,11 +1743,11 @@ def test__set_groups_and__unknown_or_missing_api_name__ok(mocker):
         instance=ruleset,
     )
     update_group_and_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._update_group_and',
     )
     create_group_and_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._create_group_and',
         return_value=created_group_and,
     )
@@ -1825,12 +1825,12 @@ def test__set_groups_and__mixed_payload__ok(mocker):
         instance=ruleset,
     )
     update_group_and_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._update_group_and',
         return_value=group_and_1,
     )
     create_group_and_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._create_group_and',
         return_value=created_group_and,
     )
@@ -1882,7 +1882,7 @@ def test__create_group_or__default_params__ok(mocker):
         instance=ruleset,
     )
     create_group_and_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._create_group_and',
     )
 
@@ -1928,7 +1928,7 @@ def test__create_group_or__api_name_provided__ok(mocker):
         instance=ruleset,
     )
     create_group_and_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._create_group_and',
     )
 
@@ -1970,7 +1970,7 @@ def test__create_group_or__api_name_omitted__ok(mocker):
         instance=ruleset,
     )
     create_group_and_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._create_group_and',
     )
 
@@ -2012,7 +2012,7 @@ def test__create_group_or__groups_and_omitted__ok(mocker):
         instance=ruleset,
     )
     create_group_and_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._create_group_and',
     )
 
@@ -2059,7 +2059,7 @@ def test__create_group_or__groups_and_is_not_none__ok(mocker):
         instance=ruleset,
     )
     create_group_and_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._create_group_and',
     )
 
@@ -2108,7 +2108,7 @@ def test__update_group_or__default_params__ok(mocker):
         instance=ruleset,
     )
     set_groups_and_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_groups_and',
     )
 
@@ -2168,7 +2168,7 @@ def test__update_group_or__groups_and_omitted__ok(mocker):
         instance=ruleset,
     )
     set_groups_and_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_groups_and',
     )
 
@@ -2226,7 +2226,7 @@ def test__update_group_or__groups_and_is_not_none__ok(mocker):
         instance=ruleset,
     )
     set_groups_and_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_groups_and',
     )
 
@@ -2278,11 +2278,11 @@ def test__set_groups_or__default_params__ok(mocker):
         instance=ruleset,
     )
     update_group_or_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._update_group_or',
     )
     create_group_or_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._create_group_or',
     )
 
@@ -2332,12 +2332,12 @@ def test__set_groups_or__matching_api_name__ok(mocker):
         instance=ruleset,
     )
     update_group_or_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._update_group_or',
         return_value=group_or_1,
     )
     create_group_or_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._create_group_or',
     )
 
@@ -2391,11 +2391,11 @@ def test__set_groups_or__unknown_or_missing_api_name__ok(mocker):
         instance=ruleset,
     )
     update_group_or_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._update_group_or',
     )
     create_group_or_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._create_group_or',
         return_value=created_group_or,
     )
@@ -2458,12 +2458,12 @@ def test__set_groups_or__mixed_payload__ok(mocker):
         instance=ruleset,
     )
     update_group_or_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._update_group_or',
         return_value=group_or_1,
     )
     create_group_or_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._create_group_or',
         return_value=created_group_or,
     )
@@ -2510,11 +2510,11 @@ def test__create_related__default_params__ok(mocker):
         instance=ruleset,
     )
     set_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_fields',
     )
     set_groups_or_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_groups_or',
     )
 
@@ -2554,11 +2554,11 @@ def test__create_related__fields_is_none__ok(mocker):
         instance=ruleset,
     )
     set_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_fields',
     )
     set_groups_or_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_groups_or',
     )
 
@@ -2599,11 +2599,11 @@ def test__create_related__fields_is_not_none__ok(mocker):
         instance=ruleset,
     )
     set_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_fields',
     )
     set_groups_or_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_groups_or',
     )
 
@@ -2643,11 +2643,11 @@ def test__create_related__groups_or_is_none__ok(mocker):
         instance=ruleset,
     )
     set_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_fields',
     )
     set_groups_or_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_groups_or',
     )
 
@@ -2692,11 +2692,11 @@ def test__create_related__groups_or_is_not_none__ok(mocker):
         instance=ruleset,
     )
     set_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_fields',
     )
     set_groups_or_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_groups_or',
     )
 
@@ -2736,15 +2736,15 @@ def test_create__default_params__ok(mocker):
         instance=ruleset,
     )
     create_instance_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._create_instance',
     )
     create_related_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._create_related',
     )
     create_actions_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._create_actions',
     )
 
@@ -2787,11 +2787,11 @@ def test_partial_update__default_params__ok(mocker):
         instance=ruleset,
     )
     set_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_fields',
     )
     set_groups_or_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_groups_or',
     )
 
@@ -2838,11 +2838,11 @@ def test_partial_update__scalar_fields_updated__ok(mocker):
         instance=ruleset,
     )
     set_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_fields',
     )
     set_groups_or_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_groups_or',
     )
 
@@ -2890,11 +2890,11 @@ def test_partial_update__fields_is_none__ok(mocker):
         instance=ruleset,
     )
     set_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_fields',
     )
     set_groups_or_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_groups_or',
     )
 
@@ -2942,11 +2942,11 @@ def test_partial_update__fields_is_not_none__ok(mocker):
         instance=ruleset,
     )
     set_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_fields',
     )
     set_groups_or_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_groups_or',
     )
 
@@ -2993,11 +2993,11 @@ def test_partial_update__groups_or_is_none__ok(mocker):
         instance=ruleset,
     )
     set_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_fields',
     )
     set_groups_or_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_groups_or',
     )
 
@@ -3049,11 +3049,11 @@ def test_partial_update__groups_or_is_not_none__ok(mocker):
         instance=ruleset,
     )
     set_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_fields',
     )
     set_groups_or_mock = mocker.patch(
-        'src.processes.services.templates.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleSetService._set_groups_or',
     )
 

@@ -40,7 +40,7 @@ from src.processes.serializers.templates.fieldset import (
 from src.processes.serializers.templates.template import (
     FieldsetTemplateFilterSerializer,
 )
-from src.processes.services.templates.fieldset import (
+from src.processes.services.fieldsets.fieldset import (
     FieldSetTemplateService,
 )
 from src.utils.validation import raise_validation_error

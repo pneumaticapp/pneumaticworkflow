@@ -12,7 +12,7 @@ from src.processes.enums import (
     FieldSetRuleOperator,
     LabelPosition,
 )
-from src.processes.services.templates.fieldset import (
+from src.processes.services.fieldsets.fieldset import (
     FieldSetTemplateService,
 )
 from src.processes.tests.fixtures import (

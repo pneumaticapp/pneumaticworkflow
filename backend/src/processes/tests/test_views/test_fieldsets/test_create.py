@@ -17,7 +17,7 @@ from src.processes.enums import (
 )
 
 from src.processes.messages.template import MSG_PT_0079
-from src.processes.services.templates.fieldset import (
+from src.processes.services.fieldsets.fieldset import (
     FieldSetTemplateService,
 )
 from src.processes.tests.fixtures import (

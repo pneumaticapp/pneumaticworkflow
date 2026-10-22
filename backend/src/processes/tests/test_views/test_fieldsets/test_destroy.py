@@ -7,7 +7,7 @@ from src.accounts.enums import BillingPlanType
 from src.accounts.messages import MSG_A_0035, MSG_A_0037, MSG_A_0041
 from src.authentication.enums import AuthTokenType
 from src.generics.exceptions import BaseServiceException
-from src.processes.services.templates.fieldset import (
+from src.processes.services.fieldsets.fieldset import (
     FieldSetTemplateService,
 )
 from src.processes.tests.fixtures import (
