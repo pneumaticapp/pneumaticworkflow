@@ -3,25 +3,26 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
-// const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 const { NODE_ENV = 'development' } = process.env;
 const devMode = NODE_ENV !== 'production';
 const fontsDir = path.resolve(__dirname, './src/public/assets');
 
-
 const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN;
 const sentryRelease = process.env.SENTRY_RELEASE;
 const enableSentryUpload = Boolean(sentryAuthToken && sentryRelease && !devMode);
+const enableBundleAnalyzer =
+  process.env.ANALYZE === 'true' || process.argv.includes('analyze') || process.argv.includes('--env=analyze');
 
 module.exports = {
   entry: {
-    main: devMode ? ['webpack-hot-middleware/client?path=/__webpack_hmr', './src/public/browser.tsx'] : './src/public/browser.tsx',
+    main: devMode
+      ? ['webpack-hot-middleware/client?path=/__webpack_hmr', './src/public/browser.tsx']
+      : './src/public/browser.tsx',
     forms: './src/public/forms.tsx',
   },
-  cache: devMode
-    ? { type: 'filesystem', buildDependencies: { config: [__filename] } }
-    : false,
+  cache: devMode ? { type: 'filesystem', buildDependencies: { config: [__filename] } } : false,
   devtool: devMode ? 'eval-cheap-module-source-map' : undefined,
   output: {
     filename: devMode ? '[name].js' : '[name].[contenthash].js',
@@ -62,7 +63,7 @@ module.exports = {
               import: true,
             },
           },
-          'postcss-loader'
+          'postcss-loader',
         ],
       },
       {
@@ -114,8 +115,14 @@ module.exports = {
       favicon: './src/public/assets/favicon.png',
     }),
     new ForkTsCheckerWebpackPlugin(),
-    // Uncomment to run Bundle Analyzer
-    // new BundleAnalyzerPlugin(),
+    ...(enableBundleAnalyzer
+      ? [
+          new BundleAnalyzerPlugin({
+            openAnalyzer: false,
+            analyzerPort: 'auto',
+          }),
+        ]
+      : []),
     ...(enableSentryUpload
       ? [
           (() => {
@@ -139,7 +146,7 @@ module.exports = {
           console.log('Compile is done!');
 
           // in case process not exited
-          if (!devMode) {
+          if (!devMode && !enableBundleAnalyzer) {
             setTimeout(() => {
               process.exit(0);
             });

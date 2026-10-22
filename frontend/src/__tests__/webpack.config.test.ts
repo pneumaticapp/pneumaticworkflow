@@ -29,9 +29,26 @@ jest.mock('html-webpack-plugin', () => {
   };
 });
 
+interface IBundleAnalyzerOptions {
+  openAnalyzer?: boolean;
+  analyzerPort?: 'auto' | number;
+}
+
+jest.mock('webpack-bundle-analyzer', () => {
+  return {
+    BundleAnalyzerPlugin: class BundleAnalyzerPlugin {
+      public opts: IBundleAnalyzerOptions;
+      constructor(opts: IBundleAnalyzerOptions = {}) {
+        this.opts = opts;
+      }
+    },
+  };
+});
+
 interface IWebpackPlugin {
   constructor: { name: string };
   definitions?: Record<string, string>;
+  opts?: IBundleAnalyzerOptions;
   options?: Record<string, unknown> & { authToken?: string; filename?: string };
 }
 
@@ -150,6 +167,47 @@ describe('webpack.config.js', () => {
       const config = loadConfig({ NODE_ENV: 'development' });
 
       expect(config.mode).toBe('development');
+    });
+  });
+
+  describe('BundleAnalyzerPlugin configuration', () => {
+    it('does not include BundleAnalyzerPlugin by default', () => {
+      const config = loadConfig();
+
+      const hasAnalyzerPlugin = config.plugins.some(
+        (p: IWebpackPlugin) => p.constructor.name === 'BundleAnalyzerPlugin',
+      );
+      expect(hasAnalyzerPlugin).toBe(false);
+    });
+
+    it('includes BundleAnalyzerPlugin when ANALYZE is true', () => {
+      const config = loadConfig({ ANALYZE: 'true' });
+
+      const analyzerPlugin = config.plugins.find((p: IWebpackPlugin) => p.constructor.name === 'BundleAnalyzerPlugin');
+      expect(analyzerPlugin).toBeDefined();
+      expect(analyzerPlugin!.opts).toEqual({
+        openAnalyzer: false,
+        analyzerPort: 'auto',
+      });
+    });
+
+    it('includes BundleAnalyzerPlugin when argv contains analyze', () => {
+      const originalArgv = [...process.argv];
+      process.argv.push('analyze');
+      try {
+        const config = loadConfig();
+
+        const analyzerPlugin = config.plugins.find(
+          (p: IWebpackPlugin) => p.constructor.name === 'BundleAnalyzerPlugin',
+        );
+        expect(analyzerPlugin).toBeDefined();
+        expect(analyzerPlugin!.opts).toEqual({
+          openAnalyzer: false,
+          analyzerPort: 'auto',
+        });
+      } finally {
+        process.argv = originalArgv;
+      }
     });
   });
 });

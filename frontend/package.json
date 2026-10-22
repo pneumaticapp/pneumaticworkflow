@@ -212,6 +212,7 @@
     "stylelint": "stylelint \"src/**/*.{css,scss,sass}\"",
     "build-client": "webpack --progress",
     "build-client:prod": "NODE_ENV=production webpack",
+    "analyze": "webpack --node-env production --env analyze",
     "start": "nodemon ./src/index.ts",
     "start:prod": "ts-node ./src/index.ts",
     "local": "npx kill-port 8000 && npm run start",
