@@ -37,6 +37,7 @@ export function createTemplateTask({
     uuid: createUUID(),
     requireCompletionByAll: false,
     skipForStarter: false,
+    skipOnReturn: false,
     conditions: getEmptyConditions(accessConditions),
     rawDueDate: createEmptyTaskDueDate(taskApiName),
     checklists: [],

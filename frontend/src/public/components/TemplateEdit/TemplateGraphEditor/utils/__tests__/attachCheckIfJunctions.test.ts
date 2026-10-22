@@ -11,6 +11,7 @@ function createTask(overrides: Partial<ITemplateTaskClient> = {}): ITemplateTask
     number: 1,
     requireCompletionByAll: false,
     skipForStarter: false,
+    skipOnReturn: false,
     fields: [],
     fieldsets: [],
     rawPerformers: [],
@@ -157,17 +158,16 @@ describe('attachCheckIfJunctions', () => {
         ],
       }),
     );
-    const intoJoin = edges.filter((edge) => (
-      edge.target === 'junction-join-checkif-task-b' && edge.data?.isConditional
-    ));
+    const intoJoin = edges.filter((edge) => edge.target === 'junction-join-checkif-task-b' && edge.data?.isConditional);
 
     expect(intoJoin).toHaveLength(2);
     expect(intoJoin.map((edge) => edge.source).sort()).toEqual([KICKOFF_NODE_ID, 'task-a']);
-    expect(edges.some((edge) => (
-      edge.source === 'junction-join-checkif-task-b'
-      && edge.target === 'task-b'
-      && edge.data?.isConditional
-    ))).toBe(true);
+    expect(
+      edges.some(
+        (edge) =>
+          edge.source === 'junction-join-checkif-task-b' && edge.target === 'task-b' && edge.data?.isConditional,
+      ),
+    ).toBe(true);
     expect(edges.some((edge) => edge.target === 'junction-join-task-b' && edge.data?.isConditional)).toBe(false);
   });
 });

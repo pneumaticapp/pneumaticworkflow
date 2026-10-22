@@ -82,6 +82,7 @@ function createTask(
     description: '',
     requireCompletionByAll: false,
     skipForStarter: false,
+    skipOnReturn: false,
     fields: [],
     fieldsets: [],
     rawPerformers: [],

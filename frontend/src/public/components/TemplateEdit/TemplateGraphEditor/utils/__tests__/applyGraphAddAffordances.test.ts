@@ -31,6 +31,7 @@ function taskNode(id: string): TGraphNode {
         number: 1,
         requireCompletionByAll: false,
         skipForStarter: false,
+        skipOnReturn: false,
         fields: [],
         fieldsets: [],
         rawPerformers: [],

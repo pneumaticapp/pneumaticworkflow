@@ -15,6 +15,7 @@ function createTask(overrides: Partial<ITemplateTaskClient> = {}): ITemplateTask
     number: 1,
     requireCompletionByAll: false,
     skipForStarter: false,
+    skipOnReturn: false,
     fields: [],
     fieldsets: [],
     rawPerformers: [],
@@ -48,11 +49,7 @@ function startRules(task: ITemplateTaskClient) {
 describe('insertGraphTask', () => {
   it('should append a task that starts after the leaf card', () => {
     const tasks = [createTask()];
-    const result = insertGraphTask(
-      tasks,
-      { kind: 'continue', afterId: 'task-a' },
-      createFromDraft,
-    );
+    const result = insertGraphTask(tasks, { kind: 'continue', afterId: 'task-a' }, createFromDraft);
     const created = result.tasks.find((task) => task.apiName === 'task-new');
     const createdRules = created ? startRules(created) : [];
 
@@ -66,11 +63,7 @@ describe('insertGraphTask', () => {
   });
 
   it('should append a task that starts after kickoff', () => {
-    const result = insertGraphTask(
-      [],
-      { kind: 'continue', afterId: KICKOFF_NODE_ID },
-      createFromDraft,
-    );
+    const result = insertGraphTask([], { kind: 'continue', afterId: KICKOFF_NODE_ID }, createFromDraft);
     const createdRules = startRules(result.tasks[0]);
 
     expect(result.tasks).toHaveLength(1);
@@ -136,11 +129,7 @@ describe('insertGraphTask', () => {
       ],
     });
     const result = insertGraphTask(
-      [
-        createTask(),
-        createTask({ apiName: 'task-c', name: 'Task C', number: 2, uuid: 'uuid-c' }),
-        taskB,
-      ],
+      [createTask(), createTask({ apiName: 'task-c', name: 'Task C', number: 2, uuid: 'uuid-c' }), taskB],
       { kind: 'insert', afterId: 'task-a', beforeId: 'task-b' },
       createFromDraft,
     );
@@ -189,11 +178,7 @@ describe('insertGraphTask', () => {
 
   it('should leave tasks unchanged when the before card is missing', () => {
     const tasks = [createTask()];
-    const result = insertGraphTask(
-      tasks,
-      { kind: 'insert', afterId: 'task-a', beforeId: 'missing' },
-      createFromDraft,
-    );
+    const result = insertGraphTask(tasks, { kind: 'insert', afterId: 'task-a', beforeId: 'missing' }, createFromDraft);
 
     expect(result.createdApiName).toBeNull();
     expect(result.tasks).toBe(tasks);

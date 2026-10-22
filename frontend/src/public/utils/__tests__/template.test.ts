@@ -68,6 +68,7 @@ const createMockTemplateResponse = (overrides: Partial<ITemplateResponse> = {}):
       description: '',
       requireCompletionByAll: false,
       skipForStarter: false,
+      skipOnReturn: false,
       delay: null,
       rawDueDate: null,
       fields: [],
@@ -132,6 +133,7 @@ const createMockTemplate = (overrides: Partial<ITemplateClient> = {}): ITemplate
       },
       requireCompletionByAll: false,
       skipForStarter: false,
+      skipOnReturn: false,
       rawPerformers: [
         {
           sourceId: '1',

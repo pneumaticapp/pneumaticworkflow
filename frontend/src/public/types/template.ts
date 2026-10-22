@@ -82,6 +82,7 @@ export interface ITemplateTask {
   rawDueDate: IDueDate;
   requireCompletionByAll: boolean;
   skipForStarter: boolean;
+  skipOnReturn: boolean;
   rawPerformers: ITemplateTaskPerformer[];
   fields: IExtraField[];
   fieldsets: IFieldsetBinding[];

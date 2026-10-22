@@ -14,6 +14,7 @@ const task: ITemplateTaskClient = {
   number: 1,
   requireCompletionByAll: false,
   skipForStarter: false,
+  skipOnReturn: false,
   fields: Array.from({ length: 6 }, (_, index) => ({
     apiName: `field-${index}`,
     name: `Field ${index + 1}`,

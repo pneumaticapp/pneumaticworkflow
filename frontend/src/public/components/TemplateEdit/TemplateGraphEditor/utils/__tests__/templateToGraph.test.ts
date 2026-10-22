@@ -19,6 +19,7 @@ function createTask(overrides: Partial<ITemplateTaskClient> = {}): ITemplateTask
     number: 1,
     requireCompletionByAll: false,
     skipForStarter: false,
+    skipOnReturn: false,
     fields: [],
     fieldsets: [],
     rawPerformers: [],

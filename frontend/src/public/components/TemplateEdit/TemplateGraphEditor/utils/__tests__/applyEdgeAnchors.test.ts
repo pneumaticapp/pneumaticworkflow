@@ -7,7 +7,16 @@ import { GRAPH_WEAVE_TEMPLATE } from '../../fixtures/graphWeaveTemplate';
 import { EGraphNodeType, TGraphEdge, TGraphNode } from '../../types';
 import { buildTemplateGraph } from '../buildTemplateGraph';
 import { getGraphEdgeLine, isLaneRoutedGraphEdge, isSkipGraphEdge } from '../edgeStyles';
-import { GRAPH_CHECK_IF_LANE_GAP, GRAPH_JUNCTION_SIZE, GRAPH_LANE_PITCH, GRAPH_NODE_HEIGHT, GRAPH_NODE_WIDTH, GRAPH_SKIP_LANE_GAP, getGraphNodeBox, getHandleAnchor } from '../graphGeometry';
+import {
+  GRAPH_CHECK_IF_LANE_GAP,
+  GRAPH_JUNCTION_SIZE,
+  GRAPH_LANE_PITCH,
+  GRAPH_NODE_HEIGHT,
+  GRAPH_NODE_WIDTH,
+  GRAPH_SKIP_LANE_GAP,
+  getGraphNodeBox,
+  getHandleAnchor,
+} from '../graphGeometry';
 import { applyEdgeAnchors } from '../applyEdgeAnchors';
 import { applyMovedCard } from '../routeGraph';
 import { getGraphEdgePath } from '../getGraphEdgePath';
@@ -21,6 +30,7 @@ function createTask(overrides: Partial<ITemplateTaskClient> = {}): ITemplateTask
     number: 1,
     requireCompletionByAll: false,
     skipForStarter: false,
+    skipOnReturn: false,
     fields: [],
     fieldsets: [],
     rawPerformers: [],
@@ -135,7 +145,9 @@ describe('applyEdgeAnchors', () => {
     expect(fromB?.targetHandle).toBe('target-top');
     expect(fromC?.sourceHandle).toBe('source-bottom');
     expect(fromC?.targetHandle).toBe('target-left');
-    expect(joinEdges.every((edge) => edge.data?.pathKind === 'from-task' || edge.data?.pathKind === 'straight')).toBe(true);
+    expect(joinEdges.every((edge) => edge.data?.pathKind === 'from-task' || edge.data?.pathKind === 'straight')).toBe(
+      true,
+    );
   });
 
   it('should send a resolved check-if line to a side lane so it does not share stem handles', () => {
@@ -182,8 +194,11 @@ describe('applyEdgeAnchors', () => {
     const checkIf = edges.find((edge) => edge.data?.isConditional);
 
     expect(startAfter).toHaveLength(2);
-    expect(startAfter.filter((edge) => edge.source === 'kickoff')
-      .every((edge) => edge.sourceHandle === 'source-bottom' || edge.targetHandle === 'target-top')).toBe(true);
+    expect(
+      startAfter
+        .filter((edge) => edge.source === 'kickoff')
+        .every((edge) => edge.sourceHandle === 'source-bottom' || edge.targetHandle === 'target-top'),
+    ).toBe(true);
     expect(checkIf?.data?.isLaneRouted).toBe(true);
     expect(checkIf?.target).toBe('task-1');
     expect(checkIf?.sourceHandle === 'source-left' || checkIf?.sourceHandle === 'source-right').toBe(true);
@@ -247,9 +262,10 @@ describe('applyEdgeAnchors', () => {
       const kickoffBox = getGraphNodeBox(kickoff);
       const linearBox = getGraphNodeBox(linear);
       const laneX = checkIf[0].data.laneX;
-      const gap = checkIf[0].data.laneSide === 'right'
-        ? Math.min(laneX - kickoffBox.right, laneX - linearBox.right)
-        : Math.min(kickoffBox.x - laneX, linearBox.x - laneX);
+      const gap =
+        checkIf[0].data.laneSide === 'right'
+          ? Math.min(laneX - kickoffBox.right, laneX - linearBox.right)
+          : Math.min(kickoffBox.x - laneX, linearBox.x - laneX);
 
       expect(gap).toBeGreaterThanOrEqual(GRAPH_CHECK_IF_LANE_GAP);
       expect(Math.abs(laneX - kickoffBox.centerX)).toBeGreaterThanOrEqual(GRAPH_LANE_PITCH);
@@ -308,18 +324,23 @@ describe('applyEdgeAnchors', () => {
     expect(nodes.some((node) => node.id === 'junction-join-task-c')).toBe(false);
     expect(nodes.some((node) => node.id === 'junction-fork-task-a')).toBe(false);
     expect(intoC.some((edge) => edge.source === 'task-b')).toBe(true);
-    expect(edges.some((edge) => edge.source === 'task-a' && (edge.target === 'task-c' || edge.target === 'junction-join-task-c'))).toBe(false);
+    expect(
+      edges.some(
+        (edge) => edge.source === 'task-a' && (edge.target === 'task-c' || edge.target === 'junction-join-task-c'),
+      ),
+    ).toBe(false);
   });
 
   it('should skip around a card that sits on a vertical stem', () => {
-    const card = (id: string, x: number, y: number): TGraphNode => ({
-      id,
-      type: EGraphNodeType.Task,
-      position: { x, y },
-      width: GRAPH_NODE_WIDTH,
-      height: GRAPH_NODE_HEIGHT,
-      data: {},
-    } as TGraphNode);
+    const card = (id: string, x: number, y: number): TGraphNode =>
+      ({
+        id,
+        type: EGraphNodeType.Task,
+        position: { x, y },
+        width: GRAPH_NODE_WIDTH,
+        height: GRAPH_NODE_HEIGHT,
+        data: {},
+      }) as TGraphNode;
     const stem: TGraphEdge = {
       id: 'edge-a-c',
       source: 'task-a',
@@ -329,24 +350,22 @@ describe('applyEdgeAnchors', () => {
       type: 'smoothstep',
       data: {},
     };
-    const routed = applyEdgeAnchors(
-      [card('task-a', 0, 0), card('blocker', 0, 140), card('task-c', 0, 300)],
-      [stem],
-    );
+    const routed = applyEdgeAnchors([card('task-a', 0, 0), card('blocker', 0, 140), card('task-c', 0, 300)], [stem]);
 
     expect(routed[0].data?.pathKind).toBe('skip');
     expect(typeof routed[0].data?.laneX).toBe('number');
   });
 
   it('should lift a side branch over a card instead of cutting through it', () => {
-    const card = (id: string, x: number, y: number): TGraphNode => ({
-      id,
-      type: EGraphNodeType.Task,
-      position: { x, y },
-      width: GRAPH_NODE_WIDTH,
-      height: GRAPH_NODE_HEIGHT,
-      data: {},
-    } as TGraphNode);
+    const card = (id: string, x: number, y: number): TGraphNode =>
+      ({
+        id,
+        type: EGraphNodeType.Task,
+        position: { x, y },
+        width: GRAPH_NODE_WIDTH,
+        height: GRAPH_NODE_HEIGHT,
+        data: {},
+      }) as TGraphNode;
     const junction = (id: string, x: number, y: number, kind: 'fork' | 'join'): TGraphNode => ({
       id,
       type: EGraphNodeType.Junction,
@@ -360,15 +379,17 @@ describe('applyEdgeAnchors', () => {
     const blocker = card('blocker', 280, 160);
     const routed = applyEdgeAnchors(
       [fork, join, blocker],
-      [{
-        id: 'edge-fork-join',
-        source: 'fork',
-        target: 'join',
-        sourceHandle: 'source-right',
-        targetHandle: 'target-top',
-        type: 'smoothstep',
-        data: {},
-      }],
+      [
+        {
+          id: 'edge-fork-join',
+          source: 'fork',
+          target: 'join',
+          sourceHandle: 'source-right',
+          targetHandle: 'target-top',
+          type: 'smoothstep',
+          data: {},
+        },
+      ],
     );
 
     expect(routed[0].data?.pathKind).toBe('from-fork');
@@ -399,14 +420,15 @@ describe('applyEdgeAnchors', () => {
   });
 
   it('should keep a crowded side branch in the tree gutters, not around the whole graph', () => {
-    const card = (id: string, x: number, y: number): TGraphNode => ({
-      id,
-      type: EGraphNodeType.Task,
-      position: { x, y },
-      width: GRAPH_NODE_WIDTH,
-      height: GRAPH_NODE_HEIGHT,
-      data: {},
-    } as TGraphNode);
+    const card = (id: string, x: number, y: number): TGraphNode =>
+      ({
+        id,
+        type: EGraphNodeType.Task,
+        position: { x, y },
+        width: GRAPH_NODE_WIDTH,
+        height: GRAPH_NODE_HEIGHT,
+        data: {},
+      }) as TGraphNode;
     const junction = (id: string, x: number, y: number, kind: 'fork' | 'join'): TGraphNode => ({
       id,
       type: EGraphNodeType.Junction,
@@ -525,7 +547,10 @@ describe('applyEdgeAnchors', () => {
       position: { x: taskB!.position.x - 24, y: taskB!.position.y },
     });
     const intoB = next.edges.find((edge) => edge.source === 'junction-fork-task-a' && edge.target === 'task-b');
-    const forkAnchor = getHandleAnchor(next.nodes.find((node) => node.id === 'junction-fork-task-a')!, 'source-bottom');
+    const forkAnchor = getHandleAnchor(
+      next.nodes.find((node) => node.id === 'junction-fork-task-a')!,
+      'source-bottom',
+    );
 
     expect(intoB?.sourceHandle).toBe('source-bottom');
     expect(intoB?.data?.sourceAnchor).toEqual(forkAnchor);
@@ -554,8 +579,18 @@ describe('applyEdgeAnchors', () => {
 
     expect(edge?.sourceHandle).toBe('source-bottom');
     expect(edge?.targetHandle).toBe('target-top');
-    expect(edge?.data?.sourceAnchor).toEqual(getHandleAnchor(next.nodes.find((node) => node.id === 'task-1')!, 'source-bottom'));
-    expect(edge?.data?.targetAnchor).toEqual(getHandleAnchor(next.nodes.find((node) => node.id === 'task-2')!, 'target-top'));
+    expect(edge?.data?.sourceAnchor).toEqual(
+      getHandleAnchor(
+        next.nodes.find((node) => node.id === 'task-1')!,
+        'source-bottom',
+      ),
+    );
+    expect(edge?.data?.targetAnchor).toEqual(
+      getHandleAnchor(
+        next.nodes.find((node) => node.id === 'task-2')!,
+        'target-top',
+      ),
+    );
   });
 
   it('should drop an offset fork child onto the top handle', () => {
@@ -584,7 +619,12 @@ describe('applyEdgeAnchors', () => {
     expect(intoC?.targetHandle).toBe('target-top');
     expect(intoC?.sourceHandle).not.toBe('source-bottom');
     expect(intoC?.data?.sourceAnchor).toEqual(getHandleAnchor(forkNode!, intoC?.sourceHandle));
-    expect(intoC?.data?.targetAnchor).toEqual(getHandleAnchor(next.nodes.find((node) => node.id === 'task-c')!, 'target-top'));
+    expect(intoC?.data?.targetAnchor).toEqual(
+      getHandleAnchor(
+        next.nodes.find((node) => node.id === 'task-c')!,
+        'target-top',
+      ),
+    );
   });
 
   it('should branch from the fork point even when the child card sits higher', () => {
@@ -610,7 +650,10 @@ describe('applyEdgeAnchors', () => {
     const intoC = next.edges.find((edge) => edge.target === 'task-c');
     const forkNode = next.nodes.find((node) => node.id === 'junction-fork-task-a')!;
     const forkAnchor = getHandleAnchor(forkNode, intoC?.sourceHandle);
-    const cardAnchor = getHandleAnchor(next.nodes.find((node) => node.id === 'task-c')!, intoC?.targetHandle);
+    const cardAnchor = getHandleAnchor(
+      next.nodes.find((node) => node.id === 'task-c')!,
+      intoC?.targetHandle,
+    );
     const { path } = getGraphEdgePath({
       sourceX: forkAnchor.x,
       sourceY: forkAnchor.y,
@@ -651,18 +694,18 @@ describe('applyEdgeAnchors', () => {
     expect(join).toBeDefined();
     expect(side?.data?.pathKind).toBe('from-fork');
     expect(side?.data?.sourceAnchor).toEqual(forkAnchor);
-    expect(getGraphEdgePath({
-      sourceX: side!.data!.sourceAnchor!.x,
-      sourceY: side!.data!.sourceAnchor!.y,
-      targetX: side!.data!.targetAnchor!.x,
-      targetY: side!.data!.targetAnchor!.y,
-      pathKind: side?.data?.pathKind,
-      laneX: side?.data?.laneX,
-      sourceHandle: side?.data?.sourceHandle ?? side?.sourceHandle,
-      targetHandle: side?.data?.targetHandle ?? side?.targetHandle,
-    }).path.startsWith(
-      `M ${forkAnchor.x},${forkAnchor.y} L ${side!.data!.targetAnchor!.x},${forkAnchor.y}`,
-    )).toBe(true);
+    expect(
+      getGraphEdgePath({
+        sourceX: side!.data!.sourceAnchor!.x,
+        sourceY: side!.data!.sourceAnchor!.y,
+        targetX: side!.data!.targetAnchor!.x,
+        targetY: side!.data!.targetAnchor!.y,
+        pathKind: side?.data?.pathKind,
+        laneX: side?.data?.laneX,
+        sourceHandle: side?.data?.sourceHandle ?? side?.sourceHandle,
+        targetHandle: side?.data?.targetHandle ?? side?.targetHandle,
+      }).path.startsWith(`M ${forkAnchor.x},${forkAnchor.y} L ${side!.data!.targetAnchor!.x},${forkAnchor.y}`),
+    ).toBe(true);
   });
 
   it('should park a check-if join beside the card and take incoming lines on distinct faces', () => {
