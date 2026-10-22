@@ -1,5 +1,7 @@
 // <reference types="jest" />
 
+import * as path from 'path';
+
 /**
  * Tests for webpack.config.js behavioral changes:
  * 1. No dotenv — .env is not read at build time
@@ -45,11 +47,20 @@ jest.mock('webpack-bundle-analyzer', () => {
   };
 });
 
+interface ICompilationMock {
+  fileDependencies: Set<string>;
+}
+
 interface IWebpackPlugin {
   constructor: { name: string };
   definitions?: Record<string, string>;
   opts?: IBundleAnalyzerOptions;
-  options?: Record<string, unknown> & { authToken?: string; filename?: string };
+  options?: Record<string, unknown> & {
+    authToken?: string;
+    filename?: string;
+    template?: string;
+    templateContent?: (params: { compilation: ICompilationMock }) => Promise<string>;
+  };
 }
 
 describe('webpack.config.js', () => {
@@ -208,6 +219,60 @@ describe('webpack.config.js', () => {
       } finally {
         process.argv = originalArgv;
       }
+    });
+  });
+
+  describe('EJS templateContent configuration (raw-loader replacement)', () => {
+    it('asynchronously reads main.ejs, registers exact file dependency, and preserves server tokens', async () => {
+      const config = loadConfig({ NODE_ENV: 'production' });
+
+      const htmlPlugins = config.plugins.filter((p: IWebpackPlugin) => p.constructor.name === 'HtmlWebpackPlugin');
+      const mainPlugin = htmlPlugins.find((p: IWebpackPlugin) => p.options?.filename === 'main.ejs');
+
+      expect(mainPlugin?.options?.template).toBeUndefined();
+      expect(typeof mainPlugin?.options?.templateContent).toBe('function');
+
+      const mockCompilation: ICompilationMock = { fileDependencies: new Set<string>() };
+      const contentPromise = mainPlugin?.options?.templateContent?.({ compilation: mockCompilation });
+
+      expect(contentPromise).toBeInstanceOf(Promise);
+
+      const content = await contentPromise;
+      expect(typeof content).toBe('string');
+
+      const expectedPath = path.resolve(__dirname, '../public/index.ejs');
+      expect(mockCompilation.fileDependencies.has(expectedPath)).toBe(true);
+
+      expect(content).toContain('<%- config %>');
+      expect(content).toContain('<%= env %>');
+      expect(content).toContain('<%- user %>');
+      expect(content).toContain('<%- invitedUser %>');
+      expect(content).toContain('<%- pages %>');
+    });
+
+    it('asynchronously reads forms.ejs, registers exact file dependency, and preserves server tokens', async () => {
+      const config = loadConfig({ NODE_ENV: 'production' });
+
+      const htmlPlugins = config.plugins.filter((p: IWebpackPlugin) => p.constructor.name === 'HtmlWebpackPlugin');
+      const formsPlugin = htmlPlugins.find((p: IWebpackPlugin) => p.options?.filename === 'forms.ejs');
+
+      expect(formsPlugin?.options?.template).toBeUndefined();
+      expect(typeof formsPlugin?.options?.templateContent).toBe('function');
+
+      const mockCompilation: ICompilationMock = { fileDependencies: new Set<string>() };
+      const contentPromise = formsPlugin?.options?.templateContent?.({ compilation: mockCompilation });
+
+      expect(contentPromise).toBeInstanceOf(Promise);
+
+      const content = await contentPromise;
+      expect(typeof content).toBe('string');
+
+      const expectedPath = path.resolve(__dirname, '../public/forms.ejs');
+      expect(mockCompilation.fileDependencies.has(expectedPath)).toBe(true);
+
+      expect(content).toContain('<%- config %>');
+      expect(content).toContain('<%= env %>');
+      expect(content).toContain('<%- user %>');
     });
   });
 });

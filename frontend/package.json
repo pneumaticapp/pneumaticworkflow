@@ -179,7 +179,6 @@
     "postcss-nested": "^8.0.1",
     "postcss-preset-env": "^11.5.0",
     "prettier": "3.9.6",
-    "raw-loader": "^3.1.0",
     "redux-saga-test-plan": "^4.0.3",
     "sass": "^1.51.0",
     "sass-loader": "^14.1.0",

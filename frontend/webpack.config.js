@@ -1,5 +1,6 @@
 const webpack = require('webpack');
 const path = require('path');
+const fs = require('fs');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
@@ -14,6 +15,14 @@ const sentryRelease = process.env.SENTRY_RELEASE;
 const enableSentryUpload = Boolean(sentryAuthToken && sentryRelease && !devMode);
 const enableBundleAnalyzer =
   process.env.ANALYZE === 'true' || process.argv.includes('analyze') || process.argv.includes('--env=analyze');
+
+const getTemplateContent =
+  (templateRelativePath) =>
+  async ({ compilation }) => {
+    const templatePath = path.resolve(__dirname, templateRelativePath);
+    compilation.fileDependencies.add(templatePath);
+    return await fs.promises.readFile(templatePath, 'utf-8');
+  };
 
 module.exports = {
   entry: {
@@ -101,7 +110,7 @@ module.exports = {
     new HtmlWebpackPlugin({
       chunks: ['main'],
       filename: 'main.ejs',
-      template: '!!raw-loader!./src/public/index.ejs',
+      templateContent: getTemplateContent('./src/public/index.ejs'),
 
       removeComments: true,
       favicon: './src/public/assets/favicon.png',
@@ -109,7 +118,7 @@ module.exports = {
     new HtmlWebpackPlugin({
       chunks: ['forms'],
       filename: 'forms.ejs',
-      template: '!!raw-loader!./src/public/forms.ejs',
+      templateContent: getTemplateContent('./src/public/forms.ejs'),
 
       removeComments: true,
       favicon: './src/public/assets/favicon.png',
