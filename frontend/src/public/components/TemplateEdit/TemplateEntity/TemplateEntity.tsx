@@ -6,6 +6,7 @@ import { WorkflowTaskFormContainer } from '../TaskForm';
 import { TaskItem } from '../TaskItem';
 import { TaskMenu } from '../TaskMenu';
 import { TTaskFormPart } from '../types';
+import { useOpenOnValidationError } from '../TemplateValidationError';
 import { ITemplateEntityProps } from './TemplateEntity.props';
 import styles from './TemplateEntity.css';
 
@@ -28,6 +29,10 @@ export function TemplateEntity({
   actualPreviousTaskApiName,
 }: ITemplateEntityProps) {
   const [scrollTarget, setScrollTarget] = useState<TTaskFormPart>(null);
+
+  useOpenOnValidationError(task.uuid, () => {
+    if (!isTaskOpen) toggleIsOpenTask();
+  });
 
   const renderAddWorkflowEntityButton = () => {
     const canAddDelay = task.number !== 1 && !task.delay;

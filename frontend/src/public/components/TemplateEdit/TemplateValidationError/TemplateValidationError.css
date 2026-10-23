@@ -1,0 +1,7 @@
+.error {
+  margin: 0.4rem 0 0;
+  font-size: 1.3rem;
+  line-height: 1.6rem;
+  color: var(--pneumatic-color-warning);
+  white-space: pre-line;
+}

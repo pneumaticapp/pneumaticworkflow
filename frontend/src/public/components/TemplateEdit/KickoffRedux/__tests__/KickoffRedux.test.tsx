@@ -9,6 +9,12 @@ import { IExtraField, ITemplateKickoffClient, ITemplateClient } from '../../../.
 import { IFieldsetCatalogItem } from '../../../../types/fieldset';
 import { ETemplateStatus } from '../../../../types/redux';
 
+jest.mock('../../../../redux/selectors/templateValidation', () => ({
+  getTemplateValidationErrors: () => [],
+  getTemplateValidationBatchId: () => 0,
+  getTemplateValidationFocusApiName: () => null,
+}));
+
 jest.mock('../../../../redux/selectors/fieldsets', () => ({
   getFieldsetsCatalogIsLoading: jest.fn(() => false),
 }));

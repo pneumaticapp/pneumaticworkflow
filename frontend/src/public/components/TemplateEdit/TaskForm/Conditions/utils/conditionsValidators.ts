@@ -10,28 +10,13 @@ export function getFilledConditions(conditions: ICondition[]) {
   }));
 }
 
-export function areConditionsValid(conditions: ICondition[]) {
-  return getFilledConditions(conditions).every((condition) => areRulesValid(condition.rules));
-}
+export function getConditionRuleErrorId(rule: TConditionRule): string {
+  if (!rule.field && rule.fieldType !== 'kickoff') return '';
+  if (!rule.fieldType || !rule.operator) return 'validation.condition-incomplete';
+  if (!OPERATORS_WITHOUT_VALUE.includes(rule.operator) && !rule.value) return 'validation.condition-incomplete';
+  if (rule.fieldType === EExtraFieldType.Number && rule.value && !numberRegex.test(String(rule.value))) {
+    return 'validation.number-invalid-format';
+  }
 
-function areRulesValid(rules: TConditionRule[]) {
-  return rules.every((rule) => {
-    if ((!rule.field && rule.fieldType !== 'kickoff') || !rule.fieldType || !rule.operator) return false;
-
-    const ruleMustHaveValue = !OPERATORS_WITHOUT_VALUE.includes(rule.operator);
-    if (ruleMustHaveValue && !rule.value) return false;
-
-    return true;
-  });
-}
-
-export function isNumberConditionsValid(conditions: ICondition[]) {
-  return conditions.every((condition) =>
-    condition.rules.every((rule) => {
-      if (rule.fieldType === EExtraFieldType.Number && rule.value && !numberRegex.test(String(rule.value))) {
-        return false;
-      }
-      return true;
-    }),
-  );
+  return '';
 }

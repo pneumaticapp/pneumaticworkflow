@@ -50,6 +50,7 @@ import { TemplateSettings } from './TemplateSettings';
 
 import { TemplateEditVariablesSync } from './TemplateEditVariablesSync';
 
+import { clearTemplateValidationErrors } from '../../redux/templateValidation/slice';
 import styles from './TemplateEdit.css';
 import { getEmptyConditions } from './TaskForm/Conditions/utils/getEmptyConditions';
 
@@ -157,6 +158,7 @@ export function TemplateEdit({
   }, [prevTemplate, prevLocation, prevUsers]);
 
   const initPage = () => {
+    dispatch(clearTemplateValidationErrors());
     const { id } = match.params as ITemplateEditParams;
     const workflowTemplateId = getTemplateIdFromUrl(location.search);
     const isCreateWorflowPage = isCreateTemplate();
@@ -193,7 +195,7 @@ export function TemplateEdit({
 
   const openTask = (taskUUID?: string) => {
     if (!taskUUID) return;
-    setOpenedTasks({ ...openedTasks, [taskUUID]: true });
+    setOpenedTasks((prev: typeof openedTasks) => ({ ...prev, [taskUUID]: true }));
   };
 
   const sortedTasks = () => [...tasks].sort((a, b) => a.number - b.number);
@@ -373,9 +375,7 @@ export function TemplateEdit({
   };
 
   const toggleIsOpenTask = (taskUUID: string) => {
-    const isTaskOpen = Boolean(openedTasks[taskUUID]);
-
-    setOpenedTasks({ ...openedTasks, [taskUUID]: !isTaskOpen });
+    setOpenedTasks((prev: typeof openedTasks) => ({ ...prev, [taskUUID]: !prev[taskUUID] }));
   };
 
   const handleMoveTask = (from: number, direction: EMoveDirections) => () => {

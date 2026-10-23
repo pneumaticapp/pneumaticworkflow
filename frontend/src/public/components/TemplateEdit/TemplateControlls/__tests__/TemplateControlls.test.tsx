@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useDispatch } from 'react-redux';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -9,6 +10,9 @@ import { getRunnableWorkflow, loadDatasetsMap } from '../../utils/getRunnableWor
 import { mapFieldsetBindingClientToRuntime } from '../../../../utils/mapFieldsetBindingClientToRuntime';
 import { getTemplate } from '../../../../__stubs__/templates';
 import { makeFieldsetBindingClient, makeFieldsetRuntime } from '../../../../__stubs__/fieldsets.factory';
+import { collectTemplateValidationErrors } from '../../utils/collectTemplateValidationErrors';
+import { setTemplateValidationErrors } from '../../../../redux/templateValidation/slice';
+import type { ITemplateValidationError } from '../../../../redux/templateValidation/types';
 
 jest.mock('../../../../utils/history', () => ({
   history: { push: jest.fn() },
@@ -100,6 +104,10 @@ jest.mock('../../utils/validateTemplate', () => ({
   validateTemplate: jest.fn(() => ({ commonWarnings: [], infoWarnings: [] })),
 }));
 
+jest.mock('../../utils/collectTemplateValidationErrors', () => ({
+  collectTemplateValidationErrors: jest.fn(() => []),
+}));
+
 jest.mock('../../../../utils/routes/getLinkToWorkflows', () => ({
   getLinkToWorkflows: jest.fn(() => '/'),
 }));
@@ -161,5 +169,26 @@ describe('TemplateControlls — fieldset logic', () => {
     expect(getRunnableWorkflow).toHaveBeenCalledTimes(1);
     expect(getRunnableWorkflow).toHaveBeenCalledWith(template, {}, [mappedFieldset]);
     expect(openRunWorkflowModal).toHaveBeenCalledWith(runnableWorkflow);
+  });
+
+  it('stores located validation errors instead of enabling an invalid template', () => {
+    const dispatch = jest.fn();
+    (useDispatch as jest.Mock).mockReturnValue(dispatch);
+    const validationError: ITemplateValidationError = {
+      apiName: 'predicate-1',
+      message: 'Fill in the condition',
+      target: { taskUuid: 'task-uuid', section: null, elementApiName: 'predicate-1' },
+      entitySnapshot: '{}',
+    };
+    (collectTemplateValidationErrors as jest.Mock).mockReturnValue([validationError]);
+    const patchTemplate = jest.fn();
+    const template = getTemplate('5');
+    template.isActive = false;
+
+    render(React.createElement(TemplateControlls, makeProps({ template, patchTemplate })));
+    userEvent.click(screen.getByRole('button', { name: new RegExp(formatMsg('template.enable-template')) }));
+
+    expect(dispatch).toHaveBeenCalledWith(setTemplateValidationErrors([validationError]));
+    expect(patchTemplate).not.toHaveBeenCalled();
   });
 });

@@ -9,6 +9,7 @@ import { isArrayWithItems } from '../../../utils/helpers';
 import { ExtraFieldIntl } from '../ExtraFields';
 import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
 import { FieldsetFlowRowDropdown } from './FieldsetFlowRowDropdown';
+import { TemplateValidationError } from '../TemplateValidationError';
 import { FieldsetEditorTitle } from './FieldsetEditorTitle';
 import { TMergedTaskOutputRow } from './mergeTaskOutputFlow';
 
@@ -47,24 +48,26 @@ export function MergedOutputRows({
         const isLast = index === mergedRows.length - 1;
         if (row.kind === 'field') {
           return (
-            <ExtraFieldIntl
-              key={row.field.apiName}
-              id={index}
-              field={{ ...row.field }}
-              fieldsCount={mergedRows.length}
-              labelBackgroundColor={EInputNameBackgroundColor.White}
-              deleteField={() => onDeleteField(row.field.apiName)}
-              moveFieldUp={isFirst ? undefined : () => onMoveRow(index, 'up')}
-              moveFieldDown={isLast ? undefined : () => onMoveRow(index, 'down')}
-              editField={onEditField(row.field.apiName)}
-              isDisabled={false}
-              innerRef={innerRef}
-              accountId={accountId}
-              mode={EExtraFieldMode.Kickoff}
-              showDropdown
-              datasetOptions={datasetOptions}
-              labelPosition={EFieldLabelPosition.Top}
-            />
+            <React.Fragment key={row.field.apiName}>
+              <ExtraFieldIntl
+                id={index}
+                field={{ ...row.field }}
+                fieldsCount={mergedRows.length}
+                labelBackgroundColor={EInputNameBackgroundColor.White}
+                deleteField={() => onDeleteField(row.field.apiName)}
+                moveFieldUp={isFirst ? undefined : () => onMoveRow(index, 'up')}
+                moveFieldDown={isLast ? undefined : () => onMoveRow(index, 'down')}
+                editField={onEditField(row.field.apiName)}
+                isDisabled={false}
+                innerRef={innerRef}
+                accountId={accountId}
+                mode={EExtraFieldMode.Kickoff}
+                showDropdown
+                datasetOptions={datasetOptions}
+                labelPosition={EFieldLabelPosition.Top}
+              />
+              <TemplateValidationError apiNames={[row.field.apiName]} />
+            </React.Fragment>
           );
         }
         const { name, title, fields, apiNameBinding } = mapFieldsetBindingClientToRuntime(row);
@@ -93,6 +96,7 @@ export function MergedOutputRows({
                   <ExtraFieldsLabels extraFields={fields} />
                 </div>
               )}
+              <TemplateValidationError apiNames={[apiNameBinding]} />
             </div>
             <div className={kickoffStyles['kick-off-input__dropdown']}>
               <FieldsetFlowRowDropdown

@@ -16,6 +16,7 @@ import { RichText } from '../../RichText';
 import { TaskRenderDueIn } from '../TaskRenderDueInInfo';
 import { TaskRenderReturnInfo } from '../TaskRenderReturnInfo';
 
+import { TemplateValidationError } from '../TemplateValidationError';
 import styles from '../TemplateEdit.css';
 import { TaskRenderConditionsInfo } from '../TaskRenderConditionsInfo';
 
@@ -48,6 +49,7 @@ export const TaskItem = ({ task, toggleIsOpenTask, setScrollTarget }: ITaskItemP
         <div className={styles['task_view-title']} onClick={toggleIsOpenTask}>
           <RichText text={name} variables={allVariables} isMarkdownMode={false} />
         </div>
+        <TemplateValidationError apiNames={[task.apiName]} />
 
         {description && (
           <div className={styles['task_view-description']} onClick={toggleIsOpenTask}>
