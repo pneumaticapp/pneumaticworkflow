@@ -28,6 +28,8 @@ import { ETemplateStatus } from '../../../types/redux';
 import { IRunWorkflow } from '../../WorkflowEditPopup/types';
 import { WarningPopup } from '../../UI/WarningPopup';
 import { validateTemplate } from '../utils/validateTemplate';
+import { collectTemplateValidationErrors } from '../utils/collectTemplateValidationErrors';
+import { setTemplateValidationErrors } from '../../../redux/templateValidation/slice';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { NotificationManager } from '../../UI/Notifications';
 import { IInfoWarningProps } from '../InfoWarningsModal';
@@ -125,8 +127,12 @@ export function TemplateControlls({
       setInfoWarnings(infoWarnings);
       return;
     }
-    if (isArrayWithItems(commonWarnings)) {
-      commonWarnings.forEach((message) => NotificationManager.warning({ message }));
+    const validationErrors = collectTemplateValidationErrors(template, formatMessage);
+    commonWarnings.forEach((message) => NotificationManager.warning({ message }));
+    if (isArrayWithItems(validationErrors)) {
+      dispatch(setTemplateValidationErrors(validationErrors));
+    }
+    if (isArrayWithItems(commonWarnings) || isArrayWithItems(validationErrors)) {
       return;
     }
 

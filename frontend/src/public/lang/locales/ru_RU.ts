@@ -385,6 +385,8 @@ export const ruMessages = {
   'validation.phone-number-invalid': 'Неверный номер телефона',
   'validation.name-empty': 'Пожалуйста, введите ваше имя',
   'validation.number-invalid-format': 'Неверный формат числа',
+  'validation.condition-incomplete': 'Заполните условие',
+  'validation.task-performers-empty': 'Добавьте в задачу хотя бы одного исполнителя',
   'validation.company-name-empty': 'Пожалуйста, введите название вашей компании',
   'validation.field-empty': 'Это поле не может быть пустым',
   'validation.checklist-item-empty': 'Пункт чеклиста не может быть пустым',
@@ -521,9 +523,6 @@ export const ruMessages = {
   'templates.assign-perfomers-to-the-following-steps': 'Пожалуйста, назначьте пользователей на следующие шаги:',
   'template.no-run-allowers': 'Пожалуйста, добавьте хотя бы одного владельца шаблона',
   'template.no-tasks': 'Пожалуйста, добавьте хотя бы одну задачу.',
-  'template.task-validation-error': 'Пожалуйста, проверьте данные в формах задачи',
-  'template.task-conditions-validation-error': 'Пожалуйста, заполните все условия в заданиях:',
-  'template.kickoff-validation-error': 'Пожалуйста, проверьте данные в форме старта',
   'template.generate-with-ai.title': 'Генератор Шаблонов',
   'template.generate-with-ai.description':
     'Позвольте Pneumatic создать шаги для нового шаблона на основе вашего описания бизнес-процесса, который вам нужен.',
@@ -728,8 +727,6 @@ export const ruMessages = {
   'template.share-kick-off-form-enable-success-url': 'Включить пользовательский URL успешного выполнения',
   'template.not-found': 'Шаблон не найден',
   'template.cannot-enable': 'Вы не можете активировать Шаблон:',
-  'template.warning-unassigned-perforemers-title': 'Шаблон содержит неназначенные задачи',
-  'template.warning-unassigned-perforemers-desc': 'Пожалуйста, добавьте исполнителей к своим задачам.',
   'template.warning-premium-feature-title': 'Шаблон содержит некоторые премиальные функции (условия)',
   'template.warning-premium-feature-desc':
     'Пожалуйста, активируйте вашу бесплатную 7-дневную пробную версию, чтобы включить шаблон и испытать всю мощь Pneumatic.',

@@ -4,11 +4,7 @@ import { IntlShape } from 'react-intl';
 import { ITemplateClient } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { validateWorkflowName } from '../../../utils/validators';
-import { UnassignedTasksWarning, PremiumFeaturesWarning, IInfoWarningProps } from '../InfoWarningsModal/warnings';
-import { areConditionsValid, isNumberConditionsValid } from '../TaskForm/Conditions/utils/conditionsValidators';
-import { areExtraFieldsValid } from './areExtraFieldsValid';
-import { areFieldsetsValid } from './areFieldsetsValid';
-import { isValidTaskForm } from './isValidTaskForm';
+import { PremiumFeaturesWarning, IInfoWarningProps } from '../InfoWarningsModal/warnings';
 
 type TWarningRule<T> = {
   check(): boolean;
@@ -16,11 +12,8 @@ type TWarningRule<T> = {
 };
 
 export function validateTemplate(template: ITemplateClient, isSubscribed: boolean, intl: IntlShape) {
-  const { owners, name, tasks, kickoff } = template;
+  const { owners, name, tasks } = template;
   const { formatMessage } = intl;
-
-  const taskWithInvalidConditions = tasks.filter((task) => !areConditionsValid(task.conditions));
-  const tasksWithInvalidNumberFormat = tasks.filter((task) => !isNumberConditionsValid(task.conditions));
 
   const commonWarningRules: TWarningRule<string>[] = [
     {
@@ -35,45 +28,9 @@ export function validateTemplate(template: ITemplateClient, isSubscribed: boolea
       check: () => Boolean(validateWorkflowName(name)),
       getMessage: () => formatMessage({ id: validateWorkflowName(name) }),
     },
-    {
-      check: () => !tasks.every(isValidTaskForm),
-      getMessage: () => formatMessage({ id: 'template.task-validation-error' }),
-    },
-    {
-      check: () => !areExtraFieldsValid(kickoff!.fields) || !areFieldsetsValid(kickoff!.fieldsets),
-      getMessage: () => formatMessage({ id: 'template.kickoff-validation-error' }),
-    },
-    {
-      check: () => isArrayWithItems(taskWithInvalidConditions),
-      getMessage: () => {
-        const baseMessage = formatMessage({ id: 'template.task-conditions-validation-error' });
-        const formattedTaskNames = taskWithInvalidConditions.map(({ name }) => name).join(',\n');
-        const message = `${baseMessage}\n${formattedTaskNames}`;
-
-        return message;
-      },
-    },
-    {
-      check: () => isArrayWithItems(tasksWithInvalidNumberFormat),
-      getMessage: () => {
-        const baseMessage = formatMessage({ id: 'validation.number-invalid-format' });
-        const formattedTaskNames = tasksWithInvalidNumberFormat.map(({ name }) => name).join(',\n');
-        const message = `${baseMessage}\n${formattedTaskNames}`;
-
-        return message;
-      },
-    },
   ];
 
   const infoWarningRules: TWarningRule<(props: IInfoWarningProps) => JSX.Element>[] = [
-    {
-      check: () => {
-        const hasTaskWithoutPerformers = tasks.some((task) => !isArrayWithItems(task.rawPerformers));
-
-        return hasTaskWithoutPerformers;
-      },
-      getMessage: () => UnassignedTasksWarning,
-    },
     {
       check: () => {
         if (isSubscribed) {
