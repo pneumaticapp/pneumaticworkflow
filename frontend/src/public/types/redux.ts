@@ -38,6 +38,7 @@ import { ETenantsSorting, ITenant } from './tenants';
 import { IDataset, IDatasetListItem, EDatasetsSorting, TDatasetItemsSortOrder } from './dataset';
 import { IFieldsetCatalogItem, EFieldsetsSorting } from './fieldset';
 import { IPagesStore } from '../redux/pages/types';
+import type { ITemplateValidationStore } from '../redux/templateValidation/types';
 import { TeamPages, IGroup, UserInvite } from '../redux/team/types';
 
 export interface IApplicationState {
@@ -55,6 +56,7 @@ export interface IApplicationState {
   templates: ITemplatesStore;
   selectTemplateModal: ISelectTemplateModalStore;
   template: ITemplateStore;
+  templateValidation: ITemplateValidationStore;
   integrations: IIntegrationsStore;
   runWorkflowModal: IStoreRunWorkflowModal;
   buyPlanModal: IBuyPlanModalStore;
