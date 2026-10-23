@@ -18,8 +18,10 @@ import { TPatchTaskPayload } from '../../../redux/actions';
 import { ReturnTo } from './ReturnTo';
 import { DueDate } from './DueDate';
 import { getFieldsetsCatalogIsLoading } from '../../../redux/selectors/fieldsets';
+import { getTemplateValidationFocusApiName } from '../../../redux/selectors/templateValidation';
 import { getSingleLineVariables, getSystemVariables, getTaskVariables, getVariables } from './utils/getTaskVariables';
 
+import { TemplateValidationError, useValidationErrorSections } from '../TemplateValidationError';
 import styles from '../TemplateEdit.css';
 
 import { EStartingType } from './Conditions/utils/getDropdownOperators';
@@ -103,7 +105,12 @@ export function TaskForm({
     removeDeletedTasks(startingOrder, task.conditions, onEdit);
   }, [startingOrder, task.conditions, onEdit]);
 
+  const errorSections = useValidationErrorSections(task.uuid);
+  const validationFocusApiName = useSelector(getTemplateValidationFocusApiName);
+
   useLayoutEffect(() => {
+    if (validationFocusApiName) return;
+
     const scrollKey = scrollTarget === ETaskFormParts.Fieldsets ? ETaskFormParts.Fields : scrollTarget;
     const scrollTo = (scrollKey && taskFormPartsRefs[scrollKey]?.current) || wrapperRef.current;
 
@@ -248,6 +255,7 @@ export function TaskForm({
             className={styles['task-name-field']}
             toolipText={formatMessage({ id: 'tasks.task-description-button-tooltip' })}
           />
+          <TemplateValidationError apiNames={[task.apiName]} />
           <TaskDescriptionEditor
             handleChange={(value: string) => {
               handleTaskFieldChange('description')(value);
@@ -260,6 +268,12 @@ export function TaskForm({
             templateVariables={templateVariables}
             accountId={accountId}
           />
+          <TemplateValidationError
+            apiNames={task.checklists.flatMap((checklist) => [
+              checklist.apiName,
+              ...checklist.selections.map((selection) => selection.apiName),
+            ])}
+          />
         </div>
 
         {taskFormParts.map(({ title, component, formPartId, widget }) => (
@@ -267,7 +281,7 @@ export function TaskForm({
             isDisabled={title === 'templates.return-to.title' && tasks.length < 2}
             label={formatMessage({ id: title })}
             containerClassName={styles['task-accordion-container']}
-            isInitiallyVisible={formPartId === scrollTarget}
+            isInitiallyVisible={formPartId === scrollTarget || errorSections.includes(formPartId)}
             key={title}
             innerRef={taskFormPartsRefs[formPartId]}
             widget={widget}

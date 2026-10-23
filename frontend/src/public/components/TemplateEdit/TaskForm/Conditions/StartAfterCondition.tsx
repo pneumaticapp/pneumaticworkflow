@@ -14,6 +14,7 @@ import { EConditionAction, TConditionRule } from './types';
 import { ESubscriptionPlan } from '../../../../types/account';
 import { ICondition, IConditionsProps, IDropdownVariable, Predicate, RichLabel } from '.';
 
+import { TemplateValidationError } from '../../TemplateValidationError';
 import styles from './Conditions.css';
 import stylesTaskForm from '../TaskForm.css';
 
@@ -106,6 +107,7 @@ export function StartAfterCondition({ startingOrder, conditions, variables, isSu
             );
           })}
         </div>
+        <TemplateValidationError apiNames={[condition.apiName]} />
 
         {accessConditions && (
           <button
