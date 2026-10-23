@@ -1,4 +1,4 @@
-import produce from 'immer';
+import { produce } from 'immer';
 import { IStoreTask } from '../../types/redux';
 import { getTaskChecklist, getTaskChecklistItem } from '../../utils/tasks';
 import { ETaskActions, ETaskStatus, TTaskActions } from './actions';

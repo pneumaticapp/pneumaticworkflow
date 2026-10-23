@@ -1,4 +1,4 @@
-import produce from 'immer';
+import { produce } from 'immer';
 
 import { ITemplateClient, ITemplateTaskClient } from '../../types/template';
 import { ETemplateStatus, ITemplateStore } from '../../types/redux';

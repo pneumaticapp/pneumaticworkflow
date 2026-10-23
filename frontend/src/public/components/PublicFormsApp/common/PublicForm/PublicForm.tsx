@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import ReCAPTCHA from 'react-google-recaptcha';
-import produce from 'immer';
+import { produce } from 'immer';
 import classnames from 'classnames';
 import { useDispatch } from 'react-redux';
 
