@@ -153,7 +153,7 @@
     "@types/webpack": "^5.28.5",
     "@types/webpack-hot-middleware": "^2.25.9",
     "chromatic": "^11.24.0",
-    "css-loader": "^3.2.1",
+    "css-loader": "^6.11.0",
     "enzyme": "^3.10.0",
     "enzyme-adapter-react-16": "^1.14.0",
     "enzyme-to-json": "^3.4.0",
