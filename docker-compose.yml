@@ -32,19 +32,28 @@ services:
     restart: always
 
   redis:
-    # Newest version not working on old linux kernels
-    image: redis:6.2.6
+    image: redis:8.10.2-trixie
     container_name: pneumatic-redis
+    mem_limit: 512m
+    memswap_limit: 512m # swap disabled
     command: >
-      redis-server
       --loglevel warning
       --databases 16
       --dbfilename dump.rdb
       --dir /data
       --requirepass ${REDIS_PASSWORD:-redis_password}
-      --save 20 1
-      --save 300 100
-      --save 60 10000
+      --save "3600 1 300 100 60 10000"
+      --stop-writes-on-bgsave-error yes
+      --maxmemory 256mb
+      --maxmemory-policy volatile-lru
+      --maxmemory-samples 10
+      --maxmemory-clients 10%
+      --lazyfree-lazy-eviction yes
+      --lazyfree-lazy-expire yes
+      --lazyfree-lazy-server-del yes
+      --activedefrag yes
+      --timeout 0
+      --tcp-keepalive 300
     volumes:
       - ./redis/data:/data
     expose:
