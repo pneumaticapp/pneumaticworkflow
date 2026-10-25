@@ -51,7 +51,7 @@ services:
       --lazyfree-lazy-expire yes
       --lazyfree-lazy-server-del yes
       --activedefrag yes
-      --timeout 0
+      --timeout 300
       --tcp-keepalive 300
     volumes:
       - ./redis/data:/data
