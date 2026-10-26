@@ -49,7 +49,7 @@ export const TaskItem = ({ task, toggleIsOpenTask, setScrollTarget }: ITaskItemP
         <div className={styles['task_view-title']} onClick={toggleIsOpenTask}>
           <RichText text={name} variables={allVariables} isMarkdownMode={false} />
         </div>
-        <TemplateValidationError apiNames={[task.apiName]} />
+        <TemplateValidationError apiNames={[task.apiName]} section={null} />
 
         {description && (
           <div className={styles['task_view-description']} onClick={toggleIsOpenTask}>

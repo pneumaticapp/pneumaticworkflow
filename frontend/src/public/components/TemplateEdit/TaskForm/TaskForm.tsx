@@ -18,7 +18,6 @@ import { TPatchTaskPayload } from '../../../redux/actions';
 import { ReturnTo } from './ReturnTo';
 import { DueDate } from './DueDate';
 import { getFieldsetsCatalogIsLoading } from '../../../redux/selectors/fieldsets';
-import { getTemplateValidationFocusApiName } from '../../../redux/selectors/templateValidation';
 import { getSingleLineVariables, getSystemVariables, getTaskVariables, getVariables } from './utils/getTaskVariables';
 
 import { TemplateValidationError, useValidationErrorSections } from '../TemplateValidationError';
@@ -37,6 +36,7 @@ export interface ITaskFormProps {
   users: TUserListItem[];
   isSubscribed: boolean;
   scrollTarget: TTaskFormPart;
+  isOpenedByValidation?: boolean;
   accountId: number;
   isTeamInvitesModalOpen: boolean;
   tasks: ITemplateTaskClient[];
@@ -50,6 +50,7 @@ export function TaskForm({
   isSubscribed,
   accountId,
   scrollTarget,
+  isOpenedByValidation,
   isTeamInvitesModalOpen,
   tasks,
   kickoff,
@@ -106,10 +107,9 @@ export function TaskForm({
   }, [startingOrder, task.conditions, onEdit]);
 
   const { errorSections, getSectionBatchId } = useValidationErrorSections(task.uuid);
-  const validationFocusApiName = useSelector(getTemplateValidationFocusApiName);
 
   useLayoutEffect(() => {
-    if (validationFocusApiName) return;
+    if (isOpenedByValidation) return;
 
     const scrollKey = scrollTarget === ETaskFormParts.Fieldsets ? ETaskFormParts.Fields : scrollTarget;
     const scrollTo = (scrollKey && taskFormPartsRefs[scrollKey]?.current) || wrapperRef.current;
