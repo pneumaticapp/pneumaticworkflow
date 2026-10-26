@@ -31,14 +31,3 @@
 .warning-item:not(:last-child) {
   margin-bottom: 8px;
 }
-
-.warning-link {
-  all: unset;
-  color: var(--pneumatic-color-link-dark);
-  cursor: pointer;
-  transition: color 0.1s ease-in-out;
-
-  &:hover {
-    color: var(--pneumatic-color-link-hover);
-  }
-}

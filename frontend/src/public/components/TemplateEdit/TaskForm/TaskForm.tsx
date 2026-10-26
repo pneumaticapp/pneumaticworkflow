@@ -20,6 +20,7 @@ import { DueDate } from './DueDate';
 import { getFieldsetsCatalogIsLoading } from '../../../redux/selectors/fieldsets';
 import { getSingleLineVariables, getSystemVariables, getTaskVariables, getVariables } from './utils/getTaskVariables';
 
+import { TemplateValidationError, useValidationErrorSections } from '../TemplateValidationError';
 import styles from '../TemplateEdit.css';
 
 import { EStartingType } from './Conditions/utils/getDropdownOperators';
@@ -35,6 +36,7 @@ export interface ITaskFormProps {
   users: TUserListItem[];
   isSubscribed: boolean;
   scrollTarget: TTaskFormPart;
+  isOpenedByValidation?: boolean;
   accountId: number;
   isTeamInvitesModalOpen: boolean;
   tasks: ITemplateTaskClient[];
@@ -48,6 +50,7 @@ export function TaskForm({
   isSubscribed,
   accountId,
   scrollTarget,
+  isOpenedByValidation,
   isTeamInvitesModalOpen,
   tasks,
   kickoff,
@@ -103,7 +106,11 @@ export function TaskForm({
     removeDeletedTasks(startingOrder, task.conditions, onEdit);
   }, [startingOrder, task.conditions, onEdit]);
 
+  const { errorSections, getSectionBatchId } = useValidationErrorSections(task.uuid);
+
   useLayoutEffect(() => {
+    if (isOpenedByValidation) return;
+
     const scrollKey = scrollTarget === ETaskFormParts.Fieldsets ? ETaskFormParts.Fields : scrollTarget;
     const scrollTo = (scrollKey && taskFormPartsRefs[scrollKey]?.current) || wrapperRef.current;
 
@@ -138,14 +145,17 @@ export function TaskForm({
       formPartId: ETaskFormParts.AssignPerformers,
       title: 'tasks.task-assign-help',
       component: (
-        <TaskPerformers
-          users={users}
-          task={task}
-          tasks={tasks}
-          variables={listVariables}
-          setCurrentTask={setCurrentTask}
-          isTeamInvitesModalOpen={isTeamInvitesModalOpen}
-        />
+        <>
+          <TaskPerformers
+            users={users}
+            task={task}
+            tasks={tasks}
+            variables={listVariables}
+            setCurrentTask={setCurrentTask}
+            isTeamInvitesModalOpen={isTeamInvitesModalOpen}
+          />
+          <TemplateValidationError apiNames={[task.apiName]} section={ETaskFormParts.AssignPerformers} />
+        </>
       ),
       widget: createWidget(TaskItemUsers, { task }),
     },
@@ -248,6 +258,7 @@ export function TaskForm({
             className={styles['task-name-field']}
             toolipText={formatMessage({ id: 'tasks.task-description-button-tooltip' })}
           />
+          <TemplateValidationError apiNames={[task.apiName]} section={null} />
           <TaskDescriptionEditor
             handleChange={(value: string) => {
               handleTaskFieldChange('description')(value);
@@ -260,6 +271,12 @@ export function TaskForm({
             templateVariables={templateVariables}
             accountId={accountId}
           />
+          <TemplateValidationError
+            apiNames={task.checklists.flatMap((checklist) => [
+              checklist.apiName,
+              ...checklist.selections.map((selection) => selection.apiName),
+            ])}
+          />
         </div>
 
         {taskFormParts.map(({ title, component, formPartId, widget }) => (
@@ -267,8 +284,8 @@ export function TaskForm({
             isDisabled={title === 'templates.return-to.title' && tasks.length < 2}
             label={formatMessage({ id: title })}
             containerClassName={styles['task-accordion-container']}
-            isInitiallyVisible={formPartId === scrollTarget}
-            key={title}
+            isInitiallyVisible={formPartId === scrollTarget || errorSections.includes(formPartId)}
+            key={`${title}-${getSectionBatchId(formPartId)}`}
             innerRef={taskFormPartsRefs[formPartId]}
             widget={widget}
             isFromTaskForm

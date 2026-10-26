@@ -55,7 +55,15 @@ import { logger } from '../../utils/logger';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { updateTemplate } from '../../api/updateTemplate';
 import { cleanTemplateReferences, getNormalizedTemplate, mapTemplateRequest } from '../../utils/template';
-import { getErrorMessage, isPaidFeatureError } from '../../utils/getErrorMessage';
+import { getErrorMessage, isPaidFeatureError, normalizeToCustomError } from '../../utils/getErrorMessage';
+import {
+  clearTemplateValidationErrors,
+  removeTemplateValidationErrors,
+  setTemplateValidationErrors,
+} from '../templateValidation/slice';
+import { createTemplateValidationError } from '../templateValidation/getValidationErrorTarget';
+import type { ITemplateValidationError } from '../templateValidation/types';
+import { getTemplateValidationErrors } from '../selectors/templateValidation';
 import { insertId } from '../../utils/templates/insertId';
 import { ETemplateStatus } from '../../types/redux';
 import { TUserListItem } from '../../types/user';
@@ -175,7 +183,60 @@ function* fetchTemplateFromSystem({ payload: id }: TLoadTemplateFromSystem) {
   }
 }
 
-function* createOrUpdateTemplate(template: ITemplateRequest, isSubscribed: boolean, users: TUserListItem[]) {
+function* reportTemplateSaveError(error: unknown, submittedTemplate?: ITemplateClient) {
+  const apiName = normalizeToCustomError(error)?.details?.api_name;
+  const message = getErrorMessage(error);
+  const editingTemplate: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
+  const validationError = apiName
+    ? createTemplateValidationError(submittedTemplate || editingTemplate, apiName, message)
+    : null;
+  const currentValidationError =
+    apiName && validationError
+      ? createTemplateValidationError(editingTemplate, apiName, message, validationError.target.section)
+      : null;
+
+  if (!validationError || currentValidationError?.entitySnapshot !== validationError.entitySnapshot) {
+    NotificationManager.notifyApiError(error, {
+      title: 'template.save-failed',
+      message: getErrorMessage(error),
+      timeOut: 0,
+    });
+
+    return;
+  }
+
+  yield put(setTemplateValidationErrors([validationError]));
+}
+
+function* syncTemplateValidationErrors(savedTemplate: ITemplateClient, isSavedAsActive: boolean) {
+  const validationErrors: ITemplateValidationError[] = yield select(getTemplateValidationErrors);
+  if (validationErrors.length === 0) return;
+
+  if (isSavedAsActive) {
+    yield put(clearTemplateValidationErrors());
+
+    return;
+  }
+
+  const staleApiNames = validationErrors
+    .filter(({ apiName, message, target, entitySnapshot }) => {
+      const current = createTemplateValidationError(savedTemplate, apiName, message, target.section);
+
+      return !current || current.entitySnapshot !== entitySnapshot;
+    })
+    .map(({ apiName }) => apiName);
+
+  if (staleApiNames.length > 0) {
+    yield put(removeTemplateValidationErrors(staleApiNames));
+  }
+}
+
+function* createOrUpdateTemplate(
+  template: ITemplateRequest,
+  isSubscribed: boolean,
+  users: TUserListItem[],
+  submittedTemplate?: ITemplateClient,
+) {
   try {
     const saveTemplatePromise = !template.id ? createTemplate(template) : updateTemplate(template.id, template);
     const result: ITemplateResponse = yield saveTemplatePromise;
@@ -190,11 +251,7 @@ function* createOrUpdateTemplate(template: ITemplateRequest, isSubscribed: boole
     }
 
     logger.error('failed to save template:', error);
-    NotificationManager.notifyApiError(error, {
-      title: 'template.save-failed',
-      message: getErrorMessage(error),
-      timeOut: 0,
-    });
+    yield call(reportTemplateSaveError, error, submittedTemplate);
     yield put(saveTemplateFailed());
 
     return null;
@@ -218,7 +275,12 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void) {
   const editingTemplate: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
   const templateRequest = mapTemplateRequest(editingTemplate);
 
-  const savedTemplate: ITemplateClient | null = yield createOrUpdateTemplate(templateRequest, isSubscribed, users);
+  const savedTemplate: ITemplateClient | null = yield createOrUpdateTemplate(
+    templateRequest,
+    isSubscribed,
+    users,
+    editingTemplate,
+  );
   const lastTemplateState: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
 
   if (!savedTemplate) {
@@ -253,6 +315,11 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void) {
   };
 
   yield put(setTemplate(newTemplateState));
+  yield call(
+    syncTemplateValidationErrors,
+    newTemplateState,
+    Boolean(templateRequest.isActive && savedTemplate.isActive),
+  );
 
   if (isTemplateCreated) {
     const redirectUrl = ERoutes.TemplatesEdit.replace(':id', String(savedTemplate.id));

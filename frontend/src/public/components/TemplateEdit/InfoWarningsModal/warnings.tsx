@@ -10,41 +10,6 @@ export interface IInfoWarningProps {
   onClickActionButton?(): void;
 }
 
-export function UnassignedTasksWarning() {
-  const { formatMessage } = useIntl();
-
-  const links = [
-    {
-      title: 'How to invite your team',
-      url: 'https://support.pneumatic.app/articles/5579977-inviting-your-team-to-pneumatic',
-    },
-    {
-      title: 'How to add free external users',
-      url: 'https://support.pneumatic.app/articles/6145048-free-external-users',
-    },
-  ];
-
-  return (
-    <>
-      <p className={styles['warning-title']}>
-        {formatMessage({ id: 'template.warning-unassigned-perforemers-title' })}
-      </p>
-      <p className={styles['warning-description']}>
-        {formatMessage({ id: 'template.warning-unassigned-perforemers-desc' })}
-      </p>
-      <ul className={styles['warning-list']}>
-        {links.map(({ title, url }) => (
-          <li className={styles['warning-item']}>
-            <a href={url} target="_blank" className={styles['warning-link']} rel="noreferrer">
-              {title}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </>
-  );
-}
-
 export function PremiumFeaturesWarning() {
   const { formatMessage } = useIntl();
   const pendingActions = useSelector(getUserPendingActions);

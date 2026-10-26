@@ -31,6 +31,7 @@ import tasks from './tasks/slice';
 import datasets from './datasets/slice';
 import fieldsets from './fieldsets/slice';
 import permissions from './permissions/slice';
+import templateValidation from './templateValidation/slice';
 
 export const reducers = combineReducers({
   general,
@@ -51,6 +52,7 @@ export const reducers = combineReducers({
   templates,
   selectTemplateModal,
   template,
+  templateValidation,
   integrations,
   runWorkflowModal,
   webhooks,

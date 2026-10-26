@@ -71,6 +71,11 @@ jest.mock('react-redux', () => {
     accounts: {
       isCreateUserModalOpen: false,
     },
+    templateValidation: {
+      errors: [],
+      batchId: 0,
+      focusElementApiName: null,
+    },
   };
 
   return {
