@@ -90,7 +90,6 @@
     "redux-persist": "^6.0.0",
     "redux-persist-transform-filter": "^0.0.22",
     "redux-saga": "^1.0.5",
-    "remarkable": "^2.0.1",
     "reselect": "^4.1.5",
     "smoothscroll-polyfill": "^0.4.4",
     "throttle-debounce": "^2.3.0"
@@ -146,7 +145,6 @@
     "@types/react-transition-group": "^4.2.2",
     "@types/react-visibility-sensor": "^5.0.1",
     "@types/redux-persist": "^4.3.1",
-    "@types/remarkable": "^2.0.3",
     "@types/smoothscroll-polyfill": "^0.3.1",
     "@types/throttle-debounce": "^2.1.0",
     "@types/webpack": "^5.28.5",
