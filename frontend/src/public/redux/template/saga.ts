@@ -183,14 +183,19 @@ function* fetchTemplateFromSystem({ payload: id }: TLoadTemplateFromSystem) {
   }
 }
 
-function* reportTemplateSaveError(error: unknown) {
+function* reportTemplateSaveError(error: unknown, submittedTemplate?: ITemplateClient) {
   const apiName = normalizeToCustomError(error)?.details?.api_name;
+  const message = getErrorMessage(error);
   const editingTemplate: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
   const validationError = apiName
-    ? createTemplateValidationError(editingTemplate, apiName, getErrorMessage(error))
+    ? createTemplateValidationError(submittedTemplate || editingTemplate, apiName, message)
     : null;
+  const currentValidationError =
+    apiName && validationError
+      ? createTemplateValidationError(editingTemplate, apiName, message, validationError.target.section)
+      : null;
 
-  if (!validationError) {
+  if (!validationError || currentValidationError?.entitySnapshot !== validationError.entitySnapshot) {
     NotificationManager.notifyApiError(error, {
       title: 'template.save-failed',
       message: getErrorMessage(error),
@@ -226,7 +231,12 @@ function* syncTemplateValidationErrors(savedTemplate: ITemplateClient, isSavedAs
   }
 }
 
-function* createOrUpdateTemplate(template: ITemplateRequest, isSubscribed: boolean, users: TUserListItem[]) {
+function* createOrUpdateTemplate(
+  template: ITemplateRequest,
+  isSubscribed: boolean,
+  users: TUserListItem[],
+  submittedTemplate?: ITemplateClient,
+) {
   try {
     const saveTemplatePromise = !template.id ? createTemplate(template) : updateTemplate(template.id, template);
     const result: ITemplateResponse = yield saveTemplatePromise;
@@ -241,7 +251,7 @@ function* createOrUpdateTemplate(template: ITemplateRequest, isSubscribed: boole
     }
 
     logger.error('failed to save template:', error);
-    yield call(reportTemplateSaveError, error);
+    yield call(reportTemplateSaveError, error, submittedTemplate);
     yield put(saveTemplateFailed());
 
     return null;
@@ -265,7 +275,12 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void) {
   const editingTemplate: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
   const templateRequest = mapTemplateRequest(editingTemplate);
 
-  const savedTemplate: ITemplateClient | null = yield createOrUpdateTemplate(templateRequest, isSubscribed, users);
+  const savedTemplate: ITemplateClient | null = yield createOrUpdateTemplate(
+    templateRequest,
+    isSubscribed,
+    users,
+    editingTemplate,
+  );
   const lastTemplateState: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
 
   if (!savedTemplate) {

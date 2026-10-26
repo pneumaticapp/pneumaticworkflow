@@ -76,7 +76,11 @@ const makeValidationError = (snapshotSource: unknown): ITemplateValidationError 
   entitySnapshot: getValidationErrorEntitySnapshot(snapshotSource),
 });
 
-const runSave = async (template: ITemplateClient, validationErrors: ITemplateValidationError[] = []) => {
+const runSave = async (
+  template: ITemplateClient,
+  validationErrors: ITemplateValidationError[] = [],
+  failWhileEditing?: { editedTemplate: ITemplateClient; error: unknown },
+) => {
   const dispatched: IDispatchedAction[] = [];
   const channel = stdChannel();
   const state = {
@@ -85,6 +89,14 @@ const runSave = async (template: ITemplateClient, validationErrors: ITemplateVal
     template: { data: template },
     templateValidation: { errors: validationErrors, batchId: 1, focusElementApiName: null },
   };
+
+  if (failWhileEditing) {
+    (updateTemplate as jest.Mock).mockImplementation(() => {
+      state.template.data = failWhileEditing.editedTemplate;
+
+      return Promise.reject(failWhileEditing.error);
+    });
+  }
 
   function* wrapper() {
     yield call(watchSaveTemplate);
@@ -131,6 +143,23 @@ describe('fetchSaveTemplate validation errors', () => {
       }),
     ]);
     expect(NotificationManager.notifyApiError).not.toHaveBeenCalled();
+  });
+
+  it('shows the toast instead of an inline error when the element was corrected during the request', async () => {
+    const correctedTemplate = makeTemplate({
+      kickoff: makeKickoffClient({ fields: [{ ...kickoffField, isRequired: true }] }),
+    });
+
+    const dispatched = await runSave(makeTemplate({ isActive: true }), [], {
+      editedTemplate: correctedTemplate,
+      error: apiError('field-user'),
+    });
+
+    expect(dispatched.map((action) => action.type)).not.toContain(setTemplateValidationErrors.type);
+    expect(NotificationManager.notifyApiError).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ title: 'template.save-failed' }),
+    );
   });
 
   it('shows the toast and keeps inline errors when the api_name is not in the template', async () => {
