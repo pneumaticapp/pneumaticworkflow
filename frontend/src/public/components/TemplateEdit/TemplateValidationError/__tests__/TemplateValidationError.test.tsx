@@ -56,6 +56,28 @@ describe('TemplateValidationError', () => {
     expect(window.HTMLElement.prototype.scrollIntoView).not.toHaveBeenCalled();
   });
 
+  it('translates a message that is a dictionary key', () => {
+    mockValidationErrors([makeError({ message: 'validation.condition-incomplete' })]);
+
+    render(<TemplateValidationError apiNames={['predicate-1']} />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Fill in the condition');
+  });
+
+  it('shows only errors of the requested section', () => {
+    const performersError = makeError({
+      apiName: 'task-1',
+      target: { taskUuid: 'task-uuid', section: ETaskFormParts.AssignPerformers, elementApiName: 'task-1' },
+    });
+    mockValidationErrors([performersError]);
+
+    const { rerender } = render(<TemplateValidationError apiNames={['task-1']} section={null} />);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    rerender(<TemplateValidationError apiNames={['task-1']} section={ETaskFormParts.AssignPerformers} />);
+    expect(screen.getByRole('alert')).toHaveTextContent('Value is required');
+  });
+
   it('renders nothing for other elements', () => {
     mockValidationErrors([makeError()]);
 
@@ -98,7 +120,9 @@ describe('useOpenOnValidationError', () => {
 
 describe('useValidationErrorSections', () => {
   function Sections({ taskUuid }: { taskUuid: string }) {
-    return <>{useValidationErrorSections(taskUuid).join(',')}</>;
+    const { errorSections, getSectionBatchId } = useValidationErrorSections(taskUuid);
+
+    return <>{errorSections.map((section) => `${section}:${getSectionBatchId(section)}`).join(',')}</>;
   }
 
   it('returns every section with an error of the task', () => {
@@ -113,6 +137,6 @@ describe('useValidationErrorSections', () => {
 
     const { container } = render(<Sections taskUuid="task-uuid" />);
 
-    expect(container).toHaveTextContent(`${ETaskFormParts.AssignPerformers},${ETaskFormParts.CheckIf}`);
+    expect(container).toHaveTextContent(`${ETaskFormParts.AssignPerformers}:1,${ETaskFormParts.CheckIf}:1`);
   });
 });

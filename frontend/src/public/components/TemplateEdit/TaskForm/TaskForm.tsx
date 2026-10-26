@@ -105,7 +105,7 @@ export function TaskForm({
     removeDeletedTasks(startingOrder, task.conditions, onEdit);
   }, [startingOrder, task.conditions, onEdit]);
 
-  const errorSections = useValidationErrorSections(task.uuid);
+  const { errorSections, getSectionBatchId } = useValidationErrorSections(task.uuid);
   const validationFocusApiName = useSelector(getTemplateValidationFocusApiName);
 
   useLayoutEffect(() => {
@@ -145,14 +145,17 @@ export function TaskForm({
       formPartId: ETaskFormParts.AssignPerformers,
       title: 'tasks.task-assign-help',
       component: (
-        <TaskPerformers
-          users={users}
-          task={task}
-          tasks={tasks}
-          variables={listVariables}
-          setCurrentTask={setCurrentTask}
-          isTeamInvitesModalOpen={isTeamInvitesModalOpen}
-        />
+        <>
+          <TaskPerformers
+            users={users}
+            task={task}
+            tasks={tasks}
+            variables={listVariables}
+            setCurrentTask={setCurrentTask}
+            isTeamInvitesModalOpen={isTeamInvitesModalOpen}
+          />
+          <TemplateValidationError apiNames={[task.apiName]} section={ETaskFormParts.AssignPerformers} />
+        </>
       ),
       widget: createWidget(TaskItemUsers, { task }),
     },
@@ -255,7 +258,7 @@ export function TaskForm({
             className={styles['task-name-field']}
             toolipText={formatMessage({ id: 'tasks.task-description-button-tooltip' })}
           />
-          <TemplateValidationError apiNames={[task.apiName]} />
+          <TemplateValidationError apiNames={[task.apiName]} section={null} />
           <TaskDescriptionEditor
             handleChange={(value: string) => {
               handleTaskFieldChange('description')(value);
@@ -282,7 +285,7 @@ export function TaskForm({
             label={formatMessage({ id: title })}
             containerClassName={styles['task-accordion-container']}
             isInitiallyVisible={formPartId === scrollTarget || errorSections.includes(formPartId)}
-            key={title}
+            key={`${title}-${getSectionBatchId(formPartId)}`}
             innerRef={taskFormPartsRefs[formPartId]}
             widget={widget}
             isFromTaskForm
