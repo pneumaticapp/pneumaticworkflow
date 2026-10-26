@@ -35,7 +35,13 @@ describe('templateValidation slice', () => {
   it('clears errors explicitly and when the template store is reset', () => {
     const withErrors = reducer(initialState, setTemplateValidationErrors([makeError('a')]));
 
-    expect(reducer(withErrors, clearTemplateValidationErrors()).errors).toEqual([]);
-    expect(reducer(withErrors, { type: ETemplateActions.ResetTemplateStore }).errors).toEqual([]);
+    expect(reducer(withErrors, clearTemplateValidationErrors())).toMatchObject({
+      errors: [],
+      focusElementApiName: null,
+    });
+    expect(reducer(withErrors, { type: ETemplateActions.ResetTemplateStore })).toMatchObject({
+      errors: [],
+      focusElementApiName: null,
+    });
   });
 });

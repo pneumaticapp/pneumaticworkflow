@@ -24,6 +24,7 @@ const templateValidationSlice = createSlice({
     },
     clearTemplateValidationErrors: (state) => {
       state.errors = [];
+      state.focusElementApiName = null;
     },
     clearTemplateValidationFocus: (state) => {
       state.focusElementApiName = null;
@@ -34,6 +35,7 @@ const templateValidationSlice = createSlice({
       (action) => action.type === ETemplateActions.ResetTemplateStore,
       (state) => {
         state.errors = [];
+        state.focusElementApiName = null;
       },
     );
   },
