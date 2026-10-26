@@ -137,4 +137,25 @@ describe('getValidationErrorTarget', () => {
       error?.entitySnapshot,
     );
   });
+
+  it('snapshots only the matching rule of a predicate error', () => {
+    const condition = makeCondition('condition-multi', EConditionAction.SkipTask, 'predicate-a');
+    const multiRuleCondition = {
+      ...condition,
+      rules: [...condition.rules, { ...condition.rules[0], ruleApiName: 'rule-b', predicateApiName: 'predicate-b' }],
+    } as ICondition;
+    const withCondition = (conditions: ICondition[]) => ({ ...template, tasks: [{ ...task, conditions }] });
+    const editedSibling = {
+      ...multiRuleCondition,
+      rules: multiRuleCondition.rules.map((rule) =>
+        rule.predicateApiName === 'predicate-b' ? { ...rule, value: 'changed' } : rule,
+      ),
+    } as ICondition;
+
+    expect(
+      createTemplateValidationError(withCondition([editedSibling]), 'predicate-a', 'Fill in')?.entitySnapshot,
+    ).toBe(
+      createTemplateValidationError(withCondition([multiRuleCondition]), 'predicate-a', 'Fill in')?.entitySnapshot,
+    );
+  });
 });

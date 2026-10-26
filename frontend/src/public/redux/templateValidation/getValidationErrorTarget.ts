@@ -71,7 +71,13 @@ const findInTask = (
     const section =
       matchedCondition.action === EConditionAction.StartTask ? ETaskFormParts.StartsAfter : ETaskFormParts.CheckIf;
 
-    return inTask(section, condition ? condition.apiName : apiName, matchedCondition);
+    if (condition) return inTask(section, condition.apiName, condition);
+
+    return inTask(
+      section,
+      apiName,
+      matchedCondition.rules.find((rule) => rule.predicateApiName === apiName),
+    );
   }
 
   if (task.rawDueDate?.apiName === apiName) return inTask(ETaskFormParts.DueIn, apiName, task.rawDueDate);
