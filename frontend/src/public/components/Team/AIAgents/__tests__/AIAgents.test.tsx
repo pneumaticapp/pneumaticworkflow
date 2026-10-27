@@ -15,6 +15,7 @@ import { ERoutes } from '../../../../constants/routes';
 import { intlMock } from '../../../../__stubs__/intlMock';
 
 jest.mock('react-redux', () => ({
+  ...jest.requireActual('react-redux'),
   useDispatch: jest.fn(),
   useSelector: jest.fn(),
 }));
@@ -130,25 +131,27 @@ describe('AIAgents', () => {
     );
   });
 
-  it('disables creation and points to Integrations when there are no providers', () => {
-    mockState({ providers: [] });
+  it('disables creation and points to Integrations below the empty state when there are no providers', () => {
+    mockState({ agents: [], providers: [] });
 
     render(<AIAgents />);
 
     expect(screen.getByRole('button', { name: new RegExp(getText('team.ai-agents.create-button')) })).toBeDisabled();
-    expect(screen.getByTestId('no-ai-providers-hint')).toHaveTextContent(
-      getText('team.create-ai-agent-modal.no-providers-hint'),
-    );
+    expect(screen.getByText(getText('team.ai-agents.empty'))).toBeInTheDocument();
+    expect(screen.getByText(getText('team.create-ai-agent-modal.no-providers-hint'))).toBeInTheDocument();
     userEvent.click(screen.getByRole('button', { name: getText('team.create-ai-agent-modal.go-to-integrations') }));
     expect(history.push).toHaveBeenCalledWith(ERoutes.Integrations);
   });
 
   it('does not show the providers hint while providers are loading', () => {
-    mockState({ providers: [], isProvidersLoading: true });
+    mockState({ agents: [], providers: [], isProvidersLoading: true });
 
     render(<AIAgents />);
 
-    expect(screen.queryByTestId('no-ai-providers-hint')).not.toBeInTheDocument();
+    expect(screen.queryByText(getText('team.create-ai-agent-modal.no-providers-hint'))).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: getText('team.create-ai-agent-modal.go-to-integrations') }),
+    ).not.toBeInTheDocument();
   });
 
   it('shows an empty state when there are no agents', () => {
@@ -156,6 +159,7 @@ describe('AIAgents', () => {
 
     render(<AIAgents />);
 
-    expect(screen.getByTestId('empty-ai-agents-message')).toHaveTextContent(getText('team.ai-agents.empty'));
+    expect(screen.getByText(getText('team.ai-agents.empty'))).toBeInTheDocument();
+    expect(screen.queryByText(getText('team.create-ai-agent-modal.no-providers-hint'))).not.toBeInTheDocument();
   });
 });

@@ -5,6 +5,8 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { AddButton } from '../../UI/Buttons/AddButton';
 import { Button } from '../../UI/Buttons/Button';
+import { Placeholder } from '../../UI/Placeholder';
+import { TasksPlaceholderIcon } from '../../Tasks/TasksPlaceholderIcon';
 import { PageTitle } from '../../PageTitle';
 import { TeamUserSkeleton } from '../TeamUserSkeleton';
 import { TeamAgent } from './TeamAgent';
@@ -42,6 +44,18 @@ export function AIAgents() {
   const providerNameById = new Map(providers.map((provider) => [provider.id, provider.name]));
   const hasNoProviders = !isProvidersLoading && providers.length === 0;
 
+  const handleOpenCreateModal = () => {
+    dispatch(openCreateUserModal());
+  };
+
+  const handleCloseCreateModal = () => {
+    dispatch(closeCreateUserModal());
+  };
+
+  const handleGoToIntegrations = () => {
+    history.push(ERoutes.Integrations);
+  };
+
   const renderAgents = () => {
     if (isAgentsLoading) {
       return Array.from([1, 2, 3], (key) => <TeamUserSkeleton key={key} />);
@@ -49,9 +63,25 @@ export function AIAgents() {
 
     if (agents.length === 0) {
       return (
-        <p className={styles['empty']} data-testid="empty-ai-agents-message">
-          {formatMessage({ id: 'team.ai-agents.empty' })}
-        </p>
+        <Placeholder
+          title={formatMessage({ id: 'team.ai-agents.empty' })}
+          description={
+            hasNoProviders ? formatMessage({ id: 'team.create-ai-agent-modal.no-providers-hint' }) : undefined
+          }
+          Icon={TasksPlaceholderIcon}
+          mood="neutral"
+          footer={
+            hasNoProviders && (
+              <Button
+                type="button"
+                size="md"
+                buttonStyle="yellow"
+                label={formatMessage({ id: 'team.create-ai-agent-modal.go-to-integrations' })}
+                onClick={handleGoToIntegrations}
+              />
+            )
+          }
+        />
       );
     }
 
@@ -71,7 +101,7 @@ export function AIAgents() {
       <CreatePerformerModal
         isOpen={isCreateModalOpen}
         initialTab={ECreatePerformerModalTab.AIAgent}
-        onClose={() => dispatch(closeCreateUserModal())}
+        onClose={handleCloseCreateModal}
       />
 
       <PageTitle titleId={EPageTitle.Team} withUnderline={false} />
@@ -80,23 +110,8 @@ export function AIAgents() {
         title={formatMessage({ id: 'team.ai-agents.create-button' })}
         caption={formatMessage({ id: 'team.ai-agents.create-button-caption' })}
         disabled={hasNoProviders}
-        onClick={() => dispatch(openCreateUserModal())}
+        onClick={handleOpenCreateModal}
       />
-
-      {hasNoProviders && (
-        <div className={styles['no-providers']} data-testid="no-ai-providers-hint">
-          <p className={styles['no-providers__hint']}>
-            {formatMessage({ id: 'team.create-ai-agent-modal.no-providers-hint' })}
-          </p>
-          <Button
-            type="button"
-            size="md"
-            buttonStyle="yellow"
-            label={formatMessage({ id: 'team.create-ai-agent-modal.go-to-integrations' })}
-            onClick={() => history.push(ERoutes.Integrations)}
-          />
-        </div>
-      )}
 
       {renderAgents()}
     </div>
