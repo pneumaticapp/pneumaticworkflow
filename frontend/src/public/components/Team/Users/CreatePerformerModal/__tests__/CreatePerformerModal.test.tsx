@@ -273,11 +273,12 @@ describe('CreatePerformerModal', () => {
       expect(history.push).toHaveBeenCalledWith(ERoutes.Integrations);
     });
 
-    it('does not show the no-providers hint while providers are loading', async () => {
+    it('shows a loader instead of the no-providers hint while providers are loading', async () => {
       mockAIState({ providers: [], isLoadingProviders: true });
-      render(<CreatePerformerModal isOpen onClose={mockOnClose} />);
+      const { baseElement } = render(<CreatePerformerModal isOpen onClose={mockOnClose} />);
       await openAIAgentTab();
 
+      expect(baseElement.querySelector('.spinner')).toBeInTheDocument();
       expect(screen.queryByTestId('ai-agent-no-providers-hint')).not.toBeInTheDocument();
       expect(screen.queryByLabelText(getTranslatedText('team.create-ai-agent-modal.name'))).not.toBeInTheDocument();
     });

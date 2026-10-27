@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { BaseModal, ModalHeader, ModalBody } from '../../../UI/BaseModal';
 import { Button } from '../../../UI/Buttons/Button';
+import { Loader } from '../../../UI/Loader';
 import { Tabs } from '../../../UI/Tabs';
 import { ERoutes } from '../../../../constants/routes';
 import { history } from '../../../../utils/history';
@@ -57,6 +58,7 @@ export function CreatePerformerModal({
   };
 
   const hasProviders = providers.length > 0;
+  const isAIAgentTab = activeTab === ECreatePerformerModalTab.AIAgent;
 
   return (
     <BaseModal
@@ -84,7 +86,13 @@ export function CreatePerformerModal({
         </div>
       </ModalHeader>
 
-      {activeTab === ECreatePerformerModalTab.AIAgent && !isLoadingProviders && !hasProviders && (
+      {isAIAgentTab && isLoadingProviders && !hasProviders && (
+        <ModalBody className={styles['modal__no-providers']}>
+          <Loader isLoading isCentered={false} />
+        </ModalBody>
+      )}
+
+      {isAIAgentTab && !isLoadingProviders && !hasProviders && (
         <ModalBody className={styles['modal__no-providers']}>
           <p className={styles['modal__no-providers-hint']} data-testid="ai-agent-no-providers-hint">
             {formatMessage({ id: 'team.create-ai-agent-modal.no-providers-hint' })}
@@ -102,7 +110,7 @@ export function CreatePerformerModal({
 
       <CreateAIAgentForm
         key={`agent-${formsKey}`}
-        isActive={activeTab === ECreatePerformerModalTab.AIAgent && hasProviders}
+        isActive={isAIAgentTab && hasProviders}
         isSubmitting={isCreatingAgent}
         submitLabel={formatMessage({ id: 'team.create-ai-agent-modal.submit' })}
         onSubmit={handleCreateAIAgent}
