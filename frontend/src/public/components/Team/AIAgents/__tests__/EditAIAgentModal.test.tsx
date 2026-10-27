@@ -9,7 +9,12 @@ import type { IAIAgent } from '../../../../api/ai/types';
 import type { IAIAgentFormValues } from '../AIAgentForm/types';
 
 jest.mock('../../../UI/BaseModal', () => ({
-  BaseModal: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  BaseModal: ({ children, toggle }: { children: React.ReactNode; toggle(): void }) => (
+    <div>
+      <button type="button" data-testid="close-edit-agent-modal" onClick={toggle} />
+      {children}
+    </div>
+  ),
   ModalHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
@@ -94,6 +99,18 @@ describe('EditAIAgentModal', () => {
     act(() => getUpdatePayload().onSuccess?.());
 
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('cannot be closed while saving and can be closed again after an error', () => {
+    render(<EditAIAgentModal agent={buildAgent()} onClose={onClose} />);
+
+    userEvent.click(screen.getByTestId('submit-edit-agent-form'));
+    userEvent.click(screen.getByTestId('close-edit-agent-modal'));
+    expect(onClose).not.toHaveBeenCalled();
+
+    act(() => getUpdatePayload().onError?.());
+    userEvent.click(screen.getByTestId('close-edit-agent-modal'));
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the modal open with the draft when the update fails', () => {
