@@ -17,28 +17,43 @@ export function TeamUserRelationsModals({
   const [isManagerSaving, setIsManagerSaving] = useState(false);
   const [isReportsSaving, setIsReportsSaving] = useState(false);
 
+  const handleCloseManagerModal = () => {
+    if (!isManagerSaving) onCloseManagerModal();
+  };
+
+  const handleConfirmManager = (managerId: number | null) => {
+    setIsManagerSaving(true);
+    handleChangeUserManager(user.id, managerId, {
+      onSuccess: () => {
+        setIsManagerSaving(false);
+        onCloseManagerModal();
+      },
+      onError: () => setIsManagerSaving(false),
+    });
+  };
+
+  const handleCloseReportsModal = () => {
+    if (!isReportsSaving) onCloseReportsModal();
+  };
+
+  const handleConfirmReports = (reportIds: number[]) => {
+    setIsReportsSaving(true);
+    handleChangeUserReports(user.id, reportIds, {
+      onSuccess: () => {
+        setIsReportsSaving(false);
+        onCloseReportsModal();
+      },
+      onError: () => setIsReportsSaving(false),
+    });
+  };
+
   return (
     <>
       {isManagerModalOpen && (
         <SelectManagerModal
           isOpen={isManagerModalOpen}
-          onClose={() => {
-            if (!isManagerSaving) {
-              onCloseManagerModal();
-            }
-          }}
-          onConfirm={(managerId) => {
-            setIsManagerSaving(true);
-            handleChangeUserManager(user.id, managerId, {
-              onSuccess: () => {
-                setIsManagerSaving(false);
-                onCloseManagerModal();
-              },
-              onError: () => {
-                setIsManagerSaving(false);
-              },
-            });
-          }}
+          onClose={handleCloseManagerModal}
+          onConfirm={handleConfirmManager}
           currentUserId={user.id}
           currentManagerId={user.managerId || null}
           isLoading={isManagerSaving}
@@ -47,23 +62,8 @@ export function TeamUserRelationsModals({
       {isReportsModalOpen && (
         <SelectReportsModal
           isOpen={isReportsModalOpen}
-          onClose={() => {
-            if (!isReportsSaving) {
-              onCloseReportsModal();
-            }
-          }}
-          onConfirm={(reportIds) => {
-            setIsReportsSaving(true);
-            handleChangeUserReports(user.id, reportIds, {
-              onSuccess: () => {
-                setIsReportsSaving(false);
-                onCloseReportsModal();
-              },
-              onError: () => {
-                setIsReportsSaving(false);
-              },
-            });
-          }}
+          onClose={handleCloseReportsModal}
+          onConfirm={handleConfirmReports}
           currentUserId={user.id}
           currentReportIds={user.reportIds || []}
           isLoading={isReportsSaving}
