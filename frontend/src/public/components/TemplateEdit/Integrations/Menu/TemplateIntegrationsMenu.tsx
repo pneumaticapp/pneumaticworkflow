@@ -3,7 +3,7 @@ import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { EditIcon, MoreIcon } from '../../../icons';
-import { Dropdown, TDropdownOption } from '../../../UI';
+import { DropdownMenu, TDropdownMenuOption } from '../../../UI';
 
 import styles from './TemplateIntegrationsMenu.css';
 
@@ -20,7 +20,7 @@ export function TemplateIntegrationsMenu({ isOpen, toggle }: ITemplateIntegratio
     handler();
   };
 
-  const dropdownOptions: TDropdownOption[] = [
+  const dropdownOptions: TDropdownMenuOption[] = [
     {
       label: formatMessage({ id: 'template.intergrations.menu-edit' }),
       onClick: handleOptionClick(toggle),
@@ -38,7 +38,7 @@ export function TemplateIntegrationsMenu({ isOpen, toggle }: ITemplateIntegratio
 
   return (
     <div className={styles['card-more-container']}>
-      <Dropdown
+      <DropdownMenu
         renderToggle={(isDropdownOpen) => (
           <MoreIcon className={classnames(styles['card-more'], isDropdownOpen && styles['card-more_active'])} />
         )}

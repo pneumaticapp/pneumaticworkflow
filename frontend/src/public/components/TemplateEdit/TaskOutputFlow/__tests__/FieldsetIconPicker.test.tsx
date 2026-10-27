@@ -21,27 +21,6 @@ jest.mock('../../../../redux/selectors/fieldsets', () => ({
   getFieldsetsCatalogItems: jest.fn(() => []),
 }));
 
-jest.mock('../../../UI', () => ({
-  FilterSelect: jest.fn(({ options, onChange, isLoading, placeholderText }: any) => {
-    if (isLoading && options.length === 0) {
-      return <div>Loading…</div>;
-    }
-    if (options.length === 0) {
-      return <div>{placeholderText}</div>;
-    }
-    return (
-      <div data-testid="mock-filter-select">
-        {options.map((option: any) => (
-          <button key={option.id} type="button" onClick={() => onChange(option.id)}>
-            {option.label}
-          </button>
-        ))}
-      </div>
-    );
-  }),
-  CustomTooltip: () => null,
-}));
-
 jest.mock('../../../UI/CustomTooltip', () => ({
   CustomTooltip: () => null,
 }));
@@ -62,6 +41,10 @@ const formatMsg = (id: string, defaultMessage?: string) => intlMock.formatMessag
 
 const EMPTY_STATE = {};
 
+const openPicker = () => userEvent.click(screen.getAllByRole('button')[0]);
+const getOptionTexts = () =>
+  Array.from(document.querySelectorAll('.react-select__option')).map((option) => option.textContent);
+
 describe('FieldsetIconPicker', () => {
   const makeProps = (overrides: Partial<IFieldsetIconPickerProps> = {}): IFieldsetIconPickerProps => ({
     fieldsetsCatalogLoading: false,
@@ -77,13 +60,17 @@ describe('FieldsetIconPicker', () => {
     (getFieldsetsCatalogItems as jest.Mock).mockReturnValue([]);
   });
 
-  it('fieldsetsCatalogLoading=true and empty catalog -> loading text is rendered', () => {
+  it('fieldsetsCatalogLoading=true and empty catalog -> skeleton rows are rendered', () => {
     render(React.createElement(FieldsetIconPicker, makeProps({ fieldsetsCatalogLoading: true })));
-    expect(screen.getByText(formatMsg('template.fieldset-picker.loading', 'Loading…'))).toBeInTheDocument();
+    openPicker();
+
+    expect(document.querySelectorAll('.select-sm__skeleton')).toHaveLength(5);
   });
 
   it('fieldsetsCatalogLoading=false and empty catalog -> empty text is rendered', () => {
     render(React.createElement(FieldsetIconPicker, makeProps({ fieldsetsCatalogLoading: false })));
+    openPicker();
+
     expect(screen.getByText(formatMsg('template.fieldset-picker.empty'))).toBeInTheDocument();
   });
 
@@ -96,11 +83,13 @@ describe('FieldsetIconPicker', () => {
     (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
 
     render(React.createElement(FieldsetIconPicker, makeProps()));
+    openPicker();
 
-    const buttons = screen.getAllByRole('button');
-    expect(buttons[0]).toHaveTextContent('Zeta');
-    expect(buttons[1]).toHaveTextContent('Beta');
-    expect(buttons[2]).toHaveTextContent('Alpha');
+    expect(getOptionTexts()).toEqual([
+      expect.stringContaining('Zeta'),
+      expect.stringContaining('Beta'),
+      expect.stringContaining('Alpha'),
+    ]);
   });
 
   it('click on fieldset option calls onSelectFieldset with fieldset object', () => {
@@ -108,28 +97,23 @@ describe('FieldsetIconPicker', () => {
     const catalogItems: IFieldsetCatalogItem[] = [makeCatalogItem(1, 'fs-1', 'My Fieldset', 0)];
     (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
 
-    render(
-      React.createElement(
-        FieldsetIconPicker,
-        makeProps({
-          onSelectFieldset,
-        }),
-      ),
-    );
-
-    userEvent.click(screen.getByRole('button'));
+    render(React.createElement(FieldsetIconPicker, makeProps({ onSelectFieldset })));
+    openPicker();
+    userEvent.click(screen.getByText('My Fieldset'));
 
     expect(onSelectFieldset).toHaveBeenCalledTimes(1);
     expect(onSelectFieldset).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
+    expect(screen.queryByText('My Fieldset')).not.toBeInTheDocument();
   });
 
-  it('background catalog load does not show loading text when list is not empty', () => {
+  it('background catalog load keeps the list when it is not empty', () => {
     const catalogItems: IFieldsetCatalogItem[] = [makeCatalogItem(1, 'fs-1', 'My Set', 0)];
     (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
 
     render(React.createElement(FieldsetIconPicker, makeProps({ fieldsetsCatalogLoading: true })));
+    openPicker();
 
-    expect(screen.queryByText(formatMsg('template.fieldset-picker.loading', 'Loading…'))).not.toBeInTheDocument();
+    expect(document.querySelectorAll('.select-sm__skeleton')).toHaveLength(0);
     expect(screen.getByText('My Set')).toBeInTheDocument();
   });
 
@@ -152,6 +136,7 @@ describe('FieldsetIconPicker', () => {
     (getFieldsetsCatalogItems as jest.Mock).mockReturnValue([catalogItem]);
 
     render(React.createElement(FieldsetIconPicker, makeProps()));
+    openPicker();
 
     expect(screen.getByText('3 fields · 5 rules')).toBeInTheDocument();
   });
@@ -165,17 +150,22 @@ describe('FieldsetIconPicker', () => {
     (getFieldsetsCatalogItems as jest.Mock).mockReturnValue([catalogItem]);
 
     render(React.createElement(FieldsetIconPicker, makeProps()));
+    openPicker();
 
     expect(screen.getByText('0 fields · 0 rules')).toBeInTheDocument();
   });
 
-  it('passes searchByText with fieldset name for each option in FilterSelect', () => {
-    const catalogItems: IFieldsetCatalogItem[] = [makeCatalogItem(1, 'fs-search', 'Searchable Fieldset', 0)];
+  it('filters fieldsets by name typed into the search', () => {
+    const catalogItems: IFieldsetCatalogItem[] = [
+      makeCatalogItem(1, 'fs-search', 'Searchable Fieldset', 0),
+      makeCatalogItem(2, 'fs-other', 'Other', 1),
+    ];
     (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
 
     render(React.createElement(FieldsetIconPicker, makeProps()));
+    openPicker();
+    userEvent.type(screen.getByRole('textbox'), 'searchable');
 
-    const button = screen.getByRole('button');
-    expect(button).toBeInTheDocument();
+    expect(getOptionTexts()).toEqual([expect.stringContaining('Searchable Fieldset')]);
   });
 });

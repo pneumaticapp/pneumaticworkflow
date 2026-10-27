@@ -14,7 +14,7 @@ import { InputField } from '../../UI/Fields/InputField';
 import { Header } from '../../UI/Typeography/Header';
 import { Modal } from '../../UI/Modal/Modal';
 import { Tabs } from '../../UI/Tabs';
-import { DropdownList } from '../../UI/DropdownList';
+import { Select } from '../../UI/Select';
 
 import styles from './AIProviders.css';
 
@@ -130,7 +130,7 @@ export function CreateAIProviderModal({ isOpen, onClose }: ICreateAIProviderModa
           <div className={styles['create-modal__fields']}>
             {isVendorTab ? (
               <>
-                <DropdownList
+                <Select
                   title={formatMessage({ id: 'ai-providers.vendor-label' })}
                   placeholder={formatMessage({ id: 'ai-providers.vendor-placeholder' })}
                   options={vendorOptions}

@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { Button } from '../../../UI/Buttons/Button';
-import { FormikDropdownList } from '../../../UI/DropdownList';
+import { FormikSelect } from '../../../UI/Select';
 import { FormikInputField } from '../../../UI/Fields/InputField';
 import { ModalBody, ModalFooter } from '../../../UI/BaseModal';
 import { isEmpty } from '../../../../utils/validators';
@@ -212,13 +212,13 @@ export function CreateAIAgentForm({
                 <h3 className={styles['modal__section-title']}>
                   {formatMessage({ id: 'team.create-ai-agent-modal.parameters' })}
                 </h3>
-                <FormikDropdownList
+                <FormikSelect
                   name="providerId"
                   label={formatMessage({ id: 'team.create-ai-agent-modal.provider' })}
                   options={providerOptions}
                   isRequired
                 />
-                <FormikDropdownList
+                <FormikSelect
                   name="model"
                   label={formatMessage({ id: 'team.create-ai-agent-modal.model' })}
                   options={modelOptions}

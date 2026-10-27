@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { BaseModal, ModalHeader, ModalBody, ModalFooter } from '../../../UI/BaseModal';
 import { FormikInputField } from '../../../UI/Fields/InputField';
-import { FormikDropdownList } from '../../../UI/DropdownList';
+import { FormikSelect } from '../../../UI/Select';
 import { Button } from '../../../UI/Buttons/Button';
 import { Tabs } from '../../../UI/Tabs';
 import { validateEmail, validateRegistrationPassword } from '../../../../utils/validators';
@@ -174,7 +174,7 @@ export function CreateUserModal({ isOpen, onClose, initialTab = ECreateUserModal
                     containerClassName={styles['modal__input-ellipsis']}
                   />
 
-                  <FormikDropdownList
+                  <FormikSelect
                     name="role"
                     label={formatMessage({ id: 'team.create-user-modal.status' })}
                     options={statusOptions}

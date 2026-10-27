@@ -2,7 +2,7 @@ import * as React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import { Dropdown, TDropdownOption } from '../../../UI';
+import { DropdownMenu, TDropdownMenuOption } from '../../../UI';
 import { EditIcon, MoreIcon, ReturnToIcon } from '../../../icons';
 
 import styles from './KickoffMenu.css';
@@ -22,7 +22,7 @@ export function KickoffMenu({ isKickoffOpen, isClearDisabled, toggleKickoff, cle
     handler();
   };
 
-  const dropdownOptions: TDropdownOption[] = [
+  const dropdownOptions: TDropdownMenuOption[] = [
     {
       label: formatMessage({ id: 'kickoff.menu-edit' }),
       onClick: handleOptionClick(toggleKickoff),
@@ -50,7 +50,7 @@ export function KickoffMenu({ isKickoffOpen, isClearDisabled, toggleKickoff, cle
 
   return (
     <div className={styles['card-more-container']}>
-      <Dropdown
+      <DropdownMenu
         renderToggle={(isOpen) => (
           <MoreIcon className={classnames(styles['card-more'], isOpen && styles['card-more_active'])} />
         )}

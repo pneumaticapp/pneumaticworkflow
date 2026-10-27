@@ -1,13 +1,13 @@
 import { envLanguageCode } from './enviroment';
-import { TDropdownOptionBase } from '../components/UI';
+import { TSelectOption } from '../components/UI';
 
 // The Russian language is present, but it should not be shown yet
-export const LANGUAGE_OPTIONS: TDropdownOptionBase[] = [
+export const LANGUAGE_OPTIONS: TSelectOption[] = [
   { label: 'user-info.locale.language.english', value: 'en' },
   envLanguageCode === 'ru' && { label: 'user-info.locale.language.russia', value: 'ru' },
-].filter(Boolean) as unknown as TDropdownOptionBase[];
+].filter(Boolean) as unknown as TSelectOption[];
 
-export const TIMEZONE_OPTIONS: TDropdownOptionBase[] = [
+export const TIMEZONE_OPTIONS: TSelectOption[] = [
   { label: 'user-info.locale.timezone.baker-island', value: 'Etc/GMT+12' },
   { label: 'user-info.locale.timezone.pago-pago', value: 'US/Samoa' },
   { label: 'user-info.locale.timezone.hawaii', value: 'Pacific/Honolulu' },
@@ -35,17 +35,17 @@ export const TIMEZONE_OPTIONS: TDropdownOptionBase[] = [
   { label: 'user-info.locale.timezone.auckland', value: 'Pacific/Fiji' },
 ];
 
-export const FIRST_DAY_OPTIONS: TDropdownOptionBase[] = [
+export const FIRST_DAY_OPTIONS: TSelectOption[] = [
   { label: 'user-info.locale.dateFdw.sunday', value: '0' },
   { label: 'user-info.locale.dateFdw.monday', value: '1' },
 ];
 
-export const TIMEFORMAT_OPTIONS: TDropdownOptionBase[] = [
+export const TIMEFORMAT_OPTIONS: TSelectOption[] = [
   { label: 'user-info.locale.timeformat.12', value: 'p' },
   { label: 'user-info.locale.timeformat.24', value: 'HH:mm' },
 ];
 
-export const DATEFORMAT_OPTIONS: TDropdownOptionBase[] = [
+export const DATEFORMAT_OPTIONS: TSelectOption[] = [
   { label: 'user-info.locale.dateformat.month', value: 'MMM dd, yyy,' },
   { label: 'user-info.locale.dateformat.day', value: 'dd MMM, yyy,' },
 ];

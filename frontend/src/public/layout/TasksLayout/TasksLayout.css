@@ -34,6 +34,14 @@
     }
   }
 
+  .template-filter__menu {
+    width: 52.8rem;
+
+    @media (--mobile) {
+      width: 100%;
+    }
+  }
+
   .step-filter {
     flex: 1 1 14rem;
     width: max(9.5rem, max-content);

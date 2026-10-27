@@ -19,10 +19,10 @@
 .control {
   display: flex;
   align-items: center;
-  padding: 6px 8px;
+  padding: 0.6rem 0.8rem;
   margin: 0;
   background: var(--pneumatic-color-black4);
-  border-radius: 16px;
+  border-radius: 1.6rem;
 
   &:hover .control-value {
     color: var(--pneumatic-color-link-hover);
@@ -30,24 +30,23 @@
 }
 
 .control-value {
-  font-size: 13px;
-  font-weight: bold;
-  line-height: 16px;
-  color: var(--pneumatic-color-black72);
+  @mixin text-small;
+
+  color: var(--pneumatic-color-black100);
   transition: color 0.1s ease-in-out;
 }
 
 .control-arrow {
-  margin-left: 4px;
+  margin-left: 0.4rem;
   color: var(--pneumatic-color-black16);
 }
 
 .content {
   z-index: 20;
   display: none;
-  padding: 16px;
+  padding: 1.6rem;
   overflow: hidden;
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 8px 16px rgb(98 98 95 / 8%);
+  border-radius: 0.8rem;
+  box-shadow: 0 0.8rem 1.6rem rgb(98 98 95 / 8%);
 }

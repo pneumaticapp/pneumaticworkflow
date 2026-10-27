@@ -60,6 +60,14 @@
   }
 }
 
+.wide-filter-menu {
+  width: 52.8rem;
+
+  @media (--mobile) {
+    width: auto;
+  }
+}
+
 .view-switch-tab {
   padding: 0.6rem 1.6rem;
 }

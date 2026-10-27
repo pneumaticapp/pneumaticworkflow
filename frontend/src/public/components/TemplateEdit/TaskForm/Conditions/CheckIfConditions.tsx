@@ -23,7 +23,8 @@ import { ESubscriptionPlan } from '../../../../types/account';
 import { getSubscriptionPlan } from '../../../../redux/selectors/user';
 import { usePrevious } from '../../../../hooks/usePrevious';
 import { EConditionAction, TConditionRule } from './types';
-import { SelectMenu, Tooltip } from '../../../UI';
+import { Select, Tooltip } from '../../../UI';
+import { getSortingSelectProps } from '../../../../utils/getSortingSelectProps';
 import { ICondition, Predicate, RichLabel } from '.';
 
 import styles from './Conditions.css';
@@ -202,15 +203,18 @@ export function CheckIfConditions({
             {formatMessage({ id: 'templates.conditions.add-another-rule' })}
           </button>
         )}
-        <SelectMenu
+        <Select
+          controlSize="sm"
+          controlVariant="accent"
+          controlClassName={styles['select']}
           isDisabled={!accessConditions}
-          hideSelectedOption
-          activeValue={condition.action}
-          containerClassName={styles['select']}
-          toggleClassName={styles['select-toggle']}
-          values={CHECK_IF_VALUES}
-          onChange={(action: EConditionAction) => handleChangeCondition(conditionIndex)({ action })}
-          isFromCheckIfConditions
+          hideSelectedOptions
+          {...getSortingSelectProps(
+            CHECK_IF_VALUES,
+            condition.action,
+            (action: EConditionAction) => handleChangeCondition(conditionIndex)({ action }),
+            formatMessage,
+          )}
         />
       </div>
     );

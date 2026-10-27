@@ -3,12 +3,13 @@ import { matchPath } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
-import { TasksSortingContainer } from './TasksSortingContainer';
+import { TasksSorting } from './TasksSorting';
 import { loadWorkflowsList } from '../../redux/workflows/slice';
 import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
 import { FilterIcon } from '../../components/icons';
-import { FilterSelect, Tabs, ReturnLink } from '../../components/UI';
+import { Tabs, ReturnLink } from '../../components/UI';
+import { Select } from '../../components/UI/Select';
 import { checkSomeRouteIsActive, history } from '../../utils/history';
 import { reactElementToText } from '../../utils/reactElementToText';
 import { ITopNavOwnProps } from '../../components/TopNav/TopNav';
@@ -74,12 +75,13 @@ export function TasksLayoutComponent({
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
 
-  const optionsWithoutCount = useMemo(() => {
-    return filterTemplates.map(({ id, name }) => ({
-      id,
-      name,
-    }));
-  }, [filterTemplates]);
+  const templateOptions = useMemo(() => {
+    const options = filterTemplates.map(({ id, name }) => ({ value: String(id), label: name }));
+
+    return templateIdFilter === null
+      ? options
+      : [{ value: '', label: formatMessage({ id: 'sorting.all-templates' }) }, ...options];
+  }, [filterTemplates, templateIdFilter, formatMessage]);
 
   useEffect(() => {
     loadFilterTemplates();
@@ -100,25 +102,26 @@ export function TasksLayoutComponent({
       return [];
     }
 
-    const options = filterSteps.map(({ name, id, apiName }) => {
-      const stepName =
-        typeof name === 'string' ? <StepName initialStepName={name} templateId={templateIdFilter} /> : name;
+    const options = filterSteps.map(({ name, apiName }) => {
+      if (typeof name !== 'string') return { value: apiName, label: name, searchByText: reactElementToText(name) };
 
       return {
-        id,
-        name: stepName,
-        searchByText: reactElementToText(stepName),
-        apiName,
-        customClickHandler: () => {
-          setFilterStep(apiName);
-        },
+        value: apiName,
+        label: <StepName initialStepName={name} templateId={templateIdFilter} />,
+        searchByText: name,
       };
     });
 
-    return options;
+    return taskApiNameFilter === null
+      ? options
+      : [{ value: '', label: formatMessage({ id: 'sorting.all-steps' }) }, ...options];
   };
 
   const renderTaskListContent = () => {
+    const stepOptions = getStepsFilterOptions();
+    const selectedTemplateOption = templateOptions.find((option) => option.value === String(templateIdFilter));
+    const selectedStepOption = stepOptions.find((option) => option.value === taskApiNameFilter);
+
     function mapSorting(
       taskStatus: ETaskListCompletionStatus,
       value: ETaskListSorting | ETaskListCompleteSorting,
@@ -174,49 +177,39 @@ export function TasksLayoutComponent({
             containerClassName={styles['completion-status-tabs']}
           />
           <div className={styles['template-filter']}>
-            <FilterSelect
-              isLoading={areFilterTemplatesLoading}
-              isSearchShown
-              isWideMenu
-              noValueLabel={formatMessage({ id: 'sorting.all-templates' })}
-              placeholderText={formatMessage({ id: 'sorting.no-template-found' })}
-              selectedOption={templateIdFilter}
-              options={optionsWithoutCount}
-              optionIdKey="id"
-              optionLabelKey="name"
-              onChange={setFilterTemplate}
-              resetFilter={() => setFilterTemplate(null)}
+            <Select
+              controlSize="sm"
+              controlVariant="accent"
               Icon={FilterIcon}
-              renderPlaceholder={(templates) => {
-                const activeOption = templates.find((t) => t.id === templateIdFilter);
-
-                return activeOption?.name || formatMessage({ id: 'sorting.all-templates' });
-              }}
+              isSearchable
+              placeholder={formatMessage({ id: 'sorting.search-placeholder' })}
+              isLoading={areFilterTemplatesLoading}
+              title={selectedTemplateOption ? '' : formatMessage({ id: 'sorting.all-templates' })}
+              noOptionsMessage={() => formatMessage({ id: 'sorting.no-template-found' })}
+              options={templateOptions}
+              value={selectedTemplateOption ?? null}
+              onChange={({ value }: { value: string }) => setFilterTemplate(value ? Number(value) : null)}
+              classNames={{ menuList: () => styles['template-filter__menu'] }}
             />
           </div>
           {templateIdFilter && (
             <div className={styles['step-filter']}>
-              <FilterSelect
-                isLoading={areFilterStepsLoading}
-                isSearchShown
-                noValueLabel={formatMessage({ id: 'sorting.all-steps' })}
-                placeholderText={formatMessage({ id: 'sorting.no-step-found' })}
-                selectedOption={taskApiNameFilter}
-                options={getStepsFilterOptions()}
-                optionIdKey="id"
-                optionLabelKey="name"
-                onChange={() => {}}
-                resetFilter={() => setFilterStep(null)}
+              <Select
+                controlSize="sm"
+                controlVariant="accent"
                 Icon={FilterIcon}
-                renderPlaceholder={(steps) => {
-                  const activeOption = steps.find((s) => s.apiName === taskApiNameFilter);
-
-                  return activeOption?.name || formatMessage({ id: 'sorting.all-steps' });
-                }}
+                isSearchable
+                placeholder={formatMessage({ id: 'sorting.search-placeholder' })}
+                isLoading={areFilterStepsLoading}
+                title={selectedStepOption ? '' : formatMessage({ id: 'sorting.all-steps' })}
+                noOptionsMessage={() => formatMessage({ id: 'sorting.no-step-found' })}
+                options={stepOptions}
+                value={selectedStepOption ?? null}
+                onChange={({ value }: { value: string }) => setFilterStep(value || null)}
               />
             </div>
           )}
-          <TasksSortingContainer />
+          <TasksSorting />
           {isHasFilter && (
             <button type="button" onClick={clearFilters} className="cancel-button">
               {formatMessage({ id: 'tasks.clear-filters' })}

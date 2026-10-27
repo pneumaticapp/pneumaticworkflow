@@ -9,7 +9,7 @@ import { EDeleteUserModalState } from '../../../../types/redux';
 import { TUserListItem } from '../../../../types/user';
 import { getDropdownUsersList, getUserFullName } from '../../../../utils/users';
 import { Loader } from '../../../UI/Loader';
-import { DropdownList } from '../../../UI/DropdownList';
+import { Select } from '../../../UI/Select';
 import { Button } from '../../../UI';
 
 import styles from './DeleteTeamUserPopup.css';
@@ -107,7 +107,7 @@ export function DeleteTeamUserPopup({
 
           {userWorkflowsCount > 0 && (
             <div className={styles['dropdown']}>
-              <DropdownList
+              <Select
                 options={dropdownSelections}
                 onChange={(value) => setReassignedUserId(value.id!)}
                 placeholder={formatMessage({ id: 'team.select-reassigned-user' })}

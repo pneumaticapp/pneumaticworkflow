@@ -6,8 +6,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
 import { checkSomeRouteIsActive, history } from '../../utils/history';
-import { GroupListSortingContainer } from './GroupListSortingContainer';
-import { UserListSortingContainer } from './UserListSortingContainer';
+import { GroupListSorting } from './GroupListSorting';
+import { UserListSorting } from './UserListSorting';
 import { ReturnLink, Tabs } from '../../components/UI';
 import { resetUsers } from '../../redux/accounts/slice';
 import { TeamPages } from '../../redux/team/types';
@@ -59,7 +59,7 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
         </div>
         {page !== TeamPages.AIAgents && (
           <div className={styles['top-nav__item']}>
-            {page === TeamPages.Users ? <UserListSortingContainer /> : <GroupListSortingContainer />}
+            {page === TeamPages.Users ? <UserListSorting /> : <GroupListSorting />}
           </div>
         )}
       </div>

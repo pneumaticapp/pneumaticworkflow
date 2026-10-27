@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { useDispatch } from 'react-redux';
 
 import { DatasetCard } from '../DatasetCard';
-import { Dropdown } from '../../../UI';
+import { DropdownMenu } from '../../../UI';
 import { WarningPopup } from '../../../UI/WarningPopup';
 import { history } from '../../../../utils/history';
 import {
@@ -35,7 +35,7 @@ jest.mock('../../../../utils/dateTime', () => ({
 }));
 
 jest.mock('../../../UI', () => ({
-  Dropdown: jest.fn(() => null),
+  DropdownMenu: jest.fn(() => null),
 }));
 
 jest.mock('../../../UI/WarningPopup', () => ({
@@ -67,7 +67,7 @@ describe('DatasetCard', () => {
   };
 
   const getDropdownOptions = () => {
-    const mock = Dropdown as jest.Mock;
+    const mock = DropdownMenu as jest.Mock;
     const lastCall = mock.mock.calls[mock.mock.calls.length - 1];
     return lastCall[0].options;
   };

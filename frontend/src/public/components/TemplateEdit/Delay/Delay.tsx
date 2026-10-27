@@ -9,7 +9,7 @@ import { IntlMessages } from '../../IntlMessages';
 import { EditIcon, MoreIcon, TrashIcon } from '../../icons';
 import { Duration } from '../../UI/Duration';
 import { START_DURATION } from '../constants';
-import { Dropdown, TDropdownOption } from '../../UI';
+import { DropdownMenu, TDropdownMenuOption } from '../../UI';
 
 import styles from './Delay.css';
 
@@ -66,7 +66,7 @@ export function Delay({ taskDelay, isDelayOpen, deleteDelay, editDelay, toggleDe
     handler();
   };
 
-  const dropdownOptions: TDropdownOption[] = [
+  const dropdownOptions: TDropdownMenuOption[] = [
     {
       label: formatMessage({ id: 'template.delay-edit' }),
       onClick: handleOptionClick(toggleDelay),
@@ -98,7 +98,7 @@ export function Delay({ taskDelay, isDelayOpen, deleteDelay, editDelay, toggleDe
       </span>
 
       <div className={styles['card-more-container']}>
-        <Dropdown
+        <DropdownMenu
           renderToggle={(isOpen) => (
             <MoreIcon className={classnames(styles['card-more'], isOpen && styles['card-more_active'])} />
           )}

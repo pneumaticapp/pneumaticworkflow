@@ -16,7 +16,8 @@ import {
   resetCurrentFieldset,
   updateFieldsetAction,
 } from '../../../../redux/fieldsets/slice';
-import { ModifyDropdown, FilterSelect } from '../../../UI';
+import { ModifyDropdown } from '../../../UI';
+import { Select } from '../../../UI/Select';
 import { NotificationManager } from '../../../UI/Notifications';
 import { ExtraFieldIntl } from '../../../TemplateEdit/ExtraFields';
 import { FieldsetModal } from '../../FieldsetModal/FieldsetModal';
@@ -66,43 +67,47 @@ jest.mock('../../../UI', () => ({
       props.label,
     ),
   ),
-  FilterSelect: jest.fn(
+  Tooltip: jest.fn(({ children }) => children),
+  RouteLeavingGuard: jest.fn(() => null),
+}));
+
+jest.mock('../../../UI/Select', () => ({
+  Select: jest.fn(
     (props: {
-      options: { apiName: string; name: string }[];
-      selectedOptions: (string | number | null)[];
-      onChange: (vals: (string | number | null)[]) => void;
-      renderPlaceholder?: (opts: { apiName: string; name: string }[]) => React.ReactNode;
+      options: { value: string; label: string }[];
+      value: { value: string } | { value: string }[] | null;
+      isMulti?: boolean;
+      title?: string;
+      onChange: (value: unknown) => void;
     }) =>
       React.createElement(
         'div',
-        { 'data-testid': 'filter-select' },
-        React.createElement(
-          'span',
-          { 'data-testid': 'filter-placeholder' },
-          props.renderPlaceholder ? props.renderPlaceholder(props.options) : null,
-        ),
+        { 'data-testid': 'dropdown-list' },
+        React.createElement('span', { 'data-testid': 'dropdown-title' }, props.title),
         ...props.options.map((option) =>
           React.createElement(
             'button',
             {
-              key: option.apiName,
+              key: option.value,
               type: 'button',
-              'data-testid': `filter-option-${option.apiName}`,
+              'data-testid': `dropdown-option-${option.value}`,
               onClick: () => {
-                const isSelected = props.selectedOptions.includes(option.apiName);
-                const next = isSelected
-                  ? props.selectedOptions.filter((value) => value !== option.apiName)
-                  : [...props.selectedOptions, option.apiName];
-                props.onChange(next);
+                if (!props.isMulti) {
+                  props.onChange(option);
+                  return;
+                }
+                const selected = props.value as { value: string }[];
+                const isSelected = selected.some(({ value }) => value === option.value);
+                props.onChange(
+                  isSelected ? selected.filter(({ value }) => value !== option.value) : [...selected, option],
+                );
               },
             },
-            option.name,
+            option.label,
           ),
         ),
       ),
   ),
-  Tooltip: jest.fn(({ children }) => children),
-  RouteLeavingGuard: jest.fn(() => null),
 }));
 
 jest.mock('../../../UI/Notifications', () => ({
@@ -238,7 +243,7 @@ describe('FieldsetDetails', () => {
   const getFieldsetModalProps = () => requireJestMock(FieldsetModal, 'FieldsetModal').mock.calls[0][0];
   const getExtraFieldIntlMock = () => requireJestMock(ExtraFieldIntl, 'ExtraFieldIntl');
   const getUpdateActionMock = () => requireJestMock(updateFieldsetAction, 'updateFieldsetAction');
-  const getFilterSelectMock = () => requireJestMock(FilterSelect, 'FilterSelect');
+  const getSelectMock = () => requireJestMock(Select, 'Select');
 
   const mockSelectorState = (state: object) => {
     requireJestMock(useSelector, 'useSelector').mockImplementation((selector: (store: object) => unknown) =>
@@ -359,8 +364,11 @@ describe('FieldsetDetails', () => {
       renderWithState(makeLoadedState({ description: 'Test desc', labelPosition: 'left' }));
       const textarea = screen.getByLabelText(formatMsg('fieldsets.settings.description'));
       expect(textarea).toHaveValue('Test desc');
-      const filterMock = getFilterSelectMock();
-      expect(filterMock).toHaveBeenCalledWith(expect.objectContaining({ selectedOption: 'left' }), {});
+      const filterMock = getSelectMock();
+      expect(filterMock).toHaveBeenCalledWith(
+        expect.objectContaining({ value: expect.objectContaining({ value: 'left' }) }),
+        {},
+      );
     });
 
     it('syncs title from fieldset', () => {
@@ -424,10 +432,10 @@ describe('FieldsetDetails', () => {
 
     it('enables Save after changing label position', () => {
       renderWithState(makeLoadedState());
-      const filterMock = getFilterSelectMock();
+      const filterMock = getSelectMock();
       const labelPositionOnChange = filterMock.mock.calls[0][0].onChange;
       act(() => {
-        labelPositionOnChange('left');
+        labelPositionOnChange({ value: 'left' });
       });
       expect(screen.getByRole('button', { name: SAVE_LABEL })).not.toBeDisabled();
     });
@@ -634,12 +642,12 @@ describe('FieldsetDetails', () => {
       const ruleInput = screen.getByPlaceholderText(RULE_VALUE_PLACEHOLDER);
       userEvent.type(ruleInput, '100');
 
-      const filterMock = getFilterSelectMock();
+      const filterMock = getSelectMock();
       const lastFilterCall = filterMock.mock.calls[filterMock.mock.calls.length - 1];
       const onChange = lastFilterCall[0].onChange;
 
       act(() => {
-        onChange(['field-1', null, 42, 'field-2']);
+        onChange([{ value: 'field-1' }, { value: 'field-2' }]);
       });
 
       userEvent.click(screen.getByRole('button', { name: SAVE_LABEL }));
@@ -703,7 +711,7 @@ describe('FieldsetDetails', () => {
     });
   });
 
-  describe('Selected fields placeholder in FilterSelect', () => {
+  describe('Selected fields title in rule fields select', () => {
     it('shows selected field names joined by comma after picking fields in UI', () => {
       const fields = [
         makeField({ apiName: 'field-1', name: 'Total', order: 1 }),
@@ -715,13 +723,13 @@ describe('FieldsetDetails', () => {
       userEvent.click(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') }));
 
       const getFieldsPlaceholder = () => {
-        const all = screen.getAllByTestId('filter-placeholder');
+        const all = screen.getAllByTestId('dropdown-title');
         return all[all.length - 1];
       };
       expect(getFieldsPlaceholder()).toHaveTextContent(formatMsg('fieldsets.rule-fields-placeholder'));
 
-      userEvent.click(screen.getByTestId('filter-option-field-1'));
-      userEvent.click(screen.getByTestId('filter-option-field-3'));
+      userEvent.click(screen.getByTestId('dropdown-option-field-1'));
+      userEvent.click(screen.getByTestId('dropdown-option-field-3'));
 
       expect(getFieldsPlaceholder()).toHaveTextContent(/^Total, Discount$/);
     });
@@ -754,7 +762,7 @@ describe('FieldsetDetails', () => {
 
       userEvent.click(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') }));
       userEvent.type(screen.getByPlaceholderText(RULE_VALUE_PLACEHOLDER), '100');
-      userEvent.click(screen.getByTestId('filter-option-field-1'));
+      userEvent.click(screen.getByTestId('dropdown-option-field-1'));
 
       userEvent.click(screen.getByRole('button', { name: SAVE_LABEL }));
 
@@ -775,20 +783,6 @@ describe('FieldsetDetails', () => {
           }),
         ),
       );
-    });
-  });
-
-  describe('FilterSelect rules without Select all', () => {
-    it('does not pass selectAllLabel to FilterSelect', () => {
-      const fields = [makeField({ apiName: 'field-1', name: 'Total', order: 1, type: EExtraFieldType.Number })];
-      renderWithState(makeLoadedState({ id: 10, fields }));
-
-      userEvent.click(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') }));
-
-      const filterMock = getFilterSelectMock();
-      const lastProps = filterMock.mock.calls[filterMock.mock.calls.length - 1][0] as Record<string, unknown>;
-
-      expect(lastProps).not.toHaveProperty('selectAllLabel');
     });
   });
 
@@ -874,7 +868,7 @@ describe('FieldsetDetails', () => {
 
     it('disables Settings Label Position when isLinked', () => {
       renderWithState(makeLoadedState({ usage: LINKED_USAGE }));
-      const filterMock = getFilterSelectMock();
+      const filterMock = getSelectMock();
       expect(filterMock).toHaveBeenCalledWith(expect.objectContaining({ isDisabled: true }), {});
     });
 
@@ -903,7 +897,7 @@ describe('FieldsetDetails', () => {
       const ruleValueInput = screen.getByDisplayValue('100');
       expect(ruleValueInput).toBeDisabled();
 
-      const filterMock = getFilterSelectMock();
+      const filterMock = getSelectMock();
       const lastCall = filterMock.mock.calls[filterMock.mock.calls.length - 1];
       expect(lastCall[0]).toEqual(expect.objectContaining({ isDisabled: true }));
     });
@@ -917,27 +911,27 @@ describe('FieldsetDetails', () => {
       expect(lastCall[0].isDisabled).toBe(true);
     });
 
-    it('passes isDisabled=true to FilterSelect when isLinked', () => {
+    it('passes isDisabled=true to the rule fields select when isLinked', () => {
       const rules = [makeFieldsetTemplateRule({ apiName: 'rule-1', value: '100', fields: ['f1'] })];
       const fields = [makeField({ apiName: 'f1', order: 1 })];
       renderWithState(makeLoadedState({ fields, rules, usage: LINKED_USAGE }));
 
-      const mock = getFilterSelectMock();
+      const mock = getSelectMock();
       const lastCall = mock.mock.calls[mock.mock.calls.length - 1];
       expect(lastCall[0].isDisabled).toBe(true);
     });
 
     it('does not set isDirty on reselecting the same label position', () => {
       renderWithState(makeLoadedState({ labelPosition: 'left' }));
-      const filterMock = getFilterSelectMock();
+      const filterMock = getSelectMock();
 
       const labelPositionCall = filterMock.mock.calls.find(
-        (call: [{ selectedOption?: string }]) => call[0].selectedOption === 'left',
+        (call: [{ value?: { value?: string } | null }]) => call[0].value?.value === 'left',
       );
       const labelPositionOnChange = labelPositionCall[0].onChange;
 
       act(() => {
-        labelPositionOnChange('left');
+        labelPositionOnChange({ value: 'left' });
       });
 
       const saveButton = screen.getByRole('button', { name: SAVE_LABEL });

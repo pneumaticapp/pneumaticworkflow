@@ -3,7 +3,7 @@ import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import { ActionMeta, FormatOptionLabelMeta } from 'react-select';
 
-import { TDropdownOptionBase, IDropdownListProps, DropdownList, Checkbox, Avatar, TAvatarUser } from '../..';
+import { TSelectOption, ISelectProps, Select, Checkbox, Avatar, TAvatarUser } from '../..';
 import { EUserStatus, TUserListItem, isUserAbsent } from '../../../../types/user';
 import { BoldPlusIcon } from '../../../icons';
 import { ETaskPerformerType } from '../../../../types/template';
@@ -23,7 +23,7 @@ export enum EOptionTypes {
   AllUsers = 'all-users',
 }
 
-export type TUsersDropdownOption = TDropdownOptionBase & {
+export type TUsersDropdownOption = TSelectOption & {
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -32,7 +32,7 @@ export type TUsersDropdownOption = TDropdownOptionBase & {
   optionType: EOptionTypes;
 };
 
-export interface IUsersDropdownProps<TOption extends TUsersDropdownOption> extends IDropdownListProps<TOption> {
+export interface IUsersDropdownProps<TOption extends TUsersDropdownOption> extends ISelectProps<TOption> {
   inviteLabel: string;
   users: TUserListItem[];
   isTeamInvitesModalOpen: boolean;
@@ -208,7 +208,7 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
   };
 
   return (
-    <DropdownList
+    <Select
       isMulti={isMulti}
       isSearchable
       options={normalizedOptions}

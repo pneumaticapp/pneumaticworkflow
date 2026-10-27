@@ -1,53 +1,17 @@
 import * as React from 'react';
 import { useState } from 'react';
 import classnames from 'classnames';
-import { UncontrolledDropdown, DropdownToggle, DropdownMenu } from 'reactstrap';
+import { UncontrolledDropdown, DropdownToggle, DropdownMenu as ReactstrapDropdownMenu } from 'reactstrap';
 import OutsideClickHandler from 'react-outside-click-handler';
 
-import { ConfirmableDropdownItem, TDropdownItemState } from './ConfirmableDropdownItem';
+import { ConfirmableDropdownItem } from './ConfirmableDropdownItem';
+import type { IDropdownMenuPanelProps, IDropdownMenuProps, TDropdownItemColor, TDropdownMenuOption } from './types';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { ArrowRightIcon } from '../../icons';
 
-import styles from './Dropdown.css';
+import styles from './DropdownMenu.css';
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
 import { Tooltip } from '../Tooltip';
-
-type TDropdownItemColor = 'black' | 'green' | 'red' | 'orange';
-
-export type TDropdownOption = {
-  mapKey?: string;
-  label: React.ReactNode;
-  withConfirmation?: boolean;
-  initialConfirmationState?: TDropdownItemState;
-  withUpperline?: boolean;
-  subOptions?: TDropdownOption[] | TDropdownOption;
-  customSubOption?: React.ReactElement;
-  color?: TDropdownItemColor;
-  isHidden?: boolean;
-  isDisabled?: boolean;
-  disabledTooltip?: string;
-  size?: 'lg' | 'sm';
-  className?: string;
-  Icon?(props: React.SVGAttributes<SVGElement>): JSX.Element;
-  onClick?(closeDropdown: () => void): void;
-};
-
-export interface IDropdownProps {
-  options: TDropdownOption[] | TDropdownOption | [];
-  direction?: 'right' | 'left';
-  className?: string;
-  toggleProps?: { [key in string]: string };
-  menuClassName?: string;
-  /** Passes reactstrap DropdownMenu `positionFixed` so Popper uses fixed positioning (escapes overflow scroll). */
-  menuPositionFixed?: boolean;
-  /** Passes reactstrap DropdownMenu `container` (portal target), e.g. `document.body`. */
-  menuContainer?: string | HTMLElement;
-  renderToggle(isOpen: boolean): React.ReactNode;
-  renderMenuContent?(renderedOptions: React.ReactNode): React.ReactNode;
-  CustomDropdownMenu?(props: IDropdownMenuProps): JSX.Element;
-  isFromBreakdownItem?: boolean;
-  isDisabled?: boolean;
-}
 
 export const getDropdownItemColorClass = (color: TDropdownItemColor = 'black') => {
   const colorClassMap = {
@@ -60,7 +24,7 @@ export const getDropdownItemColorClass = (color: TDropdownItemColor = 'black') =
   return colorClassMap[color];
 };
 
-export function Dropdown({
+export function DropdownMenu({
   options,
   direction,
   className,
@@ -73,7 +37,7 @@ export function Dropdown({
   CustomDropdownMenu,
   isFromBreakdownItem,
   isDisabled = false,
-}: IDropdownProps) {
+}: IDropdownMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { isDesktop, isMobile } = useCheckDevice();
   const onToggle = () => {
@@ -85,13 +49,13 @@ export function Dropdown({
     setIsOpen(false);
   };
 
-  const renderOptions = (items: TDropdownOption[] | TDropdownOption, level = 0): React.ReactNode => {
+  const renderOptions = (items: TDropdownMenuOption[] | TDropdownMenuOption, level = 0): React.ReactNode => {
     const overlayAtRoot = level === 0;
     const positionFixed = Boolean(menuPositionFixed && overlayAtRoot);
     const container = overlayAtRoot ? menuContainer : undefined;
 
     if (!Array.isArray(items)) {
-      const Menu = CustomDropdownMenu || DefaultDropdownMenu;
+      const Menu = CustomDropdownMenu || DropdownMenuPanel;
 
       return (
         <Menu
@@ -156,7 +120,7 @@ export function Dropdown({
             {subOptions ? (
               renderOptions(subOptions, level + 1)
             ) : (
-              <DefaultDropdownMenu
+              <DropdownMenuPanel
                 className={styles['dropdown__custom-sub-options']}
                 renderedOptions={customSubOption}
                 isWide
@@ -213,7 +177,7 @@ export function Dropdown({
       return optionContent;
     });
     const isWide = items.every((item) => item.size === 'lg');
-    const Menu = CustomDropdownMenu || DefaultDropdownMenu;
+    const Menu = CustomDropdownMenu || DropdownMenuPanel;
 
     // Only pass renderMenuContent to the top-level menu to prevent submenus from inheriting the parent's custom header
     return (
@@ -260,18 +224,7 @@ export function Dropdown({
   );
 }
 
-export interface IDropdownMenuProps {
-  renderedOptions: React.ReactNode;
-  isWide: boolean;
-  level: number;
-  direction?: 'right' | 'left';
-  className?: string;
-  renderMenuContent?(renderedOptions: React.ReactNode): React.ReactNode;
-  positionFixed?: boolean;
-  container?: string | HTMLElement;
-}
-
-export function DefaultDropdownMenu({
+export function DropdownMenuPanel({
   renderedOptions,
   isWide,
   level,
@@ -280,11 +233,11 @@ export function DefaultDropdownMenu({
   renderMenuContent,
   positionFixed = false,
   container,
-}: IDropdownMenuProps) {
+}: IDropdownMenuPanelProps) {
   const content = renderMenuContent?.(renderedOptions) || renderedOptions;
 
   return (
-    <DropdownMenu
+    <ReactstrapDropdownMenu
       cssModule={{
         'dropdown-menu': classnames(
           styles['dropdown-menu'],
@@ -300,6 +253,6 @@ export function DefaultDropdownMenu({
       container={container}
     >
       {content}
-    </DropdownMenu>
+    </ReactstrapDropdownMenu>
   );
 }
