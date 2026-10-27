@@ -53,19 +53,19 @@ export function CreateUserForm({ isActive }: ICreateUserFormProps) {
     dispatch(createUser({ ...userData, isAdmin: role === EUserRole.Admin }));
   };
 
-  return (
-    <Formik
-      initialValues={initialValues}
-      onSubmit={handleSubmit}
-      validate={(values) => {
-        const errors = getErrorsObject(values, {
-          email: validateEmail,
-          password: validateRegistrationPassword,
-        });
+  const validateForm = (values: ICreateUserFormValues) =>
+    getErrorsObject(values, {
+      email: validateEmail,
+      password: validateRegistrationPassword,
+    });
 
-        return errors;
-      }}
-    >
+  const handleCopyPassword = (password: string) => {
+    copyToClipboard(password);
+    NotificationManager.success({ message: 'team.create-user-modal.password-copied' });
+  };
+
+  return (
+    <Formik initialValues={initialValues} onSubmit={handleSubmit} validate={validateForm}>
       {({ values, handleSubmit: formikSubmit, isValid, dirty }) => {
         if (!isActive) return null;
 
@@ -118,10 +118,7 @@ export function CreateUserForm({ isActive }: ICreateUserFormProps) {
                   <button
                     type="button"
                     className={styles['modal__copy-btn']}
-                    onClick={() => {
-                      copyToClipboard(values.password || '');
-                      NotificationManager.success({ message: 'team.create-user-modal.password-copied' });
-                    }}
+                    onClick={() => handleCopyPassword(values.password || '')}
                   >
                     {formatMessage({ id: 'team.create-user-modal.copy' })}
                   </button>
