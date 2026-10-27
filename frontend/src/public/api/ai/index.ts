@@ -8,4 +8,3 @@ export * from './getAIProviderModels';
 export * from './getAIProviders';
 export * from './getAIVendors';
 export * from './updateAIAgent';
-export * from './updateAIProvider';

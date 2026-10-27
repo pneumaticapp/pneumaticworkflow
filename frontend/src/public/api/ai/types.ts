@@ -48,8 +48,6 @@ export interface IAIVendor {
   name: string;
 }
 
-export type TUpdateAIProviderRequest = Partial<ICreateAIProviderRequest>;
-
 export interface IAIModel {
   name: string;
   slug: string;

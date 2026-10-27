@@ -168,7 +168,6 @@
       "createAIProvider": "/ai/providers",
       "createAIProviderByVendor": "/ai/providers/by-vendor",
       "getAIVendors": "/ai/vendors",
-      "updateAIProvider": "/ai/providers/:id",
       "deleteAIProvider": "/ai/providers/:id",
       "getAIProviderModels": "/ai/providers/:id/models",
       "getAIAgents": "/ai/agents",
