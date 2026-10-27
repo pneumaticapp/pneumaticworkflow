@@ -1,11 +1,15 @@
 import { commonRequest } from '../commonRequest';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
-import { IAIModel } from '../../types/ai';
+import type { IAIModel } from './types';
 
 export function getAIProviderModels(providerId: number) {
   const {
     api: { urls },
   } = getBrowserConfigEnv();
 
-  return commonRequest<IAIModel[]>(urls.aiProviderModels.replace(':id', String(providerId)), {}, { shouldThrow: true });
+  return commonRequest<IAIModel[]>(
+    urls.getAIProviderModels.replace(':id', String(providerId)),
+    {},
+    { shouldThrow: true },
+  );
 }

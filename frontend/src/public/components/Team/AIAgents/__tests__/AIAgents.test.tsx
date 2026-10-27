@@ -3,70 +3,42 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { intlMock } from '../../../../__stubs__/intlMock';
 import { AIAgents } from '../AIAgents';
-import { deleteAIAgent, loadAIAgents, loadAIProviders, updateAIAgent } from '../../../../redux/ai/slice';
-import { EAIVendor, IAIAgent, IAIProvider } from '../../../../types/ai';
+import { CreatePerformerModal } from '../../CreatePerformerModal';
+import { ECreatePerformerModalTab } from '../../CreatePerformerModal/types';
+import { EAIVendor } from '../../../../api/ai/types';
+import type { IAIAgent, IAIProvider } from '../../../../api/ai/types';
+import { loadAIAgents, loadAIProviders } from '../../../../redux/ai/slice';
+import { closeCreateUserModal, openCreateUserModal } from '../../../../redux/accounts/slice';
+import { history } from '../../../../utils/history';
+import { ERoutes } from '../../../../constants/routes';
+import { intlMock } from '../../../../__stubs__/intlMock';
 
-jest.mock('../../../UI', () => ({
-  Tooltip: ({ children, content }: any) => (
-    <div data-testid="tooltip" data-content={content}>
-      {children}
-    </div>
+jest.mock('react-redux', () => ({
+  ...jest.requireActual('react-redux'),
+  useDispatch: jest.fn(),
+  useSelector: jest.fn(),
+}));
+
+jest.mock('../../../../utils/history', () => ({
+  history: { push: jest.fn(), location: { pathname: '/team/ai-agents/' } },
+}));
+
+jest.mock('../../CreatePerformerModal', () => ({
+  CreatePerformerModal: jest.fn(() => null),
+}));
+
+jest.mock('../TeamAgent', () => ({
+  TeamAgent: ({ agent, providerName }: { agent: IAIAgent; providerName?: string }) => (
+    <div data-testid="team-agent-card">{`${agent.name} · ${providerName}`}</div>
   ),
 }));
 
-jest.mock('../../../UI/Buttons/Button', () => ({
-  Button: ({ label, onClick, 'data-testid': testId, disabled }: any) => (
-    <button onClick={onClick} data-testid={testId} disabled={disabled}>
-      {label}
-    </button>
-  ),
+jest.mock('../../../PageTitle', () => ({
+  PageTitle: () => null,
 }));
 
-jest.mock('../../../UI/Buttons/AddButton', () => ({
-  AddButton: ({ title, onClick, disabled }: any) => (
-    <button data-testid="create-ai-agent-btn" onClick={onClick} disabled={disabled}>
-      {title}
-    </button>
-  ),
-}));
-
-jest.mock('../../../UI/Typeography/Header', () => ({
-  Header: ({ children }: any) => <p>{children}</p>,
-}));
-
-jest.mock('../../../UI/Modal/Modal', () => ({
-  Modal: ({ children, isOpen }: any) => (isOpen ? <div role="dialog">{children}</div> : null),
-}));
-
-jest.mock('rc-switch', () => ({ checked, onChange, disabled }: any) => (
-  <input
-    type="checkbox"
-    data-testid="active-switch"
-    checked={checked}
-    disabled={disabled}
-    onChange={(e) => onChange(e.target.checked)}
-  />
-));
-
-jest.mock('../../../PageTitle/PageTitle', () => ({
-  PageTitle: () => <div />,
-}));
-
-jest.mock('../../TeamUserSkeleton', () => ({
-  TeamUserSkeleton: () => <div data-testid="agent-skeleton" />,
-}));
-
-jest.mock('../../Users/CreateUserModal', () => ({
-  CreateUserModal: ({ isOpen, initialTab }: any) =>
-    isOpen ? <div data-testid="create-user-modal" data-initial-tab={initialTab} /> : null,
-}));
-
-jest.mock('../EditAIAgentModal', () => ({
-  EditAIAgentModal: ({ agent }: any) =>
-    agent ? <div data-testid="edit-ai-agent-modal" data-agent-id={agent.id} /> : null,
-}));
+const getText = (id: string) => intlMock.formatMessage({ id });
 
 const buildProvider = (overrides: Partial<IAIProvider> = {}): IAIProvider => ({
   id: 1,
@@ -74,7 +46,6 @@ const buildProvider = (overrides: Partial<IAIProvider> = {}): IAIProvider => ({
   baseUrl: 'https://openrouter.ai/api/v1',
   apiKeyPrefix: 'sk-or',
   vendor: EAIVendor.OpenRouter,
-  isActive: true,
   usage: [],
   ...overrides,
 });
@@ -92,21 +63,24 @@ const buildAgent = (overrides: Partial<IAIAgent> = {}): IAIAgent => ({
 
 describe('AIAgents', () => {
   const mockDispatch = jest.fn();
-  const t = (id: string) => intlMock.formatMessage({ id });
 
   const mockState = ({
-    agents = [] as IAIAgent[],
+    agents = [buildAgent()],
     providers = [buildProvider()],
-    agentsLoaded = true,
-    providersLoaded = true,
+    isAgentsLoading = false,
+    isProvidersLoading = false,
+  }: {
+    agents?: IAIAgent[];
+    providers?: IAIProvider[];
+    isAgentsLoading?: boolean;
+    isProvidersLoading?: boolean;
   } = {}) => {
     (useSelector as unknown as jest.Mock).mockImplementation((selector) =>
       selector({
+        accounts: { isCreateUserModalOpen: false },
         ai: {
-          providers: { isLoading: false, isLoaded: providersLoaded, list: providers },
-          agents: { isLoading: !agentsLoaded, isLoaded: agentsLoaded, list: agents },
-          models: { isLoading: false, providerId: null, list: [] },
-          isSaving: false,
+          agents: { isLoading: isAgentsLoading, list: agents },
+          providers: { isLoading: isProvidersLoading, list: providers },
         },
       }),
     );
@@ -125,74 +99,67 @@ describe('AIAgents', () => {
     expect(mockDispatch).toHaveBeenCalledWith(loadAIProviders());
   });
 
-  it('disables the create button and explains why while there are no providers', () => {
-    mockState({ providers: [] });
+  it('closes the shared create modal when leaving the tab', () => {
+    const { unmount } = render(<AIAgents />);
+    expect(mockDispatch).not.toHaveBeenCalledWith(closeCreateUserModal());
+
+    unmount();
+
+    expect(mockDispatch).toHaveBeenCalledWith(closeCreateUserModal());
+  });
+
+  it('lists agents sorted by name with their provider names', () => {
+    mockState({ agents: [buildAgent({ id: 1, name: 'Zed' }), buildAgent({ id: 2, name: 'Ada' })] });
 
     render(<AIAgents />);
 
-    expect(screen.getByTestId('create-ai-agent-btn')).toBeDisabled();
-    expect(screen.getByTestId('tooltip')).toHaveAttribute(
-      'data-content',
-      t('team.create-ai-agent-modal.no-providers-hint'),
+    expect(screen.getAllByTestId('team-agent-card').map((card) => card.textContent)).toEqual([
+      'Ada · OpenRouter',
+      'Zed · OpenRouter',
+    ]);
+  });
+
+  it('opens the create modal on the AI agent tab', () => {
+    render(<AIAgents />);
+
+    userEvent.click(screen.getByRole('button', { name: new RegExp(getText('team.ai-agents.create-button')) }));
+
+    expect(mockDispatch).toHaveBeenCalledWith(openCreateUserModal());
+    expect(CreatePerformerModal).toHaveBeenCalledWith(
+      expect.objectContaining({ initialTab: ECreatePerformerModalTab.AIAgent }),
+      {},
     );
   });
 
-  it('opens the creation modal on the AI agent tab when a provider exists', () => {
+  it('disables creation and points to Integrations below the empty state when there are no providers', () => {
+    mockState({ agents: [], providers: [] });
+
     render(<AIAgents />);
 
-    const createButton = screen.getByTestId('create-ai-agent-btn');
-    expect(createButton).toBeEnabled();
-
-    userEvent.click(createButton);
-
-    expect(screen.getByTestId('create-user-modal')).toHaveAttribute('data-initial-tab', 'ai-agent');
+    expect(screen.getByRole('button', { name: new RegExp(getText('team.ai-agents.create-button')) })).toBeDisabled();
+    expect(screen.getByText(getText('team.ai-agents.empty'))).toBeInTheDocument();
+    expect(screen.getByText(getText('team.create-ai-agent-modal.no-providers-hint'))).toBeInTheDocument();
+    userEvent.click(screen.getByRole('button', { name: getText('team.create-ai-agent-modal.go-to-integrations') }));
+    expect(history.push).toHaveBeenCalledWith(ERoutes.Integrations);
   });
 
-  it('renders the agent with its provider name, model and inactive badge', () => {
-    mockState({ agents: [buildAgent({ isActive: false })] });
+  it('does not show the providers hint while providers are loading', () => {
+    mockState({ agents: [], providers: [], isProvidersLoading: true });
 
     render(<AIAgents />);
 
-    expect(screen.getByText('Research assistant')).toBeInTheDocument();
-    expect(screen.getByText(/OpenRouter/)).toBeInTheDocument();
-    expect(screen.getByText(/openai\/gpt-4o/)).toBeInTheDocument();
-    expect(screen.getByTestId('ai-agent-inactive-10')).toBeInTheDocument();
+    expect(screen.queryByText(getText('team.create-ai-agent-modal.no-providers-hint'))).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: getText('team.create-ai-agent-modal.go-to-integrations') }),
+    ).not.toBeInTheDocument();
   });
 
-  it('toggles is_active from the card', () => {
-    mockState({ agents: [buildAgent({ isActive: true })] });
+  it('shows an empty state when there are no agents', () => {
+    mockState({ agents: [] });
 
     render(<AIAgents />);
 
-    userEvent.click(screen.getByTestId('active-switch'));
-
-    expect(mockDispatch).toHaveBeenCalledWith(updateAIAgent({ id: 10, isActive: false }));
-  });
-
-  it('opens the edit modal for the picked agent', () => {
-    mockState({ agents: [buildAgent()] });
-
-    render(<AIAgents />);
-
-    userEvent.click(screen.getByTestId('edit-ai-agent-10'));
-
-    expect(screen.getByTestId('edit-ai-agent-modal')).toHaveAttribute('data-agent-id', '10');
-  });
-
-  it('deletes the agent through the confirmation modal', () => {
-    mockState({ agents: [buildAgent()] });
-
-    render(<AIAgents />);
-
-    userEvent.click(screen.getByTestId('delete-ai-agent-10'));
-    userEvent.click(screen.getByTestId('confirm-delete-ai-agent'));
-
-    expect(mockDispatch).toHaveBeenCalledWith(deleteAIAgent(10));
-  });
-
-  it('shows the empty state when no agents exist', () => {
-    render(<AIAgents />);
-
-    expect(screen.getByTestId('empty-ai-agents-message')).toBeInTheDocument();
+    expect(screen.getByText(getText('team.ai-agents.empty'))).toBeInTheDocument();
+    expect(screen.queryByText(getText('team.create-ai-agent-modal.no-providers-hint'))).not.toBeInTheDocument();
   });
 });

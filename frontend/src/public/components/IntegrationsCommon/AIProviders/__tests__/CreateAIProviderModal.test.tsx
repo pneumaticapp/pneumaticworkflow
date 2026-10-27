@@ -5,48 +5,82 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { CreateAIProviderModal } from '../CreateAIProviderModal';
-import { createAIProvider, createAIProviderByVendor } from '../../../../redux/ai/slice';
-import { getAIVendors } from '../../../../api/ai';
-import { IAIVendor } from '../../../../types/ai';
+import {
+  closeCreateAIProviderModal,
+  createAIProvider,
+  createAIProviderByVendor,
+  loadAIVendors,
+} from '../../../../redux/ai/slice';
+import type { IAIVendor } from '../../../../api/ai/types';
 
-jest.mock('../../../../api/ai', () => ({
-  getAIVendors: jest.fn(),
-}));
+interface IMockButtonProps {
+  label: string;
+  onClick?: () => void;
+  'data-testid'?: string;
+  disabled?: boolean;
+  type?: 'button' | 'submit';
+}
 
 jest.mock('../../../UI/Buttons/Button', () => ({
-  Button: ({ label, onClick, 'data-testid': testId, disabled, type }: any) => (
+  Button: ({ label, onClick, 'data-testid': testId, disabled, type }: IMockButtonProps) => (
     <button onClick={onClick} data-testid={testId} disabled={disabled} type={type}>
       {label}
     </button>
   ),
 }));
 
-jest.mock('../../../UI/Fields/InputField', () => ({
-  InputField: ({ value, onChange, placeholder, 'data-testid': testId }: any) => (
-    <input value={value} onChange={onChange} placeholder={placeholder} data-testid={testId} />
-  ),
-}));
+jest.mock('../../../UI/Fields/InputField', () => {
+  const { useField } = jest.requireActual('formik');
 
-jest.mock('../../../UI/Typeography/Header', () => ({
-  Header: ({ children, className }: any) => <p className={className}>{children}</p>,
-}));
+  return {
+    FormikInputField: ({ name, 'data-testid': testId }: { name: string; 'data-testid'?: string }) => {
+      const [field] = useField(name);
+
+      return <input {...field} data-testid={testId} />;
+    },
+  };
+});
 
 jest.mock('../../../UI/Modal/Modal', () => ({
-  Modal: ({ children, isOpen }: any) => (isOpen ? <div role="dialog">{children}</div> : null),
+  Modal: ({ children, isOpen }: { children: React.ReactNode; isOpen: boolean }) =>
+    isOpen ? <div role="dialog">{children}</div> : null,
 }));
 
-jest.mock('../../../UI/DropdownList', () => ({
-  DropdownList: ({ options, onChange, 'data-testid': testId }: any) => (
-    <select data-testid={testId} onChange={(e) => onChange({ value: e.target.value })}>
-      <option value="">—</option>
-      {options.map((option: any) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
-  ),
-}));
+jest.mock('../../../UI/Select', () => {
+  const { useField } = jest.requireActual('formik');
+
+  return {
+    FormikSelect: ({
+      name,
+      label,
+      options,
+      'data-testid': testId,
+    }: {
+      name: string;
+      label?: string;
+      options: { value?: string; label: React.ReactNode }[];
+      'data-testid'?: string;
+    }) => {
+      const [field, , { setValue }] = useField(name);
+
+      return (
+        <select
+          aria-label={label}
+          data-testid={testId}
+          value={field.value}
+          onChange={(event) => setValue(event.target.value)}
+        >
+          <option value="">Select a vendor</option>
+          {options.map(({ value, label }) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+      );
+    },
+  };
+});
 
 const vendors: IAIVendor[] = [
   { slug: 'openrouter', name: 'OpenRouter' },
@@ -55,24 +89,36 @@ const vendors: IAIVendor[] = [
 
 describe('CreateAIProviderModal', () => {
   const mockDispatch = jest.fn();
-  const mockOnClose = jest.fn();
   const t = (id: string) => intlMock.formatMessage({ id });
+  let createProviderModalState: { isOpen: boolean; isLoading: boolean };
 
-  const mockAIState = () => {
-    (useSelector as unknown as jest.Mock).mockImplementation((selectorFn) =>
-      selectorFn({
-        ai: { isSaving: false },
-      }),
-    );
-  };
-
-  const renderModal = () => render(<CreateAIProviderModal isOpen onClose={mockOnClose} />);
+  const renderModal = () => render(<CreateAIProviderModal />);
 
   beforeEach(() => {
     jest.clearAllMocks();
+    createProviderModalState = { isOpen: true, isLoading: false };
     (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
-    (getAIVendors as jest.Mock).mockResolvedValue(vendors);
-    mockAIState();
+    (useSelector as unknown as jest.Mock).mockImplementation((selectorFn) =>
+      selectorFn({
+        ai: {
+          vendors: { isLoading: false, list: vendors },
+          createProviderModal: createProviderModalState,
+        },
+      }),
+    );
+  });
+
+  it('loads vendors through the redux action on open', () => {
+    renderModal();
+
+    expect(mockDispatch).toHaveBeenCalledWith(loadAIVendors());
+    expect(screen.getByRole('heading', { level: 2, name: t('ai-providers.create-modal-title') })).toBeInTheDocument();
+  });
+
+  it('labels the vendor dropdown like other form dropdowns', () => {
+    renderModal();
+
+    expect(screen.getByLabelText(t('ai-providers.vendor-label'))).toBe(screen.getByTestId('ai-provider-vendor-select'));
   });
 
   it('creates a provider by vendor from the default tab', async () => {
@@ -81,21 +127,24 @@ describe('CreateAIProviderModal', () => {
     expect(screen.getByText(t('ai-providers.connection-check-info'))).toBeInTheDocument();
 
     const submit = screen.getByTestId('submit-create-ai-provider');
-    expect(submit).toBeDisabled();
+    await waitFor(() => expect(submit).toBeDisabled());
 
-    await waitFor(() => expect(screen.getByTestId('ai-provider-vendor-select')).toBeInTheDocument());
     userEvent.type(screen.getByTestId('ai-provider-api-key-input'), ' sk-or-v1-secret ');
-    expect(submit).toBeDisabled();
+    await waitFor(() => expect(submit).toBeDisabled());
 
     userEvent.selectOptions(screen.getByTestId('ai-provider-vendor-select'), 'openrouter');
-    expect(submit).toBeEnabled();
+    await waitFor(() => expect(submit).toBeEnabled());
 
     userEvent.click(submit);
 
-    expect(mockDispatch).toHaveBeenCalledWith(
-      createAIProviderByVendor({ vendor: 'openrouter', apiKey: 'sk-or-v1-secret' }),
+    await waitFor(() =>
+      expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: createAIProviderByVendor.type })),
     );
-    expect(mockOnClose).toHaveBeenCalled();
+    const action = mockDispatch.mock.calls
+      .map(([dispatched]) => dispatched)
+      .find(({ type }) => type === createAIProviderByVendor.type);
+    expect(action).toMatchObject({ payload: { vendor: 'openrouter', apiKey: 'sk-or-v1-secret' } });
+    expect(mockDispatch).not.toHaveBeenCalledWith(closeCreateAIProviderModal());
   });
 
   it('creates a custom provider from the second tab', async () => {
@@ -106,22 +155,63 @@ describe('CreateAIProviderModal', () => {
     expect(screen.getByText(t('ai-providers.connection-check-info'))).toBeInTheDocument();
 
     const submit = screen.getByTestId('submit-create-ai-provider');
-    expect(submit).toBeDisabled();
+    await waitFor(() => expect(submit).toBeDisabled());
 
     userEvent.type(screen.getByTestId('ai-provider-name-input'), ' My provider ');
     userEvent.type(screen.getByTestId('ai-provider-base-url-input'), '  https://openrouter.ai/api/v1  ');
     userEvent.type(screen.getByTestId('ai-provider-api-key-input'), ' sk-or-v1-secret ');
-    expect(submit).toBeEnabled();
+    await waitFor(() => expect(submit).toBeEnabled());
 
     userEvent.click(submit);
 
-    expect(mockDispatch).toHaveBeenCalledWith(
-      createAIProvider({
-        name: 'My provider',
-        baseUrl: 'https://openrouter.ai/api/v1',
-        apiKey: 'sk-or-v1-secret',
-      }),
+    await waitFor(() =>
+      expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: createAIProvider.type })),
     );
-    expect(mockOnClose).toHaveBeenCalled();
+    const action = mockDispatch.mock.calls
+      .map(([dispatched]) => dispatched)
+      .find(({ type }) => type === createAIProvider.type);
+    expect(action).toMatchObject({
+      payload: { name: 'My provider', baseUrl: 'https://openrouter.ai/api/v1', apiKey: 'sk-or-v1-secret' },
+    });
+    expect(mockDispatch).not.toHaveBeenCalledWith(closeCreateAIProviderModal());
+  });
+
+  it('shows the submit as loading while the provider is being created', async () => {
+    const { rerender } = renderModal();
+    userEvent.type(screen.getByTestId('ai-provider-api-key-input'), 'secret');
+    userEvent.selectOptions(screen.getByTestId('ai-provider-vendor-select'), 'openrouter');
+    await waitFor(() => expect(screen.getByTestId('submit-create-ai-provider')).toBeEnabled());
+
+    createProviderModalState = { isOpen: true, isLoading: true };
+    rerender(<CreateAIProviderModal />);
+
+    expect(screen.getByTestId('submit-create-ai-provider')).toBeDisabled();
+  });
+
+  it('keeps the draft and allows retry when the create request fails', async () => {
+    const { rerender } = renderModal();
+    userEvent.type(screen.getByTestId('ai-provider-api-key-input'), 'secret');
+    userEvent.selectOptions(screen.getByTestId('ai-provider-vendor-select'), 'openrouter');
+    await waitFor(() => expect(screen.getByTestId('submit-create-ai-provider')).toBeEnabled());
+    userEvent.click(screen.getByTestId('submit-create-ai-provider'));
+
+    await waitFor(() =>
+      expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: createAIProviderByVendor.type })),
+    );
+    createProviderModalState = { isOpen: true, isLoading: true };
+    rerender(<CreateAIProviderModal />);
+    createProviderModalState = { isOpen: true, isLoading: false };
+    rerender(<CreateAIProviderModal />);
+
+    expect(screen.getByTestId('ai-provider-api-key-input')).toHaveValue('secret');
+    expect(screen.getByTestId('submit-create-ai-provider')).toBeEnabled();
+  });
+
+  it('closes through the store on cancel', () => {
+    renderModal();
+
+    userEvent.click(screen.getByTestId('cancel-create-ai-provider'));
+
+    expect(mockDispatch).toHaveBeenCalledWith(closeCreateAIProviderModal());
   });
 });

@@ -5,6 +5,7 @@ import classnames from 'classnames';
 
 import styles from './BaseModal.css';
 import { ClearIcon } from '../../icons';
+import { lockPageScroll, unlockPageScroll } from './pageScrollLock';
 
 interface IBaseModalProps {
   isOpen: boolean;
@@ -34,16 +35,20 @@ export function BaseModal({
   const [isVisible, setIsVisible] = useState(false);
   const [showClass, setShowClass] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  const hasScrollLockRef = useRef(false);
+
+  const releaseScrollLock = useCallback(() => {
+    if (!hasScrollLockRef.current) return;
+    hasScrollLockRef.current = false;
+    unlockPageScroll();
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
       setIsVisible(true);
-      // Locking the page hides its scrollbar, which widens the layout and shifts everything
-      // sideways. Padding the body by the width that disappeared keeps it still.
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      document.body.style.overflow = 'hidden';
-      if (scrollbarWidth > 0) {
-        document.body.style.paddingRight = `${scrollbarWidth}px`;
+      if (!hasScrollLockRef.current) {
+        hasScrollLockRef.current = true;
+        lockPageScroll();
       }
       const timer = setTimeout(() => {
         setShowClass(true);
@@ -54,11 +59,12 @@ export function BaseModal({
     setShowClass(false);
     const timer = setTimeout(() => {
       setIsVisible(false);
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
+      releaseScrollLock();
     }, 150);
     return () => clearTimeout(timer);
-  }, [isOpen]);
+  }, [isOpen, releaseScrollLock]);
+
+  useEffect(() => releaseScrollLock, [releaseScrollLock]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -126,7 +132,7 @@ export function ModalHeader({
   className = '',
   toggle,
   tag: Tag = 'div',
-  titleTag: TitleTag = 'p',
+  titleTag: TitleTag = 'h2',
 }: IModalPartProps) {
   return (
     <Tag className={classnames(styles['modal-header'], className)}>

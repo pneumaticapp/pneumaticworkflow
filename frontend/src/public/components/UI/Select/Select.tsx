@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import classnames from 'classnames';
+import { useIntl } from 'react-intl';
 import ReactSelect, { components } from 'react-select';
 import type { CSSObjectWithLabel, FormatOptionLabelMeta } from 'react-select';
 import { FieldHookConfig, useField } from 'formik';
@@ -30,8 +31,11 @@ export function Select<TOption extends TSelectOption>({
   isMulti,
   ...restProps
 }: ISelectProps<TOption>) {
+  const { messages, formatMessage } = useIntl();
   const [isOpen, setIsOpen] = useState(false);
   const [filterValue, setFilterValue] = useState('');
+  const { errorMessage } = restProps;
+  const errorText = errorMessage && messages[errorMessage] ? formatMessage({ id: errorMessage }) : errorMessage;
 
   const handleInputChange = (inputValue: string, action: any) => {
     if (action.action === 'set-value' && !(isMulti && controlSize === 'sm')) {
@@ -83,7 +87,7 @@ export function Select<TOption extends TSelectOption>({
             {...restProps}
           />
 
-          {restProps.errorMessage && <p className={styles['error-text']}>{restProps.errorMessage}</p>}
+          {errorText && <p className={styles['error-text']}>{errorText}</p>}
         </div>
       </div>
     );
@@ -139,7 +143,7 @@ export function Select<TOption extends TSelectOption>({
           {...(restProps.staticMenu && { menuIsOpen: true })}
         />
       </OutsideClickHandler>
-      {restProps.errorMessage && <p className={styles['error-text']}>{restProps.errorMessage}</p>}
+      {errorText && <p className={styles['error-text']}>{errorText}</p>}
     </div>
   );
 }
@@ -345,16 +349,23 @@ export function FormikSelect(
     options: TSelectOption[];
   } & FieldHookConfig<string>,
 ) {
-  const { name, options, type } = props;
-  const [field, meta, { setValue }] = useField(name);
+  const { name, onBlur: onBlurProp, options, type } = props;
+  const [field, meta, { setTouched, setValue }] = useField(name);
 
-  const onChange = ({ value }: any) => setValue(value);
+  const handleChange = ({ value }: any) => setValue(value);
+  const handleBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+    onBlurProp?.(event);
+    // Let react-select finish an option click before validation rerenders it.
+    window.setTimeout(() => setTouched(true), 0);
+  };
 
   return (
     <Select
       {...props}
-      onChange={onChange}
-      value={options.find((option) => option.value === field.value)}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      // null, not undefined: with undefined react-select keeps displaying its previous internal selection.
+      value={options.find((option) => option.value === field.value) ?? null}
       {...(meta.touched && meta.error && type !== 'hidden' && { errorMessage: meta.error })}
     />
   );

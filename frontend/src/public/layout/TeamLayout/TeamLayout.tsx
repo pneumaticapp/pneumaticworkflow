@@ -5,7 +5,8 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
-import { checkSomeRouteIsActive, history } from '../../utils/history';
+import { history } from '../../utils/history';
+import { getTeamPageByRoute } from '../../utils/team/getTeamPageByRoute';
 import { GroupListSorting } from './GroupListSorting';
 import { UserListSorting } from './UserListSorting';
 import { ReturnLink, Tabs } from '../../components/UI';
@@ -26,17 +27,7 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
   const page = useSelector(getTeamPage);
 
   useEffect(() => {
-    const getActiveTabByRoute = () => {
-      if (checkSomeRouteIsActive(ERoutes.Groups) || checkSomeRouteIsActive(ERoutes.GroupDetails)) {
-        return TeamPages.Groups;
-      }
-      if (checkSomeRouteIsActive(ERoutes.TeamAIAgents)) {
-        return TeamPages.AIAgents;
-      }
-      return TeamPages.Users;
-    };
-
-    dispatch(updateTeamActiveTab(getActiveTabByRoute()));
+    dispatch(updateTeamActiveTab(getTeamPageByRoute()));
 
     return () => {
       dispatch(resetUsers());
@@ -70,11 +61,10 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
     return <ReturnLink label={formatMessage({ id: 'menu.groups' })} route={ERoutes.Groups} />;
   };
 
-  // TeamAIAgents goes before Team: matchPath is not exact and '/team/' would swallow it.
   const mapLeftContent: Partial<Record<ERoutes, React.ReactNode>> = {
     [ERoutes.GroupDetails]: renderGroupDetailsLeftContent(),
     [ERoutes.Groups]: renderTeamLeftContent(),
-    [ERoutes.TeamAIAgents]: renderTeamLeftContent(),
+    [ERoutes.AIAgents]: renderTeamLeftContent(),
     [ERoutes.Team]: renderTeamLeftContent(),
   };
 

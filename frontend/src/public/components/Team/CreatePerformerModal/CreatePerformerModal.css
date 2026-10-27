@@ -1,0 +1,111 @@
+.modal {
+  &__dialog {
+    position: relative;
+    bottom: auto;
+    align-items: flex-start;
+    height: auto;
+    min-height: calc(100% - 3.2rem);
+    margin: 1.6rem auto;
+  }
+
+  &__content {
+    height: auto;
+    margin: auto 0;
+
+    > form {
+      flex: 1 1 auto;
+      height: auto;
+    }
+  }
+
+  &__no-providers {
+    display: flex;
+    flex-direction: column;
+    gap: 1.6rem;
+    align-items: center;
+    padding-top: 1.6rem;
+    text-align: center;
+  }
+
+  &__no-providers-hint {
+    margin: 0;
+  }
+
+  &__body {
+    padding-top: 1.6rem;
+    overflow: visible;
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  &__option_selected {
+    color: var(--pneumatic-color-black32);
+  }
+
+  &__password-field {
+    position: relative;
+  }
+
+  &__input-ellipsis input {
+    @mixin text-truncate;
+  }
+
+  &__password-field &__password-input-wrap input {
+    padding-right: 5.8rem;
+  }
+
+  &__copy-btn {
+    position: absolute;
+    top: 2.4rem;
+    right: 1.6rem;
+    color: var(--pneumatic-color-link);
+
+    @mixin text-small bold;
+
+    &:hover {
+      color: var(--pneumatic-color-link-hover);
+    }
+  }
+
+  &__header {
+    flex-shrink: 0;
+
+    > :first-child {
+      width: 100%;
+    }
+  }
+
+  &__tabs-switcher {
+    width: 100%;
+    height: 3.2rem;
+    background-color: var(--pneumatic-color-beige);
+    border-radius: 1.6rem;
+  }
+
+  &__tab {
+    height: 100%;
+    min-height: 0;
+    padding: 0;
+    color: var(--pneumatic-color-black100);
+    border-radius: 1.6rem;
+
+    @mixin text-small bold;
+  }
+
+  &__tab_active {
+    color: var(--pneumatic-color-white);
+    background-color: var(--pneumatic-color-link-hover);
+  }
+
+  &__footer {
+    flex-shrink: 0;
+  }
+
+  &__submit {
+    width: 100%;
+  }
+}

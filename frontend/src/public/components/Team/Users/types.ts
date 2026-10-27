@@ -1,35 +1,46 @@
-import {
-  IChangeUserAdminProps,
-  ITeamFetchStartedProps,
-  TOpenDeleteUserModalPayload,
-} from '../../../redux/accounts/types';
-import { EUserListSorting, TUserListItem } from '../../../types/user';
+import type { EUserListSorting, TUserListItem } from '../../../types/user';
 
 export interface IUsersProps {
-  currentUserId: number;
-  isLoading?: boolean;
-  sorting?: EUserListSorting;
-  users: TUserListItem[];
-  isTeamInvitesOpened?: boolean;
-  isSubscribed?: boolean;
-  trialEnded: boolean | null;
   userListSorting: EUserListSorting;
-  fetchUsers(payload: ITeamFetchStartedProps): void;
-  loadChangeUserAdmin(payload: IChangeUserAdminProps): void;
-  openModal(params: TOpenDeleteUserModalPayload): void;
-  openTeamInvitesPopup(): void;
-  loadInvitesUsers(): void;
-  setGeneralLoaderVisibility(isVisible: boolean): void;
-  loadChangeUserManager(payload: {
-    id: number;
-    managerId: number | null;
-    onSuccess?: () => void;
-    onError?: () => void;
-  }): void;
-  loadChangeUserReports(payload: {
-    id: number;
-    reportIds: number[];
-    onSuccess?: () => void;
-    onError?: () => void;
-  }): void;
+}
+
+export interface ITeamUserCardProps {
+  user: TUserListItem;
+  currentUserId: number;
+  isSubscribed: boolean;
+  onOpenVacationModal(user: TUserListItem): void;
+}
+
+export interface ITeamUserProps {
+  user: TUserListItem;
+  isCurrentUser?: boolean;
+  isSubscribed?: boolean;
+  resendInvite(): void;
+  handleToggleAdmin(user: TUserListItem): () => Promise<void>;
+  handleChangeUserManager(
+    userId: number,
+    managerId: number | null,
+    callbacks?: { onSuccess?: () => void; onError?: () => void },
+  ): void;
+  handleChangeUserReports(
+    userId: number,
+    reportIds: number[],
+    callbacks?: { onSuccess?: () => void; onError?: () => void },
+  ): void;
+  openModal(): void;
+  openVacationModal(): void;
+}
+
+export interface ITeamUserDetailsProps {
+  user: TUserListItem;
+}
+
+export interface ITeamUserRelationsModalsProps {
+  user: TUserListItem;
+  isManagerModalOpen: boolean;
+  isReportsModalOpen: boolean;
+  onCloseManagerModal(): void;
+  onCloseReportsModal(): void;
+  handleChangeUserManager: ITeamUserProps['handleChangeUserManager'];
+  handleChangeUserReports: ITeamUserProps['handleChangeUserReports'];
 }

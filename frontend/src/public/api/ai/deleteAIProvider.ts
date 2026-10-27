@@ -6,5 +6,9 @@ export function deleteAIProvider(id: number) {
     api: { urls },
   } = getBrowserConfigEnv();
 
-  return commonRequest<void>(urls.aiProvider.replace(':id', String(id)), { method: 'DELETE' }, { shouldThrow: true });
+  return commonRequest<void>(
+    urls.deleteAIProvider.replace(':id', String(id)),
+    { method: 'DELETE' },
+    { shouldThrow: true },
+  );
 }

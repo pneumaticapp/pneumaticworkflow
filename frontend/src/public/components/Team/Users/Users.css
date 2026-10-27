@@ -29,10 +29,15 @@
 
 .cards {
   width: 100%;
-}
 
-.card-wrapper:not(:last-child) {
-  margin-bottom: 0.8rem;
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
 }
 
 .card {

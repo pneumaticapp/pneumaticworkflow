@@ -3,7 +3,7 @@ import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { Select } from '../../components/UI';
-import { getUserListSorting } from '../../redux/selectors/accounts';
+import { getAccountsUserListSorting } from '../../redux/selectors/accounts';
 import { userListSortingChanged } from '../../redux/accounts/slice';
 import { userListSortingValues } from '../../constants/sortings';
 import { getSortingSelectProps } from '../../utils/getSortingSelectProps';
@@ -11,7 +11,7 @@ import { getSortingSelectProps } from '../../utils/getSortingSelectProps';
 export function UserListSorting() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const sorting = useSelector(getUserListSorting);
+  const sorting = useSelector(getAccountsUserListSorting);
 
   return (
     <Select

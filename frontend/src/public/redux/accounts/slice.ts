@@ -269,6 +269,7 @@ export const loadPlan = createAction<void>('accounts/loadPlan');
 export const startTrialSubscriptionAction = createAction<void>('accounts/startTrialSubscriptionAction');
 export const startFreeSubscriptionAction = createAction<void>('accounts/startFreeSubscriptionAction');
 export const createUser = createAction<ICreateUserRequest>('accounts/createUser');
+export const resendUserInvite = createAction<number>('accounts/resendUserInvite');
 type TChangeUserManagerPayload = {
   id: number;
   managerId: number | null;

@@ -1,27 +1,20 @@
 import * as React from 'react';
+import { useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
-import { IAIAgent } from '../../../types/ai';
 import { BaseModal, ModalHeader } from '../../UI/BaseModal';
 import { updateAIAgent } from '../../../redux/ai/slice';
-import { CreateAIAgentForm } from '../Users/CreateUserModal/CreateAIAgentForm';
-import { IAIAgentFormValues } from '../Users/CreateUserModal/types';
+import { AIAgentForm } from './AIAgentForm';
+import type { IAIAgentFormValues } from './AIAgentForm/types';
+import type { IEditAIAgentModalProps } from './types';
 
-import modalStyles from '../Users/CreateUserModal/CreateUserModal.css';
-
-export interface IEditAIAgentModalProps {
-  agent: IAIAgent | null;
-  onClose(): void;
-}
+import styles from './EditAIAgentModal.css';
 
 export function EditAIAgentModal({ agent, onClose }: IEditAIAgentModalProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-
-  if (!agent) {
-    return null;
-  }
+  const [isSaving, setIsSaving] = useState(false);
 
   const initialValues: IAIAgentFormValues = {
     name: agent.name,
@@ -31,7 +24,12 @@ export function EditAIAgentModal({ agent, onClose }: IEditAIAgentModalProps) {
     photo: agent.photo ?? '',
   };
 
+  const handleClose = () => {
+    if (!isSaving) onClose();
+  };
+
   const handleSubmit = (values: IAIAgentFormValues) => {
+    setIsSaving(true);
     dispatch(
       updateAIAgent({
         id: agent.id,
@@ -40,28 +38,28 @@ export function EditAIAgentModal({ agent, onClose }: IEditAIAgentModalProps) {
         model: values.model,
         systemPrompt: values.systemPrompt,
         photo: values.photo || null,
-        // Activation is toggled from the card; editing must not flip it.
         isActive: agent.isActive,
+        onSuccess: onClose,
+        onError: () => setIsSaving(false),
       }),
     );
-    onClose();
   };
 
   return (
     <BaseModal
       isOpen
-      toggle={onClose}
-      className={modalStyles['modal__dialog']}
-      contentClassName={modalStyles['modal__content']}
+      toggle={handleClose}
+      className={styles['edit-agent-modal__dialog']}
+      contentClassName={styles['edit-agent-modal__content']}
     >
-      <ModalHeader toggle={onClose} className={modalStyles['modal__header']} titleTag="div">
-        <div data-testid="edit-ai-agent-modal-header">{formatMessage({ id: 'team.ai-agents.edit-modal-title' })}</div>
+      <ModalHeader toggle={handleClose} className={styles['edit-agent-modal__header']}>
+        {formatMessage({ id: 'team.ai-agents.edit-modal-title' })}
       </ModalHeader>
 
-      <CreateAIAgentForm
-        isActive
-        isOpen
+      <AIAgentForm
+        isVisible
         initialValues={initialValues}
+        isSubmitting={isSaving}
         submitLabel={formatMessage({ id: 'team.create-ai-agent-modal.save' })}
         onSubmit={handleSubmit}
       />

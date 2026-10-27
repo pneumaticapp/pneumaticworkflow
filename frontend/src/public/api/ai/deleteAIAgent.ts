@@ -6,5 +6,9 @@ export function deleteAIAgent(id: number) {
     api: { urls },
   } = getBrowserConfigEnv();
 
-  return commonRequest<void>(urls.aiAgent.replace(':id', String(id)), { method: 'DELETE' }, { shouldThrow: true });
+  return commonRequest<void>(
+    urls.deleteAIAgent.replace(':id', String(id)),
+    { method: 'DELETE' },
+    { shouldThrow: true },
+  );
 }

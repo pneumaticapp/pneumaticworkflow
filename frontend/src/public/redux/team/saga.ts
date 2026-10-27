@@ -88,7 +88,7 @@ function* setTeamActiveTab({ payload: processesType }: PayloadAction<TeamPages>)
   }
 
   if (processesType === TeamPages.AIAgents) {
-    history.push(ERoutes.TeamAIAgents);
+    history.push(ERoutes.AIAgents);
   }
 }
 
