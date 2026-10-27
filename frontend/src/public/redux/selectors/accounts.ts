@@ -9,6 +9,7 @@ export const getIsCreateUserModalOpen = (state: IApplicationState): boolean => s
 
 export const getAccountsTeamList = (state: IApplicationState): TUserListItem[] => state.accounts.team.list;
 
-export const getIsAccountsTeamLoading = (state: IApplicationState): boolean => state.accounts.team.isLoading;
+export const getAccountsTeamIsLoading = (state: IApplicationState): boolean => state.accounts.team.isLoading;
 
-export const getUserListSorting = (state: IApplicationState): EUserListSorting => state.accounts.userListSorting;
+export const getAccountsUserListSorting = (state: IApplicationState): EUserListSorting =>
+  state.accounts.userListSorting;

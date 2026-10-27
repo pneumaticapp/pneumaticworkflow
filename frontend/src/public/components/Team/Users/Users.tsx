@@ -23,9 +23,9 @@ import { EPageTitle } from '../../../constants/defaultValues';
 import { getIsUserSubsribed, getSubscriptionPlan } from '../../../redux/selectors/user';
 import {
   getAccountsTeamList,
-  getIsAccountsTeamLoading,
+  getAccountsTeamIsLoading,
   getIsCreateUserModalOpen,
-  getUserListSorting,
+  getAccountsUserListSorting,
 } from '../../../redux/selectors/accounts';
 import { getAuthUserId } from '../../../redux/selectors/authUser';
 import { ESubscriptionPlan } from '../../../types/account';
@@ -45,7 +45,7 @@ export function Users({ userListSorting }: IUsersProps) {
   const dispatch = useDispatch();
 
   const users = useSelector(getAccountsTeamList);
-  const isUsersLoading = useSelector(getIsAccountsTeamLoading);
+  const isUsersLoading = useSelector(getAccountsTeamIsLoading);
   const currentUserId = useSelector(getAuthUserId);
   const isSubscribed = useSelector(getIsUserSubsribed);
   const billingPlan = useSelector(getSubscriptionPlan);
@@ -183,7 +183,7 @@ const SyncedUsers = withSyncedQueryString<IUsersProps>([
 ])(Users) as React.ComponentType<IUsersProps>;
 
 export function UsersContainer() {
-  const userListSorting = useSelector(getUserListSorting);
+  const userListSorting = useSelector(getAccountsUserListSorting);
 
   return <SyncedUsers userListSorting={userListSorting} />;
 }
