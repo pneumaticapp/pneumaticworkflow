@@ -69,22 +69,20 @@ export function CreatePerformerModal({
       contentClassName={styles['modal__content']}
     >
       <ModalHeader toggle={onClose} className={styles['modal__header']} titleTag="div">
-        <div data-testid="create-user-modal-header" className={styles['modal__tabs']}>
-          <Tabs
-            values={[
-              { id: ECreatePerformerModalTab.User, label: formatMessage({ id: 'team.create-user-modal.tab-user' }) },
-              {
-                id: ECreatePerformerModalTab.AIAgent,
-                label: formatMessage({ id: 'team.create-user-modal.tab-ai-agent' }),
-              },
-            ]}
-            activeValueId={activeTab}
-            containerClassName={styles['modal__tabs-switcher']}
-            tabClassName={styles['modal__tab']}
-            activeTabClassName={styles['modal__tab_active']}
-            onChange={setActiveTab}
-          />
-        </div>
+        <Tabs
+          values={[
+            { id: ECreatePerformerModalTab.User, label: formatMessage({ id: 'team.create-user-modal.tab-user' }) },
+            {
+              id: ECreatePerformerModalTab.AIAgent,
+              label: formatMessage({ id: 'team.create-user-modal.tab-ai-agent' }),
+            },
+          ]}
+          activeValueId={activeTab}
+          containerClassName={styles['modal__tabs-switcher']}
+          tabClassName={styles['modal__tab']}
+          activeTabClassName={styles['modal__tab_active']}
+          onChange={setActiveTab}
+        />
       </ModalHeader>
 
       {isAIAgentTab && isLoadingProviders && !hasProviders && (

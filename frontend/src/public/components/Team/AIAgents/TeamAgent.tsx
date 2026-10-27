@@ -83,15 +83,14 @@ export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
       <div className={styles['agent-card__actions']}>
         <div className={styles['agent-card__toggle']}>
           <span>{formatMessage({ id: 'team.ai-agents.active-toggle' })}</span>
-          <div data-testid={`ai-agent-toggle-${agent.id}`}>
-            <Switch
-              checked={agent.isActive}
-              onChange={handleToggleActive}
-              checkedChildren={null}
-              unCheckedChildren={null}
-              className="custom-switch custom-switch-primary custom-switch-small"
-            />
-          </div>
+          <Switch
+            checked={agent.isActive}
+            onChange={handleToggleActive}
+            checkedChildren={null}
+            unCheckedChildren={null}
+            className="custom-switch custom-switch-primary custom-switch-small"
+            data-testid={`ai-agent-toggle-${agent.id}`}
+          />
         </div>
         <Dropdown
           toggleProps={{ 'data-testid': `ai-agent-more-${agent.id}` }}

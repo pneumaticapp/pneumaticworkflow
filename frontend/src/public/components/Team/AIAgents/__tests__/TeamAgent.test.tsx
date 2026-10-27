@@ -17,6 +17,7 @@ interface IDropdownMockProps {
 interface ISwitchMockProps {
   checked: boolean;
   onChange(checked: boolean): void;
+  'data-testid'?: string;
 }
 
 jest.mock('../../../UI', () => ({
@@ -40,8 +41,8 @@ jest.mock('../../../UI', () => ({
   },
 }));
 
-jest.mock('rc-switch', () => ({ checked, onChange }: ISwitchMockProps) => (
-  <input type="checkbox" data-testid="active-switch" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+jest.mock('rc-switch', () => ({ checked, onChange, 'data-testid': testId }: ISwitchMockProps) => (
+  <input type="checkbox" data-testid={testId} checked={checked} onChange={(e) => onChange(e.target.checked)} />
 ));
 
 jest.mock('../EditAIAgentModal', () => ({
@@ -89,7 +90,7 @@ describe('TeamAgent', () => {
   it('toggles isActive from the card', () => {
     render(<TeamAgent agent={buildAgent({ isActive: true })} providerName="OpenRouter" />);
 
-    userEvent.click(screen.getByTestId('active-switch'));
+    userEvent.click(screen.getByTestId('ai-agent-toggle-10'));
 
     expect(mockDispatch).toHaveBeenCalledWith(updateAIAgent({ id: 10, isActive: false }));
   });

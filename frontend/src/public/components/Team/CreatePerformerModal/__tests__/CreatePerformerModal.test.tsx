@@ -160,7 +160,7 @@ describe('CreatePerformerModal', () => {
 
   const openModal = async () => {
     render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
-    await screen.findByTestId('create-user-modal-header');
+    await screen.findByRole('button', { name: getTranslatedText('team.create-user-modal.tab-user') });
   };
 
   beforeEach(() => {
@@ -181,13 +181,17 @@ describe('CreatePerformerModal', () => {
     it('does not render when isOpen=false', () => {
       render(<CreatePerformerModal isOpen={false} onClose={mockOnClose} />);
 
-      expect(screen.queryByTestId('create-user-modal-header')).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: getTranslatedText('team.create-user-modal.tab-user') }),
+      ).not.toBeInTheDocument();
     });
 
     it('renders when isOpen=true', async () => {
       await openModal();
 
-      expect(screen.getByTestId('create-user-modal-header')).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.tab-user') }),
+      ).toBeInTheDocument();
       expect(mockDispatch).toHaveBeenCalledWith(loadAIProviders());
     });
 
@@ -715,7 +719,7 @@ describe('CreatePerformerModal', () => {
   describe('Form reinitialization', () => {
     it('form resets and password is regenerated on reopen', async () => {
       const { unmount } = render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
-      await screen.findByTestId('create-user-modal-header');
+      await screen.findByRole('button', { name: getTranslatedText('team.create-user-modal.tab-user') });
 
       const { firstNameInput, lastNameInput, emailInput } = getFormFields();
       fillInput(firstNameInput, 'John');
