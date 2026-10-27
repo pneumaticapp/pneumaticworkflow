@@ -16,7 +16,7 @@ import { generateAgentAvatar } from '../utils/generateAgentAvatar';
 import type { IAIAgentFormFieldsProps, IAIAgentFormValues } from './types';
 import { useProviderModelsSync } from './useProviderModelsSync';
 
-import styles from '../../CreatePerformerModal/CreatePerformerModal.css';
+import styles from './AIAgentForm.css';
 
 const filterModelOption = (option: { label: string; value: string }, input: string) =>
   `${option.label} ${option.value}`.toLowerCase().includes(input.toLowerCase());
@@ -66,17 +66,17 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
 
   return (
     <form onSubmit={handleSubmit}>
-      <ModalBody className={styles['modal__body']}>
-        <div className={styles['modal__agent-avatar']}>
-          <div className={styles['modal__avatar-preview']}>
+      <ModalBody className={styles['ai-agent-form__body']}>
+        <div className={styles['ai-agent-form__avatar']}>
+          <div className={styles['ai-agent-form__avatar-preview']}>
             {values.photo ? <img src={values.photo} alt="" /> : initials}
           </div>
-          <div className={styles['modal__avatar-actions']}>
+          <div className={styles['ai-agent-form__avatar-actions']}>
             <label htmlFor="ai-agent-avatar-upload">
               {formatMessage({ id: 'team.create-ai-agent-modal.upload' })}
               <input id="ai-agent-avatar-upload" type="file" accept="image/*" onChange={handleAvatarUpload} />
             </label>
-            <span className={styles['modal__avatar-separator']} aria-hidden>
+            <span className={styles['ai-agent-form__avatar-separator']} aria-hidden>
               •
             </span>
             <button type="button" onClick={handleAvatarGenerate}>
@@ -85,14 +85,14 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
           </div>
         </div>
 
-        <div className={styles['modal__form']}>
+        <div className={styles['ai-agent-form__fields']}>
           <FormikInputField
             name="name"
             title={formatMessage({ id: 'team.create-ai-agent-modal.name' })}
             isRequired
             fieldSize="lg"
           />
-          <h3 className={styles['modal__section-title']}>
+          <h3 className={styles['ai-agent-form__section-title']}>
             {formatMessage({ id: 'team.create-ai-agent-modal.parameters' })}
           </h3>
           <FormikDropdownList
@@ -119,9 +119,9 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
           />
         </div>
       </ModalBody>
-      <ModalFooter className={styles['modal__footer']}>
+      <ModalFooter className={styles['ai-agent-form__footer']}>
         <Button
-          className={styles['modal__submit']}
+          className={styles['ai-agent-form__submit']}
           type="submit"
           label={submitLabel}
           buttonStyle="yellow"

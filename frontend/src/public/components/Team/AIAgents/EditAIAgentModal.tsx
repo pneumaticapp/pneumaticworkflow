@@ -9,7 +9,7 @@ import { AIAgentForm } from './AIAgentForm';
 import type { IAIAgentFormValues } from './AIAgentForm/types';
 import type { IEditAIAgentModalProps } from './types';
 
-import modalStyles from '../CreatePerformerModal/CreatePerformerModal.css';
+import styles from './EditAIAgentModal.css';
 
 export function EditAIAgentModal({ agent, onClose }: IEditAIAgentModalProps) {
   const { formatMessage } = useIntl();
@@ -49,10 +49,10 @@ export function EditAIAgentModal({ agent, onClose }: IEditAIAgentModalProps) {
     <BaseModal
       isOpen
       toggle={handleClose}
-      className={modalStyles['modal__dialog']}
-      contentClassName={modalStyles['modal__content']}
+      className={styles['edit-agent-modal__dialog']}
+      contentClassName={styles['edit-agent-modal__content']}
     >
-      <ModalHeader toggle={handleClose} className={modalStyles['modal__header']}>
+      <ModalHeader toggle={handleClose} className={styles['edit-agent-modal__header']}>
         {formatMessage({ id: 'team.ai-agents.edit-modal-title' })}
       </ModalHeader>
 
