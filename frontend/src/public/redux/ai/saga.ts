@@ -127,6 +127,7 @@ function* fetchAIAgents() {
     return false;
   }
 }
+
 function* fetchAIProviderModels({ payload: providerId }: PayloadAction<number>) {
   yield put(loadAIProviderModelsStarted(providerId));
 
