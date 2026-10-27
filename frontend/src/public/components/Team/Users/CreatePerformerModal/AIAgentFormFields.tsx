@@ -11,7 +11,7 @@ import { FormikTextareaField } from '../../../UI/Fields/TextareaField';
 import { ModalBody, ModalFooter } from '../../../UI/BaseModal';
 import { uploadAIAgentAvatar } from '../../../../redux/ai/slice';
 import { getAIAgentAvatarUploadState, getAIProviderModelsState, getAIProviders } from '../../../../redux/selectors/ai';
-import { getAgentInitials } from '../getAgentInitials';
+import { getAgentInitials } from '../../AIAgents/utils/getAgentInitials';
 import { generateAgentAvatar } from './generateAgentAvatar';
 import type { IAIAgentFormFieldsProps, IAIAgentFormValues } from './types';
 import { useProviderModelsSync } from './useProviderModelsSync';

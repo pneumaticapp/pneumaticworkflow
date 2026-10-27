@@ -4,11 +4,11 @@ import { useDispatch } from 'react-redux';
 
 import { BaseModal, ModalHeader } from '../../UI/BaseModal';
 import { updateAIAgent } from '../../../redux/ai/slice';
-import { CreateAIAgentForm } from './CreatePerformerModal/CreateAIAgentForm';
-import type { IAIAgentFormValues } from './CreatePerformerModal/types';
+import { CreateAIAgentForm } from '../Users/CreatePerformerModal/CreateAIAgentForm';
+import type { IAIAgentFormValues } from '../Users/CreatePerformerModal/types';
 import type { IEditAIAgentModalProps } from './types';
 
-import modalStyles from './CreatePerformerModal/CreatePerformerModal.css';
+import modalStyles from '../Users/CreatePerformerModal/CreatePerformerModal.css';
 
 export function EditAIAgentModal({ agent, onClose }: IEditAIAgentModalProps) {
   const { formatMessage } = useIntl();

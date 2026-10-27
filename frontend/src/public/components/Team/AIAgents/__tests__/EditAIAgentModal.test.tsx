@@ -6,14 +6,14 @@ import { useDispatch } from 'react-redux';
 import { EditAIAgentModal } from '../EditAIAgentModal';
 import { updateAIAgent } from '../../../../redux/ai/slice';
 import type { IAIAgent } from '../../../../api/ai/types';
-import type { IAIAgentFormValues } from '../CreatePerformerModal/types';
+import type { IAIAgentFormValues } from '../../Users/CreatePerformerModal/types';
 
 jest.mock('../../../UI/BaseModal', () => ({
   BaseModal: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   ModalHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-jest.mock('../CreatePerformerModal/CreateAIAgentForm', () => ({
+jest.mock('../../Users/CreatePerformerModal/CreateAIAgentForm', () => ({
   CreateAIAgentForm: ({
     initialValues,
     onSubmit,

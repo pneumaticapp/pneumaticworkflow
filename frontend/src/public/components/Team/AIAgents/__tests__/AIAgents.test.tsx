@@ -27,7 +27,7 @@ jest.mock('../../Users/CreatePerformerModal', () => ({
   CreatePerformerModal: jest.fn(() => null),
 }));
 
-jest.mock('../../Users/TeamAgent', () => ({
+jest.mock('../TeamAgent', () => ({
   TeamAgent: ({ agent, providerName }: { agent: IAIAgent; providerName?: string }) => (
     <div data-testid="team-agent-card">{`${agent.name} · ${providerName}`}</div>
   ),

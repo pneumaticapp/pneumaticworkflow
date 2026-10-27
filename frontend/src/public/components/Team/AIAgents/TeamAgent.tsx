@@ -11,7 +11,7 @@ import { WarningPopup } from '../../UI/WarningPopup';
 import { MoreIcon } from '../../icons';
 import { deleteAIAgent, updateAIAgent } from '../../../redux/ai/slice';
 import { EditAIAgentModal } from './EditAIAgentModal';
-import { getAgentInitials } from './getAgentInitials';
+import { getAgentInitials } from './utils/getAgentInitials';
 import type { ITeamAgentProps } from './types';
 
 import styles from './TeamAgent.css';

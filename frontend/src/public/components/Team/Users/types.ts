@@ -1,4 +1,3 @@
-import type { IAIAgent } from '../../../api/ai/types';
 import type { EUserListSorting, TUserListItem } from '../../../types/user';
 
 export interface IUsersProps {
@@ -10,16 +9,6 @@ export interface ITeamUserCardProps {
   currentUserId: number;
   isSubscribed: boolean;
   onOpenVacationModal(user: TUserListItem): void;
-}
-
-export interface ITeamAgentProps {
-  agent: IAIAgent;
-  providerName?: string;
-}
-
-export interface IEditAIAgentModalProps {
-  agent: IAIAgent;
-  onClose(): void;
 }
 
 export interface ITeamUserProps {

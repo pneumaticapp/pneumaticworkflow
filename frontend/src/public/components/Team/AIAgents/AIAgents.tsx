@@ -7,7 +7,7 @@ import { AddButton } from '../../UI/Buttons/AddButton';
 import { Button } from '../../UI/Buttons/Button';
 import { PageTitle } from '../../PageTitle';
 import { TeamUserSkeleton } from '../TeamUserSkeleton';
-import { TeamAgent } from '../Users/TeamAgent';
+import { TeamAgent } from './TeamAgent';
 import { CreatePerformerModal } from '../Users/CreatePerformerModal';
 import { ECreatePerformerModalTab } from '../Users/CreatePerformerModal/types';
 import { EPageTitle } from '../../../constants/defaultValues';
