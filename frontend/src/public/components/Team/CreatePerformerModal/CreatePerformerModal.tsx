@@ -3,18 +3,19 @@ import { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { BaseModal, ModalHeader, ModalBody } from '../../../UI/BaseModal';
-import { Button } from '../../../UI/Buttons/Button';
-import { Loader } from '../../../UI/Loader';
-import { Tabs } from '../../../UI/Tabs';
-import { ERoutes } from '../../../../constants/routes';
-import { history } from '../../../../utils/history';
-import { createAIAgent, loadAIProviders } from '../../../../redux/ai/slice';
-import { getAICreateAgentState, getAIProvidersState } from '../../../../redux/selectors/ai';
+import { BaseModal, ModalHeader, ModalBody } from '../../UI/BaseModal';
+import { Button } from '../../UI/Buttons/Button';
+import { Loader } from '../../UI/Loader';
+import { Tabs } from '../../UI/Tabs';
+import { ERoutes } from '../../../constants/routes';
+import { history } from '../../../utils/history';
+import { createAIAgent, loadAIProviders } from '../../../redux/ai/slice';
+import { getAICreateAgentState, getAIProvidersState } from '../../../redux/selectors/ai';
 
-import { CreateAIAgentForm } from './CreateAIAgentForm';
+import { AIAgentForm } from '../AIAgents/AIAgentForm';
+import type { IAIAgentFormValues } from '../AIAgents/AIAgentForm/types';
 import { CreateUserForm } from './CreateUserForm';
-import type { IAIAgentFormValues, ICreatePerformerModalProps } from './types';
+import type { ICreatePerformerModalProps } from './types';
 import { ECreatePerformerModalTab } from './types';
 
 import styles from './CreatePerformerModal.css';
@@ -108,14 +109,14 @@ export function CreatePerformerModal({
         </ModalBody>
       )}
 
-      <CreateAIAgentForm
+      <AIAgentForm
         key={`agent-${formsKey}`}
-        isActive={isAIAgentTab && hasProviders}
+        isVisible={isAIAgentTab && hasProviders}
         isSubmitting={isCreatingAgent}
         submitLabel={formatMessage({ id: 'team.create-ai-agent-modal.submit' })}
         onSubmit={handleCreateAIAgent}
       />
-      <CreateUserForm key={`user-${formsKey}`} isActive={activeTab === ECreatePerformerModalTab.User} />
+      <CreateUserForm key={`user-${formsKey}`} isVisible={activeTab === ECreatePerformerModalTab.User} />
     </BaseModal>
   );
 }

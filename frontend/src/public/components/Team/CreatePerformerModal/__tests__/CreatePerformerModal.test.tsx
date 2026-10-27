@@ -4,22 +4,22 @@ import userEvent from '@testing-library/user-event';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { CreatePerformerModal } from '../CreatePerformerModal';
-import { createUser } from '../../../../../redux/accounts/slice';
+import { createUser } from '../../../../redux/accounts/slice';
 import {
   cancelAIAgentAvatarUpload,
   createAIAgent,
   loadAIProviderModels,
   loadAIProviders,
   uploadAIAgentAvatar,
-} from '../../../../../redux/ai/slice';
-import { NotificationManager } from '../../../../UI/Notifications';
-import { copyToClipboard } from '../../../../../utils/helpers';
-import { createPassword } from '../../../../../utils/createPassword';
-import { intlMock } from '../../../../../__stubs__/intlMock';
-import { history } from '../../../../../utils/history';
-import { ERoutes } from '../../../../../constants/routes';
+} from '../../../../redux/ai/slice';
+import { NotificationManager } from '../../../UI/Notifications';
+import { copyToClipboard } from '../../../../utils/helpers';
+import { createPassword } from '../../../../utils/createPassword';
+import { intlMock } from '../../../../__stubs__/intlMock';
+import { history } from '../../../../utils/history';
+import { ERoutes } from '../../../../constants/routes';
 
-jest.mock('../../../../../utils/history', () => ({
+jest.mock('../../../../utils/history', () => ({
   history: { push: jest.fn() },
 }));
 
@@ -36,7 +36,7 @@ jest.mock('react-dom', () => {
 });
 
 const mockGenerateAgentAvatar = jest.fn();
-jest.mock('../generateAgentAvatar', () => ({
+jest.mock('../../AIAgents/utils/generateAgentAvatar', () => ({
   generateAgentAvatar: (initials: string) => mockGenerateAgentAvatar(initials),
 }));
 
@@ -45,22 +45,22 @@ jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
 }));
 
-jest.mock('../../../../../redux/accounts/slice', () => ({
+jest.mock('../../../../redux/accounts/slice', () => ({
   createUser: jest.fn((payload) => ({ type: 'accounts/createUser', payload })),
 }));
 
-jest.mock('../../../../UI/Notifications', () => ({
+jest.mock('../../../UI/Notifications', () => ({
   NotificationManager: {
     success: jest.fn(),
     warning: jest.fn(),
   },
 }));
 
-jest.mock('../../../../../utils/helpers', () => ({
+jest.mock('../../../../utils/helpers', () => ({
   copyToClipboard: jest.fn(),
 }));
 
-jest.mock('../../../../../utils/createPassword', () => ({
+jest.mock('../../../../utils/createPassword', () => ({
   createPassword: jest.fn(() => 'mock-password-123'),
 }));
 

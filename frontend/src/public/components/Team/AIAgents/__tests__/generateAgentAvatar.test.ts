@@ -1,4 +1,4 @@
-import { generateAgentAvatar } from '../generateAgentAvatar';
+import { generateAgentAvatar } from '../utils/generateAgentAvatar';
 
 describe('generateAgentAvatar', () => {
   const context = {

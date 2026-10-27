@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { TeamUserCard } from './TeamUserCard';
 import { DeleteTeamUserPopupContainer } from './DeleteTeamUserPopup';
 import { AddGuestsBanner } from './AddGuestsBanner';
-import { CreatePerformerModal } from './CreatePerformerModal';
+import { CreatePerformerModal } from '../CreatePerformerModal';
 import { VacationSettingsModal } from './VacationSettingsModal';
 
 import { EUserListSorting } from '../../../types/user';

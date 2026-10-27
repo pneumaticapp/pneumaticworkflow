@@ -4,8 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { AIAgents } from '../AIAgents';
-import { CreatePerformerModal } from '../../Users/CreatePerformerModal';
-import { ECreatePerformerModalTab } from '../../Users/CreatePerformerModal/types';
+import { CreatePerformerModal } from '../../CreatePerformerModal';
+import { ECreatePerformerModalTab } from '../../CreatePerformerModal/types';
 import { EAIVendor } from '../../../../api/ai/types';
 import type { IAIAgent, IAIProvider } from '../../../../api/ai/types';
 import { loadAIAgents, loadAIProviders } from '../../../../redux/ai/slice';
@@ -24,7 +24,7 @@ jest.mock('../../../../utils/history', () => ({
   history: { push: jest.fn(), location: { pathname: '/team/ai-agents/' } },
 }));
 
-jest.mock('../../Users/CreatePerformerModal', () => ({
+jest.mock('../../CreatePerformerModal', () => ({
   CreatePerformerModal: jest.fn(() => null),
 }));
 

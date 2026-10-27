@@ -21,7 +21,7 @@ jest.mock('../AddGuestsBanner', () => ({
   AddGuestsBanner: () => null,
 }));
 
-jest.mock('../CreatePerformerModal', () => ({
+jest.mock('../../CreatePerformerModal', () => ({
   CreatePerformerModal: () => null,
 }));
 

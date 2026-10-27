@@ -11,12 +11,12 @@ import { FormikTextareaField } from '../../../UI/Fields/TextareaField';
 import { ModalBody, ModalFooter } from '../../../UI/BaseModal';
 import { uploadAIAgentAvatar } from '../../../../redux/ai/slice';
 import { getAIAgentAvatarUploadState, getAIProviderModelsState, getAIProviders } from '../../../../redux/selectors/ai';
-import { getAgentInitials } from '../../AIAgents/utils/getAgentInitials';
-import { generateAgentAvatar } from './generateAgentAvatar';
+import { getAgentInitials } from '../utils/getAgentInitials';
+import { generateAgentAvatar } from '../utils/generateAgentAvatar';
 import type { IAIAgentFormFieldsProps, IAIAgentFormValues } from './types';
 import { useProviderModelsSync } from './useProviderModelsSync';
 
-import styles from './CreatePerformerModal.css';
+import styles from '../../CreatePerformerModal/CreatePerformerModal.css';
 
 export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFieldsProps) {
   const { formatMessage } = useIntl();

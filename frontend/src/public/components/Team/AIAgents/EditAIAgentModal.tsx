@@ -5,11 +5,11 @@ import { useDispatch } from 'react-redux';
 
 import { BaseModal, ModalHeader } from '../../UI/BaseModal';
 import { updateAIAgent } from '../../../redux/ai/slice';
-import { CreateAIAgentForm } from '../Users/CreatePerformerModal/CreateAIAgentForm';
-import type { IAIAgentFormValues } from '../Users/CreatePerformerModal/types';
+import { AIAgentForm } from './AIAgentForm';
+import type { IAIAgentFormValues } from './AIAgentForm/types';
 import type { IEditAIAgentModalProps } from './types';
 
-import modalStyles from '../Users/CreatePerformerModal/CreatePerformerModal.css';
+import modalStyles from '../CreatePerformerModal/CreatePerformerModal.css';
 
 export function EditAIAgentModal({ agent, onClose }: IEditAIAgentModalProps) {
   const { formatMessage } = useIntl();
@@ -56,8 +56,8 @@ export function EditAIAgentModal({ agent, onClose }: IEditAIAgentModalProps) {
         {formatMessage({ id: 'team.ai-agents.edit-modal-title' })}
       </ModalHeader>
 
-      <CreateAIAgentForm
-        isActive
+      <AIAgentForm
+        isVisible
         initialValues={initialValues}
         isSubmitting={isSaving}
         submitLabel={formatMessage({ id: 'team.create-ai-agent-modal.save' })}

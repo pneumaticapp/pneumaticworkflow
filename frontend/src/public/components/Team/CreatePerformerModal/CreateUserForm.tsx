@@ -4,16 +4,16 @@ import { Formik } from 'formik';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
-import { ModalBody, ModalFooter } from '../../../UI/BaseModal';
-import { FormikInputField } from '../../../UI/Fields/InputField';
-import { FormikDropdownList } from '../../../UI/DropdownList';
-import { Button } from '../../../UI/Buttons/Button';
-import { validateEmail, validateRegistrationPassword } from '../../../../utils/validators';
-import { getErrorsObject } from '../../../../utils/formik/getErrorsObject';
-import { copyToClipboard } from '../../../../utils/helpers';
-import { createPassword } from '../../../../utils/createPassword';
-import { NotificationManager } from '../../../UI/Notifications';
-import { createUser } from '../../../../redux/accounts/slice';
+import { ModalBody, ModalFooter } from '../../UI/BaseModal';
+import { FormikInputField } from '../../UI/Fields/InputField';
+import { FormikDropdownList } from '../../UI/DropdownList';
+import { Button } from '../../UI/Buttons/Button';
+import { validateEmail, validateRegistrationPassword } from '../../../utils/validators';
+import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
+import { copyToClipboard } from '../../../utils/helpers';
+import { createPassword } from '../../../utils/createPassword';
+import { NotificationManager } from '../../UI/Notifications';
+import { createUser } from '../../../redux/accounts/slice';
 
 import type { ICreateUserFormProps, ICreateUserFormValues, IStatusOption } from './types';
 import { EUserRole } from './types';
@@ -31,7 +31,7 @@ const formatStatusOption = (
   return label;
 };
 
-export function CreateUserForm({ isActive }: ICreateUserFormProps) {
+export function CreateUserForm({ isVisible }: ICreateUserFormProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
@@ -67,7 +67,7 @@ export function CreateUserForm({ isActive }: ICreateUserFormProps) {
   return (
     <Formik initialValues={initialValues} onSubmit={handleSubmit} validate={validateForm}>
       {({ values, handleSubmit: formikSubmit, isValid, dirty }) => {
-        if (!isActive) return null;
+        if (!isVisible) return null;
 
         const currentStatusValue = values.role;
         const renderStatusOption = (option: IStatusOption, { context }: { context: string }) =>

@@ -10,8 +10,8 @@ import { AIAgentFormFields } from './AIAgentFormFields';
 import { EMPTY_AI_AGENT_FORM_VALUES } from './constants';
 import type { IAIAgentFormProps } from './types';
 
-export function CreateAIAgentForm({
-  isActive,
+export function AIAgentForm({
+  isVisible,
   isSubmitting = false,
   initialValues = EMPTY_AI_AGENT_FORM_VALUES,
   submitLabel,
@@ -40,7 +40,7 @@ export function CreateAIAgentForm({
       }
       onSubmit={onSubmit}
     >
-      {isActive && <AIAgentFormFields isSubmitting={isSubmitting} submitLabel={submitLabel} />}
+      {isVisible && <AIAgentFormFields isSubmitting={isSubmitting} submitLabel={submitLabel} />}
     </Formik>
   );
 }
