@@ -86,18 +86,38 @@ export function Users({ userListSorting }: IUsersProps) {
     trackInviteTeamInPage('Team Page');
   };
 
+  const handleOpenCreateUserModal = () => {
+    dispatch(openCreateUserModal());
+  };
+
+  const handleCloseCreateUserModal = () => {
+    dispatch(closeCreateUserModal());
+  };
+
+  const handleCloseVacationModal = () => {
+    setVacationModalUser(null);
+  };
+
+  const handleChangeSearchQuery = (e: React.FormEvent<HTMLInputElement>) => {
+    setSearchQuery(e.currentTarget.value);
+  };
+
+  const handleClearSearchQuery = () => {
+    setSearchQuery('');
+  };
+
   const renderSearch = () => {
     return (
       <div className={styles['search']}>
         <SearchLargeIcon className={styles['search__icon']} />
         <InputField
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.currentTarget.value)}
+          onChange={handleChangeSearchQuery}
           containerClassName={styles['search-field']}
           className={styles['search-field__input']}
           placeholder={formatMessage({ id: 'team.search' })}
           fieldSize="md"
-          onClear={() => setSearchQuery('')}
+          onClear={handleClearSearchQuery}
         />
       </div>
     );
@@ -128,12 +148,8 @@ export function Users({ userListSorting }: IUsersProps) {
     <div className={styles['container']}>
       <DeleteTeamUserPopupContainer />
       <AddGuestsBanner />
-      <CreatePerformerModal isOpen={isCreateUserModalOpen} onClose={() => dispatch(closeCreateUserModal())} />
-      <VacationSettingsModal
-        isOpen={!!vacationModalUser}
-        onClose={() => setVacationModalUser(null)}
-        user={vacationModalUser}
-      />
+      <CreatePerformerModal isOpen={isCreateUserModalOpen} onClose={handleCloseCreateUserModal} />
+      <VacationSettingsModal isOpen={!!vacationModalUser} onClose={handleCloseVacationModal} user={vacationModalUser} />
 
       <PageTitle titleId={EPageTitle.Team} withUnderline={false} />
       {renderSearch()}
@@ -147,7 +163,7 @@ export function Users({ userListSorting }: IUsersProps) {
         <AddButton
           title={formatMessage({ id: 'team.create-user-button' })}
           caption={formatMessage({ id: 'team.create-user-button-caption' })}
-          onClick={() => dispatch(openCreateUserModal())}
+          onClick={handleOpenCreateUserModal}
         />
       </div>
 

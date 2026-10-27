@@ -8,7 +8,15 @@ import { validateRequired } from '../../../../utils/validators';
 import { cancelAIAgentAvatarUpload } from '../../../../redux/ai/slice';
 import { AIAgentFormFields } from './AIAgentFormFields';
 import { EMPTY_AI_AGENT_FORM_VALUES } from './constants';
-import type { IAIAgentFormProps } from './types';
+import type { IAIAgentFormProps, IAIAgentFormValues } from './types';
+
+const validateForm = (values: IAIAgentFormValues) =>
+  getErrorsObject(values, {
+    name: validateRequired,
+    providerId: validateRequired,
+    model: validateRequired,
+    systemPrompt: validateRequired,
+  });
 
 export function AIAgentForm({
   isVisible,
@@ -27,19 +35,7 @@ export function AIAgentForm({
   );
 
   return (
-    <Formik
-      initialValues={initialValues}
-      validateOnMount
-      validate={(values) =>
-        getErrorsObject(values, {
-          name: validateRequired,
-          providerId: validateRequired,
-          model: validateRequired,
-          systemPrompt: validateRequired,
-        })
-      }
-      onSubmit={onSubmit}
-    >
+    <Formik initialValues={initialValues} validateOnMount validate={validateForm} onSubmit={onSubmit}>
       {isVisible && <AIAgentFormFields isSubmitting={isSubmitting} submitLabel={submitLabel} />}
     </Formik>
   );

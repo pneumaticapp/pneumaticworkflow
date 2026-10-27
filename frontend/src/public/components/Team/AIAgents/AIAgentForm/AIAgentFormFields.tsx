@@ -18,6 +18,9 @@ import { useProviderModelsSync } from './useProviderModelsSync';
 
 import styles from '../../CreatePerformerModal/CreatePerformerModal.css';
 
+const filterModelOption = (option: { label: string; value: string }, input: string) =>
+  `${option.label} ${option.value}`.toLowerCase().includes(input.toLowerCase());
+
 export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFieldsProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
@@ -106,9 +109,7 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
             isSearchable
             isDisabled={isModelSelectDisabled}
             placeholder={modelPlaceholder}
-            filterOption={(option: { label: string; value: string }, input: string) =>
-              `${option.label} ${option.value}`.toLowerCase().includes(input.toLowerCase())
-            }
+            filterOption={filterModelOption}
           />
           <FormikTextareaField
             name="systemPrompt"

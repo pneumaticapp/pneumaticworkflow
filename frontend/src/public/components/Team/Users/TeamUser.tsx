@@ -37,6 +37,14 @@ export function TeamUser({
 
   const resendInviteDebounced = useMemo(() => debounce(700, resendInvite), [resendInvite]);
 
+  const handleCloseManagerModal = () => {
+    setIsManagerModalOpen(false);
+  };
+
+  const handleCloseReportsModal = () => {
+    setIsReportsModalOpen(false);
+  };
+
   const dropdownOptions: TDropdownOption[] = [
     {
       label: formatMessage({ id: 'team.card-resend-invite' }),
@@ -125,8 +133,8 @@ export function TeamUser({
         user={user}
         isManagerModalOpen={isManagerModalOpen}
         isReportsModalOpen={isReportsModalOpen}
-        onCloseManagerModal={() => setIsManagerModalOpen(false)}
-        onCloseReportsModal={() => setIsReportsModalOpen(false)}
+        onCloseManagerModal={handleCloseManagerModal}
+        onCloseReportsModal={handleCloseReportsModal}
         handleChangeUserManager={handleChangeUserManager}
         handleChangeUserReports={handleChangeUserReports}
       />

@@ -10,7 +10,7 @@ import {
   resendUserInvite,
 } from '../../../redux/accounts/slice';
 import { TeamUser } from './TeamUser';
-import type { ITeamUserCardProps } from './types';
+import type { ITeamUserCardProps, ITeamUserProps } from './types';
 
 export function TeamUserCard({ user, currentUserId, isSubscribed, onOpenVacationModal }: ITeamUserCardProps) {
   const dispatch = useDispatch();
@@ -24,20 +24,32 @@ export function TeamUserCard({ user, currentUserId, isSubscribed, onOpenVacation
     if (id && email) dispatch(loadChangeUserAdmin({ id, isAdmin: !isAdmin, email }));
   };
 
+  const handleChangeUserManager: ITeamUserProps['handleChangeUserManager'] = (userId, managerId, callbacks) => {
+    dispatch(loadChangeUserManager({ id: userId, managerId, ...callbacks }));
+  };
+
+  const handleChangeUserReports: ITeamUserProps['handleChangeUserReports'] = (userId, reportIds, callbacks) => {
+    dispatch(loadChangeUserReports({ id: userId, reportIds, ...callbacks }));
+  };
+
+  const handleOpenDeleteModal = () => {
+    dispatch(openDeleteUserModal({ user }));
+  };
+
+  const handleOpenVacationModal = () => {
+    onOpenVacationModal(user);
+  };
+
   return (
     <TeamUser
       resendInvite={resendInviteHandler}
       isCurrentUser={currentUserId === user.id}
       isSubscribed={isSubscribed}
       handleToggleAdmin={handleToggleUserAdmin}
-      handleChangeUserManager={(userId, managerId, callbacks) =>
-        dispatch(loadChangeUserManager({ id: userId, managerId, ...callbacks }))
-      }
-      handleChangeUserReports={(userId, reportIds, callbacks) =>
-        dispatch(loadChangeUserReports({ id: userId, reportIds, ...callbacks }))
-      }
-      openModal={() => dispatch(openDeleteUserModal({ user }))}
-      openVacationModal={() => onOpenVacationModal(user)}
+      handleChangeUserManager={handleChangeUserManager}
+      handleChangeUserReports={handleChangeUserReports}
+      openModal={handleOpenDeleteModal}
+      openVacationModal={handleOpenVacationModal}
       user={{ ...user, isAccountOwner: user.isAccountOwner && !user.invite }}
     />
   );

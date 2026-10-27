@@ -25,14 +25,38 @@ export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
 
   const initials = getAgentInitials(agent.name);
 
+  const handleOpenEditModal = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+  };
+
+  const handleOpenDeleteModal = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+  };
+
+  const handleToggleActive = (checked: boolean) => {
+    dispatch(updateAIAgent({ id: agent.id, isActive: checked }));
+  };
+
+  const handleConfirmDelete = () => {
+    dispatch(deleteAIAgent(agent.id));
+  };
+
   const dropdownOptions: TDropdownOption[] = [
     {
       label: formatMessage({ id: 'team.ai-agents.edit' }),
-      onClick: () => setIsEditModalOpen(true),
+      onClick: handleOpenEditModal,
     },
     {
       label: formatMessage({ id: 'team.ai-agents.delete' }),
-      onClick: () => setIsDeleteModalOpen(true),
+      onClick: handleOpenDeleteModal,
       color: 'red',
       withUpperline: true,
     },
@@ -62,7 +86,7 @@ export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
           <div data-testid={`ai-agent-toggle-${agent.id}`}>
             <Switch
               checked={agent.isActive}
-              onChange={(checked) => dispatch(updateAIAgent({ id: agent.id, isActive: checked }))}
+              onChange={handleToggleActive}
               checkedChildren={null}
               unCheckedChildren={null}
               className="custom-switch custom-switch-primary custom-switch-small"
@@ -78,7 +102,7 @@ export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
         />
       </div>
 
-      {isEditModalOpen && <EditAIAgentModal agent={agent} onClose={() => setIsEditModalOpen(false)} />}
+      {isEditModalOpen && <EditAIAgentModal agent={agent} onClose={handleCloseEditModal} />}
 
       <WarningPopup
         isOpen={isDeleteModalOpen}
@@ -86,9 +110,9 @@ export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
         message={formatMessage({ id: 'team.ai-agents.delete-confirm' }, { name: agent.name })}
         acceptTitle={formatMessage({ id: 'team.ai-agents.delete' })}
         declineTitle={formatMessage({ id: 'integrations.cancel' })}
-        onConfirm={() => dispatch(deleteAIAgent(agent.id))}
-        onReject={() => setIsDeleteModalOpen(false)}
-        closeModal={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        onReject={handleCloseDeleteModal}
+        closeModal={handleCloseDeleteModal}
       />
     </article>
   );
