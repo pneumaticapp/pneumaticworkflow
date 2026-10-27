@@ -1,18 +1,12 @@
 import { createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { checkSomeRouteIsActive } from '../../utils/history';
-import { ERoutes } from '../../constants/routes';
+import { getTeamPageByRoute } from '../../utils/team/getTeamPageByRoute';
 import { ITeamStore } from '../../types/redux';
 import { TeamPages, TInviteUsersPayload, UserInvite } from './types';
 import { TUserListItem } from '../../types/user';
 
-const initialTabTeam =
-  checkSomeRouteIsActive(ERoutes.Groups) || checkSomeRouteIsActive(ERoutes.GroupDetails)
-    ? TeamPages.Groups
-    : TeamPages.Users;
-
 const initialState: ITeamStore = {
-  page: initialTabTeam,
+  page: getTeamPageByRoute(),
   isInvitesPopupOpen: false,
   recentInvitedUsers: [],
   invitesUsersList: [],

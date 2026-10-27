@@ -5,7 +5,8 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
-import { checkSomeRouteIsActive, history } from '../../utils/history';
+import { history } from '../../utils/history';
+import { getTeamPageByRoute } from '../../utils/team/getTeamPageByRoute';
 import { GroupListSortingContainer } from './GroupListSortingContainer';
 import { UserListSortingContainer } from './UserListSortingContainer';
 import { ReturnLink, Tabs } from '../../components/UI';
@@ -26,17 +27,7 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
   const page = useSelector(getTeamPage);
 
   useEffect(() => {
-    const getActiveTabByRoute = () => {
-      if (checkSomeRouteIsActive(ERoutes.Groups, ERoutes.GroupDetails)) {
-        return TeamPages.Groups;
-      }
-      if (checkSomeRouteIsActive(ERoutes.AIAgents)) {
-        return TeamPages.AIAgents;
-      }
-      return TeamPages.Users;
-    };
-
-    dispatch(updateTeamActiveTab(getActiveTabByRoute()));
+    dispatch(updateTeamActiveTab(getTeamPageByRoute()));
 
     return () => {
       dispatch(resetUsers());
