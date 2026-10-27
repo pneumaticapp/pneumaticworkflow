@@ -190,11 +190,11 @@ function* deleteAIProviderSaga({ payload: id }: PayloadAction<number>) {
 }
 
 function* refreshAgentsAndProviders(successMessage: string) {
-  const [areAgentsRefreshed, areProvidersRefreshed]: [boolean, boolean] = yield all([
+  const [isAgentsRefreshed, isProvidersRefreshed]: [boolean, boolean] = yield all([
     fetchAIAgents(),
     fetchAIProviders(),
   ]);
-  if (areAgentsRefreshed && areProvidersRefreshed) {
+  if (isAgentsRefreshed && isProvidersRefreshed) {
     NotificationManager.success({ message: successMessage });
   }
 }
