@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { EMoveDirections } from '../../../types/workflow';
 import { AddEntityButton, EEntityTitle, ITemplateEntity } from '../AddEntityButton';
 import { Delay } from '../Delay';
@@ -6,6 +6,7 @@ import { WorkflowTaskFormContainer } from '../TaskForm';
 import { TaskItem } from '../TaskItem';
 import { TaskMenu } from '../TaskMenu';
 import { TTaskFormPart } from '../types';
+import { useOpenOnValidationError } from '../TemplateValidationError';
 import { ITemplateEntityProps } from './TemplateEntity.props';
 import styles from './TemplateEntity.css';
 
@@ -28,6 +29,18 @@ export function TemplateEntity({
   actualPreviousTaskApiName,
 }: ITemplateEntityProps) {
   const [scrollTarget, setScrollTarget] = useState<TTaskFormPart>(null);
+  const [isOpenedByValidation, setIsOpenedByValidation] = useState(false);
+
+  useOpenOnValidationError(task.uuid, () => {
+    if (isTaskOpen) return;
+
+    setIsOpenedByValidation(true);
+    toggleIsOpenTask();
+  });
+
+  useEffect(() => {
+    if (!isTaskOpen) setIsOpenedByValidation(false);
+  }, [isTaskOpen]);
 
   const renderAddWorkflowEntityButton = () => {
     const canAddDelay = task.number !== 1 && !task.delay;
@@ -70,7 +83,14 @@ export function TemplateEntity({
     const entities = [
       {
         check: isTaskOpen,
-        component: <WorkflowTaskFormContainer task={task} users={users} scrollTarget={scrollTarget} />,
+        component: (
+          <WorkflowTaskFormContainer
+            task={task}
+            users={users}
+            scrollTarget={scrollTarget}
+            isOpenedByValidation={isOpenedByValidation}
+          />
+        ),
       },
       {
         check: !isTaskOpen,

@@ -13,6 +13,7 @@ import { EConditionLogicOperations, EConditionOperators, TConditionRule } from '
 import { TUserListItem } from '../../../../types/user';
 import { IDropdownVariable } from './CheckIfConditions';
 
+import { TemplateValidationError } from '../../TemplateValidationError';
 import styles from './Conditions.css';
 import stylesTaskForm from '../TaskForm.css';
 
@@ -158,6 +159,7 @@ export function Predicate({
           </button>
         </div>
       </div>
+      <TemplateValidationError apiNames={[rule.predicateApiName]} />
     </div>
   );
 }

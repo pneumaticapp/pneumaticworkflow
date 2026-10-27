@@ -22,6 +22,7 @@ import { createEmptyTemplate } from './utils/createEmptyTemplate';
 import { getGraphShowcaseTemplate } from './TemplateGraphEditor/fixtures/graphShowcaseTemplate';
 import { getGraphWeaveTemplate } from './TemplateGraphEditor/fixtures/graphWeaveTemplate';
 import { TemplateEditorContainer } from './TemplateEditorContainer/TemplateEditorContainer';
+import { clearTemplateValidationErrors } from '../../redux/templateValidation/slice';
 
 export interface ITemplateEditProps {
   authUser: IAuthUser;
@@ -75,6 +76,7 @@ export function TemplateEdit({
   const getEmptyTemplate = (): ITemplateClient => createEmptyTemplate({ authUser, accessConditions, users });
 
   const initPage = (): void => {
+    dispatch(clearTemplateValidationErrors());
     const { id } = match.params;
     const workflowTemplateId = getTemplateIdFromUrl(location.search);
     const isCreateWorkflowPage = isCreateTemplate();

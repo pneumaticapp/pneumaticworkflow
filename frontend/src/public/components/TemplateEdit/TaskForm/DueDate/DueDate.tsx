@@ -11,6 +11,7 @@ import { getRuleTargetOptions, TRuleTargetOption } from './utils/getRuleTargetOp
 import { getRulePrepositionOptions, TRulePrepositionOption } from './utils/getRulePrepositionOptions';
 import { useUpdatePreposition } from './hooks/useUpdatePreposition';
 
+import { TemplateValidationError } from '../../TemplateValidationError';
 import styles from './DueDate.css';
 import stylesTaskForm from '../TaskForm.css';
 
@@ -157,6 +158,7 @@ export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDue
           </button>
         </div>
       )}
+      <TemplateValidationError apiNames={[dueDate.apiName]} />
     </div>
   );
 }

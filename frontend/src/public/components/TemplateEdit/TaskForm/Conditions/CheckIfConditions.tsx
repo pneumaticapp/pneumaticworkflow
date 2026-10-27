@@ -27,6 +27,7 @@ import { Select, Tooltip } from '../../../UI';
 import { getSortingSelectProps } from '../../../../utils/getSortingSelectProps';
 import { ICondition, Predicate, RichLabel } from '.';
 
+import { TemplateValidationError } from '../../TemplateValidationError';
 import styles from './Conditions.css';
 import stylesTaskForm from '../TaskForm.css';
 
@@ -191,6 +192,7 @@ export function CheckIfConditions({
             );
           })}
         </div>
+        <TemplateValidationError apiNames={[condition.apiName]} />
         {accessConditions && (
           <button
             style={{ display: 'block', marginBottom: '0.8rem' }}

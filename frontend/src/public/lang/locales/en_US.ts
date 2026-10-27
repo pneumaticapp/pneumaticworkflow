@@ -485,6 +485,8 @@ export const enMessages = {
   'validation.phone-number-invalid': 'Invalid phone number',
   'validation.name-empty': 'Please enter your name',
   'validation.number-invalid-format': 'Invalid number format',
+  'validation.condition-incomplete': 'Fill in the condition',
+  'validation.task-performers-empty': 'Add at least one performer to the task',
   'validation.company-name-empty': 'Please enter your company name',
   'validation.field-empty': 'This field cannot be empty',
   'validation.checklist-item-empty': 'Checklist item cannot be empty',
@@ -643,9 +645,6 @@ export const enMessages = {
   'templates.assign-perfomers-to-the-following-steps': 'Please assign users to the following steps:',
   'template.no-run-allowers': 'Please add at least one template owner',
   'template.no-tasks': 'Please add at least one task',
-  'template.task-validation-error': 'Please check the data in the task forms',
-  'template.task-conditions-validation-error': 'Please fill in all conditions in tasks:',
-  'template.kickoff-validation-error': 'Please check the data in the Kick-off form',
   'template.generate-with-ai.title': 'Template Generator',
   'template.generate-with-ai.description':
     'Let Pneumatic generate steps for a new template based on your description of the business process you need',
@@ -861,8 +860,6 @@ export const enMessages = {
   'template.share-kick-off-form-enable-success-url': 'Enable custom success URL',
   'template.not-found': 'Template is not found',
   'template.cannot-enable': 'You cannot enable the Template:',
-  'template.warning-unassigned-perforemers-title': 'The template has unassigned tasks',
-  'template.warning-unassigned-perforemers-desc': 'Please add performers to your tasks.',
   'template.warning-premium-feature-title': 'The template has some premium features (conditions)',
   'template.warning-premium-feature-desc':
     'Please active your free 7-day trial to enable the template and experience the full power of Pneumatic.',

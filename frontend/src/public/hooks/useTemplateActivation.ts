@@ -1,11 +1,14 @@
 import { useCallback, useState } from 'react';
 import { useIntl } from 'react-intl';
+import { useDispatch } from 'react-redux';
 
 import { ITemplateClient } from '../types/template';
 import { TPatchTemplatePayload } from '../redux/actions';
 import { NotificationManager } from '../components/UI/Notifications';
 import { IInfoWarningProps } from '../components/TemplateEdit/InfoWarningsModal';
 import { validateTemplate } from '../components/TemplateEdit/utils/validateTemplate';
+import { collectTemplateValidationErrors } from '../components/TemplateEdit/utils/collectTemplateValidationErrors';
+import { setTemplateValidationErrors } from '../redux/templateValidation/slice';
 import { isArrayWithItems } from '../utils/helpers';
 import { history } from '../utils/history';
 
@@ -31,6 +34,7 @@ export function useTemplateActivation({
   patchTemplate,
 }: IUseTemplateActivationOptions): ITemplateActivation {
   const intl = useIntl();
+  const dispatch = useDispatch();
   const [isActivating, setIsActivating] = useState(false);
   const [infoWarnings, setInfoWarnings] = useState<TInfoWarningRenderer[]>([]);
   const [isInfoWarningsOpen, setIsInfoWarningsOpen] = useState(false);
@@ -56,9 +60,14 @@ export function useTemplateActivation({
         return;
       }
 
-      if (isArrayWithItems(commonWarnings)) {
-        commonWarnings.forEach((message) => NotificationManager.warning({ message }));
+      const validationErrors = collectTemplateValidationErrors(template, intl.formatMessage);
+      commonWarnings.forEach((message) => NotificationManager.warning({ message }));
 
+      if (isArrayWithItems(validationErrors)) {
+        dispatch(setTemplateValidationErrors(validationErrors));
+      }
+
+      if (isArrayWithItems(commonWarnings) || isArrayWithItems(validationErrors)) {
         return;
       }
 
@@ -78,7 +87,7 @@ export function useTemplateActivation({
         },
       });
     },
-    [accessConditions, intl, patchTemplate, template],
+    [accessConditions, dispatch, intl, patchTemplate, template],
   );
 
   return { isActivating, infoWarnings, isInfoWarningsOpen, closeInfoWarnings, setTemplateActive };

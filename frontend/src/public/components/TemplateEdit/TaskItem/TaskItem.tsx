@@ -1,4 +1,3 @@
-/* eslint-disable */
 import React from 'react';
 import { useSelector } from 'react-redux';
 
@@ -16,6 +15,7 @@ import { RichText } from '../../RichText';
 import { TaskRenderDueIn } from '../TaskRenderDueInInfo';
 import { TaskRenderReturnInfo } from '../TaskRenderReturnInfo';
 
+import { TemplateValidationError } from '../TemplateValidationError';
 import styles from '../TemplateEdit.css';
 import { TaskRenderConditionsInfo } from '../TaskRenderConditionsInfo';
 
@@ -42,15 +42,35 @@ export const TaskItem = ({ task, toggleIsOpenTask, setScrollTarget }: ITaskItemP
     toggleIsOpenTask();
   };
 
+  const handleToggleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+
+    event.preventDefault();
+    toggleIsOpenTask();
+  };
+
   return (
     <div id={`task-form-${number}`} className={styles['task_view']} key={number}>
       <div className={styles['task__data-wrapper']}>
-        <div className={styles['task_view-title']} onClick={toggleIsOpenTask}>
+        <div
+          className={styles['task_view-title']}
+          role="button"
+          tabIndex={0}
+          onClick={toggleIsOpenTask}
+          onKeyDown={handleToggleKeyDown}
+        >
           <RichText text={name} variables={allVariables} isMarkdownMode={false} />
         </div>
+        <TemplateValidationError apiNames={[task.apiName]} section={null} />
 
         {description && (
-          <div className={styles['task_view-description']} onClick={toggleIsOpenTask}>
+          <div
+            className={styles['task_view-description']}
+            role="button"
+            tabIndex={0}
+            onClick={toggleIsOpenTask}
+            onKeyDown={handleToggleKeyDown}
+          >
             <RichText text={description} variables={allVariables} />
           </div>
         )}

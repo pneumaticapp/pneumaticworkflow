@@ -40,6 +40,7 @@ import { useWorkflowNameVariables } from '../TaskForm/utils/getTaskVariables';
 import { getFieldsetsCatalogIsLoading } from '../../../redux/selectors/fieldsets';
 import { FieldsetOutputsPreview } from '../FieldsetOutputsPreview/FieldsetOutputsPreview';
 
+import { useOpenOnValidationError } from '../TemplateValidationError';
 import styles from './KickoffRedux.css';
 import { patchTemplate } from '../../../redux/actions';
 import { InputWithVariables } from '../InputWithVariables';
@@ -86,6 +87,8 @@ export function KickoffRedux({
   const editTemplate = (templateFields: Partial<ITemplateClient>) => {
     dispatch(patchTemplate({ changedFields: templateFields }));
   };
+
+  useOpenOnValidationError(null, () => setIsOpen(true));
 
   useHashLink([
     {
