@@ -7,7 +7,7 @@ import { copyToClipboard } from '../../../utils/helpers';
 import { Button } from '../../UI/Buttons/Button';
 import { NotificationManager } from '../../UI/Notifications';
 import { loadApiKeys, createApiKey, deleteApiKey, clearNewlyCreatedKey } from '../../../redux/actions';
-import { getApiKeys, getAreApiKeysLoading, getNewlyCreatedApiKey } from '../../../redux/selectors/integrations';
+import { getApiKeys, getApiKeysIsLoading, getApiKeysNewlyCreatedKey } from '../../../redux/selectors/integrations';
 
 import { TokenListSkeleton } from '../TokenList';
 import { ApiKeyListItem } from './ApiKeyListItem';
@@ -21,8 +21,8 @@ export function ApiKeys() {
   const dispatch = useDispatch();
 
   const apiKeys = useSelector(getApiKeys);
-  const isLoading = useSelector(getAreApiKeysLoading);
-  const newlyCreatedKey = useSelector(getNewlyCreatedApiKey);
+  const isLoading = useSelector(getApiKeysIsLoading);
+  const newlyCreatedKey = useSelector(getApiKeysNewlyCreatedKey);
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
