@@ -5,16 +5,10 @@ import { useIntl } from 'react-intl';
 import type { FieldHookConfig } from 'formik';
 import { useField } from 'formik';
 
+import type { TTextareaFieldProps } from './types';
+
 import styles from './TextareaField.css';
 import commonStyles from '../common/styles.css';
-
-export interface ITextareaFieldProps {
-  title?: string;
-  errorMessage?: string;
-  isRequired?: boolean;
-}
-
-type TTextareaFieldProps = ITextareaFieldProps & React.HTMLProps<HTMLTextAreaElement>;
 
 export function TextareaField({ title, errorMessage, isRequired, className, disabled, ...props }: TTextareaFieldProps) {
   const { messages } = useIntl();
