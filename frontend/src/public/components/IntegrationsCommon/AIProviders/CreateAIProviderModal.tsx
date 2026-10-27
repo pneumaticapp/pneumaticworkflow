@@ -73,110 +73,108 @@ export function CreateAIProviderModal() {
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} width="sm">
-      <div data-testid="create-ai-provider-modal">
-        <Header tag="h2" size="6" className={styles['create-modal__title']}>
-          {formatMessage({ id: 'ai-providers.create-modal-title' })}
-        </Header>
-        <p className={styles['create-modal__description']}>
-          {formatMessage({ id: 'ai-providers.create-modal-description' })}
-        </p>
-        <Tabs
-          activeValueId={activeTab}
-          values={[
-            { id: 'vendor', label: formatMessage({ id: 'ai-providers.tab-vendor' }) },
-            { id: 'custom', label: formatMessage({ id: 'ai-providers.tab-custom' }) },
-          ]}
-          containerClassName={styles['create-modal__tabs']}
-          activeTabClassName={styles['create-modal__tab_active']}
-          onChange={handleChangeTab}
-        />
-        <Formik
-          key={activeTab}
-          initialValues={INITIAL_VALUES}
-          validateOnMount
-          validate={validateForm}
-          onSubmit={handleSubmit}
-        >
-          {({ handleSubmit: formikSubmit, isValid }) => (
-            <form onSubmit={formikSubmit} data-autofocus-first-field>
-              <div className={styles['create-modal__fields']}>
-                {isVendorTab ? (
-                  <>
-                    <FormikDropdownList
-                      name="vendor"
-                      label={formatMessage({ id: 'ai-providers.vendor-label' })}
-                      placeholder={formatMessage({ id: 'ai-providers.vendor-placeholder' })}
-                      options={vendorOptions}
-                      isRequired
-                      data-testid="ai-provider-vendor-select"
-                    />
-                    <FormikInputField
-                      name="apiKey"
-                      title={formatMessage({ id: 'ai-providers.api-key-label' })}
-                      placeholder={formatMessage({ id: 'ai-providers.api-key-placeholder' })}
-                      fieldSize="md"
-                      type="password"
-                      isRequired
-                      data-testid="ai-provider-api-key-input"
-                    />
-                  </>
-                ) : (
-                  <>
-                    <FormikInputField
-                      autoFocus
-                      name="name"
-                      title={formatMessage({ id: 'ai-providers.name-label' })}
-                      placeholder={formatMessage({ id: 'ai-providers.name-placeholder' })}
-                      fieldSize="md"
-                      isRequired
-                      data-testid="ai-provider-name-input"
-                    />
-                    <FormikInputField
-                      name="baseUrl"
-                      title={formatMessage({ id: 'ai-providers.base-url-label' })}
-                      placeholder={formatMessage({ id: 'ai-providers.base-url-placeholder' })}
-                      fieldSize="md"
-                      isRequired
-                      data-testid="ai-provider-base-url-input"
-                    />
-                    <FormikInputField
-                      name="apiKey"
-                      title={formatMessage({ id: 'ai-providers.api-key-label' })}
-                      placeholder={formatMessage({ id: 'ai-providers.api-key-placeholder' })}
-                      fieldSize="md"
-                      type="password"
-                      isRequired
-                      data-testid="ai-provider-api-key-input"
-                    />
-                  </>
-                )}
-              </div>
-              <p className={styles['create-modal__info']}>
-                {formatMessage({ id: 'ai-providers.connection-check-info' })}
-              </p>
-              <div className={styles['create-modal__footer']}>
-                <Button
-                  type="submit"
-                  size="md"
-                  buttonStyle="yellow"
-                  disabled={!isValid || isCreating}
-                  isLoading={isCreating}
-                  label={formatMessage({ id: 'ai-providers.add' })}
-                  data-testid="submit-create-ai-provider"
-                />
-                <button
-                  type="button"
-                  className="cancel-button"
-                  onClick={handleClose}
-                  data-testid="cancel-create-ai-provider"
-                >
-                  {formatMessage({ id: 'integrations.cancel' })}
-                </button>
-              </div>
-            </form>
-          )}
-        </Formik>
-      </div>
+      <Header tag="h2" size="6" className={styles['create-modal__title']}>
+        {formatMessage({ id: 'ai-providers.create-modal-title' })}
+      </Header>
+      <p className={styles['create-modal__description']}>
+        {formatMessage({ id: 'ai-providers.create-modal-description' })}
+      </p>
+      <Tabs
+        activeValueId={activeTab}
+        values={[
+          { id: 'vendor', label: formatMessage({ id: 'ai-providers.tab-vendor' }) },
+          { id: 'custom', label: formatMessage({ id: 'ai-providers.tab-custom' }) },
+        ]}
+        containerClassName={styles['create-modal__tabs']}
+        activeTabClassName={styles['create-modal__tab_active']}
+        onChange={handleChangeTab}
+      />
+      <Formik
+        key={activeTab}
+        initialValues={INITIAL_VALUES}
+        validateOnMount
+        validate={validateForm}
+        onSubmit={handleSubmit}
+      >
+        {({ handleSubmit: formikSubmit, isValid }) => (
+          <form onSubmit={formikSubmit} data-autofocus-first-field>
+            <div className={styles['create-modal__fields']}>
+              {isVendorTab ? (
+                <>
+                  <FormikDropdownList
+                    name="vendor"
+                    label={formatMessage({ id: 'ai-providers.vendor-label' })}
+                    placeholder={formatMessage({ id: 'ai-providers.vendor-placeholder' })}
+                    options={vendorOptions}
+                    isRequired
+                    data-testid="ai-provider-vendor-select"
+                  />
+                  <FormikInputField
+                    name="apiKey"
+                    title={formatMessage({ id: 'ai-providers.api-key-label' })}
+                    placeholder={formatMessage({ id: 'ai-providers.api-key-placeholder' })}
+                    fieldSize="md"
+                    type="password"
+                    isRequired
+                    data-testid="ai-provider-api-key-input"
+                  />
+                </>
+              ) : (
+                <>
+                  <FormikInputField
+                    autoFocus
+                    name="name"
+                    title={formatMessage({ id: 'ai-providers.name-label' })}
+                    placeholder={formatMessage({ id: 'ai-providers.name-placeholder' })}
+                    fieldSize="md"
+                    isRequired
+                    data-testid="ai-provider-name-input"
+                  />
+                  <FormikInputField
+                    name="baseUrl"
+                    title={formatMessage({ id: 'ai-providers.base-url-label' })}
+                    placeholder={formatMessage({ id: 'ai-providers.base-url-placeholder' })}
+                    fieldSize="md"
+                    isRequired
+                    data-testid="ai-provider-base-url-input"
+                  />
+                  <FormikInputField
+                    name="apiKey"
+                    title={formatMessage({ id: 'ai-providers.api-key-label' })}
+                    placeholder={formatMessage({ id: 'ai-providers.api-key-placeholder' })}
+                    fieldSize="md"
+                    type="password"
+                    isRequired
+                    data-testid="ai-provider-api-key-input"
+                  />
+                </>
+              )}
+            </div>
+            <p className={styles['create-modal__info']}>
+              {formatMessage({ id: 'ai-providers.connection-check-info' })}
+            </p>
+            <div className={styles['create-modal__footer']}>
+              <Button
+                type="submit"
+                size="md"
+                buttonStyle="yellow"
+                disabled={!isValid || isCreating}
+                isLoading={isCreating}
+                label={formatMessage({ id: 'ai-providers.add' })}
+                data-testid="submit-create-ai-provider"
+              />
+              <button
+                type="button"
+                className="cancel-button"
+                onClick={handleClose}
+                data-testid="cancel-create-ai-provider"
+              >
+                {formatMessage({ id: 'integrations.cancel' })}
+              </button>
+            </div>
+          </form>
+        )}
+      </Formik>
     </Modal>
   );
 }

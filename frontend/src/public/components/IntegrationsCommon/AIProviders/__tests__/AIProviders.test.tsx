@@ -174,7 +174,9 @@ describe('AIProviders', () => {
   it('opens the create modal on the add button', () => {
     render(<AIProviders />);
 
-    expect(screen.queryByTestId('create-ai-provider-modal')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: intlMock.formatMessage({ id: 'ai-providers.create-modal-title' }) }),
+    ).not.toBeInTheDocument();
 
     userEvent.click(screen.getByTestId('create-ai-provider-btn'));
 
@@ -185,7 +187,9 @@ describe('AIProviders', () => {
     mockAIState([], { createProviderModal: { isOpen: true, isLoading: false } });
     render(<AIProviders />);
 
-    expect(screen.getByTestId('create-ai-provider-modal')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: intlMock.formatMessage({ id: 'ai-providers.create-modal-title' }) }),
+    ).toBeInTheDocument();
   });
 
   it('shows the loading state before the first response', () => {
