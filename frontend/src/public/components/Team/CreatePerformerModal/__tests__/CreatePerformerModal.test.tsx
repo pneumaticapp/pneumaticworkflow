@@ -37,7 +37,7 @@ jest.mock('react-dom', () => {
 
 const mockGenerateAgentAvatar = jest.fn();
 jest.mock('../../AIAgents/utils/generateAgentAvatar', () => ({
-  generateAgentAvatar: (initials: string) => mockGenerateAgentAvatar(initials),
+  generateAgentAvatar: () => mockGenerateAgentAvatar(),
 }));
 
 jest.mock('react-redux', () => ({
@@ -367,7 +367,7 @@ describe('CreatePerformerModal', () => {
       );
 
       await waitFor(() => expect(getAvatarUploadAction()).toBeDefined());
-      expect(mockGenerateAgentAvatar).toHaveBeenCalledWith('AA');
+      expect(mockGenerateAgentAvatar).toHaveBeenCalledTimes(1);
       expect(getAvatarUploadAction().payload.file.name).toBe('ai-agent-avatar.png');
       await act(async () => {
         getAvatarUploadAction().payload.onSuccess('https://files.example.com/generated.png');

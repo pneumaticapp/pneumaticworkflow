@@ -49,7 +49,7 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
   };
 
   const handleAvatarGenerate = async () => {
-    const file = await generateAgentAvatar(initials);
+    const file = await generateAgentAvatar();
     if (file) uploadAvatar(file);
   };
 
