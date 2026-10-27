@@ -222,11 +222,15 @@ export function* createAIAgentSaga({ payload }: PayloadAction<ICreateAIAgentRequ
   }
 }
 
-function* updateAIAgentSaga({ payload: { id, ...data } }: PayloadAction<TUpdateAIAgentPayload>) {
+export function* updateAIAgentSaga({
+  payload: { id, onSuccess, onError, ...data },
+}: PayloadAction<TUpdateAIAgentPayload>) {
   try {
     yield updateAIAgentApi(id, data);
+    onSuccess?.();
     yield refreshAgentsAndProviders('team.ai-agents.updated');
   } catch (error) {
+    onError?.();
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to update AI agent', error);
   }

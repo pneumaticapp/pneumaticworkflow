@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useDispatch } from 'react-redux';
 
@@ -16,15 +16,18 @@ jest.mock('../../../UI/BaseModal', () => ({
 jest.mock('../../Users/CreatePerformerModal/CreateAIAgentForm', () => ({
   CreateAIAgentForm: ({
     initialValues,
+    isSubmitting,
     onSubmit,
   }: {
     initialValues: IAIAgentFormValues;
+    isSubmitting: boolean;
     onSubmit(values: IAIAgentFormValues): void;
   }) => (
     <button
       type="button"
       data-testid="submit-edit-agent-form"
       data-initial-values={JSON.stringify(initialValues)}
+      data-submitting={String(isSubmitting)}
       onClick={() => onSubmit(initialValues)}
     />
   ),
@@ -63,13 +66,19 @@ describe('EditAIAgentModal', () => {
     });
   });
 
-  it('dispatches the update preserving the current isActive on submit', () => {
+  const getUpdatePayload = () => {
+    const [[action]] = mockDispatch.mock.calls as [[ReturnType<typeof updateAIAgent>]];
+
+    return action.payload;
+  };
+
+  it('dispatches the update preserving the current isActive and closes only after success', () => {
     render(<EditAIAgentModal agent={buildAgent({ isActive: false, name: '  Padded name  ' })} onClose={onClose} />);
 
     userEvent.click(screen.getByTestId('submit-edit-agent-form'));
 
-    expect(mockDispatch).toHaveBeenCalledWith(
-      updateAIAgent({
+    expect(getUpdatePayload()).toEqual(
+      expect.objectContaining({
         id: 10,
         name: 'Padded name',
         providerId: 1,
@@ -79,6 +88,21 @@ describe('EditAIAgentModal', () => {
         isActive: false,
       }),
     );
+    expect(screen.getByTestId('submit-edit-agent-form')).toHaveAttribute('data-submitting', 'true');
+    expect(onClose).not.toHaveBeenCalled();
+
+    act(() => getUpdatePayload().onSuccess?.());
+
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('keeps the modal open with the draft when the update fails', () => {
+    render(<EditAIAgentModal agent={buildAgent()} onClose={onClose} />);
+
+    userEvent.click(screen.getByTestId('submit-edit-agent-form'));
+    act(() => getUpdatePayload().onError?.());
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByTestId('submit-edit-agent-form')).toHaveAttribute('data-submitting', 'false');
   });
 });

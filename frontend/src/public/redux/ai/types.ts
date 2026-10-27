@@ -30,7 +30,7 @@ export interface IAIStore {
   };
 }
 
-export type TUpdateAIAgentPayload = { id: number } & TUpdateAIAgentRequest;
+export type TUpdateAIAgentPayload = { id: number; onSuccess?(): void; onError?(): void } & TUpdateAIAgentRequest;
 
 export interface IUploadAIAgentAvatarPayload {
   file: File;

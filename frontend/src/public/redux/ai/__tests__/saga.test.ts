@@ -7,11 +7,13 @@ import {
   createAIProviderByVendor as createAIProviderByVendorApi,
   getAIAgents as getAIAgentsApi,
   getAIProviders as getAIProvidersApi,
+  updateAIAgent as updateAIAgentApi,
 } from '../../../api/ai';
 import {
   createAIAgentSaga,
   createAIProviderByVendorSaga,
   createAIProviderSaga,
+  updateAIAgentSaga,
   uploadAIAgentAvatarSaga,
 } from '../saga';
 import {
@@ -24,6 +26,7 @@ import {
   createAIProviderSuccess,
   cancelAIAgentAvatarUpload,
   closeCreateAIProviderModal,
+  updateAIAgent,
   uploadAIAgentAvatar,
   uploadAIAgentAvatarFinished,
 } from '../slice';
@@ -37,6 +40,7 @@ jest.mock('../../../api/ai', () => ({
   createAIProviderByVendor: jest.fn(),
   getAIAgents: jest.fn(),
   getAIProviders: jest.fn(),
+  updateAIAgent: jest.fn(),
 }));
 jest.mock('../../../components/UI/Notifications', () => ({
   NotificationManager: { success: jest.fn(), warning: jest.fn() },
@@ -97,6 +101,28 @@ describe('AI creation sagas', () => {
     expect(actions).toContainEqual(createAIAgentFailed());
     expect(actions).not.toContainEqual(createAIAgentSuccess());
     expect(actions).not.toContainEqual(closeCreateUserModal());
+  });
+
+  it('reports a successful agent update without sending the callbacks to the API', async () => {
+    (updateAIAgentApi as jest.Mock).mockResolvedValue({});
+    const onSuccess = jest.fn();
+    const onError = jest.fn();
+    await run(updateAIAgentSaga, updateAIAgent({ id: 7, ...agentData, onSuccess, onError }));
+
+    expect(updateAIAgentApi).toHaveBeenCalledWith(7, agentData);
+    expect(onSuccess).toHaveBeenCalledTimes(1);
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it('reports a failed agent update', async () => {
+    (updateAIAgentApi as jest.Mock).mockRejectedValue(new Error('Invalid model'));
+    const onSuccess = jest.fn();
+    const onError = jest.fn();
+    await run(updateAIAgentSaga, updateAIAgent({ id: 7, ...agentData, onSuccess, onError }));
+
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onSuccess).not.toHaveBeenCalled();
+    expect(NotificationManager.warning).toHaveBeenCalled();
   });
 
   it('marks vendor provider creation successful even when refreshing providers fails', async () => {

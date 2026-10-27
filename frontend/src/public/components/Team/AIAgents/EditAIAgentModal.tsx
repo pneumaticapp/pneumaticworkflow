@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
@@ -13,6 +14,7 @@ import modalStyles from '../Users/CreatePerformerModal/CreatePerformerModal.css'
 export function EditAIAgentModal({ agent, onClose }: IEditAIAgentModalProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
+  const [isSaving, setIsSaving] = useState(false);
 
   const initialValues: IAIAgentFormValues = {
     name: agent.name,
@@ -22,7 +24,12 @@ export function EditAIAgentModal({ agent, onClose }: IEditAIAgentModalProps) {
     photo: agent.photo ?? '',
   };
 
+  const handleClose = () => {
+    if (!isSaving) onClose();
+  };
+
   const handleSubmit = (values: IAIAgentFormValues) => {
+    setIsSaving(true);
     dispatch(
       updateAIAgent({
         id: agent.id,
@@ -32,25 +39,27 @@ export function EditAIAgentModal({ agent, onClose }: IEditAIAgentModalProps) {
         systemPrompt: values.systemPrompt,
         photo: values.photo || null,
         isActive: agent.isActive,
+        onSuccess: onClose,
+        onError: () => setIsSaving(false),
       }),
     );
-    onClose();
   };
 
   return (
     <BaseModal
       isOpen
-      toggle={onClose}
+      toggle={handleClose}
       className={modalStyles['modal__dialog']}
       contentClassName={modalStyles['modal__content']}
     >
-      <ModalHeader toggle={onClose} className={modalStyles['modal__header']}>
+      <ModalHeader toggle={handleClose} className={modalStyles['modal__header']}>
         {formatMessage({ id: 'team.ai-agents.edit-modal-title' })}
       </ModalHeader>
 
       <CreateAIAgentForm
         isActive
         initialValues={initialValues}
+        isSubmitting={isSaving}
         submitLabel={formatMessage({ id: 'team.create-ai-agent-modal.save' })}
         onSubmit={handleSubmit}
       />
