@@ -1,3 +1,5 @@
+import { createSelector } from 'reselect';
+
 import type { IApplicationState } from '../../types/redux';
 
 export const getAIProviders = (state: IApplicationState) => state.ai.providers.list;
@@ -9,6 +11,10 @@ export const getAICreateProviderModalState = (state: IApplicationState) => state
 export const getAICreateAgentState = (state: IApplicationState) => state.ai.createAgent;
 
 export const getAIAgentsState = (state: IApplicationState) => state.ai.agents;
+
+export const getAIAgentsSortedByName = createSelector(getAIAgentsState, ({ list }) =>
+  list.slice().sort((first, second) => first.name.localeCompare(second.name)),
+);
 
 export const getAIVendorsState = (state: IApplicationState) => state.ai.vendors;
 

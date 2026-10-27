@@ -17,15 +17,16 @@ import { history } from '../../../utils/history';
 import { closeCreateUserModal, openCreateUserModal } from '../../../redux/accounts/slice';
 import { loadAIAgents, loadAIProviders } from '../../../redux/ai/slice';
 import { getIsCreateUserModalOpen } from '../../../redux/selectors/accounts';
-import { getAIAgentsState, getAIProvidersState } from '../../../redux/selectors/ai';
+import { getAIAgentsSortedByName, getAIAgentsState, getAIProvidersState } from '../../../redux/selectors/ai';
 
 import styles from './AIAgents.css';
 
 export function AIAgents() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const { list: agents, isLoading: areAgentsLoading } = useSelector(getAIAgentsState);
-  const { list: providers, isLoading: areProvidersLoading } = useSelector(getAIProvidersState);
+  const { isLoading: isAgentsLoading } = useSelector(getAIAgentsState);
+  const agents = useSelector(getAIAgentsSortedByName);
+  const { list: providers, isLoading: isProvidersLoading } = useSelector(getAIProvidersState);
   const isCreateModalOpen = useSelector(getIsCreateUserModalOpen);
 
   useEffect(() => {
@@ -39,15 +40,14 @@ export function AIAgents() {
   }, [dispatch]);
 
   const providerNameById = new Map(providers.map((provider) => [provider.id, provider.name]));
-  const hasNoProviders = !areProvidersLoading && providers.length === 0;
-  const sortedAgents = [...agents].sort((first, second) => first.name.localeCompare(second.name));
+  const hasNoProviders = !isProvidersLoading && providers.length === 0;
 
   const renderAgents = () => {
-    if (areAgentsLoading) {
+    if (isAgentsLoading) {
       return Array.from([1, 2, 3], (key) => <TeamUserSkeleton key={key} />);
     }
 
-    if (sortedAgents.length === 0) {
+    if (agents.length === 0) {
       return (
         <p className={styles['empty']} data-testid="empty-ai-agents-message">
           {formatMessage({ id: 'team.ai-agents.empty' })}
@@ -57,7 +57,7 @@ export function AIAgents() {
 
     return (
       <ul className={styles['list']}>
-        {sortedAgents.map((agent) => (
+        {agents.map((agent) => (
           <li key={agent.id}>
             <TeamAgent agent={agent} providerName={providerNameById.get(agent.providerId)} />
           </li>

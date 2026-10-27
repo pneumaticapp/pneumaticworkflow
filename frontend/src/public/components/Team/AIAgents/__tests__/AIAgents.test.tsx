@@ -66,20 +66,20 @@ describe('AIAgents', () => {
   const mockState = ({
     agents = [buildAgent()],
     providers = [buildProvider()],
-    areAgentsLoading = false,
-    areProvidersLoading = false,
+    isAgentsLoading = false,
+    isProvidersLoading = false,
   }: {
     agents?: IAIAgent[];
     providers?: IAIProvider[];
-    areAgentsLoading?: boolean;
-    areProvidersLoading?: boolean;
+    isAgentsLoading?: boolean;
+    isProvidersLoading?: boolean;
   } = {}) => {
     (useSelector as unknown as jest.Mock).mockImplementation((selector) =>
       selector({
         accounts: { isCreateUserModalOpen: false },
         ai: {
-          agents: { isLoading: areAgentsLoading, list: agents },
-          providers: { isLoading: areProvidersLoading, list: providers },
+          agents: { isLoading: isAgentsLoading, list: agents },
+          providers: { isLoading: isProvidersLoading, list: providers },
         },
       }),
     );
@@ -144,7 +144,7 @@ describe('AIAgents', () => {
   });
 
   it('does not show the providers hint while providers are loading', () => {
-    mockState({ providers: [], areProvidersLoading: true });
+    mockState({ providers: [], isProvidersLoading: true });
 
     render(<AIAgents />);
 
