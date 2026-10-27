@@ -11,3 +11,5 @@ export interface ICreateAIProviderFormValues {
   baseUrl: string;
   apiKey: string;
 }
+
+export type TCreateTab = 'vendor' | 'custom';

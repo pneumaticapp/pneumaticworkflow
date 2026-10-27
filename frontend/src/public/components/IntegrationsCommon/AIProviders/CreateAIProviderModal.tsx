@@ -19,11 +19,9 @@ import { Header } from '../../UI/Typeography/Header';
 import { Modal } from '../../UI/Modal/Modal';
 import { Tabs } from '../../UI/Tabs';
 import { FormikDropdownList } from '../../UI/DropdownList';
-import type { ICreateAIProviderFormValues } from './types';
+import type { ICreateAIProviderFormValues, TCreateTab } from './types';
 
 import styles from './AIProviders.css';
-
-type TCreateTab = 'vendor' | 'custom';
 
 const INITIAL_VALUES: ICreateAIProviderFormValues = {
   vendor: '',
