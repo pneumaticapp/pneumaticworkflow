@@ -25,7 +25,7 @@ export function ApiKeys() {
   const newlyCreatedKey = useSelector(getApiKeysNewlyCreatedKey);
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     dispatch(loadApiKeys());
@@ -38,7 +38,7 @@ export function ApiKeys() {
   const handleCreate = useCallback(
     (name: string) => {
       dispatch(createApiKey({ name: name || undefined }));
-      setShowCreateForm(false);
+      setIsCreateModalOpen(false);
     },
     [dispatch],
   );
@@ -61,12 +61,12 @@ export function ApiKeys() {
     dispatch(clearNewlyCreatedKey());
   }, [dispatch]);
 
-  const handleShowCreateForm = useCallback(() => {
-    setShowCreateForm(true);
+  const handleOpenCreateModal = useCallback(() => {
+    setIsCreateModalOpen(true);
   }, []);
 
-  const handleHideCreateForm = useCallback(() => {
-    setShowCreateForm(false);
+  const handleCloseCreateModal = useCallback(() => {
+    setIsCreateModalOpen(false);
   }, []);
 
   const handleCopyNewlyCreatedKey = useCallback(() => {
@@ -86,7 +86,7 @@ export function ApiKeys() {
           <Button
             className={styles['api-keys__create-btn']}
             type="button"
-            onClick={handleShowCreateForm}
+            onClick={handleOpenCreateModal}
             size="sm"
             buttonStyle="yellow"
             label={formatMessage({ id: 'integrations.create-api-key' })}
@@ -117,7 +117,7 @@ export function ApiKeys() {
         onClose={handleConfirmDeleteCancel}
         onConfirm={handleDelete}
       />
-      <CreateApiKeyModal isOpen={showCreateForm} onSubmit={handleCreate} onClose={handleHideCreateForm} />
+      <CreateApiKeyModal isOpen={isCreateModalOpen} onSubmit={handleCreate} onClose={handleCloseCreateModal} />
     </>
   );
 }
