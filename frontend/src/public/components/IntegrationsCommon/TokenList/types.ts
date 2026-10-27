@@ -1,10 +1,5 @@
 import type { ReactNode } from 'react';
 
-export interface ITokenListProps {
-  children: ReactNode;
-  'data-testid'?: string;
-}
-
 export interface ITokenListItemProps {
   name: string;
   tokenPrefix: string;
