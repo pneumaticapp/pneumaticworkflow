@@ -32,7 +32,11 @@ export function AIProviders() {
     }
   }, [confirmDeleteId, dispatch]);
 
-  const closeDeleteModal = useCallback(() => setConfirmDeleteId(null), []);
+  const handleCloseDeleteModal = useCallback(() => setConfirmDeleteId(null), []);
+
+  const handleOpenCreateModal = () => {
+    dispatch(openCreateAIProviderModal());
+  };
 
   const providerToDelete = providers.find(({ id }) => id === confirmDeleteId);
 
@@ -45,7 +49,7 @@ export function AIProviders() {
         <Button
           className={styles['providers__create-btn']}
           type="button"
-          onClick={() => dispatch(openCreateAIProviderModal())}
+          onClick={handleOpenCreateModal}
           size="sm"
           buttonStyle="yellow"
           label={formatMessage({ id: 'ai-providers.add' })}
@@ -78,8 +82,8 @@ export function AIProviders() {
         acceptTitle={formatMessage({ id: 'ai-providers.delete' })}
         declineTitle={formatMessage({ id: 'integrations.cancel' })}
         onConfirm={handleDelete}
-        onReject={closeDeleteModal}
-        closeModal={closeDeleteModal}
+        onReject={handleCloseDeleteModal}
+        closeModal={handleCloseDeleteModal}
       />
     </section>
   );

@@ -73,6 +73,10 @@ export function RevokeApiKeyModal({ isOpen, onClose, onConfirm }: IRevokeApiKeyM
 export function CreateApiKeyModal({ isOpen, onSubmit, onClose }: ICreateApiKeyModalProps) {
   const { formatMessage } = useIntl();
 
+  const handleSubmit = ({ name }: ICreateApiKeyFormValues) => {
+    onSubmit(name.trim());
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} width="sm">
       <div data-testid="create-key-modal">
@@ -82,9 +86,9 @@ export function CreateApiKeyModal({ isOpen, onSubmit, onClose }: ICreateApiKeyMo
         <p className={styles['key-modal__description']}>
           {formatMessage({ id: 'integrations.create-api-key-modal-description' })}
         </p>
-        <Formik<ICreateApiKeyFormValues> initialValues={{ name: '' }} onSubmit={({ name }) => onSubmit(name.trim())}>
-          {({ handleSubmit }) => (
-            <form onSubmit={handleSubmit} data-autofocus-first-field>
+        <Formik<ICreateApiKeyFormValues> initialValues={{ name: '' }} onSubmit={handleSubmit}>
+          {({ handleSubmit: formikSubmit }) => (
+            <form onSubmit={formikSubmit} data-autofocus-first-field>
               <FormikInputField
                 autoFocus
                 name="name"

@@ -46,7 +46,13 @@ export function CreateAIProviderModal() {
     }
   }, [isOpen, dispatch]);
 
-  const onClose = () => dispatch(closeCreateAIProviderModal());
+  const handleClose = () => {
+    dispatch(closeCreateAIProviderModal());
+  };
+
+  const handleChangeTab = (tabId: string) => {
+    if (!isCreating) setActiveTab(tabId as TCreateTab);
+  };
 
   const handleSubmit = ({ vendor, name, baseUrl, apiKey }: ICreateAIProviderFormValues) => {
     if (activeTab === 'vendor') {
@@ -59,8 +65,16 @@ export function CreateAIProviderModal() {
   const vendorOptions = vendors.map(({ slug, name: vendorName }) => ({ value: slug, label: vendorName }));
   const isVendorTab = activeTab === 'vendor';
 
+  const validateForm = (values: ICreateAIProviderFormValues) =>
+    getErrorsObject(
+      values,
+      isVendorTab
+        ? { vendor: validateRequired, apiKey: validateRequired }
+        : { name: validateRequired, baseUrl: validateRequired, apiKey: validateRequired },
+    );
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} width="sm">
+    <Modal isOpen={isOpen} onClose={handleClose} width="sm">
       <div data-testid="create-ai-provider-modal">
         <Header tag="h2" size="6" className={styles['create-modal__title']}>
           {formatMessage({ id: 'ai-providers.create-modal-title' })}
@@ -76,22 +90,13 @@ export function CreateAIProviderModal() {
           ]}
           containerClassName={styles['create-modal__tabs']}
           activeTabClassName={styles['create-modal__tab_active']}
-          onChange={(tabId) => {
-            if (!isCreating) setActiveTab(tabId as TCreateTab);
-          }}
+          onChange={handleChangeTab}
         />
         <Formik
           key={activeTab}
           initialValues={INITIAL_VALUES}
           validateOnMount
-          validate={(values) =>
-            getErrorsObject(
-              values,
-              isVendorTab
-                ? { vendor: validateRequired, apiKey: validateRequired }
-                : { name: validateRequired, baseUrl: validateRequired, apiKey: validateRequired },
-            )
-          }
+          validate={validateForm}
           onSubmit={handleSubmit}
         >
           {({ handleSubmit: formikSubmit, isValid }) => (
@@ -164,7 +169,7 @@ export function CreateAIProviderModal() {
                 <button
                   type="button"
                   className="cancel-button"
-                  onClick={onClose}
+                  onClick={handleClose}
                   data-testid="cancel-create-ai-provider"
                 >
                   {formatMessage({ id: 'integrations.cancel' })}
