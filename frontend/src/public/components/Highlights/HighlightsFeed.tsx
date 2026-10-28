@@ -1,5 +1,5 @@
 import classnames from 'classnames';
-import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { ChangeEvent, useEffect, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useIntl } from 'react-intl';
 
@@ -110,9 +110,9 @@ export function HighlightsFeed({
     setUsersSearchText(e.target.value);
   };
 
-  const isListFullyFetched = useMemo(() => items.length === count && !isFirstFetch, [count, items, isFirstFetch]);
+  const isListFullyFetched = items.length === count && !isFirstFetch;
 
-  const isFeedEmpty = useMemo(() => !isArrayWithItems(items) && !isFirstFetch, [items, isFirstFetch]);
+  const isFeedEmpty = !isArrayWithItems(items) && !isFirstFetch;
 
   const handleChangeFilterList =
     (type: EHighlightsFilterType) => (id: number) => (e: ChangeEvent<HTMLInputElement>) => {
@@ -168,18 +168,15 @@ export function HighlightsFeed({
     loadHighlights({});
   };
 
-  const handleChangeSelectedDateFilter = useCallback(
-    (selectedTimeRange: EHighlightsDateFilter) => () => {
-      if (selectedTimeRange === timeRange) {
-        return;
-      }
+  const handleChangeSelectedDateFilter = (selectedTimeRange: EHighlightsDateFilter) => () => {
+    if (selectedTimeRange === timeRange) {
+      return;
+    }
 
-      const newRange = getHighlightsDateRange(selectedTimeRange, timezone, dateFdw);
+    const newRange = getHighlightsDateRange(selectedTimeRange, timezone, dateFdw);
 
-      setFilters({ timeRange: selectedTimeRange, ...newRange });
-    },
-    [timeRange, timezone, dateFdw],
-  );
+    setFilters({ timeRange: selectedTimeRange, ...newRange });
+  };
 
   const handleApplyFilters = () => {
     loadHighlights({});
@@ -200,14 +197,9 @@ export function HighlightsFeed({
     }
   };
 
-  const [workflowLogWorkflowId, setWorkflowLogWorkflowId] = useState<number | null>(null);
-  const handleOpenWorkflowLogPopup = useCallback(
-    (workflowIdParam: number) => () => {
-      setWorkflowLogWorkflowId(workflowIdParam);
-      openWorkflowLogPopup({ workflowId: workflowIdParam });
-    },
-    [workflowLogWorkflowId],
-  );
+  const handleOpenWorkflowLogPopup = (workflowIdParam: number) => () => {
+    openWorkflowLogPopup({ workflowId: workflowIdParam });
+  };
 
   const handleRedirectToTemplate = (templateId?: number) => () => {
     if (!templateId) {
