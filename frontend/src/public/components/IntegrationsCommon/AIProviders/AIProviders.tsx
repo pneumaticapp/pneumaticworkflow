@@ -11,7 +11,7 @@ import { getAIProvidersState } from '../../../redux/selectors/ai';
 
 import { CreateAIProviderModal } from './CreateAIProviderModal';
 import { AIProviderListItem } from './AIProviderListItem';
-import styles from './AIProviders.css';
+import sectionStyles from '../IntegrationsCommon.css';
 import tokenListStyles from '../TokenList/TokenList.css';
 
 export function AIProviders() {
@@ -41,13 +41,17 @@ export function AIProviders() {
   const providerToDelete = providers.find(({ id }) => id === confirmDeleteId);
 
   return (
-    <section className={styles['providers']} aria-labelledby="ai-providers-title" data-testid="ai-providers-section">
-      <header className={styles['providers__header']}>
-        <h2 id="ai-providers-title" className={styles['providers__title']}>
+    <section
+      className={sectionStyles['section']}
+      aria-labelledby="ai-providers-title"
+      data-testid="ai-providers-section"
+    >
+      <header className={sectionStyles['section__header']}>
+        <h2 id="ai-providers-title" className={sectionStyles['section__title']}>
           {formatMessage({ id: 'ai-providers.title' })}
         </h2>
         <Button
-          className={styles['providers__create-btn']}
+          className={sectionStyles['section__create-btn']}
           type="button"
           onClick={handleOpenCreateModal}
           size="sm"
@@ -60,7 +64,7 @@ export function AIProviders() {
       {isLoading && <TokenListSkeleton data-testid="ai-providers-skeleton" />}
 
       {!isLoading && providers.length === 0 && (
-        <p className={styles['providers__empty']} data-testid="empty-ai-providers-message">
+        <p className={sectionStyles['section__empty']} data-testid="empty-ai-providers-message">
           {formatMessage({ id: 'ai-providers.empty' })}
         </p>
       )}
