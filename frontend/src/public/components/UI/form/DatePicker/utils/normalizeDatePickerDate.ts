@@ -1,5 +1,7 @@
 import moment from 'moment-timezone';
 
+import { toEndOfDay } from '../../../../../utils/dayBounds';
+
 export type TDatePickerDayMode = 'start' | 'end';
 
 interface INormalizeDatePickerDateParams {
@@ -50,7 +52,7 @@ export const normalizeDatePickerDate = ({
   );
 
   if (mode === 'end' || !startDay) {
-    return dayStart.clone().set({ hour: 23, minute: 59, second: 59, millisecond: 0 }).toDate();
+    return toEndOfDay(dayStart).toDate();
   }
 
   return dayStart.toDate();

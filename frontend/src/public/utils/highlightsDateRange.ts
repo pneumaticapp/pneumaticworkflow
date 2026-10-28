@@ -1,6 +1,7 @@
 import moment from 'moment-timezone';
 
 import { EHighlightsDateFilter } from '../types/highlights';
+import { toEndOfDay } from './dayBounds';
 
 export interface IHighlightsDateRange {
   startDate: Date;
@@ -8,8 +9,6 @@ export interface IHighlightsDateRange {
 }
 
 const DAYS_IN_WEEK = 7;
-
-const LAST_SECOND_OF_DAY = { hour: 23, minute: 59, second: 59, millisecond: 0 };
 
 const getNow = (timezone: string) => (timezone ? moment.tz(timezone) : moment());
 
@@ -21,7 +20,7 @@ const parseFirstDayOfWeek = (dateFdw?: string): number => {
 
 const toDayRange = (dayStart: moment.Moment, lastDayStart: moment.Moment = dayStart): IHighlightsDateRange => ({
   startDate: dayStart.toDate(),
-  endDate: lastDayStart.clone().set(LAST_SECOND_OF_DAY).toDate(),
+  endDate: toEndOfDay(lastDayStart).toDate(),
 });
 
 export const getTodayDateRange = (timezone: string): IHighlightsDateRange =>
