@@ -1,13 +1,4 @@
-/* stylelint-disable
-    selector-max-specificity,
-    max-nesting-depth,selector-pseudo-class-no-unknown,
-    declaration-no-important,
-    selector-max-compound-selectors
-*/
-
-/* .conditions {
-  Add styles when multiple conditions will be enabled
-} */
+/* stylelint-disable declaration-no-important -- beats react-datepicker.css `.react-datepicker__input-container input` padding/background-color and `input:focus` border-color !important, and RichText span display in .rich-label */
 
 .condition {
   margin-bottom: 0.8rem;
@@ -67,34 +58,24 @@
       width: 100%;
     }
   }
+}
 
-  :global {
-    .react-datepicker-wrapper {
-      .react-datepicker__input-container {
-        input {
-          width: 100% !important;
-          height: 4rem;
-          padding: 1.4rem 5rem 1.4rem 1.6rem !important;
-          font-family: Nunito, sans-serif !important;
-          font-size: 1.5rem !important;
-          line-height: 2rem !important;
-          color: var(--pneumatic-color-black100) !important;
-          outline: none !important;
-          background: var(--pneumatic-color-white) !important;
-          border: 0.1rem solid var(--pneumatic-color-black16) !important;
-          border-radius: 0.8rem !important;
-          transition: 0.15s ease-in border-color !important;
+.condition-rule__settings-inner :global(.react-datepicker__input-container) input {
+  height: 4rem;
+  padding: 1.4rem 5rem 1.4rem 1.6rem !important;
+  font-family: Nunito, sans-serif;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  background: var(--pneumatic-color-white) !important;
+  border-radius: 0.8rem;
+  transition: 0.15s ease-in border-color;
 
-          &:focus {
-            border-color: var(--pneumatic-color-black48) !important;
-          }
+  &:focus {
+    border-color: var(--pneumatic-color-black48) !important;
+  }
 
-          &::placeholder {
-            color: var(--default-placeholder-color) !important;
-          }
-        }
-      }
-    }
+  &::placeholder {
+    color: var(--default-placeholder-color);
   }
 }
 
