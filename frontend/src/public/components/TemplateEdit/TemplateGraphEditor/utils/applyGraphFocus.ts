@@ -126,16 +126,14 @@ export function applyGraphFocus(
 
       return {
         ...edge,
-        className: [isConditional ? GRAPH_EDGE_CLASS_CONDITIONAL : undefined, focusClass]
-          .filter(Boolean)
-          .join(' '),
+        className: [isConditional ? GRAPH_EDGE_CLASS_CONDITIONAL : undefined, focusClass].filter(Boolean).join(' '),
         // Labels live outside the edge element, so they follow the state through the edge data.
         data: { ...edge.data, focus },
         style: isHighlighted
           ? {
-            ...edge.style,
-            ...(isConditional ? EDGE_STYLE_CONDITIONAL_FOCUSED : EDGE_STYLE_FOCUSED),
-          }
+              ...edge.style,
+              ...(isConditional ? EDGE_STYLE_CONDITIONAL_FOCUSED : EDGE_STYLE_FOCUSED),
+            }
           : edge.style,
       };
     }),

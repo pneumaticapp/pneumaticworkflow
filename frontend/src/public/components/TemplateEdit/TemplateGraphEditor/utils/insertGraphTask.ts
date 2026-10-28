@@ -28,17 +28,9 @@ function isStartRuleFrom(rule: TConditionRule, fromId: string): boolean {
   return rule.field === fromId;
 }
 
-function replaceStartAfterSource(
-  task: ITemplateTaskClient,
-  fromId: string,
-  toId: string,
-): ITemplateTaskClient {
-  const startConditions = task.conditions.filter(
-    (condition) => condition.action === EConditionAction.StartTask,
-  );
-  const otherConditions = task.conditions.filter(
-    (condition) => condition.action !== EConditionAction.StartTask,
-  );
+function replaceStartAfterSource(task: ITemplateTaskClient, fromId: string, toId: string): ITemplateTaskClient {
+  const startConditions = task.conditions.filter((condition) => condition.action === EConditionAction.StartTask);
+  const otherConditions = task.conditions.filter((condition) => condition.action !== EConditionAction.StartTask);
 
   if (startConditions.length === 0) {
     return {
@@ -112,11 +104,7 @@ export function insertGraphTask(
     return { tasks, createdApiName: null };
   }
 
-  const nextTasks = [
-    ...sorted.slice(0, beforeIndex),
-    created,
-    ...sorted.slice(beforeIndex),
-  ].map((task) => {
+  const nextTasks = [...sorted.slice(0, beforeIndex), created, ...sorted.slice(beforeIndex)].map((task) => {
     if (task.apiName !== intent.beforeId) {
       return task;
     }

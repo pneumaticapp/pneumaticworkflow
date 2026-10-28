@@ -32,13 +32,14 @@ export const KickoffNode = ({ id, data, selected }: NodeProps<IKickoffNodeData>)
     updateNodeInternals(id);
   }, [id, connectedSignature, updateNodeInternals]);
 
-  const meta = fieldsCount > 0 ? (
-    <div className={cardStyles['graph-node-card__meta']}>
-      <span className={cardStyles['graph-node-card__meta-item']}>
-        {formatMessage({ id: 'template.graph-fields-count' }, { count: fieldsCount })}
-      </span>
-    </div>
-  ) : null;
+  const meta =
+    fieldsCount > 0 ? (
+      <div className={cardStyles['graph-node-card__meta']}>
+        <span className={cardStyles['graph-node-card__meta-item']}>
+          {formatMessage({ id: 'template.graph-fields-count' }, { count: fieldsCount })}
+        </span>
+      </div>
+    ) : null;
 
   return (
     <GraphNodeCard
@@ -49,12 +50,8 @@ export const KickoffNode = ({ id, data, selected }: NodeProps<IKickoffNodeData>)
       onEdit={data.onEdit}
       editLabel={formatMessage({ id: 'kickoff.menu-edit' })}
       meta={meta}
-      handles={(
-        <GraphCardHandles handles={handles} includeTargets={false} />
-      )}
-      addTask={addTaskIntent && onAddTask ? (
-        <GraphAddTaskButton intent={addTaskIntent} onAddTask={onAddTask} />
-      ) : null}
+      handles={<GraphCardHandles handles={handles} includeTargets={false} />}
+      addTask={addTaskIntent && onAddTask ? <GraphAddTaskButton intent={addTaskIntent} onAddTask={onAddTask} /> : null}
     />
   );
 };

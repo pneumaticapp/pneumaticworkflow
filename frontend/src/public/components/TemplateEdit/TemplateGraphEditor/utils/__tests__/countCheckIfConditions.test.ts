@@ -1,4 +1,9 @@
-import { EConditionAction, EConditionLogicOperations, EConditionOperators, ICondition } from '../../../TaskForm/Conditions';
+import {
+  EConditionAction,
+  EConditionLogicOperations,
+  EConditionOperators,
+  ICondition,
+} from '../../../TaskForm/Conditions';
 import { countCheckIfConditions, isCheckIfCondition } from '../countCheckIfConditions';
 
 function createCondition(action: EConditionAction, field = 'field-1'): ICondition {
@@ -34,18 +39,22 @@ describe('countCheckIfConditions', () => {
   });
 
   it('should skip empty check-if placeholders', () => {
-    expect(countCheckIfConditions([
-      {
-        ...createCondition(EConditionAction.SkipTask),
-        rules: [{
-          ruleApiName: 'empty',
-          predicateApiName: 'empty',
-          field: null,
-          operator: null,
-          logicOperation: EConditionLogicOperations.And,
-        }],
-      },
-    ])).toBe(0);
+    expect(
+      countCheckIfConditions([
+        {
+          ...createCondition(EConditionAction.SkipTask),
+          rules: [
+            {
+              ruleApiName: 'empty',
+              predicateApiName: 'empty',
+              field: null,
+              operator: null,
+              logicOperation: EConditionLogicOperations.And,
+            },
+          ],
+        },
+      ]),
+    ).toBe(0);
   });
 
   it('should treat missing conditions as zero', () => {

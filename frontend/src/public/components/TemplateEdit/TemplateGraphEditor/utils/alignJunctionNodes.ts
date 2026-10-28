@@ -25,11 +25,7 @@ function isXTaken(x: number, taken: number[]): boolean {
   return taken.some((takenX) => Math.abs(takenX - centerX) < GRAPH_SKIP_LANE_STEP);
 }
 
-function placeCheckIfJunction(
-  box: IGraphNodeBox,
-  pull: number,
-  takenXs: number[],
-): { x: number; y: number } {
+function placeCheckIfJunction(box: IGraphNodeBox, pull: number, takenXs: number[]): { x: number; y: number } {
   const pullLeft = pull < 0;
   let x = checkIfSideX(box, pullLeft);
 
@@ -81,9 +77,10 @@ export function alignJunctionNodes(nodes: TGraphNode[], edges: TGraphEdge[]): TG
       return node;
     }
 
-    const anchorEdge = node.data.kind === 'fork'
-      ? edges.find((edge) => edge.target === node.id)
-      : edges.find((edge) => edge.source === node.id);
+    const anchorEdge =
+      node.data.kind === 'fork'
+        ? edges.find((edge) => edge.target === node.id)
+        : edges.find((edge) => edge.source === node.id);
     const anchorNodeId = node.data.kind === 'fork' ? anchorEdge?.source : anchorEdge?.target;
     const anchorNode = anchorNodeId ? nodeById.get(anchorNodeId) : undefined;
 
@@ -107,9 +104,7 @@ export function alignJunctionNodes(nodes: TGraphNode[], edges: TGraphEdge[]): TG
       };
     }
 
-    const y = node.data.kind === 'fork'
-      ? gapJunctionY(box.bottom)
-      : gapJunctionY(box.y - GRAPH_ROW_GAP);
+    const y = node.data.kind === 'fork' ? gapJunctionY(box.bottom) : gapJunctionY(box.y - GRAPH_ROW_GAP);
     const x = box.centerX - GRAPH_JUNCTION_SIZE / 2;
 
     return {

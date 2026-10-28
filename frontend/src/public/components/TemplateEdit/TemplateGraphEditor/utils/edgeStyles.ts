@@ -35,8 +35,7 @@ export function isSkipGraphEdge(edge: TGraphEdge): boolean {
 
 export function isConditionalGraphEdge(edge: TGraphEdge): boolean {
   return (
-    Boolean(edge.data?.isConditional)
-    || Boolean(edge.className?.split(' ').includes(GRAPH_EDGE_CLASS_CONDITIONAL))
+    Boolean(edge.data?.isConditional) || Boolean(edge.className?.split(' ').includes(GRAPH_EDGE_CLASS_CONDITIONAL))
   );
 }
 

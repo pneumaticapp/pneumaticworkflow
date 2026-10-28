@@ -33,8 +33,11 @@ describe('applyStoredPositions', () => {
     const graph = buildTemplateGraph(GRAPH_SHOWCASE_TEMPLATE, {
       'task-url-title': { x: movedX, y: 500 },
     });
-    const forkEdge = graph.edges.find((edge) => edge.source === 'task-url-title'
-      && graph.nodes.find((node) => node.id === edge.target)?.type === EGraphNodeType.Junction);
+    const forkEdge = graph.edges.find(
+      (edge) =>
+        edge.source === 'task-url-title' &&
+        graph.nodes.find((node) => node.id === edge.target)?.type === EGraphNodeType.Junction,
+    );
     const fork = graph.nodes.find((node) => node.id === forkEdge?.target);
 
     expect(fork?.position.x).toBe(movedX + GRAPH_NODE_WIDTH / 2 - GRAPH_JUNCTION_SIZE / 2);

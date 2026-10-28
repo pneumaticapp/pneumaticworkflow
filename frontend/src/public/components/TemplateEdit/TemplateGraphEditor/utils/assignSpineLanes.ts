@@ -2,11 +2,7 @@ import { EGraphNodeType, TGraphEdge, TGraphNode } from '../types';
 import { isConditionalGraphEdge } from './edgeStyles';
 import { getJunctionKind, isCardNode } from './graphGeometry';
 
-function resolveCheckIfCard(
-  id: string,
-  nodeById: Map<string, TGraphNode>,
-  edges: TGraphEdge[],
-): string {
+function resolveCheckIfCard(id: string, nodeById: Map<string, TGraphNode>, edges: TGraphEdge[]): string {
   const node = nodeById.get(id);
 
   if (node && isCardNode(node)) {
@@ -221,12 +217,7 @@ export function assignSpineLanes(
     return 'both';
   };
 
-  const assignExtraLanes = (
-    origin: number,
-    level: number,
-    ordered: string[],
-    side: 'left' | 'right' | 'both',
-  ) => {
+  const assignExtraLanes = (origin: number, level: number, ordered: string[], side: 'left' | 'right' | 'both') => {
     const leftSlots = side === 'right' ? [] : collectOpenLanes(origin, level, -1);
     const rightSlots = side === 'left' ? [] : collectOpenLanes(origin, level, 1);
     let leftIndex = 0;
@@ -302,9 +293,8 @@ export function assignSpineLanes(
   };
 
   const compareExtras = (first: string, second: string): number => {
-    const placedLinks = (id: string): number => (
-      (checkIfPartners.get(id) ?? []).filter((partnerId) => lanes.has(partnerId)).length
-    );
+    const placedLinks = (id: string): number =>
+      (checkIfPartners.get(id) ?? []).filter((partnerId) => lanes.has(partnerId)).length;
     const linkDiff = placedLinks(second) - placedLinks(first);
 
     if (linkDiff !== 0) {
@@ -405,8 +395,9 @@ export function assignSpineLanes(
 
     return Boolean(node && isCardNode(node));
   });
-  const remainingLevels = [...new Set(pendingCardIds.map((id) => levels.get(id) ?? 0))]
-    .sort((first, second) => first - second);
+  const remainingLevels = [...new Set(pendingCardIds.map((id) => levels.get(id) ?? 0))].sort(
+    (first, second) => first - second,
+  );
 
   remainingLevels.forEach((level) => {
     propagateJunctionLanes();

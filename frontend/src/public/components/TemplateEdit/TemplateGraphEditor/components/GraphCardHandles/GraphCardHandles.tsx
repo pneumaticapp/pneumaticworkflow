@@ -59,15 +59,16 @@ export const GraphCardHandles = ({ handles, includeTargets }: IGraphCardHandlesP
         className={handleClassName(id, handles[flag])}
       />
     ))}
-    {includeTargets && TARGET_HANDLES.map(({ id, type, position, flag }) => (
-      <Handle
-        key={id}
-        type={type}
-        position={position}
-        id={id}
-        isConnectable={false}
-        className={handleClassName(id, handles[flag])}
-      />
-    ))}
+    {includeTargets &&
+      TARGET_HANDLES.map(({ id, type, position, flag }) => (
+        <Handle
+          key={id}
+          type={type}
+          position={position}
+          id={id}
+          isConnectable={false}
+          className={handleClassName(id, handles[flag])}
+        />
+      ))}
   </>
 );

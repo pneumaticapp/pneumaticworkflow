@@ -8,7 +8,7 @@ const createMockState = (viewMode: EGraphViewMode, selectedTaskApiName: string |
       viewMode,
       selectedTaskApiName,
     },
-  } as IApplicationState);
+  }) as IApplicationState;
 
 describe('templateGraphView selectors', () => {
   it('should return list view mode from store', () => {

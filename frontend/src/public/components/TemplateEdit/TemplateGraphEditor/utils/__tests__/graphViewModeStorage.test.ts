@@ -1,9 +1,5 @@
 import { EGraphViewMode } from '../../types';
-import {
-  GRAPH_VIEW_MODE_STORAGE_KEY,
-  getGraphViewMode,
-  saveGraphViewMode,
-} from '../graphViewModeStorage';
+import { GRAPH_VIEW_MODE_STORAGE_KEY, getGraphViewMode, saveGraphViewMode } from '../graphViewModeStorage';
 
 describe('graphViewModeStorage', () => {
   beforeEach(() => {

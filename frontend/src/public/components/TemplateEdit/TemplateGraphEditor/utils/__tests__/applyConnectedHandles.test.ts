@@ -32,7 +32,13 @@ describe('applyConnectedHandles', () => {
       { id: 'junction-fork-kickoff', type: EGraphNodeType.Junction, position: { x: 0, y: 0 }, data: { kind: 'fork' } },
     ] as TGraphNode[];
     const edges: TGraphEdge[] = [
-      { id: 'e1', source: 'kickoff', target: 'junction-fork-kickoff', sourceHandle: 'source-bottom', targetHandle: 'target-top' },
+      {
+        id: 'e1',
+        source: 'kickoff',
+        target: 'junction-fork-kickoff',
+        sourceHandle: 'source-bottom',
+        targetHandle: 'target-top',
+      },
     ];
 
     const next = applyConnectedHandles({ nodes, edges });

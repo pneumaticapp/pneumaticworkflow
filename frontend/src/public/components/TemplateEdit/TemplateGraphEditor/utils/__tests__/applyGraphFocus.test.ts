@@ -81,10 +81,7 @@ describe('collectFocusIds', () => {
       createNode('task-b', EGraphNodeType.Task),
       createNode('task-c', EGraphNodeType.Task),
     ];
-    const edges: TGraphEdge[] = [
-      createEdge('e1', 'task-a', 'task-b'),
-      createEdge('e2', 'task-b', 'task-c'),
-    ];
+    const edges: TGraphEdge[] = [createEdge('e1', 'task-a', 'task-b'), createEdge('e2', 'task-b', 'task-c')];
 
     const { nodeIds, edgeIds } = collectFocusIds(nodes, edges, 'task-a');
 
@@ -139,9 +136,7 @@ describe('collectFocusIds', () => {
   it('should reach every card of the showcase graph from the first one', () => {
     const { nodes, edges } = templateToGraph(GRAPH_SHOWCASE_TEMPLATE);
     const { nodeIds } = collectFocusIds(nodes, edges, KICKOFF_NODE_ID);
-    const cardIds = nodes
-      .filter((node) => node.type !== EGraphNodeType.Junction)
-      .map((node) => node.id);
+    const cardIds = nodes.filter((node) => node.type !== EGraphNodeType.Junction).map((node) => node.id);
 
     expect(cardIds.every((id) => nodeIds.has(id))).toBe(true);
   });
@@ -156,10 +151,7 @@ describe('applyGraphFocus', () => {
   });
 
   it('should mark the focused card and highlight connected edges', () => {
-    const nodes: TGraphNode[] = [
-      createNode('task-a', EGraphNodeType.Task),
-      createNode('task-b', EGraphNodeType.Task),
-    ];
+    const nodes: TGraphNode[] = [createNode('task-a', EGraphNodeType.Task), createNode('task-b', EGraphNodeType.Task)];
     const edges: TGraphEdge[] = [createEdge('e1', 'task-a', 'task-b')];
 
     const { nodes: nextNodes, edges: nextEdges } = applyGraphFocus(nodes, edges, 'task-a');
@@ -202,10 +194,7 @@ describe('applyGraphFocus', () => {
       createNode('task-b', EGraphNodeType.Task),
       createNode('task-c', EGraphNodeType.Task),
     ];
-    const edges: TGraphEdge[] = [
-      createEdge('e1', 'task-a', 'task-b'),
-      createEdge('e2', 'task-c', 'task-b'),
-    ];
+    const edges: TGraphEdge[] = [createEdge('e1', 'task-a', 'task-b'), createEdge('e2', 'task-c', 'task-b')];
 
     const { edges: nextEdges } = applyGraphFocus(nodes, edges, 'task-a');
 
@@ -214,10 +203,7 @@ describe('applyGraphFocus', () => {
   });
 
   it('should thicken a highlighted gray line', () => {
-    const nodes: TGraphNode[] = [
-      createNode('task-a', EGraphNodeType.Task),
-      createNode('task-b', EGraphNodeType.Task),
-    ];
+    const nodes: TGraphNode[] = [createNode('task-a', EGraphNodeType.Task), createNode('task-b', EGraphNodeType.Task)];
     const edges: TGraphEdge[] = [
       {
         id: 'edge-task-a-task-b-0',
