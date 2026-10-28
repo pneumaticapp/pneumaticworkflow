@@ -115,7 +115,7 @@ export function TemplateEdit({
   const prevLocation = usePrevious(location);
   const prevTemplate = usePrevious(template);
 
-  const [openedTasks, setOpenedTasks] = useState<any>({});
+  const [openedTasks, setOpenedTasks] = useState<Record<string, boolean>>({});
   const [openedDelays, setOpenedDelays] = useState<any>({});
 
   useEffect(() => {
@@ -195,7 +195,7 @@ export function TemplateEdit({
 
   const openTask = (taskUUID?: string) => {
     if (!taskUUID) return;
-    setOpenedTasks((prev: typeof openedTasks) => ({ ...prev, [taskUUID]: true }));
+    setOpenedTasks((prev) => ({ ...prev, [taskUUID]: true }));
   };
 
   const sortedTasks = () => [...tasks].sort((a, b) => a.number - b.number);
@@ -375,7 +375,7 @@ export function TemplateEdit({
   };
 
   const toggleIsOpenTask = (taskUUID: string) => {
-    setOpenedTasks((prev: typeof openedTasks) => ({ ...prev, [taskUUID]: !prev[taskUUID] }));
+    setOpenedTasks((prev) => ({ ...prev, [taskUUID]: !prev[taskUUID] }));
   };
 
   const handleMoveTask = (from: number, direction: EMoveDirections) => () => {
