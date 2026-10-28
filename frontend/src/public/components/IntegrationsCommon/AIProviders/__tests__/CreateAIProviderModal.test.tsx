@@ -34,10 +34,18 @@ jest.mock('../../../UI/Fields/InputField', () => {
   const { useField } = jest.requireActual('formik');
 
   return {
-    FormikInputField: ({ name, 'data-testid': testId }: { name: string; 'data-testid'?: string }) => {
+    FormikInputField: ({
+      name,
+      autoFocus,
+      'data-testid': testId,
+    }: {
+      name: string;
+      autoFocus?: boolean;
+      'data-testid'?: string;
+    }) => {
       const [field] = useField(name);
 
-      return <input {...field} data-testid={testId} />;
+      return <input {...field} autoFocus={autoFocus} data-testid={testId} />;
     },
   };
 });
@@ -266,5 +274,15 @@ describe('CreateAIProviderModal', () => {
 
     userEvent.selectOptions(screen.getByTestId('ai-provider-vendor-select'), 'openai');
     await waitFor(() => expect(screen.getByTestId('submit-create-ai-provider')).toBeEnabled());
+  });
+
+  it('does not focus a field when the modal opens or the tab changes', () => {
+    renderModal();
+    expect(document.activeElement).toBe(document.body);
+
+    userEvent.click(screen.getByText(t('ai-providers.tab-custom')));
+
+    expect(screen.getByTestId('ai-provider-name-input')).not.toHaveFocus();
+    expect(document.activeElement?.tagName).not.toBe('INPUT');
   });
 });

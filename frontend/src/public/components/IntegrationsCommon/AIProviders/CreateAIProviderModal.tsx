@@ -96,7 +96,7 @@ export function CreateAIProviderModal() {
         onSubmit={handleSubmit}
       >
         {({ handleSubmit: formikSubmit, isValid }) => (
-          <form onSubmit={formikSubmit} data-autofocus-first-field>
+          <form onSubmit={formikSubmit}>
             <div className={styles['create-modal__fields']}>
               {isVendorTab ? (
                 <>
@@ -121,7 +121,6 @@ export function CreateAIProviderModal() {
               ) : (
                 <>
                   <FormikInputField
-                    autoFocus
                     name="name"
                     title={formatMessage({ id: 'ai-providers.name-label' })}
                     placeholder={formatMessage({ id: 'ai-providers.name-placeholder' })}
