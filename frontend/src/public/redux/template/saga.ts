@@ -58,7 +58,7 @@ import {
   removeTemplateValidationErrors,
   setTemplateValidationErrors,
 } from '../templateValidation/slice';
-import { createTemplateValidationError } from '../templateValidation/getValidationErrorTarget';
+import { createTemplateValidationError } from '../../utils/templates/getValidationErrorTarget';
 import type { ITemplateValidationError } from '../templateValidation/types';
 import { getTemplateValidationErrors } from '../selectors/templateValidation';
 import { insertId } from '../../utils/templates/insertId';

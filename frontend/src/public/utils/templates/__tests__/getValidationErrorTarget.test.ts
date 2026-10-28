@@ -3,7 +3,7 @@ import {
   getValidationErrorEntitySnapshot,
   getValidationErrorTarget,
 } from '../getValidationErrorTarget';
-import { initialTemplate } from '../../template/reducer';
+import { initialTemplate } from '../../../redux/template/reducer';
 import { makeExtraField } from '../../../__stubs__/fields.factory';
 import {
   makeFieldsetBindingClient,

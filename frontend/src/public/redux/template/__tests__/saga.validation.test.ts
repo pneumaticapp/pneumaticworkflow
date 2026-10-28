@@ -16,7 +16,7 @@ import {
   removeTemplateValidationErrors,
   setTemplateValidationErrors,
 } from '../../templateValidation/slice';
-import { getValidationErrorEntitySnapshot } from '../../templateValidation/getValidationErrorTarget';
+import { getValidationErrorEntitySnapshot } from '../../../utils/templates/getValidationErrorTarget';
 import type { ITemplateValidationError } from '../../templateValidation/types';
 
 jest.mock('../../../utils/getConfig', () => ({

@@ -4,7 +4,7 @@ import type { IFieldsetBindingClient } from '../../../types/fieldset';
 import type { IExtraField, ITemplateClient } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { validateFieldsetTitle } from '../../../utils/validators';
-import { createTemplateValidationError } from '../../../redux/templateValidation/getValidationErrorTarget';
+import { createTemplateValidationError } from '../../../utils/templates/getValidationErrorTarget';
 import type { ITemplateValidationError } from '../../../redux/templateValidation/types';
 import { getConditionRuleErrorId } from '../TaskForm/Conditions/utils/conditionsValidators';
 import { ETaskFormParts } from '../types';

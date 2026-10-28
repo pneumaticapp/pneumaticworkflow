@@ -2,7 +2,7 @@ import type { IFieldsetBindingClient, IFieldsetField } from '../../types/fieldse
 import type { IExtraField, ITemplateClient, ITemplateTaskClient } from '../../types/template';
 import { ETaskFormParts } from '../../components/TemplateEdit/types';
 import { EConditionAction } from '../../components/TemplateEdit/TaskForm/Conditions/types';
-import type { ITemplateValidationError, ITemplateValidationErrorMatch } from './types';
+import type { ITemplateValidationError, ITemplateValidationErrorMatch } from '../../redux/templateValidation/types';
 
 const hasSelection = (field: IExtraField | IFieldsetField, apiName: string) =>
   (field.selections || []).some((selection) => typeof selection !== 'string' && selection.apiName === apiName);
