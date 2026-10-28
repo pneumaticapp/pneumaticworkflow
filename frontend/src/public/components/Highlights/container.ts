@@ -6,10 +6,10 @@ import { openWorkflowLogPopup } from '../../redux/workflows/slice';
 import {
   loadHighlights,
   loadHighlightsTemplatesTitles,
-  resetHightlightsStore,
-  setFilters,
-  setHighlightsFiltersManuallyChanged,
-} from '../../redux/highlights/actions';
+  resetHighlightsStore,
+  setHighlightsFilters,
+  setHighlightsFiltersChanged,
+} from '../../redux/highlights/slice';
 
 import { HighlightsFeed, IHighlightsFeedProps } from './HighlightsFeed';
 import { withSyncedQueryString } from '../../HOCs/withSyncedQueryString';
@@ -33,17 +33,17 @@ type THighlightsFeedStoreProps = Pick<
   | 'endDate'
   | 'usersFilter'
   | 'templatesFilter'
-  | 'filtersChanged'
+  | 'hasChangedFilters'
 >;
 
 type THighlightsFeedDispatchProps = Pick<
   IHighlightsFeedProps,
   | 'openWorkflowLogPopup'
   | 'loadHighlights'
-  | 'resetHightlightsStore'
+  | 'resetHighlightsStore'
   | 'loadTemplatesTitles'
-  | 'setFilters'
-  | 'setFiltersChanged'
+  | 'setHighlightsFilters'
+  | 'setHighlightsFiltersChanged'
 >;
 
 export function mapStateToProps({
@@ -57,7 +57,7 @@ export function mapStateToProps({
     isTemplatesTitlesLoading,
     items,
     templatesTitles,
-    filters: { timeRange, startDate, endDate, usersFilter, templatesFilter, filtersChanged },
+    filters: { timeRange, startDate, endDate, usersFilter, templatesFilter, hasChangedFilters },
   },
 }: IApplicationState): THighlightsFeedStoreProps {
   return {
@@ -74,7 +74,7 @@ export function mapStateToProps({
     endDate,
     usersFilter,
     templatesFilter,
-    filtersChanged,
+    hasChangedFilters,
   };
 }
 
@@ -82,23 +82,23 @@ export const mapDispatchToProps: THighlightsFeedDispatchProps = {
   loadHighlights,
   loadTemplatesTitles: loadHighlightsTemplatesTitles,
   openWorkflowLogPopup,
-  resetHightlightsStore,
-  setFilters,
-  setFiltersChanged: setHighlightsFiltersManuallyChanged,
+  resetHighlightsStore,
+  setHighlightsFilters,
+  setHighlightsFiltersChanged,
 };
 
 const SyncedHiglights = withSyncedQueryString<THighlightsFeedStoreProps>([
   {
     propName: 'timeRange',
     queryParamName: 'time-range',
-    defaultAction: setFilters({ timeRange: EHighlightsDateFilter.Today }),
-    createAction: (timeRange: EHighlightsDateFilter) => setFilters({ timeRange }),
+    defaultAction: setHighlightsFilters({ timeRange: EHighlightsDateFilter.Today }),
+    createAction: (timeRange: EHighlightsDateFilter) => setHighlightsFilters({ timeRange }),
     getQueryParamByProp: (value) => value,
   },
   {
     propName: 'startDate',
     queryParamName: 'start-date',
-    defaultAction: setFilters({ startDate: getTodayDateRange().startDate }),
+    defaultAction: setHighlightsFilters({ startDate: getTodayDateRange().startDate }),
     createAction: (startDateQuery: string) => {
       const startDate = parseDateQueryParam(startDateQuery);
 
@@ -106,14 +106,14 @@ const SyncedHiglights = withSyncedQueryString<THighlightsFeedStoreProps>([
         return { type: 'EMPTY_ACTION' } as AnyAction;
       }
 
-      return setFilters({ startDate });
+      return setHighlightsFilters({ startDate });
     },
     getQueryParamByProp: serializeDateQueryParam,
   },
   {
     propName: 'endDate',
     queryParamName: 'end-date',
-    defaultAction: setFilters({ endDate: getTodayDateRange().endDate }),
+    defaultAction: setHighlightsFilters({ endDate: getTodayDateRange().endDate }),
     createAction: (endDateQuery: string) => {
       const endDate = parseDateQueryParam(endDateQuery);
 
@@ -121,29 +121,29 @@ const SyncedHiglights = withSyncedQueryString<THighlightsFeedStoreProps>([
         return { type: 'EMPTY_ACTION' } as AnyAction;
       }
 
-      return setFilters({ endDate });
+      return setHighlightsFilters({ endDate });
     },
     getQueryParamByProp: serializeDateQueryParam,
   },
   {
     propName: 'usersFilter',
     queryParamName: 'users',
-    defaultAction: setFilters({ usersFilter: [] }),
+    defaultAction: setHighlightsFilters({ usersFilter: [] }),
     createAction: (usersQuery) => {
       const usersFilter = usersQuery.split(',').map(Number);
 
-      return setFilters({ usersFilter });
+      return setHighlightsFilters({ usersFilter });
     },
     getQueryParamByProp: (users) => users.join(','),
   },
   {
     propName: 'templatesFilter',
     queryParamName: 'templates',
-    defaultAction: setFilters({ templatesFilter: [] }),
+    defaultAction: setHighlightsFilters({ templatesFilter: [] }),
     createAction: (templatesQuery) => {
       const templatesFilter = templatesQuery.split(',').map(Number);
 
-      return setFilters({ templatesFilter });
+      return setHighlightsFilters({ templatesFilter });
     },
     getQueryParamByProp: (templates) => templates.join(','),
   },

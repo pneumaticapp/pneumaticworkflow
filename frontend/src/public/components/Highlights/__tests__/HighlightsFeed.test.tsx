@@ -44,13 +44,13 @@ const renderFeed = (props: Partial<IHighlightsFeedProps> = {}) => {
     endDate: new Date('2024-11-25T23:59:59.999Z'),
     usersFilter: [],
     templatesFilter: [],
-    filtersChanged: false,
+    hasChangedFilters: false,
     loadHighlights: jest.fn(),
     openWorkflowLogPopup: jest.fn(),
-    resetHightlightsStore: jest.fn(),
+    resetHighlightsStore: jest.fn(),
     loadTemplatesTitles: jest.fn(),
-    setFilters: jest.fn(),
-    setFiltersChanged: jest.fn(),
+    setHighlightsFilters: jest.fn(),
+    setHighlightsFiltersChanged: jest.fn(),
     ...props,
   };
 
@@ -61,7 +61,7 @@ const renderFeed = (props: Partial<IHighlightsFeedProps> = {}) => {
     });
 
     const handleSetFilters = (value: Partial<IHighlightsFilters>) => {
-      defaultProps.setFilters(value);
+      defaultProps.setHighlightsFilters(value);
 
       if (value.startDate || value.endDate) {
         setRange((current) => ({
@@ -76,7 +76,7 @@ const renderFeed = (props: Partial<IHighlightsFeedProps> = {}) => {
         {...defaultProps}
         startDate={range.startDate}
         endDate={range.endDate}
-        setFilters={handleSetFilters}
+        setHighlightsFilters={handleSetFilters}
       />
     );
   };
@@ -104,14 +104,14 @@ describe('HighlightsFeed date filters', () => {
   });
 
   it('recomputes the active preset in the profile timezone before the first fetch', () => {
-    const { setFilters, loadHighlights } = renderFeed();
+    const { setHighlightsFilters, loadHighlights } = renderFeed();
 
-    expect(setFilters).toHaveBeenCalledWith({
+    expect(setHighlightsFilters).toHaveBeenCalledWith({
       startDate: new Date(START_OF_TODAY_IN_ZONE),
       endDate: new Date(END_OF_TODAY_IN_ZONE),
     });
     expect(loadHighlights).toHaveBeenCalledWith({ onScroll: true });
-    expect((setFilters as jest.Mock).mock.invocationCallOrder[0]).toBeLessThan(
+    expect((setHighlightsFilters as jest.Mock).mock.invocationCallOrder[0]).toBeLessThan(
       (loadHighlights as jest.Mock).mock.invocationCallOrder[0],
     );
   });
@@ -126,19 +126,19 @@ describe('HighlightsFeed date filters', () => {
   });
 
   it('keeps a Custom range untouched on mount', () => {
-    const { setFilters } = renderFeed({ timeRange: EHighlightsDateFilter.Custom });
+    const { setHighlightsFilters } = renderFeed({ timeRange: EHighlightsDateFilter.Custom });
 
-    expect(setFilters).not.toHaveBeenCalled();
+    expect(setHighlightsFilters).not.toHaveBeenCalled();
   });
 
   it('applies the profile timezone and the profile week start when a preset is picked', () => {
-    const { setFilters } = renderFeed();
-    (setFilters as jest.Mock).mockClear();
+    const { setHighlightsFilters } = renderFeed();
+    (setHighlightsFilters as jest.Mock).mockClear();
 
     userEvent.click(screen.getByLabelText(enMessages['process-highlights.date-picker-week']));
 
-    expect(setFilters).toHaveBeenCalledTimes(1);
-    expect(setFilters).toHaveBeenCalledWith({
+    expect(setHighlightsFilters).toHaveBeenCalledTimes(1);
+    expect(setHighlightsFilters).toHaveBeenCalledWith({
       timeRange: EHighlightsDateFilter.Week,
       startDate: new Date('2024-11-24T19:00:00.000Z'),
       endDate: new Date('2024-12-01T18:59:59.000Z'),
@@ -146,12 +146,12 @@ describe('HighlightsFeed date filters', () => {
   });
 
   it('closes a preset range on a whole second, like the date picker', () => {
-    const { setFilters } = renderFeed();
-    (setFilters as jest.Mock).mockClear();
+    const { setHighlightsFilters } = renderFeed();
+    (setHighlightsFilters as jest.Mock).mockClear();
 
     userEvent.click(screen.getByLabelText(enMessages['process-highlights.date-picker-yesterday']));
 
-    const [{ startDate, endDate }] = (setFilters as jest.Mock).mock.calls[0];
+    const [{ startDate, endDate }] = (setHighlightsFilters as jest.Mock).mock.calls[0];
 
     expect(startDate.toISOString()).toBe('2024-11-25T19:00:00.000Z');
     expect(endDate.toISOString()).toBe('2024-11-26T18:59:59.000Z');
@@ -159,11 +159,11 @@ describe('HighlightsFeed date filters', () => {
   });
 
   it('switches to Custom without overwriting the picked range', () => {
-    const { setFilters } = renderFeed();
-    (setFilters as jest.Mock).mockClear();
+    const { setHighlightsFilters } = renderFeed();
+    (setHighlightsFilters as jest.Mock).mockClear();
 
     userEvent.click(screen.getByLabelText(enMessages['process-highlights.date-picker-custom']));
 
-    expect(setFilters).toHaveBeenCalledWith({ timeRange: EHighlightsDateFilter.Custom });
+    expect(setHighlightsFilters).toHaveBeenCalledWith({ timeRange: EHighlightsDateFilter.Custom });
   });
 });

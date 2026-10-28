@@ -9,9 +9,9 @@ import { TITLES } from '../../constants/titles';
 import { history } from '../../utils/history';
 import { getHighlightsDateRange } from './utils/highlightsDateRange';
 import { UsersFilter } from './UsersFilter';
-import { ILoadHighlightsConfig } from '../../redux/highlights/actions';
+import { ILoadHighlightsConfig } from '../../redux/highlights/types';
 import { IHighlightsFilters } from '../../types/redux';
-import { getInitHighlightsFilters } from '../../redux/highlights/reducer';
+import { getInitHighlightsFilters } from '../../redux/highlights/utils/getInitHighlightsFilters';
 import { isArrayWithItems } from '../../utils/helpers';
 import { TUserListItem } from '../../types/user';
 import { ITemplateTitleBaseWithCount } from '../../types/template';
@@ -42,13 +42,13 @@ export interface IHighlightsFeedProps {
   endDate: Date;
   usersFilter: number[];
   templatesFilter: number[];
-  filtersChanged: boolean;
+  hasChangedFilters: boolean;
   loadHighlights({ limit, offset, onScroll }: ILoadHighlightsConfig): void;
   openWorkflowLogPopup(payload: TOpenWorkflowLogPopupPayload): void;
-  resetHightlightsStore(): void;
+  resetHighlightsStore(): void;
   loadTemplatesTitles({ eventDateFrom, eventDateTo }: IGetHighlightsTitlesRequestConfig): void;
-  setFilters(value: Partial<IHighlightsFilters>): void;
-  setFiltersChanged(): void;
+  setHighlightsFilters(value: Partial<IHighlightsFilters>): void;
+  setHighlightsFiltersChanged(): void;
 }
 
 export function HighlightsFeed({
@@ -65,13 +65,13 @@ export function HighlightsFeed({
   endDate,
   usersFilter,
   templatesFilter,
-  filtersChanged,
-  setFilters,
+  hasChangedFilters,
+  setHighlightsFilters,
   loadHighlights,
   openWorkflowLogPopup,
-  resetHightlightsStore,
+  resetHighlightsStore,
   loadTemplatesTitles,
-  setFiltersChanged,
+  setHighlightsFiltersChanged,
 }: IHighlightsFeedProps) {
   const { formatMessage } = useIntl();
   const { timezone, dateFdw } = useDatePickerSettings();
@@ -85,14 +85,14 @@ export function HighlightsFeed({
     const currentRange = getHighlightsDateRange(timeRange, timezone, dateFdw);
 
     if (currentRange) {
-      setFilters(currentRange);
+      setHighlightsFilters(currentRange);
     }
 
     loadHighlights({ onScroll: true });
     setIsFirstFetch(false);
 
     return () => {
-      resetHightlightsStore();
+      resetHighlightsStore();
     };
   }, []);
 
@@ -123,11 +123,11 @@ export function HighlightsFeed({
       const filterListMap = {
         [EHighlightsFilterType.Templates]: {
           filterList: templatesFilter,
-          setFilterList: (value: number[]) => setFilters({ templatesFilter: value }),
+          setFilterList: (value: number[]) => setHighlightsFilters({ templatesFilter: value }),
         },
         [EHighlightsFilterType.Users]: {
           filterList: usersFilter,
-          setFilterList: (value: number[]) => setFilters({ usersFilter: value }),
+          setFilterList: (value: number[]) => setHighlightsFilters({ usersFilter: value }),
         },
       };
 
@@ -154,8 +154,8 @@ export function HighlightsFeed({
     const filterList = type === EHighlightsFilterType.Templates ? templatesFilter : usersFilter;
     const setFilterList =
       type === EHighlightsFilterType.Templates
-        ? (value: number[]) => setFilters({ templatesFilter: value })
-        : (value: number[]) => setFilters({ usersFilter: value });
+        ? (value: number[]) => setHighlightsFilters({ templatesFilter: value })
+        : (value: number[]) => setHighlightsFilters({ usersFilter: value });
     const isSelected = filterList.includes(id);
 
     if (isSelected) {
@@ -175,18 +175,18 @@ export function HighlightsFeed({
 
     const newRange = getHighlightsDateRange(selectedTimeRange, timezone, dateFdw);
 
-    setFilters({ timeRange: selectedTimeRange, ...newRange });
+    setHighlightsFilters({ timeRange: selectedTimeRange, ...newRange });
   };
 
   const handleApplyFilters = () => {
     loadHighlights({});
-    setFiltersChanged();
+    setHighlightsFiltersChanged();
   };
 
   const handleClearFilters = () => {
     const initFilters = getInitHighlightsFilters();
 
-    setFilters({ ...initFilters, ...getHighlightsDateRange(initFilters.timeRange, timezone, dateFdw) });
+    setHighlightsFilters({ ...initFilters, ...getHighlightsDateRange(initFilters.timeRange, timezone, dateFdw) });
 
     loadHighlights({});
   };
@@ -220,7 +220,7 @@ export function HighlightsFeed({
       return null;
     }
 
-    if (filtersChanged) {
+    if (hasChangedFilters) {
       return (
         <Placeholder
           mood="bad"
@@ -252,8 +252,8 @@ export function HighlightsFeed({
               startDate={startDate}
               selectedDateFilter={timeRange}
               changeSelectedDateFilter={handleChangeSelectedDateFilter}
-              changeEndDate={(newEndDate: Date) => setFilters({ endDate: newEndDate })}
-              changeStartDate={(newStartDate: Date) => setFilters({ startDate: newStartDate })}
+              changeEndDate={(newEndDate: Date) => setHighlightsFilters({ endDate: newEndDate })}
+              changeStartDate={(newStartDate: Date) => setHighlightsFilters({ startDate: newStartDate })}
               onCustomRangeValidityChange={setIsDateFilterReady}
             />
             <TemplatesFilter

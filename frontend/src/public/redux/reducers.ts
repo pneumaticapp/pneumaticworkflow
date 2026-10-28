@@ -12,7 +12,6 @@ import { notifications } from './notifications';
 import { profile } from './profile';
 import { settings } from './settings';
 import { task } from './task';
-import { highlights } from './highlights';
 import { templates } from './templates';
 import { selectTemplateModal } from './selectTemplateModal';
 import { template } from './template';
@@ -22,6 +21,7 @@ import { webhooks } from './webhooks';
 import { tenants } from './tenants';
 import { EAuthActions } from './actions';
 import groups from './groups/slice';
+import highlights from './highlights/slice';
 
 import pages from './pages/slice';
 import team from './team/slice';
