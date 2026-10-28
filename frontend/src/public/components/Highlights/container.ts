@@ -15,7 +15,7 @@ import { HighlightsFeed, IHighlightsFeedProps } from './HighlightsFeed';
 import { withSyncedQueryString } from '../../HOCs/withSyncedQueryString';
 import { EHighlightsDateFilter } from '../../types/highlights';
 import { getActiveUsers } from '../../utils/users';
-import { getTodayDateRange } from '../../utils/highlightsDateRange';
+import { getTodayDateRange } from './utils/highlightsDateRange';
 import { parseDateQueryParam, serializeDateQueryParam } from './utils/dateQueryParam';
 
 type THighlightsFeedStoreProps = Pick<

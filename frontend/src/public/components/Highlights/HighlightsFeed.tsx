@@ -7,7 +7,7 @@ import { ERoutes } from '../../constants/routes';
 import { EHighlightsDateFilter, EHighlightsFilterType, IHighlightsItem } from '../../types/highlights';
 import { TITLES } from '../../constants/titles';
 import { history } from '../../utils/history';
-import { getHighlightsDateRange } from '../../utils/highlightsDateRange';
+import { getHighlightsDateRange } from './utils/highlightsDateRange';
 import { UsersFilter } from './UsersFilter';
 import { ILoadHighlightsConfig } from '../../redux/highlights/actions';
 import { IHighlightsFilters } from '../../types/redux';

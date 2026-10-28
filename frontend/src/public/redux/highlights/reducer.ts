@@ -3,7 +3,7 @@ import produce from 'immer';
 import { IHighlightsStore, IHighlightsFilters } from '../../types/redux';
 import { IHighlightsItem, EHighlightsDateFilter } from '../../types/highlights';
 import { ITemplateTitleBaseWithCount } from '../../types/template';
-import { getTodayDateRange } from '../../utils/highlightsDateRange';
+import { getTodayDateRange } from '../../components/Highlights/utils/highlightsDateRange';
 
 import { THighlightsActions, EHighlightsActions } from './actions';
 import { EGeneralActions, TGeneralActions } from '../actions';

@@ -1,7 +1,7 @@
 import moment from 'moment-timezone';
 
-import { EHighlightsDateFilter } from '../types/highlights';
-import { toEndOfDay } from './dayBounds';
+import { EHighlightsDateFilter } from '../../../types/highlights';
+import { toEndOfDay } from '../../../utils/dayBounds';
 
 interface IHighlightsDateRange {
   startDate: Date;

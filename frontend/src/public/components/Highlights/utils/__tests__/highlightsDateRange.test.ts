@@ -1,5 +1,5 @@
 import { getHighlightsDateRange, getTodayDateRange } from '../highlightsDateRange';
-import { EHighlightsDateFilter } from '../../types/highlights';
+import { EHighlightsDateFilter } from '../../../../types/highlights';
 
 const TIMEZONE = 'Asia/Yekaterinburg';
 const SUNDAY = '0';
