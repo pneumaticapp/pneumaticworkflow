@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
 import classnames from 'classnames';
 
@@ -112,6 +110,12 @@ export function ExtraFieldCreatable({
     setDuplicateErrors(recalculateDuplicateErrors(newOptions));
   };
 
+  const handleRemoveOptionKeyDown = (optionIndex: number) => (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    handleRemoveOption(optionIndex)();
+  };
+
   const handleChangeOption = (optionIndex: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.value;
     const apiName = selectionItems?.[optionIndex]?.apiName;
@@ -142,7 +146,7 @@ export function ExtraFieldCreatable({
       <li
         key={optionIndex}
         className={inputStyles['kickoff-create-field-option']}
-        onMouseOver={() => setActiveOptionIndex(optionIndex)}
+        onMouseEnter={() => setActiveOptionIndex(optionIndex)}
         onMouseLeave={() => setActiveOptionIndex(null)}
       >
         <div className={inputStyles['kickoff-create-field__input-container']}>
@@ -171,8 +175,10 @@ export function ExtraFieldCreatable({
           {isActive && !isDisabled && (selectionItems?.length || 0) > 1 && (
             <div
               role="button"
+              tabIndex={0}
               className={inputStyles['kickoff-create-field-option__remove']}
               onClick={handleRemoveOption(optionIndex)}
+              onKeyDown={handleRemoveOptionKeyDown(optionIndex)}
             >
               <RemoveIcon />
             </div>

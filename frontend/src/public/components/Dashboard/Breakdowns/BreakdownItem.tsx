@@ -1,6 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
-// tslint:disable: max-file-line-count
 import * as React from 'react';
 import { history } from '../../../utils/history';
 import classnames from 'classnames';
@@ -98,7 +95,7 @@ export function BreakdownItem({
 
       return routeMap[mode][counterType];
     },
-    [mode],
+    [breakdown, mode],
   );
 
   const countersParamsList: () => IDashboardCounterProps[] = () => [
@@ -140,7 +137,7 @@ export function BreakdownItem({
     if (showBreakdownTasks) {
       loadBreakdownTasks({ templateId: breakdown.templateId });
     }
-  }, [showBreakdownTasks]);
+  }, [showBreakdownTasks, breakdown.templateId, loadBreakdownTasks]);
 
   const handleToggleBreakdownTasks = () => {
     setShowBreakdownTasks(!showBreakdownTasks);
@@ -186,7 +183,7 @@ export function BreakdownItem({
     );
   };
 
-  const onRunWorkflows = (e: React.MouseEvent) => {
+  const onRunWorkflows = (e: Pick<React.MouseEvent, 'preventDefault' | 'stopPropagation'>) => {
     e.preventDefault();
     e.stopPropagation();
     openRunWorkflowModalOnDashboard({ templateId: breakdown.templateId });
@@ -259,18 +256,14 @@ export function BreakdownItem({
 
   const isPossibleToToggle = getTotalTasksCount(breakdown) !== 0;
 
-  const toggleBreakdownHandler = useCallback(() => {
-    return isPossibleToToggle ? handleToggleBreakdownTasks() : () => null;
-  }, [isPossibleToToggle, handleToggleBreakdownTasks]);
+  const toggleBreakdownHandler = () => (isPossibleToToggle ? handleToggleBreakdownTasks() : () => null);
 
-  const handleOptionClick = (handler: Function) => (closeDropdown: () => void) => {
-    closeDropdown();
-    if (handler.length > 0) {
+  const handleOptionClick =
+    (handler: (event: Pick<React.MouseEvent, 'preventDefault' | 'stopPropagation'>) => void) =>
+    (closeDropdown: () => void) => {
+      closeDropdown();
       handler({ preventDefault: () => {}, stopPropagation: () => {} });
-    } else {
-      handler();
-    }
-  };
+    };
 
   const WorkflowsOptions: TDropdownMenuOption[] = [
     {
