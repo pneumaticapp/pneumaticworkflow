@@ -48,7 +48,7 @@ export function Select<TOption extends TSelectOption>({
     }
   };
 
-  const components = getComponents(controlSize, Boolean(restProps.staticMenu));
+  const components = getComponents(controlSize, Boolean(restProps.isStaticMenu));
   const controlSm: IControlSMParams = {
     title: title || '',
     isOpen,
@@ -112,7 +112,7 @@ export function Select<TOption extends TSelectOption>({
         'react-select',
         restProps.isDisabled && 'is-disabled',
         className,
-        restProps.staticMenu && 'is-static',
+        restProps.isStaticMenu && 'is-static',
       )}
     >
       {label && (
@@ -142,8 +142,8 @@ export function Select<TOption extends TSelectOption>({
           {...{ controlSm }}
           onChange={handleChange}
           onMenuClose={handleMenuClose}
-          {...(controlSize === 'sm' && !restProps.staticMenu && { menuIsOpen: isOpen && !restProps.isDisabled })}
-          {...(restProps.staticMenu && { menuIsOpen: true })}
+          {...(controlSize === 'sm' && !restProps.isStaticMenu && { menuIsOpen: isOpen && !restProps.isDisabled })}
+          {...(restProps.isStaticMenu && { menuIsOpen: true })}
         />
       </OutsideClickHandler>
       {restProps.errorMessage && <p className={styles['error-text']}>{restProps.errorMessage}</p>}

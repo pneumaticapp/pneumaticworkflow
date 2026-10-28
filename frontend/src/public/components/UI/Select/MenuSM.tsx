@@ -9,7 +9,7 @@ export function MenuSM({ children, ...props }: any) {
     <div
       className={classnames(
         'react-select__menu-list',
-        props.selectProps.staticMenu ? 'is-static' : 'is-sm',
+        props.selectProps.isStaticMenu ? 'is-static' : 'is-sm',
         props.selectProps.isMulti && 'is-multi',
         props.selectProps.placement === 'left' && 'is-left',
         customClassName,
