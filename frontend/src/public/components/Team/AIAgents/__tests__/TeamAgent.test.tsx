@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { TeamAgent } from '../TeamAgent';
-import { deleteAIAgent, updateAIAgent } from '../../../../redux/ai/slice';
+import { cloneAIAgent, deleteAIAgent, updateAIAgent } from '../../../../redux/ai/slice';
 import type { IAIAgent } from '../../../../api/ai/types';
 
 interface IDropdownMockProps {
@@ -69,6 +69,9 @@ describe('TeamAgent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
+    (useSelector as unknown as jest.Mock).mockImplementation((selector) =>
+      selector({ ai: { agents: { isLoading: false, list: [buildAgent()] } } }),
+    );
   });
 
   it('renders the agent with its provider name, model and inactive badge', () => {
@@ -128,5 +131,24 @@ describe('TeamAgent', () => {
 
     await waitFor(() => expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument());
     expect(mockDispatch).not.toHaveBeenCalledWith(deleteAIAgent(10));
+  });
+
+  it('clones the agent right away under a free clone name', () => {
+    render(<TeamAgent agent={buildAgent({ photo: 'https://files.example.com/a.png' })} providerName="OpenRouter" />);
+
+    userEvent.click(screen.getByTestId('ai-agent-10-more'));
+    userEvent.click(screen.getByText(t('team.ai-agents.clone')));
+
+    expect(mockDispatch).toHaveBeenCalledWith(
+      cloneAIAgent({
+        name: `Research assistant (${t('team.ai-agents.clone-suffix')})`,
+        providerId: 1,
+        model: 'openai/gpt-4o',
+        systemPrompt: 'You are helpful.',
+        photo: 'https://files.example.com/a.png',
+        isActive: true,
+      }),
+    );
+    expect(screen.queryByTestId('edit-ai-agent-modal')).not.toBeInTheDocument();
   });
 });

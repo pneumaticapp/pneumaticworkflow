@@ -10,6 +10,7 @@ import {
   updateAIAgent as updateAIAgentApi,
 } from '../../../api/ai';
 import {
+  cloneAIAgentSaga,
   createAIAgentSaga,
   createAIProviderByVendorSaga,
   createAIProviderSaga,
@@ -17,6 +18,7 @@ import {
   uploadAIAgentAvatarSaga,
 } from '../saga';
 import {
+  cloneAIAgent,
   createAIAgent,
   createAIProvider,
   createAIProviderByVendor,
@@ -97,6 +99,21 @@ describe('AI creation sagas', () => {
 
     expect(actions).toContainEqual(createPerformerFailed());
     expect(actions).not.toContainEqual(closeCreatePerformerModal());
+  });
+
+  it('clones an agent without touching the create modal', async () => {
+    await run(cloneAIAgentSaga, cloneAIAgent({ ...agentData, name: 'Agent (Clone)' }));
+
+    expect(createAIAgentApi).toHaveBeenCalledWith({ ...agentData, name: 'Agent (Clone)' });
+    expect(actions).not.toContainEqual(createPerformerStarted());
+    expect(NotificationManager.success).toHaveBeenCalledWith({ message: 'team.ai-agents.cloned' });
+  });
+
+  it('warns when cloning fails', async () => {
+    (createAIAgentApi as jest.Mock).mockRejectedValue(new Error('Name taken'));
+    await run(cloneAIAgentSaga, cloneAIAgent(agentData));
+
+    expect(NotificationManager.warning).toHaveBeenCalledWith({ message: 'Name taken' });
   });
 
   it('reports a successful agent update without sending the callbacks to the API', async () => {

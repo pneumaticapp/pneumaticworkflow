@@ -44,6 +44,7 @@ export const loadAIAgents = createAction<void>('ai/loadAIAgents');
 export const createAIAgent = createAction<ICreateAIAgentRequest>('ai/createAIAgent');
 export const updateAIAgent = createAction<TUpdateAIAgentPayload>('ai/updateAIAgent');
 export const deleteAIAgent = createAction<number>('ai/deleteAIAgent');
+export const cloneAIAgent = createAction<ICreateAIAgentRequest>('ai/cloneAIAgent');
 export const uploadAIAgentAvatar = createAction<IUploadAIAgentAvatarPayload>('ai/uploadAIAgentAvatar');
 export const cancelAIAgentAvatarUpload = createAction<void>('ai/cancelAIAgentAvatarUpload');
 

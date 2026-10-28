@@ -30,6 +30,7 @@ import { uploadUserAvatar } from '../../utils/uploadFiles';
 import type { TUploadedFile } from '../../utils/uploadFiles';
 
 import {
+  cloneAIAgent,
   createAIAgent,
   createAIProvider,
   createAIProviderByVendor,
@@ -202,6 +203,16 @@ export function* createAIAgentSaga({ payload }: PayloadAction<ICreateAIAgentRequ
   }
 }
 
+export function* cloneAIAgentSaga({ payload }: PayloadAction<ICreateAIAgentRequest>) {
+  try {
+    yield call(createAIAgentApi, payload);
+    yield call(refreshAgentsAndProviders, 'team.ai-agents.cloned');
+  } catch (error) {
+    NotificationManager.warning({ message: getErrorMessage(error) });
+    logger.error('failed to clone AI agent', error);
+  }
+}
+
 export function* updateAIAgentSaga({
   payload: { id, onSuccess, onError, ...data },
 }: PayloadAction<TUpdateAIAgentPayload>) {
@@ -255,6 +266,7 @@ export function* watchAIProviders() {
 export function* watchAIAgents() {
   yield takeEvery(loadAIAgents, fetchAIAgents);
   yield takeEvery(createAIAgent, createAIAgentSaga);
+  yield takeEvery(cloneAIAgent, cloneAIAgentSaga);
   yield takeEvery(updateAIAgent, updateAIAgentSaga);
   yield takeEvery(deleteAIAgent, deleteAIAgentSaga);
   yield takeLatest([uploadAIAgentAvatar, cancelAIAgentAvatarUpload], uploadAIAgentAvatarSaga);
