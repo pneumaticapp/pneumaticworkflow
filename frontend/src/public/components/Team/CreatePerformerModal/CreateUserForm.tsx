@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
+import classnames from 'classnames';
 import { Formik } from 'formik';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
@@ -113,7 +114,10 @@ export function CreateUserForm({ isVisible }: ICreateUserFormProps) {
                     fieldSize="lg"
                     type="text"
                     isRequired
-                    containerClassName={`${styles['modal__input-ellipsis']} ${styles['modal__password-input-wrap']}`}
+                    containerClassName={classnames(
+                      styles['modal__input-ellipsis'],
+                      styles['modal__password-input-wrap'],
+                    )}
                   />
                   <button
                     type="button"
