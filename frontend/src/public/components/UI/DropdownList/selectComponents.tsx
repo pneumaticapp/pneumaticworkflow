@@ -1,14 +1,19 @@
 import * as React from 'react';
 import classnames from 'classnames';
 import { components } from 'react-select';
+import type { ControlProps, DropdownIndicatorProps, GroupBase, MenuListProps, OptionProps } from 'react-select';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 
 import { ArrowDropdownIcon, ExpandIcon, RoundClearIconMd } from '../../icons';
 
+import type { TDropdownOptionBase } from './types';
+
 import styles from './DropdownList.css';
 
 export function ControlSM(title: string, isOpen: boolean, onClick: (isOpen: boolean) => void) {
-  return (props: any) => {
+  return ({ selectProps: { value } }: ControlProps<TDropdownOptionBase, boolean>) => {
+    const selectedLabel = value && 'label' in value ? value.label : null;
+
     return (
       <button
         type="button"
@@ -19,14 +24,14 @@ export function ControlSM(title: string, isOpen: boolean, onClick: (isOpen: bool
         )}
         onClick={() => onClick(!isOpen)}
       >
-        <p className={styles['dropdownlist-sm__value']}>{title || props?.selectProps.value.label}</p>
+        <p className={styles['dropdownlist-sm__value']}>{title || selectedLabel}</p>
         <ExpandIcon className={classnames(styles['dropdownlist-sm__arrow'], isOpen && styles['is-open'])} />
       </button>
     );
   };
 }
 
-export const DropdownIndicator = ({ isDisabled }: any) => {
+export const DropdownIndicator = ({ isDisabled }: DropdownIndicatorProps<TDropdownOptionBase, boolean>) => {
   return !isDisabled ? <ArrowDropdownIcon /> : null;
 };
 
@@ -47,7 +52,7 @@ export const MenuSM = ({ children, ...props }: any) => {
   );
 };
 
-export const MenuListLG = ({ selectProps, ...props }: any) => {
+export const MenuListLG = ({ children }: MenuListProps<TDropdownOptionBase, boolean>) => {
   const ScrollBar = PerfectScrollbar as unknown as Function;
 
   return (
@@ -55,19 +60,21 @@ export const MenuListLG = ({ selectProps, ...props }: any) => {
       className={styles['dropdownlist__scrollbar']}
       options={{ suppressScrollX: true, wheelPropagation: false }}
     >
-      {props.children}
+      {children}
     </ScrollBar>
   );
 };
 
-export const MenuListSM = ({ selectProps, ...props }: any) => {
+export const MenuListSM = ({ children, selectProps }: MenuListProps<TDropdownOptionBase, boolean>) => {
   const ScrollBar = PerfectScrollbar as unknown as Function;
-  const { onInputChange, inputValue, onMenuInputFocus, placeholder, isSearchable } = selectProps;
-
-  const ariaAttributes = {
-    'aria-label': selectProps['aria-label'],
-    'aria-labelledby': selectProps['aria-labelledby'],
-  };
+  const {
+    onInputChange,
+    inputValue,
+    placeholder,
+    isSearchable,
+    'aria-label': ariaLabel,
+    'aria-labelledby': ariaLabelledBy,
+  } = selectProps;
 
   return (
     <div>
@@ -79,6 +86,7 @@ export const MenuListSM = ({ selectProps, ...props }: any) => {
             onChange={(e) =>
               onInputChange(e.currentTarget.value, {
                 action: 'input-change',
+                prevInputValue: inputValue,
               })
             }
             // When opening sm dropdown, set the autofocus on the search field
@@ -86,9 +94,9 @@ export const MenuListSM = ({ selectProps, ...props }: any) => {
             autoFocus
             onMouseDown={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
-            onFocus={onMenuInputFocus}
-            placeholder={placeholder}
-            {...ariaAttributes}
+            placeholder={typeof placeholder === 'string' ? placeholder : undefined}
+            aria-label={ariaLabel}
+            aria-labelledby={ariaLabelledBy}
           />
           {inputValue && (
             <button
@@ -98,6 +106,7 @@ export const MenuListSM = ({ selectProps, ...props }: any) => {
               onClick={() =>
                 onInputChange('', {
                   action: 'input-change',
+                  prevInputValue: inputValue,
                 })
               }
             >
@@ -111,15 +120,15 @@ export const MenuListSM = ({ selectProps, ...props }: any) => {
         className={styles['dropdownlist__scrollbar']}
         options={{ suppressScrollX: true, wheelPropagation: false }}
       >
-        {props.children}
+        {children}
       </ScrollBar>
     </div>
   );
 };
 
-export const Option = (props: any) => {
+export const Option = (props: OptionProps<TDropdownOptionBase, boolean>) => {
   const { innerProps, data } = props;
   if (data.onClick) innerProps.onClick = data.onClick;
 
-  return <components.Option {...props} />;
+  return <components.Option<TDropdownOptionBase, boolean, GroupBase<TDropdownOptionBase>> {...props} />;
 };
