@@ -3,6 +3,7 @@ import { ChangeEvent } from 'react';
 import { EHighlightsDateFilter, IHighlightsItem, THighlightsDateFilter } from '../../types/highlights';
 import { ITemplateTitleBaseWithCount } from '../../types/template';
 import { TUserListItem } from '../../types/user';
+import { IHighlightsFilters } from '../../types/redux';
 
 export interface IDateFilterProps {
   endDate: Date | null;
@@ -49,3 +50,16 @@ export interface IFeedItemOutputsProps extends Pick<IFeedItemHeaderProps, 'task'
 }
 
 export interface IPerformerChangeProps extends Pick<IFeedItemHeaderProps, 'targetGroupId' | 'targetUserId' | 'type'> {}
+
+export interface IHighlightsListProps {
+  isFirstFetch: boolean;
+}
+
+export interface IHighlightsPlaceholderProps {
+  hasChangedFilters: boolean;
+}
+
+export type THighlightsQuerySyncProps = Pick<
+  IHighlightsFilters,
+  'timeRange' | 'startDate' | 'endDate' | 'usersFilter' | 'templatesFilter'
+>;
