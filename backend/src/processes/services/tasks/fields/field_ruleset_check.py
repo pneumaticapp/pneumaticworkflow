@@ -225,11 +225,13 @@ class FieldRuleCheckService:
             field_val = self._get_group_field_value(source)
         elif value_type == FieldRuleValueType.USER:
             field_val = self._get_user_field_value(source)
-        else:
+        elif operator in self.UNARY_OPERATORS:
             field_val = (
                 self._get_user_field_value(source)
                 or self._get_group_field_value(source)
             )
+        else:
+            field_val = self._get_user_field_value(source)
         if operator in self.UNARY_OPERATORS:
             return field_val, None
         try:

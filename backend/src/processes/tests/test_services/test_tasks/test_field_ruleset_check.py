@@ -1389,6 +1389,9 @@ class TestFieldRuleActionIntegration:
         assert target_field.is_hidden is False
 
     def test_show_rule__user_field_with_group_id__equal(self):
+
+        """ Empty value_type compares user_id and skips group_id. """
+
         # arrange
         account = create_test_account()
         user = create_test_owner(account=account)
@@ -1418,7 +1421,7 @@ class TestFieldRuleActionIntegration:
             account=account,
             workflow=workflow,
             field=target_field,
-            name='Show when group is 42',
+            name='Show when user is 42',
             type=FieldRuleType.SHOW,
             order=1,
             api_name='ruleset-usr-grp',
@@ -1447,7 +1450,7 @@ class TestFieldRuleActionIntegration:
         )
 
         # assert
-        assert target_field.is_hidden is False
+        assert target_field.is_hidden is True
 
     def test_show_rule__user_field_with_group_id__not_equal(self):
         # arrange
@@ -1497,6 +1500,7 @@ class TestFieldRuleActionIntegration:
             field=source_field.api_name,
             operator=FieldRuleOperator.NOT_EQUAL,
             value='99',
+            value_type=FieldRuleValueType.GROUP,
             api_name='group-and-usr-neq',
         )
 

@@ -63,8 +63,10 @@ class FieldRuleGroupAndSerializer(serializers.ModelSerializer):
         allow_null=True,
         example=FieldRuleValueType.USER,
         help_text=(
-            'For a user field: `user` or `group`. '
-            'Empty matches either id.'
+            'For a user field: `user` reads user_id, '
+            '`group` reads group_id. '
+            'Empty reads user_id. exists and not_exists '
+            'still treat either id as filled.'
         ),
     )
 
