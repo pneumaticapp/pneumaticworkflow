@@ -4,5 +4,4 @@ export const getTemplateValidationErrors = (state: IApplicationState) => state.t
 
 export const getTemplateValidationBatchId = (state: IApplicationState) => state.templateValidation.batchId;
 
-export const getTemplateValidationFocusApiName = (state: IApplicationState) =>
-  state.templateValidation.focusElementApiName;
+export const getTemplateValidationFocusApiName = (state: IApplicationState) => state.templateValidation.focusApiName;

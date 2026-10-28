@@ -4,10 +4,15 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { ETemplateActions } from '../template/actions';
 import type { ITemplateValidationError, ITemplateValidationStore } from './types';
 
+const clearErrors = (state: ITemplateValidationStore) => {
+  state.errors = [];
+  state.focusApiName = null;
+};
+
 export const initialState: ITemplateValidationStore = {
   errors: [],
   batchId: 0,
-  focusElementApiName: null,
+  focusApiName: null,
 };
 
 const templateValidationSlice = createSlice({
@@ -17,27 +22,18 @@ const templateValidationSlice = createSlice({
     setTemplateValidationErrors: (state, action: PayloadAction<ITemplateValidationError[]>) => {
       state.errors = action.payload;
       state.batchId += 1;
-      state.focusElementApiName = action.payload[0]?.target.elementApiName ?? null;
+      state.focusApiName = action.payload[0]?.target.elementApiName ?? null;
     },
     removeTemplateValidationErrors: (state, action: PayloadAction<string[]>) => {
       state.errors = state.errors.filter(({ apiName }) => !action.payload.includes(apiName));
     },
-    clearTemplateValidationErrors: (state) => {
-      state.errors = [];
-      state.focusElementApiName = null;
-    },
+    clearTemplateValidationErrors: clearErrors,
     clearTemplateValidationFocus: (state) => {
-      state.focusElementApiName = null;
+      state.focusApiName = null;
     },
   },
   extraReducers: (builder) => {
-    builder.addMatcher(
-      (action) => action.type === ETemplateActions.ResetTemplateStore,
-      (state) => {
-        state.errors = [];
-        state.focusElementApiName = null;
-      },
-    );
+    builder.addCase(ETemplateActions.ResetTemplateStore, clearErrors);
   },
 });
 

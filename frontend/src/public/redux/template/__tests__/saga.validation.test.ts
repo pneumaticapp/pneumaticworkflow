@@ -87,7 +87,7 @@ const runSave = async (
     authUser: { account: { isSubscribed: false, billingPlan: ESubscriptionPlan.Free } },
     accounts: { users: [] },
     template: { data: template },
-    templateValidation: { errors: validationErrors, batchId: 1, focusElementApiName: null },
+    templateValidation: { errors: validationErrors, batchId: 1, focusApiName: null },
   };
 
   if (failWhileEditing) {

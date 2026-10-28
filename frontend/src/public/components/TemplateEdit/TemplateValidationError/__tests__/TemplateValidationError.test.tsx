@@ -20,7 +20,7 @@ const makeError = (overrides: Partial<ITemplateValidationError> = {}): ITemplate
 const mockValidationErrors = (errors: ITemplateValidationError[], batchId = 1) => {
   (useSelector as jest.Mock).mockImplementation((selector) =>
     selector({
-      templateValidation: { errors, batchId, focusElementApiName: errors[0]?.target.elementApiName ?? null },
+      templateValidation: { errors, batchId, focusApiName: errors[0]?.target.elementApiName ?? null },
     }),
   );
 };

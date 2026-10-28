@@ -21,5 +21,5 @@ export interface ITemplateValidationError {
 export interface ITemplateValidationStore {
   errors: ITemplateValidationError[];
   batchId: number;
-  focusElementApiName: string | null;
+  focusApiName: string | null;
 }

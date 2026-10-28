@@ -20,7 +20,7 @@ describe('templateValidation slice', () => {
 
     expect(state.errors.map(({ apiName }) => apiName)).toEqual(['a', 'b']);
     expect(state.batchId).toBe(1);
-    expect(state.focusElementApiName).toBe('a');
+    expect(state.focusApiName).toBe('a');
   });
 
   it('removes fixed errors without starting a new batch', () => {
@@ -29,7 +29,7 @@ describe('templateValidation slice', () => {
 
     expect(state.errors.map(({ apiName }) => apiName)).toEqual(['b']);
     expect(state.batchId).toBe(1);
-    expect(state.focusElementApiName).toBe('a');
+    expect(state.focusApiName).toBe('a');
   });
 
   it('clears errors explicitly and when the template store is reset', () => {
@@ -37,11 +37,11 @@ describe('templateValidation slice', () => {
 
     expect(reducer(withErrors, clearTemplateValidationErrors())).toMatchObject({
       errors: [],
-      focusElementApiName: null,
+      focusApiName: null,
     });
     expect(reducer(withErrors, { type: ETemplateActions.ResetTemplateStore })).toMatchObject({
       errors: [],
-      focusElementApiName: null,
+      focusApiName: null,
     });
   });
 });

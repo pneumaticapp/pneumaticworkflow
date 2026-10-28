@@ -74,7 +74,7 @@ jest.mock('react-redux', () => {
     templateValidation: {
       errors: [],
       batchId: 0,
-      focusElementApiName: null,
+      focusApiName: null,
     },
   };
 
