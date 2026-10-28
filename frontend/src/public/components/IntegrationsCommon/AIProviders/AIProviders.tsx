@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -27,13 +27,15 @@ export function AIProviders() {
     dispatch(loadAIProviders());
   }, [dispatch]);
 
-  const handleDelete = useCallback(() => {
+  const handleDelete = () => {
     if (confirmDeleteId !== null) {
       dispatch(deleteAIProvider(confirmDeleteId));
     }
-  }, [confirmDeleteId, dispatch]);
+  };
 
-  const handleCloseDeleteModal = useCallback(() => setConfirmDeleteId(null), []);
+  const handleCloseDeleteModal = () => {
+    setConfirmDeleteId(null);
+  };
 
   const handleOpenCreateModal = () => {
     dispatch(openCreateAIProviderModal());
