@@ -1,9 +1,4 @@
 .ai-agent-form {
-  &__body {
-    padding-top: 1.6rem;
-    overflow: visible;
-  }
-
   &__avatar {
     display: flex;
     flex-direction: column;
@@ -77,25 +72,11 @@
     color: var(--pneumatic-color-black48);
   }
 
-  &__fields {
-    display: flex;
-    flex-direction: column;
-    gap: 0.8rem;
-  }
-
   &__section-title {
     margin: 1.6rem 0 0.8rem;
     color: var(--pneumatic-color-black48);
     text-transform: uppercase;
 
     @mixin text-small bold;
-  }
-
-  &__footer {
-    flex-shrink: 0;
-  }
-
-  &__submit {
-    width: 100%;
   }
 }

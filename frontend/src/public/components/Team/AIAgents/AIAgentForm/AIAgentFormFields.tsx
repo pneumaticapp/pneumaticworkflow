@@ -16,6 +16,7 @@ import { generateAgentAvatar } from '../utils/generateAgentAvatar';
 import type { IAIAgentFormFieldsProps, IAIAgentFormValues } from './types';
 import { useProviderModelsSync } from './useProviderModelsSync';
 
+import modalStyles from '../../CreatePerformerModal/CreatePerformerModal.css';
 import styles from './AIAgentForm.css';
 
 const filterModelOption = (option: { label: string; value: string }, input: string) =>
@@ -66,7 +67,7 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
 
   return (
     <form onSubmit={handleSubmit}>
-      <ModalBody className={styles['ai-agent-form__body']}>
+      <ModalBody className={modalStyles['modal__body']}>
         <div className={styles['ai-agent-form__avatar']}>
           <div className={styles['ai-agent-form__avatar-preview']}>
             {values.photo ? <img src={values.photo} alt="" /> : initials}
@@ -85,7 +86,7 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
           </div>
         </div>
 
-        <div className={styles['ai-agent-form__fields']}>
+        <div className={modalStyles['modal__form']}>
           <FormikInputField
             name="name"
             title={formatMessage({ id: 'team.create-ai-agent-modal.name' })}
@@ -119,9 +120,9 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
           />
         </div>
       </ModalBody>
-      <ModalFooter className={styles['ai-agent-form__footer']}>
+      <ModalFooter className={modalStyles['modal__footer']}>
         <Button
-          className={styles['ai-agent-form__submit']}
+          className={modalStyles['modal__submit']}
           type="submit"
           label={submitLabel}
           buttonStyle="yellow"
