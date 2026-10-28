@@ -23,3 +23,8 @@ export interface ITemplateValidationStore {
   batchId: number;
   focusApiName: string | null;
 }
+
+export interface ITemplateValidationCollection {
+  errors: ITemplateValidationError[];
+  unlinkedMessageIds: string[];
+}

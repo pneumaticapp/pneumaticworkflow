@@ -4,7 +4,8 @@ import { isArrayWithItems } from '../../../utils/helpers';
 import { validateFieldsetTitle } from '../../../utils/validators';
 import { createTemplateValidationError } from '../../../utils/templates/getValidationErrorTarget';
 import { getConditionRuleErrorId } from '../TaskForm/Conditions/utils/conditionsValidators';
-import { ETaskFormParts, ITemplateValidationCollection } from '../types';
+import type { ITemplateValidationCollection } from '../../../redux/templateValidation/types';
+import { ETaskFormParts } from '../types';
 import { getExtraFieldErrorId } from './getExtraFieldErrorId';
 
 export function collectTemplateValidationErrors(template: ITemplateClient): ITemplateValidationCollection {
