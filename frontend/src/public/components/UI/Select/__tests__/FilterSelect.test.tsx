@@ -56,7 +56,7 @@ jest.mock('react-perfect-scrollbar', () => {
   return Scrollbar;
 });
 
-jest.mock('react-outside-click-handler', () => {
+jest.mock('../../OutsideClickHandler', () => {
   const OutsideClick = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
   return {
     __esModule: true,

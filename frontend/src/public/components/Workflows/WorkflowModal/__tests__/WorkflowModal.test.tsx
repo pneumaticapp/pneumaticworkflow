@@ -32,7 +32,7 @@ jest.mock('reactstrap', () => ({
   ModalBody: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
 }));
 
-jest.mock('react-outside-click-handler', () => ({
+jest.mock('../../../UI/OutsideClickHandler', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
 }));
