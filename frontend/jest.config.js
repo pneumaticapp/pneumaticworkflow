@@ -11,7 +11,6 @@ module.exports = {
   moduleDirectories: ['node_modules'],
   coverageDirectory: 'artifacts',
   setupFilesAfterEnv: ['<rootDir>/jest/jest.setup.js'],
-  snapshotSerializers: ['enzyme-to-json/serializer'],
   transform: {
     '^.+\\.tsx?$': 'ts-jest',
     '.+\\.(css|styl|less|sass|scss)$': 'jest-css-modules-transform',

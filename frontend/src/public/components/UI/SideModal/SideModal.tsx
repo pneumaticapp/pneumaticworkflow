@@ -83,6 +83,7 @@ export class SideModal extends Component<ISideModalProps> {
     return (
       <OutsideClickHandler onOutsideClick={this.hanldeClickOutside}>
         <div
+          data-testid="side-modal"
           className={classnames(
             styles['side-modal'],
             !isClosing ? styles['side-modal_opened'] : styles['side-modal_closed'],

@@ -1,18 +1,21 @@
 import * as React from 'react';
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { SideModalCard } from '../SideModalCard';
 
-const mockProps = {
-  onClick: jest.fn(),
-};
-
 describe('SideModalCard', () => {
-  it('calls onClick when card is clicked', () => {
-    const wrapper = shallow(<SideModalCard {...mockProps} />);
-    const card = wrapper.find('[role="button"]');
-    card.simulate('click');
+  const onClick = jest.fn();
 
-    expect(mockProps.onClick).toHaveBeenCalled();
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('calls onClick once when the card is clicked', () => {
+    render(<SideModalCard onClick={onClick} />);
+
+    userEvent.click(screen.getByRole('button'));
+
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 });
