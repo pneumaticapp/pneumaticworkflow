@@ -98,7 +98,7 @@ const SyncedHiglights = withSyncedQueryString<THighlightsFeedStoreProps>([
   {
     propName: 'startDate',
     queryParamName: 'start-date',
-    defaultAction: setFilters({ startDate: getTodayDateRange('').startDate }),
+    defaultAction: setFilters({ startDate: getTodayDateRange().startDate }),
     createAction: (startDateQuery: string) => {
       const startDate = parseDateQueryParam(startDateQuery);
 
@@ -113,7 +113,7 @@ const SyncedHiglights = withSyncedQueryString<THighlightsFeedStoreProps>([
   {
     propName: 'endDate',
     queryParamName: 'end-date',
-    defaultAction: setFilters({ endDate: getTodayDateRange('').endDate }),
+    defaultAction: setFilters({ endDate: getTodayDateRange().endDate }),
     createAction: (endDateQuery: string) => {
       const endDate = parseDateQueryParam(endDateQuery);
 

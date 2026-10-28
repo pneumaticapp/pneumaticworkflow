@@ -3,7 +3,7 @@ import moment from 'moment-timezone';
 import { EHighlightsDateFilter } from '../types/highlights';
 import { toEndOfDay } from './dayBounds';
 
-export interface IHighlightsDateRange {
+interface IHighlightsDateRange {
   startDate: Date;
   endDate: Date;
 }
@@ -23,8 +23,7 @@ const toDayRange = (dayStart: moment.Moment, lastDayStart: moment.Moment = daySt
   endDate: toEndOfDay(lastDayStart).toDate(),
 });
 
-export const getTodayDateRange = (timezone: string): IHighlightsDateRange =>
-  toDayRange(getNow(timezone).startOf('day'));
+export const getTodayDateRange = (timezone = ''): IHighlightsDateRange => toDayRange(getNow(timezone).startOf('day'));
 
 export const getHighlightsDateRange = (
   filter: EHighlightsDateFilter,
@@ -35,7 +34,7 @@ export const getHighlightsDateRange = (
 
   switch (filter) {
     case EHighlightsDateFilter.Today:
-      return toDayRange(now.startOf('day'));
+      return getTodayDateRange(timezone);
 
     case EHighlightsDateFilter.Yesterday:
       return toDayRange(now.clone().subtract(1, 'day').startOf('day'));
