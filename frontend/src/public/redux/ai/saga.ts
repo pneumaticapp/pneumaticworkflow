@@ -207,7 +207,6 @@ export function* createAIAgentSaga({ payload }: PayloadAction<ICreateAIAgentRequ
   try {
     yield call(createAIAgentApi, payload);
     if (modalCloseWatcher.isRunning()) {
-      yield cancel(modalCloseWatcher);
       yield put(createAIAgentSuccess());
       yield put(closeCreateUserModal());
     }
