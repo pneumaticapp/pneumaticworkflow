@@ -1,6 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
-/* tslint:disable:max-file-line-count */
 import {
   actionChannel,
   ActionChannelEffect,
@@ -130,7 +127,7 @@ function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed } }:
     (key) => !nonDeactivativeFields.includes(key as keyof ITemplateClient),
   );
 
-  if (Object.keys(changedFields).length === 1 && changedFields.hasOwnProperty('kickoff')) {
+  if (Object.keys(changedFields).length === 1 && 'kickoff' in changedFields) {
     shouldDeactivateTemplate =
       changedFields.kickoff?.description === template.kickoff.description ? shouldDeactivateTemplate : false;
   }
@@ -141,7 +138,7 @@ function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed } }:
     ...(shouldDeactivateTemplate && { isActive: false }),
   };
 
-  const needsCleanup = changedFields.hasOwnProperty('tasks') || changedFields.hasOwnProperty('kickoff');
+  const needsCleanup = 'tasks' in changedFields || 'kickoff' in changedFields;
   const newTemplate = needsCleanup ? cleanTemplateReferences(mergedTemplate) : mergedTemplate;
 
   yield put(setTemplate(newTemplate));
@@ -409,7 +406,7 @@ function* generateAITemplateSaga(action: TGenerateAITemplate | TStopAITemplateGe
   }
 }
 
-function* applyAITemplateSaga() {
+function applyAITemplateSaga() {
   history.push(ERoutes.TemplatesCreateAI);
 }
 

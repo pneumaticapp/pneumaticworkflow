@@ -1,4 +1,3 @@
-/* prettier-ignore */
 import { IntlShape } from 'react-intl';
 
 import { ITemplateClient } from '../../../types/template';
