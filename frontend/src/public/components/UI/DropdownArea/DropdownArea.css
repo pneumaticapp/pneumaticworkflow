@@ -46,7 +46,7 @@
   display: none;
   padding: 1.6rem;
   overflow: hidden;
-  background: white;
+  background: var(--pneumatic-color-white);
   border-radius: 0.8rem;
-  box-shadow: 0 0.8rem 1.6rem rgb(98 98 95 / 8%);
+  box-shadow: 0 0.8rem 1.6rem var(--pneumatic-color-black95);
 }
