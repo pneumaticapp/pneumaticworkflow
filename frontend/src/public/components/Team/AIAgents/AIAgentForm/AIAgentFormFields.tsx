@@ -118,7 +118,7 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
             name="systemPrompt"
             title={formatMessage({ id: 'team.create-ai-agent-modal.system-prompt' })}
             isRequired
-            rows={5}
+            className={styles['ai-agent-form__prompt']}
           />
         </div>
       </ModalBody>

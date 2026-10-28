@@ -59,4 +59,8 @@
 
     @mixin text-small bold;
   }
+
+  &__prompt {
+    height: 16rem;
+  }
 }
