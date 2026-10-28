@@ -85,9 +85,8 @@ export function CreateAIProviderModal() {
           { id: 'vendor', label: formatMessage({ id: 'ai-providers.tab-vendor' }) },
           { id: 'custom', label: formatMessage({ id: 'ai-providers.tab-custom' }) },
         ]}
+        variant="pill"
         containerClassName={styles['create-modal__tabs']}
-        tabClassName={styles['create-modal__tab']}
-        activeTabClassName={styles['create-modal__tab_active']}
         onChange={handleChangeTab}
       />
       <Formik

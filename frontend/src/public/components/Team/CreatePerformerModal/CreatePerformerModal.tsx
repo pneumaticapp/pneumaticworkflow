@@ -78,9 +78,7 @@ export function CreatePerformerModal({
             },
           ]}
           activeValueId={activeTab}
-          containerClassName={styles['modal__tabs-switcher']}
-          tabClassName={styles['modal__tab']}
-          activeTabClassName={styles['modal__tab_active']}
+          variant="pill"
           onChange={setActiveTab}
         />
       </ModalHeader>
