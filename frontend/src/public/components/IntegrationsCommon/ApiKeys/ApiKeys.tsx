@@ -11,7 +11,9 @@ import { getApiKeys, getApiKeysIsLoading, getApiKeysNewlyCreatedKey } from '../.
 
 import { TokenListItemSkeleton } from '../TokenListItem';
 import { ApiKeyListItem } from './ApiKeyListItem';
-import { CreateApiKeyModal, NewApiKeyModal, RevokeApiKeyModal } from './ApiKeyModals';
+import { CreateApiKeyModal } from './CreateApiKeyModal';
+import { NewApiKeyModal } from './NewApiKeyModal';
+import { RevokeApiKeyModal } from './RevokeApiKeyModal';
 
 import sectionStyles from '../IntegrationsCommon.css';
 import tokenListStyles from '../TokenListItem/TokenListItem.css';
