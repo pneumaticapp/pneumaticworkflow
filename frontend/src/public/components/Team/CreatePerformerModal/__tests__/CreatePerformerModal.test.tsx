@@ -349,7 +349,7 @@ describe('CreatePerformerModal', () => {
     });
 
     it('uploads a generated avatar on Generate', async () => {
-      mockGenerateAgentAvatar.mockReturnValue(new File(['<svg />'], 'ai-agent-avatar.svg', { type: 'image/svg+xml' }));
+      mockGenerateAgentAvatar.mockResolvedValue(new File(['png'], 'ai-agent-avatar.png', { type: 'image/png' }));
       render(<CreatePerformerModal />);
       await openAIAgentTab();
       await userEvent.type(getNameInput(), 'Ada Agent');
@@ -360,7 +360,7 @@ describe('CreatePerformerModal', () => {
 
       await waitFor(() => expect(getAvatarUploadAction()).toBeDefined());
       expect(mockGenerateAgentAvatar).toHaveBeenCalledTimes(1);
-      expect(getAvatarUploadAction().payload.file.name).toBe('ai-agent-avatar.svg');
+      expect(getAvatarUploadAction().payload.file.name).toBe('ai-agent-avatar.png');
       await act(async () => {
         getAvatarUploadAction().payload.onSuccess('https://files.example.com/generated.png');
       });
