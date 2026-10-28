@@ -11,7 +11,7 @@ import { FormikTextareaField } from '../../../UI/Fields/TextareaField';
 import { ModalBody, ModalFooter } from '../../../UI/BaseModal';
 import { uploadAIAgentAvatar } from '../../../../redux/ai/slice';
 import { getAIAgentAvatarUploadState, getAIProviderModelsState, getAIProviders } from '../../../../redux/selectors/ai';
-import { getAgentInitials } from '../utils/getAgentInitials';
+import { AgentAvatar } from '../AgentAvatar';
 import { generateAgentAvatar } from '../utils/generateAgentAvatar';
 import type { IAIAgentFormFieldsProps, IAIAgentFormValues } from './types';
 import { useProviderModelsSync } from './useProviderModelsSync';
@@ -35,7 +35,6 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
     label: `${provider.name} — ${provider.apiKeyPrefix}`,
     value: String(provider.id),
   }));
-  const initials = getAgentInitials(values.name);
 
   const uploadAvatar = (file: File) => {
     dispatch(uploadAIAgentAvatar({ file, onSuccess: (url) => setFieldValue('photo', url) }));
@@ -69,9 +68,7 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
     <form onSubmit={handleSubmit}>
       <ModalBody className={modalStyles['modal__body']}>
         <div className={styles['ai-agent-form__avatar']}>
-          <div className={styles['ai-agent-form__avatar-preview']}>
-            {values.photo ? <img src={values.photo} alt="" /> : initials}
-          </div>
+          <AgentAvatar name={values.name} photo={values.photo} size="lg" />
           <div className={styles['ai-agent-form__avatar-actions']}>
             <label htmlFor="ai-agent-avatar-upload">
               {formatMessage({ id: 'team.create-ai-agent-modal.upload' })}

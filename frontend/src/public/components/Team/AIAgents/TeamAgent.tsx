@@ -11,7 +11,7 @@ import { WarningPopup } from '../../UI/WarningPopup';
 import { MoreIcon } from '../../icons';
 import { deleteAIAgent, updateAIAgent } from '../../../redux/ai/slice';
 import { EditAIAgentModal } from './EditAIAgentModal';
-import { getAgentInitials } from './utils/getAgentInitials';
+import { AgentAvatar } from './AgentAvatar';
 import type { ITeamAgentProps } from './types';
 
 import styles from './TeamAgent.css';
@@ -22,8 +22,6 @@ export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
-  const initials = getAgentInitials(agent.name);
 
   const handleOpenEditModal = () => {
     setIsEditModalOpen(true);
@@ -64,7 +62,7 @@ export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
 
   return (
     <article className={styles['agent-card']} data-testid={`ai-agent-${agent.id}`}>
-      <div className={styles['agent-card__avatar']}>{agent.photo ? <img src={agent.photo} alt="" /> : initials}</div>
+      <AgentAvatar name={agent.name} photo={agent.photo} size="md" />
       <div className={styles['agent-card__info']}>
         <Header tag="h3" size="6" className={styles['agent-card__name']}>
           {agent.name}
