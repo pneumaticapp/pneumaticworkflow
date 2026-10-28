@@ -733,6 +733,15 @@ describe('FieldsetDetails', () => {
 
       expect(getFieldsPlaceholder()).toHaveTextContent(/^Total, Discount$/);
     });
+
+    it('shows the no fields text when the rule fields select has no options', () => {
+      const rules = [makeFieldsetTemplateRule({ apiName: 'rule-1', value: '100', fields: [] })];
+      renderWithState(makeLoadedState({ id: 10, fields: [], rules }));
+
+      const ruleFieldsCall = getSelectMock().mock.calls.find((call: [{ isMulti?: boolean }]) => call[0].isMulti);
+
+      expect(ruleFieldsCall[0].noOptionsMessage()).toBe(NO_FIELDS_TEXT);
+    });
   });
 
   describe('fieldset rules validation on Save', () => {

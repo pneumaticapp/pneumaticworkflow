@@ -588,7 +588,7 @@ const FieldsetDetails = ({
                       .map((option) => option.label)
                       .join(', ') || formatMessage({ id: 'fieldsets.rule-fields-placeholder' })
                   }
-                  noOptionsMessage={() => formatMessage({ id: 'fieldsets.rule-fields-placeholder' })}
+                  noOptionsMessage={() => formatMessage({ id: 'fieldsets.no-fields' })}
                   options={fieldOptions}
                   value={getSelectedFieldOptions(rule.fields)}
                   onChange={(selected: { value: string }[]) =>
