@@ -32,17 +32,6 @@ def _is_redis_pending_task_log(hint: dict) -> bool:
     )
 
 
-def _is_redis_pending_task_log(hint: dict) -> bool:
-    record = hint.get('log_record')
-    if record is None or record.name != 'asyncio':
-        return False
-    message = record.getMessage()
-    return (
-        message.startswith('Task was destroyed but it is pending!')
-        and 'aioredis' in message
-    )
-
-
 def sentry_before_send(event: dict, hint: dict) -> Optional[dict]:
 
     """Drop expected auth/validation and infra errors so they are not sent."""
