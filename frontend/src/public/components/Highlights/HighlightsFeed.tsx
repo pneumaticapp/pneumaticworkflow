@@ -1,5 +1,6 @@
 import classnames from 'classnames';
 import * as React from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useIntl } from 'react-intl';
 
@@ -73,7 +74,6 @@ export function HighlightsFeed({
   loadTemplatesTitles,
   setFiltersChanged,
 }: IHighlightsFeedProps) {
-  const { useCallback, useEffect, useMemo, useState } = React;
   const { formatMessage } = useIntl();
   const { timezone, dateFdw } = useDatePickerSettings();
 

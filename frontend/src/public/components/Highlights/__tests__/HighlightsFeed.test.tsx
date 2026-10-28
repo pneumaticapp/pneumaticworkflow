@@ -1,13 +1,13 @@
-import React from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
 
 import { HighlightsFeed, IHighlightsFeedProps } from '../HighlightsFeed';
 import { EHighlightsDateFilter } from '../../../types/highlights';
-import { IHighlightsFilters } from '../../../types/redux';
+import { ELocale, IHighlightsFilters } from '../../../types/redux';
 import { enMessages } from '../../../lang/locales/en_US';
-import { ELocale } from '../../../types/redux';
 
 const TIMEZONE = 'Asia/Yekaterinburg';
 
@@ -55,7 +55,7 @@ const renderFeed = (props: Partial<IHighlightsFeedProps> = {}) => {
   };
 
   const Harness = () => {
-    const [range, setRange] = React.useState({
+    const [range, setRange] = useState({
       startDate: defaultProps.startDate,
       endDate: defaultProps.endDate,
     });
