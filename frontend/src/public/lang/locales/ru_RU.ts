@@ -316,7 +316,6 @@ export const ruMessages = {
   'team.search': 'Поиск пользователя',
   'team.create-user-button': 'Создать пользователя',
   'team.create-user-button-caption': 'Создать новых участников команды',
-  'team.create-user-modal.title': 'Создать пользователя',
   'team.create-user-modal.first-name': 'Имя',
   'team.create-user-modal.last-name': 'Фамилия',
   'team.create-user-modal.email': 'Электронная почта',
