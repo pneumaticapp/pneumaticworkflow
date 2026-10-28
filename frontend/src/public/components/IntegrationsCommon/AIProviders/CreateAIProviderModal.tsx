@@ -10,7 +10,11 @@ import {
   createAIProviderByVendor,
   loadAIVendors,
 } from '../../../redux/ai/slice';
-import { getAICreateProviderModalState, getAIVendorsState } from '../../../redux/selectors/ai';
+import {
+  getAICreateProviderModalIsLoading,
+  getAICreateProviderModalIsOpen,
+  getAIVendorsList,
+} from '../../../redux/selectors/ai';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
 import { validateRequired } from '../../../utils/validators';
 import { Button } from '../../UI/Buttons/Button';
@@ -33,8 +37,9 @@ const INITIAL_VALUES: ICreateAIProviderFormValues = {
 export function CreateAIProviderModal() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const { isOpen, isLoading: isCreating } = useSelector(getAICreateProviderModalState);
-  const { list: vendors } = useSelector(getAIVendorsState);
+  const isOpen = useSelector(getAICreateProviderModalIsOpen);
+  const isCreating = useSelector(getAICreateProviderModalIsLoading);
+  const vendors = useSelector(getAIVendorsList);
 
   const [activeTab, setActiveTab] = useState<TCreateTab>('vendor');
 

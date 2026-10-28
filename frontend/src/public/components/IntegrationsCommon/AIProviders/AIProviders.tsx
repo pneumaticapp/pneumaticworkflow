@@ -7,7 +7,7 @@ import { Button } from '../../UI/Buttons/Button';
 import { WarningPopup } from '../../UI/WarningPopup';
 import { TokenListSkeleton } from '../TokenList';
 import { deleteAIProvider, loadAIProviders, openCreateAIProviderModal } from '../../../redux/ai/slice';
-import { getAIProvidersState } from '../../../redux/selectors/ai';
+import { getAIProvidersIsLoading, getAIProvidersList } from '../../../redux/selectors/ai';
 
 import { CreateAIProviderModal } from './CreateAIProviderModal';
 import { AIProviderListItem } from './AIProviderListItem';
@@ -18,7 +18,8 @@ export function AIProviders() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
-  const { list: providers, isLoading } = useSelector(getAIProvidersState);
+  const providers = useSelector(getAIProvidersList);
+  const isLoading = useSelector(getAIProvidersIsLoading);
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 

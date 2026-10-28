@@ -19,16 +19,22 @@ import { history } from '../../../utils/history';
 import { closeCreateUserModal, openCreateUserModal } from '../../../redux/accounts/slice';
 import { loadAIAgents, loadAIProviders } from '../../../redux/ai/slice';
 import { getIsCreateUserModalOpen } from '../../../redux/selectors/accounts';
-import { getAIAgentsSortedByName, getAIAgentsState, getAIProvidersState } from '../../../redux/selectors/ai';
+import {
+  getAIAgentsIsLoading,
+  getAIAgentsSortedByName,
+  getAIProvidersIsLoading,
+  getAIProvidersList,
+} from '../../../redux/selectors/ai';
 
 import styles from './AIAgents.css';
 
 export function AIAgents() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const { isLoading: isAgentsLoading } = useSelector(getAIAgentsState);
+  const isAgentsLoading = useSelector(getAIAgentsIsLoading);
   const agents = useSelector(getAIAgentsSortedByName);
-  const { list: providers, isLoading: isProvidersLoading } = useSelector(getAIProvidersState);
+  const providers = useSelector(getAIProvidersList);
+  const isProvidersLoading = useSelector(getAIProvidersIsLoading);
   const isCreateModalOpen = useSelector(getIsCreateUserModalOpen);
 
   useEffect(() => {

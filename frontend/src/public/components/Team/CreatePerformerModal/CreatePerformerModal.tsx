@@ -10,7 +10,7 @@ import { Tabs } from '../../UI/Tabs';
 import { ERoutes } from '../../../constants/routes';
 import { history } from '../../../utils/history';
 import { createAIAgent, loadAIProviders } from '../../../redux/ai/slice';
-import { getAICreateAgentState, getAIProvidersState } from '../../../redux/selectors/ai';
+import { getAICreateAgentIsLoading, getAIProvidersIsLoading, getAIProvidersList } from '../../../redux/selectors/ai';
 
 import { AIAgentForm } from '../AIAgents/AIAgentForm';
 import type { IAIAgentFormValues } from '../AIAgents/AIAgentForm/types';
@@ -29,8 +29,9 @@ export function CreatePerformerModal({
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState(initialTab);
   const [formsKey, setFormsKey] = useState(0);
-  const { isLoading: isLoadingProviders, list: providers } = useSelector(getAIProvidersState);
-  const { isLoading: isCreatingAgent } = useSelector(getAICreateAgentState);
+  const isLoadingProviders = useSelector(getAIProvidersIsLoading);
+  const providers = useSelector(getAIProvidersList);
+  const isCreatingAgent = useSelector(getAICreateAgentIsLoading);
 
   useEffect(() => {
     if (isOpen) {

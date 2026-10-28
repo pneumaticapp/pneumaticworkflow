@@ -10,7 +10,13 @@ import { FormikInputField } from '../../../UI/Fields/InputField';
 import { FormikTextareaField } from '../../../UI/Fields/TextareaField';
 import { ModalBody, ModalFooter } from '../../../UI/BaseModal';
 import { uploadAIAgentAvatar } from '../../../../redux/ai/slice';
-import { getAIAgentAvatarUploadState, getAIProviderModelsState, getAIProviders } from '../../../../redux/selectors/ai';
+import {
+  getAIAgentAvatarUploadIsLoading,
+  getAIProviderModelsIsLoading,
+  getAIProviderModelsList,
+  getAIProviderModelsProviderId,
+  getAIProvidersList,
+} from '../../../../redux/selectors/ai';
 import { AgentAvatar } from '../AgentAvatar';
 import { generateAgentAvatar } from '../utils/generateAgentAvatar';
 import type { IAIAgentFormFieldsProps, IAIAgentFormValues } from './types';
@@ -25,9 +31,11 @@ const filterModelOption = (option: { label: string; value: string }, input: stri
 export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFieldsProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const { isLoading: isAvatarUploading } = useSelector(getAIAgentAvatarUploadState);
-  const providers = useSelector(getAIProviders);
-  const modelsState = useSelector(getAIProviderModelsState);
+  const isAvatarUploading = useSelector(getAIAgentAvatarUploadIsLoading);
+  const providers = useSelector(getAIProvidersList);
+  const models = useSelector(getAIProviderModelsList);
+  const isModelsLoading = useSelector(getAIProviderModelsIsLoading);
+  const modelsProviderId = useSelector(getAIProviderModelsProviderId);
   const { dirty, handleSubmit, isValid, setFieldValue, values } = useFormikContext<IAIAgentFormValues>();
   useProviderModelsSync();
 
@@ -53,14 +61,14 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
     if (file) uploadAvatar(file);
   };
 
-  const isModelSelectDisabled = !values.providerId || modelsState.isLoading;
+  const isModelSelectDisabled = !values.providerId || isModelsLoading;
   const modelOptions =
-    modelsState.providerId === Number(values.providerId)
-      ? modelsState.list.map((model) => ({ label: model.name, value: model.slug }))
+    modelsProviderId === Number(values.providerId)
+      ? models.map((model) => ({ label: model.name, value: model.slug }))
       : [];
   const modelPlaceholder = (() => {
     if (!values.providerId) return formatMessage({ id: 'team.create-ai-agent-modal.model-select-provider' });
-    if (modelsState.isLoading) return formatMessage({ id: 'team.create-ai-agent-modal.model-loading' });
+    if (isModelsLoading) return formatMessage({ id: 'team.create-ai-agent-modal.model-loading' });
     return undefined;
   })();
 

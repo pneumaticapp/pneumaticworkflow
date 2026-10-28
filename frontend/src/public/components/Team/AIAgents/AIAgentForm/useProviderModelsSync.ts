@@ -3,13 +3,13 @@ import { useFormikContext } from 'formik';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { loadAIProviderModels } from '../../../../redux/ai/slice';
-import { getAIProviderModelsState, getAIProviders } from '../../../../redux/selectors/ai';
+import { getAIProviderModelsProviderId, getAIProvidersList } from '../../../../redux/selectors/ai';
 import type { IAIAgentFormValues } from './types';
 
 export function useProviderModelsSync() {
   const dispatch = useDispatch();
-  const providers = useSelector(getAIProviders);
-  const modelsState = useSelector(getAIProviderModelsState);
+  const providers = useSelector(getAIProvidersList);
+  const modelsProviderId = useSelector(getAIProviderModelsProviderId);
   const { values, setFieldValue } = useFormikContext<IAIAgentFormValues>();
   const prevProviderIdRef = useRef(values.providerId);
   const modelsRequestedForRef = useRef('');
@@ -28,9 +28,9 @@ export function useProviderModelsSync() {
     }
     prevProviderIdRef.current = values.providerId;
 
-    if (modelsState.providerId !== Number(values.providerId) && modelsRequestedForRef.current !== values.providerId) {
+    if (modelsProviderId !== Number(values.providerId) && modelsRequestedForRef.current !== values.providerId) {
       modelsRequestedForRef.current = values.providerId;
       dispatch(loadAIProviderModels(Number(values.providerId)));
     }
-  }, [values.providerId, values.model, modelsState.providerId, dispatch, setFieldValue]);
+  }, [values.providerId, values.model, modelsProviderId, dispatch, setFieldValue]);
 }
