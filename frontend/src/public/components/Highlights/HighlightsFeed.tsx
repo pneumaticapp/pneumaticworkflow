@@ -82,7 +82,6 @@ export function HighlightsFeed({
   useEffect(() => {
     document.title = TITLES.WorkflowHighlights;
 
-    // The store default range ignores the profile timezone and can be stale after midnight.
     const currentRange = getHighlightsDateRange(timeRange, timezone, dateFdw);
 
     if (currentRange) {

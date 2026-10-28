@@ -8,7 +8,6 @@ import { getTodayDateRange } from '../../utils/highlightsDateRange';
 import { THighlightsActions, EHighlightsActions } from './actions';
 import { EGeneralActions, TGeneralActions } from '../actions';
 
-// Computed per call so the range is not frozen at bundle load.
 export const getInitHighlightsFilters = (): IHighlightsFilters => {
   const { startDate, endDate } = getTodayDateRange();
 
