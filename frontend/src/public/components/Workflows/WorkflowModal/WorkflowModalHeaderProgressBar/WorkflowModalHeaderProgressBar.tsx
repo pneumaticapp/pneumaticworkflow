@@ -88,15 +88,11 @@ export function WorkflowModalHeaderProgressBar({
                         withConfirmation
                         initialConfirmationState="option"
                         closeDropdown={() => {}}
-                        cssModule={{
-                          'dropdown-item': classnames(
-                            styles['action-buttons__button'],
-                            getDropdownItemColorClass(option.color),
-                          ),
-                        }}
+                        className={classnames(
+                          styles['action-buttons__button'],
+                          getDropdownItemColorClass(option.color),
+                        )}
                         onClick={() => onClick && onClick(() => {})}
-                        toggle={false}
-                        tag="button"
                       >
                         <>
                           {Icon && <Icon />}
