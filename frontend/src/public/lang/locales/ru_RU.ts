@@ -352,7 +352,7 @@ export const ruMessages = {
   'team.create-ai-agent-modal.go-to-integrations': 'Перейти в интеграции',
   'team.create-ai-agent-modal.save': 'Сохранить',
   'team.create-ai-agent-modal.parameters': 'Параметры',
-  'team.create-ai-agent-modal.model': 'Модель ИИ',
+  'team.create-ai-agent-modal.model': 'AI-модель',
   'team.create-ai-agent-modal.system-prompt': 'Системный промпт',
   'team.create-ai-agent-modal.upload': 'Загрузить',
   'team.create-ai-agent-modal.generate': 'Сгенерировать',
