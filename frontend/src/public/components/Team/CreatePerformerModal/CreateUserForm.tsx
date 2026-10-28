@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
+import classnames from 'classnames';
 import { Formik } from 'formik';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
@@ -18,6 +19,7 @@ import { createUser } from '../../../redux/accounts/slice';
 import type { ICreateUserFormProps, ICreateUserFormValues, IStatusOption } from './types';
 import { EUserRole } from './types';
 
+import modalStyles from '../PerformerModal.css';
 import styles from './CreatePerformerModal.css';
 
 const formatStatusOption = (
@@ -75,8 +77,8 @@ export function CreateUserForm({ isVisible }: ICreateUserFormProps) {
 
         return (
           <form onSubmit={formikSubmit}>
-            <ModalBody className={styles['modal__body']}>
-              <div className={styles['modal__form']}>
+            <ModalBody className={modalStyles['performer-modal__body']}>
+              <div className={modalStyles['performer-modal__form']}>
                 <FormikInputField
                   name="firstName"
                   title={formatMessage({ id: 'team.create-user-modal.first-name' })}
@@ -113,7 +115,10 @@ export function CreateUserForm({ isVisible }: ICreateUserFormProps) {
                     fieldSize="lg"
                     type="text"
                     isRequired
-                    containerClassName={`${styles['modal__input-ellipsis']} ${styles['modal__password-input-wrap']}`}
+                    containerClassName={classnames(
+                      styles['modal__input-ellipsis'],
+                      styles['modal__password-input-wrap'],
+                    )}
                   />
                   <button
                     type="button"
@@ -126,9 +131,9 @@ export function CreateUserForm({ isVisible }: ICreateUserFormProps) {
               </div>
             </ModalBody>
 
-            <ModalFooter className={styles['modal__footer']}>
+            <ModalFooter className={modalStyles['performer-modal__footer']}>
               <Button
-                className={styles['modal__submit']}
+                className={modalStyles['performer-modal__submit']}
                 type="submit"
                 label={formatMessage({ id: 'team.create-user-modal.submit' })}
                 buttonStyle="yellow"

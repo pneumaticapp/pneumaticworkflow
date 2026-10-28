@@ -10,12 +10,19 @@ import { FormikInputField } from '../../../UI/Fields/InputField';
 import { FormikTextareaField } from '../../../UI/Fields/TextareaField';
 import { ModalBody, ModalFooter } from '../../../UI/BaseModal';
 import { uploadAIAgentAvatar } from '../../../../redux/ai/slice';
-import { getAIAgentAvatarUploadState, getAIProviderModelsState, getAIProviders } from '../../../../redux/selectors/ai';
-import { getAgentInitials } from '../utils/getAgentInitials';
+import {
+  getAIAgentAvatarUploadIsLoading,
+  getAIProviderModelsIsLoading,
+  getAIProviderModelsList,
+  getAIProviderModelsProviderId,
+  getAIProvidersList,
+} from '../../../../redux/selectors/ai';
+import { AgentAvatar } from '../AgentAvatar';
 import { generateAgentAvatar } from '../utils/generateAgentAvatar';
 import type { IAIAgentFormFieldsProps, IAIAgentFormValues } from './types';
 import { useProviderModelsSync } from './useProviderModelsSync';
 
+import modalStyles from '../../PerformerModal.css';
 import styles from './AIAgentForm.css';
 
 const filterModelOption = (option: { label: string; value: string }, input: string) =>
@@ -24,9 +31,11 @@ const filterModelOption = (option: { label: string; value: string }, input: stri
 export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFieldsProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const { isLoading: isAvatarUploading } = useSelector(getAIAgentAvatarUploadState);
-  const providers = useSelector(getAIProviders);
-  const modelsState = useSelector(getAIProviderModelsState);
+  const isAvatarUploading = useSelector(getAIAgentAvatarUploadIsLoading);
+  const providers = useSelector(getAIProvidersList);
+  const models = useSelector(getAIProviderModelsList);
+  const isModelsLoading = useSelector(getAIProviderModelsIsLoading);
+  const modelsProviderId = useSelector(getAIProviderModelsProviderId);
   const { dirty, handleSubmit, isValid, setFieldValue, values } = useFormikContext<IAIAgentFormValues>();
   useProviderModelsSync();
 
@@ -34,7 +43,6 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
     label: `${provider.name} — ${provider.apiKeyPrefix}`,
     value: String(provider.id),
   }));
-  const initials = getAgentInitials(values.name);
 
   const uploadAvatar = (file: File) => {
     dispatch(uploadAIAgentAvatar({ file, onSuccess: (url) => setFieldValue('photo', url) }));
@@ -53,24 +61,22 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
     if (file) uploadAvatar(file);
   };
 
-  const isModelSelectDisabled = !values.providerId || modelsState.isLoading;
+  const isModelSelectDisabled = !values.providerId || isModelsLoading;
   const modelOptions =
-    modelsState.providerId === Number(values.providerId)
-      ? modelsState.list.map((model) => ({ label: model.name, value: model.slug }))
+    modelsProviderId === Number(values.providerId)
+      ? models.map((model) => ({ label: model.name, value: model.slug }))
       : [];
   const modelPlaceholder = (() => {
     if (!values.providerId) return formatMessage({ id: 'team.create-ai-agent-modal.model-select-provider' });
-    if (modelsState.isLoading) return formatMessage({ id: 'team.create-ai-agent-modal.model-loading' });
+    if (isModelsLoading) return formatMessage({ id: 'team.create-ai-agent-modal.model-loading' });
     return undefined;
   })();
 
   return (
     <form onSubmit={handleSubmit}>
-      <ModalBody className={styles['ai-agent-form__body']}>
+      <ModalBody className={modalStyles['performer-modal__body']}>
         <div className={styles['ai-agent-form__avatar']}>
-          <div className={styles['ai-agent-form__avatar-preview']}>
-            {values.photo ? <img src={values.photo} alt="" /> : initials}
-          </div>
+          <AgentAvatar name={values.name} photo={values.photo} size="lg" />
           <div className={styles['ai-agent-form__avatar-actions']}>
             <label htmlFor="ai-agent-avatar-upload">
               {formatMessage({ id: 'team.create-ai-agent-modal.upload' })}
@@ -85,7 +91,7 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
           </div>
         </div>
 
-        <div className={styles['ai-agent-form__fields']}>
+        <div className={modalStyles['performer-modal__form']}>
           <FormikInputField
             name="name"
             title={formatMessage({ id: 'team.create-ai-agent-modal.name' })}
@@ -119,9 +125,9 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
           />
         </div>
       </ModalBody>
-      <ModalFooter className={styles['ai-agent-form__footer']}>
+      <ModalFooter className={modalStyles['performer-modal__footer']}>
         <Button
-          className={styles['ai-agent-form__submit']}
+          className={modalStyles['performer-modal__submit']}
           type="submit"
           label={submitLabel}
           buttonStyle="yellow"

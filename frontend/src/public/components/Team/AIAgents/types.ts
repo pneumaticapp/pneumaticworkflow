@@ -9,3 +9,9 @@ export interface IEditAIAgentModalProps {
   agent: IAIAgent;
   onClose(): void;
 }
+
+export interface IAgentAvatarProps {
+  name: string;
+  photo?: string | null;
+  size: 'md' | 'lg';
+}

@@ -74,7 +74,7 @@ function* fetchAIProviders() {
   yield put(loadAIProvidersStarted());
 
   try {
-    const providers: IAIProvider[] = yield getAIProvidersApi();
+    const providers: IAIProvider[] = yield call(getAIProvidersApi);
     if (requestId !== latestProvidersRequestId) {
       return false;
     }
@@ -94,7 +94,7 @@ function* fetchAIVendors() {
   yield put(loadAIVendorsStarted());
 
   try {
-    const vendors: IAIVendor[] = yield getAIVendorsApi();
+    const vendors: IAIVendor[] = yield call(getAIVendorsApi);
     yield put(loadAIVendorsSuccess(vendors));
     return true;
   } catch (error) {
@@ -112,7 +112,7 @@ function* fetchAIAgents() {
   yield put(loadAIAgentsStarted());
 
   try {
-    const agents: IAIAgent[] = yield getAIAgentsApi();
+    const agents: IAIAgent[] = yield call(getAIAgentsApi);
     if (requestId !== latestAgentsRequestId) {
       return false;
     }
@@ -132,7 +132,7 @@ function* fetchAIProviderModels({ payload: providerId }: PayloadAction<number>) 
   yield put(loadAIProviderModelsStarted(providerId));
 
   try {
-    const models: IAIModel[] = yield getAIProviderModelsApi(providerId);
+    const models: IAIModel[] = yield call(getAIProviderModelsApi, providerId);
     yield put(loadAIProviderModelsSuccess({ providerId, models }));
   } catch (error) {
     yield put(loadAIProviderModelsFailed(providerId));
@@ -145,16 +145,16 @@ function* waitForAction(actionType: string) {
   yield take(actionType);
 }
 
-function* createProvider(createRequest: () => Promise<unknown>) {
+function* createProvider<TRequest>(createRequest: (request: TRequest) => Promise<unknown>, request: TRequest) {
   yield put(createAIProviderStarted());
   const modalCloseWatcher: Task = yield fork(waitForAction, closeCreateAIProviderModal.type);
 
   try {
-    yield call(createRequest);
+    yield call(createRequest, request);
     if (modalCloseWatcher.isRunning()) {
       yield put(createAIProviderSuccess());
     }
-    const isRefreshed: boolean = yield fetchAIProviders();
+    const isRefreshed: boolean = yield call(fetchAIProviders);
     if (isRefreshed) {
       NotificationManager.success({ message: 'ai-providers.created' });
     }
@@ -170,17 +170,17 @@ function* createProvider(createRequest: () => Promise<unknown>) {
 }
 
 export function* createAIProviderSaga({ payload }: PayloadAction<ICreateAIProviderRequest>) {
-  yield createProvider(() => createAIProviderApi(payload));
+  yield call(createProvider, createAIProviderApi, payload);
 }
 
 export function* createAIProviderByVendorSaga({ payload }: PayloadAction<ICreateAIProviderByVendorRequest>) {
-  yield createProvider(() => createAIProviderByVendorApi(payload));
+  yield call(createProvider, createAIProviderByVendorApi, payload);
 }
 
 function* deleteAIProviderSaga({ payload: id }: PayloadAction<number>) {
   try {
-    yield deleteAIProviderApi(id);
-    const isRefreshed: boolean = yield fetchAIProviders();
+    yield call(deleteAIProviderApi, id);
+    const isRefreshed: boolean = yield call(fetchAIProviders);
     if (isRefreshed) {
       NotificationManager.success({ message: 'ai-providers.deleted' });
     }
@@ -192,8 +192,8 @@ function* deleteAIProviderSaga({ payload: id }: PayloadAction<number>) {
 
 function* refreshAgentsAndProviders(successMessage: string) {
   const [isAgentsRefreshed, isProvidersRefreshed]: [boolean, boolean] = yield all([
-    fetchAIAgents(),
-    fetchAIProviders(),
+    call(fetchAIAgents),
+    call(fetchAIProviders),
   ]);
   if (isAgentsRefreshed && isProvidersRefreshed) {
     NotificationManager.success({ message: successMessage });
@@ -207,11 +207,10 @@ export function* createAIAgentSaga({ payload }: PayloadAction<ICreateAIAgentRequ
   try {
     yield call(createAIAgentApi, payload);
     if (modalCloseWatcher.isRunning()) {
-      yield cancel(modalCloseWatcher);
       yield put(createAIAgentSuccess());
       yield put(closeCreateUserModal());
     }
-    yield refreshAgentsAndProviders('team.ai-agents.created');
+    yield call(refreshAgentsAndProviders, 'team.ai-agents.created');
   } catch (error) {
     if (modalCloseWatcher.isRunning()) {
       yield put(createAIAgentFailed());
@@ -227,9 +226,9 @@ export function* updateAIAgentSaga({
   payload: { id, onSuccess, onError, ...data },
 }: PayloadAction<TUpdateAIAgentPayload>) {
   try {
-    yield updateAIAgentApi(id, data);
+    yield call(updateAIAgentApi, id, data);
     onSuccess?.();
-    yield refreshAgentsAndProviders('team.ai-agents.updated');
+    yield call(refreshAgentsAndProviders, 'team.ai-agents.updated');
   } catch (error) {
     onError?.();
     NotificationManager.warning({ message: getErrorMessage(error) });
@@ -239,8 +238,8 @@ export function* updateAIAgentSaga({
 
 function* deleteAIAgentSaga({ payload: id }: PayloadAction<number>) {
   try {
-    yield deleteAIAgentApi(id);
-    yield refreshAgentsAndProviders('team.ai-agents.deleted');
+    yield call(deleteAIAgentApi, id);
+    yield call(refreshAgentsAndProviders, 'team.ai-agents.deleted');
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to delete AI agent', error);

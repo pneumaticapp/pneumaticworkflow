@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 import { EPageTitle } from '../../constants/defaultValues';
 import { PageTitle } from '../PageTitle/PageTitle';
 import { AIProviders } from './AIProviders';
-import { ApiKeys } from './ApiKeys/ApiKeys';
+import { ApiKeys } from './ApiKeys';
 
 import styles from './IntegrationsCommon.css';
 

@@ -1,4 +1,4 @@
-.edit-agent-modal {
+.performer-modal {
   &__dialog {
     position: relative;
     bottom: auto;
@@ -18,11 +18,30 @@
     }
   }
 
+  &__body {
+    padding-top: 1.6rem;
+    overflow: visible;
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
   &__header {
     flex-shrink: 0;
 
     > :first-child {
       width: 100%;
     }
+  }
+
+  &__footer {
+    flex-shrink: 0;
+  }
+
+  &__submit {
+    width: 100%;
   }
 }

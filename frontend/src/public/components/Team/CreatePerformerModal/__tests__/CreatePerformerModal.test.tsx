@@ -322,7 +322,7 @@ describe('CreatePerformerModal', () => {
       await act(async () => {
         getAvatarUploadAction().payload.onSuccess('https://files.example.com/avatar.png');
       });
-      expect(document.querySelector('.ai-agent-form__avatar-preview img')).toHaveAttribute(
+      expect(document.querySelector('.agent-avatar img')).toHaveAttribute(
         'src',
         'https://files.example.com/avatar.png',
       );
@@ -372,7 +372,7 @@ describe('CreatePerformerModal', () => {
       await act(async () => {
         getAvatarUploadAction().payload.onSuccess('https://files.example.com/generated.png');
       });
-      expect(document.querySelector('.ai-agent-form__avatar-preview img')).toHaveAttribute(
+      expect(document.querySelector('.agent-avatar img')).toHaveAttribute(
         'src',
         'https://files.example.com/generated.png',
       );
@@ -441,7 +441,7 @@ describe('CreatePerformerModal', () => {
 
       expect(mockDispatch).toHaveBeenCalledWith(cancelAIAgentAvatarUpload());
       expect(getNameInput()).toHaveValue('');
-      expect(document.querySelector('.ai-agent-form__avatar-preview img')).not.toBeInTheDocument();
+      expect(document.querySelector('.agent-avatar img')).not.toBeInTheDocument();
     });
 
     it('cancels a pending avatar upload when the agent form unmounts', async () => {

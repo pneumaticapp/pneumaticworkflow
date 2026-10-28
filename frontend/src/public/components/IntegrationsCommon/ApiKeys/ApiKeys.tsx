@@ -13,7 +13,7 @@ import { TokenListSkeleton } from '../TokenList';
 import { ApiKeyListItem } from './ApiKeyListItem';
 import { CreateApiKeyModal, NewApiKeyModal, RevokeApiKeyModal } from './ApiKeyModals';
 
-import styles from './ApiKeys.css';
+import sectionStyles from '../IntegrationsCommon.css';
 import tokenListStyles from '../TokenList/TokenList.css';
 
 export function ApiKeys() {
@@ -78,13 +78,13 @@ export function ApiKeys() {
 
   return (
     <>
-      <section className={styles['api-keys']} aria-labelledby="api-keys-title" data-testid="api-keys-section">
-        <header className={styles['api-keys__header']}>
-          <h2 id="api-keys-title" className={styles['api-keys__title']}>
+      <section className={sectionStyles['section']} aria-labelledby="api-keys-title" data-testid="api-keys-section">
+        <header className={sectionStyles['section__header']}>
+          <h2 id="api-keys-title" className={sectionStyles['section__title']}>
             {formatMessage({ id: 'integrations.api-keys-title' })}
           </h2>
           <Button
-            className={styles['api-keys__create-btn']}
+            className={sectionStyles['section__create-btn']}
             type="button"
             onClick={handleOpenCreateModal}
             size="sm"
@@ -97,7 +97,7 @@ export function ApiKeys() {
         {isLoading && <TokenListSkeleton data-testid="api-keys-skeleton" />}
 
         {!isLoading && apiKeys.length === 0 && (
-          <p className={styles['api-keys__empty']} data-testid="empty-keys-message">
+          <p className={sectionStyles['section__empty']} data-testid="empty-keys-message">
             {formatMessage({ id: 'integrations.no-api-keys' })}
           </p>
         )}

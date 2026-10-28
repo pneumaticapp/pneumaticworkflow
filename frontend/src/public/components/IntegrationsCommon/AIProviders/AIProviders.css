@@ -1,37 +1,4 @@
 .providers {
-  margin: 3.2rem 0;
-
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.6rem;
-  }
-
-  &__title {
-    @mixin font-text;
-
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: bold;
-    line-height: inherit;
-    color: var(--pneumatic-color-black100);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  &__create-btn {
-    font-size: 1.3rem;
-    line-height: 1.6rem;
-  }
-
-  &__empty {
-    padding: 2.4rem 0;
-    font-size: 1.4rem;
-    color: var(--pneumatic-color-black48);
-    text-align: center;
-  }
-
   &__delete-btn:disabled {
     pointer-events: none;
   }
@@ -50,10 +17,6 @@
 
   &__tabs {
     margin-bottom: 1.6rem;
-  }
-
-  &__tabs &__tab_active {
-    background: var(--pneumatic-color-orange);
   }
 
   &__fields {

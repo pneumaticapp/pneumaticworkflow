@@ -15,6 +15,7 @@ export interface ITabsProps<TOption extends TOptionBase> {
   containerClassName?: string;
   tabClassName?: string;
   activeTabClassName?: string;
+  variant?: 'default' | 'pill';
   onChange(value: TOption['id']): void;
 }
 
@@ -24,6 +25,7 @@ export function Tabs<TOption extends TOptionBase>({
   containerClassName,
   tabClassName,
   activeTabClassName,
+  variant = 'default',
   onChange,
 }: ITabsProps<TOption>) {
   const checkIsActiveValue = (value: TOption) => value.id === activeValueId;
@@ -36,7 +38,9 @@ export function Tabs<TOption extends TOptionBase>({
   const activeTabIndex = values.findIndex(checkIsActiveValue);
 
   return (
-    <div className={classnames(styles['container'], containerClassName)}>
+    <div
+      className={classnames(styles['container'], variant === 'pill' && styles['container_pill'], containerClassName)}
+    >
       {values.map((value, index) => {
         let middleTabBorderClass = '';
         if (values.length === 3 && activeTabIndex !== 1 && index === 1) {

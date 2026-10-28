@@ -10,7 +10,7 @@ import { Tabs } from '../../UI/Tabs';
 import { ERoutes } from '../../../constants/routes';
 import { history } from '../../../utils/history';
 import { createAIAgent, loadAIProviders } from '../../../redux/ai/slice';
-import { getAICreateAgentState, getAIProvidersState } from '../../../redux/selectors/ai';
+import { getAICreateAgentIsLoading, getAIProvidersIsLoading, getAIProvidersList } from '../../../redux/selectors/ai';
 
 import { AIAgentForm } from '../AIAgents/AIAgentForm';
 import type { IAIAgentFormValues } from '../AIAgents/AIAgentForm/types';
@@ -18,6 +18,7 @@ import { CreateUserForm } from './CreateUserForm';
 import type { ICreatePerformerModalProps } from './types';
 import { ECreatePerformerModalTab } from './types';
 
+import modalStyles from '../PerformerModal.css';
 import styles from './CreatePerformerModal.css';
 
 export function CreatePerformerModal({
@@ -29,8 +30,9 @@ export function CreatePerformerModal({
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState(initialTab);
   const [formsKey, setFormsKey] = useState(0);
-  const { isLoading: isLoadingProviders, list: providers } = useSelector(getAIProvidersState);
-  const { isLoading: isCreatingAgent } = useSelector(getAICreateAgentState);
+  const isLoadingProviders = useSelector(getAIProvidersIsLoading);
+  const providers = useSelector(getAIProvidersList);
+  const isCreatingAgent = useSelector(getAICreateAgentIsLoading);
 
   useEffect(() => {
     if (isOpen) {
@@ -65,10 +67,10 @@ export function CreatePerformerModal({
     <BaseModal
       isOpen={isOpen}
       toggle={onClose}
-      className={styles['modal__dialog']}
-      contentClassName={styles['modal__content']}
+      className={modalStyles['performer-modal__dialog']}
+      contentClassName={modalStyles['performer-modal__content']}
     >
-      <ModalHeader toggle={onClose} className={styles['modal__header']} titleTag="div">
+      <ModalHeader toggle={onClose} className={modalStyles['performer-modal__header']} titleTag="div">
         <Tabs
           values={[
             { id: ECreatePerformerModalTab.User, label: formatMessage({ id: 'team.create-user-modal.tab-user' }) },
@@ -78,9 +80,7 @@ export function CreatePerformerModal({
             },
           ]}
           activeValueId={activeTab}
-          containerClassName={styles['modal__tabs-switcher']}
-          tabClassName={styles['modal__tab']}
-          activeTabClassName={styles['modal__tab_active']}
+          variant="pill"
           onChange={setActiveTab}
         />
       </ModalHeader>
