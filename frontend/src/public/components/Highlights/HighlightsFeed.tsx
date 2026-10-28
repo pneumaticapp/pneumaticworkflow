@@ -1,6 +1,5 @@
 import classnames from 'classnames';
-import * as React from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useIntl } from 'react-intl';
 
@@ -103,12 +102,12 @@ export function HighlightsFeed({
   }, [endDate, startDate]);
 
   const [templatesSearchText, setTemplatesSearchText] = useState('');
-  const handleChangeTemplatesSearchText = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeTemplatesSearchText = (e: ChangeEvent<HTMLInputElement>) => {
     setTemplatesSearchText(e.target.value);
   };
 
   const [usersSearchText, setUsersSearchText] = useState('');
-  const handleChangeUsersSearchText = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeUsersSearchText = (e: ChangeEvent<HTMLInputElement>) => {
     setUsersSearchText(e.target.value);
   };
 
@@ -117,7 +116,7 @@ export function HighlightsFeed({
   const isFeedEmpty = useMemo(() => !isArrayWithItems(items) && !isFirstFetch, [items, isFirstFetch]);
 
   const handleChangeFilterList =
-    (type: EHighlightsFilterType) => (id: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    (type: EHighlightsFilterType) => (id: number) => (e: ChangeEvent<HTMLInputElement>) => {
       const {
         target: { checked },
       } = e;
