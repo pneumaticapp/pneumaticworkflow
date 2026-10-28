@@ -1,15 +1,18 @@
 import * as React from 'react';
 import { useState } from 'react';
 import classnames from 'classnames';
-import ReactSelect, { components } from 'react-select';
-import type { CSSObjectWithLabel, FormatOptionLabelMeta } from 'react-select';
-import { FieldHookConfig, useField } from 'formik';
+import ReactSelect from 'react-select';
+import type { CSSObjectWithLabel } from 'react-select';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import OutsideClickHandler from 'react-outside-click-handler';
 
-import { ArrowDropdownIcon, ClearIcon, ExpandIcon, RoundClearIconMd } from '../../icons';
-import { Checkbox } from '../Fields/Checkbox';
-import { Skeleton } from '../Skeleton';
+import { ArrowDropdownIcon } from '../../icons';
+import { ControlSM } from './ControlSM';
+import { MenuSM } from './MenuSM';
+import { MenuListSM } from './MenuListSM';
+import { Option } from './Option';
+import { formatCompactMultiOptionLabel, formatCompactOptionLabel } from './utils/formatCompactOptionLabel';
+import { filterCompactOption } from './utils/filterCompactOption';
 
 import '../../../assets/css/library/react-select.css';
 import styles from './Select.css';
@@ -144,86 +147,8 @@ export function Select<TOption extends TSelectOption>({
   );
 }
 
-function ControlSM(props: any) {
-  const { title, isOpen, isDisabled, variant, className, Icon, content, onToggle, onClear }: IControlSMParams =
-    props.selectProps.controlSm;
-
-  if (content) {
-    return (
-      <button
-        ref={props.innerRef}
-        type="button"
-        disabled={isDisabled}
-        className={classnames(styles['select-sm__control-custom'], className)}
-        onClick={() => onToggle(!isOpen)}
-      >
-        {content}
-      </button>
-    );
-  }
-
-  return (
-    <button
-      ref={props.innerRef}
-      type="button"
-      disabled={isDisabled}
-      className={classnames(
-        'react-select_controlllll',
-        styles['select-sm__control'],
-        variant === 'accent' && styles['select-sm__control_accent'],
-        isOpen && styles['is-open'],
-        className,
-      )}
-      onClick={() => onToggle(!isOpen)}
-    >
-      {Icon && <Icon className={styles['select-sm__icon']} />}
-      <p className={styles['select-sm__value']}>{title || props?.selectProps.value?.label}</p>
-      {onClear ? (
-        <span
-          role="button"
-          tabIndex={0}
-          aria-label="Clear selected options"
-          className={styles['select-sm__clear-value']}
-          onClick={(event) => {
-            event.stopPropagation();
-            onClear();
-          }}
-          onKeyDown={(event) => {
-            if (event.key !== 'Enter' && event.key !== ' ') return;
-            event.preventDefault();
-            event.stopPropagation();
-            onClear();
-          }}
-        >
-          <ClearIcon />
-        </span>
-      ) : (
-        <ExpandIcon className={classnames(styles['select-sm__arrow'], isOpen && styles['is-open'])} />
-      )}
-    </button>
-  );
-}
-
 const DropdownIndicator = ({ isDisabled }: any) => {
   return !isDisabled ? <ArrowDropdownIcon /> : null;
-};
-
-const MenuSM = ({ children, ...props }: any) => {
-  const customClassName = props.selectProps.classNames?.menuList?.(props);
-
-  return (
-    <div
-      className={classnames(
-        'react-select__menu-list',
-        props.selectProps.staticMenu ? 'is-static' : 'is-sm',
-        props.selectProps.isMulti && 'is-multi',
-        props.selectProps.placement === 'left' && 'is-left',
-        customClassName,
-      )}
-    >
-      <components.Menu {...props}>{children}</components.Menu>
-    </div>
-  );
 };
 
 const MenuListLG = ({ selectProps, ...props }: any) => {
@@ -235,130 +160,6 @@ const MenuListLG = ({ selectProps, ...props }: any) => {
     </ScrollBar>
   );
 };
-
-const SKELETON_ROW_WIDTHS = ['80%', '60%', '80%', '60%', '70%'];
-
-function formatCompactOptionLabel(data: unknown, { context }: FormatOptionLabelMeta<unknown>) {
-  const option = data as TSelectOption;
-  if (context !== 'menu') return option.label;
-
-  return (
-    <span className={styles['select-sm__option']}>
-      <span className={styles['select-sm__option-label']}>{option.label}</span>
-      {option.count !== undefined && <span className={styles['select-sm__option-count']}>{option.count}</span>}
-    </span>
-  );
-}
-
-function formatCompactMultiOptionLabel(data: unknown, meta: FormatOptionLabelMeta<unknown>) {
-  const option = data as TSelectOption;
-  const content = formatCompactOptionLabel(data, meta);
-  if (meta.context !== 'menu' || !option.value) return content;
-
-  return (
-    <span className={styles['select-sm__option-check']}>
-      <Checkbox
-        checked={(meta.selectValue as TSelectOption[]).some(({ value }) => value === option.value)}
-        title={content}
-        onChange={() => {}}
-      />
-    </span>
-  );
-}
-
-function filterCompactOption({ label, data }: { label: unknown; data: unknown }, input: string) {
-  const option = data as TSelectOption;
-  const searchText = option.searchByText ?? (typeof label === 'string' ? label : '');
-
-  return !input || searchText.toLowerCase().includes(input.toLowerCase());
-}
-
-const MenuListSM = ({ selectProps, ...props }: any) => {
-  const ScrollBar = PerfectScrollbar as unknown as Function;
-  const { onInputChange, inputValue, onMenuInputFocus, placeholder, isSearchable } = selectProps;
-
-  const ariaAttributes = {
-    'aria-label': selectProps['aria-label'],
-    'aria-labelledby': selectProps['aria-labelledby'],
-  };
-
-  return (
-    <div>
-      {isSearchable && !selectProps.isLoading && (
-        <div className={styles['select-sm__search']}>
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) =>
-              onInputChange(e.currentTarget.value, {
-                action: 'input-change',
-              })
-            }
-            // When opening sm dropdown, set the autofocus on the search field
-
-            autoFocus
-            onMouseDown={(e) => e.stopPropagation()}
-            onTouchEnd={(e) => e.stopPropagation()}
-            onFocus={onMenuInputFocus}
-            placeholder={placeholder}
-            {...ariaAttributes}
-          />
-          {inputValue && (
-            <button
-              className={styles['select-sm__clear']}
-              type="button"
-              aria-label="button"
-              onClick={() =>
-                onInputChange('', {
-                  action: 'input-change',
-                })
-              }
-            >
-              <RoundClearIconMd />
-            </button>
-          )}
-        </div>
-      )}
-
-      <ScrollBar className={styles['select__scrollbar']} options={{ suppressScrollX: true, wheelPropagation: false }}>
-        {selectProps.isLoading
-          ? SKELETON_ROW_WIDTHS.map((width, index) => (
-              <div key={index} className={styles['select-sm__skeleton']}>
-                <Skeleton display="block" height="2.4rem" width={width} />
-              </div>
-            ))
-          : props.children}
-      </ScrollBar>
-    </div>
-  );
-};
-
-const Option = (props: any) => {
-  const { innerProps, data } = props;
-  if (data.onClick) innerProps.onClick = data.onClick;
-
-  return <components.Option {...props} />;
-};
-
-export function FormikSelect(
-  props: Omit<ISelectProps<TSelectOption>, 'options'> & {
-    options: TSelectOption[];
-  } & FieldHookConfig<string>,
-) {
-  const { name, options, type } = props;
-  const [field, meta, { setValue }] = useField(name);
-
-  const onChange = ({ value }: any) => setValue(value);
-
-  return (
-    <Select
-      {...props}
-      onChange={onChange}
-      value={options.find((option) => option.value === field.value)}
-      {...(meta.touched && meta.error && type !== 'hidden' && { errorMessage: meta.error })}
-    />
-  );
-}
 
 const NullComponent = () => null;
 
