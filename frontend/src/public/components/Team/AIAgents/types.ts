@@ -1,7 +1,7 @@
 import type { EAIAgentsSorting } from '../../../redux/ai/types';
 import type { IAIAgent } from '../../../api/ai/types';
 
-export interface ITeamAgentProps {
+export interface ITeamAIAgentCardProps {
   agent: IAIAgent;
   providerName?: string;
 }

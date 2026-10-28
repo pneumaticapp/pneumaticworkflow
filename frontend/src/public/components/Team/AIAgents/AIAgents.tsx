@@ -9,7 +9,7 @@ import { Placeholder } from '../../UI/Placeholder';
 import { TasksPlaceholderIcon } from '../../Tasks/TasksPlaceholderIcon';
 import { PageTitle } from '../../PageTitle';
 import { TeamUserSkeleton } from '../TeamUserSkeleton';
-import { TeamAgent } from './TeamAgent';
+import { TeamAIAgentCard } from './TeamAIAgentCard';
 import { CreatePerformerModal } from '../CreatePerformerModal';
 import { ECreatePerformerModalTab } from '../CreatePerformerModal/types';
 import { EPageTitle } from '../../../constants/defaultValues';
@@ -85,7 +85,7 @@ export function AIAgents() {
       <ul className={styles['list']}>
         {agents.map((agent) => (
           <li key={agent.id}>
-            <TeamAgent agent={agent} providerName={providerNameById.get(agent.providerId)} />
+            <TeamAIAgentCard agent={agent} providerName={providerNameById.get(agent.providerId)} />
           </li>
         ))}
       </ul>

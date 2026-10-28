@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
-import { TeamAgent } from '../TeamAgent';
+import { TeamAIAgentCard } from '../TeamAIAgentCard';
 import { cloneAIAgent, deleteAIAgent, updateAIAgent } from '../../../../redux/ai/slice';
 import type { IAIAgent } from '../../../../api/ai/types';
 import { EAIAgentsSorting } from '../../../../redux/ai/types';
@@ -63,7 +63,7 @@ const buildAgent = (overrides: Partial<IAIAgent> = {}): IAIAgent => ({
   ...overrides,
 });
 
-describe('TeamAgent', () => {
+describe('TeamAIAgentCard', () => {
   const mockDispatch = jest.fn();
   const t = (id: string) => intlMock.formatMessage({ id });
 
@@ -76,7 +76,7 @@ describe('TeamAgent', () => {
   });
 
   it('renders the agent with its provider name, model and inactive badge', () => {
-    render(<TeamAgent agent={buildAgent({ isActive: false })} providerName="OpenRouter" />);
+    render(<TeamAIAgentCard agent={buildAgent({ isActive: false })} providerName="OpenRouter" />);
 
     expect(screen.getByRole('article')).toHaveAttribute('data-testid', 'ai-agent-10');
     expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent('Research assistant');
@@ -86,13 +86,13 @@ describe('TeamAgent', () => {
   });
 
   it('falls back to the unknown provider label', () => {
-    render(<TeamAgent agent={buildAgent()} />);
+    render(<TeamAIAgentCard agent={buildAgent()} />);
 
     expect(screen.getByText(new RegExp(t('team.ai-agents.unknown-provider')))).toBeInTheDocument();
   });
 
   it('toggles isActive from the card', () => {
-    render(<TeamAgent agent={buildAgent({ isActive: true })} providerName="OpenRouter" />);
+    render(<TeamAIAgentCard agent={buildAgent({ isActive: true })} providerName="OpenRouter" />);
 
     userEvent.click(screen.getByTestId('ai-agent-10-toggle'));
 
@@ -100,7 +100,7 @@ describe('TeamAgent', () => {
   });
 
   it('opens the edit modal from the card dropdown', () => {
-    render(<TeamAgent agent={buildAgent()} providerName="OpenRouter" />);
+    render(<TeamAIAgentCard agent={buildAgent()} providerName="OpenRouter" />);
 
     userEvent.click(screen.getByTestId('ai-agent-10-more'));
     userEvent.click(screen.getByText(t('team.ai-agents.edit')));
@@ -109,7 +109,7 @@ describe('TeamAgent', () => {
   });
 
   it('deletes the agent through the confirmation modal', async () => {
-    render(<TeamAgent agent={buildAgent()} providerName="OpenRouter" />);
+    render(<TeamAIAgentCard agent={buildAgent()} providerName="OpenRouter" />);
 
     userEvent.click(screen.getByTestId('ai-agent-10-more'));
     userEvent.click(screen.getByText(t('team.ai-agents.delete')));
@@ -124,7 +124,7 @@ describe('TeamAgent', () => {
   });
 
   it('closes the delete modal on cancel without dispatching', async () => {
-    render(<TeamAgent agent={buildAgent()} providerName="OpenRouter" />);
+    render(<TeamAIAgentCard agent={buildAgent()} providerName="OpenRouter" />);
 
     userEvent.click(screen.getByTestId('ai-agent-10-more'));
     userEvent.click(screen.getByText(t('team.ai-agents.delete')));
@@ -135,7 +135,9 @@ describe('TeamAgent', () => {
   });
 
   it('clones the agent right away under a free clone name', () => {
-    render(<TeamAgent agent={buildAgent({ photo: 'https://files.example.com/a.png' })} providerName="OpenRouter" />);
+    render(
+      <TeamAIAgentCard agent={buildAgent({ photo: 'https://files.example.com/a.png' })} providerName="OpenRouter" />,
+    );
 
     userEvent.click(screen.getByTestId('ai-agent-10-more'));
     userEvent.click(screen.getByText(t('team.ai-agents.clone')));

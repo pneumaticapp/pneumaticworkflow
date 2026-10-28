@@ -11,9 +11,9 @@ import { getAIAgentsSorted } from '../../../redux/selectors/ai';
 import { getAgentCloneName } from './utils/getAgentCloneName';
 import { EditAIAgentModal } from './EditAIAgentModal';
 import { AgentAvatar } from './AgentAvatar';
-import type { ITeamAgentProps } from './types';
+import type { ITeamAIAgentCardProps } from './types';
 
-export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
+export function TeamAIAgentCard({ agent, providerName }: ITeamAIAgentCardProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const agents = useSelector(getAIAgentsSorted);
