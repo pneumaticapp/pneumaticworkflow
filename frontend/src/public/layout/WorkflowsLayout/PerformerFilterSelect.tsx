@@ -113,6 +113,14 @@ export function PerformerFilterSelect() {
     }
   };
 
+  const handleChange = (selected: typeof options) => {
+    const getIds = (type: ETemplateOwnerType) =>
+      selected.filter((option) => option.type === type).map((option) => option.id);
+
+    dispatch(setWorkflowsFilterPerfomers(getIds(ETemplateOwnerType.User)));
+    dispatch(setWorkflowsFilterPerfomersGroup(getIds(ETemplateOwnerType.UserGroup)));
+  };
+
   return (
     <Select
       controlSize="sm"
@@ -135,13 +143,7 @@ export function PerformerFilterSelect() {
       noOptionsMessage={() => formatMessage({ id: 'workflows.filter-no-user' })}
       options={options}
       value={options.filter((option) => selectedValues.includes(option.value))}
-      onChange={(selected: typeof options) => {
-        const getIds = (type: ETemplateOwnerType) =>
-          selected.filter((option) => option.type === type).map((option) => option.id);
-
-        dispatch(setWorkflowsFilterPerfomers(getIds(ETemplateOwnerType.User)));
-        dispatch(setWorkflowsFilterPerfomersGroup(getIds(ETemplateOwnerType.UserGroup)));
-      }}
+      onChange={handleChange}
       onClear={filterIds.length > 0 ? handleClear : undefined}
       {...menuPortalProps}
     />

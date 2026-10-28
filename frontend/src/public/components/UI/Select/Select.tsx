@@ -61,6 +61,20 @@ export function Select<TOption extends TSelectOption>({
     onClear,
   };
 
+  const handleOutsideClick = (event: MouseEvent) => {
+    if (!(event.target as Element | null)?.closest?.('.react-select__menu-portal')) setIsOpen(false);
+  };
+
+  const handleChange = (value: unknown, action: unknown) => {
+    if (controlSize === 'sm' && !isMulti) setIsOpen(false);
+    restProps.onChange?.(value, action);
+  };
+
+  const handleMenuClose = () => {
+    if (controlSize === 'sm') setIsOpen(false);
+    restProps.onMenuClose?.();
+  };
+
   if (label && controlSize === 'lg') {
     return (
       <div className={classnames('react-select', restProps.isDisabled && 'is-disabled', className)}>
@@ -107,11 +121,7 @@ export function Select<TOption extends TSelectOption>({
           {restProps.isRequired && <span className={styles['is-required']}>*</span>}
         </p>
       )}
-      <OutsideClickHandler
-        onOutsideClick={(event: MouseEvent) => {
-          if (!(event.target as Element | null)?.closest?.('.react-select__menu-portal')) setIsOpen(false);
-        }}
-      >
+      <OutsideClickHandler onOutsideClick={handleOutsideClick}>
         <ReactSelect
           isMulti={isMulti}
           closeMenuOnSelect={!isMulti}
@@ -130,14 +140,8 @@ export function Select<TOption extends TSelectOption>({
           })}
           {...restProps}
           {...{ controlSm }}
-          onChange={(value: unknown, action: unknown) => {
-            if (controlSize === 'sm' && !isMulti) setIsOpen(false);
-            restProps.onChange?.(value, action);
-          }}
-          onMenuClose={() => {
-            if (controlSize === 'sm') setIsOpen(false);
-            restProps.onMenuClose?.();
-          }}
+          onChange={handleChange}
+          onMenuClose={handleMenuClose}
           {...(controlSize === 'sm' && !restProps.staticMenu && { menuIsOpen: isOpen && !restProps.isDisabled })}
           {...(restProps.staticMenu && { menuIsOpen: true })}
         />

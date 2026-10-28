@@ -10,6 +10,22 @@ export function ControlSM(props: any) {
   const { title, isOpen, isDisabled, variant, className, Icon, content, onToggle, onClear }: IControlSMParams =
     props.selectProps.controlSm;
 
+  const handleToggle = () => {
+    onToggle(!isOpen);
+  };
+
+  const handleClearClick = (event: React.MouseEvent<HTMLSpanElement>) => {
+    event.stopPropagation();
+    onClear?.();
+  };
+
+  const handleClearKeyDown = (event: React.KeyboardEvent<HTMLSpanElement>) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    event.stopPropagation();
+    onClear?.();
+  };
+
   if (content) {
     return (
       <button
@@ -17,7 +33,7 @@ export function ControlSM(props: any) {
         type="button"
         disabled={isDisabled}
         className={classnames(styles['select-sm__control-custom'], className)}
-        onClick={() => onToggle(!isOpen)}
+        onClick={handleToggle}
       >
         {content}
       </button>
@@ -35,7 +51,7 @@ export function ControlSM(props: any) {
         isOpen && styles['is-open'],
         className,
       )}
-      onClick={() => onToggle(!isOpen)}
+      onClick={handleToggle}
     >
       {Icon && <Icon className={styles['select-sm__icon']} />}
       <p className={styles['select-sm__value']}>{title || props?.selectProps.value?.label}</p>
@@ -45,16 +61,8 @@ export function ControlSM(props: any) {
           tabIndex={0}
           aria-label="Clear selected options"
           className={styles['select-sm__clear-value']}
-          onClick={(event) => {
-            event.stopPropagation();
-            onClear();
-          }}
-          onKeyDown={(event) => {
-            if (event.key !== 'Enter' && event.key !== ' ') return;
-            event.preventDefault();
-            event.stopPropagation();
-            onClear();
-          }}
+          onClick={handleClearClick}
+          onKeyDown={handleClearKeyDown}
         >
           <ClearIcon />
         </span>

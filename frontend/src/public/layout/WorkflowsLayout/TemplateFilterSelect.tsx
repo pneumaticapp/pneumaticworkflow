@@ -51,6 +51,11 @@ export function TemplateFilterSelect() {
     }
   };
 
+  const handleChange = (selected: typeof templatesOptions) => {
+    sessionStorage.setItem('isInternalNavigation', 'true');
+    dispatch(setWorkflowsFilterTemplate(selected.map((option) => option.id)));
+  };
+
   return (
     <Select
       controlSize="sm"
@@ -71,10 +76,7 @@ export function TemplateFilterSelect() {
       noOptionsMessage={() => formatMessage({ id: 'sorting.no-template-found' })}
       options={templatesOptions}
       value={templatesOptions.filter((option) => templatesIdsFilter.includes(option.id))}
-      onChange={(selected: typeof templatesOptions) => {
-        sessionStorage.setItem('isInternalNavigation', 'true');
-        dispatch(setWorkflowsFilterTemplate(selected.map((option) => option.id)));
-      }}
+      onChange={handleChange}
       onClear={templatesIdsFilter.length > 0 ? handleClear : undefined}
       classNames={{ menuList: () => styles['wide-filter-menu'] }}
       {...menuPortalProps}
