@@ -19,22 +19,15 @@ import { IGroup } from '../../../redux/team/types';
 import { EUserListSorting, TUserListItem } from '../../../types/user';
 
 import { IntegrateIcon, SearchLargeIcon, AddUserIcon } from '../../icons';
-import {
-  TDropdownMenuOption,
-  InputField,
-  Select,
-  DropdownMenu,
-  Button,
-  TSelectOption,
-  Placeholder,
-  ModifyDropdown,
-} from '../../UI';
+import { TDropdownMenuOption, InputField, Select, DropdownMenu, Button, Placeholder, ModifyDropdown } from '../../UI';
 import { EModifyDropdownToggle } from '../../UI/ModifyDropdown/types';
 import { UserSelection } from '../UserSelection';
 import { GroupUser } from './GroupUser';
 
 import { EditGroupModal } from '../Groups/EditGroupModal';
 import { ERoutes } from '../../../constants/routes';
+import { userListSortingValues } from '../../../constants/sortings';
+import { getEnumSelectProps } from '../../../utils/getEnumSelectProps';
 import { TaskCarkSkeleton } from '../../TaskCard/TaskCarkSkeleton';
 import { TasksPlaceholderIcon } from '../../Tasks/TasksPlaceholderIcon';
 
@@ -185,46 +178,19 @@ export function GroupDetails({ match }: any) {
     );
   };
 
-  const renderSorting = () => {
-    const dropdownOptions: TSelectOption[] = [
-      {
-        label: (
-          <p className={styles['dropdown__sorting']}>
-            <span>Sort by name</span> (A-Z)
-          </p>
-        ),
-        value: EUserListSorting.NameAsc,
-      },
-      {
-        label: (
-          <p className={styles['dropdown__sorting']}>
-            <span>Sort by name</span> (Z-A)
-          </p>
-        ),
-        value: EUserListSorting.NameDesc,
-      },
-      {
-        label: (
-          <p className={styles['dropdown__sorting']}>
-            <span>Group by</span> status
-          </p>
-        ),
-        value: EUserListSorting.Status,
-      },
-    ];
-
-    return (
-      <Select
-        placement="left"
-        className={styles['test']}
-        controlSize="sm"
-        isSearchable={false}
-        defaultValue={dropdownOptions.find((item) => item.value === sorting)}
-        onChange={(val: any) => dispatch(userListSortingChanged(val.value))}
-        options={dropdownOptions}
-      />
-    );
-  };
+  const renderSorting = () => (
+    <Select
+      placement="left"
+      className={styles['sorting']}
+      controlSize="sm"
+      {...getEnumSelectProps(
+        userListSortingValues,
+        sorting,
+        (value) => dispatch(userListSortingChanged(value)),
+        formatMessage,
+      )}
+    />
+  );
 
   const renderUserList = () => {
     const list = getFilteredUsers().map((user: TUserListItem) => (
