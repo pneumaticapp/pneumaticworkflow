@@ -162,6 +162,24 @@ describe('fetchSaveTemplate validation errors', () => {
     );
   });
 
+  it.each([8, undefined])(
+    'keeps existing errors when a failed save belongs to another template (current id: %s)',
+    async (id) => {
+      const dispatched = await runSave(makeTemplate({ isActive: true }), [makeValidationError(kickoffField)], {
+        editedTemplate: makeTemplate({ id }),
+        error: apiError('field-user'),
+      });
+
+      expect(dispatched.map((action) => action.type)).not.toContain(setTemplateValidationErrors.type);
+      expect(dispatched.map((action) => action.type)).not.toContain(removeTemplateValidationErrors.type);
+      expect(dispatched.map((action) => action.type)).not.toContain(clearTemplateValidationErrors.type);
+      expect(NotificationManager.notifyApiError).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ title: 'template.save-failed' }),
+      );
+    },
+  );
+
   it('shows the toast and keeps inline errors when the api_name is not in the template', async () => {
     (updateTemplate as jest.Mock).mockRejectedValue(apiError('owner-1'));
 

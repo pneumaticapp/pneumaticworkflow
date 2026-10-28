@@ -191,7 +191,11 @@ function* reportTemplateSaveError(error: unknown, submittedTemplate?: ITemplateC
     ? createTemplateValidationError(editingTemplate, validationError.apiName, message, validationError.target.section)
     : null;
 
-  if (!validationError || currentValidationError?.entitySnapshot !== validationError.entitySnapshot) {
+  if (
+    !validationError ||
+    (submittedTemplate && submittedTemplate.id !== editingTemplate.id) ||
+    currentValidationError?.entitySnapshot !== validationError.entitySnapshot
+  ) {
     NotificationManager.notifyApiError(error, {
       title: 'template.save-failed',
       message,
