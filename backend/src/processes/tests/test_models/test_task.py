@@ -3,6 +3,10 @@ import pytest
 from datetime import timedelta
 
 from django.utils import timezone
+from pytest_mock import MockerFixture
+
+from src.accounts.enums import AbsenceStatus, UserGroupType
+from src.accounts.models import UserVacation
 
 from src.processes.enums import (
     DirectlyStatus,
@@ -20,6 +24,7 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_not_admin,
     create_test_workflow,
+    create_test_template,
     create_test_dataset,
 )
 
@@ -1020,6 +1025,209 @@ def test_add_raw_performer__no_user_no_field__raise_exception():
     # assert
     assert str(ex.value) == (
         'Raw performer should be linked with field or user'
+    )
+
+
+@pytest.mark.parametrize('performer_type', (
+    PerformerType.USER,
+    PerformerType.GROUP,
+))
+@pytest.mark.parametrize('absence_status', (
+    AbsenceStatus.VACATION,
+    AbsenceStatus.SICK_LEAVE,
+))
+def test_delete_orphaned_performers__active_delegation__preserved(
+    mocker: MockerFixture,
+    performer_type: str,
+    absence_status: AbsenceStatus.LITERALS,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    substitute = create_test_not_admin(account=account)
+    template = create_test_template(
+        user=owner,
+        tasks_count=1,
+        is_active=True,
+    )
+    if performer_type == PerformerType.GROUP:
+        task_template = template.tasks.get(number=1)
+        task_template.delete_raw_performers()
+        source_group = create_test_group(
+            account=account,
+            users=[owner],
+        )
+        task_template.add_raw_performer(
+            group=source_group,
+            performer_type=performer_type,
+        )
+    workflow = create_test_workflow(
+        user=owner,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    substitute_group = create_test_group(
+        account=account,
+        name='Substitutes',
+        users=[substitute],
+        type_=UserGroupType.PERSONAL,
+    )
+    UserVacation.objects.create(
+        account=account,
+        user=owner,
+        substitute_group=substitute_group,
+        absence_status=absence_status,
+    )
+    substitute_performer = TaskPerformer.objects.create(
+        task=task,
+        group=substitute_group,
+        type=PerformerType.GROUP,
+    )
+    sync_performer_group_mock = mocker.patch(
+        target='src.processes.services.workflow_permissions.'
+        'WorkflowPermissionService.sync_performer_group',
+    )
+    schedule_sync_workflow_attachment_permissions_mock = mocker.patch(
+        target='src.storage.tasks.'
+        'schedule_sync_workflow_attachment_permissions',
+    )
+
+    # act
+    deleted_user_ids, deleted_group_ids = task._delete_orphaned_performers()
+
+    # assert
+    substitute_performer.refresh_from_db()
+    assert deleted_user_ids == []
+    assert deleted_group_ids == []
+    assert substitute_performer.is_deleted is False
+    assert task.taskperformer_set.type_user_or_group().count() == 2
+    sync_performer_group_mock.assert_not_called()
+    schedule_sync_workflow_attachment_permissions_mock.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    'absence_status, vacation_deleted, group_deleted',
+    (
+        (AbsenceStatus.ACTIVE, False, False),
+        (AbsenceStatus.VACATION, True, False),
+        (AbsenceStatus.VACATION, False, True),
+    ),
+)
+def test_delete_orphaned_performers__stale_delegation__deleted(
+    mocker: MockerFixture,
+    absence_status: AbsenceStatus.LITERALS,
+    vacation_deleted: bool,
+    group_deleted: bool,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    substitute = create_test_not_admin(account=account)
+    workflow = create_test_workflow(
+        user=owner,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    substitute_group = create_test_group(
+        account=account,
+        name='Substitutes',
+        users=[substitute],
+        type_=UserGroupType.PERSONAL,
+    )
+    if group_deleted:
+        substitute_group.delete()
+    UserVacation.objects.create(
+        account=account,
+        user=owner,
+        substitute_group=substitute_group,
+        absence_status=absence_status,
+        is_deleted=vacation_deleted,
+    )
+    substitute_performer = TaskPerformer.objects.create(
+        task=task,
+        group=substitute_group,
+        type=PerformerType.GROUP,
+    )
+    sync_performer_group_mock = mocker.patch(
+        target='src.processes.services.workflow_permissions.'
+        'WorkflowPermissionService.sync_performer_group',
+    )
+    schedule_sync_workflow_attachment_permissions_mock = mocker.patch(
+        target='src.storage.tasks.'
+        'schedule_sync_workflow_attachment_permissions',
+    )
+
+    # act
+    deleted_user_ids, deleted_group_ids = task._delete_orphaned_performers()
+
+    # assert
+    substitute_performer.refresh_from_db()
+    assert deleted_group_ids == [substitute_group.id]
+    assert substitute_performer.is_deleted is True
+    assert deleted_user_ids == []
+    sync_performer_group_mock.assert_called_once_with(
+        group_id=substitute_group.id,
+    )
+    schedule_sync_workflow_attachment_permissions_mock.assert_called_once_with(
+        workflow.id,
+    )
+
+
+def test_delete_orphaned_performers__source_removed__delegation_deleted(
+    mocker: MockerFixture,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    substitute = create_test_not_admin(account=account)
+    workflow = create_test_workflow(
+        user=owner,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.raw_performers.all().delete()
+    substitute_group = create_test_group(
+        account=account,
+        name='Substitutes',
+        users=[substitute],
+        type_=UserGroupType.PERSONAL,
+    )
+    UserVacation.objects.create(
+        account=account,
+        user=owner,
+        substitute_group=substitute_group,
+        absence_status=AbsenceStatus.VACATION,
+    )
+    substitute_performer = TaskPerformer.objects.create(
+        task=task,
+        group=substitute_group,
+        type=PerformerType.GROUP,
+    )
+    sync_performer_group_mock = mocker.patch(
+        target='src.processes.services.workflow_permissions.'
+        'WorkflowPermissionService.sync_performer_group',
+    )
+    schedule_sync_workflow_attachment_permissions_mock = mocker.patch(
+        target='src.storage.tasks.'
+        'schedule_sync_workflow_attachment_permissions',
+    )
+
+    # act
+    deleted_user_ids, deleted_group_ids = task._delete_orphaned_performers()
+
+    # assert
+    substitute_performer.refresh_from_db()
+    assert deleted_user_ids == [owner.id]
+    assert deleted_group_ids == [substitute_group.id]
+    assert substitute_performer.is_deleted is True
+    sync_performer_group_mock.assert_called_once_with(
+        group_id=substitute_group.id,
+    )
+    schedule_sync_workflow_attachment_permissions_mock.assert_called_once_with(
+        workflow.id,
     )
 
 

@@ -11,6 +11,7 @@ from src.accounts.enums import (
     LeaseLevel,
     UserDateFormat,
     UserFirstDayWeek,
+    UserGroupType,
     UserInviteStatus,
     UserStatus,
 )
@@ -178,6 +179,7 @@ def create_test_user(
     language: Language.LITERALS = settings.LANGUAGE_CODE,
     date_fmt: str = UserDateFormat.PY_USA_12,
     date_fdw: int = UserFirstDayWeek.SUNDAY,
+    is_ai: bool = False,
 ) -> UserModel:
 
     """
@@ -207,6 +209,7 @@ def create_test_user(
         language=language,
         date_fmt=date_fmt,
         date_fdw=date_fdw,
+        is_ai=is_ai,
     )
 
 
@@ -683,6 +686,7 @@ def create_test_group(
     name: str = 'Group_test',
     photo: Optional[str] = None,
     users: Optional[List[UserModel]] = None,
+    type_: str = UserGroupType.REGULAR,
 ) -> UserGroup:
 
     """Creating user groups."""
@@ -691,6 +695,7 @@ def create_test_group(
         name=name,
         photo=photo,
         account=account,
+        type=type_,
     )
     if users:
         group.users.set(users)

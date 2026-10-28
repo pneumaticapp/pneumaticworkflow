@@ -1,4 +1,8 @@
+from datetime import timedelta
+
 import pytest
+from django.utils import timezone
+from pytest_mock import MockerFixture
 
 from src.accounts.enums import AbsenceStatus, UserGroupType
 from src.accounts.models import UserGroup, UserVacation
@@ -8,17 +12,21 @@ from src.processes.enums import (
     DirectlyStatus,
     PerformerType,
     TaskStatus,
+    WorkflowEventType,
     WorkflowStatus,
 )
-from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.task import Delay, TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
     create_test_group,
+    create_test_not_admin,
     create_test_owner,
     create_test_template,
     create_test_workflow,
 )
+from src.processes.services.workflow_action import WorkflowActionService
 from src.processes.services.workflow_permissions import (
     WorkflowPermissionService,
 )
@@ -1933,4 +1941,1359 @@ def test_deactivate__sends_ws_user_updated__ok(mocker):
         logging=account.log_api_requests,
         account_id=account.id,
         user_data=UserWebsocketSerializer(owner).data,
+    )
+
+
+def test_skip_tasks_for_starter__substitute_is_starter__skipped(mocker):
+
+    """
+    Workflow starter is a substitute: the task is passed
+    to WorkflowActionService on behalf of the account owner.
+    """
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    vacation_user = create_test_admin(account=account)
+    starter = create_test_not_admin(account=account)
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group.users.add(starter)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.save(update_fields=['skip_for_starter'])
+    workflow_action_service_init_mock = mocker.patch.object(
+        WorkflowActionService,
+        attribute='__init__',
+        return_value=None,
+    )
+    skip_delegated_task_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.skip_delegated_task_for_starter',
+        return_value=True,
+    )
+    service = VacationDelegationService(user=vacation_user)
+
+    # act
+    result = service._skip_tasks_for_starter(
+        group=group,
+        task_ids={task.id},
+    )
+
+    # assert
+    assert result == {task.id}
+    workflow_action_service_init_mock.assert_called_once_with(
+        user=account_owner,
+        workflow=workflow,
+    )
+    skip_delegated_task_for_starter_mock.assert_called_once_with(
+        task=task,
+        absent_user=vacation_user,
+    )
+
+
+def test_skip_tasks_for_starter__already_completed__no_calculations(mocker):
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    absent_user = create_test_admin(account=account)
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group.users.add(starter)
+    workflow = create_test_workflow(user=starter, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.status = TaskStatus.COMPLETED
+    task.save(update_fields=['skip_for_starter', 'status'])
+    action_service_mock = mocker.patch(
+        'src.accounts.services.vacation.WorkflowActionService',
+    )
+    service = VacationDelegationService(user=absent_user)
+
+    # act
+    result = service._skip_tasks_for_starter(group=group, task_ids={task.id})
+
+    # assert
+    assert result == {task.id}
+    action_service_mock.assert_not_called()
+
+
+def test_skip_tasks_for_starter__completed_during_delegation__returned(mocker):
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    absent_user = create_test_admin(account=account)
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group.users.add(starter)
+    workflow = create_test_workflow(user=starter, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.save(update_fields=['skip_for_starter'])
+
+    def complete_without_skip(task, absent_user):
+        task.status = TaskStatus.COMPLETED
+        task.save(update_fields=['status'])
+        return False
+
+    skip_mock = mocker.patch.object(
+        WorkflowActionService,
+        'skip_delegated_task_for_starter',
+        side_effect=complete_without_skip,
+    )
+    service = VacationDelegationService(user=absent_user)
+
+    # act
+    result = service._skip_tasks_for_starter(group=group, task_ids={task.id})
+
+    # assert
+    assert result == {task.id}
+    skip_mock.assert_called_once_with(task=task, absent_user=absent_user)
+
+
+def test_skip_tasks_for_starter__task_not_skipped__empty(mocker):
+
+    """
+    WorkflowActionService did not skip the task
+    (e.g. RCBA with other performers).
+    """
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    vacation_user = create_test_admin(account=account)
+    starter = create_test_not_admin(account=account)
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group.users.add(starter)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.save(update_fields=['skip_for_starter'])
+    workflow_action_service_init_mock = mocker.patch.object(
+        WorkflowActionService,
+        attribute='__init__',
+        return_value=None,
+    )
+    skip_delegated_task_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.skip_delegated_task_for_starter',
+        return_value=False,
+    )
+    service = VacationDelegationService(user=vacation_user)
+
+    # act
+    result = service._skip_tasks_for_starter(
+        group=group,
+        task_ids={task.id},
+    )
+
+    # assert
+    assert result == set()
+    workflow_action_service_init_mock.assert_called_once_with(
+        user=account_owner,
+        workflow=workflow,
+    )
+    skip_delegated_task_for_starter_mock.assert_called_once_with(
+        task=task,
+        absent_user=vacation_user,
+    )
+
+
+def test_skip_tasks_for_starter__several_tasks__only_skipped_ids(mocker):
+
+    """
+    Only IDs of the tasks skipped by WorkflowActionService
+    are returned.
+    """
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    vacation_user = create_test_admin(account=account)
+    starter = create_test_not_admin(account=account)
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group.users.add(starter)
+    workflow_1 = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task_1 = workflow_1.tasks.get(number=1)
+    task_1.skip_for_starter = True
+    task_1.save(update_fields=['skip_for_starter'])
+    workflow_2 = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task_2 = workflow_2.tasks.get(number=1)
+    task_2.skip_for_starter = True
+    task_2.save(update_fields=['skip_for_starter'])
+    workflow_action_service_init_mock = mocker.patch.object(
+        WorkflowActionService,
+        attribute='__init__',
+        return_value=None,
+    )
+    skip_delegated_task_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.skip_delegated_task_for_starter',
+        side_effect=[True, False],
+    )
+    service = VacationDelegationService(user=vacation_user)
+
+    # act
+    result = service._skip_tasks_for_starter(
+        group=group,
+        task_ids={task_1.id, task_2.id},
+    )
+
+    # assert
+    assert result == {task_1.id}
+    assert workflow_action_service_init_mock.call_count == 2
+    workflow_action_service_init_mock.assert_has_calls(
+        [
+            mocker.call(
+                user=account_owner,
+                workflow=workflow_1,
+            ),
+            mocker.call(
+                user=account_owner,
+                workflow=workflow_2,
+            ),
+        ],
+    )
+    assert skip_delegated_task_for_starter_mock.call_count == 2
+    skip_delegated_task_for_starter_mock.assert_has_calls(
+        [
+            mocker.call(
+                task=task_1,
+                absent_user=vacation_user,
+            ),
+            mocker.call(
+                task=task_2,
+                absent_user=vacation_user,
+            ),
+        ],
+    )
+
+
+def test_skip_tasks_for_starter__starter_not_substitute__not_called(mocker):
+
+    # arrange
+    account = create_test_account()
+    vacation_user = create_test_admin(account=account)
+    starter = create_test_not_admin(account=account)
+    substitute = create_test_admin(
+        account=account,
+        email='sub@pneumatic.app',
+    )
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group.users.add(substitute)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.save(update_fields=['skip_for_starter'])
+    skip_delegated_task_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.skip_delegated_task_for_starter',
+    )
+    service = VacationDelegationService(user=vacation_user)
+
+    # act
+    result = service._skip_tasks_for_starter(
+        group=group,
+        task_ids={task.id},
+    )
+
+    # assert
+    assert result == set()
+    skip_delegated_task_for_starter_mock.assert_not_called()
+
+
+def test_skip_tasks_for_starter__not_skip_flag__not_called(mocker):
+
+    # arrange
+    account = create_test_account()
+    vacation_user = create_test_admin(account=account)
+    starter = create_test_not_admin(account=account)
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group.users.add(starter)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    skip_delegated_task_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.skip_delegated_task_for_starter',
+    )
+    service = VacationDelegationService(user=vacation_user)
+
+    # act
+    result = service._skip_tasks_for_starter(
+        group=group,
+        task_ids={task.id},
+    )
+
+    # assert
+    assert result == set()
+    skip_delegated_task_for_starter_mock.assert_not_called()
+
+
+def test_skip_tasks_for_starter__empty_task_ids__empty(mocker):
+
+    # arrange
+    account = create_test_account()
+    vacation_user = create_test_admin(account=account)
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    workflow_action_service_init_mock = mocker.patch.object(
+        WorkflowActionService,
+        attribute='__init__',
+        return_value=None,
+    )
+    service = VacationDelegationService(user=vacation_user)
+
+    # act
+    result = service._skip_tasks_for_starter(
+        group=group,
+        task_ids=set(),
+    )
+
+    # assert
+    assert result == set()
+    workflow_action_service_init_mock.assert_not_called()
+
+
+def test_skip_tasks_for_starter__completed_wf__not_called(mocker):
+
+    """
+    The workflow is completed by the skip of the previous task
+    of this workflow (e.g. by the "end workflow" condition),
+    its active task is not skipped.
+    """
+
+    # arrange
+    account = create_test_account()
+    create_test_owner(account=account)
+    vacation_user = create_test_admin(account=account)
+    starter = create_test_not_admin(account=account)
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group.users.add(starter)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+        status=WorkflowStatus.DONE,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.save(update_fields=['skip_for_starter'])
+    workflow_action_service_init_mock = mocker.patch.object(
+        WorkflowActionService,
+        attribute='__init__',
+        return_value=None,
+    )
+    skip_delegated_task_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.skip_delegated_task_for_starter',
+    )
+    service = VacationDelegationService(user=vacation_user)
+
+    # act
+    result = service._skip_tasks_for_starter(
+        group=group,
+        task_ids={task.id},
+    )
+
+    # assert
+    assert result == set()
+    workflow_action_service_init_mock.assert_not_called()
+    skip_delegated_task_for_starter_mock.assert_not_called()
+
+
+def test_skip_tasks_for_starter__two_tasks_one_wf__wf_running(mocker):
+
+    """
+    Active and delayed tasks of one workflow are delegated.
+    The skip of the active task delays the workflow, the skip
+    of the delayed task starts the next task: the workflow runs.
+    """
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    vacation_user = create_test_admin(account=account)
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group.users.add(starter)
+    workflow = create_test_workflow(user=starter)
+    task_1 = workflow.tasks.get(number=1)
+    task_1.skip_for_starter = True
+    task_1.save(update_fields=['skip_for_starter'])
+    task_1.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task_id=task_1.id,
+        user_id=vacation_user.id,
+    )
+    TaskPerformer.objects.create(
+        task_id=task_1.id,
+        group_id=group.id,
+        type=PerformerType.GROUP,
+    )
+    task_2 = workflow.tasks.get(number=2)
+    task_2.skip_for_starter = True
+    task_2.status = TaskStatus.DELAYED
+    task_2.save(update_fields=['skip_for_starter', 'status'])
+    Delay.objects.create(
+        task=task_2,
+        workflow=workflow,
+        duration=timedelta(days=1),
+        start_date=timezone.now(),
+    )
+    task_2.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task_id=task_2.id,
+        user_id=vacation_user.id,
+    )
+    TaskPerformer.objects.create(
+        task_id=task_2.id,
+        group_id=group.id,
+        type=PerformerType.GROUP,
+    )
+    task_3 = workflow.tasks.get(number=3)
+    task_1_data = task_1.get_data_for_list()
+    task_2_data = task_2.get_data_for_list()
+    after_create_actions_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService._after_create_actions',
+    )
+    send_task_deleted_notification_mock = mocker.patch(
+        'src.notifications.tasks.send_task_deleted_notification.delay',
+    )
+    send_new_task_notification_mock = mocker.patch(
+        'src.notifications.tasks.send_new_task_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        'src.notifications.tasks.send_new_task_websocket.delay',
+    )
+    service = VacationDelegationService(user=vacation_user)
+
+    # act
+    result = service._skip_tasks_for_starter(
+        group=group,
+        task_ids={task_1.id, task_2.id},
+    )
+
+    # assert
+    assert result == {task_1.id, task_2.id}
+    task_1.refresh_from_db()
+    task_2.refresh_from_db()
+    task_3.refresh_from_db()
+    workflow.refresh_from_db()
+    assert task_1.status == TaskStatus.SKIPPED
+    assert task_2.status == TaskStatus.SKIPPED
+    assert task_3.status == TaskStatus.ACTIVE
+    assert workflow.status == WorkflowStatus.RUNNING
+    task_1_skip_event = WorkflowEvent.objects.get(
+        task=task_1,
+        type=WorkflowEventType.TASK_SKIP,
+    )
+    task_2_skip_event = WorkflowEvent.objects.get(
+        task=task_2,
+        type=WorkflowEventType.TASK_SKIP,
+    )
+    task_3_start_event = WorkflowEvent.objects.get(
+        task=task_3,
+        type=WorkflowEventType.TASK_START,
+    )
+    assert after_create_actions_mock.call_count == 3
+    after_create_actions_mock.assert_has_calls(
+        [
+            mocker.call(task_1_skip_event),
+            mocker.call(task_2_skip_event),
+            mocker.call(task_3_start_event),
+        ],
+    )
+    assert send_task_deleted_notification_mock.call_count == 2
+    send_task_deleted_notification_mock.assert_has_calls(
+        [
+            mocker.call(
+                task_id=task_1.id,
+                recipients=[
+                    (starter.id, starter.email),
+                    (vacation_user.id, vacation_user.email),
+                ],
+                account_id=account.id,
+                task_data=task_1_data,
+            ),
+            mocker.call(
+                task_id=task_2.id,
+                recipients=[
+                    (starter.id, starter.email),
+                    (vacation_user.id, vacation_user.email),
+                ],
+                account_id=account.id,
+                task_data=task_2_data,
+            ),
+        ],
+    )
+    send_new_task_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        recipients=[(starter.id, starter.email, True)],
+        task_id=task_3.id,
+        task_name=task_3.name,
+        task_data=task_3.get_data_for_list(),
+        task_description=task_3.description,
+        workflow_name=workflow.name,
+        template_name=workflow.get_template_name(),
+        workflow_starter_name=starter.name,
+        workflow_starter_photo=starter.photo,
+        due_date_timestamp=None,
+        logo_lg=account.logo_lg,
+        is_returned=False,
+    )
+    send_new_task_websocket_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        task_id=task_3.id,
+        recipients=[(starter.id, starter.email, True)],
+        account_id=account.id,
+        task_data=task_3.get_data_for_list(),
+    )
+
+
+def test_delegate_tasks__skipped_task__excluded_from_task_ids(mocker):
+
+    """
+    Skipped task keeps the delegation event
+    but is not counted as delegated.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    substitute = create_test_admin(account=account)
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group.users.add(substitute)
+    workflow = create_test_workflow(
+        user=owner,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task_delegation_event_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+    skip_tasks_for_starter_mock = mocker.patch(
+        'src.accounts.services.vacation.VacationDelegationService'
+        '._skip_tasks_for_starter',
+        return_value={task.id},
+    )
+    service = VacationDelegationService(user=owner)
+
+    # act
+    task_ids, wf_ids = service.delegate_tasks(group=group)
+
+    # assert
+    assert task_ids == set()
+    assert wf_ids == {workflow.id}
+    task_delegation_event_mock.assert_called_once_with(
+        task=task,
+        user=owner,
+        substitute_group=group,
+    )
+    skip_tasks_for_starter_mock.assert_called_once_with(
+        group=group,
+        task_ids={task.id},
+    )
+
+
+def test_delegate_tasks__existing_task_ids__not_checked_for_skip(mocker):
+
+    """
+    Already delegated tasks are not checked again
+    by the periodic delegation.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    workflow = create_test_workflow(
+        user=owner,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task_delegation_event_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+    skip_tasks_for_starter_mock = mocker.patch(
+        'src.accounts.services.vacation.VacationDelegationService'
+        '._skip_tasks_for_starter',
+        return_value=set(),
+    )
+    service = VacationDelegationService(user=owner)
+
+    # act
+    task_ids, wf_ids = service.delegate_tasks(
+        group=group,
+        existing_task_ids={task.id},
+    )
+
+    # assert
+    assert task_ids == {task.id}
+    assert wf_ids == set()
+    task_delegation_event_mock.assert_not_called()
+    skip_tasks_for_starter_mock.assert_called_once_with(
+        group=group,
+        task_ids=set(),
+    )
+
+
+def test_delegate_tasks__group_task_skipped__excluded_from_task_ids(mocker):
+
+    """
+    Skipped task of the user's regular group keeps
+    the delegation event but is not counted as delegated.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    member = create_test_admin(account=account)
+    regular_group = create_test_group(
+        account=account,
+        users=[owner, member],
+    )
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    workflow = create_test_workflow(
+        user=member,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        group_id=regular_group.id,
+        type=PerformerType.GROUP,
+    )
+    task_delegation_event_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+    skip_tasks_for_starter_mock = mocker.patch(
+        'src.accounts.services.vacation.VacationDelegationService'
+        '._skip_tasks_for_starter',
+        return_value={task.id},
+    )
+    service = VacationDelegationService(user=owner)
+
+    # act
+    task_ids, wf_ids = service.delegate_tasks(group=group)
+
+    # assert
+    assert task_ids == set()
+    assert wf_ids == {workflow.id}
+    task_delegation_event_mock.assert_called_once_with(
+        task=task,
+        user=owner,
+        substitute_group=group,
+    )
+    skip_tasks_for_starter_mock.assert_called_once_with(
+        group=group,
+        task_ids={task.id},
+    )
+
+
+def test_update_existing__skipped_task__excluded_from_task_ids(mocker):
+
+    """
+    The workflow starter becomes a substitute: the already
+    delegated task is skipped and is not passed
+    to delegate_tasks as delegated.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    starter = create_test_admin(account=account)
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    vacation = UserVacation.objects.create(
+        user=owner,
+        account=account,
+        substitute_group=group,
+    )
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        group_id=group.id,
+        type=PerformerType.GROUP,
+    )
+    skip_tasks_for_starter_mock = mocker.patch(
+        'src.accounts.services.vacation.VacationDelegationService'
+        '._skip_tasks_for_starter',
+        return_value={task.id},
+    )
+    delegate_tasks_mock = mocker.patch(
+        'src.accounts.services.vacation.VacationDelegationService'
+        '.delegate_tasks',
+        return_value=(set(), set()),
+    )
+    sync_members_mock = mocker.patch(
+        'src.accounts.services.vacation.VacationDelegationService'
+        '.sync_members',
+    )
+    service = VacationDelegationService(user=owner)
+
+    # act
+    result = service._update_existing(
+        vacation=vacation,
+        substitute_user_ids=[starter.id],
+        absence_status=AbsenceStatus.VACATION,
+    )
+
+    # assert
+    assert result == set()
+    skip_tasks_for_starter_mock.assert_called_once_with(
+        group=group,
+        task_ids={task.id},
+    )
+    delegate_tasks_mock.assert_called_once_with(
+        group=group,
+        existing_task_ids=set(),
+    )
+    sync_members_mock.assert_called_once_with(
+        wf_ids={workflow.id},
+        substitute_user_ids=[starter.id],
+        user_id=owner.id,
+    )
+
+
+def test_activate__substitute_is_wf_starter__task_skipped(mocker):
+
+    """
+    The task has "skip for starter", the vacation user is the only
+    performer and the workflow starter is the substitute.
+    The task is skipped as if the starter were assigned directly,
+    the workflow moves to the next task.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    starter = create_test_admin(account=account)
+    template = create_test_template(
+        user=owner,
+        tasks_count=2,
+        is_active=True,
+    )
+    workflow = create_test_workflow(
+        user=starter,
+        template=template,
+    )
+    task_1 = workflow.tasks.get(number=1)
+    task_1.skip_for_starter = True
+    task_1.save(update_fields=['skip_for_starter'])
+    task_1_data = task_1.get_data_for_list()
+    task_2 = workflow.tasks.get(number=2)
+    task_delegation_event_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+    after_create_actions_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService._after_create_actions',
+    )
+    send_task_deleted_notification_mock = mocker.patch(
+        'src.notifications.tasks.send_task_deleted_notification.delay',
+    )
+    send_new_task_notification_mock = mocker.patch(
+        'src.notifications.tasks.send_new_task_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        'src.notifications.tasks.send_new_task_websocket.delay',
+    )
+    send_vacation_delegation_notification_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'send_vacation_delegation_notification.delay',
+    )
+    send_user_updated_notification_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'send_user_updated_notification.delay',
+    )
+    service = VacationDelegationService(user=owner)
+
+    # act
+    service.activate(substitute_user_ids=[starter.id])
+
+    # assert
+    task_1.refresh_from_db()
+    task_2.refresh_from_db()
+    owner.refresh_from_db()
+    assert task_1.status == TaskStatus.SKIPPED
+    assert task_2.status == TaskStatus.ACTIVE
+    substitute_group = owner.vacation.substitute_group
+    task_delegation_event_mock.assert_called_once_with(
+        task=task_1,
+        user=owner,
+        substitute_group=substitute_group,
+    )
+    skip_event = WorkflowEvent.objects.get(
+        task=task_1,
+        type=WorkflowEventType.TASK_SKIP,
+    )
+    start_event = WorkflowEvent.objects.get(
+        task=task_2,
+        type=WorkflowEventType.TASK_START,
+    )
+    assert after_create_actions_mock.call_count == 2
+    after_create_actions_mock.assert_has_calls(
+        [
+            mocker.call(skip_event),
+            mocker.call(start_event),
+        ],
+    )
+    send_task_deleted_notification_mock.assert_called_once_with(
+        task_id=task_1.id,
+        recipients=[
+            (owner.id, owner.email),
+            (starter.id, starter.email),
+        ],
+        account_id=account.id,
+        task_data=task_1_data,
+    )
+    send_new_task_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        recipients=[(owner.id, owner.email, True)],
+        task_id=task_2.id,
+        task_name=task_2.name,
+        task_data=task_2.get_data_for_list(),
+        task_description=task_2.description,
+        workflow_name=workflow.name,
+        template_name=workflow.get_template_name(),
+        workflow_starter_name=starter.name,
+        workflow_starter_photo=starter.photo,
+        due_date_timestamp=None,
+        logo_lg=account.logo_lg,
+        is_returned=False,
+    )
+    send_new_task_websocket_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        task_id=task_2.id,
+        recipients=[(owner.id, owner.email, True)],
+        account_id=account.id,
+        task_data=task_2.get_data_for_list(),
+    )
+
+    # the only delegated task is skipped, nothing to notify about
+    send_vacation_delegation_notification_mock.assert_not_called()
+    send_user_updated_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        user_data=UserWebsocketSerializer(owner).data,
+    )
+
+
+def test_activate__rcba_vacation_user_only__starter_substitute__task_skipped(
+    mocker: MockerFixture,
+):
+
+    """The vacation user is replaced by the starter, not kept as
+    another required performer on an RCBA task."""
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    starter = create_test_admin(account=account)
+    template = create_test_template(
+        user=owner,
+        tasks_count=1,
+        is_active=True,
+    )
+    workflow = create_test_workflow(
+        user=starter,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.require_completion_by_all = True
+    task.save(update_fields=['skip_for_starter', 'require_completion_by_all'])
+    after_create_actions_mock = mocker.patch(
+        target='src.processes.services.events.'
+        'WorkflowEventService._after_create_actions',
+    )
+    send_task_deleted_notification_mock = mocker.patch(
+        target='src.notifications.tasks.send_task_deleted_notification.delay',
+    )
+    send_vacation_delegation_notification_mock = mocker.patch(
+        target='src.accounts.services.vacation.'
+        'send_vacation_delegation_notification.delay',
+    )
+    send_user_updated_notification_mock = mocker.patch(
+        target='src.accounts.services.vacation.'
+        'send_user_updated_notification.delay',
+    )
+    start_next_tasks_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'WorkflowActionService._start_next_tasks',
+    )
+    sync_members_mock = mocker.patch(
+        target='src.accounts.services.vacation.'
+        'VacationDelegationService.sync_members',
+    )
+    service = VacationDelegationService(user=owner)
+    substitute_user_ids = [starter.id]
+    task_data = task.get_data_for_list()
+
+    # act
+    service.activate(substitute_user_ids=substitute_user_ids)
+
+    # assert
+    task.refresh_from_db()
+    owner.refresh_from_db()
+    assert task.status == TaskStatus.SKIPPED
+    delegation_event = WorkflowEvent.objects.get(
+        task=task,
+        type=WorkflowEventType.TASK_DELEGATION,
+    )
+    skip_event = WorkflowEvent.objects.get(
+        task=task,
+        type=WorkflowEventType.TASK_SKIP,
+    )
+    assert after_create_actions_mock.call_count == 2
+    after_create_actions_mock.assert_has_calls(
+        [mocker.call(delegation_event), mocker.call(skip_event)],
+    )
+    send_task_deleted_notification_mock.assert_called_once_with(
+        task_id=task.id,
+        recipients=[(owner.id, owner.email), (starter.id, starter.email)],
+        account_id=account.id,
+        task_data=task_data,
+    )
+    send_vacation_delegation_notification_mock.assert_not_called()
+    send_user_updated_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        user_data=UserWebsocketSerializer(owner).data,
+    )
+    start_next_tasks_mock.assert_called_once_with(parent_task=task)
+    sync_members_mock.assert_called_once_with(
+        wf_ids={workflow.id},
+        substitute_user_ids=substitute_user_ids,
+        user_id=owner.id,
+    )
+
+
+def test_delegate_tasks__rcba_completed__notification_ids_empty(
+    mocker: MockerFixture,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    starter = create_test_admin(account=account)
+    other_user = create_test_not_admin(account=account)
+    template = create_test_template(
+        user=owner,
+        tasks_count=1,
+        is_active=True,
+    )
+    workflow = create_test_workflow(
+        user=starter,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.require_completion_by_all = True
+    task.save(update_fields=['skip_for_starter', 'require_completion_by_all'])
+    TaskPerformer.objects.create(
+        task=task,
+        user=other_user,
+        type=PerformerType.USER,
+        is_completed=True,
+    )
+    group = create_test_group(
+        account=account,
+        users=[starter],
+        type_=UserGroupType.PERSONAL,
+    )
+    task_delegation_event_mock = mocker.patch(
+        target='src.accounts.services.vacation.'
+        'WorkflowEventService.task_delegation_event',
+    )
+    start_next_tasks_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'WorkflowActionService._start_next_tasks',
+    )
+    send_task_completed_websocket_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_task_completed_websocket.delay',
+    )
+    send_task_completed_notification_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'send_task_completed_notification.delay',
+    )
+    service = VacationDelegationService(user=owner)
+
+    # act
+    task_ids, workflow_ids = service.delegate_tasks(group=group)
+
+    # assert
+    task.refresh_from_db()
+    assert task.status == TaskStatus.COMPLETED
+    assert task_ids == set()
+    assert workflow_ids == {workflow.id}
+    task_delegation_event_mock.assert_called_once_with(
+        task=task,
+        user=owner,
+        substitute_group=group,
+    )
+    start_next_tasks_mock.assert_called_once_with(parent_task=task)
+    assert send_task_completed_websocket_mock.call_count == 2
+    send_task_completed_websocket_mock.assert_has_calls(
+        [
+            mocker.call(
+                task_id=task.id,
+                recipients=[
+                    (owner.id, owner.email),
+                    (starter.id, starter.email),
+                ],
+                account_id=account.id,
+            ),
+            mocker.call(
+                task_id=task.id,
+                recipients=[],
+                account_id=account.id,
+            ),
+        ],
+    )
+    send_task_completed_notification_mock.assert_not_called()
+
+
+def test_activate__rcba_other_completed__starter_substitute__task_completed(
+    mocker: MockerFixture,
+):
+
+    """The vacation user's share is waived for the starter substitute,
+    so an RCBA task completes when every independent performer is done."""
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    starter = create_test_admin(account=account)
+    other_performer = create_test_admin(
+        account=account,
+        email='other@pneumatic.app',
+    )
+    template = create_test_template(
+        user=owner,
+        tasks_count=1,
+        is_active=True,
+    )
+    workflow = create_test_workflow(
+        user=starter,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.require_completion_by_all = True
+    task.save(update_fields=['skip_for_starter', 'require_completion_by_all'])
+    TaskPerformer.objects.create(
+        task=task,
+        user=other_performer,
+        is_completed=True,
+    )
+    after_create_actions_mock = mocker.patch(
+        target='src.processes.services.events.'
+        'WorkflowEventService._after_create_actions',
+    )
+    send_task_deleted_notification_mock = mocker.patch(
+        target='src.notifications.tasks.send_task_deleted_notification.delay',
+    )
+    send_task_completed_websocket_mock = mocker.patch(
+        target='src.notifications.tasks.send_task_completed_websocket.delay',
+    )
+    send_task_completed_notification_mock = mocker.patch(
+        target=(
+            'src.notifications.tasks.send_task_completed_notification.delay'
+        ),
+    )
+    send_vacation_delegation_notification_mock = mocker.patch(
+        target='src.accounts.services.vacation.'
+        'send_vacation_delegation_notification.delay',
+    )
+    send_user_updated_notification_mock = mocker.patch(
+        target='src.accounts.services.vacation.'
+        'send_user_updated_notification.delay',
+    )
+    start_next_tasks_mock = mocker.patch(
+        target='src.processes.services.workflow_action.'
+        'WorkflowActionService._start_next_tasks',
+    )
+    sync_members_mock = mocker.patch(
+        target='src.accounts.services.vacation.'
+        'VacationDelegationService.sync_members',
+    )
+    service = VacationDelegationService(user=owner)
+    substitute_user_ids = [starter.id]
+
+    # act
+    service.activate(substitute_user_ids=substitute_user_ids)
+
+    # assert
+    task.refresh_from_db()
+    owner.refresh_from_db()
+    assert task.status == TaskStatus.COMPLETED
+    assert task.date_completed is not None
+    assert TaskPerformer.objects.get(
+        task=task,
+        user=owner,
+        type=PerformerType.USER,
+    ).is_completed is True
+    assert TaskPerformer.objects.get(
+        task=task,
+        user=starter,
+        type=PerformerType.GROUP_USER,
+    ).is_completed is True
+    assert not TaskPerformer.objects.filter(
+        task=task,
+        is_completed=False,
+    ).exists()
+    delegation_event = WorkflowEvent.objects.get(
+        task=task,
+        type=WorkflowEventType.TASK_DELEGATION,
+    )
+    after_create_actions_mock.assert_called_once_with(delegation_event)
+    send_task_deleted_notification_mock.assert_not_called()
+    assert send_task_completed_websocket_mock.call_count == 2
+    send_task_completed_websocket_mock.assert_has_calls(
+        [
+            mocker.call(
+                task_id=task.id,
+                recipients=[
+                    (owner.id, owner.email),
+                    (starter.id, starter.email),
+                ],
+                account_id=account.id,
+            ),
+            mocker.call(
+                task_id=task.id,
+                recipients=[],
+                account_id=account.id,
+            ),
+        ],
+    )
+    send_task_completed_notification_mock.assert_not_called()
+    send_vacation_delegation_notification_mock.assert_not_called()
+    send_user_updated_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        user_data=UserWebsocketSerializer(owner).data,
+    )
+    start_next_tasks_mock.assert_called_once_with(parent_task=task)
+    sync_members_mock.assert_called_once_with(
+        wf_ids={workflow.id},
+        substitute_user_ids=substitute_user_ids,
+        user_id=owner.id,
+    )
+
+
+@pytest.mark.parametrize('require_all', (False, True))
+def test_activate__change_substitute_to_wf_starter__task_skipped(
+    mocker: MockerFixture,
+    require_all: bool,
+):
+
+    """
+    Vacation is already active and the task is delegated.
+    The workflow starter becomes the new substitute:
+    the already delegated task is skipped.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    substitute = create_test_admin(
+        account=account,
+        email='sub@pneumatic.app',
+    )
+    starter = create_test_admin(
+        account=account,
+        email='starter@pneumatic.app',
+    )
+    template = create_test_template(
+        user=owner,
+        tasks_count=1,
+        is_active=True,
+    )
+    workflow = create_test_workflow(
+        user=starter,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.require_completion_by_all = require_all
+    task.save(update_fields=['skip_for_starter', 'require_completion_by_all'])
+    sub_group = create_test_group(
+        name='Substitutes',
+        type_=UserGroupType.PERSONAL,
+        account=account,
+        users=[substitute],
+    )
+    UserVacation.objects.create(
+        user=owner,
+        account=account,
+        substitute_group=sub_group,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        group=sub_group,
+        type=PerformerType.GROUP,
+    )
+    task_delegation_event_mock = mocker.patch(
+        target='src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+    after_create_actions_mock = mocker.patch(
+        target='src.processes.services.events.'
+        'WorkflowEventService._after_create_actions',
+    )
+    send_task_deleted_notification_mock = mocker.patch(
+        target='src.notifications.tasks.send_task_deleted_notification.delay',
+    )
+    send_vacation_delegation_notification_mock = mocker.patch(
+        target='src.accounts.services.vacation.'
+        'send_vacation_delegation_notification.delay',
+    )
+    send_user_updated_notification_mock = mocker.patch(
+        target='src.accounts.services.vacation.'
+        'send_user_updated_notification.delay',
+    )
+    deactivate_task_guest_cache_mock = mocker.patch(
+        target=(
+            'src.processes.services.workflow_action.'
+            'GuestJWTAuthService.deactivate_task_guest_cache'
+        ),
+    )
+    sync_members_mock = mocker.patch(
+        target=(
+            'src.accounts.services.vacation.'
+            'VacationDelegationService.sync_members'
+        ),
+    )
+    task_data = task.get_data_for_list()
+    service = VacationDelegationService(user=owner)
+    substitute_user_ids = [starter.id]
+
+    # act
+    service.activate(substitute_user_ids=substitute_user_ids)
+
+    # assert
+    task.refresh_from_db()
+    workflow.refresh_from_db()
+    owner.refresh_from_db()
+    assert task.status == TaskStatus.SKIPPED
+    assert workflow.status == WorkflowStatus.DONE
+    task_delegation_event_mock.assert_not_called()
+    skip_event = WorkflowEvent.objects.get(
+        task=task,
+        type=WorkflowEventType.TASK_SKIP,
+    )
+    ended_event = WorkflowEvent.objects.get(
+        workflow=workflow,
+        type=WorkflowEventType.ENDED,
+    )
+    assert after_create_actions_mock.call_count == 2
+    after_create_actions_mock.assert_has_calls(
+        [
+            mocker.call(skip_event),
+            mocker.call(ended_event),
+        ],
+    )
+    send_task_deleted_notification_mock.assert_called_once_with(
+        task_id=task.id,
+        recipients=[
+            (owner.id, owner.email),
+            (starter.id, starter.email),
+        ],
+        account_id=account.id,
+        task_data=task_data,
+    )
+    send_vacation_delegation_notification_mock.assert_not_called()
+    send_user_updated_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        user_data=UserWebsocketSerializer(owner).data,
+    )
+    deactivate_task_guest_cache_mock.assert_called_once_with(task_id=task.id)
+    sync_members_mock.assert_called_once_with(
+        wf_ids={workflow.id},
+        substitute_user_ids=substitute_user_ids,
+        user_id=owner.id,
     )

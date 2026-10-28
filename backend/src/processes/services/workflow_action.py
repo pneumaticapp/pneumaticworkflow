@@ -1,12 +1,13 @@
 from datetime import datetime
-from typing import Callable, Iterable, List, Optional, Tuple
+from typing import Callable, Iterable, List, Optional, Set, Tuple
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from django.db.models import Q
 
-from src.accounts.enums import UserType
+from src.accounts.enums import UserGroupType, UserType
+from src.accounts.models import UserVacation
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
@@ -79,6 +80,9 @@ class WorkflowActionService:
         auth_type: AuthTokenType.LITERALS = AuthTokenType.USER,
         sync: bool = False,
     ):
+
+        """ Bind the service to a workflow and an acting user """
+
         self.workflow = workflow
         if user is None:
             raise Exception(
@@ -121,6 +125,8 @@ class WorkflowActionService:
         user_type: UserType.LITERALS = None,
     ) -> List[Tuple[int, str]]:
 
+        """ Return (id, email) pairs of incompleted task performers """
+
         users = self._get_incompleted_performers_users(
             task=task,
             user_type=user_type,
@@ -129,10 +135,13 @@ class WorkflowActionService:
 
     def check_delay_workflow(self):
 
+        """ Mark the running workflow as delayed
+            if it has no active tasks but has delayed ones """
+
         if (
             self.workflow.is_running
-            and self.workflow.tasks.active().count() == 0
-            and self.workflow.tasks.delayed().count() > 0
+            and not self.workflow.tasks.active().exists()
+            and self.workflow.tasks.delayed().exists()
         ):
             self.workflow.status = WorkflowStatus.DELAYED
             self.workflow.save(update_fields=['status'])
@@ -207,14 +216,22 @@ class WorkflowActionService:
 
     def resume_task(self, task: Task):
 
+        """ Resume a delayed task and set the workflow running
+            when no delayed tasks remain """
+
         if self.workflow.is_completed:
             raise exceptions.ResumeCompletedWorkflow
 
         with transaction.atomic():
             self.continue_task(task)
-            if not self.workflow.tasks.delayed().exists():
+            if (
+                not self.workflow.is_completed
+                and not self.workflow.tasks.delayed().exists()
+            ):
                 self.workflow.status = WorkflowStatus.RUNNING
                 self.workflow.save(update_fields=['status'])
+            if task.is_skipped:
+                self.check_delay_workflow()
 
     def force_resume_workflow(self):
 
@@ -240,7 +257,8 @@ class WorkflowActionService:
                 workflow=self.workflow,
                 user=self.user,
             )
-            for task in self.workflow.tasks.delayed():
+            delayed_tasks = self.workflow.tasks.delayed()
+            for task in delayed_tasks:
                 send_resumed_workflow_notification.delay(
                     logging=self.account.log_api_requests,
                     logo_lg=self.account.logo_lg,
@@ -249,8 +267,15 @@ class WorkflowActionService:
                     task_id=task.id,
                 )
                 self.continue_task(task)
+                if self.workflow.is_completed:
+                    break
+            if any(task.is_skipped for task in delayed_tasks):
+                self.check_delay_workflow()
 
     def terminate_workflow(self):
+
+        """ Delete the workflow, notify performers of active tasks
+            and drop guest access to its tasks """
 
         for task in self.workflow.tasks.active():
             recipients = self._get_incompleted_recipients(
@@ -276,6 +301,9 @@ class WorkflowActionService:
         self.workflow.delete()
 
     def _complete_workflow(self):
+
+        """ Set the workflow DONE: end delays, drop guest access,
+            reset urgency, send notification and webhook """
 
         for task in self.workflow.tasks.delayed():
             delay = task.get_active_delay()
@@ -313,6 +341,8 @@ class WorkflowActionService:
 
     def force_complete_workflow(self):
 
+        """ Complete the workflow manually regardless of task statuses """
+
         self._complete_workflow()
         WorkflowEventService.workflow_ended_event(
             workflow=self.workflow,
@@ -336,6 +366,10 @@ class WorkflowActionService:
         by_complete_task: bool = False,
         **kwargs,
     ):
+
+        """ Complete the workflow and write the event
+            matching the reason: condition, last task or force """
+
         if by_condition:
             self._complete_workflow()
             WorkflowEventService.workflow_ended_by_condition_event(
@@ -365,6 +399,10 @@ class WorkflowActionService:
         is_returned: bool = False,
         **kwargs,
     ):
+
+        """ Skip the task. On return go back to the parent tasks,
+            otherwise start the next tasks """
+
         task_service = TaskService(
             instance=task,
             user=self.user or self.workflow.account.get_owner(),
@@ -386,6 +424,9 @@ class WorkflowActionService:
         self,
         task: Task,
     ) -> Optional[Callable]:
+
+        """ Return the action of passed skip conditions:
+            end workflow has priority over skip task """
 
         skip_task_condition_passed = False
         for condition in task.conditions.skip_task():
@@ -446,6 +487,9 @@ class WorkflowActionService:
 
     def start_workflow(self):
 
+        """ Fill first tasks with kickoff values, write run events,
+            start the first tasks and send the started webhook """
+
         # Duplicate start task code, need for workflow_run_event
         tasks = self.workflow.tasks.filter(parents=[])
         for task in tasks:
@@ -476,6 +520,10 @@ class WorkflowActionService:
             )
 
     def continue_workflow(self, task: Task, is_returned: bool = False):
+
+        """ Set the workflow running, sync permissions
+            and activate the task """
+
         if not self.workflow.is_running:
             self.workflow.status = WorkflowStatus.RUNNING
             self.workflow.save(update_fields=['status'])
@@ -525,6 +573,16 @@ class WorkflowActionService:
         performers_qst.type_group_user().delete()
         if task.skip_for_starter:
             self._complete_task_for_starter(task=task)
+            if (
+                not self.workflow.is_external
+                and task.require_completion_by_all
+                and task.can_be_completed()
+            ):
+                self._task_skip_for_starter(
+                    task=task,
+                    is_returned=is_returned,
+                )
+                return
 
         # if task force snoozed then start task event already exists
         # but if task returned then
@@ -612,15 +670,23 @@ class WorkflowActionService:
             )
         self._start_next_tasks()
 
+    def _get_parent_tasks(self, task: Task):
+
+        """ Return the task parents in the current workflow """
+
+        return Task.objects.filter(
+            api_name__in=task.parents,
+            workflow_id=self.workflow.id,
+        )
+
     def _start_prev_tasks(
         self,
         child_task: Task,
     ):
 
-        for task in Task.objects.filter(
-            api_name__in=child_task.parents,
-            workflow_id=self.workflow.id,
-        ):
+        """ Run condition actions of the parent tasks in return mode """
+
+        for task in self._get_parent_tasks(child_task):
             action_method, _ = self.execute_conditions(task)
             if action_method:
                 action_method(
@@ -632,6 +698,10 @@ class WorkflowActionService:
         self,
         parent_task: Optional[Task] = None,
     ):
+
+        """ Run the action of the first pending task whose conditions
+            allow it, or end the workflow when nothing is left """
+
         by_complete_task = parent_task and parent_task.is_completed
         if self.workflow.tasks.pending().exists():
             for task in self.workflow.tasks.pending():
@@ -654,6 +724,10 @@ class WorkflowActionService:
                 )
 
     def update_tasks_status(self):
+
+        """ Re-evaluate conditions of not finished tasks and
+            start, resume, complete or skip them accordingly """
+
         for task in self.workflow.tasks.apd_status():
             action_method, _ = self.execute_conditions(task)
             if action_method is not None:
@@ -665,15 +739,22 @@ class WorkflowActionService:
                             delay = task.get_active_delay()
                             if not delay or (delay and delay.is_expired):
                                 self.resume_task(task)
-                        if task.can_be_completed():
+                        if task.is_active and task.can_be_completed():
                             self.complete_task(task=task)
                     else:
                         action_method(task=task)
+            if self.workflow.is_completed:
+                break
 
-        if not self.workflow.tasks.apd_status().exists():
+        if (
+            not self.workflow.is_completed
+            and not self.workflow.tasks.apd_status().exists()
+        ):
             self._complete_workflow()
 
     def delay_task(self, task: Task, delay: Delay):
+
+        """ Set the task delayed and start the delay countdown """
 
         task.status = TaskStatus.DELAYED
         task.save(update_fields=['status'])
@@ -690,6 +771,9 @@ class WorkflowActionService:
         task: Task,
         is_returned: bool,
     ):
+
+        """ Skip the task by the "skip for starter" rule """
+
         WorkflowEventService.task_skip_event(task)
         if is_returned and task.parents:
             task.status = TaskStatus.PENDING
@@ -705,6 +789,10 @@ class WorkflowActionService:
         task: Task,
         is_returned: bool,
     ):
+
+        """ Skip the task without performers and move
+            to the previous or next tasks """
+
         WorkflowEventService.task_skip_no_performers_event(task)
         task.status = TaskStatus.SKIPPED
         task.save(update_fields=('status',))
@@ -716,26 +804,154 @@ class WorkflowActionService:
     def _complete_task_for_starter(
         self,
         task: Task,
-    ):
-        if (
+    ) -> Set[UserModel]:
+
+        """Complete waived shares and return their users."""
+
+        if not (
             task.skip_for_starter
             and not self.workflow.is_external
             and task.require_completion_by_all
         ):
-            try:
-                starter = self.workflow.workflow_starter
-                task_performers = self._get_performers_for_user(
+            return set()
+
+        waived_users = self._get_starter_completion_users(task=task)
+
+        # The starter may have completed their share before delegation.
+        for user in waived_users:
+            self._complete_performers_for_user(task=task, user=user)
+        return waived_users
+
+    def _get_starter_completion_users(self, task: Task) -> Set[UserModel]:
+
+        """Get notification recipients before completing waived shares."""
+
+        starter_id = self.workflow.workflow_starter_id
+        substitute_group_ids = (
+            TaskPerformer.objects
+            .by_task(task_id=task.id)
+            .type_group()
+            .exclude_directly_deleted()
+            .filter(
+                group__users=starter_id,
+                group__type=UserGroupType.PERSONAL,
+                group__is_deleted=False,
+            )
+            .values_list('group_id', flat=True)
+        )
+        vacations = (
+            UserVacation.objects
+            .sick_leave_or_vacation()
+            .filter(substitute_group_id__in=substitute_group_ids)
+            .select_related('user')
+        )
+        return {
+            self.workflow.workflow_starter,
+            *(vacation.user for vacation in vacations),
+        }
+
+    def _is_task_skipped_for_starter(
+        self,
+        task: Task,
+        performers_user_ids: Set[int],
+    ) -> bool:
+
+        """ The starter is a performer and there is nobody else
+            to wait for: "skip for starter" skips the whole task.
+            With RCBA and other performers, complete only the shares
+            waived for the starter and the employees they substitute for
+            (see "_complete_task_for_starter"). """
+
+        starter_id = self.workflow.workflow_starter_id
+        if starter_id not in performers_user_ids:
+            return False
+        return (
+            not task.require_completion_by_all
+            or performers_user_ids == {starter_id}
+        )
+
+    def skip_delegated_task_for_starter(
+        self,
+        task: Task,
+        absent_user: Optional[UserModel] = None,
+    ) -> bool:
+
+        """ Apply "skip for starter" to an active or delayed task
+            that the workflow starter got after the task start,
+            e.g. as a vacation substitute. absent_user is the employee
+            who is absent, not the substitute receiving the task.
+
+            Example: Ivan is absent and starter Peter substitutes for
+            him. With "require completion by all", waive Ivan's and
+            Peter's shares, but keep waiting for independent Anna.
+            If only Peter remains after excluding Ivan, skip the task.
+
+            Returns True if the task is skipped """
+
+        if not task.skip_for_starter:
+            return False
+        performers_users = self._get_all_performers_users(task=task)
+        performers_user_ids = {user['id'] for user in performers_users}
+        starter_id = self.workflow.workflow_starter_id
+        if starter_id not in performers_user_ids:
+            return False
+        if absent_user:
+            performers_user_ids.discard(absent_user.id)
+        if not self._is_task_skipped_for_starter(
+            task=task,
+            performers_user_ids=performers_user_ids,
+        ):
+            waived_users = self._complete_task_for_starter(task=task)
+            if absent_user and absent_user not in waived_users:
+                self._complete_performers_for_user(
                     task=task,
-                    user=starter,
+                    user=absent_user,
                 )
-                if task_performers:
-                    self._complete_performers_for_user(
-                        task=task,
-                        task_performers=task_performers,
-                        user=starter,
-                    )
-            except exceptions.UserAlreadyCompleteTask:
-                pass
+                waived_users.add(absent_user)
+            self._send_waived_task_websocket(
+                task=task,
+                performers_users=performers_users,
+                waived_user_ids={user.id for user in waived_users},
+            )
+            if task.is_active and task.can_be_completed():
+                self.complete_task(task=task)
+                self.check_delay_workflow()
+            return False
+
+        delay = task.get_active_delay()
+        if delay:
+            delay.end_date = timezone.now()
+            delay.save(update_fields=['end_date'])
+        self._send_task_deleted(task=task)
+        self._task_skip_for_starter(task=task, is_returned=False)
+        self.check_delay_workflow()
+        return True
+
+    @staticmethod
+    def _send_waived_task_websocket(
+        task: Task,
+        performers_users: List[dict],
+        waived_user_ids: Set[int],
+    ):
+        """Remove auto-completed shares from users' task lists/counters.
+
+        Use the performer snapshot taken before completion to avoid
+        notifying users whose shares were already completed.
+        """
+
+        recipients = [
+            (user['id'], user['email'])
+            for user in performers_users
+            if user['id'] in waived_user_ids
+            and user['type'] == UserType.USER
+            and not user['is_completed']
+        ]
+        if recipients:
+            send_task_completed_websocket.delay(
+                task_id=task.id,
+                recipients=recipients,
+                account_id=task.account_id,
+            )
 
     def start_task(
         self,
@@ -743,6 +959,18 @@ class WorkflowActionService:
         is_returned: bool = False,
         **kwargs,
     ):
+
+        """ Start the task: skip it on return when "skip on return"
+            is set, skip it without performers or for the starter,
+            otherwise delay or activate it """
+
+        if is_returned and task.skip_on_return:
+            delay = task.get_active_delay()
+            if delay:
+                delay.end_date = timezone.now()
+                delay.save(update_fields=['end_date'])
+            self.skip_task(task=task, is_returned=True)
+            return
 
         task_service = TaskService(
             instance=task,
@@ -761,26 +989,18 @@ class WorkflowActionService:
             self._task_skip_no_performers(task, is_returned=is_returned)
             return
 
-        if task.skip_for_starter and not self.workflow.is_external:
-            starter = self.workflow.workflow_starter
-            performers_user_ids = {user['id'] for user in performers_users}
-
-            if starter.id in performers_user_ids:
-                performers_user_ids.remove(starter.id)
-                task_rcba = task.require_completion_by_all
-                if task_rcba:
-                    # if performers_user_ids exists then complete task
-                    # only for starter in the "continue_task" method
-                    # using "_complete_task_for_starter" method
-                    if not performers_user_ids:
-                        self._task_skip_for_starter(
-                            task=task,
-                            is_returned=is_returned,
-                        )
-                        return
-                else:
-                    self._task_skip_for_starter(task, is_returned=is_returned)
-                    return
+        # With RCBA and other performers the task is completed
+        # only for the starter in the "continue_task" method
+        if (
+            task.skip_for_starter
+            and not self.workflow.is_external
+            and self._is_task_skipped_for_starter(
+                task=task,
+                performers_user_ids={user['id'] for user in performers_users},
+            )
+        ):
+            self._task_skip_for_starter(task=task, is_returned=is_returned)
+            return
 
         if is_returned:
             self.continue_workflow(task=task, is_returned=is_returned)
@@ -865,12 +1085,16 @@ class WorkflowActionService:
         user: Optional[UserModel] = None,
     ) -> Optional[List[TaskPerformer]]:
 
+        """ Return the task performers of the user (directly or via group),
+            None if there are none. Raise if any is already completed """
+
         user = user or self.user
         performers = list(
             TaskPerformer.objects
             .by_task(task.id)
             .by_user_or_group(user.id)
-            .exclude_directly_deleted(),
+            .exclude_directly_deleted()
+            .select_related('group'),
         )
         task_performers = []
         for performer in performers:
@@ -884,10 +1108,25 @@ class WorkflowActionService:
     def _complete_performers_for_user(
         self,
         task: Task,
-        task_performers: Iterable[TaskPerformer],
+        task_performers: Optional[Iterable[TaskPerformer]] = None,
         user: Optional[UserModel] = None,
     ):
+
+        """ Mark the user performers as completed. For RCBA group
+            performers record the user completion separately """
+
         user = user or self.user
+        if task_performers is None:
+            try:
+                task_performers = self._get_performers_for_user(
+                    task=task,
+                    user=user,
+                )
+            except exceptions.UserAlreadyCompleteTask:
+                return
+        if not task_performers:
+            return
+        task_performers = list(task_performers)
         now = timezone.now()
         for performer in task_performers:
             if performer.type_group:
@@ -914,11 +1153,33 @@ class WorkflowActionService:
                     update_fields=('date_completed', 'is_completed'),
                 )
 
+        # Complete this user's shares before following delegation links:
+        # completed performers also stop circular substitutions.
+        for performer in task_performers:
+            if (
+                performer.type_group
+                and performer.group.type == UserGroupType.PERSONAL
+            ):
+                vacations = (
+                    performer.group.vacation_owners
+                    .sick_leave_or_vacation()
+                    .select_related('user')
+                )
+                for vacation in vacations:
+                    self._complete_performers_for_user(
+                        task=task,
+                        user=vacation.user,
+                    )
+
     def complete_task_for_user(
         self,
         task: Task,
         fields_values: Optional[dict] = None,
     ):
+
+        """ Validate and save the output fields, then complete the task
+            for the current user or fully if it can be completed  """
+
         if self.workflow.is_delayed:
             raise exceptions.CompleteDelayedWorkflow
         if self.workflow.is_completed:
@@ -996,6 +1257,9 @@ class WorkflowActionService:
                             recipients=[(self.user.id, self.user.email)],
                             account_id=task.account_id,
                         )
+                    # A substitute may also complete the absent user's share.
+                    if task.can_be_completed():
+                        self.complete_task(task=task)
             elif self.user.is_account_owner:
                 # account owner force completion
                 # not complete performers, but send ws remove task
@@ -1003,6 +1267,9 @@ class WorkflowActionService:
         return task
 
     def _get_not_skipped_revert_task(self, task: Task) -> Optional[Task]:
+
+        """ Return the task or the nearest previous task
+            that would not be skipped by conditions """
 
         action_method, _ = self.execute_conditions(task)
         if action_method and action_method.__name__ in (
@@ -1022,21 +1289,36 @@ class WorkflowActionService:
     def _revert_is_possible(
         self,
         revert_to_tasks: Iterable[Task],
+        root_tasks: Optional[List[Task]] = None,
     ) -> bool:
 
+        """ Return True if any task in the chain can be started on return.
+            Tasks without previous tasks are collected into "root_tasks" """
+
+        if root_tasks is None:
+            root_tasks = []
         for revert_to_task in revert_to_tasks:
             action_method, _ = self.execute_conditions(revert_to_task)
-            if action_method and action_method.__name__ in (
-                ConditionAction.START_TASK,
-                ConditionAction.END_WORKFLOW,
+            if (
+                action_method
+                and action_method.__name__ in (
+                    ConditionAction.START_TASK,
+                    ConditionAction.END_WORKFLOW,
+                )
+                and not revert_to_task.skip_on_return
             ):
                 return True
 
             prev_revert_to_tasks = revert_to_task.get_revert_tasks()
-            revert_is_possible = self._revert_is_possible(prev_revert_to_tasks)
-            if revert_is_possible:
-                return True
-
+            if prev_revert_to_tasks:
+                revert_is_possible = self._revert_is_possible(
+                    revert_to_tasks=prev_revert_to_tasks,
+                    root_tasks=root_tasks,
+                )
+                if revert_is_possible:
+                    return True
+            else:
+                root_tasks.append(revert_to_task)
         return False
 
     def _validate_revert_is_possible(
@@ -1044,15 +1326,23 @@ class WorkflowActionService:
         revert_to_tasks: Iterable[Task],
     ):
 
+        """ Return True if the workflow can return to any of the tasks
+            or their previous tasks, otherwise raise the reason error """
+
         if not revert_to_tasks:
             raise exceptions.FirstTaskCannotBeReverted
 
+        root_tasks = []
         next_depth_revert_tasks_exists = False
         for revert_to_task in revert_to_tasks:
             action_method, _ = self.execute_conditions(revert_to_task)
-            if action_method and action_method.__name__ in (
-                ConditionAction.START_TASK,
-                ConditionAction.END_WORKFLOW,
+            if (
+                action_method
+                and action_method.__name__ in (
+                    ConditionAction.START_TASK,
+                    ConditionAction.END_WORKFLOW,
+                )
+                and not revert_to_task.skip_on_return
             ):
                 return True
 
@@ -1060,11 +1350,24 @@ class WorkflowActionService:
             if next_depth_revert_to_tasks:
                 next_depth_revert_tasks_exists = True
                 revert_is_possible = self._revert_is_possible(
-                    next_depth_revert_to_tasks,
+                    revert_to_tasks=next_depth_revert_to_tasks,
+                    root_tasks=root_tasks,
                 )
                 if revert_is_possible:
                     return True
+            else:
+                root_tasks.append(revert_to_task)
 
+        if root_tasks:
+            all_root_tasks_is_skipped = True
+            for root_task in root_tasks:
+                if not (root_task.skip_on_return and not root_task.parents):
+                    all_root_tasks_is_skipped = False
+
+            if all_root_tasks_is_skipped:
+                raise exceptions.RevertToSkippedTask(
+                    messages.MSG_PW_0092(root_tasks[0].name),
+                )
         if next_depth_revert_tasks_exists:
             raise exceptions.RevertToSkippedTask(
                 messages.MSG_PW_0080(revert_to_tasks[0].name),
@@ -1074,6 +1377,10 @@ class WorkflowActionService:
         )
 
     def _send_task_deleted(self, task: Task):
+
+        """ Notify the task performers that the task is removed
+            from their task list """
+
         task_data = task.get_data_for_list()
         query = GetTaskPerformersQuery(
             task_id=task.id,
@@ -1091,6 +1398,9 @@ class WorkflowActionService:
             )
 
     def _deactivate_task(self, parent_task: Task):
+
+        """ Recursively return started child tasks to pending,
+            reset their delays and performers completion """
 
         dependent_tasks = Task.objects.filter(
             workflow=self.workflow,
@@ -1153,6 +1463,9 @@ class WorkflowActionService:
         revert_from_tasks: Iterable[Task],
         revert_to_tasks: Iterable[Task],
     ):
+
+        """ Restart the target tasks in return mode, deactivate
+            their child tasks and send task returned webhooks """
 
         if not self.workflow.is_running:
             self.workflow.date_completed = None
@@ -1245,6 +1558,9 @@ class WorkflowActionService:
 
     def return_to(self, revert_to_task: Optional[Task] = None):
 
+        """ Return the whole workflow to a passed task
+            from all active or delayed tasks """
+
         # validate revert to task
         if revert_to_task.is_pending:
             raise exceptions.ReturnToFutureTask
@@ -1255,6 +1571,10 @@ class WorkflowActionService:
         ):
             raise exceptions.WorkflowActionServiceException(
                 messages.MSG_PW_0079(revert_to_task.name),
+            )
+        if revert_to_task.skip_on_return:
+            raise exceptions.RevertToSkippedTask(
+                messages.MSG_PW_0093(revert_to_task.name),
             )
 
         # validate revert from tasks
