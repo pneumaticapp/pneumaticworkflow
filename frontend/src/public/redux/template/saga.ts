@@ -187,15 +187,14 @@ function* reportTemplateSaveError(error: unknown, submittedTemplate?: ITemplateC
   const validationError = apiName
     ? createTemplateValidationError(submittedTemplate || editingTemplate, apiName, message)
     : null;
-  const currentValidationError =
-    apiName && validationError
-      ? createTemplateValidationError(editingTemplate, apiName, message, validationError.target.section)
-      : null;
+  const currentValidationError = validationError
+    ? createTemplateValidationError(editingTemplate, validationError.apiName, message, validationError.target.section)
+    : null;
 
   if (!validationError || currentValidationError?.entitySnapshot !== validationError.entitySnapshot) {
     NotificationManager.notifyApiError(error, {
       title: 'template.save-failed',
-      message: getErrorMessage(error),
+      message,
       timeOut: 0,
     });
 
