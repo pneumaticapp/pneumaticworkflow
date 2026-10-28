@@ -7,13 +7,13 @@
 .container--graph {
   position: relative;
   display: flex;
-  overflow: hidden;
   flex-direction: column;
   width: 100%;
   min-width: 0;
   max-width: none;
   height: 100%;
   min-height: 0;
+  overflow: hidden;
 }
 
 .container--loading {
@@ -45,28 +45,28 @@
 
 .template-wrapper--graph {
   display: flex;
-  overflow: hidden;
+  flex: 1;
   flex-direction: column;
   width: 100%;
   min-width: 0;
   min-height: 0;
-  flex: 1;
+  overflow: hidden;
 }
 
 .template-wrapper--graph .template-wrapper__info {
   flex-shrink: 0;
+  width: 100%;
   margin-right: 0;
   margin-bottom: 1.6rem;
-  width: 100%;
 }
 
 .template-wrapper--graph .template-wrapper__tasks {
   position: relative;
   display: flex;
-  overflow: hidden;
+  flex: 1;
   flex-direction: column;
   min-height: 0;
-  flex: 1;
+  overflow: hidden;
 }
 
 .template-wrapper__tasks {
@@ -142,8 +142,8 @@
 }
 
 .task_form--embedded {
-  margin-bottom: 0 !important;
   padding: 0;
+  margin-bottom: 0 !important;
   background: transparent;
   border-radius: 0 !important;
 }

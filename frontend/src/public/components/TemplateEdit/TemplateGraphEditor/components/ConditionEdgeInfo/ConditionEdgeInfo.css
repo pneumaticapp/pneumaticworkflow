@@ -36,7 +36,7 @@
   font-size: 1.3rem;
   font-weight: normal;
   line-height: 1.6rem;
-  text-align: center;
   color: var(--pneumatic-color-beige);
+  text-align: center;
   overflow-wrap: break-word;
 }
