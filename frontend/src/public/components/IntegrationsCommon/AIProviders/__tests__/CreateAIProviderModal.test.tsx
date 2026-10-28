@@ -124,8 +124,6 @@ describe('CreateAIProviderModal', () => {
   it('creates a provider by vendor from the default tab', async () => {
     renderModal();
 
-    expect(screen.getByText(t('ai-providers.connection-check-info'))).toBeInTheDocument();
-
     const submit = screen.getByTestId('submit-create-ai-provider');
     await waitFor(() => expect(submit).toBeDisabled());
 
@@ -151,8 +149,6 @@ describe('CreateAIProviderModal', () => {
     renderModal();
 
     userEvent.click(screen.getByText(t('ai-providers.tab-custom')));
-
-    expect(screen.getByText(t('ai-providers.connection-check-info'))).toBeInTheDocument();
 
     const submit = screen.getByTestId('submit-create-ai-provider');
     await waitFor(() => expect(submit).toBeDisabled());

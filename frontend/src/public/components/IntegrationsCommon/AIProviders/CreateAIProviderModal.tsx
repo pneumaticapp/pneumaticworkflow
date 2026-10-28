@@ -81,9 +81,6 @@ export function CreateAIProviderModal() {
       <Header tag="h2" size="6" className={styles['create-modal__title']}>
         {formatMessage({ id: 'ai-providers.create-modal-title' })}
       </Header>
-      <p className={styles['create-modal__description']}>
-        {formatMessage({ id: 'ai-providers.create-modal-description' })}
-      </p>
       <Tabs
         activeValueId={activeTab}
         values={[
@@ -155,9 +152,6 @@ export function CreateAIProviderModal() {
                 </>
               )}
             </div>
-            <p className={styles['create-modal__info']}>
-              {formatMessage({ id: 'ai-providers.connection-check-info' })}
-            </p>
             <div className={styles['create-modal__footer']}>
               <Button
                 type="submit"

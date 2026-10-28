@@ -3,12 +3,6 @@
     margin-bottom: 0.8rem;
   }
 
-  &__description {
-    margin-bottom: 1.6rem;
-    font-size: 1.4rem;
-    color: var(--pneumatic-color-black48);
-  }
-
   &__tabs {
     margin-bottom: 1.6rem;
   }
@@ -17,12 +11,6 @@
     display: flex;
     flex-direction: column;
     gap: 1.6rem;
-  }
-
-  &__info {
-    margin-top: 1.6rem;
-    font-size: 1.2rem;
-    color: var(--pneumatic-color-black48);
   }
 
   &__footer {

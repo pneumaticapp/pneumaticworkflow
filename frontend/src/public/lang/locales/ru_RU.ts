@@ -1297,17 +1297,12 @@ export const ruMessages = {
   'ai-providers.delete-disabled-tooltip':
     'Провайдер задействован в AI-агентах: {agents}. Сначала удалите этих агентов.',
   'ai-providers.create-modal-title': 'Добавить AI-провайдера',
-  'ai-providers.create-modal-description':
-    'Выберите вендора и вставьте секретный ключ или перейдите на вкладку ручной настройки. ' +
-    'Провайдер станет доступен всему аккаунту.',
   'ai-providers.tab-vendor': 'По вендору',
   'ai-providers.tab-custom': 'Свой',
   'ai-providers.vendor-label': 'Вендор',
   'ai-providers.vendor-placeholder': 'Выберите вендора',
   'ai-providers.name-label': 'Название',
   'ai-providers.name-placeholder': 'OpenRouter',
-  'ai-providers.connection-check-info':
-    'При подключении будет выполнен 1 запрос к вендору, чтобы проверить подключение.',
   'ai-providers.base-url-label': 'Базовый URL',
   'ai-providers.base-url-placeholder': 'https://openrouter.ai/api/v1',
   'ai-providers.api-key-label': 'API-ключ',
