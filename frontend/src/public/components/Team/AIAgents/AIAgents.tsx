@@ -20,7 +20,7 @@ import { openCreatePerformerModal } from '../../../redux/team/slice';
 import { loadAIAgents, loadAIProviders } from '../../../redux/ai/slice';
 import {
   getAIAgentsIsLoading,
-  getAIAgentsSortedByName,
+  getAIAgentsSorted,
   getAIProvidersIsLoading,
   getAIProvidersList,
 } from '../../../redux/selectors/ai';
@@ -31,7 +31,7 @@ export function AIAgents() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const isAgentsLoading = useSelector(getAIAgentsIsLoading);
-  const agents = useSelector(getAIAgentsSortedByName);
+  const agents = useSelector(getAIAgentsSorted);
   const providers = useSelector(getAIProvidersList);
   const isProvidersLoading = useSelector(getAIProvidersIsLoading);
 

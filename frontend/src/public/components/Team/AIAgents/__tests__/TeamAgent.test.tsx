@@ -7,6 +7,7 @@ import { intlMock } from '../../../../__stubs__/intlMock';
 import { TeamAgent } from '../TeamAgent';
 import { cloneAIAgent, deleteAIAgent, updateAIAgent } from '../../../../redux/ai/slice';
 import type { IAIAgent } from '../../../../api/ai/types';
+import { EAIAgentsSorting } from '../../../../redux/ai/types';
 
 interface IDropdownMockProps {
   renderToggle(isOpen: boolean): React.ReactNode;
@@ -70,7 +71,7 @@ describe('TeamAgent', () => {
     jest.clearAllMocks();
     (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
     (useSelector as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({ ai: { agents: { isLoading: false, list: [buildAgent()] } } }),
+      selector({ ai: { agents: { isLoading: false, list: [buildAgent()] }, agentsSorting: EAIAgentsSorting.NameAsc } }),
     );
   });
 

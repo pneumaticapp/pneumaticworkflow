@@ -1,6 +1,7 @@
 import { createAction, createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
+import { EAIAgentsSorting } from './types';
 import type { IAIStore, IUploadAIAgentAvatarPayload, TUpdateAIAgentPayload } from './types';
 import type {
   IAIAgent,
@@ -22,6 +23,7 @@ const initialState: IAIStore = {
     isLoading: true,
     list: [],
   },
+  agentsSorting: EAIAgentsSorting.NameAsc,
   vendors: {
     isLoading: false,
     list: [],
@@ -98,6 +100,9 @@ const aiSlice = createSlice({
       state.vendors.isLoading = false;
     },
 
+    aiAgentsSortingChanged: (state, action: PayloadAction<EAIAgentsSorting>) => {
+      state.agentsSorting = action.payload;
+    },
     loadAIProviderModelsStarted: (state, action: PayloadAction<number>) => {
       state.models = { isLoading: true, providerId: action.payload, list: [] };
     },
@@ -126,6 +131,7 @@ export const {
   createAIProviderStarted,
   createAIProviderSuccess,
   createAIProviderFailed,
+  aiAgentsSortingChanged,
   loadAIAgentsStarted,
   loadAIAgentsSuccess,
   loadAIAgentsFailed,

@@ -10,6 +10,7 @@ import { EAIVendor } from '../../../../api/ai/types';
 import type { IAIAgent, IAIProvider } from '../../../../api/ai/types';
 import { loadAIAgents, loadAIProviders } from '../../../../redux/ai/slice';
 import { openCreatePerformerModal } from '../../../../redux/team/slice';
+import { EAIAgentsSorting } from '../../../../redux/ai/types';
 import { history } from '../../../../utils/history';
 import { ERoutes } from '../../../../constants/routes';
 import { intlMock } from '../../../../__stubs__/intlMock';
@@ -81,6 +82,7 @@ describe('AIAgents', () => {
         ai: {
           agents: { isLoading: isAgentsLoading, list: agents },
           providers: { isLoading: isProvidersLoading, list: providers },
+          agentsSorting: EAIAgentsSorting.NameAsc,
         },
       }),
     );

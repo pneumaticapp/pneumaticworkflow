@@ -1,5 +1,11 @@
 import type { IAIAgent, IAIModel, IAIProvider, IAIVendor, TUpdateAIAgentRequest } from '../../api/ai/types';
 
+export enum EAIAgentsSorting {
+  NameAsc = 'ai-agent-name-asc',
+  NameDesc = 'ai-agent-name-desc',
+  DateDesc = 'ai-agent-date-desc',
+}
+
 export interface IAIStore {
   providers: {
     isLoading: boolean;
@@ -13,6 +19,7 @@ export interface IAIStore {
     isLoading: boolean;
     list: IAIAgent[];
   };
+  agentsSorting: EAIAgentsSorting;
   vendors: {
     isLoading: boolean;
     list: IAIVendor[];

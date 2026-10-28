@@ -7,7 +7,7 @@ import type { TDropdownOption } from '../../UI';
 import { WarningPopup } from '../../UI/WarningPopup';
 import { PerformerCard } from '../PerformerCard';
 import { cloneAIAgent, deleteAIAgent, updateAIAgent } from '../../../redux/ai/slice';
-import { getAIAgentsSortedByName } from '../../../redux/selectors/ai';
+import { getAIAgentsSorted } from '../../../redux/selectors/ai';
 import { getAgentCloneName } from './utils/getAgentCloneName';
 import { EditAIAgentModal } from './EditAIAgentModal';
 import { AgentAvatar } from './AgentAvatar';
@@ -16,7 +16,7 @@ import type { ITeamAgentProps } from './types';
 export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const agents = useSelector(getAIAgentsSortedByName);
+  const agents = useSelector(getAIAgentsSorted);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
