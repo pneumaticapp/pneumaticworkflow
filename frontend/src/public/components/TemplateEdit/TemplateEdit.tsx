@@ -116,7 +116,7 @@ export function TemplateEdit({
   const prevTemplate = usePrevious(template);
 
   const [openedTasks, setOpenedTasks] = useState<Record<string, boolean>>({});
-  const [openedDelays, setOpenedDelays] = useState<any>({});
+  const [openedDelays, setOpenedDelays] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     initPage();
