@@ -18,6 +18,7 @@ import { CreateUserForm } from './CreateUserForm';
 import type { ICreatePerformerModalProps } from './types';
 import { ECreatePerformerModalTab } from './types';
 
+import modalStyles from '../PerformerModal.css';
 import styles from './CreatePerformerModal.css';
 
 export function CreatePerformerModal({
@@ -66,10 +67,10 @@ export function CreatePerformerModal({
     <BaseModal
       isOpen={isOpen}
       toggle={onClose}
-      className={styles['modal__dialog']}
-      contentClassName={styles['modal__content']}
+      className={modalStyles['performer-modal__dialog']}
+      contentClassName={modalStyles['performer-modal__content']}
     >
-      <ModalHeader toggle={onClose} className={styles['modal__header']} titleTag="div">
+      <ModalHeader toggle={onClose} className={modalStyles['performer-modal__header']} titleTag="div">
         <Tabs
           values={[
             { id: ECreatePerformerModalTab.User, label: formatMessage({ id: 'team.create-user-modal.tab-user' }) },
