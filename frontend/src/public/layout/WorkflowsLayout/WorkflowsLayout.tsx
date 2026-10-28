@@ -11,7 +11,7 @@ import { WorkflowModalContainer } from '../../components/Workflows/WorkflowModal
 import classnames from 'classnames';
 import type { FormatOptionLabelMeta } from 'react-select';
 import { Select, Tabs } from '../../components/UI';
-import { getSortingSelectProps } from '../../utils/getSortingSelectProps';
+import { getEnumSelectProps } from '../../utils/getEnumSelectProps';
 import { EWorkflowsSorting, EWorkflowsStatus, EWorkflowsView, ITemplateFilterItem } from '../../types/workflow';
 import { BoxesIcon, StatusTitlesIcon, TableViewIcon } from '../../components/icons';
 import { IWorkflowsFiltersProps } from '../../components/Workflows/types';
@@ -385,7 +385,7 @@ export function WorkflowsLayoutComponent({
           Icon={StatusTitlesIcon}
           formatOptionLabel={renderRadioOption}
           {...menuPortalProps}
-          {...getSortingSelectProps(statusTitles, statusFilter, setStatusFilter, formatMessage)}
+          {...getEnumSelectProps(statusTitles, statusFilter, setStatusFilter, formatMessage)}
         />
         <TaskFilterSelect selectedTemplates={selectedTemplates} />
         <PerformerFilterSelect />
@@ -394,7 +394,7 @@ export function WorkflowsLayoutComponent({
           controlVariant="accent"
           formatOptionLabel={renderRadioOption}
           {...menuPortalProps}
-          {...getSortingSelectProps(sortingTitles, sorting, changeWorkflowsSorting, formatMessage)}
+          {...getEnumSelectProps(sortingTitles, sorting, changeWorkflowsSorting, formatMessage)}
         />
         {areFiltersChanged && (
           <button

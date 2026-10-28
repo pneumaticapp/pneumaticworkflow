@@ -24,7 +24,7 @@ import { getSubscriptionPlan } from '../../../../redux/selectors/user';
 import { usePrevious } from '../../../../hooks/usePrevious';
 import { EConditionAction, TConditionRule } from './types';
 import { Select, Tooltip } from '../../../UI';
-import { getSortingSelectProps } from '../../../../utils/getSortingSelectProps';
+import { getEnumSelectProps } from '../../../../utils/getEnumSelectProps';
 import { ICondition, Predicate, RichLabel } from '.';
 
 import styles from './Conditions.css';
@@ -209,7 +209,7 @@ export function CheckIfConditions({
           controlClassName={styles['select']}
           isDisabled={!accessConditions}
           hideSelectedOptions
-          {...getSortingSelectProps(
+          {...getEnumSelectProps(
             CHECK_IF_VALUES,
             condition.action,
             (action: EConditionAction) => handleChangeCondition(conditionIndex)({ action }),

@@ -3,7 +3,7 @@ import { useIntl } from 'react-intl';
 
 import { TopNavContainer } from '../../components/TopNav';
 import { Select } from '../../components/UI';
-import { getSortingSelectProps } from '../../utils/getSortingSelectProps';
+import { getEnumSelectProps } from '../../utils/getEnumSelectProps';
 import { ETenantsSorting } from '../../types/tenants';
 
 export interface ITenantsLayoutProps {
@@ -21,7 +21,7 @@ export function TenantsLayout({ children, sorting, changeSorting }: ITenantsLayo
       <Select
         controlSize="sm"
         controlVariant="accent"
-        {...getSortingSelectProps(sortingTitles, sorting, changeSorting, formatMessage)}
+        {...getEnumSelectProps(sortingTitles, sorting, changeSorting, formatMessage)}
       />
     );
   };

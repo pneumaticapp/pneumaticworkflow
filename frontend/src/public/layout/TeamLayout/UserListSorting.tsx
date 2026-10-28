@@ -6,7 +6,7 @@ import { Select } from '../../components/UI';
 import { getUserListSorting } from '../../redux/selectors/accounts';
 import { userListSortingChanged } from '../../redux/accounts/slice';
 import { userListSortingValues } from '../../constants/sortings';
-import { getSortingSelectProps } from '../../utils/getSortingSelectProps';
+import { getEnumSelectProps } from '../../utils/getEnumSelectProps';
 
 export function UserListSorting() {
   const { formatMessage } = useIntl();
@@ -17,7 +17,7 @@ export function UserListSorting() {
     <Select
       controlSize="sm"
       controlVariant="accent"
-      {...getSortingSelectProps(
+      {...getEnumSelectProps(
         userListSortingValues,
         sorting,
         (value) => dispatch(userListSortingChanged(value)),

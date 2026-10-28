@@ -6,7 +6,7 @@ import { TopNavContainer } from '../../components/TopNav';
 import { EDashboardTimeRange } from '../../types/dashboard';
 import { EDashboardModes, IApplicationState } from '../../types/redux';
 import { Select, Tabs } from '../../components/UI';
-import { getSortingSelectProps } from '../../utils/getSortingSelectProps';
+import { getEnumSelectProps } from '../../utils/getEnumSelectProps';
 import { FilterIcon } from '../../components/icons';
 import { getCanAccessWorkflows } from '../../redux/selectors/user';
 import {
@@ -62,7 +62,7 @@ export const DashboardLayoutComponent: React.FC = ({ children }) => {
           controlSize="sm"
           controlVariant="accent"
           Icon={FilterIcon}
-          {...getSortingSelectProps(timeRangesTitles, currentTimeRange, handleSetTimeRange, intl.formatMessage)}
+          {...getEnumSelectProps(timeRangesTitles, currentTimeRange, handleSetTimeRange, intl.formatMessage)}
         />
       </div>
     </div>

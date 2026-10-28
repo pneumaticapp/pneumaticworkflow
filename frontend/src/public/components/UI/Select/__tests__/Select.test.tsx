@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { Select } from '../Select';
-import { getSortingSelectProps } from '../../../../utils/getSortingSelectProps';
+import { getEnumSelectProps } from '../../../../utils/getEnumSelectProps';
 
 jest.mock('react-perfect-scrollbar', () => ({
   __esModule: true,
@@ -167,7 +167,7 @@ describe('Select compact control', () => {
       <Select
         controlSize="sm"
         title="Sorting"
-        {...getSortingSelectProps(['date', 'name'], 'date', jest.fn(), (({ id }: { id: string }) => id) as never)}
+        {...getEnumSelectProps(['date', 'name'], 'date', jest.fn(), (({ id }: { id: string }) => id) as never)}
       />,
     );
 

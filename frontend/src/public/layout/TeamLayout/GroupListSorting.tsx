@@ -6,7 +6,7 @@ import { Select } from '../../components/UI';
 import { getGroupsListSorting } from '../../redux/selectors/groups';
 import { changeGroupsListSorting } from '../../redux/actions';
 import { groupListSortingValues } from '../../constants/sortings';
-import { getSortingSelectProps } from '../../utils/getSortingSelectProps';
+import { getEnumSelectProps } from '../../utils/getEnumSelectProps';
 
 export function GroupListSorting() {
   const { formatMessage } = useIntl();
@@ -17,7 +17,7 @@ export function GroupListSorting() {
     <Select
       controlSize="sm"
       controlVariant="accent"
-      {...getSortingSelectProps(
+      {...getEnumSelectProps(
         groupListSortingValues,
         sorting,
         (value) => dispatch(changeGroupsListSorting(value)),
