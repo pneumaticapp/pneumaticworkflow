@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
-import { Avatar } from '../../components/UI';
-import { Select } from '../../components/UI/Select';
+import { Avatar, Select } from '../../components/UI';
 import {
   cancelCurrentPerformersCounters,
   cancelTemplateTasksCounters,

@@ -9,8 +9,7 @@ import { EDeleteUserModalState } from '../../../../types/redux';
 import { TUserListItem } from '../../../../types/user';
 import { getDropdownUsersList, getUserFullName } from '../../../../utils/users';
 import { Loader } from '../../../UI/Loader';
-import { Select } from '../../../UI/Select';
-import { Button } from '../../../UI';
+import { Button, Select } from '../../../UI';
 
 import styles from './DeleteTeamUserPopup.css';
 import { TDeclineInvitePayload, TDeleteUserPayload } from '../../../../redux/accounts/types';
