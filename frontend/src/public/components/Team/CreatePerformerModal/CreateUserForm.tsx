@@ -50,16 +50,16 @@ export function CreateUserForm({ isVisible }: ICreateUserFormProps) {
     password: createPassword(),
   }));
 
-  const handleSubmit = (values: ICreateUserFormValues) => {
-    const { role, ...userData } = values;
-    dispatch(createUser({ ...userData, isAdmin: role === EUserRole.Admin }));
-  };
-
   const validateForm = (values: ICreateUserFormValues) =>
     getErrorsObject(values, {
       email: validateEmail,
       password: validateRegistrationPassword,
     });
+
+  const handleSubmit = (values: ICreateUserFormValues) => {
+    const { role, ...userData } = values;
+    dispatch(createUser({ ...userData, isAdmin: role === EUserRole.Admin }));
+  };
 
   const handleCopyPassword = (password: string) => {
     copyToClipboard(password);
@@ -67,7 +67,12 @@ export function CreateUserForm({ isVisible }: ICreateUserFormProps) {
   };
 
   return (
-    <Formik initialValues={initialValues} onSubmit={handleSubmit} validate={validateForm}>
+    <Formik
+      initialValues={initialValues}
+      initialErrors={validateForm(initialValues)}
+      validate={validateForm}
+      onSubmit={handleSubmit}
+    >
       {({ values, handleSubmit: formikSubmit, isValid, dirty }) => {
         if (!isVisible) return null;
 

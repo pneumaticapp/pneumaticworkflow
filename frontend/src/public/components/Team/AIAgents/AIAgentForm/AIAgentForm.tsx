@@ -35,7 +35,12 @@ export function AIAgentForm({
   );
 
   return (
-    <Formik initialValues={initialValues} validateOnMount validate={validateForm} onSubmit={onSubmit}>
+    <Formik
+      initialValues={initialValues}
+      initialErrors={validateForm(initialValues)}
+      validate={validateForm}
+      onSubmit={onSubmit}
+    >
       {isVisible && <AIAgentFormFields isSubmitting={isSubmitting} submitLabel={submitLabel} />}
     </Formik>
   );

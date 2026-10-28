@@ -484,8 +484,7 @@ describe('CreatePerformerModal', () => {
       await openAIAgentTab();
 
       const submitButton = getAgentSubmitButton();
-      // The sole provider is auto-preselected; wait for validation to settle instead of asserting a race.
-      await waitFor(() => expect(getAgentSubmitButton()).toBeDisabled());
+      expect(submitButton).toBeDisabled();
 
       await fillAgentForm();
       await userEvent.click(submitButton);
