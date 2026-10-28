@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useEffect, useRef } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
-import classnames from 'classnames';
 
 import {
   getTemplateValidationBatchId,
@@ -14,7 +13,7 @@ import type { ITemplateValidationErrorProps } from './types';
 
 import styles from './TemplateValidationError.css';
 
-export function TemplateValidationError({ apiNames, section, className }: ITemplateValidationErrorProps) {
+export function TemplateValidationError({ apiNames, section }: ITemplateValidationErrorProps) {
   const { messages, formatMessage } = useIntl();
   const dispatch = useDispatch();
   const validationErrors = useSelector(getTemplateValidationErrors);
@@ -37,7 +36,7 @@ export function TemplateValidationError({ apiNames, section, className }: ITempl
   if (!validationError) return null;
 
   return (
-    <p ref={errorRef} role="alert" className={classnames(styles['error'], className)}>
+    <p ref={errorRef} role="alert" className={styles['error']}>
       {messages[validationError.message] ? formatMessage({ id: validationError.message }) : validationError.message}
     </p>
   );
