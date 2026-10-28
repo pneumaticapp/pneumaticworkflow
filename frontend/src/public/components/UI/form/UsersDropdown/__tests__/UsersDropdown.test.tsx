@@ -4,7 +4,8 @@ import { IntlProvider } from 'react-intl';
 
 import { enMessages } from '../../../../../lang/locales/en_US';
 import { EUserStatus } from '../../../../../types/user';
-import { EOptionTypes, UsersDropdownComponent } from '../UsersDropdown';
+import { UsersDropdownComponent } from '../UsersDropdown';
+import { EOptionTypes } from '../types';
 
 jest.mock('../../..', () => ({
   Avatar: () => null,
