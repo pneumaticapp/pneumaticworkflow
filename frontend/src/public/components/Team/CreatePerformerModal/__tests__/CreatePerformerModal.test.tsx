@@ -233,8 +233,7 @@ describe('CreatePerformerModal', () => {
 
     const fillAgentForm = async () => {
       await userEvent.type(getNameInput(), 'Research assistant');
-      await userEvent.click(getDropdownControl('team.create-ai-agent-modal.model'));
-      await userEvent.click(screen.getByText('GPT-4o'));
+      await waitFor(() => expect(screen.getByText('GPT-4o')).toBeInTheDocument());
       await userEvent.type(
         screen.getByLabelText(getTranslatedText('team.create-ai-agent-modal.system-prompt')),
         'You are helpful.',
@@ -392,6 +391,7 @@ describe('CreatePerformerModal', () => {
     });
 
     it('localizes the required model error', async () => {
+      mockAIState({ models: { isLoading: false, providerId: 1, list: [] } });
       render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
 
@@ -446,7 +446,7 @@ describe('CreatePerformerModal', () => {
       expect(mockDispatch).toHaveBeenCalledWith(cancelAIAgentAvatarUpload());
     });
 
-    it('clears the picked model and reloads the list when the provider changes', async () => {
+    it('selects the first model of the picked provider once its models load', async () => {
       mockAIState({
         providers: [OPENROUTER_PROVIDER, INTERNAL_PROVIDER],
         models: { isLoading: false, providerId: null, list: [] },
@@ -463,15 +463,20 @@ describe('CreatePerformerModal', () => {
         models: { isLoading: false, providerId: 1, list: DEFAULT_MODELS },
       });
       rerender(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
-      await userEvent.click(getDropdownControl('team.create-ai-agent-modal.model'));
-      await userEvent.click(screen.getByText('GPT-4o'));
-      expect(screen.getByText('GPT-4o')).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByText('GPT-4o')).toBeInTheDocument());
 
       await userEvent.click(getDropdownControl('team.create-ai-agent-modal.provider'));
       await userEvent.click(screen.getByText('OpenAI compatible — secret-key-abc'));
 
       await waitFor(() => expect(mockDispatch).toHaveBeenCalledWith(loadAIProviderModels(2)));
       expect(screen.queryByText('GPT-4o')).not.toBeInTheDocument();
+
+      mockAIState({
+        providers: [OPENROUTER_PROVIDER, INTERNAL_PROVIDER],
+        models: { isLoading: false, providerId: 2, list: [{ name: 'Llama', slug: 'meta/llama' }] },
+      });
+      rerender(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+      await waitFor(() => expect(screen.getByText('Llama')).toBeInTheDocument());
     });
 
     it('dispatches agent creation and leaves closing to the saga', async () => {
