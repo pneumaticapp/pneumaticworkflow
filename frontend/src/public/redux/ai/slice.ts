@@ -20,7 +20,6 @@ const initialState: IAIStore = {
   },
   createProviderModal: { isOpen: false, isLoading: false },
   createAgent: { isLoading: false },
-  agentAvatarUpload: { isLoading: false },
   agents: {
     isLoading: true,
     list: [],
@@ -90,13 +89,6 @@ const aiSlice = createSlice({
       state.createAgent.isLoading = false;
     },
 
-    uploadAIAgentAvatarStarted: (state) => {
-      state.agentAvatarUpload.isLoading = true;
-    },
-    uploadAIAgentAvatarFinished: (state) => {
-      state.agentAvatarUpload.isLoading = false;
-    },
-
     loadAIAgentsStarted: (state) => {
       state.agents.isLoading = state.agents.list.length === 0;
     },
@@ -153,8 +145,6 @@ export const {
   createAIAgentStarted,
   createAIAgentSuccess,
   createAIAgentFailed,
-  uploadAIAgentAvatarStarted,
-  uploadAIAgentAvatarFinished,
   loadAIAgentsStarted,
   loadAIAgentsSuccess,
   loadAIAgentsFailed,

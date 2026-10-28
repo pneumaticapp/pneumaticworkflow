@@ -11,7 +11,6 @@ import { FormikTextareaField } from '../../../UI/Fields/TextareaField';
 import { ModalBody, ModalFooter } from '../../../UI/BaseModal';
 import { uploadAIAgentAvatar } from '../../../../redux/ai/slice';
 import {
-  getAIAgentAvatarUploadIsLoading,
   getAIProviderModelsIsLoading,
   getAIProviderModelsList,
   getAIProviderModelsProviderId,
@@ -31,7 +30,6 @@ const filterModelOption = (option: { label: string; value: string }, input: stri
 export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFieldsProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const isAvatarUploading = useSelector(getAIAgentAvatarUploadIsLoading);
   const providers = useSelector(getAIProvidersList);
   const models = useSelector(getAIProviderModelsList);
   const isModelsLoading = useSelector(getAIProviderModelsIsLoading);
@@ -131,7 +129,7 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
           type="submit"
           label={submitLabel}
           buttonStyle="yellow"
-          disabled={!dirty || !isValid || isSubmitting || isAvatarUploading}
+          disabled={!dirty || !isValid || isSubmitting}
           isLoading={isSubmitting}
         />
       </ModalFooter>

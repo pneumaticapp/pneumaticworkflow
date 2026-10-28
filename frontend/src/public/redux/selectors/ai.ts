@@ -27,5 +27,3 @@ export const getAIProviderModelsList = (state: IApplicationState) => state.ai.mo
 export const getAIProviderModelsIsLoading = (state: IApplicationState) => state.ai.models.isLoading;
 
 export const getAIProviderModelsProviderId = (state: IApplicationState) => state.ai.models.providerId;
-
-export const getAIAgentAvatarUploadIsLoading = (state: IApplicationState) => state.ai.agentAvatarUpload.isLoading;

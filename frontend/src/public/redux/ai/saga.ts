@@ -62,8 +62,6 @@ import {
   uploadAIAgentAvatar,
   cancelAIAgentAvatarUpload,
   closeCreateAIProviderModal,
-  uploadAIAgentAvatarStarted,
-  uploadAIAgentAvatarFinished,
 } from './slice';
 import type { TUpdateAIAgentPayload } from './types';
 
@@ -252,8 +250,6 @@ export function* uploadAIAgentAvatarSaga(
   if (!uploadAIAgentAvatar.match(action)) return;
 
   const { file, onSuccess } = action.payload;
-  yield put(uploadAIAgentAvatarStarted());
-
   try {
     const [uploaded]: TUploadedFile[] = yield call(uploadUserAvatar, file);
     if (uploaded?.url && !uploaded.error) {
@@ -262,8 +258,6 @@ export function* uploadAIAgentAvatarSaga(
   } catch (error) {
     NotificationManager.warning({ message: 'file-service.upload-failed' });
     logger.error('failed to upload AI agent avatar', error);
-  } finally {
-    yield put(uploadAIAgentAvatarFinished());
   }
 }
 

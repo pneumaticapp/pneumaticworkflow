@@ -125,7 +125,6 @@ describe('CreatePerformerModal', () => {
     { name: 'Claude Sonnet', slug: 'anthropic/claude-sonnet' },
   ];
   let createAgentState: { isLoading: boolean };
-  let isAvatarUploading: boolean;
 
   const mockAIState = ({
     providers = [OPENROUTER_PROVIDER],
@@ -137,7 +136,6 @@ describe('CreatePerformerModal', () => {
         ai: {
           providers: { isLoading: isLoadingProviders, list: providers },
           createAgent: createAgentState,
-          agentAvatarUpload: { isLoading: isAvatarUploading },
           agents: { isLoading: false, list: [] },
           models,
         },
@@ -167,7 +165,6 @@ describe('CreatePerformerModal', () => {
     jest.useRealTimers();
     jest.clearAllMocks();
     createAgentState = { isLoading: false };
-    isAvatarUploading = false;
     (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
     mockAIState();
   });
@@ -328,21 +325,15 @@ describe('CreatePerformerModal', () => {
       );
     });
 
-    it('blocks agent creation while the avatar uploads and submits the uploaded url', async () => {
-      const { rerender } = render(<CreatePerformerModal isOpen onClose={mockOnClose} />);
+    it('submits the uploaded avatar url', async () => {
+      render(<CreatePerformerModal isOpen onClose={mockOnClose} />);
       await openAIAgentTab();
       await fillAgentForm();
       await uploadAvatar();
 
-      isAvatarUploading = true;
-      rerender(<CreatePerformerModal isOpen onClose={mockOnClose} />);
-      expect(getAgentSubmitButton()).toBeDisabled();
-
       await act(async () => {
         getAvatarUploadAction().payload.onSuccess('https://files.example.com/avatar.png');
       });
-      isAvatarUploading = false;
-      rerender(<CreatePerformerModal isOpen onClose={mockOnClose} />);
 
       await waitFor(() => expect(getAgentSubmitButton()).toBeEnabled());
       await userEvent.click(getAgentSubmitButton());

@@ -28,7 +28,6 @@ import {
   closeCreateAIProviderModal,
   updateAIAgent,
   uploadAIAgentAvatar,
-  uploadAIAgentAvatarFinished,
 } from '../slice';
 import { uploadUserAvatar } from '../../../utils/uploadFiles';
 import { NotificationManager } from '../../../components/UI/Notifications';
@@ -195,7 +194,6 @@ describe('AI agent avatar upload saga', () => {
 
     expect(onOld).not.toHaveBeenCalled();
     expect(onNew).toHaveBeenCalledWith('https://files.example.com/new.png');
-    expect(dispatched[dispatched.length - 1]).toEqual(uploadAIAgentAvatarFinished());
   });
 
   it('drops a pending upload after cancellation', async () => {
@@ -208,7 +206,6 @@ describe('AI agent avatar upload saga', () => {
     await flush();
 
     expect(onSuccess).not.toHaveBeenCalled();
-    expect(dispatched).toContainEqual(uploadAIAgentAvatarFinished());
   });
 
   it('warns and finishes when the upload fails', async () => {
@@ -221,7 +218,6 @@ describe('AI agent avatar upload saga', () => {
 
     expect(onSuccess).not.toHaveBeenCalled();
     expect(NotificationManager.warning).toHaveBeenCalledWith({ message: 'file-service.upload-failed' });
-    expect(dispatched).toContainEqual(uploadAIAgentAvatarFinished());
   });
 
   it('ignores an upload result marked with an error', async () => {

@@ -12,9 +12,6 @@ export interface IAIStore {
   createAgent: {
     isLoading: boolean;
   };
-  agentAvatarUpload: {
-    isLoading: boolean;
-  };
   agents: {
     isLoading: boolean;
     list: IAIAgent[];
