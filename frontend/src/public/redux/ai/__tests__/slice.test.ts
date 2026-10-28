@@ -1,8 +1,5 @@
 import reducer, {
   closeCreateAIProviderModal,
-  createAIAgentFailed,
-  createAIAgentStarted,
-  createAIAgentSuccess,
   createAIProviderFailed,
   createAIProviderStarted,
   createAIProviderSuccess,
@@ -11,7 +8,6 @@ import reducer, {
   loadAIProvidersSuccess,
   openCreateAIProviderModal,
 } from '../slice';
-import { closeCreateUserModal } from '../../accounts/slice';
 import { EAIVendor } from '../../../api/ai/types';
 
 describe('AI request state', () => {
@@ -45,15 +41,6 @@ describe('AI request state', () => {
     expect(failed.providers).toEqual({ isLoading: false, list: [provider] });
   });
 
-  it('tracks agent creation with isLoading', () => {
-    const initial = reducer(undefined, { type: 'init' });
-    const pending = reducer(initial, createAIAgentStarted());
-
-    expect(pending.createAgent).toEqual({ isLoading: true });
-    expect(reducer(pending, createAIAgentSuccess()).createAgent).toEqual({ isLoading: false });
-    expect(reducer(pending, createAIAgentFailed()).createAgent).toEqual({ isLoading: false });
-  });
-
   it('closes the provider modal only when creation succeeds', () => {
     const initial = reducer(undefined, { type: 'init' });
     const pending = reducer(reducer(initial, openCreateAIProviderModal()), createAIProviderStarted());
@@ -69,10 +56,8 @@ describe('AI request state', () => {
 
   it('releases create loading when its modal closes', () => {
     const initial = reducer(undefined, { type: 'init' });
-    const pendingAgent = reducer(initial, createAIAgentStarted());
     const pendingProvider = reducer(reducer(initial, openCreateAIProviderModal()), createAIProviderStarted());
 
-    expect(reducer(pendingAgent, closeCreateUserModal()).createAgent.isLoading).toBe(false);
     expect(reducer(pendingProvider, closeCreateAIProviderModal()).createProviderModal).toEqual({
       isOpen: false,
       isLoading: false,

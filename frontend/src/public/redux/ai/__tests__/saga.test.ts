@@ -18,8 +18,6 @@ import {
 } from '../saga';
 import {
   createAIAgent,
-  createAIAgentFailed,
-  createAIAgentSuccess,
   createAIProvider,
   createAIProviderByVendor,
   createAIProviderFailed,
@@ -31,7 +29,7 @@ import {
 } from '../slice';
 import { uploadUserAvatar } from '../../../utils/uploadFiles';
 import { NotificationManager } from '../../../components/UI/Notifications';
-import { closeCreateUserModal } from '../../accounts/slice';
+import { closeCreatePerformerModal, createPerformerFailed, createPerformerStarted } from '../../team/slice';
 
 jest.mock('../../../api/ai', () => ({
   createAIAgent: jest.fn(),
@@ -86,9 +84,9 @@ describe('AI creation sagas', () => {
     const request = createAIAgent(agentData);
     await run(createAIAgentSaga, request);
 
-    expect(actions).toContainEqual(createAIAgentSuccess());
-    expect(actions).toContainEqual(closeCreateUserModal());
-    expect(actions).not.toContainEqual(createAIAgentFailed());
+    expect(actions).toContainEqual(createPerformerStarted());
+    expect(actions).toContainEqual(closeCreatePerformerModal());
+    expect(actions).not.toContainEqual(createPerformerFailed());
     expect(createAIAgentApi).toHaveBeenCalledTimes(1);
   });
 
@@ -97,9 +95,8 @@ describe('AI creation sagas', () => {
     const request = createAIAgent(agentData);
     await run(createAIAgentSaga, request);
 
-    expect(actions).toContainEqual(createAIAgentFailed());
-    expect(actions).not.toContainEqual(createAIAgentSuccess());
-    expect(actions).not.toContainEqual(closeCreateUserModal());
+    expect(actions).toContainEqual(createPerformerFailed());
+    expect(actions).not.toContainEqual(closeCreatePerformerModal());
   });
 
   it('reports a successful agent update without sending the callbacks to the API', async () => {
@@ -279,12 +276,11 @@ describe('AI creation sagas when the modal closes mid-request', () => {
       createAIAgent({ name: 'Agent', providerId: 1, model: 'm', systemPrompt: 'p', photo: null, isActive: true }),
     );
 
-    channel.put(closeCreateUserModal());
+    channel.put(closeCreatePerformerModal());
     request.resolve({});
     await task.toPromise();
 
-    expect(dispatched).not.toContainEqual(createAIAgentSuccess());
-    expect(dispatched).not.toContainEqual(closeCreateUserModal());
+    expect(dispatched).not.toContainEqual(closeCreatePerformerModal());
     expect(NotificationManager.success).toHaveBeenCalledWith({ message: 'team.ai-agents.created' });
   });
 
@@ -296,12 +292,12 @@ describe('AI creation sagas when the modal closes mid-request', () => {
       createAIAgent({ name: 'Agent', providerId: 1, model: 'm', systemPrompt: 'p', photo: null, isActive: true }),
     );
 
-    channel.put(closeCreateUserModal());
+    channel.put(closeCreatePerformerModal());
     request.reject(new Error('Invalid agent'));
     await task.toPromise();
     await flush();
 
-    expect(dispatched).not.toContainEqual(createAIAgentFailed());
+    expect(dispatched).not.toContainEqual(createPerformerFailed());
     expect(NotificationManager.warning).toHaveBeenCalledWith({ message: 'Invalid agent' });
   });
 

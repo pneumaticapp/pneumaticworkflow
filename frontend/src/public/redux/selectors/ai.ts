@@ -10,8 +10,6 @@ export const getAICreateProviderModalIsOpen = (state: IApplicationState) => stat
 
 export const getAICreateProviderModalIsLoading = (state: IApplicationState) => state.ai.createProviderModal.isLoading;
 
-export const getAICreateAgentIsLoading = (state: IApplicationState) => state.ai.createAgent.isLoading;
-
 const getAIAgentsList = (state: IApplicationState) => state.ai.agents.list;
 
 export const getAIAgentsIsLoading = (state: IApplicationState) => state.ai.agents.isLoading;

@@ -63,7 +63,6 @@ const mockState = {
   groups: {
     list: [{ id: 5, name: GROUP_NAME }],
   },
-  accounts: { isCreateUserModalOpen: false },
 };
 
 describe('FeedItemHeader', () => {

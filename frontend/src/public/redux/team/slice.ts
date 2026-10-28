@@ -10,6 +10,10 @@ const initialState: ITeamStore = {
   isInvitesPopupOpen: false,
   recentInvitedUsers: [],
   invitesUsersList: [],
+  createPerformerModal: {
+    isOpen: false,
+    isSubmitting: false,
+  },
 };
 
 const teamSlice = createSlice({
@@ -34,6 +38,18 @@ const teamSlice = createSlice({
     closeTeamInvitesPopup: (state) => {
       state.isInvitesPopupOpen = false;
     },
+    openCreatePerformerModal: (state) => {
+      state.createPerformerModal.isOpen = true;
+    },
+    closeCreatePerformerModal: (state) => {
+      state.createPerformerModal = { isOpen: false, isSubmitting: false };
+    },
+    createPerformerStarted: (state) => {
+      state.createPerformerModal.isSubmitting = true;
+    },
+    createPerformerFailed: (state) => {
+      state.createPerformerModal.isSubmitting = false;
+    },
   },
 });
 
@@ -47,6 +63,10 @@ export const {
   updateTeamActiveTab,
   openTeamInvitesPopup,
   closeTeamInvitesPopup,
+  openCreatePerformerModal,
+  closeCreatePerformerModal,
+  createPerformerStarted,
+  createPerformerFailed,
   setRecentInvitedUsers,
   loadInvitesUsersSuccess,
 } = teamSlice.actions;

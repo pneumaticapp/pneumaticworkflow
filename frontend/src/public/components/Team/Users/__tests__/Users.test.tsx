@@ -9,7 +9,6 @@ import { TeamUserSkeleton } from '../../TeamUserSkeleton';
 import { generateUser, mockLastNameUsers } from '../../../../__stubs__/users';
 import { EUserListSorting } from '../../../../types/user';
 import { loadAIAgents } from '../../../../redux/ai/slice';
-import { closeCreateUserModal } from '../../../../redux/accounts/slice';
 import type { IAIAgent } from '../../../../api/ai/types';
 import type { TUserListItem } from '../../../../types/user';
 
@@ -74,7 +73,6 @@ describe('Users', () => {
         accounts: {
           team: { list: users, isLoading: isUsersLoading },
           userListSorting: EUserListSorting.NameAsc,
-          isCreateUserModalOpen: false,
         },
         ai: {
           agents: { isLoading: false, list: agents },
@@ -103,15 +101,6 @@ describe('Users', () => {
     expect(screen.getAllByTestId(/^team-user-card-/)).toHaveLength(2);
     expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
     expect(mockDispatch).not.toHaveBeenCalledWith(loadAIAgents());
-  });
-
-  it('closes the shared create modal when leaving the page', () => {
-    const { unmount } = render(<Users userListSorting={EUserListSorting.NameAsc} />);
-    expect(mockDispatch).not.toHaveBeenCalledWith(closeCreateUserModal());
-
-    unmount();
-
-    expect(mockDispatch).toHaveBeenCalledWith(closeCreateUserModal());
   });
 
   it('applies the search query to users', () => {

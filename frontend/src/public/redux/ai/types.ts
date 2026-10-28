@@ -9,9 +9,6 @@ export interface IAIStore {
     isOpen: boolean;
     isLoading: boolean;
   };
-  createAgent: {
-    isLoading: boolean;
-  };
   agents: {
     isLoading: boolean;
     list: IAIAgent[];

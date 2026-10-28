@@ -178,7 +178,6 @@ export interface IAccounts {
     userWorkflowsCount: number;
     state: EDeleteUserModalState;
   };
-  isCreateUserModalOpen: boolean;
 }
 
 export interface IStoreTask {
@@ -353,6 +352,10 @@ export type ITeamStore = {
   isInvitesPopupOpen: boolean;
   recentInvitedUsers: TUserListItem[];
   invitesUsersList: UserInvite[];
+  createPerformerModal: {
+    isOpen: boolean;
+    isSubmitting: boolean;
+  };
 };
 
 export type IGroupsStore = {

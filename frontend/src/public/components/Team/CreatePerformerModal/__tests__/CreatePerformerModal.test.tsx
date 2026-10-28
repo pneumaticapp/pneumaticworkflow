@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { CreatePerformerModal } from '../CreatePerformerModal';
 import { createUser } from '../../../../redux/accounts/slice';
+import { closeCreatePerformerModal } from '../../../../redux/team/slice';
 import {
   cancelAIAgentAvatarUpload,
   createAIAgent,
@@ -21,6 +22,7 @@ import { ERoutes } from '../../../../constants/routes';
 
 jest.mock('../../../../utils/history', () => ({
   history: { push: jest.fn() },
+  checkSomeRouteIsActive: jest.fn(() => false),
 }));
 
 jest.mock('react-dom', () => {
@@ -74,7 +76,6 @@ jest.mock('react-perfect-scrollbar', () => {
 
 describe('CreatePerformerModal', () => {
   const mockDispatch = jest.fn();
-  const mockOnClose = jest.fn();
 
   const getTranslatedText = (id: string) => intlMock.formatMessage({ id });
 
@@ -124,7 +125,7 @@ describe('CreatePerformerModal', () => {
     { name: 'GPT-4o', slug: 'openai/gpt-4o' },
     { name: 'Claude Sonnet', slug: 'anthropic/claude-sonnet' },
   ];
-  let createAgentState: { isLoading: boolean };
+  let modalState: { isOpen: boolean; isSubmitting: boolean };
 
   const mockAIState = ({
     providers = [OPENROUTER_PROVIDER],
@@ -135,10 +136,10 @@ describe('CreatePerformerModal', () => {
       selector({
         ai: {
           providers: { isLoading: isLoadingProviders, list: providers },
-          createAgent: createAgentState,
           agents: { isLoading: false, list: [] },
           models,
         },
+        team: { createPerformerModal: modalState },
       }),
     );
   };
@@ -146,7 +147,7 @@ describe('CreatePerformerModal', () => {
   const openAIAgentTab = async () => {
     await userEvent.click(
       screen.getByRole('button', {
-        name: getTranslatedText('team.create-user-modal.tab-ai-agent'),
+        name: getTranslatedText('team.create-performer-modal.tab-ai-agent'),
       }),
     );
   };
@@ -157,14 +158,14 @@ describe('CreatePerformerModal', () => {
   };
 
   const openModal = async () => {
-    render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
-    await screen.findByRole('button', { name: getTranslatedText('team.create-user-modal.tab-user') });
+    render(<CreatePerformerModal />);
+    await screen.findByRole('button', { name: getTranslatedText('team.create-performer-modal.tab-user') });
   };
 
   beforeEach(() => {
     jest.useRealTimers();
     jest.clearAllMocks();
-    createAgentState = { isLoading: false };
+    modalState = { isOpen: true, isSubmitting: false };
     (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
     mockAIState();
   });
@@ -176,10 +177,11 @@ describe('CreatePerformerModal', () => {
 
   describe('Rendering', () => {
     it('does not render when isOpen=false', () => {
-      render(<CreatePerformerModal isOpen={false} onClose={mockOnClose} />);
+      modalState = { isOpen: false, isSubmitting: false };
+      render(<CreatePerformerModal />);
 
       expect(
-        screen.queryByRole('button', { name: getTranslatedText('team.create-user-modal.tab-user') }),
+        screen.queryByRole('button', { name: getTranslatedText('team.create-performer-modal.tab-user') }),
       ).not.toBeInTheDocument();
     });
 
@@ -187,7 +189,7 @@ describe('CreatePerformerModal', () => {
       await openModal();
 
       expect(
-        screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.tab-user') }),
+        screen.getByRole('button', { name: getTranslatedText('team.create-performer-modal.tab-user') }),
       ).toBeInTheDocument();
       expect(mockDispatch).toHaveBeenCalledWith(loadAIProviders());
     });
@@ -242,7 +244,7 @@ describe('CreatePerformerModal', () => {
     };
 
     it('renders the agent fields once a provider exists', async () => {
-      render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+      render(<CreatePerformerModal />);
       await openAIAgentTab();
 
       expect(getNameInput()).toBeInTheDocument();
@@ -253,7 +255,7 @@ describe('CreatePerformerModal', () => {
 
     it('shows the register-a-provider hint instead of the form when there are no providers', async () => {
       mockAIState({ providers: [] });
-      render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+      render(<CreatePerformerModal />);
       await openAIAgentTab();
 
       expect(screen.getByTestId('ai-agent-no-providers-hint')).toBeInTheDocument();
@@ -262,20 +264,20 @@ describe('CreatePerformerModal', () => {
 
     it('closes the modal and opens Integrations from the no-providers hint', async () => {
       mockAIState({ providers: [] });
-      render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+      render(<CreatePerformerModal />);
       await openAIAgentTab();
 
       await userEvent.click(
         screen.getByRole('button', { name: getTranslatedText('team.create-ai-agent-modal.go-to-integrations') }),
       );
 
-      expect(mockOnClose).toHaveBeenCalledTimes(1);
+      expect(mockDispatch).toHaveBeenCalledWith(closeCreatePerformerModal());
       expect(history.push).toHaveBeenCalledWith(ERoutes.Integrations);
     });
 
     it('shows a loader instead of the no-providers hint while providers are loading', async () => {
       mockAIState({ providers: [], isLoadingProviders: true });
-      const { baseElement } = render(<CreatePerformerModal isOpen onClose={mockOnClose} />);
+      const { baseElement } = render(<CreatePerformerModal />);
       await openAIAgentTab();
 
       expect(baseElement.querySelector('.spinner')).toBeInTheDocument();
@@ -285,7 +287,7 @@ describe('CreatePerformerModal', () => {
 
     it('preselects the provider and loads its models when the account has exactly one', async () => {
       mockAIState({ models: { isLoading: false, providerId: null, list: [] } });
-      render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+      render(<CreatePerformerModal />);
       await openAIAgentTab();
 
       await waitFor(() => {
@@ -304,7 +306,7 @@ describe('CreatePerformerModal', () => {
       );
 
     it('dispatches the avatar upload and clears the input so the same file can be selected again', async () => {
-      render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+      render(<CreatePerformerModal />);
       await openAIAgentTab();
 
       const avatarInput = screen.getByLabelText(
@@ -325,7 +327,7 @@ describe('CreatePerformerModal', () => {
     });
 
     it('submits the uploaded avatar url', async () => {
-      render(<CreatePerformerModal isOpen onClose={mockOnClose} />);
+      render(<CreatePerformerModal />);
       await openAIAgentTab();
       await fillAgentForm();
       await uploadAvatar();
@@ -348,7 +350,7 @@ describe('CreatePerformerModal', () => {
 
     it('uploads a generated avatar on Generate', async () => {
       mockGenerateAgentAvatar.mockReturnValue(new File(['<svg />'], 'ai-agent-avatar.svg', { type: 'image/svg+xml' }));
-      render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+      render(<CreatePerformerModal />);
       await openAIAgentTab();
       await userEvent.type(getNameInput(), 'Ada Agent');
 
@@ -369,7 +371,7 @@ describe('CreatePerformerModal', () => {
     });
 
     it('preserves both forms while switching tabs', async () => {
-      render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+      render(<CreatePerformerModal />);
 
       const userFirstName = screen.getByLabelText(getTranslatedText('team.create-user-modal.first-name'));
       const generatedPassword = screen
@@ -380,7 +382,7 @@ describe('CreatePerformerModal', () => {
       await openAIAgentTab();
       await userEvent.type(getNameInput(), 'Agent draft');
 
-      await userEvent.click(screen.getByText(getTranslatedText('team.create-user-modal.tab-user')));
+      await userEvent.click(screen.getByText(getTranslatedText('team.create-performer-modal.tab-user')));
       expect(screen.getByLabelText(getTranslatedText('team.create-user-modal.first-name'))).toHaveValue('User draft');
       expect(screen.getByLabelText(getTranslatedText('team.create-user-modal.password'))).toHaveValue(
         generatedPassword,
@@ -392,7 +394,7 @@ describe('CreatePerformerModal', () => {
 
     it('localizes the required model error', async () => {
       mockAIState({ models: { isLoading: false, providerId: 1, list: [] } });
-      render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+      render(<CreatePerformerModal />);
       await openAIAgentTab();
 
       const modelDropdown = screen
@@ -408,23 +410,26 @@ describe('CreatePerformerModal', () => {
     });
 
     it('keeps the AI agent form visible during the close animation', async () => {
-      const { rerender } = render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+      const { rerender } = render(<CreatePerformerModal />);
       await openAIAgentTab();
 
-      rerender(<CreatePerformerModal isOpen={false} onClose={mockOnClose} />);
+      modalState = { isOpen: false, isSubmitting: false };
+      rerender(<CreatePerformerModal />);
 
       expect(getNameInput()).toBeInTheDocument();
     });
 
     it('clears the draft and cancels a pending avatar upload on a quick reopen', async () => {
-      const { rerender } = render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+      const { rerender } = render(<CreatePerformerModal />);
       await openAIAgentTab();
       await userEvent.type(getNameInput(), 'Draft agent');
       await uploadAvatar('old.png');
       mockDispatch.mockClear();
 
-      rerender(<CreatePerformerModal isOpen={false} onClose={mockOnClose} />);
-      rerender(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+      modalState = { isOpen: false, isSubmitting: false };
+      rerender(<CreatePerformerModal />);
+      modalState = { isOpen: true, isSubmitting: false };
+      rerender(<CreatePerformerModal />);
       await waitFor(() =>
         expect(screen.getByLabelText(getTranslatedText('team.create-user-modal.email'))).toBeInTheDocument(),
       );
@@ -436,7 +441,7 @@ describe('CreatePerformerModal', () => {
     });
 
     it('cancels a pending avatar upload when the agent form unmounts', async () => {
-      const { unmount } = render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+      const { unmount } = render(<CreatePerformerModal />);
       await openAIAgentTab();
       await uploadAvatar();
       mockDispatch.mockClear();
@@ -451,7 +456,7 @@ describe('CreatePerformerModal', () => {
         providers: [OPENROUTER_PROVIDER, INTERNAL_PROVIDER],
         models: { isLoading: false, providerId: null, list: [] },
       });
-      const { rerender } = render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+      const { rerender } = render(<CreatePerformerModal />);
       await openAIAgentTab();
 
       await userEvent.click(getDropdownControl('team.create-ai-agent-modal.provider'));
@@ -462,7 +467,7 @@ describe('CreatePerformerModal', () => {
         providers: [OPENROUTER_PROVIDER, INTERNAL_PROVIDER],
         models: { isLoading: false, providerId: 1, list: DEFAULT_MODELS },
       });
-      rerender(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+      rerender(<CreatePerformerModal />);
       await waitFor(() => expect(screen.getByText('GPT-4o')).toBeInTheDocument());
 
       await userEvent.click(getDropdownControl('team.create-ai-agent-modal.provider'));
@@ -475,12 +480,12 @@ describe('CreatePerformerModal', () => {
         providers: [OPENROUTER_PROVIDER, INTERNAL_PROVIDER],
         models: { isLoading: false, providerId: 2, list: [{ name: 'Llama', slug: 'meta/llama' }] },
       });
-      rerender(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+      rerender(<CreatePerformerModal />);
       await waitFor(() => expect(screen.getByText('Llama')).toBeInTheDocument());
     });
 
     it('dispatches agent creation and leaves closing to the saga', async () => {
-      const { rerender } = render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
+      const { rerender } = render(<CreatePerformerModal />);
       await openAIAgentTab();
 
       const submitButton = getAgentSubmitButton();
@@ -505,15 +510,15 @@ describe('CreatePerformerModal', () => {
           isActive: true,
         },
       });
-      expect(mockOnClose).not.toHaveBeenCalled();
+      expect(mockDispatch).not.toHaveBeenCalledWith(closeCreatePerformerModal());
 
-      createAgentState = { isLoading: true };
-      rerender(<CreatePerformerModal isOpen onClose={mockOnClose} />);
+      modalState = { isOpen: true, isSubmitting: true };
+      rerender(<CreatePerformerModal />);
       expect(getAgentSubmitButton()).toBeDisabled();
     });
 
     it('keeps the agent draft after an API failure and permits retry', async () => {
-      const { rerender } = render(<CreatePerformerModal isOpen onClose={mockOnClose} />);
+      const { rerender } = render(<CreatePerformerModal />);
       await openAIAgentTab();
       await fillAgentForm();
       await userEvent.click(getAgentSubmitButton());
@@ -521,12 +526,12 @@ describe('CreatePerformerModal', () => {
       await waitFor(() =>
         expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: createAIAgent.type })),
       );
-      createAgentState = { isLoading: true };
-      rerender(<CreatePerformerModal isOpen onClose={mockOnClose} />);
-      createAgentState = { isLoading: false };
-      rerender(<CreatePerformerModal isOpen onClose={mockOnClose} />);
+      modalState = { isOpen: true, isSubmitting: true };
+      rerender(<CreatePerformerModal />);
+      modalState = { isOpen: true, isSubmitting: false };
+      rerender(<CreatePerformerModal />);
 
-      expect(mockOnClose).not.toHaveBeenCalled();
+      expect(mockDispatch).not.toHaveBeenCalledWith(closeCreatePerformerModal());
       expect(getNameInput()).toHaveValue('Research assistant');
       expect(getAgentSubmitButton()).toBeEnabled();
     });
@@ -711,10 +716,19 @@ describe('CreatePerformerModal', () => {
     });
   });
 
+  describe('Submitting', () => {
+    it('disables the user submit while a performer is being created', async () => {
+      modalState = { isOpen: true, isSubmitting: true };
+      await openModal();
+
+      expect(getSubmitButton()).toBeDisabled();
+    });
+  });
+
   describe('Form reinitialization', () => {
     it('form resets and password is regenerated on reopen', async () => {
-      const { unmount } = render(<CreatePerformerModal isOpen={true} onClose={mockOnClose} />);
-      await screen.findByRole('button', { name: getTranslatedText('team.create-user-modal.tab-user') });
+      const { unmount } = render(<CreatePerformerModal />);
+      await screen.findByRole('button', { name: getTranslatedText('team.create-performer-modal.tab-user') });
 
       const { firstNameInput, lastNameInput, emailInput } = getFormFields();
       fillInput(firstNameInput, 'John');
@@ -754,14 +768,23 @@ describe('CreatePerformerModal', () => {
   });
 
   describe('Modal closing', () => {
-    it('calls onClose on close', async () => {
+    it('closes the modal when the page unmounts', () => {
+      const { unmount } = render(<CreatePerformerModal />);
+      expect(mockDispatch).not.toHaveBeenCalledWith(closeCreatePerformerModal());
+
+      unmount();
+
+      expect(mockDispatch).toHaveBeenCalledWith(closeCreatePerformerModal());
+    });
+
+    it('closes the modal through the store', async () => {
       await openModal();
       const closeButtons = screen.getAllByRole('button', { name: 'Close modal' });
       const headerCloseButton = closeButtons.find((button) => button.classList.contains('close-button'));
       expect(headerCloseButton).toBeInTheDocument();
       await userEvent.click(headerCloseButton!);
 
-      expect(mockOnClose).toHaveBeenCalled();
+      expect(mockDispatch).toHaveBeenCalledWith(closeCreatePerformerModal());
     });
   });
 });

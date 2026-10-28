@@ -1,7 +1,6 @@
 import { createAction, createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
-import { closeCreateUserModal } from '../accounts/slice';
 import type { IAIStore, IUploadAIAgentAvatarPayload, TUpdateAIAgentPayload } from './types';
 import type {
   IAIAgent,
@@ -19,7 +18,6 @@ const initialState: IAIStore = {
     list: [],
   },
   createProviderModal: { isOpen: false, isLoading: false },
-  createAgent: { isLoading: false },
   agents: {
     isLoading: true,
     list: [],
@@ -79,16 +77,6 @@ const aiSlice = createSlice({
       state.createProviderModal.isLoading = false;
     },
 
-    createAIAgentStarted: (state) => {
-      state.createAgent.isLoading = true;
-    },
-    createAIAgentSuccess: (state) => {
-      state.createAgent.isLoading = false;
-    },
-    createAIAgentFailed: (state) => {
-      state.createAgent.isLoading = false;
-    },
-
     loadAIAgentsStarted: (state) => {
       state.agents.isLoading = state.agents.list.length === 0;
     },
@@ -126,11 +114,6 @@ const aiSlice = createSlice({
       state.models.providerId = null;
     },
   },
-  extraReducers: (builder) => {
-    builder.addCase(closeCreateUserModal, (state) => {
-      state.createAgent.isLoading = false;
-    });
-  },
 });
 
 export const {
@@ -142,9 +125,6 @@ export const {
   createAIProviderStarted,
   createAIProviderSuccess,
   createAIProviderFailed,
-  createAIAgentStarted,
-  createAIAgentSuccess,
-  createAIAgentFailed,
   loadAIAgentsStarted,
   loadAIAgentsSuccess,
   loadAIAgentsFailed,
