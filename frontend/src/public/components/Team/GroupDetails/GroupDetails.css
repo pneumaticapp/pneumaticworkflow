@@ -1,4 +1,3 @@
-/* stylelint-disable declaration-no-important */
 .container {
   max-width: 108.8rem;
   margin: 0 auto;
@@ -31,7 +30,7 @@
 
   &__item {
     padding: 1.6rem 0;
-    border-bottom: 1px solid var(--pneumatic-color-black16);
+    border-bottom: 0.1rem solid var(--pneumatic-color-black16);
   }
 
   &__filter {
@@ -39,7 +38,7 @@
     align-items: center;
     justify-content: space-between;
     padding-bottom: 3.2rem;
-    border-bottom: 1px solid var(--pneumatic-color-black16);
+    border-bottom: 0.1rem solid var(--pneumatic-color-black16);
   }
 }
 
@@ -56,9 +55,12 @@
   }
 
   &-field__input {
-    height: 2rem !important;
-    padding-left: 2.8rem !important;
     border: none;
+  }
+
+  .search-field .search-field__input {
+    height: 2rem;
+    padding-left: 2.8rem;
   }
 }
 
@@ -82,12 +84,4 @@
 
 .placeholder {
   margin-top: 3.2rem;
-}
-
-:global .react-select_controlllll {
-  @media (--mobile) {
-    span {
-      display: none !important;
-    }
-  }
 }

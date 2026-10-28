@@ -30,7 +30,6 @@ export function ControlSM(props: any) {
       type="button"
       disabled={isDisabled}
       className={classnames(
-        'react-select_controlllll',
         styles['select-sm__control'],
         variant === 'accent' && styles['select-sm__control_accent'],
         isOpen && styles['is-open'],
