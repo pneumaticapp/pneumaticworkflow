@@ -52,7 +52,7 @@ describe('getHighlightsDateRange', () => {
     expect(toISO(range!.endDate)).toBe('2024-11-26T18:59:59.000Z');
   });
 
-  it('closes every range on a whole second so the timestamp cannot round up to the next day', () => {
+  it('closes every range on a whole second, like the date picker', () => {
     setNow(MIDDAY_IN_ZONE);
 
     const filters = [
@@ -66,7 +66,6 @@ describe('getHighlightsDateRange', () => {
       const { endDate } = getHighlightsDateRange(filter, TIMEZONE)!;
 
       expect(endDate.getMilliseconds()).toBe(0);
-      expect(Math.floor(endDate.getTime() / 1000)).toBe(endDate.getTime() / 1000);
     });
   });
 

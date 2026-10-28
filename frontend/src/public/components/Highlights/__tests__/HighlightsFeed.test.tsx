@@ -145,7 +145,7 @@ describe('HighlightsFeed date filters', () => {
     });
   });
 
-  it('closes a preset range on a whole second so it cannot round up into the next day', () => {
+  it('closes a preset range on a whole second, like the date picker', () => {
     const { setFilters } = renderFeed();
     (setFilters as jest.Mock).mockClear();
 
