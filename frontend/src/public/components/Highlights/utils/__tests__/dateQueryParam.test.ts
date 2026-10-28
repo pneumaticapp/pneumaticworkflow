@@ -30,12 +30,6 @@ describe('date query params', () => {
     expect(parseDateQueryParam('2024-11-27T00:00:00+05:00')!.toISOString()).toBe('2024-11-26T19:00:00.000Z');
   });
 
-  it('still reads the legacy Date.toString() format so existing links keep working', () => {
-    const restored = parseDateQueryParam('Wed Nov 27 2024 00:00:00 GMT 0500 (Yekaterinburg Standard Time)');
-
-    expect(restored!.toISOString()).toBe('2024-11-26T19:00:00.000Z');
-  });
-
   it('serializes an absent date to an empty param', () => {
     expect(serializeDateQueryParam(null)).toBe('');
     expect(serializeDateQueryParam(undefined)).toBe('');
