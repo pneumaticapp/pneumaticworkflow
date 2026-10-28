@@ -86,6 +86,7 @@ export function CreateAIProviderModal() {
           { id: 'custom', label: formatMessage({ id: 'ai-providers.tab-custom' }) },
         ]}
         containerClassName={styles['create-modal__tabs']}
+        tabClassName={styles['create-modal__tab']}
         activeTabClassName={styles['create-modal__tab_active']}
         onChange={handleChangeTab}
       />

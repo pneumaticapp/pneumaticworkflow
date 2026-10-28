@@ -49,11 +49,26 @@
   }
 
   &__tabs {
+    width: 100%;
+    height: 3.2rem;
     margin-bottom: 1.6rem;
+    background-color: var(--pneumatic-color-beige);
+    border-radius: 1.6rem;
   }
 
-  &__tabs &__tab_active {
-    background: var(--pneumatic-color-orange);
+  &__tab {
+    height: 100%;
+    min-height: 0;
+    padding: 0;
+    color: var(--pneumatic-color-black100);
+    border-radius: 1.6rem;
+
+    @mixin text-small bold;
+  }
+
+  &__tab_active {
+    color: var(--pneumatic-color-white);
+    background-color: var(--pneumatic-color-link-hover);
   }
 
   &__fields {
