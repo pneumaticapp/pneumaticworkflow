@@ -1307,6 +1307,7 @@ export const ruMessages = {
   'ai-providers.base-url-placeholder': 'https://openrouter.ai/api/v1',
   'ai-providers.api-key-label': 'API-ключ',
   'ai-providers.api-key-placeholder': 'sk-…',
+  'ai-providers.name-exists': 'Провайдер с таким именем уже существует',
   'ai-providers.delete-modal-title': 'Удалить AI-провайдера',
   'ai-providers.delete-confirm': 'Удалить провайдера {name}? Действие необратимо.',
   'ai-providers.created': 'Провайдер добавлен. Теперь можно создавать AI-агентов на странице «Команда».',

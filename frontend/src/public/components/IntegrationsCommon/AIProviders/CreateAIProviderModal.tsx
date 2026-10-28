@@ -13,17 +13,18 @@ import {
 import {
   getAICreateProviderModalIsLoading,
   getAICreateProviderModalIsOpen,
+  getAIProvidersList,
   getAIVendorsList,
 } from '../../../redux/selectors/ai';
-import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
-import { validateRequired } from '../../../utils/validators';
 import { Button } from '../../UI/Buttons/Button';
 import { FormikInputField } from '../../UI/Fields/InputField';
 import { Header } from '../../UI/Typeography/Header';
 import { Modal } from '../../UI/Modal/Modal';
 import { Tabs } from '../../UI/Tabs';
 import { FormikDropdownList } from '../../UI/DropdownList';
-import type { ICreateAIProviderFormValues, TCreateTab } from './types';
+import { ECreateAIProviderTab } from './types';
+import type { ICreateAIProviderFormValues } from './types';
+import { validateCreateAIProviderForm } from './utils/validateCreateAIProviderForm';
 
 import styles from './AIProviders.css';
 
@@ -40,8 +41,9 @@ export function CreateAIProviderModal() {
   const isOpen = useSelector(getAICreateProviderModalIsOpen);
   const isCreating = useSelector(getAICreateProviderModalIsLoading);
   const vendors = useSelector(getAIVendorsList);
+  const providers = useSelector(getAIProvidersList);
 
-  const [activeTab, setActiveTab] = useState<TCreateTab>('vendor');
+  const [activeTab, setActiveTab] = useState(ECreateAIProviderTab.Vendor);
 
   useEffect(() => {
     if (isOpen) {
@@ -53,12 +55,12 @@ export function CreateAIProviderModal() {
     dispatch(closeCreateAIProviderModal());
   };
 
-  const handleChangeTab = (tabId: string) => {
-    if (!isCreating) setActiveTab(tabId as TCreateTab);
+  const handleChangeTab = (tab: ECreateAIProviderTab) => {
+    if (!isCreating) setActiveTab(tab);
   };
 
   const handleSubmit = ({ vendor, name, baseUrl, apiKey }: ICreateAIProviderFormValues) => {
-    if (activeTab === 'vendor') {
+    if (activeTab === ECreateAIProviderTab.Vendor) {
       dispatch(createAIProviderByVendor({ vendor, apiKey: apiKey.trim() }));
     } else {
       dispatch(createAIProvider({ name: name.trim(), baseUrl: baseUrl.trim(), apiKey: apiKey.trim() }));
@@ -66,15 +68,10 @@ export function CreateAIProviderModal() {
   };
 
   const vendorOptions = vendors.map(({ slug, name: vendorName }) => ({ value: slug, label: vendorName }));
-  const isVendorTab = activeTab === 'vendor';
+  const isVendorTab = activeTab === ECreateAIProviderTab.Vendor;
 
   const validateForm = (values: ICreateAIProviderFormValues) =>
-    getErrorsObject(
-      values,
-      isVendorTab
-        ? { vendor: validateRequired, apiKey: validateRequired }
-        : { name: validateRequired, baseUrl: validateRequired, apiKey: validateRequired },
-    );
+    validateCreateAIProviderForm(values, activeTab, providers, vendors);
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} width="sm">
@@ -84,8 +81,8 @@ export function CreateAIProviderModal() {
       <Tabs
         activeValueId={activeTab}
         values={[
-          { id: 'vendor', label: formatMessage({ id: 'ai-providers.tab-vendor' }) },
-          { id: 'custom', label: formatMessage({ id: 'ai-providers.tab-custom' }) },
+          { id: ECreateAIProviderTab.Vendor, label: formatMessage({ id: 'ai-providers.tab-vendor' }) },
+          { id: ECreateAIProviderTab.Custom, label: formatMessage({ id: 'ai-providers.tab-custom' }) },
         ]}
         variant="pill"
         containerClassName={styles['create-modal__tabs']}
@@ -94,7 +91,7 @@ export function CreateAIProviderModal() {
       <Formik
         key={activeTab}
         initialValues={INITIAL_VALUES}
-        validateOnMount
+        initialErrors={validateForm(INITIAL_VALUES)}
         validate={validateForm}
         onSubmit={handleSubmit}
       >

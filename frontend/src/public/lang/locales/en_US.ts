@@ -1413,6 +1413,7 @@ export const enMessages = {
   'ai-providers.base-url-placeholder': 'https://openrouter.ai/api/v1',
   'ai-providers.api-key-label': 'API key',
   'ai-providers.api-key-placeholder': 'sk-…',
+  'ai-providers.name-exists': 'A provider with this name already exists',
   'ai-providers.delete-modal-title': 'Delete AI provider',
   'ai-providers.delete-confirm': 'Delete provider {name}? This cannot be undone.',
   'ai-providers.created': 'Provider added. You can now create AI agents on the Team page.',
