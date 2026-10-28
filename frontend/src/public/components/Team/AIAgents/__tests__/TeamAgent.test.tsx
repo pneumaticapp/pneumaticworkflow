@@ -75,10 +75,10 @@ describe('TeamAgent', () => {
     render(<TeamAgent agent={buildAgent({ isActive: false })} providerName="OpenRouter" />);
 
     expect(screen.getByRole('article')).toHaveAttribute('data-testid', 'ai-agent-10');
-    expect(screen.getByRole('heading', { level: 3, name: 'Research assistant' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent('Research assistant');
     expect(screen.getByText(/OpenRouter/)).toBeInTheDocument();
     expect(screen.getByText(/openai\/gpt-4o/)).toBeInTheDocument();
-    expect(screen.getByTestId('ai-agent-inactive-10')).toBeInTheDocument();
+    expect(screen.getByText(t('team.ai-agents.inactive'))).toBeInTheDocument();
   });
 
   it('falls back to the unknown provider label', () => {
@@ -90,7 +90,7 @@ describe('TeamAgent', () => {
   it('toggles isActive from the card', () => {
     render(<TeamAgent agent={buildAgent({ isActive: true })} providerName="OpenRouter" />);
 
-    userEvent.click(screen.getByTestId('ai-agent-toggle-10'));
+    userEvent.click(screen.getByTestId('ai-agent-10-toggle'));
 
     expect(mockDispatch).toHaveBeenCalledWith(updateAIAgent({ id: 10, isActive: false }));
   });
@@ -98,7 +98,7 @@ describe('TeamAgent', () => {
   it('opens the edit modal from the card dropdown', () => {
     render(<TeamAgent agent={buildAgent()} providerName="OpenRouter" />);
 
-    userEvent.click(screen.getByTestId('ai-agent-more-10'));
+    userEvent.click(screen.getByTestId('ai-agent-10-more'));
     userEvent.click(screen.getByText(t('team.ai-agents.edit')));
 
     expect(screen.getByTestId('edit-ai-agent-modal')).toHaveAttribute('data-agent-id', '10');
@@ -107,7 +107,7 @@ describe('TeamAgent', () => {
   it('deletes the agent through the confirmation modal', async () => {
     render(<TeamAgent agent={buildAgent()} providerName="OpenRouter" />);
 
-    userEvent.click(screen.getByTestId('ai-agent-more-10'));
+    userEvent.click(screen.getByTestId('ai-agent-10-more'));
     userEvent.click(screen.getByText(t('team.ai-agents.delete')));
     const popup = screen
       .getByRole('heading', { level: 2, name: t('team.ai-agents.delete-modal-title') })
@@ -122,7 +122,7 @@ describe('TeamAgent', () => {
   it('closes the delete modal on cancel without dispatching', async () => {
     render(<TeamAgent agent={buildAgent()} providerName="OpenRouter" />);
 
-    userEvent.click(screen.getByTestId('ai-agent-more-10'));
+    userEvent.click(screen.getByTestId('ai-agent-10-more'));
     userEvent.click(screen.getByText(t('team.ai-agents.delete')));
     userEvent.click(screen.getByRole('button', { name: t('integrations.cancel') }));
 

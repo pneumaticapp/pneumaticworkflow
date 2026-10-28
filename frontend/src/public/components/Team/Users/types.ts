@@ -11,29 +11,11 @@ export interface ITeamUserCardProps {
   onOpenVacationModal(user: TUserListItem): void;
 }
 
-export interface ITeamUserProps {
-  user: TUserListItem;
-  isCurrentUser?: boolean;
-  isSubscribed?: boolean;
-  resendInvite(): void;
-  handleToggleAdmin(user: TUserListItem): () => Promise<void>;
-  handleChangeUserManager(
-    userId: number,
-    managerId: number | null,
-    callbacks?: { onSuccess?: () => void; onError?: () => void },
-  ): void;
-  handleChangeUserReports(
-    userId: number,
-    reportIds: number[],
-    callbacks?: { onSuccess?: () => void; onError?: () => void },
-  ): void;
-  openModal(): void;
-  openVacationModal(): void;
-}
+type TUserRelationCallbacks = { onSuccess?: () => void; onError?: () => void };
 
-export interface ITeamUserDetailsProps {
-  user: TUserListItem;
-}
+export type TChangeUserManager = (userId: number, managerId: number | null, callbacks?: TUserRelationCallbacks) => void;
+
+export type TChangeUserReports = (userId: number, reportIds: number[], callbacks?: TUserRelationCallbacks) => void;
 
 export interface ITeamUserRelationsModalsProps {
   user: TUserListItem;
@@ -41,6 +23,6 @@ export interface ITeamUserRelationsModalsProps {
   isReportsModalOpen: boolean;
   onCloseManagerModal(): void;
   onCloseReportsModal(): void;
-  handleChangeUserManager: ITeamUserProps['handleChangeUserManager'];
-  handleChangeUserReports: ITeamUserProps['handleChangeUserReports'];
+  handleChangeUserManager: TChangeUserManager;
+  handleChangeUserReports: TChangeUserReports;
 }

@@ -1,20 +1,15 @@
 import * as React from 'react';
 import { useState } from 'react';
-import classnames from 'classnames';
-import Switch from 'rc-switch';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
-import { Dropdown, Header } from '../../UI';
 import type { TDropdownOption } from '../../UI';
 import { WarningPopup } from '../../UI/WarningPopup';
-import { MoreIcon } from '../../icons';
+import { PerformerCard } from '../PerformerCard';
 import { deleteAIAgent, updateAIAgent } from '../../../redux/ai/slice';
 import { EditAIAgentModal } from './EditAIAgentModal';
 import { AgentAvatar } from './AgentAvatar';
 import type { ITeamAgentProps } from './types';
-
-import styles from './TeamAgent.css';
 
 export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
   const { formatMessage } = useIntl();
@@ -61,43 +56,20 @@ export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
   ];
 
   return (
-    <article className={styles['agent-card']} data-testid={`ai-agent-${agent.id}`}>
-      <AgentAvatar name={agent.name} photo={agent.photo} size="md" />
-      <div className={styles['agent-card__info']}>
-        <Header tag="h3" size="6" className={styles['agent-card__name']}>
-          {agent.name}
-        </Header>
-        <p className={styles['agent-card__meta']}>
-          {providerName ?? formatMessage({ id: 'team.ai-agents.unknown-provider' })}
-          {' · '}
-          {agent.model}
-        </p>
-        {!agent.isActive && (
-          <span className={styles['agent-card__inactive']} data-testid={`ai-agent-inactive-${agent.id}`}>
-            {formatMessage({ id: 'team.ai-agents.inactive' })}
-          </span>
-        )}
-      </div>
-      <div className={styles['agent-card__actions']}>
-        <div className={styles['agent-card__toggle']}>
-          <span>{formatMessage({ id: 'team.ai-agents.active-toggle' })}</span>
-          <Switch
-            checked={agent.isActive}
-            onChange={handleToggleActive}
-            checkedChildren={null}
-            unCheckedChildren={null}
-            className="custom-switch custom-switch-primary custom-switch-small"
-            data-testid={`ai-agent-toggle-${agent.id}`}
-          />
-        </div>
-        <Dropdown
-          toggleProps={{ 'data-testid': `ai-agent-more-${agent.id}` }}
-          renderToggle={(isOpen) => (
-            <MoreIcon className={classnames(styles['agent-card__more'], isOpen && styles['agent-card__more_active'])} />
-          )}
-          options={dropdownOptions}
-        />
-      </div>
+    <>
+      <PerformerCard
+        avatar={<AgentAvatar name={agent.name} photo={agent.photo} size="md" />}
+        name={agent.name}
+        nameBadge={agent.isActive ? undefined : formatMessage({ id: 'team.ai-agents.inactive' })}
+        description={`${providerName ?? formatMessage({ id: 'team.ai-agents.unknown-provider' })} · ${agent.model}`}
+        toggle={{
+          label: formatMessage({ id: 'team.ai-agents.active-toggle' }),
+          isChecked: agent.isActive,
+          onChange: handleToggleActive,
+        }}
+        options={dropdownOptions}
+        data-testid={`ai-agent-${agent.id}`}
+      />
 
       {isEditModalOpen && <EditAIAgentModal agent={agent} onClose={handleCloseEditModal} />}
 
@@ -111,6 +83,6 @@ export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
         onReject={handleCloseDeleteModal}
         closeModal={handleCloseDeleteModal}
       />
-    </article>
+    </>
   );
 }

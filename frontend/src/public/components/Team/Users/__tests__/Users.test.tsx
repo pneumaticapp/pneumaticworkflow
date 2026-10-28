@@ -33,8 +33,8 @@ jest.mock('../../../PageTitle', () => ({
   PageTitle: () => null,
 }));
 
-jest.mock('../TeamUser', () => ({
-  TeamUser: ({ user }: { user: TUserListItem }) => {
+jest.mock('../TeamUserCard', () => ({
+  TeamUserCard: ({ user }: { user: TUserListItem }) => {
     const [expanded, setExpanded] = React.useState(false);
     return (
       <button type="button" data-testid={`team-user-card-${user.id}`} onClick={() => setExpanded(true)}>
