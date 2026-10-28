@@ -54,9 +54,8 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
     uploadAvatar(file);
   };
 
-  const handleAvatarGenerate = async () => {
-    const file = await generateAgentAvatar();
-    if (file) uploadAvatar(file);
+  const handleAvatarGenerate = () => {
+    uploadAvatar(generateAgentAvatar());
   };
 
   const isModelSelectDisabled = !values.providerId || isModelsLoading;

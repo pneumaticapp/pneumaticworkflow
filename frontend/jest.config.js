@@ -23,6 +23,8 @@ module.exports = {
   modulePaths: ['jest'],
   modulePathIgnorePatterns: ['promise-polyfill/*'],
   moduleNameMapper: {
+    '^@dicebear/core$': 'dicebear-core-stub.js',
+    '^@dicebear/styles/.+\\.json$': 'empty-stub.js',
     '^uuid$': '<rootDir>/node_modules/exceljs/node_modules/uuid/dist/index.js',
     '.scss$': 'empty-stub.js',
     'react-perfect-scrollbar/dist/css/styles.css': 'empty-stub.js',
