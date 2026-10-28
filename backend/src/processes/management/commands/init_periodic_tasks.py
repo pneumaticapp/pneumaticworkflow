@@ -36,6 +36,8 @@ class Command(BaseCommand):
             self._ensure_process_vacations,
             self._ensure_delegate_vacation_tasks,
             self._ensure_events_consumer,
+            self._ensure_dispatch_ai_agent_tasks,
+            self._ensure_dispatch_ai_agent_new_notifications,
         )
 
         for task_func in tasks:
@@ -200,5 +202,27 @@ class Command(BaseCommand):
         self._create_or_skip_task(
             name="Deliver events to log backend",
             task_path="src.logs.events.tasks.consume_events",
+            schedule_obj=schedule,
+        )
+
+    def _ensure_dispatch_ai_agent_tasks(self):
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=30,
+            period=IntervalSchedule.SECONDS,
+        )
+        self._create_or_skip_task(
+            name="Dispatch AI agent tasks",
+            task_path="src.ai.tasks.dispatch_ai_agent_new_tasks",
+            schedule_obj=schedule,
+        )
+
+    def _ensure_dispatch_ai_agent_new_notifications(self):
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=10,
+            period=IntervalSchedule.SECONDS,
+        )
+        self._create_or_skip_task(
+            name="Dispatch AI agent mentions",
+            task_path="src.ai.tasks.dispatch_ai_agent_new_notifications",
             schedule_obj=schedule,
         )

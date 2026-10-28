@@ -12,8 +12,11 @@ module.exports = {
   coverageDirectory: 'artifacts',
   setupFilesAfterEnv: ['<rootDir>/jest/jest.setup.js'],
   snapshotSerializers: ['enzyme-to-json/serializer'],
+  // Type checking is already covered by `npm run eslint` and fork-ts-checker in the
+  // webpack build, so ts-jest only transpiles here. A full TS program per worker
+  // costs ~500 MB of baseline heap and is the main source of OOM on large runs.
   transform: {
-    '^.+\\.tsx?$': 'ts-jest',
+    '^.+\\.tsx?$': ['ts-jest', { isolatedModules: true }],
     '.+\\.(css|styl|less|sass|scss)$': 'jest-css-modules-transform',
     '\\.(svg|png|jpg|woff2|woff|eot|ttf)$': '<rootDir>/jest/file-preprocessor.js',
   },
@@ -39,4 +42,10 @@ module.exports = {
   },
   testEnvironmentOptions: { url: 'http://localhost' },
   testEnvironment: 'jest-environment-jsdom',
+  // Every worker is a separate Node process with its own jsdom, so an unbounded
+  // worker pool exhausts RAM on developer machines. The idle limit recycles a
+  // worker once its heap grows past the threshold instead of leaking until OOM.
+  maxWorkers: '50%',
+  workerIdleMemoryLimit: '512MB',
+  clearMocks: true,
 };

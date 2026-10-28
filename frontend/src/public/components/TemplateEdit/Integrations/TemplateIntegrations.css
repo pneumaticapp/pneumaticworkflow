@@ -3,8 +3,13 @@
   position: relative;
   width: 100%;
   padding: 32px;
+  scroll-margin-top: 10.4rem;
   background: white;
   border-radius: 24px;
+
+  @media (--mobile) {
+    scroll-margin-top: 0;
+  }
 }
 
 .header {

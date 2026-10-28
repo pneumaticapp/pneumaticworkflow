@@ -1,4 +1,4 @@
-import { hostNameRegex } from '../constants/defaultValues';
+import { ALLOWED_PROTOCOLS, hostNameRegex } from '../constants/defaultValues';
 
 export function mergePaths(left: string, right: string) {
   const leftSlash = left[left.length - 1] === '/';
@@ -25,4 +25,13 @@ export function getHostName(url: string, isDirect?: boolean) {
   }
 
   return undefined;
+}
+
+export function isValidUri(value: string) {
+  try {
+    const { protocol } = new URL(value);
+    return ALLOWED_PROTOCOLS.has(protocol);
+  } catch {
+    return false;
+  }
 }
