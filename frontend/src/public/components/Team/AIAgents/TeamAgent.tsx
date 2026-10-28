@@ -39,8 +39,8 @@ export function TeamAgent({ agent, providerName }: ITeamAgentProps) {
     setIsDeleteModalOpen(false);
   };
 
-  const handleToggleActive = (checked: boolean) => {
-    dispatch(updateAIAgent({ id: agent.id, isActive: checked }));
+  const handleToggleActive = (isChecked: boolean) => {
+    dispatch(updateAIAgent({ id: agent.id, isActive: isChecked }));
   };
 
   const handleConfirmDelete = () => {
