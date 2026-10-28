@@ -24,7 +24,7 @@ export function TemplateValidationError({ apiNames, section }: ITemplateValidati
   const validationError = validationErrors.find(
     ({ target }) => apiNames.includes(target.elementApiName) && (section === undefined || target.section === section),
   );
-  const isFocused = validationError?.target.elementApiName === focusApiName;
+  const isFocused = Boolean(validationError) && validationError?.target.elementApiName === focusApiName;
 
   useEffect(() => {
     if (!isFocused) return;
