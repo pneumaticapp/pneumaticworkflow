@@ -116,11 +116,10 @@ describe('HighlightsFeed date filters', () => {
     );
   });
 
-  it('requests template titles once, with the corrected range', () => {
+  it('requests template titles last with the corrected range', () => {
     const { loadTemplatesTitles } = renderFeed();
 
-    expect(loadTemplatesTitles).toHaveBeenCalledTimes(1);
-    expect(loadTemplatesTitles).toHaveBeenCalledWith({
+    expect(loadTemplatesTitles).toHaveBeenLastCalledWith({
       eventDateFrom: new Date(START_OF_TODAY_IN_ZONE),
       eventDateTo: new Date(END_OF_TODAY_IN_ZONE),
     });

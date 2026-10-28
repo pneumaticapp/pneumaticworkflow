@@ -7,7 +7,7 @@ import { ERoutes } from '../../constants/routes';
 import { EHighlightsDateFilter, EHighlightsFilterType, IHighlightsItem } from '../../types/highlights';
 import { TITLES } from '../../constants/titles';
 import { history } from '../../utils/history';
-import { getHighlightsDateRange, IHighlightsDateRange } from '../../utils/highlightsDateRange';
+import { getHighlightsDateRange } from '../../utils/highlightsDateRange';
 import { UsersFilter } from './UsersFilter';
 import { ILoadHighlightsConfig } from '../../redux/highlights/actions';
 import { IHighlightsFilters } from '../../types/redux';
@@ -73,13 +73,12 @@ export function HighlightsFeed({
   loadTemplatesTitles,
   setFiltersChanged,
 }: IHighlightsFeedProps) {
-  const { useCallback, useEffect, useMemo, useRef, useState } = React;
+  const { useCallback, useEffect, useMemo, useState } = React;
   const { formatMessage } = useIntl();
   const { timezone, dateFdw } = useDatePickerSettings();
 
   const [isFirstFetch, setIsFirstFetch] = useState(true);
   const [isDateFilterReady, setIsDateFilterReady] = useState(true);
-  const pendingInitialRangeRef = useRef<IHighlightsDateRange | null>(null);
 
   useEffect(() => {
     document.title = TITLES.WorkflowHighlights;
@@ -88,7 +87,6 @@ export function HighlightsFeed({
     const currentRange = getHighlightsDateRange(timeRange, timezone, dateFdw);
 
     if (currentRange) {
-      pendingInitialRangeRef.current = currentRange;
       setFilters(currentRange);
     }
 
@@ -101,17 +99,6 @@ export function HighlightsFeed({
   }, []);
 
   useEffect(() => {
-    // Wait for the mount range before fetching titles, or a stale `takeEvery` request can win.
-    const pendingRange = pendingInitialRangeRef.current;
-
-    if (pendingRange) {
-      if (pendingRange.startDate !== startDate || pendingRange.endDate !== endDate) {
-        return;
-      }
-
-      pendingInitialRangeRef.current = null;
-    }
-
     loadTemplatesTitles({ eventDateFrom: startDate, eventDateTo: endDate });
   }, [endDate, startDate]);
 

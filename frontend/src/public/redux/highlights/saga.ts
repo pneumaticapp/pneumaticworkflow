@@ -1,4 +1,4 @@
-import { all, fork, put, select, takeEvery, takeLatest } from 'redux-saga/effects';
+import { all, fork, put, select, takeLatest } from 'redux-saga/effects';
 
 import { getHighlightsStore, getHighlightsFilters } from '../selectors/highlights';
 import { getHighlights, IGetHighlightsResponse, IGetHighlightsFilters } from '../../api/getHighlights';
@@ -82,7 +82,7 @@ export function* fetchHighlights({ payload: { limit, offset, onScroll } }: TLoad
 }
 
 export function* watchFetchTemplatesTitles() {
-  yield takeEvery(EHighlightsActions.LoadHighlightsTemplatesTitles, fetchTemplatesTitles);
+  yield takeLatest(EHighlightsActions.LoadHighlightsTemplatesTitles, fetchTemplatesTitles);
 }
 
 export function* watchFetchHighlights() {
