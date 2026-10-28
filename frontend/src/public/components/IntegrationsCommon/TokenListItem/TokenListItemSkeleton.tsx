@@ -1,11 +1,11 @@
 import * as React from 'react';
 
 import { Skeleton } from '../../UI/Skeleton';
-import type { ITokenListSkeletonProps } from './types';
+import type { ITokenListItemSkeletonProps } from './types';
 
-import styles from './TokenList.css';
+import styles from './TokenListItem.css';
 
-export function TokenListSkeleton({ 'data-testid': testId }: ITokenListSkeletonProps) {
+export function TokenListItemSkeleton({ 'data-testid': testId }: ITokenListItemSkeletonProps) {
   return (
     <div className={styles['token-list']} data-testid={testId}>
       {[0, 1, 2].map((row) => (

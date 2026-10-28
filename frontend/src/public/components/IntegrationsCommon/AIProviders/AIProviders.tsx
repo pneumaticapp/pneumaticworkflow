@@ -5,14 +5,14 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { Button } from '../../UI/Buttons/Button';
 import { WarningPopup } from '../../UI/WarningPopup';
-import { TokenListSkeleton } from '../TokenList';
+import { TokenListItemSkeleton } from '../TokenListItem';
 import { deleteAIProvider, loadAIProviders, openCreateAIProviderModal } from '../../../redux/ai/slice';
 import { getAIProvidersIsLoading, getAIProvidersList } from '../../../redux/selectors/ai';
 
 import { CreateAIProviderModal } from './CreateAIProviderModal';
 import { AIProviderListItem } from './AIProviderListItem';
 import sectionStyles from '../IntegrationsCommon.css';
-import tokenListStyles from '../TokenList/TokenList.css';
+import tokenListStyles from '../TokenListItem/TokenListItem.css';
 
 export function AIProviders() {
   const { formatMessage } = useIntl();
@@ -62,7 +62,7 @@ export function AIProviders() {
         />
       </header>
 
-      {isLoading && <TokenListSkeleton data-testid="ai-providers-skeleton" />}
+      {isLoading && <TokenListItemSkeleton data-testid="ai-providers-skeleton" />}
 
       {!isLoading && providers.length === 0 && (
         <p className={sectionStyles['section__empty']} data-testid="empty-ai-providers-message">

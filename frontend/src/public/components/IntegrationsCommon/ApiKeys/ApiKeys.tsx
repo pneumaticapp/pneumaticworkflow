@@ -9,12 +9,12 @@ import { NotificationManager } from '../../UI/Notifications';
 import { loadApiKeys, createApiKey, deleteApiKey, clearNewlyCreatedKey } from '../../../redux/actions';
 import { getApiKeys, getApiKeysIsLoading, getApiKeysNewlyCreatedKey } from '../../../redux/selectors/integrations';
 
-import { TokenListSkeleton } from '../TokenList';
+import { TokenListItemSkeleton } from '../TokenListItem';
 import { ApiKeyListItem } from './ApiKeyListItem';
 import { CreateApiKeyModal, NewApiKeyModal, RevokeApiKeyModal } from './ApiKeyModals';
 
 import sectionStyles from '../IntegrationsCommon.css';
-import tokenListStyles from '../TokenList/TokenList.css';
+import tokenListStyles from '../TokenListItem/TokenListItem.css';
 
 export function ApiKeys() {
   const { formatMessage } = useIntl();
@@ -94,7 +94,7 @@ export function ApiKeys() {
           />
         </header>
 
-        {isLoading && <TokenListSkeleton data-testid="api-keys-skeleton" />}
+        {isLoading && <TokenListItemSkeleton data-testid="api-keys-skeleton" />}
 
         {!isLoading && apiKeys.length === 0 && (
           <p className={sectionStyles['section__empty']} data-testid="empty-keys-message">

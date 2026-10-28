@@ -1,9 +1,3 @@
-.providers {
-  &__delete-btn:disabled {
-    pointer-events: none;
-  }
-}
-
 .create-modal {
   &__title {
     margin-bottom: 0.8rem;

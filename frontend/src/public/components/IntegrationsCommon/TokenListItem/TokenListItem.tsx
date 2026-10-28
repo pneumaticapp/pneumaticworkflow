@@ -1,8 +1,10 @@
 import * as React from 'react';
 
+import { Button } from '../../UI/Buttons/Button';
+import { Tooltip } from '../../UI/Tooltip';
 import type { ITokenListItemProps } from './types';
 
-import styles from './TokenList.css';
+import styles from './TokenListItem.css';
 
 const TOKEN_MASK = '••••••••';
 
@@ -11,7 +13,7 @@ export function TokenListItem({
   tokenPrefix,
   details,
   meta,
-  action,
+  action: { label, onClick, isDisabled, tooltip, 'data-testid': actionTestId },
   'data-testid': testId,
 }: ITokenListItemProps) {
   return (
@@ -25,7 +27,22 @@ export function TokenListItem({
         </code>
         {meta && <p className={styles['token-list__meta']}>{meta}</p>}
       </div>
-      <div className={styles['token-list__actions']}>{action}</div>
+      <div className={styles['token-list__actions']}>
+        <Tooltip disabled={!tooltip} content={tooltip}>
+          <div>
+            <Button
+              type="button"
+              className={styles['token-list__action']}
+              onClick={onClick}
+              size="sm"
+              buttonStyle="transparent-black"
+              disabled={isDisabled}
+              label={label}
+              data-testid={actionTestId}
+            />
+          </div>
+        </Tooltip>
+      </div>
     </li>
   );
 }
