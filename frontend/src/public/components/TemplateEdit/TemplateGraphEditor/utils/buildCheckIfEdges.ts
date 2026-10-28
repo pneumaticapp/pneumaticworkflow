@@ -1,8 +1,5 @@
 import { IExtraField, ITemplateClient, ITemplateTaskClient } from '../../../../types/template';
-import {
-  EConditionLogicOperations,
-  TConditionRule,
-} from '../../TaskForm/Conditions';
+import { EConditionLogicOperations, TConditionRule } from '../../TaskForm/Conditions';
 import { EStartingType } from '../../TaskForm/Conditions/utils/getDropdownOperators';
 import { IGraphConditionClause, TGraphEdge } from '../types';
 import { getGraphEdgeVisual } from './edgeStyles';
@@ -168,8 +165,8 @@ export function buildCheckIfEdges(
       });
     });
 
-    return [...grouped.entries()].map(([sourceId, clauses], index) => (
-      buildCheckIfEdge(sourceId, task.apiName, index, clauses)
-    ));
+    return [...grouped.entries()].map(([sourceId, clauses], index) =>
+      buildCheckIfEdge(sourceId, task.apiName, index, clauses),
+    );
   });
 }

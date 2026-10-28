@@ -262,11 +262,15 @@ export function KickoffRedux({
       <div
         className={styles['header']}
         onClick={embedded ? undefined : toggleExpanded}
-        onKeyDown={embedded ? undefined : (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            toggleExpanded();
-          }
-        }}
+        onKeyDown={
+          embedded
+            ? undefined
+            : (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  toggleExpanded();
+                }
+              }
+        }
         tabIndex={embedded ? undefined : 0}
         role={embedded ? undefined : 'button'}
         aria-label={embedded ? undefined : 'Toggle expand'}

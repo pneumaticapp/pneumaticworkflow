@@ -25,11 +25,7 @@ function createCheckIfEdge(source: string, target: string, suffix: string): TGra
   };
 }
 
-function attachIncomingJoins(
-  nodes: TGraphNode[],
-  checkIfEdges: TGraphEdge[],
-  cardIds: Set<string>,
-): IGraphState {
+function attachIncomingJoins(nodes: TGraphNode[], checkIfEdges: TGraphEdge[], cardIds: Set<string>): IGraphState {
   const leftover: TGraphEdge[] = [];
   const byTarget = new Map<string, TGraphEdge[]>();
 
@@ -57,20 +53,13 @@ function attachIncomingJoins(
 
     const joinId = joinIdForCheckIf(cardId);
     nextNodes = [...nextNodes, createJunctionNode(joinId, 'join')];
-    nextCheckIf.push(
-      ...list.map((edge) => ({ ...edge, target: joinId })),
-      createCheckIfEdge(joinId, cardId, 'in'),
-    );
+    nextCheckIf.push(...list.map((edge) => ({ ...edge, target: joinId })), createCheckIfEdge(joinId, cardId, 'in'));
   });
 
   return { nodes: nextNodes, edges: nextCheckIf };
 }
 
-function attachOutgoingForks(
-  nodes: TGraphNode[],
-  edges: TGraphEdge[],
-  cardIds: Set<string>,
-): IGraphState {
+function attachOutgoingForks(nodes: TGraphNode[], edges: TGraphEdge[], cardIds: Set<string>): IGraphState {
   const bySource = new Map<string, TGraphEdge[]>();
 
   edges.forEach((edge) => {

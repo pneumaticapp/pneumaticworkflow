@@ -19,9 +19,12 @@ export const GraphViewToggle = () => {
   const dispatch = useDispatch();
   const viewMode = useSelector(selectTemplateViewMode);
 
-  const handleChange = useCallback((id: IToggleTab['id']) => {
-    dispatch(setViewMode(id));
-  }, [dispatch]);
+  const handleChange = useCallback(
+    (id: IToggleTab['id']) => {
+      dispatch(setViewMode(id));
+    },
+    [dispatch],
+  );
 
   const values = useMemo(
     (): IToggleTab[] =>

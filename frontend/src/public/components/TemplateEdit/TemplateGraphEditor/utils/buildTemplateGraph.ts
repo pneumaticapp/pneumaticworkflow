@@ -10,10 +10,7 @@ import { templateToGraph } from './templateToGraph';
  * 2. Layout: rank the DAG, then overlay saved card positions.
  * 3. Route: align junctions, pick handles and orthogonal / detour paths.
  */
-export function buildTemplateGraph(
-  template: ITemplateClient,
-  storedPositions: TGraphNodePositions = {},
-): IGraphState {
+export function buildTemplateGraph(template: ITemplateClient, storedPositions: TGraphNodePositions = {}): IGraphState {
   const { nodes: topologyNodes, edges: topologyEdges } = templateToGraph(template);
   const autoLayoutNodes = applyDagreLayout(topologyNodes, topologyEdges);
   const positionedNodes = applyStoredPositions(autoLayoutNodes, topologyEdges, storedPositions);

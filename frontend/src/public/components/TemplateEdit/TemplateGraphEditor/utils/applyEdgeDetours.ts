@@ -13,11 +13,7 @@ import {
 
 const CARD_HIT_INSET = 2;
 
-function wouldAlignedEdgeCrossCard(
-  source: TGraphNode,
-  target: TGraphNode,
-  nodes: TGraphNode[],
-): boolean {
+function wouldAlignedEdgeCrossCard(source: TGraphNode, target: TGraphNode, nodes: TGraphNode[]): boolean {
   const sourceBox = getGraphNodeBox(source);
   const targetBox = getGraphNodeBox(target);
   const top = sourceBox.bottom;
@@ -43,10 +39,10 @@ function wouldAlignedEdgeCrossCard(
     }
 
     return (
-      box.y < bottom - CARD_HIT_INSET
-      && box.bottom > top + CARD_HIT_INSET
-      && lineX > box.x + CARD_HIT_INSET
-      && lineX < box.right - CARD_HIT_INSET
+      box.y < bottom - CARD_HIT_INSET &&
+      box.bottom > top + CARD_HIT_INSET &&
+      lineX > box.x + CARD_HIT_INSET &&
+      lineX < box.right - CARD_HIT_INSET
     );
   });
 }
@@ -112,8 +108,8 @@ export function markDetourEdges(nodes: TGraphNode[], edges: TGraphEdge[]): TGrap
     }
 
     const deltaX = getGraphNodeBox(target).centerX - getGraphNodeBox(source).centerX;
-    const needsDetour = Math.abs(deltaX) <= GRAPH_EDGE_SIDEWAYS_THRESHOLD
-      && wouldAlignedEdgeCrossCard(source, target, nodes);
+    const needsDetour =
+      Math.abs(deltaX) <= GRAPH_EDGE_SIDEWAYS_THRESHOLD && wouldAlignedEdgeCrossCard(source, target, nodes);
 
     if (!needsDetour) {
       return { ...edge, data: restData };

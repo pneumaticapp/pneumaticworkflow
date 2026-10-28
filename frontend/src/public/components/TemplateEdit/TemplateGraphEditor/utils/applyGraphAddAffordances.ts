@@ -61,9 +61,7 @@ export function resolveStemCard(
     return node.id;
   }
 
-  const adjacent = walk === 'up'
-    ? index.incoming.get(nodeId) ?? []
-    : index.outgoing.get(nodeId) ?? [];
+  const adjacent = walk === 'up' ? (index.incoming.get(nodeId) ?? []) : (index.outgoing.get(nodeId) ?? []);
   const nextIds = neighborIds(adjacent, walk);
 
   if (nextIds.length !== 1) {

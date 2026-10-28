@@ -32,11 +32,7 @@ describe('JunctionNode', () => {
   it('should render a join node', () => {
     render(
       <ReactFlowProvider>
-        <JunctionNode
-          {...nodeProps}
-          id="junction-join-task-d"
-          data={{ kind: 'join' }}
-        />
+        <JunctionNode {...nodeProps} id="junction-join-task-d" data={{ kind: 'join' }} />
       </ReactFlowProvider>,
     );
 
@@ -60,11 +56,7 @@ describe('JunctionNode', () => {
   it('should paint a check-if junction orange', () => {
     const { container } = render(
       <ReactFlowProvider>
-        <JunctionNode
-          {...nodeProps}
-          id="junction-fork-checkif-kickoff"
-          data={{ kind: 'fork' }}
-        />
+        <JunctionNode {...nodeProps} id="junction-fork-checkif-kickoff" data={{ kind: 'fork' }} />
       </ReactFlowProvider>,
     );
 

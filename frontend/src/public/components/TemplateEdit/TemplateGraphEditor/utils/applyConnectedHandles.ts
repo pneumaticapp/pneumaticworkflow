@@ -36,27 +36,27 @@ const TARGET_HANDLE_FLAGS: Record<string, keyof IConnectedHandles> = {
 };
 
 export function collectConnectedHandles(nodeId: string, edges: TGraphEdge[]): IConnectedHandles {
-  return edges.reduce<IConnectedHandles>((handles, edge) => {
-    if (edge.source === nodeId) {
-      const flag = SOURCE_HANDLE_FLAGS[edge.sourceHandle ?? 'source-bottom'] ?? 'hasSourceBottom';
+  return edges.reduce<IConnectedHandles>(
+    (handles, edge) => {
+      if (edge.source === nodeId) {
+        const flag = SOURCE_HANDLE_FLAGS[edge.sourceHandle ?? 'source-bottom'] ?? 'hasSourceBottom';
 
-      return { ...handles, [flag]: true };
-    }
+        return { ...handles, [flag]: true };
+      }
 
-    if (edge.target === nodeId) {
-      const flag = TARGET_HANDLE_FLAGS[edge.targetHandle ?? 'target-top'] ?? 'hasTargetTop';
+      if (edge.target === nodeId) {
+        const flag = TARGET_HANDLE_FLAGS[edge.targetHandle ?? 'target-top'] ?? 'hasTargetTop';
 
-      return { ...handles, [flag]: true };
-    }
+        return { ...handles, [flag]: true };
+      }
 
-    return handles;
-  }, { ...EMPTY_CONNECTED_HANDLES });
+      return handles;
+    },
+    { ...EMPTY_CONNECTED_HANDLES },
+  );
 }
 
-function withConnectedHandles<TNode extends TTaskNode | TKickoffNode>(
-  node: TNode,
-  edges: TGraphEdge[],
-): TNode {
+function withConnectedHandles<TNode extends TTaskNode | TKickoffNode>(node: TNode, edges: TGraphEdge[]): TNode {
   return {
     ...node,
     data: {

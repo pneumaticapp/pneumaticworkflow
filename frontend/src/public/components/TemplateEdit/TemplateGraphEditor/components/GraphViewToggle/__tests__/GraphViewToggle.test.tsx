@@ -39,10 +39,7 @@ jest.mock('../../../../../UI', () => ({
 
 const mockDispatch = jest.fn();
 
-const renderToggle = (
-  viewMode: EGraphViewMode = EGraphViewMode.List,
-  selectedTaskApiName: string | null = null,
-) => {
+const renderToggle = (viewMode: EGraphViewMode = EGraphViewMode.List, selectedTaskApiName: string | null = null) => {
   (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
   (useSelector as jest.Mock).mockImplementation((selector: (state: unknown) => unknown) =>
     selector({
