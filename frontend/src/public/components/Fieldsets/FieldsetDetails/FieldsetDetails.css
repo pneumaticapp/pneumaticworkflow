@@ -70,11 +70,10 @@
   @mixin text-base;
 }
 
-/* stylelint-disable declaration-no-important */
 .settings-description {
   box-sizing: border-box;
   display: block;
-  width: 100% !important;
+  width: 100%;
   max-width: 100%;
   min-height: 8rem;
   padding: 1.2rem 1.6rem;
@@ -97,14 +96,13 @@
     overflow-wrap: anywhere;
     white-space: pre-wrap;
     cursor: default;
-    resize: none !important;
+    resize: none;
     background-color: var(--pneumatic-color-black4);
     border: 0.1rem solid transparent;
     opacity: 1;
     field-sizing: content;
   }
 }
-/* stylelint-enable declaration-no-important */
 
 .settings-select {
   width: fit-content;
@@ -123,18 +121,17 @@
   opacity: 0.55;
 }
 
-/* stylelint-disable declaration-no-important */
 .settings-title {
   box-sizing: border-box;
   display: block;
-  width: 100% !important;
+  width: 100%;
   max-width: 100%;
   padding: 0.8rem 1.2rem;
   overflow: hidden;
   text-overflow: ellipsis;
   font-family: inherit;
   white-space: nowrap;
-  resize: none !important;
+  resize: none;
   outline: none;
   border: 1px solid var(--pneumatic-color-black16);
   border-radius: 0.8rem;
@@ -153,7 +150,7 @@
     overflow-wrap: anywhere;
     white-space: pre-wrap;
     cursor: default;
-    resize: none !important;
+    resize: none;
     background-color: var(--pneumatic-color-black4);
     border: 0.1rem solid transparent;
     opacity: 1;
@@ -161,14 +158,13 @@
   }
 
   &::-webkit-resizer {
-    display: none !important;
+    display: none;
   }
 }
 
 .settings-description::-webkit-resizer {
-  display: none !important;
+  display: none;
 }
-/* stylelint-enable declaration-no-important */
 
 .settings-title_error {
   border-color: var(--pneumatic-color-warning);
