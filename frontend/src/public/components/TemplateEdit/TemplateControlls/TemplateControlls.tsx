@@ -127,12 +127,13 @@ export function TemplateControlls({
       setInfoWarnings(infoWarnings);
       return;
     }
-    const validationErrors = collectTemplateValidationErrors(template, formatMessage);
-    commonWarnings.forEach((message) => NotificationManager.warning({ message }));
+    const { errors: validationErrors, unlinkedMessageIds } = collectTemplateValidationErrors(template);
+    const warnings = [...commonWarnings, ...unlinkedMessageIds.map((id) => formatMessage({ id }))];
+    warnings.forEach((message) => NotificationManager.warning({ message }));
     if (isArrayWithItems(validationErrors)) {
       dispatch(setTemplateValidationErrors(validationErrors));
     }
-    if (isArrayWithItems(commonWarnings) || isArrayWithItems(validationErrors)) {
+    if (isArrayWithItems(warnings) || isArrayWithItems(validationErrors)) {
       return;
     }
 

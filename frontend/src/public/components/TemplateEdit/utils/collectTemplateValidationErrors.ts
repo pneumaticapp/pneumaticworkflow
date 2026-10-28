@@ -1,24 +1,22 @@
-import type { IntlShape } from 'react-intl';
-
 import type { IFieldsetBindingClient } from '../../../types/fieldset';
 import type { IExtraField, ITemplateClient } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { validateFieldsetTitle } from '../../../utils/validators';
 import { createTemplateValidationError } from '../../../utils/templates/getValidationErrorTarget';
-import type { ITemplateValidationError } from '../../../redux/templateValidation/types';
 import { getConditionRuleErrorId } from '../TaskForm/Conditions/utils/conditionsValidators';
-import { ETaskFormParts } from '../types';
+import { ETaskFormParts, ITemplateValidationCollection } from '../types';
 import { getExtraFieldErrorId } from './getExtraFieldErrorId';
 
-export function collectTemplateValidationErrors(
-  template: ITemplateClient,
-  formatMessage: IntlShape['formatMessage'],
-): ITemplateValidationError[] {
-  const errors: ITemplateValidationError[] = [];
+export function collectTemplateValidationErrors(template: ITemplateClient): ITemplateValidationCollection {
+  const collection: ITemplateValidationCollection = { errors: [], unlinkedMessageIds: [] };
 
   const addError = (apiName: string, messageId: string, taskSection: ETaskFormParts | null = null) => {
-    const error = createTemplateValidationError(template, apiName, formatMessage({ id: messageId }), taskSection);
-    if (error) errors.push(error);
+    const error = createTemplateValidationError(template, apiName, messageId, taskSection);
+    if (error) {
+      collection.errors.push(error);
+    } else {
+      collection.unlinkedMessageIds.push(messageId);
+    }
   };
 
   const checkOutputs = (fields: IExtraField[], fieldsets: IFieldsetBindingClient[] = []) => {
@@ -49,5 +47,5 @@ export function collectTemplateValidationErrors(
       );
     });
 
-  return errors;
+  return collection;
 }

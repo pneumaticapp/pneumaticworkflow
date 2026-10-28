@@ -2,6 +2,7 @@ import React from 'react';
 import { EExtraFieldType } from '../../types/template';
 import { TDropdownOptionBase } from '../UI/DropdownList';
 import { EStartingType } from './TaskForm/Conditions/utils/getDropdownOperators';
+import type { ITemplateValidationError } from '../../redux/templateValidation/types';
 
 export const enum ECustomResponsibleUsers {
   ProcessStarter = 'process-starter',
@@ -33,3 +34,8 @@ export enum ETaskFormParts {
 }
 
 export type TTaskFormPart = ETaskFormParts | null;
+
+export interface ITemplateValidationCollection {
+  errors: ITemplateValidationError[];
+  unlinkedMessageIds: string[];
+}

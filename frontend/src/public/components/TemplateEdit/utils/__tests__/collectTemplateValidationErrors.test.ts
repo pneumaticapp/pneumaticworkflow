@@ -1,6 +1,6 @@
 import { collectTemplateValidationErrors } from '../collectTemplateValidationErrors';
 import { initialTemplate } from '../../../../redux/template/reducer';
-import { intlMock } from '../../../../__stubs__/intlMock';
+import * as validationTarget from '../../../../utils/templates/getValidationErrorTarget';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
 import { makeFieldsetBindingClient } from '../../../../__stubs__/fieldsets.factory';
 import { makeKickoffClient, makeTemplateTaskClient } from '../../../../__stubs__/templates.factory';
@@ -15,13 +15,11 @@ const makeTemplate = (overrides: Partial<ITemplateClient>): ITemplateClient => (
   ...overrides,
 });
 
-const formatMessage = intlMock.formatMessage;
-
 describe('collectTemplateValidationErrors', () => {
   it('returns no errors for a valid template', () => {
     const template = makeTemplate({ tasks: [makeTemplateTaskClient({ rawPerformers: [performer] })] });
 
-    expect(collectTemplateValidationErrors(template, formatMessage)).toEqual([]);
+    expect(collectTemplateValidationErrors(template)).toEqual({ errors: [], unlinkedMessageIds: [] });
   });
 
   it('locates invalid kickoff fields and fieldsets', () => {
@@ -34,7 +32,7 @@ describe('collectTemplateValidationErrors', () => {
     });
 
     expect(
-      collectTemplateValidationErrors(template, formatMessage).map(({ apiName, message, target }) => ({
+      collectTemplateValidationErrors(template).errors.map(({ apiName, message, target }) => ({
         apiName,
         message,
         target,
@@ -42,12 +40,12 @@ describe('collectTemplateValidationErrors', () => {
     ).toEqual([
       {
         apiName: 'field-empty-name',
-        message: formatMessage({ id: 'validation.kickoff-form-field-name-empty' }),
+        message: 'validation.kickoff-form-field-name-empty',
         target: { taskUuid: null, section: null, elementApiName: 'field-empty-name' },
       },
       {
         apiName: 'fieldset-1',
-        message: formatMessage({ id: 'validation.fieldset-title-empty' }),
+        message: 'validation.fieldset-title-empty',
         target: { taskUuid: null, section: null, elementApiName: 'fieldset-1' },
       },
     ]);
@@ -81,9 +79,21 @@ describe('collectTemplateValidationErrors', () => {
     });
     const template = makeTemplate({ tasks: [second, first] });
 
-    expect(collectTemplateValidationErrors(template, formatMessage).map(({ target }) => target)).toEqual([
+    expect(collectTemplateValidationErrors(template).errors.map(({ target }) => target)).toEqual([
       { taskUuid: 'uuid-1', section: ETaskFormParts.AssignPerformers, elementApiName: 'task-1' },
       { taskUuid: 'uuid-2', section: ETaskFormParts.CheckIf, elementApiName: 'predicate-1' },
     ]);
+  });
+
+  it('keeps an error it cannot locate as an unlinked message id', () => {
+    const spy = jest.spyOn(validationTarget, 'createTemplateValidationError').mockReturnValue(null);
+    const template = makeTemplate({ tasks: [makeTemplateTaskClient({ rawPerformers: [] })] });
+
+    expect(collectTemplateValidationErrors(template)).toEqual({
+      errors: [],
+      unlinkedMessageIds: ['validation.task-performers-empty'],
+    });
+
+    spy.mockRestore();
   });
 });

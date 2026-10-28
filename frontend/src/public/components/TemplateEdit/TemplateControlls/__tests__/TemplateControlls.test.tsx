@@ -13,6 +13,7 @@ import { makeFieldsetBindingClient, makeFieldsetRuntime } from '../../../../__st
 import { collectTemplateValidationErrors } from '../../utils/collectTemplateValidationErrors';
 import { setTemplateValidationErrors } from '../../../../redux/templateValidation/slice';
 import type { ITemplateValidationError } from '../../../../redux/templateValidation/types';
+import { NotificationManager } from '../../../UI/Notifications';
 
 jest.mock('../../../../utils/history', () => ({
   history: { push: jest.fn() },
@@ -105,7 +106,7 @@ jest.mock('../../utils/validateTemplate', () => ({
 }));
 
 jest.mock('../../utils/collectTemplateValidationErrors', () => ({
-  collectTemplateValidationErrors: jest.fn(() => []),
+  collectTemplateValidationErrors: jest.fn(() => ({ errors: [], unlinkedMessageIds: [] })),
 }));
 
 jest.mock('../../../../utils/routes/getLinkToWorkflows', () => ({
@@ -180,7 +181,10 @@ describe('TemplateControlls — fieldset logic', () => {
       target: { taskUuid: 'task-uuid', section: null, elementApiName: 'predicate-1' },
       entitySnapshot: '{}',
     };
-    (collectTemplateValidationErrors as jest.Mock).mockReturnValue([validationError]);
+    (collectTemplateValidationErrors as jest.Mock).mockReturnValue({
+      errors: [validationError],
+      unlinkedMessageIds: [],
+    });
     const patchTemplate = jest.fn();
     const template = getTemplate('5');
     template.isActive = false;
@@ -189,6 +193,24 @@ describe('TemplateControlls — fieldset logic', () => {
     userEvent.click(screen.getByRole('button', { name: new RegExp(formatMsg('template.enable-template')) }));
 
     expect(dispatch).toHaveBeenCalledWith(setTemplateValidationErrors([validationError]));
+    expect(patchTemplate).not.toHaveBeenCalled();
+  });
+
+  it('warns about an error it cannot locate and keeps the template disabled', () => {
+    (collectTemplateValidationErrors as jest.Mock).mockReturnValue({
+      errors: [],
+      unlinkedMessageIds: ['validation.task-performers-empty'],
+    });
+    const patchTemplate = jest.fn();
+    const template = getTemplate('5');
+    template.isActive = false;
+
+    render(React.createElement(TemplateControlls, makeProps({ template, patchTemplate })));
+    userEvent.click(screen.getByRole('button', { name: new RegExp(formatMsg('template.enable-template')) }));
+
+    expect(NotificationManager.warning).toHaveBeenCalledWith({
+      message: formatMsg('validation.task-performers-empty'),
+    });
     expect(patchTemplate).not.toHaveBeenCalled();
   });
 });
