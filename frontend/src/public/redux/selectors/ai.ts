@@ -21,8 +21,6 @@ export const getAIAgentsSorting = (state: IApplicationState) => state.ai.agentsS
 const agentsComparators: Record<EAIAgentsSorting, (first: IAIAgent, second: IAIAgent) => number> = {
   [EAIAgentsSorting.NameAsc]: (first, second) => first.name.localeCompare(second.name),
   [EAIAgentsSorting.NameDesc]: (first, second) => second.name.localeCompare(first.name),
-  // The API has no creation date; ids are sequential, so a higher id is a newer agent.
-  [EAIAgentsSorting.DateDesc]: (first, second) => second.id - first.id,
 };
 
 export const getAIAgentsSorted = createSelector(getAIAgentsList, getAIAgentsSorting, (list, sorting) =>

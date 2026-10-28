@@ -984,7 +984,6 @@ export const ruMessages = {
   'sorting.team-group-status': 'По статусу',
   'sorting.ai-agent-name-asc': 'По имени (А-Я)',
   'sorting.ai-agent-name-desc': 'По имени (Я-А)',
-  'sorting.ai-agent-date-desc': 'По дате создания',
   'sorting.new': 'Сначала новые',
   'sorting.old': 'Сначала старые',
   'sorting.workflows-all-statuses': 'Все статусы',

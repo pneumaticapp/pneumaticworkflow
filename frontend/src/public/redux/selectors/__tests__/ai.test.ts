@@ -32,8 +32,4 @@ describe('getAIAgentsSorted', () => {
   it('sorts by name Z-A', () => {
     expect(getNames(EAIAgentsSorting.NameDesc)).toEqual(['Charlie', 'Bravo', 'Alpha']);
   });
-
-  it('puts the newest agents first', () => {
-    expect(getNames(EAIAgentsSorting.DateDesc)).toEqual(['Alpha', 'Charlie', 'Bravo']);
-  });
 });

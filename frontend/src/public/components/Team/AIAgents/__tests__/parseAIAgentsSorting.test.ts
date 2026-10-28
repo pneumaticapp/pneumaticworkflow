@@ -3,7 +3,7 @@ import { EAIAgentsSorting } from '../../../../redux/ai/types';
 
 describe('parseAIAgentsSorting', () => {
   it('keeps a known sorting', () => {
-    expect(parseAIAgentsSorting(EAIAgentsSorting.DateDesc)).toBe(EAIAgentsSorting.DateDesc);
+    expect(parseAIAgentsSorting(EAIAgentsSorting.NameDesc)).toBe(EAIAgentsSorting.NameDesc);
   });
 
   it('falls back to name A-Z for an unknown query value', () => {

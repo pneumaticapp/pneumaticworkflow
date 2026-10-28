@@ -3,7 +3,6 @@ import type { IAIAgent, IAIModel, IAIProvider, IAIVendor, TUpdateAIAgentRequest 
 export enum EAIAgentsSorting {
   NameAsc = 'ai-agent-name-asc',
   NameDesc = 'ai-agent-name-desc',
-  DateDesc = 'ai-agent-date-desc',
 }
 
 export interface IAIStore {

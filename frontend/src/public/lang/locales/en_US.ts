@@ -1113,7 +1113,6 @@ export const enMessages = {
   'sorting.group-name-desc': 'Sort by name (Z-A)',
   'sorting.ai-agent-name-asc': 'Sort by name (A-Z)',
   'sorting.ai-agent-name-desc': 'Sort by name (Z-A)',
-  'sorting.ai-agent-date-desc': 'Sort by date created',
 
   'tasks.task-workflow-performer': 'Assignee',
   'tasks.task-completed-by-all': 'Task has to be completed by all assignees',
