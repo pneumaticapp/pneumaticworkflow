@@ -1,30 +1,37 @@
-import { all, fork, put, select, takeEvery, takeLatest } from 'redux-saga/effects';
+import { PayloadAction } from '@reduxjs/toolkit';
+import { all, fork, put, select, takeLatest } from 'redux-saga/effects';
 
-import { getHighlightsStore, getHighlightsFilters } from '../selectors/highlights';
+import { getHighlightsItems, getHighlightsFilters } from '../selectors/highlights';
 import { getHighlights, IGetHighlightsResponse, IGetHighlightsFilters } from '../../api/getHighlights';
 import { logger } from '../../utils/logger';
 
 import {
-  EHighlightsActions,
-  setIsFeedLoading,
-  setHighlights,
-  setSetHighlightsTemplatesTitles,
+  loadHighlights,
+  loadHighlightsTemplatesTitles,
   loadHighlightsTemplatesTitlesFailed,
-  TLoadHighlights,
-  TLoadHighlightsTemplatesTitles,
-} from './actions';
-import { getHighlightsTitles, TGetHighlightsTitlesResponse } from '../../api/getHighlightsTitles';
+  setHighlights,
+  setHighlightsIsFeedLoading,
+  setHighlightsTemplatesTitles,
+} from './slice';
+import { ILoadHighlightsConfig } from './types';
+import {
+  getHighlightsTitles,
+  IGetHighlightsTitlesRequestConfig,
+  TGetHighlightsTitlesResponse,
+} from '../../api/getHighlightsTitles';
 import { mapWorkflowsForSetHighlights } from '../../utils/mappers';
 import { getUserTimezone } from '../selectors/user';
 import { NotificationManager } from '../../components/UI/Notifications';
 
-function* fetchTemplatesTitles({ payload: { eventDateFrom, eventDateTo } }: TLoadHighlightsTemplatesTitles) {
+function* fetchTemplatesTitles({
+  payload: { eventDateFrom, eventDateTo },
+}: PayloadAction<IGetHighlightsTitlesRequestConfig>) {
   try {
     const templatesTitles: TGetHighlightsTitlesResponse = yield getHighlightsTitles({
       eventDateFrom,
       eventDateTo,
     });
-    yield put(setSetHighlightsTemplatesTitles(templatesTitles));
+    yield put(setHighlightsTemplatesTitles(templatesTitles));
   } catch (error) {
     NotificationManager.notifyApiError(error, { message: 'workflow-highlights.fetch-filters-fail' });
     yield put(loadHighlightsTemplatesTitlesFailed());
@@ -32,9 +39,9 @@ function* fetchTemplatesTitles({ payload: { eventDateFrom, eventDateTo } }: TLoa
   }
 }
 
-export function* fetchHighlights({ payload: { limit, offset, onScroll } }: TLoadHighlights) {
+export function* fetchHighlights({ payload: { limit, offset, onScroll } }: PayloadAction<ILoadHighlightsConfig>) {
   try {
-    const { items }: ReturnType<typeof getHighlightsStore> = yield select(getHighlightsStore);
+    const items: ReturnType<typeof getHighlightsItems> = yield select(getHighlightsItems);
 
     const filters: ReturnType<typeof getHighlightsFilters> = yield select(getHighlightsFilters);
     const normalizedFilters: IGetHighlightsFilters = {
@@ -46,7 +53,7 @@ export function* fetchHighlights({ payload: { limit, offset, onScroll } }: TLoad
     const timezone: ReturnType<typeof getUserTimezone> = yield select(getUserTimezone);
 
     if (onScroll) {
-      yield put(setIsFeedLoading(true));
+      yield put(setHighlightsIsFeedLoading(true));
 
       const { count, next, previous, results }: IGetHighlightsResponse = yield getHighlights({
         limit,
@@ -55,7 +62,7 @@ export function* fetchHighlights({ payload: { limit, offset, onScroll } }: TLoad
       });
 
       const formattedResults = mapWorkflowsForSetHighlights(results, timezone);
-      yield put(setIsFeedLoading(false));
+      yield put(setHighlightsIsFeedLoading(false));
       yield put(setHighlights({ count, next, previous, results: [...items, ...formattedResults] }));
 
       return;
@@ -63,7 +70,7 @@ export function* fetchHighlights({ payload: { limit, offset, onScroll } }: TLoad
 
     if (!onScroll) {
       yield put(setHighlights({ count: 0, results: [] }));
-      yield put(setIsFeedLoading(true));
+      yield put(setHighlightsIsFeedLoading(true));
 
       const { count, next, previous, results }: IGetHighlightsResponse = yield getHighlights({
         limit,
@@ -72,7 +79,7 @@ export function* fetchHighlights({ payload: { limit, offset, onScroll } }: TLoad
       });
 
       const formattedResults = mapWorkflowsForSetHighlights(results, timezone);
-      yield put(setIsFeedLoading(false));
+      yield put(setHighlightsIsFeedLoading(false));
       yield put(setHighlights({ count, next, previous, results: formattedResults }));
     }
   } catch (error) {
@@ -82,11 +89,11 @@ export function* fetchHighlights({ payload: { limit, offset, onScroll } }: TLoad
 }
 
 export function* watchFetchTemplatesTitles() {
-  yield takeEvery(EHighlightsActions.LoadHighlightsTemplatesTitles, fetchTemplatesTitles);
+  yield takeLatest(loadHighlightsTemplatesTitles.type, fetchTemplatesTitles);
 }
 
 export function* watchFetchHighlights() {
-  yield takeLatest(EHighlightsActions.LoadHighlights, fetchHighlights);
+  yield takeLatest(loadHighlights.type, fetchHighlights);
 }
 
 export function* rootSaga() {

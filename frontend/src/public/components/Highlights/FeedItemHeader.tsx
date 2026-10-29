@@ -7,7 +7,7 @@ import { getSnoozedUntilDate } from '../../utils/dateTime';
 import { FeedItemComment } from './FeedItemComment';
 import { FeedItemOutputs } from './FeedItemOutputs';
 import { PerformerChange } from './PerformerChange';
-import { IFeedItemHeaderProps } from './types';
+import { TFeedItemHeaderProps } from './types';
 
 export function FeedItemHeader({
   attachments,
@@ -18,7 +18,7 @@ export function FeedItemHeader({
   delay,
   targetUserId,
   targetGroupId,
-}: IFeedItemHeaderProps) {
+}: TFeedItemHeaderProps) {
   const { formatMessage } = useIntl();
   const [isTextExpanded, setIsTextExpanded] = useState(false);
   const handleExpand = () => setIsTextExpanded(true);

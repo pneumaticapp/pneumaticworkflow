@@ -494,13 +494,12 @@ export interface IHighlightsFilters {
   endDate: Date;
   usersFilter: number[];
   templatesFilter: number[];
-  filtersChanged: boolean;
+  hasChangedFilters: boolean;
 }
 
 export interface IHighlightsStore {
   count: number;
   isFeedLoading: boolean;
-  isUsersLoading: boolean;
   isTemplatesTitlesLoading: boolean;
   items: IHighlightsItem[];
   templatesTitles: ITemplateTitleBaseWithCount[];

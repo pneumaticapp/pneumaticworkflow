@@ -1,323 +1,66 @@
 import classnames from 'classnames';
-import * as React from 'react';
-import InfiniteScroll from 'react-infinite-scroll-component';
-import { useIntl } from 'react-intl';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 
-import { ERoutes } from '../../constants/routes';
-import { EHighlightsDateFilter, EHighlightsFilterType, IHighlightsItem } from '../../types/highlights';
 import { TITLES } from '../../constants/titles';
-import { history } from '../../utils/history';
-import { PROCESS_HIGHLIGHTS_DATE_RANGE_MAP } from '../../utils/dateTime';
-import { UsersFilter } from './UsersFilter';
-import { ILoadHighlightsConfig } from '../../redux/highlights/actions';
-import { IHighlightsFilters } from '../../types/redux';
-import { INIT_FILTERS } from '../../redux/highlights/reducer';
-import { isArrayWithItems } from '../../utils/helpers';
-import { TUserListItem } from '../../types/user';
-import { ITemplateTitleBaseWithCount } from '../../types/template';
-import { Placeholder, Button } from '../UI';
-import { TOpenWorkflowLogPopupPayload } from '../../redux/workflows/types';
-
-import { HighlightsPlaceholderIcon } from './HighlightsPlaceholderIcon';
-import { TemplatesFilter } from './TemplatesFilter';
-import { DateFilter } from './DateFilter';
-import { FeedItem } from './FeedItem';
-import styles from './HighlightsFeed.css';
-import { EPageTitle } from '../../constants/defaultValues';
-import { PageTitle } from '../PageTitle/PageTitle';
-import { IGetHighlightsTitlesRequestConfig } from '../../api/getHighlightsTitles';
-
-export interface IHighlightsFeedProps {
-  count: number;
-  isFeedLoading: boolean;
-  isWorkflowLogPopupLoading?: boolean;
-  isTemplatesTitlesLoading: boolean;
-  items: IHighlightsItem[];
-  workflowId: number | null;
-  users: TUserListItem[];
-  templatesTitles: ITemplateTitleBaseWithCount[];
-  timeRange: EHighlightsDateFilter;
-  startDate: Date;
-  endDate: Date;
-  usersFilter: number[];
-  templatesFilter: number[];
-  filtersChanged: boolean;
-  loadHighlights({ limit, offset, onScroll }: ILoadHighlightsConfig): void;
-  openWorkflowLogPopup(payload: TOpenWorkflowLogPopupPayload): void;
-  resetHightlightsStore(): void;
-  loadTemplatesTitles({ eventDateFrom, eventDateTo }: IGetHighlightsTitlesRequestConfig): void;
-  setFilters(value: Partial<IHighlightsFilters>): void;
-  setFiltersChanged(): void;
-}
-
-export function HighlightsFeed({
-  count,
-  isWorkflowLogPopupLoading,
-  items,
-  workflowId,
-  isFeedLoading,
-  templatesTitles,
-  users,
-  isTemplatesTitlesLoading,
-  timeRange,
-  startDate,
-  endDate,
-  usersFilter,
-  templatesFilter,
-  filtersChanged,
-  setFilters,
+import { useDatePickerSettings } from '../../hooks/useDatePickerSettings';
+import {
   loadHighlights,
-  openWorkflowLogPopup,
-  resetHightlightsStore,
-  loadTemplatesTitles,
-  setFiltersChanged,
-}: IHighlightsFeedProps) {
-  const { useCallback, useEffect, useMemo, useState } = React;
-  const { formatMessage } = useIntl();
+  loadHighlightsTemplatesTitles,
+  resetHighlightsStore,
+  setHighlightsFilters,
+} from '../../redux/highlights/slice';
+import { getHighlightsFilters } from '../../redux/selectors/highlights';
+import { getWorkflowLogIsLoading } from '../../redux/selectors/workflowLog';
+import { getHighlightsDateRange } from './utils/highlightsDateRange';
+import { HighlightsFilters } from './HighlightsFilters';
+import { HighlightsList } from './HighlightsList';
+
+import styles from './HighlightsFeed.css';
+
+export function HighlightsFeed() {
+  const dispatch = useDispatch();
+  const { timeRange, startDate, endDate } = useSelector(getHighlightsFilters);
+  const isWorkflowLogPopupLoading = useSelector(getWorkflowLogIsLoading);
+  const { timezone, dateFdw } = useDatePickerSettings();
 
   const [isFirstFetch, setIsFirstFetch] = useState(true);
-  const [isDateFilterReady, setIsDateFilterReady] = useState(true);
 
   useEffect(() => {
     document.title = TITLES.WorkflowHighlights;
 
-    loadHighlights({ onScroll: true });
+    const currentRange = getHighlightsDateRange(timeRange, timezone, dateFdw);
+
+    if (currentRange) {
+      dispatch(setHighlightsFilters(currentRange));
+    }
+
+    dispatch(loadHighlights({ onScroll: true }));
     setIsFirstFetch(false);
 
     return () => {
-      resetHightlightsStore();
+      dispatch(resetHighlightsStore());
     };
   }, []);
 
   useEffect(() => {
-    loadTemplatesTitles({ eventDateFrom: startDate, eventDateTo: endDate });
-  }, [endDate, startDate]);
+    dispatch(loadHighlightsTemplatesTitles({ eventDateFrom: startDate, eventDateTo: endDate }));
+  }, [dispatch, endDate, startDate]);
 
-  const [templatesSearchText, setTemplatesSearchText] = useState('');
-  const handleChangeTemplatesSearchText = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTemplatesSearchText(e.target.value);
-  };
-
-  const [usersSearchText, setUsersSearchText] = useState('');
-  const handleChangeUsersSearchText = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUsersSearchText(e.target.value);
-  };
-
-  const isListFullyFetched = useMemo(() => items.length === count && !isFirstFetch, [count, items, isFirstFetch]);
-
-  const isFeedEmpty = useMemo(() => !isArrayWithItems(items) && !isFirstFetch, [items, isFirstFetch]);
-
-  const handleChangeFilterList =
-    (type: EHighlightsFilterType) => (id: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      const {
-        target: { checked },
-      } = e;
-
-      const filterListMap = {
-        [EHighlightsFilterType.Templates]: {
-          filterList: templatesFilter,
-          setFilterList: (value: number[]) => setFilters({ templatesFilter: value }),
-        },
-        [EHighlightsFilterType.Users]: {
-          filterList: usersFilter,
-          setFilterList: (value: number[]) => setFilters({ usersFilter: value }),
-        },
-      };
-
-      const { filterList, setFilterList } = filterListMap[type];
-
-      const isSelected = filterList.includes(id);
-      const shouldAdd = checked && !isSelected;
-      const shouldDelete = !checked && isSelected;
-
-      if (shouldAdd) {
-        setFilterList([...filterList, id]);
-      }
-
-      if (shouldDelete) {
-        setFilterList([...filterList.filter((x) => x !== id)]);
-      }
-    };
-
-  const handleInstantlyChangeFilterList = (type: EHighlightsFilterType) => (id?: number) => () => {
-    if (!id) {
-      return;
-    }
-
-    const filterList = type === EHighlightsFilterType.Templates ? templatesFilter : usersFilter;
-    const setFilterList =
-      type === EHighlightsFilterType.Templates
-        ? (value: number[]) => setFilters({ templatesFilter: value })
-        : (value: number[]) => setFilters({ usersFilter: value });
-    const isSelected = filterList.includes(id);
-
-    if (isSelected) {
-      return;
-    }
-
-    const newFilterList = [...filterList, id];
-    setFilterList(newFilterList);
-
-    loadHighlights({});
-  };
-
-  const handleChangeSelectedDateFilter = useCallback(
-    (selectedTimeRange: EHighlightsDateFilter) => () => {
-      if (selectedTimeRange === timeRange) {
-        return;
-      }
-
-      setFilters({ timeRange: selectedTimeRange });
-
-      if (selectedTimeRange !== EHighlightsDateFilter.Custom) {
-        const { startDate: newStartDate, endDate: newEndDate } = PROCESS_HIGHLIGHTS_DATE_RANGE_MAP[selectedTimeRange];
-
-        setFilters({ startDate: newStartDate, endDate: newEndDate });
-      }
-    },
-    [timeRange],
-  );
-
-  const handleApplyFilters = () => {
-    loadHighlights({});
-    setFiltersChanged();
-  };
-
-  const handleClearFilters = () => {
-    setFilters(INIT_FILTERS);
-
-    loadHighlights({});
-  };
-
-  const onScroll = () => {
-    if (!isFeedLoading) {
-      loadHighlights({ offset: items.length, onScroll: true });
-    }
-  };
-
-  const [workflowLogWorkflowId, setWorkflowLogWorkflowId] = useState<number | null>(null);
-  const handleOpenWorkflowLogPopup = useCallback(
-    (workflowIdParam: number) => () => {
-      setWorkflowLogWorkflowId(workflowIdParam);
-      openWorkflowLogPopup({ workflowId: workflowIdParam });
-    },
-    [workflowLogWorkflowId],
-  );
-
-  const handleRedirectToTemplate = (templateId?: number) => () => {
-    if (!templateId) {
-      return;
-    }
-
-    const redirectUrl = ERoutes.TemplatesEdit.replace(':id', String(templateId));
-    history.replace(redirectUrl);
-  };
   const containerClassName = classnames(
     'container',
     styles['process-highlights-feed__container'],
     isWorkflowLogPopupLoading && styles['process-highlights-feed__container_disabled'],
   );
 
-  const renderPlaceholder = () => {
-    if (!isFeedEmpty || isFeedLoading) {
-      return null;
-    }
-
-    if (filtersChanged) {
-      return (
-        <Placeholder
-          mood="bad"
-          Icon={HighlightsPlaceholderIcon}
-          title={formatMessage({ id: 'workflow-highlights.placeholder-empty-search-title' })}
-          description={formatMessage({ id: 'workflow-highlights.placeholder-empty-search-descrtiption' })}
-        />
-      );
-    }
-
-    return (
-      <Placeholder
-        mood="neutral"
-        Icon={HighlightsPlaceholderIcon}
-        title={formatMessage({ id: 'workflow-highlights.placeholder-empty-list-title' })}
-        description={formatMessage({ id: 'workflow-highlights.placeholder-empty-list-descrtiption' })}
-      />
-    );
-  };
-
   return (
     <div className={containerClassName}>
       <div className="row">
         <div className="col-md-4 mb-5 mb-md-0">
-          <div className={styles['filters']}>
-            <PageTitle titleId={EPageTitle.Highlights} />
-            <DateFilter
-              endDate={endDate}
-              startDate={startDate}
-              selectedDateFilter={timeRange}
-              changeSelectedDateFilter={handleChangeSelectedDateFilter}
-              changeEndDate={(newEndDate: Date) => setFilters({ endDate: newEndDate })}
-              changeStartDate={(newStartDate: Date) => setFilters({ startDate: newStartDate })}
-              onCustomRangeValidityChange={setIsDateFilterReady}
-            />
-            <TemplatesFilter
-              changeTemplatesSearchText={handleChangeTemplatesSearchText}
-              changeTemplatesFilter={handleChangeFilterList(EHighlightsFilterType.Templates)}
-              searchText={templatesSearchText}
-              selectedTemplates={templatesFilter}
-              templatesTitles={templatesTitles}
-              isFiltersLoading={isTemplatesTitlesLoading}
-            />
-            <UsersFilter
-              changeUsersFilter={handleChangeFilterList(EHighlightsFilterType.Users)}
-              changeUsersSearchText={handleChangeUsersSearchText}
-              searchText={usersSearchText}
-              selectedUsers={usersFilter}
-              users={users}
-            />
-            <div className={styles['filters__buttons']}>
-              <div className={styles['button_save-container']}>
-                <Button
-                  disabled={!isDateFilterReady}
-                  onClick={handleApplyFilters}
-                  type="button"
-                  label={formatMessage({ id: 'workflow-highlights.button-apply-filters' })}
-                  size="md"
-                />
-              </div>
-              <div className={styles['button_clear-container']}>
-                <Button
-                  className="cancel-button"
-                  onClick={handleClearFilters}
-                  label={formatMessage({ id: 'process-highlights.button-clear' })}
-                />
-              </div>
-            </div>
-          </div>
+          <HighlightsFilters />
         </div>
         <div className="col-md-8 h-100">
-          <div className={styles['feed']}>
-            <InfiniteScroll
-              hasMore={isFeedLoading || !isListFullyFetched}
-              next={onScroll}
-              dataLength={items.length}
-              loader={<div className={classnames('loading', styles['feed__spinner'])} />}
-              scrollableTarget="app-container"
-            >
-              {items.map((item) => (
-                <FeedItem
-                  {...item}
-                  item={item}
-                  redirectToTemplate={handleRedirectToTemplate}
-                  applyTemplatesFilter={handleInstantlyChangeFilterList(EHighlightsFilterType.Templates)}
-                  applyUserFilter={handleInstantlyChangeFilterList(EHighlightsFilterType.Users)}
-                  key={`FeedItem${item.id}`}
-                  openProcessLogPopup={handleOpenWorkflowLogPopup(item.workflow.id)}
-                  isProcessLogPopupLoading={isWorkflowLogPopupLoading && item.workflow.id === workflowId}
-                />
-              ))}
-            </InfiniteScroll>
-            {renderPlaceholder()}
-          </div>
+          <HighlightsList isFirstFetch={isFirstFetch} />
         </div>
       </div>
     </div>
