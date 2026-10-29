@@ -7,11 +7,11 @@ import { getUserFullName } from '../../utils/users';
 import { UserData } from '../UserData';
 import UserDataWithGroup from '../UserDataWithGroup';
 
-import { IPerformerChangeProps } from './types';
+import { TPerformerChangeProps } from './types';
 
 import styles from './FeedItem.css';
 
-export function PerformerChange({ targetGroupId, targetUserId, type }: IPerformerChangeProps) {
+export function PerformerChange({ targetGroupId, targetUserId, type }: TPerformerChangeProps) {
   const { formatMessage } = useIntl();
   const isGroup = type === EWorkflowLogEvent.AddedPerformerGroup || type === EWorkflowLogEvent.RemovedPerformerGroup;
 

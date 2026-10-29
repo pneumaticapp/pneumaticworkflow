@@ -3,6 +3,7 @@ import { ChangeEvent } from 'react';
 import { EHighlightsDateFilter, IHighlightsItem, THighlightsDateFilter } from '../../types/highlights';
 import { ITemplateTitleBaseWithCount } from '../../types/template';
 import { TUserListItem } from '../../types/user';
+import { IHighlightsFilters } from '../../types/redux';
 
 export interface IDateFilterProps {
   endDate: Date | null;
@@ -35,17 +36,30 @@ export interface ITemplatesFilterProps {
   changeTemplatesFilter(templateId: number): (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
-export interface IFeedItemHeaderProps extends IHighlightsItem {}
+export type TFeedItemHeaderProps = IHighlightsItem;
 
-export interface IFeedItemCommentProps extends Pick<IFeedItemHeaderProps, 'attachments' | 'task' | 'text' | 'type'> {
+export interface IFeedItemCommentProps extends Pick<TFeedItemHeaderProps, 'attachments' | 'task' | 'text' | 'type'> {
   isTextExpanded: boolean;
   onExpand: () => void;
 }
 
-export interface IFeedItemOutputsProps extends Pick<IFeedItemHeaderProps, 'task' | 'type'> {
-  kickoff: IFeedItemHeaderProps['workflow']['kickoff'];
+export interface IFeedItemOutputsProps extends Pick<TFeedItemHeaderProps, 'task' | 'type'> {
+  kickoff: TFeedItemHeaderProps['workflow']['kickoff'];
   isTextExpanded: boolean;
   onExpand: () => void;
 }
 
-export interface IPerformerChangeProps extends Pick<IFeedItemHeaderProps, 'targetGroupId' | 'targetUserId' | 'type'> {}
+export type TPerformerChangeProps = Pick<TFeedItemHeaderProps, 'targetGroupId' | 'targetUserId' | 'type'>;
+
+export interface IHighlightsListProps {
+  isFirstFetch: boolean;
+}
+
+export interface IHighlightsPlaceholderProps {
+  hasChangedFilters: boolean;
+}
+
+export type THighlightsQuerySyncProps = Pick<
+  IHighlightsFilters,
+  'timeRange' | 'startDate' | 'endDate' | 'usersFilter' | 'templatesFilter'
+>;
