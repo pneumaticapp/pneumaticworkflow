@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 
 import { Button } from '../../UI/Buttons/Button';
 import { Tooltip } from '../../UI/Tooltip';

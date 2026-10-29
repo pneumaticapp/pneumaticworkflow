@@ -1,5 +1,4 @@
-import * as React from 'react';
-import type { ChangeEvent } from 'react';
+import React, { type ChangeEvent } from 'react';
 import { useFormikContext } from 'formik';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';

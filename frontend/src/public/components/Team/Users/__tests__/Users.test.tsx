@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { shallow } from 'enzyme';
 import { render, screen } from '@testing-library/react';
 import { useDispatch, useSelector } from 'react-redux';

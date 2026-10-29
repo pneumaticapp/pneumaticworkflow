@@ -1,5 +1,4 @@
-import * as React from 'react';
-import type { ComponentType } from 'react';
+import React, { type ComponentType } from 'react';
 import { useSelector } from 'react-redux';
 
 import { withSyncedQueryString } from '../../../HOCs/withSyncedQueryString';

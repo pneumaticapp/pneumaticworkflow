@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl, FormattedDate } from 'react-intl';
 
 import { TokenListItem } from '../TokenListItem';

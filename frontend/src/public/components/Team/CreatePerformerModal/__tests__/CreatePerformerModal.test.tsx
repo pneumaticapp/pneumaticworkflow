@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { act, render, screen, fireEvent, waitFor, within, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useDispatch, useSelector } from 'react-redux';
