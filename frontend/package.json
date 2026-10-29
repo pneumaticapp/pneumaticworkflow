@@ -24,7 +24,7 @@
     "@lexical/utils": "^0.21.0",
     "@loadable/component": "^5.15.0",
     "@popperjs/core": "^2.11.4",
-    "@reduxjs/toolkit": "^2.9.1",
+    "@reduxjs/toolkit": "^1.9.7",
     "@sentry/node": "^7.120.4",
     "@sentry/react": "^7.94.1",
     "@tippyjs/react": "^4.2.6",
