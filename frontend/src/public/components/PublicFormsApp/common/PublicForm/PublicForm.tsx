@@ -32,7 +32,7 @@ import { useShouldHideIntercom } from '../../../../hooks/useShouldHideIntercom';
 import { prependHttp } from '../../../../utils/prependHttp';
 
 import submitedImage from '../images/SubmitedImage.svg';
-import * as ErrorImage from '../images/ErrorImage.svg';
+import ErrorImage from '../images/ErrorImage.svg';
 
 import '../../../../assets/fonts/simple-line-icons/css/simple-line-icons.css';
 import '../../../../assets/fonts/iconsmind-s/css/iconsminds.css';
