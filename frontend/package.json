@@ -145,7 +145,7 @@
     "@types/webpack-hot-middleware": "^2.25.9",
     "chromatic": "^11.24.0",
     "css-loader": "^6.11.0",
-    "eslint": "^10.9.1",
+    "eslint": "^10.13.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react-hooks": "^7.1.1",
