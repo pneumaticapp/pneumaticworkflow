@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -8,7 +8,7 @@ import { changeTaskListSorting } from '../../redux/tasks/slice';
 import { processesTasksCompleteSortingValues, processesTasksSortingValues } from '../../constants/sortings';
 import { ETaskListCompletionStatus } from '../../types/tasks';
 import type { ETaskListCompleteSorting, ETaskListSorting } from '../../types/tasks';
-import { getSortingSelectProps } from '../../utils/getSortingSelectProps';
+import { getEnumSelectProps } from '../../utils/getEnumSelectProps';
 
 export function TasksSorting() {
   const { formatMessage } = useIntl();
@@ -23,7 +23,7 @@ export function TasksSorting() {
     <Select
       controlSize="sm"
       controlVariant="accent"
-      {...getSortingSelectProps(values, sorting, (value) => dispatch(changeTaskListSorting(value)), formatMessage)}
+      {...getEnumSelectProps(values, sorting, (value) => dispatch(changeTaskListSorting(value)), formatMessage)}
     />
   );
 }

@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { TemplatesSorting } from './TemplatesSorting';
 import { TopNavContainer } from '../../components/TopNav';
 import { Select, Tabs } from '../../components/UI';
-import { getSortingSelectProps } from '../../utils/getSortingSelectProps';
+import { getEnumSelectProps } from '../../utils/getEnumSelectProps';
 import { ERoutes } from '../../constants/routes';
 import { datasetsSortingValues, fieldsetsSortingValues } from '../../constants/sortings';
 import { setDatasetsListSorting } from '../../redux/datasets/slice';
@@ -106,7 +106,7 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
           <Select
             controlSize="sm"
             controlVariant="accent"
-            {...getSortingSelectProps(
+            {...getEnumSelectProps(
               datasetsSortingValues,
               datasetsSortingType,
               handleDatasetsSortingChange,
@@ -118,7 +118,7 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
           <Select
             controlSize="sm"
             controlVariant="accent"
-            {...getSortingSelectProps(
+            {...getEnumSelectProps(
               fieldsetsSortingValues,
               fieldsetsSortingType,
               handleFieldsetsSortingChange,

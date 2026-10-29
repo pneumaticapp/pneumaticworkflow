@@ -281,6 +281,7 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
         is_returning = bool(user)
         if not user:
             invited_user = users.invited().first()
+            is_returning = bool(invited_user)
             if invited_user:
                 user = self._activate_invited_user(invited_user, user_data)
                 is_returning = True

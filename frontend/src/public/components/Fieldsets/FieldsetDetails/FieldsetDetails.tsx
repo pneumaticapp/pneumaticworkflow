@@ -224,6 +224,18 @@ const FieldsetDetails = ({
     setDetailFieldsetChanges((prev) => ({ ...prev, rules }));
   };
 
+  const handleRuleTypeChange =
+    (index: number, currentType: EFieldsetRuleType) =>
+    ({ value }: { value: EFieldsetRuleType }) => {
+      if (value !== currentType) handleEditRuleType(index, value);
+    };
+
+  const handleLabelPositionChange = ({ value }: { value: EFieldLabelPosition }) => {
+    if (value === detailFieldset.labelPosition) return;
+    setDetailFieldset((prev) => ({ ...prev, labelPosition: value }));
+    setDetailFieldsetChanges((prev) => ({ ...prev, labelPosition: value }));
+  };
+
   const handleEditRuleFields = (index: number, fieldApiNames: string[]) => {
     const rules = detailFieldset.rules.map((rule, i) => (i === index ? { ...rule, fields: fieldApiNames } : rule));
     setDetailFieldset((prev) => ({ ...prev, rules }));
@@ -470,12 +482,7 @@ const FieldsetDetails = ({
                 isDisabled={isLinked}
                 options={labelPositionOptions}
                 value={labelPositionOptions.find((option) => option.value === detailFieldset.labelPosition) ?? null}
-                onChange={({ value }: { value: EFieldLabelPosition }) => {
-                  if (value !== detailFieldset.labelPosition) {
-                    setDetailFieldset((prev) => ({ ...prev, labelPosition: value }));
-                    setDetailFieldsetChanges((prev) => ({ ...prev, labelPosition: value }));
-                  }
-                }}
+                onChange={handleLabelPositionChange}
               />
             </div>
           </div>
@@ -549,11 +556,7 @@ const FieldsetDetails = ({
               isDisabled={isLinked}
               options={ruleTypeOptions}
               value={ruleTypeOptions.find((option) => option.value === rule.type) ?? null}
-              onChange={({ value }: { value: EFieldsetRuleType }) => {
-                if (value !== rule.type) {
-                  handleEditRuleType(index, value);
-                }
-              }}
+              onChange={handleRuleTypeChange(index, rule.type)}
             />
 
             <input
@@ -585,7 +588,7 @@ const FieldsetDetails = ({
                       .map((option) => option.label)
                       .join(', ') || formatMessage({ id: 'fieldsets.rule-fields-placeholder' })
                   }
-                  noOptionsMessage={() => formatMessage({ id: 'fieldsets.rule-fields-placeholder' })}
+                  noOptionsMessage={() => formatMessage({ id: 'fieldsets.no-fields' })}
                   options={fieldOptions}
                   value={getSelectedFieldOptions(rule.fields)}
                   onChange={(selected: { value: string }[]) =>

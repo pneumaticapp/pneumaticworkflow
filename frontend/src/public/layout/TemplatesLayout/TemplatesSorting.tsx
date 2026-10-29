@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -6,7 +6,7 @@ import { Select } from '../../components/UI';
 import { getTemplatesListSorting } from '../../redux/selectors/templates';
 import { changeTemplatesSorting } from '../../redux/actions';
 import { workflowsSortingValues } from '../../constants/sortings';
-import { getSortingSelectProps } from '../../utils/getSortingSelectProps';
+import { getEnumSelectProps } from '../../utils/getEnumSelectProps';
 
 export function TemplatesSorting() {
   const { formatMessage } = useIntl();
@@ -17,7 +17,7 @@ export function TemplatesSorting() {
     <Select
       controlSize="sm"
       controlVariant="accent"
-      {...getSortingSelectProps(
+      {...getEnumSelectProps(
         workflowsSortingValues,
         sorting,
         (value) => dispatch(changeTemplatesSorting(value)),

@@ -1,6 +1,6 @@
-/* eslint-disable */
 import classnames from 'classnames';
 import * as React from 'react';
+import { useEffect, useRef } from 'react';
 import { useIntl } from 'react-intl';
 
 import { scrollToElement } from '../../../utils/helpers';
@@ -22,31 +22,21 @@ export interface IDelayProps {
 }
 
 export function Delay({ taskDelay, isDelayOpen, deleteDelay, editDelay, toggleDelay }: IDelayProps) {
+  const { formatMessage } = useIntl();
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const wasDelayOpenRef = useRef(false);
+
+  useEffect(() => {
+    if (wrapperRef.current && isDelayOpen && !wasDelayOpenRef.current) {
+      scrollToElement(wrapperRef.current);
+    }
+
+    wasDelayOpenRef.current = Boolean(isDelayOpen);
+  }, [isDelayOpen]);
+
   if (!taskDelay) {
     return null;
   }
-
-  const { useEffect, useState } = React;
-  const { formatMessage } = useIntl();
-
-  const wrapperRef = React.useRef<HTMLDivElement>(null);
-  const [open, setOpen] = useState(Boolean(isDelayOpen));
-
-  useEffect(() => {
-    if (wrapperRef.current && isDelayOpen) {
-      scrollToElement(wrapperRef.current);
-    }
-  }, []);
-
-  useEffect(() => {
-    const isJustOpened = isDelayOpen && !open;
-
-    if (wrapperRef.current && isJustOpened) {
-      scrollToElement(wrapperRef.current);
-    }
-
-    setOpen(Boolean(isDelayOpen));
-  }, [isDelayOpen]);
 
   const getDelayTitle = () => {
     const isFullDelayShown = taskDelay !== START_DURATION && !isDelayOpen;
@@ -59,6 +49,12 @@ export function Delay({ taskDelay, isDelayOpen, deleteDelay, editDelay, toggleDe
     }
 
     return formatMessage({ id: 'template.delay' });
+  };
+
+  const handleTitleKeyDown = (event: React.KeyboardEvent<HTMLSpanElement>) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    toggleDelay();
   };
 
   const handleOptionClick = (handler: () => void) => (closeDropdown: () => void) => {
@@ -93,7 +89,13 @@ export function Delay({ taskDelay, isDelayOpen, deleteDelay, editDelay, toggleDe
 
   return (
     <div ref={wrapperRef} className={styles['delay']}>
-      <span className={styles['header__title']} onClick={toggleDelay}>
+      <span
+        role="button"
+        tabIndex={0}
+        className={styles['header__title']}
+        onClick={toggleDelay}
+        onKeyDown={handleTitleKeyDown}
+      >
         {getDelayTitle()}
       </span>
 

@@ -40,7 +40,7 @@ export interface ISelectProps<TOption extends TSelectOption> extends Omit<
   title?: ReactNode;
   controlSize?: TControlSize;
   className?: string;
-  staticMenu?: boolean;
+  isStaticMenu?: boolean;
   placement?: TPlacement;
   onChange?: (value: any, action: any) => void;
   errorMessage?: string;

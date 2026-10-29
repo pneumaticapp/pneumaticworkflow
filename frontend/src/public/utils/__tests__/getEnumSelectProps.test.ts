@@ -1,17 +1,12 @@
-import { getSortingSelectProps } from '../getSortingSelectProps';
+import { getEnumSelectProps } from '../getEnumSelectProps';
 import { intlMock } from '../../__stubs__/intlMock';
 import { ETemplatesSorting } from '../../types/workflow';
 
-describe('getSortingSelectProps', () => {
+describe('getEnumSelectProps', () => {
   const values = [ETemplatesSorting.DateDesc, ETemplatesSorting.NameAsc];
 
   it('builds localized options and the selected option', () => {
-    const { options, value } = getSortingSelectProps(
-      values,
-      ETemplatesSorting.NameAsc,
-      jest.fn(),
-      intlMock.formatMessage,
-    );
+    const { options, value } = getEnumSelectProps(values, ETemplatesSorting.NameAsc, jest.fn(), intlMock.formatMessage);
 
     expect(options).toEqual(
       values.map((sorting) => ({ value: sorting, label: intlMock.formatMessage({ id: `sorting.${sorting}` }) })),
@@ -21,7 +16,7 @@ describe('getSortingSelectProps', () => {
 
   it('reports only a changed value', () => {
     const onChange = jest.fn();
-    const props = getSortingSelectProps(values, ETemplatesSorting.DateDesc, onChange, intlMock.formatMessage);
+    const props = getEnumSelectProps(values, ETemplatesSorting.DateDesc, onChange, intlMock.formatMessage);
 
     props.onChange(props.options[0]);
     props.onChange(props.options[1]);

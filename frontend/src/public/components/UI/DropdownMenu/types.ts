@@ -1,8 +1,8 @@
-import type { ReactElement, ReactNode, SVGAttributes } from 'react';
-
-import type { TDropdownItemState } from './ConfirmableDropdownItem';
+import type { MouseEvent, ReactElement, ReactNode, SVGAttributes } from 'react';
 
 export type TDropdownItemColor = 'black' | 'green' | 'red' | 'orange';
+
+export type TDropdownItemState = 'option' | 'confirmation';
 
 export type TDropdownMenuOption = {
   mapKey?: string;
@@ -28,24 +28,42 @@ export interface IDropdownMenuProps {
   className?: string;
   toggleProps?: { [key in string]: string };
   menuClassName?: string;
-  /** Passes reactstrap DropdownMenu `positionFixed` so Popper uses fixed positioning (escapes overflow scroll). */
-  menuPositionFixed?: boolean;
-  /** Passes reactstrap DropdownMenu `container` (portal target), e.g. `document.body`. */
-  menuContainer?: string | HTMLElement;
   renderToggle(isOpen: boolean): ReactNode;
   renderMenuContent?(renderedOptions: ReactNode): ReactNode;
-  CustomDropdownMenu?(props: IDropdownMenuPanelProps): JSX.Element;
   isFromBreakdownItem?: boolean;
   isDisabled?: boolean;
 }
 
 export interface IDropdownMenuPanelProps {
   renderedOptions: ReactNode;
+  isOpen: boolean;
   isWide: boolean;
   level: number;
   direction?: 'right' | 'left';
   className?: string;
   renderMenuContent?(renderedOptions: ReactNode): ReactNode;
-  positionFixed?: boolean;
-  container?: string | HTMLElement;
 }
+
+export interface IDropdownSubmenuProps {
+  label: ReactNode;
+  className?: string;
+  toggleClassName?: string;
+  renderPanel(isOpen: boolean): ReactNode;
+}
+
+export interface IDropdownMenuItemProps {
+  option: TDropdownMenuOption;
+  isSpaced: boolean;
+  closeDropdown(): void;
+}
+
+export interface IConfirmableDropdownItemProps {
+  children: ReactNode;
+  className?: string;
+  withConfirmation?: boolean;
+  initialConfirmationState?: TDropdownItemState;
+  closeDropdown(): void;
+  onClick?(event?: MouseEvent<HTMLButtonElement>): void;
+}
+
+export type TSubmenuPlacement = { side: 'right' } | { side: 'left' } | { side: 'shifted'; left: number };

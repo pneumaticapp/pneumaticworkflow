@@ -1,17 +1,17 @@
 import type { IntlShape } from 'react-intl';
 
-interface ISortingOption<T extends string> {
+interface IEnumSelectOption<T extends string> {
   value: T;
   label: string;
 }
 
-export function getSortingSelectProps<T extends string>(
+export function getEnumSelectProps<T extends string>(
   values: T[],
   activeValue: T,
   onChange: (value: T) => void,
   formatMessage: IntlShape['formatMessage'],
 ) {
-  const options: ISortingOption<T>[] = values.map((value) => ({
+  const options: IEnumSelectOption<T>[] = values.map((value) => ({
     value,
     label: formatMessage({ id: `sorting.${value}` }),
   }));
@@ -20,7 +20,7 @@ export function getSortingSelectProps<T extends string>(
     isSearchable: false,
     options,
     value: options.find((option) => option.value === activeValue) ?? null,
-    onChange: (option: ISortingOption<T>) => {
+    onChange: (option: IEnumSelectOption<T>) => {
       if (option.value !== activeValue) onChange(option.value);
     },
   };

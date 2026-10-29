@@ -1,9 +1,10 @@
-/* stylelint-disable declaration-no-important */
-
 .select__scrollbar {
   max-height: 35.2rem;
-  padding-right: 0 !important;
-  margin-right: 0 !important;
+
+  &:global(.scrollbar-container) {
+    padding-right: 0;
+    margin-right: 0;
+  }
 }
 
 .select-sm {
@@ -152,8 +153,8 @@
 
     :global .react-select__control {
       min-height: 4.8rem;
-      padding-top: 1.1rem !important;
-      padding-bottom: 1.1rem !important;
+      padding-top: 1.1rem;
+      padding-bottom: 1.1rem;
     }
   }
 
@@ -175,8 +176,8 @@
   color: var(--pneumatic-color-warning);
 }
 
-.has-error :global(.react-select__control) {
-  border-color: var(--pneumatic-color-warning) !important;
+:global(.react-select) .has-error :global(.react-select__control) {
+  border-color: var(--pneumatic-color-warning);
 }
 
 .error-text {

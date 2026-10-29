@@ -31,9 +31,12 @@ SUBSTITUTE_GROUP_PREFIX = 'Substitutes'
 
 class VacationDelegationService:
 
-    """ user is the person on vacation. request_user is whoever turns
-        the vacation on or off: the person themselves, an admin, or
-        nobody when a scheduled task or a cleanup does it. """
+    """Manage delegation for self.user, the absent employee.
+
+    Task substitutes are the users in that employee's substitute group.
+    request_user turns the vacation on or off: the employee, an admin,
+    or nobody when a scheduled task or cleanup does it.
+    """
 
     def __init__(
         self,

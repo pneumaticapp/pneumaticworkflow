@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 
 import { Select, Placeholder, InputField } from '../../UI';
-import { getSortingSelectProps } from '../../../utils/getSortingSelectProps';
+import { getEnumSelectProps } from '../../../utils/getEnumSelectProps';
 import { SearchMediumIcon } from '../../icons';
 import { TasksPlaceholderIcon } from '../../Tasks/TasksPlaceholderIcon';
 import { DatasetRow } from '../DatasetRow/DatasetRow';
@@ -95,7 +95,7 @@ export const DatasetItemsList = ({
           controlVariant="accent"
           className={styles['dataset__sorting-container']}
           {...(isMobile && { title: formatMessage({ id: `datasets.sorting.${sorting}.mobile` }) })}
-          {...getSortingSelectProps(
+          {...getEnumSelectProps(
             datasetsSortingValues,
             sorting,
             (value) => onSortingChange(value as EDatasetsSorting),

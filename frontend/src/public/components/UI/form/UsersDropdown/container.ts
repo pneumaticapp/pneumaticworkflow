@@ -2,7 +2,8 @@ import { connect } from 'react-redux';
 
 import { IApplicationState } from '../../../../types/redux';
 import { openTeamInvitesPopup } from '../../../../redux/team/slice';
-import { TUsersDropdownOption, IUsersDropdownProps, UsersDropdownComponent } from './UsersDropdown';
+import { UsersDropdownComponent } from './UsersDropdown';
+import type { IUsersDropdownProps, TUsersDropdownOption } from './types';
 
 type TStoreProps = Pick<
   IUsersDropdownProps<TUsersDropdownOption>,

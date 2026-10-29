@@ -1,4 +1,3 @@
-/* stylelint-disable declaration-no-important */
 .team-popup__loading {
   [class*='modal-content'] {
     min-height: 36.8rem;
@@ -26,10 +25,10 @@
   width: 100%;
 
   .popup-button_submit {
-    position: relative !important;
+    position: relative;
     display: inline-flex;
-    align-items: center !important;
-    justify-content: center !important;
+    align-items: center;
+    justify-content: center;
     width: 11.4rem;
     height: 4rem;
     margin-right: 1.6rem;

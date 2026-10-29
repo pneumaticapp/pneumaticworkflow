@@ -3,7 +3,7 @@ import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { Select } from '../../../UI';
-import { getSortingSelectProps } from '../../../../utils/getSortingSelectProps';
+import { getEnumSelectProps } from '../../../../utils/getEnumSelectProps';
 import { IDropdownOperator } from './utils/getDropdownOperators';
 import { CONDITION_DISABLED_OPERATOR, OPERATORS_WITHOUT_VALUE } from './utils/shared';
 import { getFormattedDropdownOption } from './utils/getFormattedDropdownOption';
@@ -66,7 +66,7 @@ export function Predicate({
               controlClassName={styles['select-logic-operation']}
               isDisabled={!accessConditions}
               hideSelectedOptions
-              {...getSortingSelectProps(
+              {...getEnumSelectProps(
                 Object.values(EConditionLogicOperations),
                 rule.logicOperation,
                 (logicOperation) => changeCurrentRule({ logicOperation }),

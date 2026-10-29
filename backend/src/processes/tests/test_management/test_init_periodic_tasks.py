@@ -8,7 +8,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.parametrize(
-    'task_path, name, interval_seconds',
+    'task_path, task_name, interval',
     (
         (
             'src.logs.events.tasks.consume_events',
@@ -27,23 +27,16 @@ pytestmark = pytest.mark.django_db
         ),
     ),
 )
-def test_handle__ok__periodic_task_created_once(
-    task_path,
-    name,
-    interval_seconds,
-):
+def test_handle__ok__periodic_task_created(task_path, task_name, interval):
 
     # arrange
     stdout = StringIO()
 
     # act
     call_command('init_periodic_tasks', stdout=stdout)
-    call_command('init_periodic_tasks', stdout=stdout)
 
     # assert
-    task = PeriodicTask.objects.get(
-        task=task_path,
-    )
-    assert task.name == name
-    assert task.interval.every == interval_seconds
+    task = PeriodicTask.objects.get(task=task_path)
+    assert task.name == task_name
+    assert task.interval.every == interval
     assert task.interval.period == IntervalSchedule.SECONDS

@@ -35,6 +35,7 @@ class Command(BaseCommand):
             self._ensure_reminder_task_notification,
             self._ensure_process_vacations,
             self._ensure_delegate_vacation_tasks,
+            self._ensure_events_consumer,
             self._ensure_dispatch_ai_agent_tasks,
             self._ensure_dispatch_ai_agent_new_notifications,
             self._ensure_events_consumer,
@@ -192,6 +193,17 @@ class Command(BaseCommand):
             ),
             schedule_obj=schedule,
             schedule_field="crontab",
+        )
+
+    def _ensure_events_consumer(self):
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=settings.LOGS_CONSUMER_INTERVAL_SECONDS,
+            period=IntervalSchedule.SECONDS,
+        )
+        self._create_or_skip_task(
+            name="Deliver events to log backend",
+            task_path="src.logs.events.tasks.consume_events",
+            schedule_obj=schedule,
         )
 
     def _ensure_dispatch_ai_agent_tasks(self):

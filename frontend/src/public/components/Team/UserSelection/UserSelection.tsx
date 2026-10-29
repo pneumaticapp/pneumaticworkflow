@@ -32,7 +32,7 @@ export function UserSelection({ selectedUsers, onChange, onChangeSelected, onCli
       placeholder="Search"
       controlSize="sm"
       value={selectedValue}
-      staticMenu
+      isStaticMenu
       isMulti
       options={selectionsDropdownOption}
       onChangeSelected={onChangeSelected}

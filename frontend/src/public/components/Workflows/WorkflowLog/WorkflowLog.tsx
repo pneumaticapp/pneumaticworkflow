@@ -18,7 +18,7 @@ import { isArrayWithItems } from '../../../utils/helpers';
 import { PopupCommentFieldContainer } from './PopupCommentField';
 import { workflowLogSortingValues } from '../../../constants/sortings';
 import { Select, Tabs } from '../../UI';
-import { getSortingSelectProps } from '../../../utils/getSortingSelectProps';
+import { getEnumSelectProps } from '../../../utils/getEnumSelectProps';
 
 import {
   WorkflowLogTaskComplete,
@@ -121,7 +121,7 @@ export const WorkflowLog = ({
               controlVariant="accent"
               className={styles['popup-body-controls-general__item']}
               controlClassName={classnames(theme === 'beige' && styles['popup-body-controls-general__item_beige'])}
-              {...getSortingSelectProps(workflowLogSortingValues, sorting, changeSorting, formatMessage)}
+              {...getEnumSelectProps(workflowLogSortingValues, sorting, changeSorting, formatMessage)}
             />
           </div>
           {!areRightTogglesHidden && (
