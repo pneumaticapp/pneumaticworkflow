@@ -1,5 +1,5 @@
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { isArrayWithItems } from '../utils/helpers';
+import { buildQueryString } from '../utils/buildQueryString';
 import { identifyAppPartOnClient } from '../utils/identifyAppPart/identifyAppPartOnClient';
 import { EAppPart } from '../utils/identifyAppPart/types';
 import { commonRequest } from './commonRequest';
@@ -28,12 +28,5 @@ export function getUsersQueryString(config?: IGetUsersConfig) {
 
   const { type, status, isAi } = config;
 
-  const params = new URLSearchParams();
-  if (type) params.set('type', type);
-  if (isArrayWithItems(status)) params.set('status', status.join(','));
-  if (typeof isAi === 'boolean') params.set('is_ai', String(isAi));
-
-  const query = params.toString();
-
-  return query ? `?${query}` : '';
+  return buildQueryString({ type, status, is_ai: isAi });
 }

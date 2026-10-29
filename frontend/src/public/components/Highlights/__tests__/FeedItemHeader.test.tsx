@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { useSelector } from 'react-redux';
 import userEvent from '@testing-library/user-event';
@@ -63,7 +63,6 @@ const mockState = {
   groups: {
     list: [{ id: 5, name: GROUP_NAME }],
   },
-  accounts: { isCreateUserModalOpen: false },
 };
 
 describe('FeedItemHeader', () => {

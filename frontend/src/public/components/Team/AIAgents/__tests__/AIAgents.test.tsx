@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useDispatch, useSelector } from 'react-redux';
@@ -9,7 +9,8 @@ import { ECreatePerformerModalTab } from '../../CreatePerformerModal/types';
 import { EAIVendor } from '../../../../api/ai/types';
 import type { IAIAgent, IAIProvider } from '../../../../api/ai/types';
 import { loadAIAgents, loadAIProviders } from '../../../../redux/ai/slice';
-import { closeCreateUserModal, openCreateUserModal } from '../../../../redux/accounts/slice';
+import { openCreatePerformerModal } from '../../../../redux/team/slice';
+import { EAIAgentsSorting } from '../../../../redux/ai/types';
 import { history } from '../../../../utils/history';
 import { ERoutes } from '../../../../constants/routes';
 import { intlMock } from '../../../../__stubs__/intlMock';
@@ -22,14 +23,15 @@ jest.mock('react-redux', () => ({
 
 jest.mock('../../../../utils/history', () => ({
   history: { push: jest.fn(), location: { pathname: '/team/ai-agents/' } },
+  checkSomeRouteIsActive: jest.fn(() => false),
 }));
 
 jest.mock('../../CreatePerformerModal', () => ({
   CreatePerformerModal: jest.fn(() => null),
 }));
 
-jest.mock('../TeamAgent', () => ({
-  TeamAgent: ({ agent, providerName }: { agent: IAIAgent; providerName?: string }) => (
+jest.mock('../TeamAIAgentCard', () => ({
+  TeamAIAgentCard: ({ agent, providerName }: { agent: IAIAgent; providerName?: string }) => (
     <div data-testid="team-agent-card">{`${agent.name} · ${providerName}`}</div>
   ),
 }));
@@ -77,10 +79,10 @@ describe('AIAgents', () => {
   } = {}) => {
     (useSelector as unknown as jest.Mock).mockImplementation((selector) =>
       selector({
-        accounts: { isCreateUserModalOpen: false },
         ai: {
           agents: { isLoading: isAgentsLoading, list: agents },
           providers: { isLoading: isProvidersLoading, list: providers },
+          agentsSorting: EAIAgentsSorting.NameAsc,
         },
       }),
     );
@@ -99,15 +101,6 @@ describe('AIAgents', () => {
     expect(mockDispatch).toHaveBeenCalledWith(loadAIProviders());
   });
 
-  it('closes the shared create modal when leaving the tab', () => {
-    const { unmount } = render(<AIAgents />);
-    expect(mockDispatch).not.toHaveBeenCalledWith(closeCreateUserModal());
-
-    unmount();
-
-    expect(mockDispatch).toHaveBeenCalledWith(closeCreateUserModal());
-  });
-
   it('lists agents sorted by name with their provider names', () => {
     mockState({ agents: [buildAgent({ id: 1, name: 'Zed' }), buildAgent({ id: 2, name: 'Ada' })] });
 
@@ -124,7 +117,7 @@ describe('AIAgents', () => {
 
     userEvent.click(screen.getByRole('button', { name: new RegExp(getText('team.ai-agents.create-button')) }));
 
-    expect(mockDispatch).toHaveBeenCalledWith(openCreateUserModal());
+    expect(mockDispatch).toHaveBeenCalledWith(openCreatePerformerModal());
     expect(CreatePerformerModal).toHaveBeenCalledWith(
       expect.objectContaining({ initialTab: ECreatePerformerModalTab.AIAgent }),
       {},

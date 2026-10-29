@@ -1,4 +1,4 @@
-import { all, call, cancel, fork, put, take, takeEvery, takeLatest } from 'redux-saga/effects';
+import { all, call, cancel, cancelled, fork, put, takeEvery, takeLatest } from 'redux-saga/effects';
 import type { Task } from 'redux-saga';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
@@ -28,13 +28,10 @@ import { getErrorMessage } from '../../utils/getErrorMessage';
 import { logger } from '../../utils/logger';
 import { uploadUserAvatar } from '../../utils/uploadFiles';
 import type { TUploadedFile } from '../../utils/uploadFiles';
-import { closeCreateUserModal } from '../accounts/slice';
 
 import {
+  cloneAIAgent,
   createAIAgent,
-  createAIAgentFailed,
-  createAIAgentStarted,
-  createAIAgentSuccess,
   createAIProvider,
   createAIProviderByVendor,
   createAIProviderFailed,
@@ -62,10 +59,10 @@ import {
   uploadAIAgentAvatar,
   cancelAIAgentAvatarUpload,
   closeCreateAIProviderModal,
-  uploadAIAgentAvatarStarted,
-  uploadAIAgentAvatarFinished,
 } from './slice';
 import type { TUpdateAIAgentPayload } from './types';
+import { submitCreatePerformer } from '../team/utils/submitCreatePerformer';
+import { waitForAction } from '../utils/waitForAction';
 
 let latestProvidersRequestId = 0;
 
@@ -141,10 +138,6 @@ function* fetchAIProviderModels({ payload: providerId }: PayloadAction<number>) 
   }
 }
 
-function* waitForAction(actionType: string) {
-  yield take(actionType);
-}
-
 function* createProvider<TRequest>(createRequest: (request: TRequest) => Promise<unknown>, request: TRequest) {
   yield put(createAIProviderStarted());
   const modalCloseWatcher: Task = yield fork(waitForAction, closeCreateAIProviderModal.type);
@@ -201,24 +194,22 @@ function* refreshAgentsAndProviders(successMessage: string) {
 }
 
 export function* createAIAgentSaga({ payload }: PayloadAction<ICreateAIAgentRequest>) {
-  yield put(createAIAgentStarted());
-  const modalCloseWatcher: Task = yield fork(waitForAction, closeCreateUserModal.type);
-
   try {
-    yield call(createAIAgentApi, payload);
-    if (modalCloseWatcher.isRunning()) {
-      yield put(createAIAgentSuccess());
-      yield put(closeCreateUserModal());
-    }
+    yield call(submitCreatePerformer, call(createAIAgentApi, payload));
     yield call(refreshAgentsAndProviders, 'team.ai-agents.created');
   } catch (error) {
-    if (modalCloseWatcher.isRunning()) {
-      yield put(createAIAgentFailed());
-    }
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to create AI agent', error);
-  } finally {
-    yield cancel(modalCloseWatcher);
+  }
+}
+
+export function* cloneAIAgentSaga({ payload }: PayloadAction<ICreateAIAgentRequest>) {
+  try {
+    yield call(createAIAgentApi, payload);
+    yield call(refreshAgentsAndProviders, 'team.ai-agents.cloned');
+  } catch (error) {
+    NotificationManager.warning({ message: getErrorMessage(error) });
+    logger.error('failed to clone AI agent', error);
   }
 }
 
@@ -251,9 +242,7 @@ export function* uploadAIAgentAvatarSaga(
 ) {
   if (!uploadAIAgentAvatar.match(action)) return;
 
-  const { file, onSuccess } = action.payload;
-  yield put(uploadAIAgentAvatarStarted());
-
+  const { file, onSuccess, onSettled } = action.payload;
   try {
     const [uploaded]: TUploadedFile[] = yield call(uploadUserAvatar, file);
     if (uploaded?.url && !uploaded.error) {
@@ -263,7 +252,8 @@ export function* uploadAIAgentAvatarSaga(
     NotificationManager.warning({ message: 'file-service.upload-failed' });
     logger.error('failed to upload AI agent avatar', error);
   } finally {
-    yield put(uploadAIAgentAvatarFinished());
+    const isCancelled: boolean = yield cancelled();
+    if (!isCancelled) onSettled();
   }
 }
 
@@ -279,6 +269,7 @@ export function* watchAIProviders() {
 export function* watchAIAgents() {
   yield takeEvery(loadAIAgents, fetchAIAgents);
   yield takeEvery(createAIAgent, createAIAgentSaga);
+  yield takeEvery(cloneAIAgent, cloneAIAgentSaga);
   yield takeEvery(updateAIAgent, updateAIAgentSaga);
   yield takeEvery(deleteAIAgent, deleteAIAgentSaga);
   yield takeLatest([uploadAIAgentAvatar, cancelAIAgentAvatarUpload], uploadAIAgentAvatarSaga);

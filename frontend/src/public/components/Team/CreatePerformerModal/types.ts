@@ -1,8 +1,6 @@
 import type { ICreateUserRequest } from '../../../types/user';
 
 export interface ICreatePerformerModalProps {
-  isOpen: boolean;
-  onClose: () => void;
   initialTab?: ECreatePerformerModalTab;
 }
 
@@ -27,6 +25,6 @@ export interface ICreateUserFormValues extends Required<
   role: EUserRole;
 }
 
-export interface ICreateUserFormProps {
+export interface ICreatePerformerTabProps {
   isVisible: boolean;
 }

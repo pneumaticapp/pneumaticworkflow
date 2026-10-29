@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -24,19 +23,13 @@ import { getIsUserSubsribed, getSubscriptionPlan } from '../../../redux/selector
 import {
   getAccountsTeamList,
   getAccountsTeamIsLoading,
-  getIsCreateUserModalOpen,
   getAccountsUserListSorting,
 } from '../../../redux/selectors/accounts';
 import { getAuthUserId } from '../../../redux/selectors/authUser';
 import { ESubscriptionPlan } from '../../../types/account';
 import type { IUsersProps } from './types';
-import {
-  closeCreateUserModal,
-  openCreateUserModal,
-  teamFetchStarted,
-  userListSortingChanged,
-} from '../../../redux/accounts/slice';
-import { loadInvitesUsers, openTeamInvitesPopup } from '../../../redux/team/slice';
+import { teamFetchStarted, userListSortingChanged } from '../../../redux/accounts/slice';
+import { loadInvitesUsers, openCreatePerformerModal, openTeamInvitesPopup } from '../../../redux/team/slice';
 
 import styles from './Users.css';
 
@@ -49,7 +42,6 @@ export function Users({ userListSorting }: IUsersProps) {
   const currentUserId = useSelector(getAuthUserId);
   const isSubscribed = useSelector(getIsUserSubsribed);
   const billingPlan = useSelector(getSubscriptionPlan);
-  const isCreateUserModalOpen = useSelector(getIsCreateUserModalOpen);
 
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
   const accessConditions = isSubscribed || isFreePlan;
@@ -61,10 +53,6 @@ export function Users({ userListSorting }: IUsersProps) {
     dispatch(teamFetchStarted({}));
     dispatch(loadInvitesUsers());
     document.title = TITLES.Team;
-
-    return () => {
-      dispatch(closeCreateUserModal());
-    };
   }, [dispatch]);
 
   const getVisibleUsers = () => {
@@ -87,11 +75,7 @@ export function Users({ userListSorting }: IUsersProps) {
   };
 
   const handleOpenCreateUserModal = () => {
-    dispatch(openCreateUserModal());
-  };
-
-  const handleCloseCreateUserModal = () => {
-    dispatch(closeCreateUserModal());
+    dispatch(openCreatePerformerModal());
   };
 
   const handleCloseVacationModal = () => {
@@ -148,7 +132,7 @@ export function Users({ userListSorting }: IUsersProps) {
     <div className={styles['container']}>
       <DeleteTeamUserPopupContainer />
       <AddGuestsBanner />
-      <CreatePerformerModal isOpen={isCreateUserModalOpen} onClose={handleCloseCreateUserModal} />
+      <CreatePerformerModal />
       <VacationSettingsModal isOpen={!!vacationModalUser} onClose={handleCloseVacationModal} user={vacationModalUser} />
 
       <PageTitle titleId={EPageTitle.Team} withUnderline={false} />

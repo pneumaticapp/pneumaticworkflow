@@ -12,4 +12,7 @@ export interface ICreateAIProviderFormValues {
   apiKey: string;
 }
 
-export type TCreateTab = 'vendor' | 'custom';
+export enum ECreateAIProviderTab {
+  Vendor = 'vendor',
+  Custom = 'custom',
+}

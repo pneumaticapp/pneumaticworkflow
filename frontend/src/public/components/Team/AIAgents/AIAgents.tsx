@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -9,19 +8,18 @@ import { Placeholder } from '../../UI/Placeholder';
 import { TasksPlaceholderIcon } from '../../Tasks/TasksPlaceholderIcon';
 import { PageTitle } from '../../PageTitle';
 import { TeamUserSkeleton } from '../TeamUserSkeleton';
-import { TeamAgent } from './TeamAgent';
+import { TeamAIAgentCard } from './TeamAIAgentCard';
 import { CreatePerformerModal } from '../CreatePerformerModal';
 import { ECreatePerformerModalTab } from '../CreatePerformerModal/types';
 import { EPageTitle } from '../../../constants/defaultValues';
 import { ERoutes } from '../../../constants/routes';
 import { TITLES } from '../../../constants/titles';
 import { history } from '../../../utils/history';
-import { closeCreateUserModal, openCreateUserModal } from '../../../redux/accounts/slice';
+import { openCreatePerformerModal } from '../../../redux/team/slice';
 import { loadAIAgents, loadAIProviders } from '../../../redux/ai/slice';
-import { getIsCreateUserModalOpen } from '../../../redux/selectors/accounts';
 import {
   getAIAgentsIsLoading,
-  getAIAgentsSortedByName,
+  getAIAgentsSorted,
   getAIProvidersIsLoading,
   getAIProvidersList,
 } from '../../../redux/selectors/ai';
@@ -32,30 +30,21 @@ export function AIAgents() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const isAgentsLoading = useSelector(getAIAgentsIsLoading);
-  const agents = useSelector(getAIAgentsSortedByName);
+  const agents = useSelector(getAIAgentsSorted);
   const providers = useSelector(getAIProvidersList);
   const isProvidersLoading = useSelector(getAIProvidersIsLoading);
-  const isCreateModalOpen = useSelector(getIsCreateUserModalOpen);
 
   useEffect(() => {
     dispatch(loadAIAgents());
     dispatch(loadAIProviders());
     document.title = TITLES.Team;
-
-    return () => {
-      dispatch(closeCreateUserModal());
-    };
   }, [dispatch]);
 
   const providerNameById = new Map(providers.map((provider) => [provider.id, provider.name]));
   const hasNoProviders = !isProvidersLoading && providers.length === 0;
 
   const handleOpenCreateModal = () => {
-    dispatch(openCreateUserModal());
-  };
-
-  const handleCloseCreateModal = () => {
-    dispatch(closeCreateUserModal());
+    dispatch(openCreatePerformerModal());
   };
 
   const handleGoToIntegrations = () => {
@@ -95,7 +84,7 @@ export function AIAgents() {
       <ul className={styles['list']}>
         {agents.map((agent) => (
           <li key={agent.id}>
-            <TeamAgent agent={agent} providerName={providerNameById.get(agent.providerId)} />
+            <TeamAIAgentCard agent={agent} providerName={providerNameById.get(agent.providerId)} />
           </li>
         ))}
       </ul>
@@ -104,11 +93,7 @@ export function AIAgents() {
 
   return (
     <div className={styles['container']}>
-      <CreatePerformerModal
-        isOpen={isCreateModalOpen}
-        initialTab={ECreatePerformerModalTab.AIAgent}
-        onClose={handleCloseCreateModal}
-      />
+      <CreatePerformerModal initialTab={ECreatePerformerModalTab.AIAgent} />
 
       <PageTitle titleId={EPageTitle.Team} withUnderline={false} />
 

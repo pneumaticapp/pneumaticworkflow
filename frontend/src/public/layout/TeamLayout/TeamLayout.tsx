@@ -9,6 +9,7 @@ import { history } from '../../utils/history';
 import { getTeamPageByRoute } from '../../utils/team/getTeamPageByRoute';
 import { GroupListSorting } from './GroupListSorting';
 import { UserListSorting } from './UserListSorting';
+import { AIAgentsSortingSelect } from './AIAgentsSortingSelect';
 import { ReturnLink, Tabs } from '../../components/UI';
 import { resetUsers } from '../../redux/accounts/slice';
 import { TeamPages } from '../../redux/team/types';
@@ -34,6 +35,12 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
     };
   }, [history.location.pathname]);
 
+  const sortingSelectByPage: Record<TeamPages, React.ReactNode> = {
+    [TeamPages.Users]: <UserListSorting />,
+    [TeamPages.Groups]: <GroupListSorting />,
+    [TeamPages.AIAgents]: <AIAgentsSortingSelect />,
+  };
+
   const renderTeamLeftContent = () => {
     return (
       <div className={styles['top-nav']}>
@@ -48,11 +55,7 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
             onChange={(activeTab) => dispatch(setTeamActivePage(activeTab))}
           />
         </div>
-        {page !== TeamPages.AIAgents && (
-          <div className={styles['top-nav__item']}>
-            {page === TeamPages.Users ? <UserListSorting /> : <GroupListSorting />}
-          </div>
-        )}
+        <div className={styles['top-nav__item']}>{sortingSelectByPage[page]}</div>
       </div>
     );
   };

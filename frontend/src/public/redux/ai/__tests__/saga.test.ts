@@ -10,6 +10,7 @@ import {
   updateAIAgent as updateAIAgentApi,
 } from '../../../api/ai';
 import {
+  cloneAIAgentSaga,
   createAIAgentSaga,
   createAIProviderByVendorSaga,
   createAIProviderSaga,
@@ -17,9 +18,8 @@ import {
   uploadAIAgentAvatarSaga,
 } from '../saga';
 import {
+  cloneAIAgent,
   createAIAgent,
-  createAIAgentFailed,
-  createAIAgentSuccess,
   createAIProvider,
   createAIProviderByVendor,
   createAIProviderFailed,
@@ -28,11 +28,10 @@ import {
   closeCreateAIProviderModal,
   updateAIAgent,
   uploadAIAgentAvatar,
-  uploadAIAgentAvatarFinished,
 } from '../slice';
 import { uploadUserAvatar } from '../../../utils/uploadFiles';
 import { NotificationManager } from '../../../components/UI/Notifications';
-import { closeCreateUserModal } from '../../accounts/slice';
+import { closeCreatePerformerModal, createPerformerFailed, createPerformerStarted } from '../../team/slice';
 
 jest.mock('../../../api/ai', () => ({
   createAIAgent: jest.fn(),
@@ -87,9 +86,9 @@ describe('AI creation sagas', () => {
     const request = createAIAgent(agentData);
     await run(createAIAgentSaga, request);
 
-    expect(actions).toContainEqual(createAIAgentSuccess());
-    expect(actions).toContainEqual(closeCreateUserModal());
-    expect(actions).not.toContainEqual(createAIAgentFailed());
+    expect(actions).toContainEqual(createPerformerStarted());
+    expect(actions).toContainEqual(closeCreatePerformerModal());
+    expect(actions).not.toContainEqual(createPerformerFailed());
     expect(createAIAgentApi).toHaveBeenCalledTimes(1);
   });
 
@@ -98,9 +97,23 @@ describe('AI creation sagas', () => {
     const request = createAIAgent(agentData);
     await run(createAIAgentSaga, request);
 
-    expect(actions).toContainEqual(createAIAgentFailed());
-    expect(actions).not.toContainEqual(createAIAgentSuccess());
-    expect(actions).not.toContainEqual(closeCreateUserModal());
+    expect(actions).toContainEqual(createPerformerFailed());
+    expect(actions).not.toContainEqual(closeCreatePerformerModal());
+  });
+
+  it('clones an agent without touching the create modal', async () => {
+    await run(cloneAIAgentSaga, cloneAIAgent({ ...agentData, name: 'Agent (Clone)' }));
+
+    expect(createAIAgentApi).toHaveBeenCalledWith({ ...agentData, name: 'Agent (Clone)' });
+    expect(actions).not.toContainEqual(createPerformerStarted());
+    expect(NotificationManager.success).toHaveBeenCalledWith({ message: 'team.ai-agents.cloned' });
+  });
+
+  it('warns when cloning fails', async () => {
+    (createAIAgentApi as jest.Mock).mockRejectedValue(new Error('Name taken'));
+    await run(cloneAIAgentSaga, cloneAIAgent(agentData));
+
+    expect(NotificationManager.warning).toHaveBeenCalledWith({ message: 'Name taken' });
   });
 
   it('reports a successful agent update without sending the callbacks to the API', async () => {
@@ -186,29 +199,38 @@ describe('AI agent avatar upload saga', () => {
     const channel = startWatcher();
     const onOld = jest.fn();
     const onNew = jest.fn();
+    const onOldSettled = jest.fn();
+    const onNewSettled = jest.fn();
 
-    channel.put(uploadAIAgentAvatar({ file: buildFile('old.png'), onSuccess: onOld }));
-    channel.put(uploadAIAgentAvatar({ file: buildFile('new.png'), onSuccess: onNew }));
+    channel.put(uploadAIAgentAvatar({ file: buildFile('old.png'), onSuccess: onOld, onSettled: onOldSettled }));
+    channel.put(uploadAIAgentAvatar({ file: buildFile('new.png'), onSuccess: onNew, onSettled: onNewSettled }));
     pendingUploads[0]([{ id: 'old', url: 'https://files.example.com/old.png', size: 1 }]);
+    await flush();
+
+    expect(onOldSettled).not.toHaveBeenCalled();
+    expect(onNewSettled).not.toHaveBeenCalled();
+
     pendingUploads[1]([{ id: 'new', url: 'https://files.example.com/new.png', size: 1 }]);
     await flush();
 
     expect(onOld).not.toHaveBeenCalled();
     expect(onNew).toHaveBeenCalledWith('https://files.example.com/new.png');
-    expect(dispatched[dispatched.length - 1]).toEqual(uploadAIAgentAvatarFinished());
+    expect(onNewSettled).toHaveBeenCalledTimes(1);
   });
 
   it('drops a pending upload after cancellation', async () => {
     const channel = startWatcher();
     const onSuccess = jest.fn();
 
-    channel.put(uploadAIAgentAvatar({ file: buildFile('old.png'), onSuccess }));
+    const onSettled = jest.fn();
+
+    channel.put(uploadAIAgentAvatar({ file: buildFile('old.png'), onSuccess, onSettled }));
     channel.put(cancelAIAgentAvatarUpload());
     pendingUploads[0]([{ id: 'old', url: 'https://files.example.com/old.png', size: 1 }]);
     await flush();
 
     expect(onSuccess).not.toHaveBeenCalled();
-    expect(dispatched).toContainEqual(uploadAIAgentAvatarFinished());
+    expect(onSettled).not.toHaveBeenCalled();
   });
 
   it('warns and finishes when the upload fails', async () => {
@@ -216,19 +238,21 @@ describe('AI agent avatar upload saga', () => {
     const channel = startWatcher();
     const onSuccess = jest.fn();
 
-    channel.put(uploadAIAgentAvatar({ file: buildFile('avatar.png'), onSuccess }));
+    const onSettled = jest.fn();
+
+    channel.put(uploadAIAgentAvatar({ file: buildFile('avatar.png'), onSuccess, onSettled }));
     await flush();
 
     expect(onSuccess).not.toHaveBeenCalled();
+    expect(onSettled).toHaveBeenCalledTimes(1);
     expect(NotificationManager.warning).toHaveBeenCalledWith({ message: 'file-service.upload-failed' });
-    expect(dispatched).toContainEqual(uploadAIAgentAvatarFinished());
   });
 
   it('ignores an upload result marked with an error', async () => {
     const channel = startWatcher();
     const onSuccess = jest.fn();
 
-    channel.put(uploadAIAgentAvatar({ file: buildFile('big.png'), onSuccess }));
+    channel.put(uploadAIAgentAvatar({ file: buildFile('big.png'), onSuccess, onSettled: jest.fn() }));
     pendingUploads[0]([{ id: 'big', url: '', size: 1, error: 'Max file size exceeded' }]);
     await flush();
 
@@ -283,12 +307,11 @@ describe('AI creation sagas when the modal closes mid-request', () => {
       createAIAgent({ name: 'Agent', providerId: 1, model: 'm', systemPrompt: 'p', photo: null, isActive: true }),
     );
 
-    channel.put(closeCreateUserModal());
+    channel.put(closeCreatePerformerModal());
     request.resolve({});
     await task.toPromise();
 
-    expect(dispatched).not.toContainEqual(createAIAgentSuccess());
-    expect(dispatched).not.toContainEqual(closeCreateUserModal());
+    expect(dispatched).not.toContainEqual(closeCreatePerformerModal());
     expect(NotificationManager.success).toHaveBeenCalledWith({ message: 'team.ai-agents.created' });
   });
 
@@ -300,12 +323,12 @@ describe('AI creation sagas when the modal closes mid-request', () => {
       createAIAgent({ name: 'Agent', providerId: 1, model: 'm', systemPrompt: 'p', photo: null, isActive: true }),
     );
 
-    channel.put(closeCreateUserModal());
+    channel.put(closeCreatePerformerModal());
     request.reject(new Error('Invalid agent'));
     await task.toPromise();
     await flush();
 
-    expect(dispatched).not.toContainEqual(createAIAgentFailed());
+    expect(dispatched).not.toContainEqual(createPerformerFailed());
     expect(NotificationManager.warning).toHaveBeenCalledWith({ message: 'Invalid agent' });
   });
 

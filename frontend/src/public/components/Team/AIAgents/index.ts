@@ -1,3 +1,4 @@
 export * from './AIAgents';
+export * from './container';
 
-export { AIAgents as default } from './AIAgents';
+export { AIAgentsContainer as default } from './container';

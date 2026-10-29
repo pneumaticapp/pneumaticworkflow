@@ -71,6 +71,10 @@
     margin-left: 1.6rem;
   }
 
+  &__action:disabled {
+    pointer-events: none;
+  }
+
   &__skeleton-name {
     width: 12rem;
     height: 1.6rem;

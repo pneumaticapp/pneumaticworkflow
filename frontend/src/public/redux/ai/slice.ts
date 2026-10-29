@@ -1,7 +1,7 @@
 import { createAction, createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
-import { closeCreateUserModal } from '../accounts/slice';
+import { EAIAgentsSorting } from './types';
 import type { IAIStore, IUploadAIAgentAvatarPayload, TUpdateAIAgentPayload } from './types';
 import type {
   IAIAgent,
@@ -19,12 +19,11 @@ const initialState: IAIStore = {
     list: [],
   },
   createProviderModal: { isOpen: false, isLoading: false },
-  createAgent: { isLoading: false },
-  agentAvatarUpload: { isLoading: false },
   agents: {
     isLoading: true,
     list: [],
   },
+  agentsSorting: EAIAgentsSorting.NameAsc,
   vendors: {
     isLoading: false,
     list: [],
@@ -47,6 +46,7 @@ export const loadAIAgents = createAction<void>('ai/loadAIAgents');
 export const createAIAgent = createAction<ICreateAIAgentRequest>('ai/createAIAgent');
 export const updateAIAgent = createAction<TUpdateAIAgentPayload>('ai/updateAIAgent');
 export const deleteAIAgent = createAction<number>('ai/deleteAIAgent');
+export const cloneAIAgent = createAction<ICreateAIAgentRequest>('ai/cloneAIAgent');
 export const uploadAIAgentAvatar = createAction<IUploadAIAgentAvatarPayload>('ai/uploadAIAgentAvatar');
 export const cancelAIAgentAvatarUpload = createAction<void>('ai/cancelAIAgentAvatarUpload');
 
@@ -80,23 +80,6 @@ const aiSlice = createSlice({
       state.createProviderModal.isLoading = false;
     },
 
-    createAIAgentStarted: (state) => {
-      state.createAgent.isLoading = true;
-    },
-    createAIAgentSuccess: (state) => {
-      state.createAgent.isLoading = false;
-    },
-    createAIAgentFailed: (state) => {
-      state.createAgent.isLoading = false;
-    },
-
-    uploadAIAgentAvatarStarted: (state) => {
-      state.agentAvatarUpload.isLoading = true;
-    },
-    uploadAIAgentAvatarFinished: (state) => {
-      state.agentAvatarUpload.isLoading = false;
-    },
-
     loadAIAgentsStarted: (state) => {
       state.agents.isLoading = state.agents.list.length === 0;
     },
@@ -117,6 +100,9 @@ const aiSlice = createSlice({
       state.vendors.isLoading = false;
     },
 
+    aiAgentsSortingChanged: (state, action: PayloadAction<EAIAgentsSorting>) => {
+      state.agentsSorting = action.payload;
+    },
     loadAIProviderModelsStarted: (state, action: PayloadAction<number>) => {
       state.models = { isLoading: true, providerId: action.payload, list: [] };
     },
@@ -134,11 +120,6 @@ const aiSlice = createSlice({
       state.models.providerId = null;
     },
   },
-  extraReducers: (builder) => {
-    builder.addCase(closeCreateUserModal, (state) => {
-      state.createAgent.isLoading = false;
-    });
-  },
 });
 
 export const {
@@ -150,11 +131,7 @@ export const {
   createAIProviderStarted,
   createAIProviderSuccess,
   createAIProviderFailed,
-  createAIAgentStarted,
-  createAIAgentSuccess,
-  createAIAgentFailed,
-  uploadAIAgentAvatarStarted,
-  uploadAIAgentAvatarFinished,
+  aiAgentsSortingChanged,
   loadAIAgentsStarted,
   loadAIAgentsSuccess,
   loadAIAgentsFailed,

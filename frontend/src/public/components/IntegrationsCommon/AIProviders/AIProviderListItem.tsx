@@ -1,22 +1,17 @@
-import * as React from 'react';
-import { useCallback } from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 
-import { Button } from '../../UI/Buttons/Button';
-import { Tooltip } from '../../UI/Tooltip';
-import { TokenListItem } from '../TokenList';
+import { TokenListItem } from '../TokenListItem';
 import type { IAIProviderListItemProps } from './types';
 
-import styles from './AIProviders.css';
-
-export const AIProviderListItem = React.memo(({ provider, onDelete }: IAIProviderListItemProps) => {
+export function AIProviderListItem({ provider, onDelete }: IAIProviderListItemProps) {
   const { formatMessage } = useIntl();
   const isUsed = provider.usage.length > 0;
   const agentNames = provider.usage.map(({ name }) => name).join(', ');
 
-  const handleDelete = useCallback(() => {
+  const handleDelete = () => {
     onDelete(provider.id);
-  }, [provider.id, onDelete]);
+  };
 
   return (
     <TokenListItem
@@ -25,27 +20,15 @@ export const AIProviderListItem = React.memo(({ provider, onDelete }: IAIProvide
       tokenPrefix={provider.apiKeyPrefix}
       meta={isUsed ? formatMessage({ id: 'ai-providers.usage' }, { agents: agentNames }) : undefined}
       data-testid={`ai-provider-${provider.id}`}
-      action={
-        <Tooltip
-          disabled={!isUsed}
-          content={formatMessage({ id: 'ai-providers.delete-disabled-tooltip' }, { agents: agentNames })}
-        >
-          <div data-testid={`delete-ai-provider-guard-${provider.id}`}>
-            <Button
-              type="button"
-              className={styles['providers__delete-btn']}
-              onClick={handleDelete}
-              size="sm"
-              buttonStyle="transparent-black"
-              disabled={isUsed}
-              label={formatMessage({ id: 'ai-providers.delete' })}
-              data-testid={`delete-ai-provider-${provider.id}`}
-            />
-          </div>
-        </Tooltip>
-      }
+      action={{
+        label: formatMessage({ id: 'ai-providers.delete' }),
+        onClick: handleDelete,
+        isDisabled: isUsed,
+        tooltip: isUsed
+          ? formatMessage({ id: 'ai-providers.delete-disabled-tooltip' }, { agents: agentNames })
+          : undefined,
+        'data-testid': `delete-ai-provider-${provider.id}`,
+      }}
     />
   );
-});
-
-AIProviderListItem.displayName = 'AIProviderListItem';
+}

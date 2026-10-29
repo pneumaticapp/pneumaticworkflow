@@ -1,12 +1,13 @@
-import * as React from 'react';
+import React from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
-import { TeamAgent } from '../TeamAgent';
-import { deleteAIAgent, updateAIAgent } from '../../../../redux/ai/slice';
+import { TeamAIAgentCard } from '../TeamAIAgentCard';
+import { cloneAIAgent, deleteAIAgent, updateAIAgent } from '../../../../redux/ai/slice';
 import type { IAIAgent } from '../../../../api/ai/types';
+import { EAIAgentsSorting } from '../../../../redux/ai/types';
 
 interface IDropdownMockProps {
   renderToggle(isOpen: boolean): React.ReactNode;
@@ -62,52 +63,55 @@ const buildAgent = (overrides: Partial<IAIAgent> = {}): IAIAgent => ({
   ...overrides,
 });
 
-describe('TeamAgent', () => {
+describe('TeamAIAgentCard', () => {
   const mockDispatch = jest.fn();
   const t = (id: string) => intlMock.formatMessage({ id });
 
   beforeEach(() => {
     jest.clearAllMocks();
     (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
+    (useSelector as unknown as jest.Mock).mockImplementation((selector) =>
+      selector({ ai: { agents: { isLoading: false, list: [buildAgent()] }, agentsSorting: EAIAgentsSorting.NameAsc } }),
+    );
   });
 
   it('renders the agent with its provider name, model and inactive badge', () => {
-    render(<TeamAgent agent={buildAgent({ isActive: false })} providerName="OpenRouter" />);
+    render(<TeamAIAgentCard agent={buildAgent({ isActive: false })} providerName="OpenRouter" />);
 
     expect(screen.getByRole('article')).toHaveAttribute('data-testid', 'ai-agent-10');
-    expect(screen.getByRole('heading', { level: 3, name: 'Research assistant' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent('Research assistant');
     expect(screen.getByText(/OpenRouter/)).toBeInTheDocument();
     expect(screen.getByText(/openai\/gpt-4o/)).toBeInTheDocument();
-    expect(screen.getByTestId('ai-agent-inactive-10')).toBeInTheDocument();
+    expect(screen.getByText(t('team.ai-agents.inactive'))).toBeInTheDocument();
   });
 
   it('falls back to the unknown provider label', () => {
-    render(<TeamAgent agent={buildAgent()} />);
+    render(<TeamAIAgentCard agent={buildAgent()} />);
 
     expect(screen.getByText(new RegExp(t('team.ai-agents.unknown-provider')))).toBeInTheDocument();
   });
 
   it('toggles isActive from the card', () => {
-    render(<TeamAgent agent={buildAgent({ isActive: true })} providerName="OpenRouter" />);
+    render(<TeamAIAgentCard agent={buildAgent({ isActive: true })} providerName="OpenRouter" />);
 
-    userEvent.click(screen.getByTestId('ai-agent-toggle-10'));
+    userEvent.click(screen.getByTestId('ai-agent-10-toggle'));
 
     expect(mockDispatch).toHaveBeenCalledWith(updateAIAgent({ id: 10, isActive: false }));
   });
 
   it('opens the edit modal from the card dropdown', () => {
-    render(<TeamAgent agent={buildAgent()} providerName="OpenRouter" />);
+    render(<TeamAIAgentCard agent={buildAgent()} providerName="OpenRouter" />);
 
-    userEvent.click(screen.getByTestId('ai-agent-more-10'));
+    userEvent.click(screen.getByTestId('ai-agent-10-more'));
     userEvent.click(screen.getByText(t('team.ai-agents.edit')));
 
     expect(screen.getByTestId('edit-ai-agent-modal')).toHaveAttribute('data-agent-id', '10');
   });
 
   it('deletes the agent through the confirmation modal', async () => {
-    render(<TeamAgent agent={buildAgent()} providerName="OpenRouter" />);
+    render(<TeamAIAgentCard agent={buildAgent()} providerName="OpenRouter" />);
 
-    userEvent.click(screen.getByTestId('ai-agent-more-10'));
+    userEvent.click(screen.getByTestId('ai-agent-10-more'));
     userEvent.click(screen.getByText(t('team.ai-agents.delete')));
     const popup = screen
       .getByRole('heading', { level: 2, name: t('team.ai-agents.delete-modal-title') })
@@ -120,13 +124,34 @@ describe('TeamAgent', () => {
   });
 
   it('closes the delete modal on cancel without dispatching', async () => {
-    render(<TeamAgent agent={buildAgent()} providerName="OpenRouter" />);
+    render(<TeamAIAgentCard agent={buildAgent()} providerName="OpenRouter" />);
 
-    userEvent.click(screen.getByTestId('ai-agent-more-10'));
+    userEvent.click(screen.getByTestId('ai-agent-10-more'));
     userEvent.click(screen.getByText(t('team.ai-agents.delete')));
     userEvent.click(screen.getByRole('button', { name: t('integrations.cancel') }));
 
     await waitFor(() => expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument());
     expect(mockDispatch).not.toHaveBeenCalledWith(deleteAIAgent(10));
+  });
+
+  it('clones the agent right away under a free clone name', () => {
+    render(
+      <TeamAIAgentCard agent={buildAgent({ photo: 'https://files.example.com/a.png' })} providerName="OpenRouter" />,
+    );
+
+    userEvent.click(screen.getByTestId('ai-agent-10-more'));
+    userEvent.click(screen.getByText(t('team.ai-agents.clone')));
+
+    expect(mockDispatch).toHaveBeenCalledWith(
+      cloneAIAgent({
+        name: `Research assistant (${t('team.ai-agents.clone-suffix')})`,
+        providerId: 1,
+        model: 'openai/gpt-4o',
+        systemPrompt: 'You are helpful.',
+        photo: 'https://files.example.com/a.png',
+        isActive: true,
+      }),
+    );
+    expect(screen.queryByTestId('edit-ai-agent-modal')).not.toBeInTheDocument();
   });
 });

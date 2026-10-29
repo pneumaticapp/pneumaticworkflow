@@ -14,7 +14,6 @@ import {
   usersFetchStarted,
   activeUsersCountFetchFinished,
   loadActiveUsersCount,
-  closeCreateUserModal,
   closeDeleteUserModal,
   openDeleteUserModal,
   userListSortingChanged,
@@ -69,6 +68,7 @@ import { getAbsolutePath } from '../../utils/getAbsolutePath';
 import { createUser as createUserApi } from '../../api/createUser';
 import { editTeamUser } from '../../api/editTeamUser';
 import { resendInvite } from '../../api/resendInvite';
+import { submitCreatePerformer } from '../team/utils/submitCreatePerformer';
 
 /**
  * The backend API returns `subordinates_ids` (camelCased to `subordinatesIds`),
@@ -358,9 +358,8 @@ function* startFreeSubscriptionSaga() {
 
 function* createUserSaga({ payload }: PayloadAction<ICreateUserRequest>) {
   try {
-    yield call(createUserApi, payload);
+    yield call(submitCreatePerformer, call(createUserApi, payload));
     NotificationManager.success({ message: 'team.create-user-success-msg' });
-    yield put(closeCreateUserModal());
 
     yield put(teamFetchStarted({}));
     yield put(usersFetchStarted());

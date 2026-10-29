@@ -1,5 +1,10 @@
 import type { IAIAgent, IAIModel, IAIProvider, IAIVendor, TUpdateAIAgentRequest } from '../../api/ai/types';
 
+export enum EAIAgentsSorting {
+  NameAsc = 'ai-agent-name-asc',
+  NameDesc = 'ai-agent-name-desc',
+}
+
 export interface IAIStore {
   providers: {
     isLoading: boolean;
@@ -9,16 +14,11 @@ export interface IAIStore {
     isOpen: boolean;
     isLoading: boolean;
   };
-  createAgent: {
-    isLoading: boolean;
-  };
-  agentAvatarUpload: {
-    isLoading: boolean;
-  };
   agents: {
     isLoading: boolean;
     list: IAIAgent[];
   };
+  agentsSorting: EAIAgentsSorting;
   vendors: {
     isLoading: boolean;
     list: IAIVendor[];
@@ -35,4 +35,5 @@ export type TUpdateAIAgentPayload = { id: number; onSuccess?(): void; onError?()
 export interface IUploadAIAgentAvatarPayload {
   file: File;
   onSuccess(url: string): void;
+  onSettled(): void;
 }

@@ -4,6 +4,9 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  font-weight: bold;
+  color: var(--pneumatic-color-white);
+  text-transform: uppercase;
   border-radius: 50%;
 
   img {
@@ -12,20 +15,19 @@
     object-fit: cover;
   }
 
+  &_empty {
+    background-color: var(--pneumatic-color-black8);
+  }
+
   &_md {
-    width: 4.8rem;
-    height: 4.8rem;
-    font-size: 1.6rem;
-    font-weight: bold;
-    color: var(--pneumatic-color-black48);
-    background: var(--pneumatic-color-black8);
+    width: 4rem;
+    height: 4rem;
+    font-size: 1.5rem;
   }
 
   &_lg {
     width: 6.4rem;
     height: 6.4rem;
-    color: var(--pneumatic-color-black72);
-    background-color: var(--pneumatic-color-black16);
 
     @mixin text-base bold;
   }

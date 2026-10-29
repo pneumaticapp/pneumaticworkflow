@@ -31,7 +31,7 @@
   font-size: 1.5rem;
   line-height: 2rem;
   color: var(--pneumatic-color-black100);
-  resize: vertical;
+  resize: none;
   outline: none;
   border: 0.1rem solid var(--pneumatic-color-black16);
   border-radius: 0.8rem;

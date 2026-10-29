@@ -1,59 +1,54 @@
 import { generateAgentAvatar } from '../utils/generateAgentAvatar';
 
 describe('generateAgentAvatar', () => {
-  const gradient = { addColorStop: jest.fn() };
-  const context = {
-    fillStyle: '' as unknown,
-    globalAlpha: 1,
-    filter: '',
-    createLinearGradient: jest.fn(() => gradient),
-    fillRect: jest.fn(),
-    beginPath: jest.fn(),
-    arc: jest.fn(),
-    fill: jest.fn(),
-  };
+  const context = { fillStyle: '', fillRect: jest.fn(), drawImage: jest.fn() };
+  const OriginalImage = window.Image;
+  let loadedSources: string[];
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    loadedSources = [];
     jest
       .spyOn(HTMLCanvasElement.prototype, 'getContext')
       .mockReturnValue(context as unknown as CanvasRenderingContext2D);
     jest.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation((callback: BlobCallback) => {
       callback(new Blob(['png'], { type: 'image/png' }));
     });
+    window.Image = jest.fn(() => {
+      const image = {} as HTMLImageElement;
+      Object.defineProperty(image, 'src', {
+        set: (src: string) => {
+          loadedSources.push(src);
+          image.onload?.(new Event('load'));
+        },
+      });
+      return image;
+    }) as unknown as typeof Image;
   });
 
   afterEach(() => {
+    window.Image = OriginalImage;
     jest.restoreAllMocks();
   });
 
-  it('draws a gradient with blurred spots and returns a png file', async () => {
-    jest.spyOn(Math, 'random').mockReturnValue(0.5);
+  it('draws the DiceBear face for the seed and returns a png file', async () => {
+    const file = await generateAgentAvatar('agent-seed');
 
-    const file = await generateAgentAvatar();
-
-    expect(gradient.addColorStop).toHaveBeenNthCalledWith(1, 0, 'hsl(180, 75%, 62%)');
-    expect(gradient.addColorStop).toHaveBeenNthCalledWith(2, 1, 'hsl(240, 75%, 62%)');
+    expect(decodeURIComponent(loadedSources[0])).toContain('data-seed="agent-seed"');
     expect(context.fillRect).toHaveBeenCalledWith(0, 0, 256, 256);
-    expect(context.fill).toHaveBeenCalledTimes(3);
-    expect(context.filter).toBe('blur(25.6px)');
-    expect(file).toBeInstanceOf(File);
+    expect(context.drawImage).toHaveBeenCalledWith(expect.anything(), 0, 0, 256, 256);
     expect(file?.name).toBe('ai-agent-avatar.png');
     expect(file?.type).toBe('image/png');
   });
 
-  it('uses a new palette on every call', async () => {
-    jest.spyOn(Math, 'random').mockReturnValueOnce(0.1).mockReturnValue(0.5);
+  it('uses a new random seed on every call', async () => {
     await generateAgentAvatar();
-    jest.spyOn(Math, 'random').mockReturnValueOnce(0.9).mockReturnValue(0.5);
     await generateAgentAvatar();
 
-    expect(gradient.addColorStop).toHaveBeenNthCalledWith(1, 0, 'hsl(36, 75%, 62%)');
-    expect(gradient.addColorStop).toHaveBeenNthCalledWith(3, 0, 'hsl(324, 75%, 62%)');
+    expect(loadedSources[0]).not.toBe(loadedSources[1]);
   });
 
-  it('returns null when the canvas is not available', async () => {
-    jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
+  it('returns null without a canvas context', async () => {
+    (HTMLCanvasElement.prototype.getContext as jest.Mock).mockReturnValue(null);
 
     await expect(generateAgentAvatar()).resolves.toBeNull();
   });

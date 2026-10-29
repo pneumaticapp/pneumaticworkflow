@@ -1,9 +1,8 @@
-import * as React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import classnames from 'classnames';
 import { Formik } from 'formik';
 import { useIntl } from 'react-intl';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { ModalBody, ModalFooter } from '../../UI/BaseModal';
 import { FormikInputField } from '../../UI/Fields/InputField';
@@ -15,8 +14,9 @@ import { copyToClipboard } from '../../../utils/helpers';
 import { createPassword } from '../../../utils/createPassword';
 import { NotificationManager } from '../../UI/Notifications';
 import { createUser } from '../../../redux/accounts/slice';
+import { getTeamCreatePerformerModalIsSubmitting } from '../../../redux/selectors/team';
 
-import type { ICreateUserFormProps, ICreateUserFormValues, IStatusOption } from './types';
+import type { ICreatePerformerTabProps, ICreateUserFormValues, IStatusOption } from './types';
 import { EUserRole } from './types';
 
 import modalStyles from '../PerformerModal.css';
@@ -33,9 +33,10 @@ const formatStatusOption = (
   return label;
 };
 
-export function CreateUserForm({ isVisible }: ICreateUserFormProps) {
+export function CreateUserTab({ isVisible }: ICreatePerformerTabProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
+  const isSubmitting = useSelector(getTeamCreatePerformerModalIsSubmitting);
 
   const statusOptions: IStatusOption[] = [
     { label: formatMessage({ id: 'team.create-user-modal.status-admin' }), value: EUserRole.Admin },
@@ -50,16 +51,16 @@ export function CreateUserForm({ isVisible }: ICreateUserFormProps) {
     password: createPassword(),
   }));
 
-  const handleSubmit = (values: ICreateUserFormValues) => {
-    const { role, ...userData } = values;
-    dispatch(createUser({ ...userData, isAdmin: role === EUserRole.Admin }));
-  };
-
   const validateForm = (values: ICreateUserFormValues) =>
     getErrorsObject(values, {
       email: validateEmail,
       password: validateRegistrationPassword,
     });
+
+  const handleSubmit = (values: ICreateUserFormValues) => {
+    const { role, ...userData } = values;
+    dispatch(createUser({ ...userData, isAdmin: role === EUserRole.Admin }));
+  };
 
   const handleCopyPassword = (password: string) => {
     copyToClipboard(password);
@@ -67,7 +68,12 @@ export function CreateUserForm({ isVisible }: ICreateUserFormProps) {
   };
 
   return (
-    <Formik initialValues={initialValues} onSubmit={handleSubmit} validate={validateForm}>
+    <Formik
+      initialValues={initialValues}
+      initialErrors={validateForm(initialValues)}
+      validate={validateForm}
+      onSubmit={handleSubmit}
+    >
       {({ values, handleSubmit: formikSubmit, isValid, dirty }) => {
         if (!isVisible) return null;
 
@@ -137,7 +143,8 @@ export function CreateUserForm({ isVisible }: ICreateUserFormProps) {
                 type="submit"
                 label={formatMessage({ id: 'team.create-user-modal.submit' })}
                 buttonStyle="yellow"
-                disabled={!isValid || !dirty}
+                disabled={!isValid || !dirty || isSubmitting}
+                isLoading={isSubmitting}
               />
             </ModalFooter>
           </form>

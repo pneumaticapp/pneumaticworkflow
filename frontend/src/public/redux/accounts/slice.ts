@@ -42,7 +42,6 @@ const initialState: IAccounts = {
   },
   userListSorting: EUserListSorting.NameAsc,
   deleteUserModal: initialDeleteModal,
-  isCreateUserModalOpen: false,
 };
 
 function setUserProperties(users: TUserListItem[], userId: number, changedProps: Partial<TUserListItem>) {
@@ -217,14 +216,6 @@ const accountsSlice = createSlice({
       state.isLoading = true;
     },
 
-    openCreateUserModal: (state) => {
-      state.isCreateUserModalOpen = true;
-    },
-
-    closeCreateUserModal: (state) => {
-      state.isCreateUserModalOpen = false;
-    },
-
     upsertUserFromWs: (state, action: PayloadAction<TUserListItem>) => {
       const user = action.payload;
       const hasLocalUsers = Boolean(state.users.length || state.team.list.length);
@@ -300,8 +291,6 @@ export const {
   setDeleteUserModalState,
   setWorkflowsCount,
   setIsLoading,
-  openCreateUserModal,
-  closeCreateUserModal,
   changeUserManager,
   changeUserReports,
   upsertUserFromWs,

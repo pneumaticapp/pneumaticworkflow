@@ -1,41 +1,38 @@
+import { Avatar, Style } from '@dicebear/core';
+import lorelei from '@dicebear/styles/lorelei.json';
+
+import { createUniqueId } from '../../../../utils/createId';
+
 const AVATAR_SIZE = 256;
-const SPOTS_COUNT = 3;
+const BACKGROUND_COLOR_VARIABLE = '--pneumatic-color-beige';
 
-const getRandom = (min: number, max: number) => min + Math.random() * (max - min);
-const getColor = (hue: number) => `hsl(${Math.round(hue) % 360}, 75%, 62%)`;
+const loreleiStyle = new Style(lorelei);
 
-export async function generateAgentAvatar(): Promise<File | null> {
+const loadImage = (src: string) =>
+  new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = src;
+  });
+
+// The file service stores SVG as an opaque binary (XSS guard), so the avatar is uploaded as PNG.
+export const generateAgentAvatar = async (seed = createUniqueId('ai-agent-xxxxxxxx')): Promise<File | null> => {
   const canvas = document.createElement('canvas');
   canvas.width = AVATAR_SIZE;
   canvas.height = AVATAR_SIZE;
   const context = canvas.getContext('2d');
   if (!context) return null;
 
-  const hue = getRandom(0, 360);
-  const gradient = context.createLinearGradient(0, 0, AVATAR_SIZE, AVATAR_SIZE);
-  gradient.addColorStop(0, getColor(hue));
-  gradient.addColorStop(1, getColor(hue + 60));
-  context.fillStyle = gradient;
-  context.fillRect(0, 0, AVATAR_SIZE, AVATAR_SIZE);
+  const image = await loadImage(new Avatar(loreleiStyle, { seed, size: AVATAR_SIZE }).toDataUri());
 
-  context.globalAlpha = 0.6;
-  context.filter = `blur(${AVATAR_SIZE / 10}px)`;
-  Array.from({ length: SPOTS_COUNT }).forEach(() => {
-    context.fillStyle = getColor(hue + 360 + getRandom(-90, 90));
-    context.beginPath();
-    context.arc(
-      getRandom(0, AVATAR_SIZE),
-      getRandom(0, AVATAR_SIZE),
-      getRandom(0.2, 0.5) * AVATAR_SIZE,
-      0,
-      Math.PI * 2,
-    );
-    context.fill();
-  });
+  context.fillStyle = getComputedStyle(document.documentElement).getPropertyValue(BACKGROUND_COLOR_VARIABLE).trim();
+  context.fillRect(0, 0, AVATAR_SIZE, AVATAR_SIZE);
+  context.drawImage(image, 0, 0, AVATAR_SIZE, AVATAR_SIZE);
 
   const blob = await new Promise<Blob | null>((resolve) => {
     canvas.toBlob(resolve, 'image/png');
   });
 
   return blob ? new File([blob], 'ai-agent-avatar.png', { type: 'image/png' }) : null;
-}
+};

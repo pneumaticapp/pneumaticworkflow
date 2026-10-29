@@ -1,5 +1,4 @@
-import * as React from 'react';
-import type { ChangeEvent } from 'react';
+import React, { useState, type ChangeEvent } from 'react';
 import { useFormikContext } from 'formik';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
@@ -11,7 +10,6 @@ import { FormikTextareaField } from '../../../UI/Fields/TextareaField';
 import { ModalBody, ModalFooter } from '../../../UI/BaseModal';
 import { uploadAIAgentAvatar } from '../../../../redux/ai/slice';
 import {
-  getAIAgentAvatarUploadIsLoading,
   getAIProviderModelsIsLoading,
   getAIProviderModelsList,
   getAIProviderModelsProviderId,
@@ -31,12 +29,12 @@ const filterModelOption = (option: { label: string; value: string }, input: stri
 export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFieldsProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const isAvatarUploading = useSelector(getAIAgentAvatarUploadIsLoading);
   const providers = useSelector(getAIProvidersList);
   const models = useSelector(getAIProviderModelsList);
   const isModelsLoading = useSelector(getAIProviderModelsIsLoading);
   const modelsProviderId = useSelector(getAIProviderModelsProviderId);
   const { dirty, handleSubmit, isValid, setFieldValue, values } = useFormikContext<IAIAgentFormValues>();
+  const [isAvatarUploading, setIsAvatarUploading] = useState(false);
   useProviderModelsSync();
 
   const providerOptions = providers.map((provider) => ({
@@ -44,8 +42,17 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
     value: String(provider.id),
   }));
 
+  const handleAvatarUploaded = (url: string) => {
+    setFieldValue('photo', url);
+  };
+
+  const handleAvatarUploadSettled = () => {
+    setIsAvatarUploading(false);
+  };
+
   const uploadAvatar = (file: File) => {
-    dispatch(uploadAIAgentAvatar({ file, onSuccess: (url) => setFieldValue('photo', url) }));
+    setIsAvatarUploading(true);
+    dispatch(uploadAIAgentAvatar({ file, onSuccess: handleAvatarUploaded, onSettled: handleAvatarUploadSettled }));
   };
 
   const handleAvatarUpload = (event: ChangeEvent<HTMLInputElement>) => {
@@ -121,7 +128,7 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
             name="systemPrompt"
             title={formatMessage({ id: 'team.create-ai-agent-modal.system-prompt' })}
             isRequired
-            rows={5}
+            className={styles['ai-agent-form__prompt']}
           />
         </div>
       </ModalBody>

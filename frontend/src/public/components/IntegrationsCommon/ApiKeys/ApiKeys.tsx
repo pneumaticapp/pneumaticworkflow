@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -9,12 +8,14 @@ import { NotificationManager } from '../../UI/Notifications';
 import { loadApiKeys, createApiKey, deleteApiKey, clearNewlyCreatedKey } from '../../../redux/actions';
 import { getApiKeys, getApiKeysIsLoading, getApiKeysNewlyCreatedKey } from '../../../redux/selectors/integrations';
 
-import { TokenListSkeleton } from '../TokenList';
+import { TokenListItemSkeleton } from '../TokenListItem';
 import { ApiKeyListItem } from './ApiKeyListItem';
-import { CreateApiKeyModal, NewApiKeyModal, RevokeApiKeyModal } from './ApiKeyModals';
+import { CreateApiKeyModal } from './CreateApiKeyModal';
+import { NewApiKeyModal } from './NewApiKeyModal';
+import { RevokeApiKeyModal } from './RevokeApiKeyModal';
 
 import sectionStyles from '../IntegrationsCommon.css';
-import tokenListStyles from '../TokenList/TokenList.css';
+import tokenListStyles from '../TokenListItem/TokenListItem.css';
 
 export function ApiKeys() {
   const { formatMessage } = useIntl();
@@ -35,46 +36,39 @@ export function ApiKeys() {
     };
   }, [dispatch]);
 
-  const handleCreate = useCallback(
-    (name: string) => {
-      dispatch(createApiKey({ name: name || undefined }));
-      setIsCreateModalOpen(false);
-    },
-    [dispatch],
-  );
+  const handleCreate = (name: string) => {
+    dispatch(createApiKey({ name: name || undefined }));
+    setIsCreateModalOpen(false);
+  };
 
-  const handleDelete = useCallback(() => {
+  const handleDelete = () => {
     if (confirmDeleteId !== null) {
       dispatch(deleteApiKey({ id: confirmDeleteId }));
     }
-  }, [confirmDeleteId, dispatch]);
+  };
 
-  const handleConfirmDeleteStart = useCallback((id: number) => {
-    setConfirmDeleteId(id);
-  }, []);
-
-  const handleConfirmDeleteCancel = useCallback(() => {
+  const handleConfirmDeleteCancel = () => {
     setConfirmDeleteId(null);
-  }, []);
+  };
 
-  const handleCloseNewKeyModal = useCallback(() => {
+  const handleCloseNewKeyModal = () => {
     dispatch(clearNewlyCreatedKey());
-  }, [dispatch]);
+  };
 
-  const handleOpenCreateModal = useCallback(() => {
+  const handleOpenCreateModal = () => {
     setIsCreateModalOpen(true);
-  }, []);
+  };
 
-  const handleCloseCreateModal = useCallback(() => {
+  const handleCloseCreateModal = () => {
     setIsCreateModalOpen(false);
-  }, []);
+  };
 
-  const handleCopyNewlyCreatedKey = useCallback(() => {
+  const handleCopyNewlyCreatedKey = () => {
     if (newlyCreatedKey) {
       copyToClipboard(newlyCreatedKey);
       NotificationManager.success({ message: 'integrations.api-key-copied' });
     }
-  }, [newlyCreatedKey]);
+  };
 
   return (
     <>
@@ -94,7 +88,7 @@ export function ApiKeys() {
           />
         </header>
 
-        {isLoading && <TokenListSkeleton data-testid="api-keys-skeleton" />}
+        {isLoading && <TokenListItemSkeleton data-testid="api-keys-skeleton" />}
 
         {!isLoading && apiKeys.length === 0 && (
           <p className={sectionStyles['section__empty']} data-testid="empty-keys-message">
@@ -105,7 +99,7 @@ export function ApiKeys() {
         {!isLoading && apiKeys.length > 0 && (
           <ul className={tokenListStyles['token-list']} data-testid="api-keys-list">
             {apiKeys.map((key) => (
-              <ApiKeyListItem key={key.id} apiKey={key} onRevoke={handleConfirmDeleteStart} />
+              <ApiKeyListItem key={key.id} apiKey={key} onRevoke={setConfirmDeleteId} />
             ))}
           </ul>
         )}
