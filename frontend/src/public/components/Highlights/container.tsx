@@ -10,17 +10,16 @@ import { HighlightsFeed } from './HighlightsFeed';
 import { THighlightsQuerySyncProps } from './types';
 import { parseDateQueryParam, serializeDateQueryParam } from './utils/dateQueryParam';
 import { getTodayDateRange } from './utils/highlightsDateRange';
+import { parseIdsQueryParam, parseTimeRangeQueryParam } from './utils/highlightsQueryParams';
 
 const EMPTY_ACTION: AnyAction = { type: 'EMPTY_ACTION' };
-
-const parseIdsQueryParam = (query: string): number[] => query.split(',').map(Number);
 
 const SyncedHighlightsFeed = withSyncedQueryString<THighlightsQuerySyncProps>([
   {
     propName: 'timeRange',
     queryParamName: 'time-range',
     defaultAction: setHighlightsFilters({ timeRange: EHighlightsDateFilter.Today }),
-    createAction: (timeRange: EHighlightsDateFilter) => setHighlightsFilters({ timeRange }),
+    createAction: (query) => setHighlightsFilters({ timeRange: parseTimeRangeQueryParam(query) }),
     getQueryParamByProp: (value) => value,
   },
   {
