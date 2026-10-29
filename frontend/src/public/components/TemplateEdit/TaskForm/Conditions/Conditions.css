@@ -137,6 +137,13 @@
   background: var(--pneumatic-color-black4);
 }
 
+:global(.react-select) .select,
+:global(.react-select) .select-logic-operation {
+  @media (--mobile) {
+    width: auto;
+  }
+}
+
 .text-field {
   width: 100%;
   margin: 0;
