@@ -1,8 +1,7 @@
 import { createSelector } from 'reselect';
 
 import type { IApplicationState } from '../../types/redux';
-import type { IAIAgent } from '../../api/ai/types';
-import { EAIAgentsSorting } from '../ai/types';
+import { aiAgentsComparators } from '../ai/utils/aiAgentsComparators';
 
 export const getAIProvidersList = (state: IApplicationState) => state.ai.providers.list;
 
@@ -18,13 +17,8 @@ export const getAIAgentsIsLoading = (state: IApplicationState) => state.ai.agent
 
 export const getAIAgentsSorting = (state: IApplicationState) => state.ai.agentsSorting;
 
-const agentsComparators: Record<EAIAgentsSorting, (first: IAIAgent, second: IAIAgent) => number> = {
-  [EAIAgentsSorting.NameAsc]: (first, second) => first.name.localeCompare(second.name),
-  [EAIAgentsSorting.NameDesc]: (first, second) => second.name.localeCompare(first.name),
-};
-
 export const getAIAgentsSorted = createSelector(getAIAgentsList, getAIAgentsSorting, (list, sorting) =>
-  list.slice().sort(agentsComparators[sorting]),
+  list.slice().sort(aiAgentsComparators[sorting]),
 );
 
 export const getAIVendorsList = (state: IApplicationState) => state.ai.vendors.list;
