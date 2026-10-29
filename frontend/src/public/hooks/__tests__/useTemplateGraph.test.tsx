@@ -1,0 +1,300 @@
+import * as React from 'react';
+import { useEffect } from 'react';
+import { act, render, waitFor } from '@testing-library/react';
+import { Node } from 'reactflow';
+
+import { GRAPH_SHOWCASE_TEMPLATE } from '../../components/TemplateEdit/TemplateGraphEditor/fixtures/graphShowcaseTemplate';
+import { ITemplateClient } from '../../types/template';
+import {
+  GRAPH_JUNCTION_SIZE,
+  GRAPH_NODE_WIDTH,
+} from '../../components/TemplateEdit/TemplateGraphEditor/utils/graphGeometry';
+import {
+  getGraphNodePositions,
+  saveGraphNodePosition,
+} from '../../components/TemplateEdit/TemplateGraphEditor/utils/graphPositionsStorage';
+import { useTemplateGraph } from '../useTemplateGraph';
+
+type TTemplateGraphResult = ReturnType<typeof useTemplateGraph>;
+
+interface IHookHarnessProps {
+  template?: ITemplateClient;
+  onChange: (graph: TTemplateGraphResult) => void;
+}
+
+const SAVED_TEMPLATE: ITemplateClient = { ...GRAPH_SHOWCASE_TEMPLATE, id: 42 };
+
+const HookHarness = ({ template = SAVED_TEMPLATE, onChange }: IHookHarnessProps) => {
+  const graph = useTemplateGraph(template);
+
+  useEffect(() => {
+    onChange(graph);
+  }, [graph, onChange]);
+
+  return null;
+};
+
+describe('useTemplateGraph', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('should persist a moved card and update the graph state', async () => {
+    let currentGraph: TTemplateGraphResult | undefined;
+    const handleChange = jest.fn((graph: TTemplateGraphResult) => {
+      currentGraph = graph;
+    });
+
+    render(<HookHarness onChange={handleChange} />);
+
+    await waitFor(() => {
+      expect(currentGraph?.nodes.length).toBeGreaterThan(0);
+    });
+
+    const taskNode = currentGraph!.nodes.find((node) => node.id === 'task-linear');
+    const nextPosition = { x: 900, y: 450 };
+
+    expect(taskNode).toBeDefined();
+
+    act(() => {
+      currentGraph!.onNodeDragStop(
+        {} as React.MouseEvent<Element>,
+        { ...taskNode!, position: nextPosition } as Node,
+        [],
+      );
+    });
+
+    await waitFor(() => {
+      expect(currentGraph?.nodes.find((node) => node.id === 'task-linear')?.position).toEqual(nextPosition);
+    });
+
+    expect(getGraphNodePositions(42)['task-linear']).toEqual(nextPosition);
+  });
+
+  it('should realign junctions and edges while a card is dragged without saving', async () => {
+    let currentGraph: TTemplateGraphResult | undefined;
+    const handleChange = jest.fn((graph: TTemplateGraphResult) => {
+      currentGraph = graph;
+    });
+
+    render(<HookHarness onChange={handleChange} />);
+
+    await waitFor(() => {
+      expect(currentGraph?.nodes.some((node) => node.id === 'junction-fork-task-url-title')).toBe(true);
+    });
+
+    const taskNode = currentGraph!.nodes.find((node) => node.id === 'task-url-title');
+    const nextPosition = { x: (taskNode?.position.x ?? 0) + 200, y: taskNode?.position.y ?? 0 };
+
+    expect(taskNode).toBeDefined();
+
+    act(() => {
+      currentGraph!.onNodesChange([{ id: 'task-url-title', type: 'position', dragging: true, position: nextPosition }]);
+    });
+
+    await waitFor(() => {
+      const fork = currentGraph?.nodes.find((node) => node.id === 'junction-fork-task-url-title');
+      expect(fork?.position.x).toBe(nextPosition.x + GRAPH_NODE_WIDTH / 2 - GRAPH_JUNCTION_SIZE / 2);
+    });
+
+    expect(getGraphNodePositions(42)['task-url-title']).toBeUndefined();
+  });
+
+  it('should reroute edge anchors while a card is dragged through onNodesChange', async () => {
+    let currentGraph: TTemplateGraphResult | undefined;
+    const handleChange = jest.fn((graph: TTemplateGraphResult) => {
+      currentGraph = graph;
+    });
+
+    render(<HookHarness onChange={handleChange} />);
+
+    await waitFor(() => {
+      expect(currentGraph?.edges.some((edge) => edge.target === 'task-linear' && edge.data?.targetAnchor)).toBe(true);
+    });
+
+    const first = currentGraph!.nodes.find((node) => node.id === 'task-linear');
+    const inbound = currentGraph!.edges.find((edge) => edge.target === 'task-linear');
+    const nextPosition = { x: (first?.position.x ?? 0) + 280, y: first?.position.y ?? 0 };
+    const previousAnchor = inbound?.data?.targetAnchor;
+
+    expect(first).toBeDefined();
+    expect(previousAnchor).toBeDefined();
+
+    act(() => {
+      currentGraph!.onNodesChange([{ id: 'task-linear', type: 'position', dragging: true, position: nextPosition }]);
+    });
+
+    await waitFor(() => {
+      const moved = currentGraph?.nodes.find((node) => node.id === 'task-linear');
+      const edgeAfter = currentGraph?.edges.find((edge) => edge.id === inbound?.id);
+
+      expect(moved?.position).toEqual(nextPosition);
+      expect(edgeAfter?.data?.targetAnchor?.x).toBe((previousAnchor?.x ?? 0) + 280);
+    });
+  });
+
+  it('should mark the layout as custom after a drag and restore it on reset', async () => {
+    let currentGraph: TTemplateGraphResult | undefined;
+    const handleChange = jest.fn((graph: TTemplateGraphResult) => {
+      currentGraph = graph;
+    });
+
+    render(<HookHarness onChange={handleChange} />);
+
+    await waitFor(() => {
+      expect(currentGraph?.nodes.length).toBeGreaterThan(0);
+    });
+
+    expect(currentGraph?.hasCustomLayout).toBe(false);
+
+    const taskNode = currentGraph!.nodes.find((node) => node.id === 'task-linear');
+    const autoPosition = taskNode!.position;
+
+    act(() => {
+      currentGraph!.onNodeDragStop(
+        {} as React.MouseEvent<Element>,
+        { ...taskNode!, position: { x: 900, y: 450 } } as Node,
+        [],
+      );
+    });
+
+    await waitFor(() => {
+      expect(currentGraph?.hasCustomLayout).toBe(true);
+    });
+
+    act(() => {
+      currentGraph!.resetLayout();
+    });
+
+    await waitFor(() => {
+      expect(currentGraph?.hasCustomLayout).toBe(false);
+      expect(currentGraph?.nodes.find((node) => node.id === 'task-linear')?.position).toEqual(autoPosition);
+    });
+
+    expect(getGraphNodePositions(42)).toEqual({});
+  });
+
+  it('should mark the layout as custom on mount when positions are already stored', async () => {
+    saveGraphNodePosition(42, 'task-linear', { x: 900, y: 450 });
+
+    let currentGraph: TTemplateGraphResult | undefined;
+    const handleChange = jest.fn((graph: TTemplateGraphResult) => {
+      currentGraph = graph;
+    });
+
+    render(<HookHarness onChange={handleChange} />);
+
+    await waitFor(() => {
+      expect(currentGraph?.hasCustomLayout).toBe(true);
+    });
+  });
+
+  it('should keep every card when React Flow reports only the dragged node', async () => {
+    let currentGraph: TTemplateGraphResult | undefined;
+    const handleChange = jest.fn((graph: TTemplateGraphResult) => {
+      currentGraph = graph;
+    });
+
+    render(<HookHarness onChange={handleChange} />);
+
+    await waitFor(() => {
+      expect(currentGraph?.nodes.filter((node) => node.type === 'task').length).toBeGreaterThan(1);
+    });
+
+    const taskCount = currentGraph!.nodes.filter((node) => node.type === 'task').length;
+    const nodeCount = currentGraph!.nodes.length;
+    const taskNode = currentGraph!.nodes.find((node) => node.id === 'task-linear');
+    const nextPosition = { x: 640, y: 280 };
+
+    expect(taskNode).toBeDefined();
+
+    act(() => {
+      currentGraph!.onNodesChange([{ id: 'task-linear', type: 'position', dragging: true, position: nextPosition }]);
+    });
+
+    await waitFor(() => {
+      expect(currentGraph?.nodes.find((node) => node.id === 'task-linear')?.position).toEqual(nextPosition);
+      expect(currentGraph?.nodes).toHaveLength(nodeCount);
+      expect(currentGraph?.nodes.filter((node) => node.type === 'task')).toHaveLength(taskCount);
+    });
+  });
+
+  it('should ignore canvas removals so the graph stays tied to the template', async () => {
+    let currentGraph: TTemplateGraphResult | undefined;
+    const handleChange = jest.fn((graph: TTemplateGraphResult) => {
+      currentGraph = graph;
+    });
+
+    render(<HookHarness onChange={handleChange} />);
+
+    await waitFor(() => {
+      expect(currentGraph?.nodes.length).toBeGreaterThan(0);
+      expect(currentGraph?.edges.length).toBeGreaterThan(0);
+    });
+
+    const nodeCount = currentGraph!.nodes.length;
+    const edgeCount = currentGraph!.edges.length;
+    const nodeId = currentGraph!.nodes[0].id;
+    const edgeId = currentGraph!.edges[0].id;
+
+    act(() => {
+      currentGraph!.onNodesChange([{ id: nodeId, type: 'remove' }]);
+      currentGraph!.onEdgesChange([{ id: edgeId, type: 'remove' }]);
+    });
+
+    expect(currentGraph?.nodes).toHaveLength(nodeCount);
+    expect(currentGraph?.edges).toHaveLength(edgeCount);
+    expect(currentGraph?.nodes.some((node) => node.id === nodeId)).toBe(true);
+    expect(currentGraph?.edges.some((edge) => edge.id === edgeId)).toBe(true);
+  });
+
+  it('should keep a draft layout until the template id arrives', async () => {
+    const draftTemplate: ITemplateClient = { ...GRAPH_SHOWCASE_TEMPLATE };
+    let currentGraph: TTemplateGraphResult | undefined;
+    const handleChange = jest.fn((graph: TTemplateGraphResult) => {
+      currentGraph = graph;
+    });
+
+    const { rerender } = render(<HookHarness template={draftTemplate} onChange={handleChange} />);
+
+    await waitFor(() => {
+      expect(currentGraph?.nodes.some((node) => node.id === 'task-linear')).toBe(true);
+    });
+
+    const nextPosition = { x: 900, y: 450 };
+
+    act(() => {
+      const taskNode = currentGraph!.nodes.find((node) => node.id === 'task-linear');
+
+      currentGraph!.onNodeDragStop(
+        {} as React.MouseEvent<Element>,
+        { ...taskNode!, position: nextPosition } as Node,
+        [],
+      );
+    });
+
+    await waitFor(() => {
+      expect(currentGraph?.hasCustomLayout).toBe(true);
+      expect(currentGraph?.nodes.find((node) => node.id === 'task-linear')?.position).toEqual(nextPosition);
+    });
+
+    expect(getGraphNodePositions()).toEqual({});
+
+    rerender(<HookHarness template={{ ...draftTemplate, name: 'Renamed draft' }} onChange={handleChange} />);
+
+    await waitFor(() => {
+      expect(currentGraph?.nodes.find((node) => node.id === 'task-linear')?.position).toEqual(nextPosition);
+    });
+
+    expect(getGraphNodePositions()).toEqual({});
+
+    rerender(<HookHarness template={{ ...draftTemplate, id: 77, name: 'Renamed draft' }} onChange={handleChange} />);
+
+    await waitFor(() => {
+      expect(currentGraph?.hasCustomLayout).toBe(true);
+      expect(currentGraph?.nodes.find((node) => node.id === 'task-linear')?.position).toEqual(nextPosition);
+    });
+
+    expect(getGraphNodePositions(77)['task-linear']).toEqual(nextPosition);
+  });
+});

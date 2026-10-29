@@ -1,6 +1,6 @@
 # ruff: noqa: PLC0415
 import re
-from typing import Optional, List
+from typing import List, Optional
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -34,6 +34,7 @@ from src.accounts.services.vacation import VacationDelegationService
 from src.analysis.mixins import BaseIdentifyMixin
 from src.analysis.services import AnalyticService
 from src.generics.base.service import BaseModelService
+from src.logs.events import AuditEventService
 from src.notifications.tasks import (
     send_user_created_notification,
     send_user_deleted_notification,
@@ -380,10 +381,18 @@ class UserService(
         with transaction.atomic():
             self._deactivate_subordinates()
             # Remove from personal (vacation substitute) groups
-            VacationDelegationService.clear_substitute_groups(user)
+            VacationDelegationService.clear_substitute_groups(
+                user,
+                request_user=self.user,
+                auth_type=self.auth_type,
+            )
             # Also deactivate own vacation if active
             if user.is_absent:
-                VacationDelegationService(user).deactivate()
+                VacationDelegationService(
+                    user,
+                    request_user=self.user,
+                    auth_type=self.auth_type,
+                ).deactivate()
             remove_user_from_draft(
                 account_id=user.account_id,
                 user_id=user.id,
@@ -420,6 +429,30 @@ class UserService(
                 user_data=UserWebsocketSerializer(old_manager).data,
             )
 
+    def toggle_admin(self):
+
+        """ Flip the admin permission of the user and journal it.
+
+            Granting admin is the privilege escalation the journal
+            exists for, so the write, the record and the notification
+            belong together rather than in whichever view happens to
+            call them.
+        """
+
+        self.instance.is_admin = not self.instance.is_admin
+        self.instance.save(update_fields=['is_admin'])
+        AuditEventService.user_admin_toggled(
+            user=self.user,
+            auth_type=self.auth_type,
+            target=self.instance,
+        )
+        self.identify(self.instance)
+        send_user_updated_notification.delay(
+            logging=self.account.log_api_requests,
+            account_id=self.account.id,
+            user_data=UserWebsocketSerializer(self.instance).data,
+        )
+
     def deactivate(self, skip_validation=False):
 
         """ Deactivate user and call delete actions
@@ -432,6 +465,11 @@ class UserService(
         # Refresh to clear stale prefetch cache (e.g. subordinates)
         # so the WS payload reflects the post-deactivation state.
         self.instance.refresh_from_db()
+        AuditEventService.user_deactivated(
+            user=self.user,
+            auth_type=self.auth_type,
+            target=self.instance,
+        )
         send_user_deleted_notification.delay(
             logging=self.account.log_api_requests,
             account_id=self.account.id,
@@ -615,6 +653,15 @@ class UserService(
             logging=self.account.log_api_requests,
             account_id=self.account.id,
             user_data=ws_data,
+        )
+        AuditEventService.user_updated(
+            user=self.user,
+            auth_type=self.auth_type,
+            target=self.instance,
+            update_kwargs=update_kwargs,
+            user_groups=user_groups,
+            subordinates=subordinates,
+            is_password_set=bool(raw_password),
         )
 
         return self.instance

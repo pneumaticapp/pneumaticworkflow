@@ -29,6 +29,7 @@ from src.authentication.services.user_auth import AuthService
 from src.authentication.tokens import PneumaticToken
 from src.authentication.views.mixins import SignUpMixin
 from src.generics.mixins.services import CacheMixin, EncryptionMixin
+from src.logs.events import AuditEventService
 
 UserModel = get_user_model()
 
@@ -277,8 +278,10 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
             email=user_data['email'],
         )
         user = users.active().first()
+        is_returning = bool(user)
         if not user:
             invited_user = users.invited().first()
+            is_returning = bool(invited_user)
             if invited_user:
                 user = self._activate_invited_user(invited_user, user_data)
             elif users.inactive().exists():
@@ -297,6 +300,11 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
             auth_type=AuthTokenType.USER,
             source=self.source,
         )
+        if is_returning:
+            AuditEventService.user_logged_in(
+                user=user,
+                source=self.source,
+            )
         return user, token
 
     def _activate_invited_user(

@@ -80,6 +80,7 @@
     "react-table": "^7.8.0",
     "react-textarea-autosize": "^8.2.0",
     "react-transition-group": "^4.4.5",
+    "reactflow": "^11.11.4",
     "reactstrap": "^8.10.1",
     "redux": "^4.0.4",
     "redux-persist": "^6.0.0",
