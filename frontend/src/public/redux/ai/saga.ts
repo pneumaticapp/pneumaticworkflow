@@ -1,4 +1,4 @@
-import { all, call, cancel, fork, put, takeEvery, takeLatest } from 'redux-saga/effects';
+import { all, call, cancel, cancelled, fork, put, takeEvery, takeLatest } from 'redux-saga/effects';
 import type { Task } from 'redux-saga';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
@@ -242,7 +242,7 @@ export function* uploadAIAgentAvatarSaga(
 ) {
   if (!uploadAIAgentAvatar.match(action)) return;
 
-  const { file, onSuccess } = action.payload;
+  const { file, onSuccess, onSettled } = action.payload;
   try {
     const [uploaded]: TUploadedFile[] = yield call(uploadUserAvatar, file);
     if (uploaded?.url && !uploaded.error) {
@@ -251,6 +251,9 @@ export function* uploadAIAgentAvatarSaga(
   } catch (error) {
     NotificationManager.warning({ message: 'file-service.upload-failed' });
     logger.error('failed to upload AI agent avatar', error);
+  } finally {
+    const isCancelled: boolean = yield cancelled();
+    if (!isCancelled) onSettled();
   }
 }
 

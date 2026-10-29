@@ -1,4 +1,4 @@
-import React, { type ChangeEvent } from 'react';
+import React, { useState, type ChangeEvent } from 'react';
 import { useFormikContext } from 'formik';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
@@ -34,6 +34,7 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
   const isModelsLoading = useSelector(getAIProviderModelsIsLoading);
   const modelsProviderId = useSelector(getAIProviderModelsProviderId);
   const { dirty, handleSubmit, isValid, setFieldValue, values } = useFormikContext<IAIAgentFormValues>();
+  const [isAvatarUploading, setIsAvatarUploading] = useState(false);
   useProviderModelsSync();
 
   const providerOptions = providers.map((provider) => ({
@@ -41,8 +42,17 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
     value: String(provider.id),
   }));
 
+  const handleAvatarUploaded = (url: string) => {
+    setFieldValue('photo', url);
+  };
+
+  const handleAvatarUploadSettled = () => {
+    setIsAvatarUploading(false);
+  };
+
   const uploadAvatar = (file: File) => {
-    dispatch(uploadAIAgentAvatar({ file, onSuccess: (url) => setFieldValue('photo', url) }));
+    setIsAvatarUploading(true);
+    dispatch(uploadAIAgentAvatar({ file, onSuccess: handleAvatarUploaded, onSettled: handleAvatarUploadSettled }));
   };
 
   const handleAvatarUpload = (event: ChangeEvent<HTMLInputElement>) => {
@@ -128,7 +138,7 @@ export function AIAgentFormFields({ isSubmitting, submitLabel }: IAIAgentFormFie
           type="submit"
           label={submitLabel}
           buttonStyle="yellow"
-          disabled={!dirty || !isValid || isSubmitting}
+          disabled={!dirty || !isValid || isSubmitting || isAvatarUploading}
           isLoading={isSubmitting}
         />
       </ModalFooter>

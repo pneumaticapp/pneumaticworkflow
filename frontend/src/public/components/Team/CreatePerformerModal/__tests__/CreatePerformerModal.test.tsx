@@ -326,14 +326,17 @@ describe('CreatePerformerModal', () => {
       );
     });
 
-    it('submits the uploaded avatar url', async () => {
+    it('blocks submit while the avatar uploads and submits the uploaded url', async () => {
       render(<CreatePerformerModal />);
       await openAIAgentTab();
       await fillAgentForm();
       await uploadAvatar();
 
+      expect(getAgentSubmitButton()).toBeDisabled();
+
       await act(async () => {
         getAvatarUploadAction().payload.onSuccess('https://files.example.com/avatar.png');
+        getAvatarUploadAction().payload.onSettled();
       });
 
       await waitFor(() => expect(getAgentSubmitButton()).toBeEnabled());
@@ -346,6 +349,20 @@ describe('CreatePerformerModal', () => {
           }),
         ),
       );
+    });
+
+    it('unblocks submit when the avatar upload fails', async () => {
+      render(<CreatePerformerModal />);
+      await openAIAgentTab();
+      await fillAgentForm();
+      await uploadAvatar();
+      expect(getAgentSubmitButton()).toBeDisabled();
+
+      await act(async () => {
+        getAvatarUploadAction().payload.onSettled();
+      });
+
+      await waitFor(() => expect(getAgentSubmitButton()).toBeEnabled());
     });
 
     it('uploads a generated avatar on Generate', async () => {

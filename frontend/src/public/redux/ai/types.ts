@@ -35,4 +35,5 @@ export type TUpdateAIAgentPayload = { id: number; onSuccess?(): void; onError?()
 export interface IUploadAIAgentAvatarPayload {
   file: File;
   onSuccess(url: string): void;
+  onSettled(): void;
 }

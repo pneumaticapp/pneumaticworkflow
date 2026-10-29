@@ -199,27 +199,38 @@ describe('AI agent avatar upload saga', () => {
     const channel = startWatcher();
     const onOld = jest.fn();
     const onNew = jest.fn();
+    const onOldSettled = jest.fn();
+    const onNewSettled = jest.fn();
 
-    channel.put(uploadAIAgentAvatar({ file: buildFile('old.png'), onSuccess: onOld }));
-    channel.put(uploadAIAgentAvatar({ file: buildFile('new.png'), onSuccess: onNew }));
+    channel.put(uploadAIAgentAvatar({ file: buildFile('old.png'), onSuccess: onOld, onSettled: onOldSettled }));
+    channel.put(uploadAIAgentAvatar({ file: buildFile('new.png'), onSuccess: onNew, onSettled: onNewSettled }));
     pendingUploads[0]([{ id: 'old', url: 'https://files.example.com/old.png', size: 1 }]);
+    await flush();
+
+    expect(onOldSettled).not.toHaveBeenCalled();
+    expect(onNewSettled).not.toHaveBeenCalled();
+
     pendingUploads[1]([{ id: 'new', url: 'https://files.example.com/new.png', size: 1 }]);
     await flush();
 
     expect(onOld).not.toHaveBeenCalled();
     expect(onNew).toHaveBeenCalledWith('https://files.example.com/new.png');
+    expect(onNewSettled).toHaveBeenCalledTimes(1);
   });
 
   it('drops a pending upload after cancellation', async () => {
     const channel = startWatcher();
     const onSuccess = jest.fn();
 
-    channel.put(uploadAIAgentAvatar({ file: buildFile('old.png'), onSuccess }));
+    const onSettled = jest.fn();
+
+    channel.put(uploadAIAgentAvatar({ file: buildFile('old.png'), onSuccess, onSettled }));
     channel.put(cancelAIAgentAvatarUpload());
     pendingUploads[0]([{ id: 'old', url: 'https://files.example.com/old.png', size: 1 }]);
     await flush();
 
     expect(onSuccess).not.toHaveBeenCalled();
+    expect(onSettled).not.toHaveBeenCalled();
   });
 
   it('warns and finishes when the upload fails', async () => {
@@ -227,10 +238,13 @@ describe('AI agent avatar upload saga', () => {
     const channel = startWatcher();
     const onSuccess = jest.fn();
 
-    channel.put(uploadAIAgentAvatar({ file: buildFile('avatar.png'), onSuccess }));
+    const onSettled = jest.fn();
+
+    channel.put(uploadAIAgentAvatar({ file: buildFile('avatar.png'), onSuccess, onSettled }));
     await flush();
 
     expect(onSuccess).not.toHaveBeenCalled();
+    expect(onSettled).toHaveBeenCalledTimes(1);
     expect(NotificationManager.warning).toHaveBeenCalledWith({ message: 'file-service.upload-failed' });
   });
 
@@ -238,7 +252,7 @@ describe('AI agent avatar upload saga', () => {
     const channel = startWatcher();
     const onSuccess = jest.fn();
 
-    channel.put(uploadAIAgentAvatar({ file: buildFile('big.png'), onSuccess }));
+    channel.put(uploadAIAgentAvatar({ file: buildFile('big.png'), onSuccess, onSettled: jest.fn() }));
     pendingUploads[0]([{ id: 'big', url: '', size: 1, error: 'Max file size exceeded' }]);
     await flush();
 
