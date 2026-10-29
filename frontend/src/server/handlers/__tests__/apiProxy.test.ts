@@ -76,8 +76,6 @@ function createMockResponse(): IMockResponseContext {
   };
 }
 
-const targetUrl = 'https://dev.pneumatic.app/auth/token/obtain';
-
 describe('handlers', () => {
   describe('apiProxy', () => {
     const mockMiddleware = jest.fn();
@@ -86,7 +84,9 @@ describe('handlers', () => {
       jest.clearAllMocks();
       createProxyMiddleware.mockReturnValue(mockMiddleware);
       parseCookies.mockReturnValue({});
-      jest.spyOn(serverApi, 'getProxyUrl').mockReturnValue(targetUrl);
+      jest
+        .spyOn(serverApi, 'getProxyUrl')
+        .mockImplementation((url: string) => `https://dev.pneumatic.app${serverApi.getProxyPath(url)}`);
     });
 
     it('configures createProxyMiddleware and invokes it on allowed route', () => {
@@ -145,6 +145,33 @@ describe('handlers', () => {
       const { res, redirectMock } = createMockResponse();
 
       handler(anotherReq, res);
+
+      expect(redirectMock).toHaveBeenCalledTimes(1);
+      expect(redirectMock).toHaveBeenCalledWith(ERoutes.Error);
+      expect(mockMiddleware).not.toHaveBeenCalled();
+    });
+
+    it('redirects to 404 if path traversal resolves to a disallowed path', () => {
+      const handler = apiProxy();
+      const traversalReq = createMockRequest({
+        originalUrl: '/api/accounts/invites/../../workflows',
+      });
+      const { res, redirectMock } = createMockResponse();
+
+      handler(traversalReq, res);
+
+      expect(redirectMock).toHaveBeenCalledTimes(1);
+      expect(redirectMock).toHaveBeenCalledWith(ERoutes.Error);
+      expect(mockMiddleware).not.toHaveBeenCalled();
+    });
+
+    it('redirects to 404 if url is invalid', () => {
+      jest.spyOn(serverApi, 'getProxyUrl').mockReturnValueOnce('http://[');
+      const handler = apiProxy();
+      const badReq = createMockRequest();
+      const { res, redirectMock } = createMockResponse();
+
+      handler(badReq, res);
 
       expect(redirectMock).toHaveBeenCalledTimes(1);
       expect(redirectMock).toHaveBeenCalledWith(ERoutes.Error);

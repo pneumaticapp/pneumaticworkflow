@@ -32,7 +32,14 @@ export function apiProxy() {
   });
 
   return (req: Request, res: Response) => {
-    if (!isRouteAllowed(req.originalUrl)) {
+    let destinationPath: string;
+    try {
+      destinationPath = new URL(serverApi.getProxyUrl(req.originalUrl)).pathname;
+    } catch {
+      return res.redirect(ERoutes.Error);
+    }
+
+    if (!isRouteAllowed(destinationPath)) {
       return res.redirect(ERoutes.Error);
     }
 
