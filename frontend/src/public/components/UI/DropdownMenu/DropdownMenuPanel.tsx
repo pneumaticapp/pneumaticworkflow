@@ -25,6 +25,7 @@ export function DropdownMenuPanel({
         styles['dropdown-menu'],
         isWide && styles['dropdown-menu_wide'],
         level === 0 && direction === 'right' && styles['dropdown-menu_right'],
+        level > 0 && styles['dropdown-menu_submenu'],
         isOpen && styles['dropdown-menu_show'],
         className,
       )}

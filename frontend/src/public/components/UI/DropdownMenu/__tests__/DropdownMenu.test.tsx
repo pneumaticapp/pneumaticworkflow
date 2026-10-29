@@ -87,6 +87,18 @@ describe('DropdownMenu', () => {
     expect(getMenu()).toHaveAttribute('aria-hidden', 'true');
   });
 
+  it('opens a submenu beside its row and keeps the root menu in place', () => {
+    renderMenu([{ label: 'Return to', subOptions: [{ label: 'Step 1' }] }]);
+
+    userEvent.click(screen.getByRole('button', { name: 'Open menu' }));
+    userEvent.click(screen.getByRole('menuitem', { name: 'Return to' }));
+
+    const [rootMenu, submenu] = screen.getAllByRole('menu');
+
+    expect(submenu.className).toContain('dropdown-menu_submenu');
+    expect(rootMenu.className).not.toContain('dropdown-menu_submenu');
+  });
+
   it('moves focus with arrows and leaves keys typed in a nested input alone', () => {
     renderMenu([
       { label: 'Edit', onClick: jest.fn() },

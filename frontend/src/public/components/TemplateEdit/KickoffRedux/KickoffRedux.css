@@ -427,6 +427,7 @@
 
   .dataset-submenu > .dropdown-menu {
     position: absolute;
+    top: auto;
     right: 100%;
     left: auto;
     width: 30.4rem;

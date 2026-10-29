@@ -35,6 +35,11 @@
   right: 0;
 }
 
+.dropdown-menu_submenu {
+  top: 0;
+  left: 100%;
+}
+
 .dropdown-menu_wide {
   width: 30.4rem;
 }
