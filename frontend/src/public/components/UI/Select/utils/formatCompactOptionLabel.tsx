@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import type { FormatOptionLabelMeta } from 'react-select';
 
 import { Checkbox } from '../../Fields/Checkbox';

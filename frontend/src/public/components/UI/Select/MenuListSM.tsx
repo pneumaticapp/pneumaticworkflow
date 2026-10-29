@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 
 import { RoundClearIconMd } from '../../icons';

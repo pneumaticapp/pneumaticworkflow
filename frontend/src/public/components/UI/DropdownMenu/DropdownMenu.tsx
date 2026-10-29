@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import classnames from 'classnames';
 import OutsideClickHandler from 'react-outside-click-handler';
 

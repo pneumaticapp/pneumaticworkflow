@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { components } from 'react-select';
 
 export function Option(props: any) {
