@@ -53,6 +53,11 @@
   position: relative;
 }
 
+.submenu_left > .dropdown-menu_submenu {
+  right: 100%;
+  left: auto;
+}
+
 .dropdown-item {
   position: relative;
   z-index: 1;

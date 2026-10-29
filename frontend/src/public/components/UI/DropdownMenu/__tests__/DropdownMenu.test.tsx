@@ -99,6 +99,28 @@ describe('DropdownMenu', () => {
     expect(rootMenu.className).not.toContain('dropdown-menu_submenu');
   });
 
+  it('opens a submenu to the left when it does not fit on the right', () => {
+    const clientWidthSpy = jest.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(1000);
+    const rectSpy = jest
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockReturnValue({ right: 1200 } as DOMRect);
+    renderMenu([{ label: 'Return to', subOptions: [{ label: 'Step 1' }] }]);
+
+    userEvent.click(screen.getByRole('button', { name: 'Open menu' }));
+    const submenuToggle = screen.getByRole('menuitem', { name: 'Return to' });
+    userEvent.click(submenuToggle);
+
+    expect(submenuToggle.parentElement?.className).toContain('submenu_left');
+
+    rectSpy.mockReturnValue({ right: 800 } as DOMRect);
+    userEvent.click(submenuToggle);
+    userEvent.click(submenuToggle);
+
+    expect(submenuToggle.parentElement?.className).not.toContain('submenu_left');
+    clientWidthSpy.mockRestore();
+    rectSpy.mockRestore();
+  });
+
   it('moves focus with arrows and leaves keys typed in a nested input alone', () => {
     renderMenu([
       { label: 'Edit', onClick: jest.fn() },

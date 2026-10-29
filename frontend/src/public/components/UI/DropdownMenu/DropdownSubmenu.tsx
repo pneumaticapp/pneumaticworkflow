@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import classnames from 'classnames';
 import OutsideClickHandler from 'react-outside-click-handler';
 
@@ -9,6 +9,20 @@ import styles from './DropdownMenu.css';
 
 export function DropdownSubmenu({ label, className, toggleClassName, renderPanel }: IDropdownSubmenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isOpenToLeft, setIsOpenToLeft] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (!isOpen) {
+      setIsOpenToLeft(false);
+      return;
+    }
+
+    const panel = containerRef.current?.querySelector<HTMLElement>(':scope > [role="menu"]');
+    if (panel && panel.getBoundingClientRect().right > document.documentElement.clientWidth) {
+      setIsOpenToLeft(true);
+    }
+  }, [isOpen]);
 
   const handleToggle = () => {
     setIsOpen((prev) => !prev);
@@ -20,7 +34,10 @@ export function DropdownSubmenu({ label, className, toggleClassName, renderPanel
 
   return (
     <OutsideClickHandler disabled={!isOpen} onOutsideClick={handleOutsideClick}>
-      <div className={classnames(styles['submenu'], className)}>
+      <div
+        ref={containerRef}
+        className={classnames(styles['submenu'], isOpenToLeft && styles['submenu_left'], className)}
+      >
         <button
           type="button"
           role="menuitem"
