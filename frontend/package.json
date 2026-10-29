@@ -211,6 +211,7 @@
     "prettier:check": "prettier --check src",
     "lint": "npm run prettier:check && npm run stylelint && npm run eslint",
     "lint:fix": "npm run prettier && npm run stylelint -- --fix && npm run eslint -- --fix",
+    "audit": "npm audit --audit-level=high",
     "check": "npm run lint && npm run test:prod",
     "eslint": "eslint src",
     "stylelint": "stylelint \"src/**/*.{css,scss,sass}\"",
