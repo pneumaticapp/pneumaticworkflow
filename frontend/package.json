@@ -89,7 +89,8 @@
     "redux-saga": "^1.0.5",
     "reselect": "^4.1.5",
     "smoothscroll-polyfill": "^0.4.4",
-    "throttle-debounce": "^2.3.0"
+    "throttle-debounce": "^2.3.0",
+    "yjs": "^13.6.33"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^1.2.20",
