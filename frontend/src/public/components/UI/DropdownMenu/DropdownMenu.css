@@ -58,6 +58,11 @@
   left: auto;
 }
 
+.submenu_shifted > .dropdown-menu_submenu {
+  right: auto;
+  left: var(--submenu-left);
+}
+
 .dropdown-item {
   position: relative;
   z-index: 1;

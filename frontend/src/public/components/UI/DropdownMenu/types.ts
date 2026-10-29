@@ -65,3 +65,5 @@ export interface IConfirmableDropdownItemProps {
   closeDropdown(): void;
   onClick?(event?: MouseEvent<HTMLButtonElement>): void;
 }
+
+export type TSubmenuPlacement = { side: 'right' } | { side: 'left' } | { side: 'shifted'; left: number };

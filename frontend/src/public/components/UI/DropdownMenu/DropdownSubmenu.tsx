@@ -1,28 +1,38 @@
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import classnames from 'classnames';
 import OutsideClickHandler from 'react-outside-click-handler';
 
 import { ArrowRightIcon } from '../../icons';
-import type { IDropdownSubmenuProps } from './types';
+import { getSubmenuPlacement } from './utils/getSubmenuPlacement';
+import type { IDropdownSubmenuProps, TSubmenuPlacement } from './types';
 
 import styles from './DropdownMenu.css';
 
 export function DropdownSubmenu({ label, className, toggleClassName, renderPanel }: IDropdownSubmenuProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isOpenToLeft, setIsOpenToLeft] = useState(false);
+  const [placement, setPlacement] = useState<TSubmenuPlacement>({ side: 'right' });
   const containerRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     if (!isOpen) {
-      setIsOpenToLeft(false);
+      setPlacement({ side: 'right' });
       return;
     }
 
-    const panel = containerRef.current?.querySelector<HTMLElement>(':scope > [role="menu"]');
-    if (panel && panel.getBoundingClientRect().right > document.documentElement.clientWidth) {
-      setIsOpenToLeft(true);
-    }
+    const container = containerRef.current;
+    const panel = container?.querySelector<HTMLElement>(':scope > [role="menu"]');
+    if (!container || !panel) return;
+
+    const panelRect = panel.getBoundingClientRect();
+    if (panelRect.right <= document.documentElement.clientWidth) return;
+
+    setPlacement(
+      getSubmenuPlacement(container.getBoundingClientRect(), panelRect.width, document.documentElement.clientWidth),
+    );
   }, [isOpen]);
+
+  const placementStyle =
+    placement.side === 'shifted' ? ({ '--submenu-left': `${placement.left}px` } as CSSProperties) : undefined;
 
   const handleToggle = () => {
     setIsOpen((prev) => !prev);
@@ -36,7 +46,13 @@ export function DropdownSubmenu({ label, className, toggleClassName, renderPanel
     <OutsideClickHandler disabled={!isOpen} onOutsideClick={handleOutsideClick}>
       <div
         ref={containerRef}
-        className={classnames(styles['submenu'], isOpenToLeft && styles['submenu_left'], className)}
+        className={classnames(
+          styles['submenu'],
+          placement.side === 'left' && styles['submenu_left'],
+          placement.side === 'shifted' && styles['submenu_shifted'],
+          className,
+        )}
+        style={placementStyle}
       >
         <button
           type="button"
