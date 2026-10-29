@@ -197,7 +197,10 @@
     "qs": "^6.16.1",
     "undici": "^6.29.1",
     "postcss-selector-parser": "^7.1.7",
-    "cosmiconfig": "^9.0.2"
+    "cosmiconfig": "^9.0.2",
+    "eslint-plugin-jsx-a11y": {
+      "eslint": "$eslint"
+    }
   },
   "scripts": {
     "preinstall": "npx only-allow npm",
