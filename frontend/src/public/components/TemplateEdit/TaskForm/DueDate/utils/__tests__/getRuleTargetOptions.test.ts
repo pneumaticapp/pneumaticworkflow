@@ -4,7 +4,7 @@ import { createEmptyTaskDueDate } from '../../../../../../utils/dueDate/createEm
 import { getRuleTargetOptions } from '../getRuleTargetOptions';
 
 jest.mock('../../../../../UI', () => ({
-  DropdownList: jest.fn(() => null),
+  Select: jest.fn(() => null),
 }));
 
 const makeTask = (overrides: Partial<ITemplateTaskClient> = {}): ITemplateTaskClient => ({

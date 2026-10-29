@@ -3,51 +3,15 @@ import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import { ActionMeta, FormatOptionLabelMeta } from 'react-select';
 
-import { TDropdownOptionBase, IDropdownListProps, DropdownList, Checkbox, Avatar, TAvatarUser } from '../..';
+import { Select, Checkbox, Avatar, TAvatarUser } from '../..';
 import { EUserStatus, TUserListItem, isUserAbsent } from '../../../../types/user';
 import { BoldPlusIcon } from '../../../icons';
-import { ETaskPerformerType } from '../../../../types/template';
 import { getUserById } from '../../../UserData/utils/getUserById';
 
 import { isUsersDropdownOptionSelected } from './usersDropdownOptionValue';
+import { EOptionTypes, IUsersDropdownProps, TUsersDropdownOption } from './types';
 
 import styles from './UsersDropdown.css';
-
-export enum EOptionTypes {
-  Group = ETaskPerformerType.UserGroup,
-  User = ETaskPerformerType.User,
-  Starter = ETaskPerformerType.WorkflowStarter,
-  Field = ETaskPerformerType.OutputUser,
-  Manager = ETaskPerformerType.Manager,
-  InviteUsers = 'invite-users',
-  AllUsers = 'all-users',
-}
-
-export type TUsersDropdownOption = TDropdownOptionBase & {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  status?: EUserStatus;
-  id: number;
-  optionType: EOptionTypes;
-};
-
-export interface IUsersDropdownProps<TOption extends TUsersDropdownOption> extends IDropdownListProps<TOption> {
-  inviteLabel: string;
-  users: TUserListItem[];
-  isTeamInvitesModalOpen: boolean;
-  recentInvitedUsers: TUserListItem[];
-  isAdmin: boolean;
-  value?: any;
-  onChange: (value: any) => void;
-  onChangeSelected?: (value: any) => void;
-  openTeamInvitesPopup(): void;
-  onUsersInvited?(invitedUsers: any): void;
-  onClickInvite(): void;
-  onClickAllUsers?(value: boolean): void;
-  errorMessage?: string;
-  isRequired?: boolean;
-}
 
 export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
   options,
@@ -208,7 +172,7 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
   };
 
   return (
-    <DropdownList
+    <Select
       isMulti={isMulti}
       isSearchable
       options={normalizedOptions}

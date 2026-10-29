@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ReactNode, useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
@@ -7,19 +7,12 @@ import { IFieldsetCatalogItem } from '../../../types/fieldset';
 import { getFieldsetsCatalogItems } from '../../../redux/selectors/fieldsets';
 import { CustomTooltip } from '../../UI/CustomTooltip';
 import { Tooltip } from '../../UI/Tooltip';
-import { FilterSelect } from '../../UI';
+import { Select, TSelectOption } from '../../UI/Select';
 import { FieldsetIcon } from '../../icons/FieldsetIcon';
 
 import pickerStyles from './FieldsetIconPicker.css';
 import kickoffStyles from '../KickoffRedux/KickoffRedux.css';
 import flowStyles from '../OutputForm/OutputForm.css';
-
-interface IFieldsetCatalogOption {
-  id: number;
-  name: string;
-  label: ReactNode;
-  searchByText: string;
-}
 
 interface IFieldsetCatalogPickerRow {
   id: number;
@@ -58,11 +51,10 @@ export const FieldsetIconPicker = ({ fieldsetsCatalogLoading, onSelectFieldset }
   const triggerRef = useRef<HTMLSpanElement>(null);
   const fieldsetsCatalogItems = useSelector(getFieldsetsCatalogItems);
 
-  const options = useMemo((): IFieldsetCatalogOption[] => {
+  const options = useMemo((): TSelectOption[] => {
     const rows = buildCatalogPickerRows(fieldsetsCatalogItems);
     return rows.map((row) => ({
-      id: row.id,
-      name: row.name,
+      value: String(row.id),
       searchByText: row.name,
       label: (
         <Tooltip
@@ -84,9 +76,8 @@ export const FieldsetIconPicker = ({ fieldsetsCatalogLoading, onSelectFieldset }
   }, [fieldsetsCatalogItems]);
 
   const handleSelectFieldset = useCallback(
-    (sharedFieldsetId: number | null) => {
-      if (sharedFieldsetId === null) return;
-      const fieldsetCatalogItem = fieldsetsCatalogItems.find((item) => item.id === sharedFieldsetId);
+    ({ value }: TSelectOption) => {
+      const fieldsetCatalogItem = fieldsetsCatalogItems.find((item) => String(item.id) === value);
       if (fieldsetCatalogItem) {
         onSelectFieldset(fieldsetCatalogItem);
       }
@@ -96,27 +87,22 @@ export const FieldsetIconPicker = ({ fieldsetsCatalogLoading, onSelectFieldset }
 
   return (
     <div className={flowStyles['flow__fieldset-icon-slot']}>
-      <FilterSelect<'id', 'label', IFieldsetCatalogOption>
-        optionIdKey="id"
-        optionLabelKey="label"
+      <Select
+        controlSize="sm"
+        isSearchable
         options={options}
-        isLoading={fieldsetsCatalogLoading}
-        isSearchShown
-        positionFixed
-        selectedOption={null}
+        value={null}
+        isLoading={fieldsetsCatalogLoading && options.length === 0}
         onChange={handleSelectFieldset}
-        resetFilter={() => {}}
-        searchPlaceholder={formatMessage({ id: 'search.placeholder', defaultMessage: 'Search...' })}
-        placeholderText={formatMessage({ id: 'template.fieldset-picker.empty' })}
-        containerClassname={pickerStyles['fieldset-picker__container']}
-        toggleClassName={pickerStyles['fieldset-picker__toggle']}
-        menuClassName={pickerStyles['fieldset-picker__menu']}
-        arrowClassName={pickerStyles['fieldset-picker__arrow_hidden']}
-        renderPlaceholder={() => (
+        placeholder={formatMessage({ id: 'search.placeholder', defaultMessage: 'Search...' })}
+        noOptionsMessage={() => formatMessage({ id: 'template.fieldset-picker.empty' })}
+        menuPortalTarget={document.body}
+        menuPosition="fixed"
+        controlContent={
           <span ref={triggerRef} className={kickoffStyles['component-icon-container']}>
             <FieldsetIcon className={kickoffStyles['component-icon']} aria-hidden />
           </span>
-        )}
+        }
       />
       <CustomTooltip
         target={triggerRef}

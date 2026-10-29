@@ -1,13 +1,13 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
-import { ConfirmableDropdownItem } from '../../../UI/Dropdown/ConfirmableDropdownItem';
+import { ConfirmableDropdownItem } from '../../../UI/DropdownMenu/ConfirmableDropdownItem';
 import { CircleProgressBar } from '../../../CircleProgressBar';
 import { ProgressBar } from '../../../ProgressBar';
 import { EProgressbarColor } from '../../utils/getWorfkflowClientProperties';
 import { IWorkflowDetailsClient } from '../../../../types/workflow';
 import { WorkflowControlls } from '../../WorkflowControlls';
-import { Dropdown, getDropdownItemColorClass, TDropdownOption } from '../../../UI';
+import { DropdownMenu, getDropdownItemColorClass, TDropdownMenuOption } from '../../../UI';
 import { isArrayWithItems } from '../../../../utils/helpers';
 
 import styles from '../WorkflowModal.css';
@@ -61,7 +61,7 @@ export function WorkflowModalHeaderProgressBar({
                   return null;
                 }
 
-                const renderControl = (lOnClick?: TDropdownOption['onClick']) => {
+                const renderControl = (lOnClick?: TDropdownMenuOption['onClick']) => {
                   const Tag = lOnClick ? 'button' : 'span';
 
                   return (
@@ -88,15 +88,11 @@ export function WorkflowModalHeaderProgressBar({
                         withConfirmation
                         initialConfirmationState="option"
                         closeDropdown={() => {}}
-                        cssModule={{
-                          'dropdown-item': classnames(
-                            styles['action-buttons__button'],
-                            getDropdownItemColorClass(option.color),
-                          ),
-                        }}
+                        className={classnames(
+                          styles['action-buttons__button'],
+                          getDropdownItemColorClass(option.color),
+                        )}
                         onClick={() => onClick && onClick(() => {})}
-                        toggle={false}
-                        tag="button"
                       >
                         <>
                           {Icon && <Icon />}
@@ -105,7 +101,7 @@ export function WorkflowModalHeaderProgressBar({
                       </ConfirmableDropdownItem>
                     )}
                     {subOptions && (
-                      <Dropdown
+                      <DropdownMenu
                         renderToggle={() => renderControl()}
                         options={subOptions}
                         direction="left"
@@ -141,7 +137,7 @@ export function WorkflowModalHeaderProgressBar({
   );
 }
 
-const getNormalizedControlls = (controlls: TDropdownOption[]): TDropdownOption[] => {
+const getNormalizedControlls = (controlls: TDropdownMenuOption[]): TDropdownMenuOption[] => {
   return controlls.map((option) => {
     if (option.withConfirmation && Array.isArray(option.subOptions) && !isArrayWithItems(option.subOptions)) {
       return {

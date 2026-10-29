@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { ExtraFieldCreatable } from '../ExtraFieldCreatable';
 import { OutputFieldContent } from '../../utils/OutputFieldContent';
 import { FieldLabel } from '../../utils/FieldLabel';
-import { DropdownList } from '../../../../UI/DropdownList';
+import { Select } from '../../../../UI/Select';
 import { IWorkflowExtraFieldProps } from '../../types';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
@@ -17,8 +17,8 @@ jest.mock('../../utils/OutputFieldContent', () => ({
   ),
 }));
 
-jest.mock('../../../../UI/DropdownList', () => ({
-  DropdownList: jest.fn(() => React.createElement('div', { 'data-testid': 'dropdown-list' })),
+jest.mock('../../../../UI/Select', () => ({
+  Select: jest.fn(() => React.createElement('div', { 'data-testid': 'dropdown-list' })),
 }));
 
 jest.mock('../../../../icons', () => ({
@@ -126,10 +126,10 @@ describe('ExtraFieldCreatable', () => {
     );
   });
 
-  it('ProcessRun: renders DropdownList with string selections as options', () => {
+  it('ProcessRun: renders Select with string selections as options', () => {
     render(<ExtraFieldCreatable {...baseKickoffProps} field={processRunField} mode={EExtraFieldMode.ProcessRun} />);
 
-    const mock = DropdownList as jest.Mock;
+    const mock = Select as jest.Mock;
     expect(mock).toHaveBeenCalledTimes(1);
     expect(mock).toHaveBeenCalledWith(
       expect.objectContaining({

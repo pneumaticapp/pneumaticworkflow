@@ -1,4 +1,5 @@
-.react-select {
+.react-select,
+.react-select__menu-portal {
   &.is-disabled {
     opacity: 0.32;
     cursor: not-allowed;
@@ -15,6 +16,7 @@
   }
 
   .react-select__control {
+    min-height: 4rem;
     background: transparent;
     outline: initial;
     box-shadow: none;
@@ -30,12 +32,16 @@
     &:hover,
     &--is-focused,
     &--is-focused:hover {
-      border-color: var(--pneumatic-color-black48) !important;
+      border-color: var(--pneumatic-color-black48);
     }
   }
 
   .react-select__input {
     pointer-events: none;
+  }
+
+  .react-select__single-value {
+    color: var(--pneumatic-color-black100);
   }
 
   .react-select__placeholder {
@@ -84,6 +90,20 @@
     }
   }
 
+  &.react-select__menu-portal .react-select__menu-list.is-sm {
+    @media (--mobile) {
+      position: fixed;
+      right: 1.6rem;
+      left: 1.6rem;
+      min-width: 0 !important;
+    }
+  }
+
+  .react-select__menu-list.is-sm:not(.is-multi) .react-select__option--is-selected {
+    color: var(--pneumatic-color-black32) !important;
+    pointer-events: none;
+  }
+
   .react-select__menu-list.is-sm .react-select__menu {
     position: static !important;
   }
@@ -112,6 +132,7 @@
     overflow: hidden !important;
 
     &:hover {
+      color: var(--pneumatic-color-link-hover) !important;
       background-color: var(--pneumatic-color-beige) !important;
       border-radius: 0.4rem;
     }

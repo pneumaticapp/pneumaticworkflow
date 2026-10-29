@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
-import { Dropdown, TDropdownOption } from '../../UI';
+import { DropdownMenu, TDropdownMenuOption } from '../../UI';
 import { MoreIcon, PencilIcon, TrashIcon, UnionIcon } from '../../icons';
 import { WarningPopup } from '../../UI/WarningPopup';
 import {
@@ -55,7 +55,7 @@ export function DatasetCard({ id, name, description, dateCreatedTsp, itemsCount 
     history.push(ERoutes.DatasetDetail.replace(':id', id.toString()));
   };
 
-  const dropdownOptions: TDropdownOption[] = [
+  const dropdownOptions: TDropdownMenuOption[] = [
     {
       label: formatMessage({ id: 'datasets.edit' }),
       onClick: handleEditName,
@@ -105,7 +105,7 @@ export function DatasetCard({ id, name, description, dateCreatedTsp, itemsCount 
             {sanitizeText(name)}
           </div>
 
-          <Dropdown
+          <DropdownMenu
             renderToggle={(isOpen: boolean) => (
               <MoreIcon className={classnames(styles['card__more'], isOpen && styles['is-active'])} />
             )}

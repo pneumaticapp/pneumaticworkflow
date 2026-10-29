@@ -3,7 +3,7 @@ import { render } from '@testing-library/react';
 
 import { DatasetItemsList } from '../DatasetItemsList';
 import { DatasetRow } from '../../DatasetRow/DatasetRow';
-import { Placeholder, SelectMenu, InputField } from '../../../UI';
+import { Select, Placeholder, InputField } from '../../../UI';
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { EDatasetsSorting } from '../../../../types/dataset';
 
@@ -13,7 +13,7 @@ jest.mock('../../DatasetRow/DatasetRow', () => ({
 
 jest.mock('../../../UI', () => ({
   Placeholder: jest.fn(() => null),
-  SelectMenu: jest.fn(() => null),
+  Select: jest.fn(() => null),
   InputField: jest.fn(() => null),
 }));
 
@@ -104,13 +104,16 @@ describe('DatasetItemsList', () => {
     expect(calls[0][0]).toEqual(expect.objectContaining({ isEditing: true }));
   });
 
-  it('renders InputField for search and SelectMenu for sorting', () => {
+  it('renders InputField for search and a compact Select for sorting', () => {
     render(React.createElement(DatasetItemsList, baseProps));
 
     expect(InputField as jest.Mock).toHaveBeenCalledTimes(1);
-    expect(SelectMenu as jest.Mock).toHaveBeenCalledTimes(1);
-    expect(SelectMenu as jest.Mock).toHaveBeenCalledWith(
-      expect.objectContaining({ activeValue: EDatasetsSorting.DateDesc }),
+    expect(Select as jest.Mock).toHaveBeenCalledTimes(1);
+    expect(Select as jest.Mock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        controlSize: 'sm',
+        value: expect.objectContaining({ value: EDatasetsSorting.DateDesc }),
+      }),
       {},
     );
   });

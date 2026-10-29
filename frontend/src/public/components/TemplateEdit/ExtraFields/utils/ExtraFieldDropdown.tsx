@@ -5,7 +5,7 @@ import { useIntl } from 'react-intl';
 
 import { IntlMessages } from '../../../IntlMessages';
 import { ArrowDownIcon, ArrowRightIcon, ArrowUpIcon, BurgerIcon, DropdownCrossIcon, TrashIcon } from '../../../icons';
-import { Dropdown, TDropdownOption } from '../../../UI';
+import { DropdownMenu, TDropdownMenuOption } from '../../../UI';
 import { IKickoffDropdownProps } from './types';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
@@ -33,7 +33,7 @@ export function ExtraFieldDropdown({
     handler();
   };
 
-  const getDatasetSubOptions = (): TDropdownOption[] | undefined => {
+  const getDatasetSubOptions = (): TDropdownMenuOption[] | undefined => {
     if (!showDatasetOption || !datasetOptions.length) {
       return undefined;
     }
@@ -54,7 +54,7 @@ export function ExtraFieldDropdown({
   };
 
   return (
-    <Dropdown
+    <DropdownMenu
       direction="right"
       className={styles['dropdown-wrapper']}
       renderToggle={(isOpen) => {

@@ -3,7 +3,7 @@ import { InviteResponse } from '../api/sendInvites';
 import { capitalize } from './strings';
 import { NotificationManager } from '../components/UI/Notifications';
 import { getPluralNoun } from './helpers';
-import { TDropdownOptionBase } from '../components/UI';
+import { TSelectOption } from '../components/UI';
 import { UserInvitePayload } from '../redux/team/types';
 
 export const EXTERNAL_USER_ID = -1;
@@ -131,7 +131,7 @@ export const showInvitesNotification = ({ invites, sendInvitesResult }: IShowInv
   showNotification('success', successfullyInvitedUsers);
 };
 
-export type TUserDropdownOption = TUserListItem & TDropdownOptionBase;
+export type TUserDropdownOption = TUserListItem & TSelectOption;
 
 export const getDropdownUsersList = (users: TUserListItem[]) => {
   const activeUsers = getNotDeletedUsers(users);
