@@ -47,6 +47,7 @@ const mockTask1: ITemplateTaskClient = {
   rawPerformers: [],
   requireCompletionByAll: true,
   skipForStarter: false,
+  skipOnReturn: false,
   fields: [
     makeExtraField({
       name: 'Large Text Field',
@@ -73,6 +74,7 @@ const mockTask2: ITemplateTaskClient = {
   rawPerformers: [],
   requireCompletionByAll: false,
   skipForStarter: false,
+  skipOnReturn: false,
   fields: [
     makeExtraField({
       name: 'Reasons',

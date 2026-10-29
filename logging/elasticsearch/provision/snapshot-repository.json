@@ -1,0 +1,9 @@
+{
+  "type": "fs",
+  "settings": {
+    "location": "/snapshots",
+    "compress": true,
+    "max_snapshot_bytes_per_sec": "100mb",
+    "max_restore_bytes_per_sec": "100mb"
+  }
+}

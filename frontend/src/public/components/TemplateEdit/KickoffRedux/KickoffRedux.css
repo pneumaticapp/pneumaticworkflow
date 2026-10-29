@@ -3,9 +3,14 @@
   width: 100%;
   padding: 3.2rem;
   margin-bottom: 1.6rem;
+  scroll-margin-top: 10.4rem;
   background: var(--pneumatic-color-white);
   border: none;
   border-radius: 2.4rem;
+
+  @media (--mobile) {
+    scroll-margin-top: 0;
+  }
 
   .header {
     display: flex;
@@ -65,6 +70,14 @@
     color: var(--pneumatic-color-black48);
     text-align: center;
   }
+}
+
+.kick-off--embedded {
+  position: static;
+  padding: 0;
+  margin-bottom: 0;
+  background: transparent;
+  border-radius: 0;
 }
 
 .kick-off__subtitle {

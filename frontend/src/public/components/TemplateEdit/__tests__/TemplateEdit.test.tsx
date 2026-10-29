@@ -73,6 +73,9 @@ jest.mock('../KickoffRedux', () => ({
 jest.mock('../TemplateSettings', () => ({
   TemplateSettings: jest.fn(() => null),
 }));
+jest.mock('../TemplateLeavingGuard', () => ({
+  TemplateLeavingGuard: jest.fn(() => null),
+}));
 jest.mock('../TemplateEditVariablesSync', () => ({
   TemplateEditVariablesSync: jest.fn(() => null),
 }));

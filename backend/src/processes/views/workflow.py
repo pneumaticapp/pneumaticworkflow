@@ -27,6 +27,7 @@ from src.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
 )
+from src.logs.events import AuditEventService
 from src.openapi import (
     ACCESS_ACCOUNT_OWNER,
     ACCESS_AUTH,
@@ -358,6 +359,12 @@ class WorkflowViewSet(
             auth_type=request.token_type,
             is_superuser=request.is_superuser,
             user=request.user,
+        )
+        AuditEventService.workflow_updated(
+            user=request.user,
+            auth_type=request.token_type,
+            workflow=workflow,
+            update_kwargs=serializer.validated_data,
         )
         if is_urgent_changed:
             AnalyticService.workflows_urgent(

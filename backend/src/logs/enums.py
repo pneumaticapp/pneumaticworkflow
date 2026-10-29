@@ -1,8 +1,7 @@
-from typing_extensions import Literal
+from typing_extensions import Literal, get_args
 
 
 class AccountEventType:
-
     API = 'api'
     AUTH = 'auth'
     DATABUS = 'databus'
@@ -19,7 +18,6 @@ class AccountEventType:
 
 
 class AccountEventStatus:
-
     PENDING = 'pending'
     SUCCESS = 'success'
     FAILED = 'failed'
@@ -34,7 +32,6 @@ class AccountEventStatus:
 
 
 class RequestDirection:
-
     RECEIVED = 'received'
     SENT = 'sent'
 
@@ -42,3 +39,19 @@ class RequestDirection:
         (RECEIVED, RECEIVED),
         (SENT, SENT),
     )
+
+
+class LogsBackend:
+    """Value of LOGS_BACKEND: where the collector sends the events.
+    The backend itself always delivers OTLP to the collector at
+    LOGS_OTLP_ENDPOINT. An unset value disables the pipeline; an
+    invalid value refuses to start the web and celery processes."""
+
+    OTLP = 'otlp'
+    ELASTICSEARCH = 'elasticsearch'
+
+    LITERALS = Literal[
+        OTLP,
+        ELASTICSEARCH,
+    ]
+    VALUES = set(get_args(LITERALS))
