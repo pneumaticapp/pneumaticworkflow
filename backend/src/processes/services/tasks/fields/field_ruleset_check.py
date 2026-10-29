@@ -118,8 +118,6 @@ class FieldRuleCheckService:
 
     def __init__(self, field: TaskField):
         self.field = field
-        self.account = field.account
-        self.workflow = field.workflow
 
     def _get_source(
         self,
