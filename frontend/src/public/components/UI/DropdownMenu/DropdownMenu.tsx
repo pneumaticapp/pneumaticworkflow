@@ -48,6 +48,8 @@ export function DropdownMenu({
     if (!isOpen || event.defaultPrevented || isTextEntryTarget(event.target)) return;
 
     if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
       closeDropdown();
       toggleRef.current?.focus();
       return;

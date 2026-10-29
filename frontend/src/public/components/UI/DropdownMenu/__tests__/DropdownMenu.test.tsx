@@ -169,6 +169,19 @@ describe('DropdownMenu', () => {
     expect(getMenu()).toHaveAttribute('aria-hidden', 'false');
   });
 
+  it('keeps Escape that closes the menu away from parent listeners', () => {
+    const onWindowKeyDown = jest.fn();
+    window.addEventListener('keydown', onWindowKeyDown);
+    renderMenu([{ label: 'Delete' }]);
+
+    userEvent.click(screen.getByRole('button', { name: 'Open menu' }));
+    fireEvent.keyDown(screen.getByRole('menuitem', { name: 'Delete' }), { key: 'Escape' });
+
+    expect(getMenu()).toHaveAttribute('aria-hidden', 'true');
+    expect(onWindowKeyDown).not.toHaveBeenCalled();
+    window.removeEventListener('keydown', onWindowKeyDown);
+  });
+
   it('stops click propagation to parent handlers', () => {
     const onParentClick = jest.fn();
     render(
