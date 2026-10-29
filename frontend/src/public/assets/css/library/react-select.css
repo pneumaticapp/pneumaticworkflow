@@ -32,7 +32,7 @@
     &:hover,
     &--is-focused,
     &--is-focused:hover {
-      border-color: var(--pneumatic-color-black48) !important;
+      border-color: var(--pneumatic-color-black48);
     }
   }
 

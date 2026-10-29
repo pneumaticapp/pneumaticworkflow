@@ -17,9 +17,13 @@
     transition: 0.15s ease-in border-color;
   }
 
-  :global .react-select__control:focus-within {
-    /* stylelint-disable-next-line declaration-no-important -- beats react-select.css .react-select__control--is-focused border-color !important */
-    border-bottom-color: var(--pneumatic-color-black32) !important;
+  :global(.react-select) :global(.react-select__control):hover,
+  :global(.react-select) :global(.react-select__control--is-focused) {
+    border-color: var(--pneumatic-color-black48);
+  }
+
+  :global(.react-select) :global(.react-select__control):focus-within {
+    border-bottom-color: var(--pneumatic-color-black32);
   }
 
   :global .react-select__multi-value__label {
