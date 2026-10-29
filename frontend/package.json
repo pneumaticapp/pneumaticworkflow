@@ -94,7 +94,7 @@
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^1.2.20",
-    "@commitlint/cli": "^21.2.0",
+    "@commitlint/cli": "^21.2.4",
     "@csstools/css-parser-algorithms": "4.0.0",
     "@csstools/css-tokenizer": "4.0.0",
     "@csstools/postcss-global-data": "^4.0.0",
