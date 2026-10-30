@@ -1,7 +1,6 @@
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { compose } from 'redux';
-import { hot } from 'react-hot-loader/root';
 
 import { App, IAppProps } from './App';
 import { IApplicationState } from '../../types/redux';
@@ -37,9 +36,7 @@ const mapDispatchToProps: TAppDispatchProps = {
   logoutUser,
 };
 
-export const AppContainer: any = hot(
-  compose(
-    withRouter, // crucial for correct router work
-    connect<TAppStoreProps, TAppDispatchProps>(mapStateToProps, mapDispatchToProps),
-  )(App),
-);
+export const AppContainer = compose(
+  withRouter, // crucial for correct router work
+  connect<TAppStoreProps, TAppDispatchProps>(mapStateToProps, mapDispatchToProps),
+)(App);

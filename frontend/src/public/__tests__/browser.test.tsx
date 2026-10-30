@@ -1,6 +1,5 @@
 import * as ReactDOM from 'react-dom';
-import { shallow } from 'enzyme';
-import { AppContainer } from '../components/App';
+import { within } from '@testing-library/react';
 
 jest.mock('../utils/getConfig', () => ({
   getBrowserConfigEnv: () => ({ api: { urls: {} } }),
@@ -9,20 +8,28 @@ jest.mock('../utils/getConfig', () => ({
   }),
 }));
 jest.mock('../redux/store');
-jest.mock('react-dom');
+jest.mock('../components/App', () => ({ AppContainer: () => 'AppContainer stub' }));
+jest.mock('redux-persist/integration/react', () => ({
+  PersistGate: ({ children }: { children: unknown }) => children,
+}));
 
-describe('browser', () => {
-  it('renders the application upon import.', () => {
-    const render = ReactDOM.render as jest.Mock;
+describe('browser entry point', () => {
+  let rootElement: HTMLDivElement;
 
-    const domSpy = jest.spyOn(document, 'getElementById').mockReturnValue('div' as unknown as HTMLElement);
+  beforeEach(() => {
+    rootElement = document.createElement('div');
+    rootElement.id = 'pneumatic-frontend';
+    document.body.appendChild(rootElement);
+  });
 
+  afterEach(() => {
+    ReactDOM.unmountComponentAtNode(rootElement);
+    rootElement.remove();
+  });
+
+  it('renders the app inside the container with id pneumatic-frontend', () => {
     jest.requireActual('../browser');
-    const [component, element] = render.mock.calls[0];
-    const childrenWrapper = shallow((component as any).props.children);
 
-    expect(element).toEqual('div');
-    expect(domSpy).toHaveBeenCalledWith('pneumatic-frontend');
-    expect(childrenWrapper.exists(AppContainer)).toEqual(true);
+    expect(within(rootElement).getByText('AppContainer stub')).toBeInTheDocument();
   });
 });

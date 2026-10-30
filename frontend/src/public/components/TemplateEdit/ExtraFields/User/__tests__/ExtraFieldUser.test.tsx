@@ -31,11 +31,6 @@ jest.mock('../../utils/FieldWithName', () => ({
   FieldWithName: () => null,
 }));
 
-jest.mock('react-input-autosize', () => ({
-  __esModule: true,
-  default: () => null,
-}));
-
 jest.mock('../../../../../utils/users', () => ({
   getNotDeletedUsers: jest.fn((users) => users),
   getUserFullName: jest.fn((user: { id: number }) => `User ${user.id}`),

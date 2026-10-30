@@ -1,3 +1,4 @@
+import { Action } from 'redux';
 import { EGroupsListSorting, EUserListSorting, EUserStatus, IUnsavedUser, IUserVacation, TUserListItem } from './user';
 import { TNotificationsListItem } from './notifications';
 import { IAccountGenericTemplate } from './genericTemplates';
@@ -523,4 +524,23 @@ export interface IStoreRunWorkflowModal {
 
 export interface IWorkflowsTuneViewModal {
   isOpen: boolean;
+}
+
+export interface IReduxDevToolsOptions {
+  name?: string;
+  latency?: number;
+  maxAge?: number;
+  trace?: boolean | ((action: Action) => string);
+  traceLimit?: number;
+  shouldRecordChanges?: boolean;
+  shouldStartLocked?: boolean;
+  shouldHotReload?: boolean;
+  shouldCatchErrors?: boolean;
+  pauseActionType?: string;
+  autoPause?: boolean;
+  actionsBlacklist?: string | string[];
+  actionsWhitelist?: string | string[];
+  predicate?: <S, A extends Action>(state: S, action: A) => boolean;
+  actionSanitizer?: <A extends Action>(action: A, id: number) => A;
+  stateSanitizer?: <S>(state: S, index: number) => S;
 }

@@ -11,7 +11,6 @@ module.exports = {
   moduleDirectories: ['node_modules'],
   coverageDirectory: 'artifacts',
   setupFilesAfterEnv: ['<rootDir>/jest/jest.setup.js'],
-  snapshotSerializers: ['enzyme-to-json/serializer'],
   // Type checking is already covered by `npm run eslint` and fork-ts-checker in the
   // webpack build, so ts-jest only transpiles here. A full TS program per worker
   // costs ~500 MB of baseline heap and is the main source of OOM on large runs.
@@ -34,7 +33,6 @@ module.exports = {
     'promise-polyfill/src/polyfill': 'empty-stub.js',
     'react-datepicker/dist/react-datepicker.css': 'empty-stub.js',
     'assets/css/library/.+\\.css$': 'empty-stub.js',
-    'draft-js/dist/Draft.css': 'empty-stub.js',
     'style.css': 'empty-stub.js',
     'react-phone-number-input/style.css': 'empty-stub.js',
     'redux-persist/es/constants': 'empty-stub.js',
