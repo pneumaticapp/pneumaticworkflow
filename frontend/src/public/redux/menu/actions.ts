@@ -2,8 +2,7 @@
 import classNames from 'classnames';
 import { IMenu, ITypedReduxAction } from '../../types/redux';
 import { actionGenerator } from '../../utils/redux';
-import { IMenuItem } from '../../types/menu';
-import { TMenuCounter } from '../../constants/menu';
+import { IMenuItem, TMenuCounter } from '../../types/menu';
 
 export const enum EMenuActions {
   GenerateMenu = 'GENERATE_MENU',

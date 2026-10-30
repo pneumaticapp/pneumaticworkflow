@@ -104,7 +104,7 @@ function getHandlePoint(node: TGraphNode, handleId?: string | null): IPoint {
 }
 
 function parseSegments(edge: TGraphEdge, path: string, source: TGraphNode, target: TGraphNode): ISegment[] {
-  const tokens = path.match(/[MLQ][^MLQ]*/g) ?? [];
+  const tokens: string[] = path.match(/[MLQ][^MLQ]*/g) ?? [];
   const segments: ISegment[] = [];
   let cursor: IPoint = { x: 0, y: 0 };
 

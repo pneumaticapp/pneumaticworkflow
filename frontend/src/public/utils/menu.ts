@@ -1,7 +1,7 @@
 import { getNavMenuItem } from '../api/menu/getNavMenuItem';
-import { getUserMenuItems, TMenuCounter, IGetUserMenuItemsOptions } from '../constants/menu';
+import { getUserMenuItems, IGetUserMenuItemsOptions } from '../constants/menu';
 import { mapArrayIAPIMenuSubToIMenuSub } from '../redux/menu/utils/mapIAPIMenuToIMenu';
-import { IMenuItem, TMenuCounterType } from '../types/menu';
+import { IMenuItem, TMenuCounterType, TMenuCounter } from '../types/menu';
 import { IAuthUser } from '../types/redux';
 
 // generate the menu items sequentially: first the top-level items, and then the sub-items
