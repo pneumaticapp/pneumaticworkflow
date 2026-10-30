@@ -1,0 +1,34 @@
+.agent-avatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-weight: bold;
+  color: var(--pneumatic-color-white);
+  text-transform: uppercase;
+  border-radius: 50%;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &_empty {
+    background-color: var(--pneumatic-color-black8);
+  }
+
+  &_md {
+    width: 4rem;
+    height: 4rem;
+    font-size: 1.5rem;
+  }
+
+  &_lg {
+    width: 6.4rem;
+    height: 6.4rem;
+
+    @mixin text-base bold;
+  }
+}

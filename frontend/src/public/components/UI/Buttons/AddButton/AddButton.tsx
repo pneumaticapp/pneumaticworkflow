@@ -7,12 +7,13 @@ import styles from './AddButton.css';
 export interface IAddButtonProps {
   title: string;
   caption: string;
+  disabled?: boolean;
   onClick(e: React.MouseEvent): void;
 }
 
-export function AddButton({ title, caption, onClick }: IAddButtonProps) {
+export function AddButton({ title, caption, disabled, onClick }: IAddButtonProps) {
   return (
-    <button type="button" className={styles['add-button']} onClick={onClick}>
+    <button type="button" className={styles['add-button']} onClick={onClick} disabled={disabled}>
       <div className={styles['add-button__icon']}>
         <PlusWithCircleIcon />
       </div>

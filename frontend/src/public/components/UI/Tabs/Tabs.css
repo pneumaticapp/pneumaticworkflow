@@ -1,22 +1,35 @@
 .container {
   display: flex;
-  height: 32px;
-  font-size: 13px;
+  height: 3.2rem;
+  font-size: 1.3rem;
   font-weight: bold;
-  line-height: 16px;
+  line-height: 1.6rem;
   color: var(--pneumatic-color-black100);
-  background: white;
-  border-radius: 16px;
+  background: var(--pneumatic-color-white);
+  border-radius: 1.6rem;
 
   @media (--mobile) {
     justify-content: space-between;
   }
 }
 
+.container_pill {
+  width: 100%;
+  background: var(--pneumatic-color-beige);
+
+  .tab {
+    height: 100%;
+    min-height: 0;
+    padding: 0;
+
+    @mixin text-small bold;
+  }
+}
+
 .tab {
   all: unset;
   flex-grow: 1;
-  padding: 8px 16px;
+  padding: 0.8rem 1.6rem;
   text-align: center;
   border-radius: 1.6rem;
   transition: color 0.1s ease-in-out;
@@ -27,7 +40,7 @@
 }
 
 .tab_active {
-  color: white;
+  color: var(--pneumatic-color-white);
   background: var(--pneumatic-color-link-hover);
 }
 
