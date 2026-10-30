@@ -97,6 +97,7 @@ export * from './PencilIcon';
 export * from './ArrowRightIcon';
 export * from './RibbonTail';
 export * from './BoldPlusIcon';
+export * from './PlusCircleIcon';
 export * from './AddPerformerIcon';
 export * from './RemovePerformerIcon';
 export * from './RoundPlusIcon';

@@ -293,6 +293,7 @@ class UsersAdmin(JournaledAdminMixin, UserAdmin, SignUpMixin):
                 'password',
                 'is_account_owner',
                 'type',
+                'is_ai',
                 'language',
                 'timezone',
                 'date_fmt',
@@ -388,6 +389,7 @@ class UsersAdmin(JournaledAdminMixin, UserAdmin, SignUpMixin):
         'type',
         'status',
         'is_admin',
+        'is_ai',
         'is_account_owner',
         'is_superuser',
     )

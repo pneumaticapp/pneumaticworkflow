@@ -21,8 +21,23 @@ SENTRY_THROTTLE_SECONDS = 60
 _sentry_last_messages: Dict[str, float] = {}
 
 
+def _is_redis_pending_task_log(hint: dict) -> bool:
+    record = hint.get('log_record')
+    if record is None or record.name != 'asyncio':
+        return False
+    message = record.getMessage()
+    return (
+        message.startswith('Task was destroyed but it is pending!')
+        and 'aioredis' in message
+    )
+
+
 def sentry_before_send(event: dict, hint: dict) -> Optional[dict]:
+
     """Drop expected auth/validation and infra errors so they are not sent."""
+
+    if _is_redis_pending_task_log(hint):
+        return None
     if 'exc_info' not in hint:
         return event
     _, exc_value, _ = hint['exc_info']

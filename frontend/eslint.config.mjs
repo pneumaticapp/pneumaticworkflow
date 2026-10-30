@@ -3,12 +3,19 @@ import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 import reactHooks from 'eslint-plugin-react-hooks';
+import eslintReact from '@eslint-react/eslint-plugin';
 import eslintConfigPrettier from 'eslint-config-prettier';
 import globals from 'globals';
 
 export default defineConfig(
   {
     ignores: ['**/dist/**', 'src/**/*.stories.tsx', 'src/**/*.test.ts', 'src/**/*.test.tsx'],
+  },
+
+  {
+    linterOptions: {
+      reportUnusedDisableDirectives: 'error',
+    },
   },
 
   // Shared: client + server
@@ -36,6 +43,9 @@ export default defineConfig(
   // Browser / React
   {
     files: ['src/public/**/*.{ts,tsx}'],
+    plugins: {
+      '@eslint-react': eslintReact,
+    },
     extends: [jsxA11y.flatConfigs.recommended, reactHooks.configs.flat.recommended],
     languageOptions: {
       globals: globals.browser,
@@ -52,6 +62,11 @@ export default defineConfig(
       'react-hooks/purity': 'off',
       'react-hooks/set-state-in-render': 'off',
       'react-hooks/preserve-manual-memoization': 'off',
+      '@eslint-react/no-missing-key': 'error',
+      '@eslint-react/no-duplicate-key': 'error',
+      '@eslint-react/dom-no-unknown-property': 'error',
+      '@eslint-react/dom-no-void-elements-with-children': 'error',
+      '@eslint-react/dom-no-string-style-prop': 'error',
     },
   },
 

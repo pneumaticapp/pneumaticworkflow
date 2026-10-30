@@ -10,6 +10,8 @@ import { getCurrentToken } from '../utils/auth';
 import { envBackendURL } from '../constants/enviroment';
 import { isRequestCanceled } from '../utils/isRequestCanceled';
 import { isExpectedClientError } from '../utils/expectedClientErrors';
+// Brings the AxiosRequestConfig augmentation into ts-node's program (it ignores tsconfig include)
+import type {} from '../../typings/axios';
 
 import { InterceptorError } from './InterceptorError';
 import { createApiError } from './utils/createApiError';
@@ -45,6 +47,7 @@ interface ICommonRequestOptions {
   shouldThrow: boolean;
   timeOut: number;
   responseType: TResponseType;
+  expectedErrorStatuses?: number[];
 }
 
 const DEFAULT_OPTIONS: ICommonRequestOptions = {
@@ -110,7 +113,8 @@ axiosInstance.interceptors.response.use(
 
     if (error.response) {
       const responseData = error.response.data;
-      if (isExpectedClientError(responseData)) {
+      const isExpectedStatus = Boolean(error.config?.expectedErrorStatuses?.includes(error.response.status));
+      if (isExpectedStatus || isExpectedClientError(responseData)) {
         logger.info('Response Error:', error.response.status, responseData);
       } else {
         logger.error('Response Error:', error.response.status, responseData);
@@ -187,6 +191,7 @@ export async function commonRequest<T>(
       withCredentials: type !== 'fileService',
       responseType: options.responseType === 'text' || options.responseType === 'empty' ? 'text' : 'json',
       validateStatus: (status) => successStatusCodes.includes(status),
+      expectedErrorStatuses: options.expectedErrorStatuses,
     };
 
     const response = await axiosInstance(fullUrl, config);

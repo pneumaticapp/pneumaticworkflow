@@ -31,9 +31,12 @@ SUBSTITUTE_GROUP_PREFIX = 'Substitutes'
 
 class VacationDelegationService:
 
-    """ user is the person on vacation. request_user is whoever turns
-        the vacation on or off: the person themselves, an admin, or
-        nobody when a scheduled task or a cleanup does it. """
+    """Manage delegation for self.user, the absent employee.
+
+    Task substitutes are the users in that employee's substitute group.
+    request_user turns the vacation on or off: the employee, an admin,
+    or nobody when a scheduled task or cleanup does it.
+    """
 
     def __init__(
         self,
@@ -175,7 +178,7 @@ class VacationDelegationService:
         for user's direct tasks and regular group tasks.
 
         Returns (task_ids, wf_ids) — the full set of
-        delegated task IDs and their workflow IDs. Tasks skipped
+        delegated task IDs and their workflow IDs. Tasks finished
         because the workflow starter became a performer
         are not included in task_ids.
         """
@@ -309,7 +312,7 @@ class VacationDelegationService:
         task_ids must contain only active or delayed tasks,
         as the callers select them.
 
-        Returns IDs of skipped tasks.
+        Returns IDs of skipped or completed tasks.
         """
         if not task_ids:
             return set()
@@ -322,9 +325,12 @@ class VacationDelegationService:
             )
             .order_by('id')
         )
-        skipped_task_ids: Set[int] = set()
+        finished_task_ids: Set[int] = set()
         account_owner = self.user.account.get_owner()
         for task in tasks:
+            if task.is_completed:
+                finished_task_ids.add(task.id)
+                continue
             # The workflow is loaded here, not by select_related:
             # the skip of the previous task of the same workflow
             # may delay the workflow or complete it by a condition
@@ -334,9 +340,14 @@ class VacationDelegationService:
                 user=account_owner,
                 workflow=task.workflow,
             )
-            if service.skip_delegated_task_for_starter(task=task):
-                skipped_task_ids.add(task.id)
-        return skipped_task_ids
+            is_skipped = service.skip_delegated_task_for_starter(
+                task=task,
+                absent_user=self.user,
+            )
+            # Delegation may complete an RCBA task without skipping it.
+            if is_skipped or task.is_completed:
+                finished_task_ids.add(task.id)
+        return finished_task_ids
 
     def _update_existing(
         self,

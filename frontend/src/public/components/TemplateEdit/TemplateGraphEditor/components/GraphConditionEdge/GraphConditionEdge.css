@@ -1,0 +1,18 @@
+.edge-label {
+  position: absolute;
+  z-index: 1;
+  pointer-events: all;
+  transition: opacity 0.2s ease;
+}
+
+.edge-label--dimmed {
+  pointer-events: none;
+  opacity: 0.15;
+}
+
+/* Invisible strip that makes the line itself hoverable, so its plus can react. */
+.edge-hit-area {
+  pointer-events: stroke;
+  stroke: transparent;
+  stroke-width: 12;
+}
