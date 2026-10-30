@@ -1,16 +1,78 @@
 {
   "name": "pneumatic-frontend",
-  "version": "0.0.1",
-  "description": "pneumatic frontend",
-  "main": "webpack.config.js",
+  "version": "7.3.2",
   "private": true,
+  "homepage": "https://www.pneumatic.app",
+  "bugs": {
+    "url": "https://github.com/pneumaticapp/pneumaticworkflow/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pneumaticapp/pneumaticworkflow.git",
+    "directory": "frontend"
+  },
+  "license": "Apache-2.0",
+  "author": "Pneumatic Software Inc.",
+  "scripts": {
+    "analyze": "webpack --node-env production --env analyze",
+    "audit": "npm audit --audit-level=high",
+    "build-client": "webpack --progress",
+    "build-client:prod": "NODE_ENV=production webpack",
+    "build-storybook": "storybook build",
+    "check": "npm run lint && npm run test:prod",
+    "e2e": "playwright test",
+    "e2e:debug": "playwright test --headed --slowMo=500",
+    "e2e:headed": "playwright test --headed",
+    "e2e:ui": "playwright test --ui",
+    "eslint": "eslint src",
+    "preinstall": "npx only-allow npm",
+    "lint": "npm run prettier:check && npm run stylelint && npm run eslint",
+    "lint:fix": "npm run prettier && npm run stylelint -- --fix && npm run eslint -- --fix",
+    "local": "npx kill-port 8000 && npm run start",
+    "prepare": "sh scripts/prepare-husky.sh",
+    "prettier": "prettier --write src",
+    "prettier:check": "prettier --check src",
+    "start": "nodemon ./src/index.ts",
+    "start:prod": "ts-node ./src/index.ts",
+    "storybook": "storybook dev -p 6006",
+    "stylelint": "stylelint \"src/**/*.{css,scss,sass}\"",
+    "test": "jest",
+    "test:prod": "jest --ci",
+    "test:related": "sh scripts/test-related.sh",
+    "test:updateSnapshot": "jest --updateSnapshot"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.css": [
+      "prettier --write",
+      "stylelint --fix"
+    ],
+    "*.{js,json,md}": "prettier --write"
+  },
   "browserslist": [
     "defaults",
     "not op_mini all"
   ],
-  "engines": {
-    "node": "^22.22.3 || ^24.15.0 || >=26.0.0",
-    "npm": ">=12.0.0"
+  "overrides": {
+    "@grpc/grpc-js": "^1.14.6",
+    "@keyv/bigmap": {
+      "keyv": "^4.5.4 || ^5.6.0"
+    },
+    "cosmiconfig": "^9.0.2",
+    "eslint-plugin-jsx-a11y": {
+      "eslint": "$eslint"
+    },
+    "form-data": "^4.0.6",
+    "picomatch": "^4.0.7",
+    "postcss-selector-parser": "^7.1.7",
+    "protobufjs": "^7.6.6",
+    "qs": "^6.16.1",
+    "tough-cookie": "^4.1.3",
+    "undici": "^6.29.1",
+    "webpack-dev-middleware": "$webpack-dev-middleware"
   },
   "dependencies": {
     "@emoji-mart/data": "^1.1.2",
@@ -161,6 +223,7 @@
     "postcss-nested": "^8.0.1",
     "postcss-preset-env": "^11.5.0",
     "prettier": "3.9.6",
+    "prettier-plugin-packagejson": "^3.0.3",
     "redux-saga-test-plan": "^4.0.3",
     "sass": "^1.51.0",
     "sass-loader": "^14.1.0",
@@ -182,84 +245,8 @@
     "webpack-dev-middleware": "^7.0.0",
     "webpack-hot-middleware": "^2.26.0"
   },
-  "overrides": {
-    "webpack-dev-middleware": "$webpack-dev-middleware",
-    "form-data": "^4.0.6",
-    "protobufjs": "^7.6.6",
-    "picomatch": "^4.0.7",
-    "@grpc/grpc-js": "^1.14.6",
-    "tough-cookie": "^4.1.3",
-    "qs": "^6.16.1",
-    "undici": "^6.29.1",
-    "postcss-selector-parser": "^7.1.7",
-    "cosmiconfig": "^9.0.2",
-    "eslint-plugin-jsx-a11y": {
-      "eslint": "$eslint"
-    },
-    "@keyv/bigmap": {
-      "keyv": "^4.5.4 || ^5.6.0"
-    }
-  },
-  "scripts": {
-    "preinstall": "npx only-allow npm",
-    "prettier": "prettier --write src",
-    "prettier:check": "prettier --check src",
-    "lint": "npm run prettier:check && npm run stylelint && npm run eslint",
-    "lint:fix": "npm run prettier && npm run stylelint -- --fix && npm run eslint -- --fix",
-    "audit": "npm audit --audit-level=high",
-    "check": "npm run lint && npm run test:prod",
-    "eslint": "eslint src",
-    "stylelint": "stylelint \"src/**/*.{css,scss,sass}\"",
-    "build-client": "webpack --progress",
-    "build-client:prod": "NODE_ENV=production webpack",
-    "analyze": "webpack --node-env production --env analyze",
-    "start": "nodemon ./src/index.ts",
-    "start:prod": "ts-node ./src/index.ts",
-    "local": "npx kill-port 8000 && npm run start",
-    "test": "jest",
-    "test:prod": "jest --ci",
-    "test:editor": "jest --testPathPattern=RichEditor",
-    "test:editor:coverage": "jest --testPathPattern=RichEditor --coverage --collectCoverageFrom='src/public/components/RichEditor/**/*.{ts,tsx}' --collectCoverageFrom='!**/__tests__/**'",
-    "test:updateSnapshot": "jest --updateSnapshot",
-    "test:related": "sh scripts/test-related.sh",
-    "commitlint": "commitlint --edit",
-    "prepare": "sh scripts/prepare-husky.sh",
-    "e2e": "playwright test",
-    "e2e:ui": "playwright test --ui",
-    "e2e:headed": "playwright test --headed",
-    "e2e:debug": "playwright test --headed --slowMo=500",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
-    "chromatic": "npx chromatic --project-token=chpt_84542468ff35306"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://bitbucket.org/antida-projects/pneumatic-frontend.git"
-  },
-  "keywords": [
-    "pneumatic",
-    "frontend",
-    "react",
-    "typescript",
-    "express"
-  ],
-  "author": {
-    "name": "Antida Software"
-  },
-  "license": "ISC",
-  "homepage": "https://bitbucket.org/antida-projects/pneumatic-frontend#readme",
-  "lint-staged": {
-    "*.{ts,tsx}": [
-      "prettier --write",
-      "eslint --fix"
-    ],
-    "*.css": [
-      "prettier --write",
-      "stylelint --fix"
-    ],
-    "*.{js,json,md}": "prettier --write"
-  },
-  "bugs": {
-    "url": "https://bitbucket.org/antida-projects/pneumatic-frontend/issues"
+  "engines": {
+    "node": "^22.22.3 || ^24.15.0 || >=26.0.0",
+    "npm": ">=12.0.0"
   }
 }
