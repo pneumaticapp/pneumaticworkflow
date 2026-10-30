@@ -5,6 +5,7 @@ import jsxA11y from 'eslint-plugin-jsx-a11y';
 import reactHooks from 'eslint-plugin-react-hooks';
 import eslintReact from '@eslint-react/eslint-plugin';
 import eslintConfigPrettier from 'eslint-config-prettier';
+import { importX } from 'eslint-plugin-import-x';
 import globals from 'globals';
 
 export default defineConfig(
@@ -21,8 +22,24 @@ export default defineConfig(
   // Shared: client + server
   {
     files: ['src/**/*.{ts,tsx}'],
+    plugins: {
+      'import-x': importX,
+    },
+    settings: {
+      'import-x/extensions': ['.ts', '.tsx', '.js', '.jsx'],
+      'import-x/cache': {
+        lifetime: 'Infinity',
+      },
+      'import-x/resolver': {
+        node: {
+          extensions: ['.ts', '.tsx', '.js', '.jsx'],
+        },
+      },
+    },
     extends: [js.configs.recommended, tseslint.configs.recommended],
     rules: {
+      'import-x/no-duplicates': 'error',
+      'import-x/no-cycle': ['warn', { ignoreExternal: true, maxDepth: 3 }],
       'no-undef': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { args: 'none', ignoreRestSiblings: true, caughtErrors: 'none' }],
       'no-console': 'warn',
