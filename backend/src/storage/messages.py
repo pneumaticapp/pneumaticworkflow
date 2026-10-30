@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 MSG_FS_0001 = _('FILE_SERVICE_URL not configured.')
 MSG_FS_0002 = _('Connection to file service failed.')

@@ -1,12 +1,22 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.core.exceptions import MultipleObjectsReturned
 from django.db.models import Manager
+from django.utils.crypto import get_random_string
 
 from src.accounts.enums import UserGroupType, UserStatus, UserType
 from src.generics.mixins.managers import NormalizeEmailMixin
 
 
 class SoftDeleteUserManager(NormalizeEmailMixin, BaseUserManager):
+
+    def make_random_password(
+        self,
+        length: int = 10,
+        allowed_chars: str = (
+            'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+        ),
+    ) -> str:
+        return get_random_string(length=length, allowed_chars=allowed_chars)
 
     def get_queryset(self):
         return (

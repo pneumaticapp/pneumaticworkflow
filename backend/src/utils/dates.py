@@ -3,7 +3,7 @@ from datetime import timezone as tz
 
 from django.contrib.auth import get_user_model
 from django.utils import translation
-from pytz import timezone
+from zoneinfo import ZoneInfo
 
 from src.generics import messages
 
@@ -30,14 +30,14 @@ def date_to_tz(
     date: datetime,
     tz: str,
 ) -> datetime:
-    return date.astimezone(timezone(tz))
+    return date.astimezone(ZoneInfo(tz))
 
 
 def date_to_user_fmt(
     date: datetime,
     user: UserModel,
 ) -> str:
-    local_date = date.astimezone(timezone(user.timezone))
+    local_date = date.astimezone(ZoneInfo(user.timezone))
     month = date.strftime('%B')
     month_abbreviation = month_abbreviation_map[local_date.month]
     str_date = local_date.strftime(user.date_fmt)

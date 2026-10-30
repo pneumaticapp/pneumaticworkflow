@@ -59,7 +59,6 @@ def test_retrieve__another_account__not_found(api_client):
     account_2 = create_test_account(name='Another Company')
     agent = create_test_agent(account=account_2)
     path = f'/ai/agents/{agent.id}'
-    message = 'Not found.'
     api_client.token_authenticate(user=user)
 
     # act
@@ -69,7 +68,7 @@ def test_retrieve__another_account__not_found(api_client):
 
     # assert
     assert response.status_code == 404
-    assert response.data['detail'] == message
+    assert response.data['detail'].code == 'not_found'
 
 
 def test_retrieve__unauthenticated__unauthorized(api_client):

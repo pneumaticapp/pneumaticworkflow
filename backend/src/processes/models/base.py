@@ -24,5 +24,5 @@ class BaseApiNameModel(
     def save(self, update_fields=None, **kwargs):
         self.api_name = self.api_name or self._create_api_name()
         if update_fields is not None and 'api_name' not in update_fields:
-            update_fields.append('api_name')
+            update_fields = [*update_fields, 'api_name']
         super().save(update_fields=update_fields, **kwargs)

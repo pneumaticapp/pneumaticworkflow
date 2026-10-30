@@ -275,7 +275,6 @@ def test_partial_update__not_found__not_found(api_client):
     data = {
         'name': 'Updated',
     }
-    message = 'Not found.'
     api_client.token_authenticate(user=user)
 
     # act
@@ -286,7 +285,7 @@ def test_partial_update__not_found__not_found(api_client):
 
     # assert
     assert response.status_code == 404
-    assert response.data['detail'] == message
+    assert response.data['detail'].code == 'not_found'
 
 
 def test_partial_update__another_account__not_found(api_client):
@@ -308,7 +307,6 @@ def test_partial_update__another_account__not_found(api_client):
     data = {
         'name': 'Updated',
     }
-    message = 'Not found.'
     api_client.token_authenticate(user=user)
 
     # act
@@ -319,7 +317,7 @@ def test_partial_update__another_account__not_found(api_client):
 
     # assert
     assert response.status_code == 404
-    assert response.data['detail'] == message
+    assert response.data['detail'].code == 'not_found'
 
 
 def test_partial_update__soft_deleted__not_found(api_client):
@@ -341,7 +339,6 @@ def test_partial_update__soft_deleted__not_found(api_client):
     data = {
         'name': 'Updated',
     }
-    message = 'Not found.'
     api_client.token_authenticate(user=user)
 
     # act
@@ -352,7 +349,7 @@ def test_partial_update__soft_deleted__not_found(api_client):
 
     # assert
     assert response.status_code == 404
-    assert response.data['detail'] == message
+    assert response.data['detail'].code == 'not_found'
 
 
 def test_partial_update__empty_api_key__validation_error(api_client, mocker):
