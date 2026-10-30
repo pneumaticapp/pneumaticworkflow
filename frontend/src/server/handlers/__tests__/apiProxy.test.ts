@@ -1,91 +1,181 @@
-import * as request from 'request';
 import { Request, Response } from 'express';
+import type { Options } from 'http-proxy-middleware';
 
-import { parseCookies } from '../../../public/utils/cookie';
 import { apiProxy } from '../';
 import { serverApi } from '../../utils';
-import { getAuthHeader } from '../../utils/getAuthHeader';
 import { logger } from '../../../public/utils/logger';
 import { ERoutes } from '../../../public/constants/routes';
 
 jest.mock('../../../public/utils/cookie');
 jest.mock('../../utils/getAuthHeader');
-jest.mock('request');
+jest.mock('http-proxy-middleware', () => ({
+  createProxyMiddleware: jest.fn(),
+  fixRequestBody: jest.fn(),
+}));
 
-const req = {
-  body: { 1: 2 },
-  get: jest.fn(),
-  headers: {
-    'X-Header': 'ok',
-  },
-  params: {
-    path: '/auth/token/obtain',
-  },
-  url: '/api/auth/token/obtain',
-  originalUrl: '/api/auth/token/obtain',
-  hostname: 'dev.pneumatic.app',
-} as unknown as Request;
+interface IMockHttpProxyMiddleware {
+  createProxyMiddleware: jest.Mock<jest.Mock, [Options<Request, Response>]>;
+  fixRequestBody: jest.Mock;
+}
 
-const res = {
-  status: jest.fn(),
-  send: jest.fn().mockImplementation(() => res),
-  redirect: jest.fn(),
-} as unknown as Response;
-const url = 'https://dev.pneumatic.app/auth/token/obtain';
+interface IMockCookie {
+  parseCookies: jest.Mock<Record<string, string>, [Request]>;
+}
+
+const { createProxyMiddleware, fixRequestBody }: IMockHttpProxyMiddleware = require('http-proxy-middleware');
+const { parseCookies }: IMockCookie = require('../../../public/utils/cookie');
+
+type TProxyHandler = ReturnType<typeof apiProxy>;
+type TProxyRequest = Parameters<TProxyHandler>[0];
+type TProxyResponse = Parameters<TProxyHandler>[1];
+
+interface IMockResponseContext {
+  res: TProxyResponse;
+  statusMock: jest.Mock;
+  sendMock: jest.Mock;
+  redirectMock: jest.Mock;
+}
+
+function createMockRequest(overrides?: Partial<TProxyRequest>): TProxyRequest {
+  const defaultReq: Partial<TProxyRequest> = {
+    body: { 1: 2 },
+    get: jest.fn(),
+    headers: {
+      'X-Header': 'ok',
+    },
+    params: {
+      path: '/auth/token/obtain',
+    },
+    url: '/api/auth/token/obtain',
+    originalUrl: '/api/auth/token/obtain',
+    hostname: 'dev.pneumatic.app',
+  };
+
+  return {
+    ...defaultReq,
+    ...overrides,
+  } as TProxyRequest;
+}
+
+function createMockResponse(): IMockResponseContext {
+  const statusMock = jest.fn().mockReturnThis();
+  const sendMock = jest.fn().mockReturnThis();
+  const redirectMock = jest.fn();
+
+  const res: Partial<TProxyResponse> = {
+    status: statusMock,
+    send: sendMock,
+    redirect: redirectMock,
+  };
+
+  return {
+    res: res as TProxyResponse,
+    statusMock,
+    sendMock,
+    redirectMock,
+  };
+}
 
 describe('handlers', () => {
   describe('apiProxy', () => {
+    const mockMiddleware = jest.fn();
+
     beforeEach(() => {
-      jest.resetAllMocks();
-      (parseCookies as jest.Mock).mockReturnValue({});
-      jest.spyOn(serverApi, 'getUrl').mockReturnValue(url);
-      jest.spyOn(serverApi, 'getUrl').mockReturnValue(url);
-      (res.status as jest.Mock).mockImplementation(() => res);
-      (res.send as jest.Mock).mockImplementation(() => res);
+      jest.clearAllMocks();
+      createProxyMiddleware.mockReturnValue(mockMiddleware);
+      parseCookies.mockReturnValue({});
+      jest
+        .spyOn(serverApi, 'getProxyUrl')
+        .mockImplementation((url: string) => `https://dev.pneumatic.app${serverApi.getProxyPath(url)}`);
     });
-    it('calls the passed method with the required parameters', async () => {
-      const pipe = jest.fn();
-      const on = jest.fn().mockReturnValue({ pipe });
-      const postMock = request.post as jest.Mock;
-      const headers = {
-        ...req.headers,
-        Host: 'dev.pneumatic.app',
-        'Content-Type': 'application/json',
-      };
-      postMock.mockReturnValue({ on } as unknown as request.Request);
-      const post = apiProxy('post');
 
-      post(req, res);
+    it('configures createProxyMiddleware and invokes it on allowed route', () => {
+      const handler = apiProxy();
+      const req = createMockRequest();
+      const { res } = createMockResponse();
 
-      expect(postMock).toHaveBeenCalledWith(url, { body: req.body, headers, rejectUnauthorized: false, json: true });
+      handler(req, res);
+
+      expect(createProxyMiddleware).toHaveBeenCalledTimes(1);
+
+      const proxyConfig = createProxyMiddleware.mock.calls[0][0];
+
+      expect(proxyConfig.changeOrigin).toBe(true);
+      expect(proxyConfig.on?.proxyReq).toBe(fixRequestBody);
+      expect(typeof proxyConfig.router).toBe('function');
+      if (typeof proxyConfig.router === 'function') {
+        expect(proxyConfig.router(req)).toBe('https://dev.pneumatic.app');
+      }
+      expect(typeof proxyConfig.pathRewrite).toBe('function');
+      if (typeof proxyConfig.pathRewrite === 'function') {
+        expect(proxyConfig.pathRewrite(req.url, req)).toBe('/auth/token/obtain');
+      }
+
+      expect(mockMiddleware).toHaveBeenCalledTimes(1);
+      expect(mockMiddleware).toHaveBeenCalledWith(req, res, expect.any(Function));
     });
-    it('in case of an error, returns a 500 status and logs the error', async () => {
-      const pipe = jest.fn();
-      const on = jest.fn().mockReturnValue({ pipe });
-      const postMock = request.post as jest.Mock;
-      const authHeader = { Authorization: 'Bearer SomeToken' };
-      (getAuthHeader as jest.Mock).mockReturnValue(authHeader);
+
+    it('in case of an error, returns a 500 status and logs the error', () => {
       const errorSpy = jest.spyOn(logger, 'error');
-      postMock.mockReturnValue({ on } as unknown as request.Request);
-      const error = 'Some Bad Error';
-      const post = apiProxy('post');
+      const error = new Error('Some Bad Error');
+      const handler = apiProxy();
       const msg = 'Error on connecting to API.';
+      const req = createMockRequest();
+      const { res, statusMock, sendMock } = createMockResponse();
 
-      post(req, res);
-      const onError = on.mock.calls[0][1];
-      onError(error);
+      handler(req, res);
 
+      const proxyConfig = createProxyMiddleware.mock.calls[0][0];
+      const onError = proxyConfig.on?.error;
+      if (onError) {
+        onError(error, req, res);
+      }
+
+      expect(errorSpy).toHaveBeenCalledTimes(1);
       expect(errorSpy).toHaveBeenCalledWith(msg, error);
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.send).toHaveBeenCalledWith(msg);
+      expect(statusMock).toHaveBeenCalledTimes(1);
+      expect(statusMock).toHaveBeenCalledWith(500);
+      expect(sendMock).toHaveBeenCalledTimes(1);
+      expect(sendMock).toHaveBeenCalledWith(msg);
     });
-    it('redirects to 404 if the path is not allowed', async () => {
-      const post = apiProxy('get');
-      const anotherReq = { ...req, originalUrl: '/api/auth' };
 
-      post(anotherReq as unknown as Request, res);
+    it('redirects to 404 if the path is not allowed', () => {
+      const handler = apiProxy();
+      const anotherReq = createMockRequest({ originalUrl: '/api/auth' });
+      const { res, redirectMock } = createMockResponse();
 
-      expect(res.redirect).toHaveBeenCalledWith(ERoutes.Error);
+      handler(anotherReq, res);
+
+      expect(redirectMock).toHaveBeenCalledTimes(1);
+      expect(redirectMock).toHaveBeenCalledWith(ERoutes.Error);
+      expect(mockMiddleware).not.toHaveBeenCalled();
+    });
+
+    it('redirects to 404 if path traversal resolves to a disallowed path', () => {
+      const handler = apiProxy();
+      const traversalReq = createMockRequest({
+        originalUrl: '/api/accounts/invites/../../workflows',
+      });
+      const { res, redirectMock } = createMockResponse();
+
+      handler(traversalReq, res);
+
+      expect(redirectMock).toHaveBeenCalledTimes(1);
+      expect(redirectMock).toHaveBeenCalledWith(ERoutes.Error);
+      expect(mockMiddleware).not.toHaveBeenCalled();
+    });
+
+    it('redirects to 404 if url is invalid', () => {
+      jest.spyOn(serverApi, 'getProxyUrl').mockReturnValueOnce('http://[');
+      const handler = apiProxy();
+      const badReq = createMockRequest();
+      const { res, redirectMock } = createMockResponse();
+
+      handler(badReq, res);
+
+      expect(redirectMock).toHaveBeenCalledTimes(1);
+      expect(redirectMock).toHaveBeenCalledWith(ERoutes.Error);
+      expect(mockMiddleware).not.toHaveBeenCalled();
     });
   });
 });

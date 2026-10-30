@@ -4,38 +4,14 @@ import classnames from 'classnames';
 import Select, { components } from 'react-select';
 import { FieldHookConfig, useField } from 'formik';
 import PerfectScrollbar from 'react-perfect-scrollbar';
-import OutsideClickHandler from 'react-outside-click-handler';
+import OutsideClickHandler from '../OutsideClickHandler';
 
 import { ArrowDropdownIcon, ExpandIcon, RoundClearIconMd } from '../../icons';
 
 import '../../../assets/css/library/react-select.css';
 import styles from './DropdownList.css';
 
-type TControlSize = 'lg' | 'sm';
-type TPlacement = 'left' | 'right';
-
-export type TDropdownOptionBase = {
-  label: string | React.ReactNode;
-  sourceId?: string | null;
-  value?: string;
-  onClick?: () => void;
-};
-
-export interface IDropdownListProps<TOption extends TDropdownOptionBase> extends Omit<
-  React.ComponentProps<typeof Select>,
-  'options' | 'onChange'
-> {
-  label?: string;
-  options: TOption[];
-  title?: string;
-  controlSize?: TControlSize;
-  className?: string;
-  staticMenu?: boolean;
-  placement?: TPlacement;
-  onChange?: (value: any, action: any) => void;
-  errorMessage?: string;
-  isRequired?: boolean;
-}
+import { TControlSize, TDropdownOptionBase, IDropdownListProps } from './types';
 
 export function DropdownList<TOption extends TDropdownOptionBase>({
   controlSize = 'lg',

@@ -1,22 +1,15 @@
-import * as request from 'request';
+import axios, { AxiosRequestConfig } from 'axios';
 import * as dotenv from 'dotenv';
 import { mergePaths } from '../../public/utils/urls';
 import { getConfig } from '../../public/utils/getConfig';
 import { PROXY_ALLOWED_ROUTES, PROXY_URL_PREFIX } from '../constants/proxy';
-import { isInRange } from './helpers';
+import { ETimeouts } from '../../public/constants/defaultValues';
 
 dotenv.config();
 
-export type TRequestType = 'get' | 'post' | 'patch' | 'put';
-type TOptions = Pick<request.CoreOptions, 'body' | 'headers' | 'rejectUnauthorized'>;
-type TRequestMethod = (uri: string, options?: TOptions, cb?: Function) => request.Request;
-
-const REQUEST_MAP: { [key in TRequestType]: TRequestMethod } = {
-  get: request.get,
-  post: request.post,
-  patch: request.patch,
-  put: request.put,
-};
+export interface IHttpRequestOptions extends AxiosRequestConfig {
+  json?: boolean;
+}
 
 export class HttpRequest {
   public constructor() {
@@ -38,34 +31,33 @@ export class HttpRequest {
 
   public getProxyUrl = (path: string) => this.getUrl(this.getProxyPath(path));
 
-  private makeRequest = (type: TRequestType) => {
-    const requestMethod = REQUEST_MAP[type];
+  public get = async <T>(
+    uri: string,
+    options?: IHttpRequestOptions,
+    isPrivate?: boolean,
+    isExternal?: boolean,
+  ): Promise<T> => {
+    let path = this.urls[uri] || uri;
+    if (isPrivate) {
+      path = this.getProxyPath(path);
+    }
+    const url = isExternal ? path : this.getUrl(path);
 
-    return <T>(uri: string, options?: request.CoreOptions, isPrivate?: boolean, isExternal?: boolean): Promise<T> =>
-      new Promise((resolve, reject) => {
-        let path = this.urls[uri] || uri;
-        if (isPrivate) {
-          path = this.getProxyPath(path);
-        }
-        const url = isExternal ? path : this.getUrl(path);
-
-        return requestMethod(url, options, (error: object | void, response: request.Response, body: object) => {
-          if (error || !isInRange(response.statusCode, 200, 299)) {
-            reject(body || error || new Error(`Request failed with status ${response.statusCode}`));
-          } else {
-            resolve(body as unknown as T);
-          }
-        });
+    try {
+      const response = await axios.request<T>({
+        ...options,
+        method: 'get',
+        url,
+        timeout: options?.timeout ?? ETimeouts.Default,
       });
+      return response.data;
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        throw err.response.data || new Error(`Request failed with status ${err.response.status}`);
+      }
+      throw err;
+    }
   };
-
-  public get = this.makeRequest('get');
-
-  public post = this.makeRequest('post');
-
-  public patch = this.makeRequest('patch');
-
-  public put = this.makeRequest('put');
 }
 
 export const serverApi = new HttpRequest();

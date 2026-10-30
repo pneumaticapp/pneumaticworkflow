@@ -4,7 +4,7 @@ import classnames from 'classnames';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import { DropdownItem, DropdownMenu, DropdownToggle, Dropdown } from 'reactstrap';
 
-import OutsideClickHandler from 'react-outside-click-handler';
+import OutsideClickHandler from '../OutsideClickHandler';
 import { ClearIcon, ExpandIcon } from '../../icons';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { Skeleton } from '../Skeleton';

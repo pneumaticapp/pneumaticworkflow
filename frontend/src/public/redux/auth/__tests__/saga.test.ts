@@ -1,7 +1,7 @@
 import { put } from 'redux-saga/effects';
 
 import { configMock } from '../../../__stubs__/configMock';
-import { ApiError } from '../../../api/commonRequest';
+import { ApiError } from '../../../api/ApiError';
 jest.mock('../../../utils/getConfig', () => ({
   getBrowserConfigEnv: jest.fn().mockReturnValue(configMock),
   getBrowserConfig: jest.fn().mockReturnValue(configMock),

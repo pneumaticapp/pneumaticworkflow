@@ -11,10 +11,9 @@ import {
 } from '../accounts/slice';
 import { getAuthUser } from '../selectors/user';
 import { generateMenuItems, createMenuCounter } from '../../utils/menu';
-import { IMenuItem } from '../../types/menu';
+import { IMenuItem, TMenuCounter } from '../../types/menu';
 import { getTotalTasksCount } from '../selectors/tasks';
 import { getAccountPlan } from '../selectors/accounts';
-import { TMenuCounter } from '../../constants/menu';
 import { changeTasksCount } from '../tasks/slice';
 
 import { getTenantsCountStore } from '../selectors/tenants';

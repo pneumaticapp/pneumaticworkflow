@@ -1,4 +1,4 @@
-import produce from 'immer';
+import { produce } from 'immer';
 
 import { EIntegrationsActions, TIntegrationsActions } from './actions';
 import { IIntegrationsStore } from '../../types/redux';

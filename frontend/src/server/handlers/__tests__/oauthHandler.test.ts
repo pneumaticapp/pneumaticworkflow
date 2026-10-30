@@ -44,7 +44,7 @@ describe('oAuthHandler', () => {
     };
 
     it('exchanges code for token and redirects to main', async () => {
-      const tokenResponse = JSON.stringify({ token: 'jwt-token' });
+      const tokenResponse = { token: 'jwt-token' };
       (serverApi.get as jest.Mock).mockResolvedValue(tokenResponse);
       const res = createRes();
 
@@ -82,7 +82,7 @@ describe('oAuthHandler', () => {
     const req: MockRequest = { query: {} };
 
     it('fetches auth URI and sends redirect URI', async () => {
-      const authResponse = JSON.stringify({ auth_uri: 'https://login.microsoft.com/...' });
+      const authResponse = { auth_uri: 'https://login.microsoft.com/...' };
       (serverApi.get as jest.Mock).mockResolvedValue(authResponse);
       const res = createRes();
 

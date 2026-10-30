@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import ReCAPTCHA from 'react-google-recaptcha';
-import produce from 'immer';
+import { produce } from 'immer';
 import classnames from 'classnames';
 import { useDispatch } from 'react-redux';
 
@@ -32,7 +32,7 @@ import { useShouldHideIntercom } from '../../../../hooks/useShouldHideIntercom';
 import { prependHttp } from '../../../../utils/prependHttp';
 
 import submitedImage from '../images/SubmitedImage.svg';
-import * as ErrorImage from '../images/ErrorImage.svg';
+import ErrorImage from '../images/ErrorImage.svg';
 
 import '../../../../assets/fonts/simple-line-icons/css/simple-line-icons.css';
 import '../../../../assets/fonts/iconsmind-s/css/iconsminds.css';

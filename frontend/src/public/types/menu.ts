@@ -31,3 +31,9 @@ export interface IMenuItemSub {
   isHidden?: boolean;
   iconComponent?: (props: React.SVGAttributes<SVGElement>) => React.ReactElement;
 }
+
+export type TMenuCounter = {
+  id: IMenuItem['id'];
+  value: number;
+  type: TMenuCounterType;
+};

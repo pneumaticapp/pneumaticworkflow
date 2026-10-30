@@ -3,7 +3,7 @@ import { InviteResponse } from '../api/sendInvites';
 import { capitalize } from './strings';
 import { NotificationManager } from '../components/UI/Notifications';
 import { getPluralNoun } from './helpers';
-import { TDropdownOptionBase } from '../components/UI';
+import type { TDropdownOptionBase } from '../components/UI/DropdownList/types';
 import { UserInvitePayload } from '../redux/team/types';
 
 export const EXTERNAL_USER_ID = -1;

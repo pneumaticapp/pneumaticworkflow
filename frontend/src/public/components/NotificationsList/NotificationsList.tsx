@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 import classnames from 'classnames';
-import OutsideClickHandler from 'react-outside-click-handler';
+import OutsideClickHandler from '../UI/OutsideClickHandler';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useIntl } from 'react-intl';
 
