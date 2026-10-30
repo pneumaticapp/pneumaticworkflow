@@ -97,7 +97,7 @@
     "@csstools/css-parser-algorithms": "4.0.0",
     "@csstools/css-tokenizer": "4.0.0",
     "@csstools/postcss-global-data": "^4.0.0",
-    "@eslint-react/eslint-plugin": "^5.27.1",
+    "@eslint-react/eslint-plugin": "^5.28.8",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.58.2",
     "@sentry/webpack-plugin": "^2.23.1",
