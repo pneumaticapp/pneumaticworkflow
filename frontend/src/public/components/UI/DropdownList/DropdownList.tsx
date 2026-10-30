@@ -4,7 +4,7 @@ import classnames from 'classnames';
 import Select, { components } from 'react-select';
 import { FieldHookConfig, useField } from 'formik';
 import PerfectScrollbar from 'react-perfect-scrollbar';
-import OutsideClickHandler from 'react-outside-click-handler';
+import OutsideClickHandler from '../OutsideClickHandler';
 
 import { ArrowDropdownIcon, ExpandIcon, RoundClearIconMd } from '../../icons';
 

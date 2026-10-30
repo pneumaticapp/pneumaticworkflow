@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import produce from 'immer';
+import { produce } from 'immer';
 
 import { EDashboardActions, TDashboardActions } from './actions';
 import { EDashboardTimeRange } from '../../types/dashboard';

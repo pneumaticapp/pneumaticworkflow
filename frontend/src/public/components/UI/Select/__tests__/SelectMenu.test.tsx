@@ -1,37 +1,62 @@
 import * as React from 'react';
-import { shallow } from 'enzyme';
-import { DropdownItem } from 'reactstrap';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { IntlProvider } from 'react-intl';
 
 import { SelectMenu } from '../SelectMenu';
 import { ETaskListSorting } from '../../../../types/tasks';
-
-const mockProps = {
-  activeValue: ETaskListSorting.DateDesc,
-  values: Object.values(ETaskListSorting),
-  onChange: jest.fn(),
-};
+import { enMessages } from '../../../../lang/locales/en_US';
 
 describe('SelectMenu', () => {
+  const ACTIVE_LABEL = 'Newest first';
+  const INACTIVE_LABEL = 'Oldest first';
+  const OVERDUE_LABEL = 'Overdue first';
+  const onChange = jest.fn();
+
+  const renderSelectMenu = () =>
+    render(
+      <IntlProvider locale="en" messages={enMessages}>
+        <SelectMenu
+          activeValue={ETaskListSorting.DateDesc}
+          values={Object.values(ETaskListSorting)}
+          onChange={onChange}
+        />
+      </IntlProvider>,
+    );
+
+  const getMenuItem = (name: string) => screen.getByRole('menuitem', { name, hidden: true });
+
   beforeEach(() => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
   });
-  it('renders correctly', () => {
-    const wrapper = shallow(<SelectMenu {...mockProps} />);
 
-    expect(wrapper).toMatchSnapshot();
+  it('shows the active value in the button and all values in the menu with the active one marked', () => {
+    renderSelectMenu();
+
+    expect(screen.getByRole('button', { name: ACTIVE_LABEL })).toBeInTheDocument();
+    const menuItems = screen.getAllByRole('menuitem', { hidden: true });
+    expect(menuItems[0]).toHaveTextContent(INACTIVE_LABEL);
+    expect(menuItems[1]).toHaveTextContent(ACTIVE_LABEL);
+    expect(menuItems[2]).toHaveTextContent(OVERDUE_LABEL);
+    expect(menuItems[0]).not.toHaveClass('value-item__disabled');
+    expect(menuItems[1]).toHaveClass('value-item__disabled');
+    expect(menuItems[2]).not.toHaveClass('value-item__disabled');
   });
-  it('clicking on the element calls onChange if the value is inactive', () => {
-    const wrapper = shallow(<SelectMenu {...mockProps} />);
 
-    wrapper.find(DropdownItem).at(0).simulate('click');
+  it('calls onChange with the item value when an inactive item is clicked', () => {
+    renderSelectMenu();
 
-    expect(mockProps.onChange).toHaveBeenCalledWith(ETaskListSorting.DateAsc);
+    userEvent.click(getMenuItem(INACTIVE_LABEL));
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith(ETaskListSorting.DateAsc);
   });
-  it('clicking on the element does not call onChange if the value is active', () => {
-    const wrapper = shallow(<SelectMenu {...mockProps} />);
 
-    wrapper.find(DropdownItem).at(1).simulate('click');
+  it('does not call onChange when the active item is clicked', () => {
+    renderSelectMenu();
 
-    expect(mockProps.onChange).not.toHaveBeenCalled();
+    userEvent.click(getMenuItem(ACTIVE_LABEL));
+
+    expect(onChange).not.toHaveBeenCalled();
   });
 });

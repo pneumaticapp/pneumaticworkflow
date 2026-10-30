@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { useIntl } from 'react-intl';
-import OutsideClickHandler from 'react-outside-click-handler';
+import OutsideClickHandler from '../UI/OutsideClickHandler';
 
 import { IntegrateIcon } from '../icons';
 import { Tooltip, Button } from '../UI';

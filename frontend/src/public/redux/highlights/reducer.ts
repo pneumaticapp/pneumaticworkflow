@@ -1,4 +1,4 @@
-import produce from 'immer';
+import { produce } from 'immer';
 import { endOfToday, startOfToday } from 'date-fns';
 
 import { IHighlightsStore, IHighlightsFilters } from '../../types/redux';

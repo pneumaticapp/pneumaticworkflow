@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Component } from 'react';
 import classnames from 'classnames';
 import * as ReactDOM from 'react-dom';
-import OutsideClickHandler from 'react-outside-click-handler';
+import OutsideClickHandler from '../OutsideClickHandler';
 
 import { ClearIcon } from '../../icons';
 import { history } from '../../../utils/history';
@@ -83,6 +83,7 @@ export class SideModal extends Component<ISideModalProps> {
     return (
       <OutsideClickHandler onOutsideClick={this.hanldeClickOutside}>
         <div
+          data-testid="side-modal"
           className={classnames(
             styles['side-modal'],
             !isClosing ? styles['side-modal_opened'] : styles['side-modal_closed'],

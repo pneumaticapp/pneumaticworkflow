@@ -1,26 +1,41 @@
-import React, { ReactElement } from 'react';
-import { shallow } from 'enzyme';
+import * as React from 'react';
+import { render, screen } from '@testing-library/react';
 
-import { Tooltip } from '../../UI';
 import { SubMenuTooltip } from '../SubMenuItemTooltip';
 import styles from '../SubMenuItemTooltip.css';
 
+jest.mock('../../UI', () => ({
+  Tooltip: ({ size, children }: { size?: string; children: React.ReactNode }) => (
+    <div data-testid="tooltip" data-size={size}>
+      {children}
+    </div>
+  ),
+}));
+
 describe('SubMenuTooltip', () => {
   const renderTooltip = () =>
-    shallow(
+    render(
       <SubMenuTooltip containerClassName="menu-default" menuItems={[]}>
         <a href="/help">Help center</a>
       </SubMenuTooltip>,
     );
 
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('uses the large arrow that matches the submenu caret dimensions', () => {
-    expect(renderTooltip().find(Tooltip).prop('size')).toBe('lg');
+    renderTooltip();
+
+    expect(screen.getByTestId('tooltip')).toHaveAttribute('data-size', 'lg');
   });
 
   it('uses a full-width element as the tooltip trigger', () => {
-    const trigger = shallow(renderTooltip().find(Tooltip).prop('children') as ReactElement);
+    renderTooltip();
 
-    expect(trigger.is('div')).toBe(true);
-    expect(trigger.hasClass(styles['sub-menu__trigger'])).toBe(true);
+    const trigger = screen.getByTestId('sub-menu-trigger');
+
+    expect(trigger).toBeInstanceOf(HTMLDivElement);
+    expect(trigger).toHaveClass(styles['sub-menu__trigger']);
   });
 });
