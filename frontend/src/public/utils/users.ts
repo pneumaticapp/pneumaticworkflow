@@ -1,10 +1,5 @@
 import { EUserStatus, TUserListItem } from '../types/user';
-import { InviteResponse } from '../api/sendInvites';
 import { capitalize } from './strings';
-import { NotificationManager } from '../components/UI/Notifications';
-import { getPluralNoun } from './helpers';
-import type { TDropdownOptionBase } from '../components/UI/DropdownList/types';
-import { UserInvitePayload } from '../redux/team/types';
 
 export const EXTERNAL_USER_ID = -1;
 
@@ -91,56 +86,4 @@ export const sortUsersByNameDesc = (users: TUserListItem[]) => {
   return users.slice().sort((user1, user2) => {
     return getUserNameForSorting(user1) < getUserNameForSorting(user2) ? 1 : -1;
   });
-};
-
-export interface IShowNotification {
-  (type: 'success' | 'warning', invites: UserInvitePayload[], title?: string): void;
-}
-
-export interface IShowInvitesNotification {
-  invites: UserInvitePayload[];
-  sendInvitesResult: InviteResponse;
-}
-
-export const showInvitesNotification = ({ invites, sendInvitesResult }: IShowInvitesNotification) => {
-  const showNotification: IShowNotification = (type, invites, title) => {
-    if (!invites.length) {
-      return;
-    }
-    const notification = type === 'success' ? NotificationManager.success : NotificationManager.warning;
-    const preNotificationTitle = type === 'success' ? 'Successfully invited' : 'Failed to invite';
-    notification({
-      title:
-        title ||
-        `${preNotificationTitle} ${getPluralNoun({
-          counter: invites.length,
-          single: 'user',
-          plural: 'users',
-          includeCounter: true,
-        })}`,
-      message: invites.map(({ email }) => email).join('\n'),
-    });
-  };
-
-  const { alreadyAccepted } = sendInvitesResult;
-  const alreadyAcceptedEmails = alreadyAccepted.map(({ email }) => email);
-  const alreadyAcceptedUsers = invites.filter(({ email }) => alreadyAcceptedEmails.includes(email));
-  const successfullyInvitedUsers = invites.filter(({ email }) => !alreadyAcceptedEmails.includes(email));
-
-  showNotification('warning', alreadyAcceptedUsers, 'users.error-already-accepted');
-  showNotification('success', successfullyInvitedUsers);
-};
-
-export type TUserDropdownOption = TUserListItem & TDropdownOptionBase;
-
-export const getDropdownUsersList = (users: TUserListItem[]) => {
-  const activeUsers = getNotDeletedUsers(users);
-
-  const dropdownSelections: TUserDropdownOption[] = activeUsers.map((user) => ({
-    ...user,
-    value: String(user.id),
-    label: getUserFullName(user)!,
-  }));
-
-  return dropdownSelections;
 };

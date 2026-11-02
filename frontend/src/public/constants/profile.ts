@@ -1,5 +1,5 @@
 import { envLanguageCode } from './enviroment';
-import { TDropdownOptionBase } from '../components/UI';
+import type { TDropdownOptionBase } from '../components/UI/DropdownList/types';
 
 // The Russian language is present, but it should not be shown yet
 export const LANGUAGE_OPTIONS: TDropdownOptionBase[] = [

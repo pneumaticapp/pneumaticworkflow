@@ -1,7 +1,7 @@
 import React from 'react';
 import { EExtraFieldType, ITemplateKickoffClient, ITemplateTaskClient } from '../../types/template';
 import { EMoveDirections } from '../../types/workflow';
-import { TDropdownOptionBase } from '../UI/DropdownList';
+import type { TDropdownOptionBase } from '../UI/DropdownList/types';
 import { EStartingType } from './TaskForm/Conditions/utils/getDropdownOperators';
 import type { TGraphAddTaskIntent } from './TemplateGraphEditor/types';
 

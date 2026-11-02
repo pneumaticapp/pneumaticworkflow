@@ -3,7 +3,8 @@ import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import { ActionMeta, FormatOptionLabelMeta } from 'react-select';
 
-import { TDropdownOptionBase, IDropdownListProps, DropdownList, Checkbox, Avatar, TAvatarUser } from '../..';
+import { DropdownList, Checkbox, Avatar, TAvatarUser } from '../..';
+import type { TDropdownOptionBase, IDropdownListProps } from '../../DropdownList/types';
 import { EUserStatus, TUserListItem, isUserAbsent } from '../../../../types/user';
 import { BoldPlusIcon } from '../../../icons';
 import { ETaskPerformerType } from '../../../../types/template';

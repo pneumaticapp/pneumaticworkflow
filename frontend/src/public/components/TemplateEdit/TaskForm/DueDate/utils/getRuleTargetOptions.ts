@@ -4,7 +4,7 @@ import {
   ITemplateTaskClient,
   TDueDateRuleTarget,
 } from '../../../../../types/template';
-import { TDropdownOptionBase } from '../../../../UI';
+import type { TDropdownOptionBase } from '../../../../UI/DropdownList/types';
 import { getPreviousTasks } from '../../utils/getPreviousTasks';
 import { getTaskVariables } from '../../utils/getTaskVariables';
 
