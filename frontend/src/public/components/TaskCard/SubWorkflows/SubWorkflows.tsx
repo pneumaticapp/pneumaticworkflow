@@ -4,7 +4,7 @@ import classnames from 'classnames';
 
 import { IWorkflowControllsProps, WorkflowControlls } from '../../Workflows/WorkflowControlls';
 import { IWorkflowClient } from '../../../types/workflow';
-import { Dropdown, Tooltip } from '../../UI';
+import { DropdownMenu, Tooltip } from '../../UI';
 import { MoreIcon, UrgentColorIcon } from '../../icons';
 import { isArrayWithItems } from '../../../utils/helpers';
 
@@ -77,7 +77,7 @@ function SubWorkflowItem({
           }
 
           return (
-            <Dropdown
+            <DropdownMenu
               renderToggle={(isOpen) => (
                 <MoreIcon className={classnames(styles['workflow-embeded__more'], isOpen && styles['is-active'])} />
               )}

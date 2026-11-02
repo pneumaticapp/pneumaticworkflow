@@ -48,8 +48,8 @@ jest.mock('../../UI/UserPerformer', () => ({
   EBgColorTypes: { Light: 'light' },
 }));
 
-jest.mock('../../UI/DropdownList', () => ({
-  DropdownList: ({ options, value, onChange, label }: any) => (
+jest.mock('../../UI/Select', () => ({
+  Select: ({ options, value, onChange, label }: any) => (
     <div data-testid="status-dropdown">
       <span>{label}</span>
       {options.map((opt: any) => (

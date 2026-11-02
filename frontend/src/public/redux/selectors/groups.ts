@@ -1,5 +1,5 @@
 import { IApplicationState } from '../../types/redux';
-import { EUserListSorting } from '../../types/user';
+import { EGroupsListSorting, EUserListSorting } from '../../types/user';
 import { EUserGroupType, IGroup } from '../team/types';
 
 export const getGroupsList = (state: IApplicationState): IGroup[] => state.groups.list;
@@ -13,3 +13,5 @@ export const getCurrentGroupData = (state: IApplicationState): IGroup | null => 
 
 export const getCurrentGroupUserListSorting = (state: IApplicationState): EUserListSorting =>
   state.groups.currentGroup.userListSorting;
+
+export const getGroupsListSorting = (state: IApplicationState): EGroupsListSorting => state.groups.groupsListSorting;

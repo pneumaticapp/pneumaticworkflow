@@ -4,7 +4,7 @@ import classNames from 'classnames';
 
 import { TrashIcon, PencilIcon, UnionIcon, SettingsIcon, MoreIcon } from '../../icons';
 
-import { Dropdown, TDropdownOption } from '../Dropdown';
+import { DropdownMenu, TDropdownMenuOption } from '../DropdownMenu';
 
 import { IModifyDropdownProps, EModifyDropdownToggle } from './types';
 
@@ -24,7 +24,7 @@ export function ModifyDropdown({
 }: IModifyDropdownProps) {
   const { formatMessage } = useIntl();
 
-  const options: TDropdownOption[] = [
+  const options: TDropdownMenuOption[] = [
     {
       label: editLabel,
       onClick: onEdit,
@@ -82,5 +82,5 @@ export function ModifyDropdown({
     );
   };
 
-  return <Dropdown renderToggle={renderToggle} options={options} />;
+  return <DropdownMenu renderToggle={renderToggle} options={options} />;
 }

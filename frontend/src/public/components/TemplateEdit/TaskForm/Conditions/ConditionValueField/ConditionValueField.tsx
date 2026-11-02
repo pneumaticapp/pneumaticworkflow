@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import { DropdownList } from '../../../../UI/DropdownList';
+import { Select } from '../../../../UI/Select';
 import { EExtraFieldType } from '../../../../../types/template';
 import { Field } from '../../../../Field';
 import { EUserStatus, TUserListItem } from '../../../../../types/user';
@@ -106,7 +106,7 @@ export function ConditionValueField({
     const selectedSelection = dropdownSelections.find((selection) => selection.value === rule.value) || null;
 
     return (
-      <DropdownList
+      <Select
         isDisabled={isDisabled}
         isSearchable={false}
         placeholder={formatMessage({ id: 'templates.conditions.value-placeholder' })}
@@ -156,7 +156,7 @@ export function ConditionValueField({
       null;
 
     return (
-      <DropdownList
+      <Select
         isDisabled={isDisabled}
         isSearchable={false}
         placeholder={formatMessage({ id: 'templates.conditions.value-placeholder' })}

@@ -11,7 +11,7 @@ import { sanitizeText } from '../../../../utils/strings';
 import { DateFormat } from '../../../UI/DateFormat';
 import { TemplateName } from '../../../UI/TemplateName';
 import { WorkflowControlls } from '../../WorkflowControlls';
-import { Dropdown, Tooltip } from '../../../UI';
+import { DropdownMenu, Tooltip } from '../../../UI';
 import { MoreIcon } from '../../../icons';
 
 import styles from '../WorkflowsGridPage.css';
@@ -133,7 +133,7 @@ export const WorkflowCard = ({
 
             return (
               <div className={styles['dropdown']}>
-                <Dropdown
+                <DropdownMenu
                   renderToggle={(isOpen) => (
                     <MoreIcon className={classnames(styles['card-more'], isOpen && styles['card-more_active'])} />
                   )}

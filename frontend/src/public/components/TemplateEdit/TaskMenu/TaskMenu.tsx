@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 
 import { ITemplateTaskClient } from '../../../types/template';
 import { ArrowDownIcon, ArrowUpIcon, ClockIcon, EditIcon, MoreIcon, TrashIcon, UnionIcon } from '../../icons';
-import { Dropdown, TDropdownOption } from '../../UI';
+import { DropdownMenu, TDropdownMenuOption } from '../../UI';
 import { TTaskFormPart } from '../types';
 
 import styles from './TaskMenu.css';
@@ -43,7 +43,7 @@ export function TaskMenu({
 
   const isFirstTask = task.number === 1;
   const isLastTask = task.number === tasksCount;
-  const dropdownOptions: TDropdownOption[] = [
+  const dropdownOptions: TDropdownMenuOption[] = [
     {
       label: formatMessage({ id: 'template.move-up' }),
       onClick: handleOptionClick(moveTaskUp),
@@ -103,7 +103,7 @@ export function TaskMenu({
 
   return (
     <div className={styles['card-more-container']}>
-      <Dropdown
+      <DropdownMenu
         renderToggle={(isOpen) => (
           <MoreIcon className={classnames(styles['card-more'], isOpen && styles['card-more_active'])} />
         )}

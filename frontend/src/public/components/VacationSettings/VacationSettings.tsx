@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 
 import { Button } from '../UI/Buttons/Button';
 import { Header } from '../UI/Typeography/Header';
-import { DropdownList } from '../UI/DropdownList';
+import { Select } from '../UI/Select';
 import { DateField } from '../UI/Fields/DateField';
 import { UsersDropdown, TUsersDropdownOption } from '../UI/form/UsersDropdown';
 import { UserPerformer, EBgColorTypes } from '../UI/UserPerformer';
@@ -119,7 +119,7 @@ export function VacationSettings({
       </Header>
 
       <div className={styles['vacation-form']} data-testid="vacation-form">
-        <DropdownList
+        <Select
           label={formatMessage({ id: 'user-info.vacation.status', defaultMessage: 'Options' })}
           options={STATUS_OPTIONS}
           value={STATUS_OPTIONS.find((o) => o.value === activeTab)}

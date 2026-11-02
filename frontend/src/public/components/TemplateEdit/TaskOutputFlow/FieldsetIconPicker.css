@@ -1,16 +1,3 @@
-.fieldset-picker__container,
-.fieldset-picker__toggle {
-  padding: 0;
-}
-
-.fieldset-picker__arrow_hidden {
-  display: none;
-}
-
-.fieldset-picker__menu {
-  max-width: 20rem;
-}
-
 .fieldset-picker__option-info {
   display: flex;
   flex-direction: column;

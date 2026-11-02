@@ -5,7 +5,7 @@ import { useIntl } from 'react-intl';
 import { openTuneViewModal } from '../../../../redux/workflows/slice';
 import { EWorkflowsLoadingStatus } from '../../../../types/workflow';
 import { EPageTitle } from '../../../../constants/defaultValues';
-import { Button, Dropdown, Tooltip } from '../../../UI';
+import { Button, DropdownMenu, Tooltip } from '../../../UI';
 import { TuneViewIcon, DownloadIcon } from '../../../icons';
 import { PageTitle } from '../../../PageTitle';
 import { getWorkflowTemplatesIdsFilter } from '../../../../redux/selectors/workflows';
@@ -73,7 +73,7 @@ export function WorkflowsTableActions({
     : formatMessage({ id: isExporting ? 'workflows.export-loading' : 'workflows.export-menu' });
 
   const exportControl = (
-    <Dropdown
+    <DropdownMenu
       isDisabled={isExportDisabled}
       direction="right"
       className={styles['export-dropdown']}

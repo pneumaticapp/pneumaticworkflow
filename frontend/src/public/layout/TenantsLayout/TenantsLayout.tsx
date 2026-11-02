@@ -1,7 +1,9 @@
 import React, { useMemo } from 'react';
+import { useIntl } from 'react-intl';
 
 import { TopNavContainer } from '../../components/TopNav';
-import { SelectMenu } from '../../components/UI';
+import { Select } from '../../components/UI';
+import { getEnumSelectProps } from '../../utils/getEnumSelectProps';
 import { ETenantsSorting } from '../../types/tenants';
 
 export interface ITenantsLayoutProps {
@@ -11,10 +13,17 @@ export interface ITenantsLayoutProps {
 }
 
 export function TenantsLayout({ children, sorting, changeSorting }: ITenantsLayoutProps) {
+  const { formatMessage } = useIntl();
   const sortingTitles = useMemo(() => Object.values(ETenantsSorting), []);
 
   const renderTenantsNavContent = () => {
-    return <SelectMenu values={sortingTitles} activeValue={sorting} onChange={changeSorting} />;
+    return (
+      <Select
+        controlSize="sm"
+        controlVariant="accent"
+        {...getEnumSelectProps(sortingTitles, sorting, changeSorting, formatMessage)}
+      />
+    );
   };
 
   return (

@@ -4,14 +4,14 @@ import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
 
 import { ExtraFieldDropdown } from '../ExtraFieldDropdown';
-import { Dropdown } from '../../../../UI';
+import { DropdownMenu } from '../../../../UI';
 import { enMessages } from '../../../../../lang/locales/en_US';
 
 jest.mock('../../../../UI', () => {
   const actual = jest.requireActual('../../../../UI');
   return {
     ...actual,
-    Dropdown: jest.fn(actual.Dropdown),
+    DropdownMenu: jest.fn(actual.DropdownMenu),
   };
 });
 
@@ -124,12 +124,12 @@ describe('ExtraFieldDropdown', () => {
       expect(screen.getByText('Dataset B')).toBeInTheDocument();
     });
 
-    it('passes dataset subOptions to Dropdown when datasetOptions is provided', () => {
-      (Dropdown as jest.Mock).mockClear();
+    it('passes dataset subOptions to DropdownMenu when datasetOptions is provided', () => {
+      (DropdownMenu as jest.Mock).mockClear();
 
       renderWithIntl(<ExtraFieldDropdown {...datasetProps} />);
 
-      const dropdownProps = (Dropdown as jest.Mock).mock.calls[0]?.[0];
+      const dropdownProps = (DropdownMenu as jest.Mock).mock.calls[0]?.[0];
       const datasetMenuItem = dropdownProps.options.find(
         (opt: any) => opt.className && opt.className.includes('dataset-submenu'),
       );

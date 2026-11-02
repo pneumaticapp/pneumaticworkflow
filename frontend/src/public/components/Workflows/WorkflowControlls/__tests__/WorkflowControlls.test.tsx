@@ -3,7 +3,7 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { TDropdownOption } from '../../../UI';
+import { TDropdownMenuOption } from '../../../UI';
 import { enMessages } from '../../../../lang/locales/en_US';
 import { EWorkflowStatus, IWorkflowClient } from '../../../../types/workflow';
 
@@ -37,7 +37,7 @@ describe('WorkflowControllsComponents', () => {
   const renderResumeOption = (status: EWorkflowStatus) => {
     render(
       <WorkflowControllsComponents workflow={createWorkflow(status)} timezone="UTC">
-        {(options: TDropdownOption[]) => {
+        {(options: TDropdownMenuOption[]) => {
           const option = options.find(({ label }) => label === RESUME_LABEL);
 
           expect(option).toBeDefined();

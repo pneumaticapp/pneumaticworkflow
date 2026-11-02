@@ -3,7 +3,7 @@ import { render } from '@testing-library/react';
 
 import { TopNavContent } from '../TopNav';
 import { TTopNavContentProps } from '../types';
-import { Dropdown, TDropdownOption } from '../../UI';
+import { DropdownMenu, TDropdownMenuOption } from '../../UI';
 import { intlMock } from '../../../__stubs__/intlMock';
 import { ESubscriptionPlan } from '../../../types/account';
 import { IAccount } from '../../../types/user';
@@ -21,7 +21,7 @@ jest.mock('../PaywallReminder', () => ({
 }));
 
 jest.mock('../../UI', () => ({
-  Dropdown: jest.fn(() => null),
+  DropdownMenu: jest.fn(() => null),
   CurrentUserAvatar: () => null,
 }));
 
@@ -82,11 +82,11 @@ describe('TopNav', () => {
   };
 
   const getDropdownOptions = () => {
-    const dropdownMock = Dropdown as jest.MockedFunction<typeof Dropdown>;
+    const dropdownMock = DropdownMenu as jest.MockedFunction<typeof DropdownMenu>;
     const lastCall = dropdownMock.mock.calls[dropdownMock.mock.calls.length - 1];
     const { options } = lastCall[0];
 
-    return (Array.isArray(options) ? options : [options]) as TDropdownOption[];
+    return (Array.isArray(options) ? options : [options]) as TDropdownMenuOption[];
   };
 
   const findOption = (label: string) => {
@@ -94,7 +94,7 @@ describe('TopNav', () => {
     const option = options.find((dropdownOption) => dropdownOption.label === label);
 
     if (!option) {
-      throw new Error(`Dropdown option not found: ${label}`);
+      throw new Error(`DropdownMenu option not found: ${label}`);
     }
 
     return option;

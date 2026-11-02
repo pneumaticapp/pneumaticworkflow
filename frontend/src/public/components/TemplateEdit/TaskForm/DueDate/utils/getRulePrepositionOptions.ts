@@ -1,7 +1,7 @@
 import { TDueDateRulePreposition, TDueDateRuleTarget } from '../../../../../types/template';
-import { TDropdownOptionBase } from '../../../../UI';
+import { TSelectOption } from '../../../../UI';
 
-export type TRulePrepositionOption = TDropdownOptionBase & {
+export type TRulePrepositionOption = TSelectOption & {
   rulePreposition: TDueDateRulePreposition;
 };
 

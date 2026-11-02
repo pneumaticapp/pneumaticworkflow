@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 import { NavLink } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 
-import { Dropdown, TDropdownOption } from '../../../UI';
+import { DropdownMenu, TDropdownMenuOption } from '../../../UI';
 import { GroupIcon, IntegrateIcon, MoreIcon, PencilIcon, TrashIcon, UnionIcon } from '../../../icons';
 import { WorkflowCardUsers } from '../../../WorkflowCardUsers';
 import { IGroup } from '../../../../redux/team/types';
@@ -33,7 +33,7 @@ export function Group({ group }: IGroupProps) {
   });
 
   const renderDropdownMore = () => {
-    const dropdownOptions: TDropdownOption[] = [
+    const dropdownOptions: TDropdownMenuOption[] = [
       {
         label: formatMessage({ id: 'group.edit-name' }),
         onClick: () => dispatch(editModalOpen(group)),
@@ -98,7 +98,7 @@ export function Group({ group }: IGroupProps) {
     ];
 
     return (
-      <Dropdown
+      <DropdownMenu
         renderToggle={(isOpen: boolean) => (
           <MoreIcon className={classnames(styles['group__more'], isOpen && styles['is-active'])} />
         )}

@@ -1,6 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
-// tslint:disable: max-file-line-count
 import * as React from 'react';
 import { history } from '../../../utils/history';
 import classnames from 'classnames';
@@ -33,7 +30,7 @@ import {
   WorkflowOpen,
   WorkflowMinimize,
 } from '../../icons';
-import { Dropdown, Header, Loader, TDropdownOption } from '../../UI';
+import { DropdownMenu, Header, Loader, TDropdownMenuOption } from '../../UI';
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
 import { IntegrateButton } from '../../IntegrateButton';
 
@@ -98,7 +95,7 @@ export function BreakdownItem({
 
       return routeMap[mode][counterType];
     },
-    [mode],
+    [breakdown, mode],
   );
 
   const countersParamsList: () => IDashboardCounterProps[] = () => [
@@ -140,7 +137,7 @@ export function BreakdownItem({
     if (showBreakdownTasks) {
       loadBreakdownTasks({ templateId: breakdown.templateId });
     }
-  }, [showBreakdownTasks]);
+  }, [showBreakdownTasks, breakdown.templateId, loadBreakdownTasks]);
 
   const handleToggleBreakdownTasks = () => {
     setShowBreakdownTasks(!showBreakdownTasks);
@@ -186,7 +183,7 @@ export function BreakdownItem({
     );
   };
 
-  const onRunWorkflows = (e: React.MouseEvent) => {
+  const onRunWorkflows = (e: Pick<React.MouseEvent, 'preventDefault' | 'stopPropagation'>) => {
     e.preventDefault();
     e.stopPropagation();
     openRunWorkflowModalOnDashboard({ templateId: breakdown.templateId });
@@ -259,20 +256,16 @@ export function BreakdownItem({
 
   const isPossibleToToggle = getTotalTasksCount(breakdown) !== 0;
 
-  const toggleBreakdownHandler = useCallback(() => {
-    return isPossibleToToggle ? handleToggleBreakdownTasks() : () => null;
-  }, [isPossibleToToggle, handleToggleBreakdownTasks]);
+  const toggleBreakdownHandler = () => (isPossibleToToggle ? handleToggleBreakdownTasks() : () => null);
 
-  const handleOptionClick = (handler: Function) => (closeDropdown: () => void) => {
-    closeDropdown();
-    if (handler.length > 0) {
+  const handleOptionClick =
+    (handler: (event: Pick<React.MouseEvent, 'preventDefault' | 'stopPropagation'>) => void) =>
+    (closeDropdown: () => void) => {
+      closeDropdown();
       handler({ preventDefault: () => {}, stopPropagation: () => {} });
-    } else {
-      handler();
-    }
-  };
+    };
 
-  const WorkflowsOptions: TDropdownOption[] = [
+  const WorkflowsOptions: TDropdownMenuOption[] = [
     {
       label: formatMessage({ id: 'templates.run-workflow' }),
       onClick: handleOptionClick(onRunWorkflows),
@@ -292,13 +285,13 @@ export function BreakdownItem({
       size: 'sm',
     },
   ];
-  const openButton: TDropdownOption = {
+  const openButton: TDropdownMenuOption = {
     label: formatMessage({ id: 'workflows.open' }),
     onClick: toggleBreakdownHandler,
     Icon: WorkflowOpen,
     size: 'sm',
   };
-  const minimizeButton: TDropdownOption = {
+  const minimizeButton: TDropdownMenuOption = {
     label: formatMessage({ id: 'workflows.minimize' }),
     onClick: toggleBreakdownHandler,
     Icon: WorkflowMinimize,
@@ -373,7 +366,7 @@ export function BreakdownItem({
                   </div>
                 </div>
                 {isMobile && (
-                  <Dropdown
+                  <DropdownMenu
                     isFromBreakdownItem
                     renderToggle={() => <MoreIcon className={styles['card__more']} />}
                     options={[...MobileMyTasksOptions, ...WorkflowsOptions]}
@@ -384,7 +377,7 @@ export function BreakdownItem({
               {renderCounters()}
             </div>
             {isDesktop && (
-              <Dropdown
+              <DropdownMenu
                 isFromBreakdownItem
                 renderToggle={() => <MoreIcon className={styles['card__more']} />}
                 options={WorkflowsOptions}
@@ -433,7 +426,7 @@ export function BreakdownItem({
                   </div>
                 </div>
                 {isMobile && (
-                  <Dropdown
+                  <DropdownMenu
                     isFromBreakdownItem
                     renderToggle={() => <MoreIcon className={styles['card__more']} />}
                     options={MobileMyTasksOptions}
@@ -443,7 +436,7 @@ export function BreakdownItem({
               {renderCounters()}
             </div>
             {isDesktop && (
-              <Dropdown
+              <DropdownMenu
                 isFromBreakdownItem
                 renderToggle={() => (
                   <MoreIcon className={classnames(styles['card__more_disabled'], styles['card__more'])} />

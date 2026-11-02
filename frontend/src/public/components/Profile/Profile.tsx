@@ -24,7 +24,7 @@ import { IAuthUser } from '../../types/redux';
 import { TUserListItem, isUserAbsent } from '../../types/user';
 import { FormikCheckbox } from '../UI/Fields/Checkbox';
 import { AvatarController } from './AvatarController';
-import { FormikDropdownList } from '../UI';
+import { FormikSelect } from '../UI';
 import { LockIcon } from '../icons/LockIcon';
 import { ChangePassword } from './ChangePassword';
 import { ProfileManager } from './ProfileManager';
@@ -307,31 +307,31 @@ export function Profile({
               {formatMessage({ id: 'user-info.locale' })}
             </SectionTitle>
 
-            <FormikDropdownList
+            <FormikSelect
               className={styles['field']}
               label={formatMessage({ id: 'user-info.locale.language' })}
               name="language"
               options={mapToFormatMessageOptions(LANGUAGE_OPTIONS)}
             />
-            <FormikDropdownList
+            <FormikSelect
               label={formatMessage({ id: 'user-info.locale.timezone' })}
               className={styles['field']}
               name="timezone"
               options={mapToFormatMessageOptions(TIMEZONE_OPTIONS)}
             />
-            <FormikDropdownList
+            <FormikSelect
               label={formatMessage({ id: 'user-info.locale.timeformat' })}
               className={styles['field']}
               name="timeformat"
               options={mapToFormatMessageOptions(TIMEFORMAT_OPTIONS)}
             />
-            <FormikDropdownList
+            <FormikSelect
               label={formatMessage({ id: 'user-info.locale.dateformat' })}
               className={styles['field']}
               name="dateformat"
               options={mapToFormatMessageOptions(DATEFORMAT_OPTIONS)}
             />
-            <FormikDropdownList
+            <FormikSelect
               label={formatMessage({ id: 'user-info.locale.dateFdw' })}
               className={styles['field']}
               name="dateFdw"

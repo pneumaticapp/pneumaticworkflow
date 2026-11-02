@@ -23,18 +23,19 @@ import { getRegularGroupsList } from '../../redux/selectors/groups';
 import { getAccountsUsers } from '../../redux/selectors/accounts';
 
 import { getActiveUsers, getUserFullName } from '../../utils/users';
-import { Avatar, FilterSelect } from '../../components/UI';
+import { Avatar } from '../../components/UI';
+import { Select } from '../../components/UI/Select';
 import { PerformerFilterIcon } from '../../components/icons';
 import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
 import { canFilterByTemplateStep } from '../../utils/workflows/filters';
-import { useCheckDevice } from '../../hooks/useCheckDevice';
+import { useMobileMenuPortalProps } from './useMobileMenuPortalProps';
 
 import styles from './WorkflowsLayout.css';
 
 export function PerformerFilterSelect() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const { isMobile } = useCheckDevice();
+  const menuPortalProps = useMobileMenuPortalProps();
 
   const performersGroupIdsFilter = useSelector(getWorkflowPerformersGroupsIdsFilter);
   const performersIdsFilter = useSelector(getWorkflowPerformersIdsFilter);
@@ -57,7 +58,8 @@ export function PerformerFilterSelect() {
         return {
           ...group,
           type: ETemplateOwnerType.UserGroup,
-          displayName: (
+          value: `${ETemplateOwnerType.UserGroup}-${group.id}`,
+          label: (
             <div className={styles['user']}>
               <Avatar user={{ type: ETemplateOwnerType.UserGroup }} size="sm" />
               <span className={styles['user-name']}>{group.name}</span>
@@ -67,7 +69,7 @@ export function PerformerFilterSelect() {
           searchByText: group.name,
         };
       }),
-    [groups, performersCounters],
+    [groups, performersCountersMap],
   );
 
   const activeUsers = useMemo(() => getActiveUsers(users), [users]);
@@ -79,7 +81,9 @@ export function PerformerFilterSelect() {
         const count = performersCountersMap.get(user.id) || 0;
         return {
           ...user,
-          displayName: (
+          type: ETemplateOwnerType.User,
+          value: `${ETemplateOwnerType.User}-${user.id}`,
+          label: (
             <div className={styles['user']}>
               <Avatar user={user} size="sm" />
               <span className={styles['user-name']}>{userFullName}</span>
@@ -89,63 +93,59 @@ export function PerformerFilterSelect() {
           searchByText: userFullName,
         };
       }),
-    [activeUsers, performersCounters],
+    [activeUsers, performersCountersMap],
   );
   const filterIds = [...performersGroupIdsFilter, ...performersIdsFilter];
   const isOneFilterId = filterIds.length === 1;
   const filterType = isOneFilterId && performersIdsFilter.length === 1 ? 'userType' : 'groupType';
 
-  return (
-    <div className={styles['performer-filter']}>
-      <FilterSelect
-        isDisabled={mustDisableFilter}
-        isMultiple
-        isSearchShown
-        placeholderText={formatMessage({ id: 'workflows.filter-no-user' })}
-        searchPlaceholder={formatMessage({ id: 'sorting.search-placeholder' })}
-        selectedOptions={[
-          ...performersGroupIdsFilter.map((id) => `${ETemplateOwnerType.UserGroup}-${id}`),
-          ...performersIdsFilter.map((id) => `${ETemplateOwnerType.User}-${id}`),
-        ]}
-        optionIdKey="id"
-        optionLabelKey="displayName"
-        getOptionSelectionKey={(opt) => `${opt.type}-${opt.id}`}
-        options={[...performersGroupOptions, ...performersOptions]}
-        onChange={(_, options: any) => {
-          const performers = options
-            .filter((item: any) => item.type === ETemplateOwnerType.User)
-            .map((lItem: any) => lItem.id);
-          const selectedGroups = options
-            .filter((item: any) => item.type === ETemplateOwnerType.UserGroup)
-            .map((lItem: any) => lItem.id);
+  const options = [...performersGroupOptions, ...performersOptions];
+  const selectedValues = [
+    ...performersGroupIdsFilter.map((id) => `${ETemplateOwnerType.UserGroup}-${id}`),
+    ...performersIdsFilter.map((id) => `${ETemplateOwnerType.User}-${id}`),
+  ];
 
-          dispatch(setWorkflowsFilterPerfomers(performers));
-          dispatch(setWorkflowsFilterPerfomersGroup(selectedGroups));
-        }}
-        resetFilter={() => {
-          dispatch(setWorkflowsFilterPerfomers([]));
-          dispatch(setWorkflowsFilterPerfomersGroup([]));
-          if (!canFilterByTemplateStep(statusFilter)) {
-            dispatch(cancelTemplateTasksCounters());
-          }
-        }}
-        Icon={PerformerFilterIcon}
-        renderPlaceholder={() =>
-          getRenderPlaceholder({
-            isDisabled: mustDisableFilter,
-            filterType,
-            filterIds,
-            options: filterType === 'userType' ? performersOptions : performersGroupOptions,
-            formatMessage,
-            type: ERenderPlaceholderType.Performer,
-            severalOptionPlaceholder: 'sorting.several-performers',
-            defaultPlaceholder: 'sorting.all-performers',
-          })
-        }
-        containerClassname={styles['filter-container']}
-        arrowClassName={styles['header-filter__arrow']}
-        positionFixed={isMobile}
-      />
-    </div>
+  const handleClear = () => {
+    dispatch(setWorkflowsFilterPerfomers([]));
+    dispatch(setWorkflowsFilterPerfomersGroup([]));
+    if (!canFilterByTemplateStep(statusFilter)) {
+      dispatch(cancelTemplateTasksCounters());
+    }
+  };
+
+  const handleChange = (selected: typeof options) => {
+    const getIds = (type: ETemplateOwnerType) =>
+      selected.filter((option) => option.type === type).map((option) => option.id);
+
+    dispatch(setWorkflowsFilterPerfomers(getIds(ETemplateOwnerType.User)));
+    dispatch(setWorkflowsFilterPerfomersGroup(getIds(ETemplateOwnerType.UserGroup)));
+  };
+
+  return (
+    <Select
+      controlSize="sm"
+      controlVariant="accent"
+      Icon={PerformerFilterIcon}
+      isMulti
+      isSearchable
+      isDisabled={mustDisableFilter}
+      title={getRenderPlaceholder({
+        isDisabled: mustDisableFilter,
+        filterType,
+        filterIds,
+        options: filterType === 'userType' ? performersOptions : performersGroupOptions,
+        formatMessage,
+        type: ERenderPlaceholderType.Performer,
+        severalOptionPlaceholder: 'sorting.several-performers',
+        defaultPlaceholder: 'sorting.all-performers',
+      })}
+      placeholder={formatMessage({ id: 'sorting.search-placeholder' })}
+      noOptionsMessage={() => formatMessage({ id: 'workflows.filter-no-user' })}
+      options={options}
+      value={options.filter((option) => selectedValues.includes(option.value))}
+      onChange={handleChange}
+      onClear={filterIds.length > 0 ? handleClear : undefined}
+      {...menuPortalProps}
+    />
   );
 }

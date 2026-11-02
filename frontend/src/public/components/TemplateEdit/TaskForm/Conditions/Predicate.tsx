@@ -2,7 +2,8 @@ import React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import { DropdownList, SelectMenu } from '../../../UI';
+import { Select } from '../../../UI';
+import { getEnumSelectProps } from '../../../../utils/getEnumSelectProps';
 import { IDropdownOperator } from './utils/getDropdownOperators';
 import { CONDITION_DISABLED_OPERATOR, OPERATORS_WITHOUT_VALUE } from './utils/shared';
 import { getFormattedDropdownOption } from './utils/getFormattedDropdownOption';
@@ -58,14 +59,18 @@ export function Predicate({
       {ruleIndex !== 0 && (
         <div className={styles['condition-rule__logic-operation']}>
           {rule.logicOperation && (
-            <SelectMenu
+            <Select
+              controlSize="sm"
+              controlVariant="accent"
+              controlClassName={styles['select-logic-operation']}
               isDisabled={!accessConditions}
-              hideSelectedOption
-              activeValue={rule.logicOperation}
-              containerClassName={styles['select-logic-operation']}
-              toggleClassName={styles['select-toggle']}
-              values={Object.values(EConditionLogicOperations)}
-              onChange={(logicOperation) => changeCurrentRule({ logicOperation })}
+              hideSelectedOptions
+              {...getEnumSelectProps(
+                Object.values(EConditionLogicOperations),
+                rule.logicOperation,
+                (logicOperation) => changeCurrentRule({ logicOperation }),
+                formatMessage,
+              )}
             />
           )}
         </div>
@@ -78,7 +83,7 @@ export function Predicate({
           )}
         >
           <div className={classnames(styles['condition-rule__setting'], styles['condition-rule__field'])}>
-            <DropdownList
+            <Select
               isDisabled={!accessConditions}
               placeholder={formatMessage({ id: 'templates.conditions.field-placeholder' })}
               isSearchable={false}
@@ -102,7 +107,7 @@ export function Predicate({
           </div>
           {isCheckIs && (
             <div className={classnames(styles['condition-rule__setting'], styles['condition-rule__operator'])}>
-              <DropdownList
+              <Select
                 isDisabled={isDisabledOperator}
                 placeholder={formatMessage({ id: 'templates.conditions.operator-placeholder' })}
                 isSearchable={false}

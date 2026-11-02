@@ -4,41 +4,30 @@
   width: 100%;
   min-width: 0;
 
-  /* stylelint-disable selector-pseudo-class-no-unknown, declaration-no-important  */
-  :global .react-select__control {
-    padding-top: 1.1rem !important;
-    padding-bottom: 1.1rem !important;
+  :global(.react-select) :global(.react-select__control) {
+    padding-top: 1.1rem;
+    padding-bottom: 1.1rem;
     font-family: Nunito, sans-serif;
     font-size: 1.5rem;
     line-height: 2rem;
-    color: #262522;
+    color: var(--pneumatic-color-black100);
     outline: none;
-    border-color: #dcdcdb !important;
-    border-radius: 0.8rem !important;
+    border-color: var(--pneumatic-color-black16);
+    border-radius: 0.8rem;
     transition: 0.15s ease-in border-color;
+  }
 
-    &:focus {
-      border-color: #979795 !important;
-    }
+  :global(.react-select) :global(.react-select__control):hover,
+  :global(.react-select) :global(.react-select__control--is-focused) {
+    border-color: var(--pneumatic-color-black48);
+  }
 
-    &:focus-within {
-      border-color: #979795 !important;
-      border-bottom-color: #b9b9b8 !important;
-    }
-
-    &:disabled {
-      color: #b9b9b8 !important;
-      cursor: text;
-      background-color: white;
-    }
-
-    &::placeholder {
-      color: var(--default-placeholder-color) !important;
-    }
+  :global(.react-select) :global(.react-select__control):focus-within {
+    border-bottom-color: var(--pneumatic-color-black32);
   }
 
   :global .react-select__multi-value__label {
-    color: #262522 !important;
+    color: var(--pneumatic-color-black100);
   }
 
   :global .react-select__placeholder {
@@ -53,14 +42,12 @@
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: #262522 !important;
     white-space: nowrap;
   }
 
   [class*='react-select__option'] {
     overflow-wrap: anywhere;
   }
-  /* stylelint-enable */
 }
 
 .dropdown-select-wrapper_label-left {
@@ -77,9 +64,7 @@
     top: -99999px;
     left: -99999px;
     font-family: Nunito, sans-serif;
-    /* stylelint-disable number-max-precision */
     font-size: 1.504rem;
-    /* stylelint-enable number-max-precision */
     line-height: 1.6rem;
     white-space: pre;
   }

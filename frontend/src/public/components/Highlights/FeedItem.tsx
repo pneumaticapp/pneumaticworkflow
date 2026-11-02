@@ -11,7 +11,7 @@ import { IHighlightsItem } from '../../types/highlights';
 import { EditIcon, MoreIcon } from '../icons';
 import { UserData } from '../UserData';
 import { ERoutes } from '../../constants/routes';
-import { Dropdown, Loader, TDropdownOption } from '../UI';
+import { DropdownMenu, Loader, TDropdownMenuOption } from '../UI';
 
 import { FeedItemHeader } from './FeedItemHeader';
 import { DateFormat } from '../UI/DateFormat';
@@ -59,7 +59,7 @@ export function FeedItem({
         }
 
         const userName = getUserFullName(isExternal ? EXTERNAL_USER : user);
-        const dropdownOptions: TDropdownOption[] = [
+        const dropdownOptions: TDropdownMenuOption[] = [
           ...(template
             ? [
                 {
@@ -67,7 +67,7 @@ export function FeedItem({
                   onClick: redirectToTemplate(template.id),
                   Icon: EditIcon,
                   size: 'lg',
-                } as TDropdownOption,
+                } as TDropdownMenuOption,
               ]
             : []),
           ...(template
@@ -76,7 +76,7 @@ export function FeedItem({
                   label: formatMessage({ id: 'process-highlights.review-workflow' }, { workflow: template.name }),
                   onClick: applyTemplatesFilter(template.id),
                   size: 'lg',
-                } as TDropdownOption,
+                } as TDropdownMenuOption,
               ]
             : []),
           {
@@ -104,7 +104,7 @@ export function FeedItem({
               </Link>
 
               <div className={styles['card-more-container']}>
-                <Dropdown
+                <DropdownMenu
                   renderToggle={(isOpen) => (
                     <MoreIcon className={classnames(styles['card-more'], isOpen && styles['card-more_active'])} />
                   )}

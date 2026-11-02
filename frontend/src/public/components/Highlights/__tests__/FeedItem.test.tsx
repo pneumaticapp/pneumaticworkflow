@@ -23,7 +23,7 @@ jest.mock('../../UserData', () => ({
 }));
 
 jest.mock('../../UI', () => ({
-  Dropdown: () => null,
+  DropdownMenu: () => null,
   Loader: () => null,
 }));
 

@@ -9,7 +9,7 @@ import { UsersDropdown } from '../UI/form/UsersDropdown';
 import { UserPerformer, EBgColorTypes } from '../UI/UserPerformer';
 import { ETaskPerformerType } from '../../types/template';
 import { TUserListItem } from '../../types/user';
-import { FormikDropdownList } from '../UI';
+import { FormikSelect } from '../UI';
 import { SectionTitle } from '../UI/Typeography/SectionTitle';
 
 import { formatDateLocal } from '../../utils/formatDateLocal';
@@ -84,7 +84,7 @@ export function ProfileVacationFields({ availableUsers }: IProfileVacationFields
         {formatMessage({ id: 'user-info.vacation.title' })}
       </SectionTitle>
 
-      <FormikDropdownList
+      <FormikSelect
         label={formatMessage({ id: 'user-info.vacation.status', defaultMessage: 'Options' })}
         className={styles['field']}
         name="absenceStatus"

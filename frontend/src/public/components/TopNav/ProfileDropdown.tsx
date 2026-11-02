@@ -14,7 +14,7 @@ import {
   TurnOffIcon,
   UsersIcon,
 } from '../icons';
-import { CurrentUserAvatar, Dropdown, TDropdownOption } from '../UI';
+import { CurrentUserAvatar, DropdownMenu, TDropdownMenuOption } from '../UI';
 import { TProfileDropdownProps } from './types';
 
 import styles from './TopNav.css';
@@ -88,10 +88,10 @@ export function ProfileDropdown({
       withUpperline: true,
       Icon: TurnOffIcon,
     },
-  ].filter((item) => typeof item === 'object') as TDropdownOption[];
+  ].filter((item) => typeof item === 'object') as TDropdownMenuOption[];
 
   return (
-    <Dropdown
+    <DropdownMenu
       renderToggle={() => <CurrentUserAvatar size="md" />}
       toggleProps={{
         'data-test-id': 'open-user-menu-button',

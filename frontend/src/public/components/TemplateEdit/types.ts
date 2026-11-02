@@ -1,7 +1,7 @@
 import React from 'react';
 import { EExtraFieldType, ITemplateKickoffClient, ITemplateTaskClient } from '../../types/template';
 import { EMoveDirections } from '../../types/workflow';
-import { TDropdownOptionBase } from '../UI/DropdownList';
+import { TSelectOption } from '../UI/Select';
 import { EStartingType } from './TaskForm/Conditions/utils/getDropdownOperators';
 import type { TGraphAddTaskIntent } from './TemplateGraphEditor/types';
 
@@ -10,7 +10,7 @@ export const enum ECustomResponsibleUsers {
   InviteNewUserSelectorValue = 'invite-new-user-selector-option',
 }
 
-export interface ITemplateOwnerOption extends TDropdownOptionBase {
+export interface ITemplateOwnerOption extends TSelectOption {
   id: number;
 }
 

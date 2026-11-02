@@ -4,11 +4,11 @@ import {
   ITemplateTaskClient,
   TDueDateRuleTarget,
 } from '../../../../../types/template';
-import { TDropdownOptionBase } from '../../../../UI';
+import { TSelectOption } from '../../../../UI';
 import { getPreviousTasks } from '../../utils/getPreviousTasks';
 import { getTaskVariables } from '../../utils/getTaskVariables';
 
-export type TRuleTargetOption = TDropdownOptionBase & {
+export type TRuleTargetOption = TSelectOption & {
   ruleTarget: TDueDateRuleTarget;
   sourceId: string | null;
 };

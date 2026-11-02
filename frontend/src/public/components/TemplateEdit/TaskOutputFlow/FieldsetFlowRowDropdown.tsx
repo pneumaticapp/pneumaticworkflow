@@ -3,7 +3,7 @@ import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
 import { ArrowDownIcon, ArrowUpIcon, BurgerIcon, DropdownCrossIcon, TrashIcon } from '../../icons';
-import { Dropdown, type TDropdownOption } from '../../UI';
+import { DropdownMenu, type TDropdownMenuOption } from '../../UI';
 
 import styles from '../KickoffRedux/KickoffRedux.css';
 
@@ -33,7 +33,7 @@ export const FieldsetFlowRowDropdown = ({
     handler();
   };
 
-  const openDetailOption: TDropdownOption | null = onOpenDetail
+  const openDetailOption: TDropdownMenuOption | null = onOpenDetail
     ? {
         mapKey: 'fieldset-flow-open-detail',
         label: formatMessage({ id: 'fieldsets.title' }),
@@ -41,7 +41,7 @@ export const FieldsetFlowRowDropdown = ({
       }
     : null;
 
-  const menuOptions: TDropdownOption[] = [
+  const menuOptions: TDropdownMenuOption[] = [
     {
       label: formatMessage({ id: 'template.move-up' }),
       onClick: handleOptionClick(onMoveUp),
@@ -66,7 +66,7 @@ export const FieldsetFlowRowDropdown = ({
   ];
 
   return (
-    <Dropdown
+    <DropdownMenu
       direction="right"
       className={styles['dropdown-wrapper']}
       renderToggle={(isOpen) => {

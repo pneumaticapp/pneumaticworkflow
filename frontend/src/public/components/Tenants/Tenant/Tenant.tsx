@@ -4,7 +4,7 @@ import classnames from 'classnames';
 
 import { TStateEditModal } from '../TenantModal';
 import { WarningPopup } from '../../UI/WarningPopup';
-import { Dropdown, Header, TDropdownOption } from '../../UI';
+import { DropdownMenu, Header, TDropdownMenuOption } from '../../UI';
 import { DateFormat } from '../../UI/DateFormat';
 import { TLoginPartnerSuperuserPayload } from '../../../redux/actions';
 import { MoreIcon, PencilIcon, TenantIcon, TrashIcon } from '../../icons';
@@ -28,7 +28,7 @@ export function Tenant({ id, name, dateJoined, loginPartnerSuperuser, deleteTena
     deleteTenant(id);
   };
 
-  const dropdownOptions: TDropdownOption[] = [
+  const dropdownOptions: TDropdownMenuOption[] = [
     {
       label: formatMessage({ id: 'tenants.dropdown-edit-name' }),
       onClick: () => {
@@ -76,7 +76,7 @@ export function Tenant({ id, name, dateJoined, loginPartnerSuperuser, deleteTena
         </p>
       </div>
       <div className={styles['tenant__info']}>
-        <Dropdown
+        <DropdownMenu
           className={styles['tenant__dropdown']}
           renderToggle={(isOpen) => (
             <MoreIcon className={classnames(styles['tenant__more'], isOpen && styles['is-active'])} />

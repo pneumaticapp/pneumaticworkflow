@@ -46,7 +46,7 @@ jest.mock('../UI/Fields/InputField', () => ({
 }));
 
 jest.mock('../UI', () => ({
-  FormikDropdownList: jest.fn(() => <div data-testid="dropdown" />),
+  FormikSelect: jest.fn(() => <div data-testid="dropdown" />),
 }));
 
 jest.mock('../UI/Typeography/Header', () => ({

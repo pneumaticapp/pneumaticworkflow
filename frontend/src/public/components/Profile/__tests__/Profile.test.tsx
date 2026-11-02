@@ -19,7 +19,7 @@ jest.mock('../ProfileManager', () => ({ ProfileManager: () => null }));
 jest.mock('../ProfileReports', () => ({ ProfileReports: () => null }));
 jest.mock('../ProfileVacationFields', () => ({ ProfileVacationFields: () => null }));
 jest.mock('../../UI/Fields/Checkbox', () => ({ FormikCheckbox: () => null }));
-jest.mock('../../UI', () => ({ FormikDropdownList: () => null }));
+jest.mock('../../UI', () => ({ FormikSelect: () => null }));
 
 const user = {
   id: 1,

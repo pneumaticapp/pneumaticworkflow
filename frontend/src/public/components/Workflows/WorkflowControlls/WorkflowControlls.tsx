@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 import Switch from 'rc-switch';
 import classnames from 'classnames';
 
-import { TDropdownOption } from '../../UI';
+import { TDropdownMenuOption } from '../../UI';
 import {
   UnionIcon,
   PencilIcon,
@@ -43,7 +43,7 @@ export interface IWorkflowControllsProps {
   onWorkflowResumed?(): void;
   onWorkflowReturn?(): void;
   onChangeUrgent?(isChecked: boolean): void;
-  children(options: TDropdownOption[]): React.ReactNode;
+  children(options: TDropdownMenuOption[]): React.ReactNode;
 }
 
 export function WorkflowControllsComponents({
@@ -149,7 +149,7 @@ export function WorkflowControllsComponents({
     );
   };
 
-  const options: TDropdownOption[] = [
+  const options: TDropdownMenuOption[] = [
     {
       label: formatMessage({ id: 'workflows.card-resume' }),
       onClick: handleResumeWorkflow,
