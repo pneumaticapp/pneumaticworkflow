@@ -9,12 +9,7 @@ import { logoutUser } from '../../redux/actions';
 
 type TAppStoreProps = Pick<
   IAppProps,
-  | 'locale'
-  | 'user'
-  | 'hasNewTasks'
-  | 'hasNewNotifications'
-  | 'containerClassnames'
-  | 'isFullscreenImageOpen'
+  'locale' | 'user' | 'hasNewTasks' | 'hasNewNotifications' | 'containerClassnames' | 'isFullscreenImageOpen'
 >;
 type TAppDispatchProps = Pick<IAppProps, 'logoutUser'>;
 
@@ -28,7 +23,6 @@ const mapStateToProps = ({
   authUser,
   menu: { containerClassnames },
 }: IApplicationState): TAppStoreProps => {
-
   return {
     locale,
     user: authUser,
@@ -43,7 +37,9 @@ const mapDispatchToProps: TAppDispatchProps = {
   logoutUser,
 };
 
-export const AppContainer: any = hot(compose(
-  withRouter, // crucial for correct router work
-  connect<TAppStoreProps, TAppDispatchProps>(mapStateToProps, mapDispatchToProps),
-)(App));
+export const AppContainer: any = hot(
+  compose(
+    withRouter, // crucial for correct router work
+    connect<TAppStoreProps, TAppDispatchProps>(mapStateToProps, mapDispatchToProps),
+  )(App),
+);

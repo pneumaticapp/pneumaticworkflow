@@ -1,2 +1,0 @@
-export { CreateUserModal } from './CreateUserModal';
-

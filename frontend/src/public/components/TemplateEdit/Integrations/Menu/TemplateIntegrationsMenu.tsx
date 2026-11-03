@@ -12,10 +12,7 @@ interface ITemplateIntegrationsMenuProps {
   toggle(): void;
 }
 
-export function TemplateIntegrationsMenu({
-  isOpen,
-  toggle,
-}: ITemplateIntegrationsMenuProps) {
+export function TemplateIntegrationsMenu({ isOpen, toggle }: ITemplateIntegrationsMenuProps) {
   const { formatMessage } = useIntl();
 
   const handleOptionClick = (handler: () => void) => (closeDropdown: () => void) => {
@@ -28,13 +25,13 @@ export function TemplateIntegrationsMenu({
       label: formatMessage({ id: 'template.intergrations.menu-edit' }),
       onClick: handleOptionClick(toggle),
       Icon: EditIcon,
-      size: "sm",
+      size: 'sm',
       isHidden: isOpen,
     },
     {
       label: formatMessage({ id: 'template.intergrations.menu-close' }),
       onClick: handleOptionClick(toggle),
-      size: "sm",
+      size: 'sm',
       isHidden: !isOpen,
     },
   ];
@@ -42,10 +39,8 @@ export function TemplateIntegrationsMenu({
   return (
     <div className={styles['card-more-container']}>
       <Dropdown
-        renderToggle={isDropdownOpen => (
-          <MoreIcon
-            className={classnames(styles['card-more'], isDropdownOpen && styles['card-more_active'])}
-          />
+        renderToggle={(isDropdownOpen) => (
+          <MoreIcon className={classnames(styles['card-more'], isDropdownOpen && styles['card-more_active'])} />
         )}
         options={dropdownOptions}
       />

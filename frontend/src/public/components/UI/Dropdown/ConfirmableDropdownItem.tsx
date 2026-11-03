@@ -6,7 +6,7 @@ import OutsideClickHandler from 'react-outside-click-handler';
 
 import styles from './Dropdown.css';
 
-export type TDropdownItemState = "option" | "confirmation";
+export type TDropdownItemState = 'option' | 'confirmation';
 
 export interface IConfirmableDropdownItemProps extends DropdownItemProps {
   withConfirmation?: boolean;
@@ -16,39 +16,36 @@ export interface IConfirmableDropdownItemProps extends DropdownItemProps {
 
 export function ConfirmableDropdownItem({
   withConfirmation,
-  initialConfirmationState = "option",
+  initialConfirmationState = 'option',
   closeDropdown,
   ...dropdownItemProps
 }: IConfirmableDropdownItemProps) {
-  const { formatMessage } = useIntl()
-  const [dropdownItemState, setDropdownItemState] = useState<TDropdownItemState>(initialConfirmationState)
+  const { formatMessage } = useIntl();
+  const [dropdownItemState, setDropdownItemState] = useState<TDropdownItemState>(initialConfirmationState);
 
   if (!withConfirmation) {
-    return <DropdownItem {...dropdownItemProps} tag={dropdownItemProps.onClick ? "button" : "span"} />
+    return <DropdownItem {...dropdownItemProps} tag={dropdownItemProps.onClick ? 'button' : 'span'} />;
   }
 
-  const handleConfirm: React.AllHTMLAttributes<HTMLButtonElement>['onClick'] = event => {
+  const handleConfirm: React.AllHTMLAttributes<HTMLButtonElement>['onClick'] = (event) => {
     event.stopPropagation();
     dropdownItemProps.onClick?.(event);
-  }
+  };
 
-  const handleReject: React.AllHTMLAttributes<HTMLButtonElement>['onClick'] = event => {
+  const handleReject: React.AllHTMLAttributes<HTMLButtonElement>['onClick'] = (event) => {
     event.stopPropagation();
-    setDropdownItemState("option");
-    if (initialConfirmationState === "confirmation") {
+    setDropdownItemState('option');
+    if (initialConfirmationState === 'confirmation') {
       closeDropdown();
     }
-  }
+  };
 
   const renderContent = () => {
     const contentMap = {
       option: dropdownItemProps.children,
       confirmation: (
         <div className={styles['dropdown-confirm']}>
-          <span>
-            {formatMessage({ id: 'dropdown.are-you-sure' })}
-          </span>
-          {' '}
+          <span>{formatMessage({ id: 'dropdown.are-you-sure' })}</span>{' '}
           <button type="button" onClick={handleConfirm} className={styles['dropdown-confirm-option']}>
             {formatMessage({ id: 'dropdown.yes' })}
           </button>
@@ -58,21 +55,23 @@ export function ConfirmableDropdownItem({
           </button>
         </div>
       ),
-    }
+    };
 
     return contentMap[dropdownItemState];
-  }
+  };
 
   return (
-    <OutsideClickHandler onOutsideClick={() => {
-      if (initialConfirmationState === "option") {
-        setDropdownItemState("option")
-      }
-    }}>
+    <OutsideClickHandler
+      onOutsideClick={() => {
+        if (initialConfirmationState === 'option') {
+          setDropdownItemState('option');
+        }
+      }}
+    >
       <DropdownItem
         {...dropdownItemProps}
-        tag={dropdownItemState === "confirmation" ? "div" : "button"}
-        onClick={() => setDropdownItemState("confirmation")}
+        tag={dropdownItemState === 'confirmation' ? 'div' : 'button'}
+        onClick={() => setDropdownItemState('confirmation')}
       >
         {renderContent()}
       </DropdownItem>

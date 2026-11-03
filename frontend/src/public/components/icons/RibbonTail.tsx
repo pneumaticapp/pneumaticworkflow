@@ -2,7 +2,7 @@
 /* prettier-ignore */
 import * as React from 'react';
 
-export interface IRibbonProps extends React.SVGAttributes<SVGElement> { }
+export interface IRibbonProps extends React.SVGAttributes<SVGElement> {}
 
 export function RibbonTail({ fill = 'currentColor', ...rest }: IRibbonProps) {
   return (

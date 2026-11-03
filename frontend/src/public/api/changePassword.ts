@@ -8,13 +8,19 @@ export interface IChangePasswordResponse {
 }
 
 export function changePassword(body: TChangePassword) {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
-  return commonRequest<IChangePasswordResponse>(urls.changePassword, {
-    method: 'POST',
-    data: mapRequestBody(body),
-  }, {
-    type: 'local',
-    shouldThrow: true,
-  });
+  return commonRequest<IChangePasswordResponse>(
+    urls.changePassword,
+    {
+      method: 'POST',
+      data: mapRequestBody(body),
+    },
+    {
+      type: 'local',
+      shouldThrow: true,
+    },
+  );
 }

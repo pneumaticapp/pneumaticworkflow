@@ -51,4 +51,28 @@ describe('getSortedAndFilteredDatasetItems', () => {
     const values = result.map((i) => i.value);
     expect(values).toEqual(['Apple', 'Apricot', 'Banana']);
   });
+
+  describe('natural numeric sorting by name', () => {
+    const numericItems: IDatasetItem[] = [
+      makeItem('10', 1),
+      makeItem('2', 2),
+      makeItem('1', 3),
+      makeItem('20', 4),
+      makeItem('100', 5),
+    ];
+
+    it('sorts numeric string values in natural ascending order (1, 2, 10, 20, 100)', () => {
+      const result = getSortedAndFilteredDatasetItems(numericItems, '', EDatasetsSorting.NameAsc);
+      const values = result.map((item) => item.value);
+
+      expect(values).toEqual(['1', '2', '10', '20', '100']);
+    });
+
+    it('sorts numeric string values in natural descending order (100, 20, 10, 2, 1)', () => {
+      const result = getSortedAndFilteredDatasetItems(numericItems, '', EDatasetsSorting.NameDesc);
+      const values = result.map((item) => item.value);
+
+      expect(values).toEqual(['100', '20', '10', '2', '1']);
+    });
+  });
 });

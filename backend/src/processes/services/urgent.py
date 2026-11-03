@@ -5,6 +5,8 @@ from django.utils import timezone as tz
 
 from src.accounts.enums import NotificationType
 from src.accounts.models import Notification
+from src.authentication.enums import AuthTokenType
+from src.logs.events import AuditEventService
 from src.notifications.tasks import (
     send_not_urgent_notification,
     send_urgent_notification,
@@ -76,6 +78,7 @@ class UrgentService:
         cls,
         workflow: Workflow,
         user: UserModel,
+        auth_type: AuthTokenType.LITERALS,
     ):
         event_type = cls._get_event_type(workflow)
         notification_type = cls._get_notification_type(workflow)
@@ -101,12 +104,18 @@ class UrgentService:
             workflow=workflow,
             user=user,
         )
+        AuditEventService.workflow_urgent(
+            user=user,
+            auth_type=auth_type,
+            workflow=workflow,
+        )
 
     @classmethod
     def resolve(
         cls,
         workflow: Workflow,
         user: UserModel,
+        auth_type: AuthTokenType.LITERALS,
     ):
 
         """ Urgent management logic:
@@ -121,7 +130,7 @@ class UrgentService:
 
         prev_urgent_event = cls._get_prev_urgent_event(workflow)
         if not prev_urgent_event:
-            cls._create_urgent_actions(workflow, user)
+            cls._create_urgent_actions(workflow, user, auth_type)
         else:  # noqa: PLR5501
             if prev_urgent_event.type != cls._get_event_type(workflow):
                 delete_period = tz.now() - tz.timedelta(minutes=1)
@@ -129,4 +138,4 @@ class UrgentService:
                     prev_urgent_event.delete()
                     cls._delete_urgent_notification(workflow, user)
                 else:
-                    cls._create_urgent_actions(workflow, user)
+                    cls._create_urgent_actions(workflow, user, auth_type)

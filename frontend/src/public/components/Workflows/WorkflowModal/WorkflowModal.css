@@ -1,12 +1,12 @@
 /* stylelint-disable declaration-no-important */
 .inwork-popup {
   .inwork-popup-dialog {
-    padding-top: 16px;
     height: 100%;
+    padding-top: 16px;
 
     .inwork-popup-content {
-      margin-bottom: 16px;
       height: auto !important;
+      margin-bottom: 16px;
       border-radius: 32px !important;
     }
   }
@@ -17,8 +17,8 @@
 }
 
 .popup-header {
-  padding: 80px 80px 32px;
   min-height: 300px;
+  padding: 80px 80px 32px;
   background: white;
   border-radius: 32px;
 
@@ -33,8 +33,8 @@
     width: 20px;
     height: 20px;
     vertical-align: top;
-    cursor: pointer;
     color: var(--pneumatic-color-black16);
+    cursor: pointer;
   }
 
   .popup-pretitle {
@@ -45,20 +45,20 @@
   }
 
   .popup-general-info {
-    margin-bottom: 16px;
     display: flex;
     flex-flow: row;
     justify-content: space-between;
+    margin-bottom: 16px;
 
     @media (--mobile) {
-      margin-bottom: 32px;
       flex-flow: column;
       align-items: center;
+      margin-bottom: 32px;
     }
 
     .popup-title-container {
-      padding-right: 35px;
       width: 100%;
+      padding-right: 35px;
       font-size: 15px;
 
       @media (--mobile) {
@@ -70,12 +70,12 @@
   .popup-title {
     position: relative;
     margin-bottom: 0;
-    font-family: 'Abhaya Libre', 'Times New Roman', Arial;
+    font-family: 'Abhaya Libre', 'Times New Roman', Arial, serif;
     font-size: 28px;
     font-weight: 800;
     line-height: 32px;
     letter-spacing: -0.01em;
-    word-break: break-word;
+    overflow-wrap: anywhere;
   }
 
   .popup-title__edit {
@@ -92,8 +92,8 @@
 
   .popup-title-form {
     position: relative;
-    margin-bottom: -1px;
     display: flex;
+    margin-bottom: -1px;
 
     & .popup-title_urgent {
       position: absolute;
@@ -102,18 +102,18 @@
   }
 
   .popup-title-form__input {
+    align-self: center;
+    width: 100%;
     padding: 0;
     overflow: hidden;
-    width: 100%;
-    font-family: 'Abhaya Libre', 'Times New Roman', Arial;
+    font-family: 'Abhaya Libre', 'Times New Roman', Arial, serif;
     font-size: 28px;
     font-weight: 800;
     line-height: 32px;
     letter-spacing: -0.01em;
     resize: none;
-    border: 0;
     outline: none;
-    align-self: center;
+    border: 0;
   }
 
   .popup-title-form__input_urgent {
@@ -124,9 +124,9 @@
     margin-top: 16px;
     font-size: 13px;
     line-height: 16px;
-    white-space: pre-line;
-    word-break: break-word;
     color: #979795;
+    overflow-wrap: anywhere;
+    white-space: pre-line;
 
     @media (--mobile) {
       margin-top: 32px;
@@ -139,9 +139,9 @@
 }
 
 .action-buttons {
-  margin-top: 32px;
   display: flex;
   flex-direction: column;
+  margin-top: 32px;
   font-size: 13px;
   font-weight: bold;
   line-height: 16px;
@@ -151,16 +151,17 @@
 .action-buttons__button-wrapper {
   height: 2rem;
   font-size: 1.5rem;
+
   &:not(:last-child) {
     margin-bottom: 10px;
   }
 }
 
 .action-buttons__button {
-  padding: 0;
   display: flex;
-  cursor: pointer;
+  padding: 0;
   color: var(--pneumatic-color-black72);
+  cursor: pointer;
   background: transparent;
   border: 0;
 
@@ -170,33 +171,33 @@
 }
 
 .action-buttons__button-text {
+  align-self: center;
   margin-left: 8px;
   font-size: 13px;
   font-weight: bold;
   line-height: 16px;
   white-space: nowrap;
-  align-self: center;
 }
 
 .progress-bar-text {
+  align-self: flex-start;
   margin-bottom: 16px;
   font-family: Nunito, sans-serif;
   font-size: 11px;
   font-weight: 800;
   line-height: 16px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   color: #b9b9b8;
-  align-self: flex-start;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .progress-container-mobile {
   display: none;
 
   @media (--mobile) {
-    margin-top: 16px;
     display: block;
     width: 100%;
+    margin-top: 16px;
   }
 }
 
@@ -221,8 +222,8 @@
 }
 
 .popup-general-info-container {
-  padding-right: 39px;
   width: 100%;
+  padding-right: 39px;
 
   @media (--desktop) {
     width: calc(100% - 112px);
@@ -235,20 +236,20 @@
 }
 
 .popup-title_urgent {
+  display: inline-flex;
+  align-self: center;
+  padding: 1px 8px;
   margin-top: -2px;
   margin-right: 8px;
-  padding: 1px 8px;
-  display: inline-flex;
-  font-family: Nunito;
+  font-family: Nunito, sans-serif;
   font-size: 13px;
   font-weight: normal;
   line-height: 16px;
   vertical-align: middle;
-  letter-spacing: -0.01em;
   color: white;
+  letter-spacing: -0.01em;
   background: var(--pneumatic-notification-1);
   border-radius: 14px;
-  align-self: center;
 }
 
 .popup-title_name {
@@ -261,9 +262,9 @@
 }
 
 .workflow-info {
-  margin-top: 8px;
   display: flex;
   align-items: center;
+  margin-top: 8px;
 
   @media (--mobile) {
     flex-direction: column;
@@ -272,14 +273,14 @@
 }
 
 .workflow-starter {
-  margin: 0 8px 0 0;
-  padding: 6px 8px;
   display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+  margin: 0 8px 0 0;
   background-color: var(--pneumatic-color-black4);
   border-radius: 16px;
-  justify-content: center;
-  align-items: center;
-  flex-shrink: 0;
 
   @media (--mobile) {
     margin: 0 0 8px;
@@ -296,11 +297,11 @@
 }
 
 .workflow-date-started {
+  flex-shrink: 0;
   margin: 0;
   font-size: 13px;
   line-height: 16px;
   color: var(--pneumatic-color-black48);
-  flex-shrink: 0;
 }
 
 .workflow-date-started__date {
@@ -308,8 +309,8 @@
 }
 
 .workflow-due-date {
-  margin-left: auto;
   width: 100%;
+  margin-left: auto;
   text-align: right;
 
   @media (--mobile) {
@@ -327,44 +328,44 @@
   :global(body.workflow-modal-print-mode .processes-inwork-popup) {
     position: static !important;
     z-index: auto !important;
-    padding: 0 !important;
     display: block !important;
-    overflow: visible !important;
     width: 100% !important;
     max-width: none !important;
     height: auto !important;
     min-height: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
     background: white !important;
     opacity: 1 !important;
 
     :global(.modal) {
       position: static !important;
-      overflow: visible !important;
       width: auto !important;
       max-width: none !important;
       height: auto !important;
       max-height: none !important;
+      overflow: visible !important;
     }
 
     :global(.modal-dialog) {
       position: static !important;
-      margin: 0 !important;
-      padding: 0 !important;
       width: auto !important;
       max-width: none !important;
       height: auto !important;
       min-height: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
       transform: none !important;
     }
 
     :global(.modal-content) {
-      margin: 0 !important;
-      padding: 0 !important;
       display: block !important;
-      overflow: visible !important;
       height: auto !important;
       min-height: 0 !important;
       max-height: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: visible !important;
       background: white !important;
       border: 0 !important;
       border-radius: 0 !important;
@@ -374,10 +375,10 @@
     :global(.modal-content > div),
     :global(.modal-content > form),
     :global(.modal-body) {
-      overflow: visible !important;
       height: auto !important;
       min-height: 0 !important;
       max-height: none !important;
+      overflow: visible !important;
     }
 
     :global(.modal-body) {
@@ -387,13 +388,13 @@
     }
 
     :global(a) {
-      text-decoration: none !important;
       color: inherit !important;
+      text-decoration: none !important;
     }
 
     .popup-header {
-      padding: 0 !important;
       min-height: 0 !important;
+      padding: 0 !important;
       background: white !important;
       border-radius: 0 !important;
     }

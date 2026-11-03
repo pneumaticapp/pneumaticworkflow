@@ -5,9 +5,7 @@ import { IApplicationState } from '../../../types/redux';
 
 type TStoreProps = Pick<IUserPerformerProps, 'users'>;
 
-const mapStateToProps = (
-  { accounts: { users } }: IApplicationState,
-): TStoreProps => {
+const mapStateToProps = ({ accounts: { users } }: IApplicationState): TStoreProps => {
   return { users };
 };
 

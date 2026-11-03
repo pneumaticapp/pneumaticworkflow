@@ -15,8 +15,6 @@ import { InvitesType } from '../../../../redux/team/types';
 import styles from './EmailInvitesTab.css';
 import popupStyles from '../../TeamInvitesPopup.css';
 
-
-
 const ScrollBar = PerfectScrollbar as unknown as Function;
 
 export function EmailInvitesTab() {

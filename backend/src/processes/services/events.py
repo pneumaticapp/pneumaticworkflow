@@ -7,6 +7,7 @@ from django.utils import timezone
 from src.accounts.models import UserGroup
 from src.analysis.services import AnalyticService
 from src.generics.base.service import BaseModelService
+from src.logs.events import AuditEventService
 from src.notifications.tasks import (
     send_comment_notification,
     send_event_created,
@@ -705,6 +706,11 @@ class CommentService(BaseModelService):
                 clear_text=clear_text,
                 after_create_actions=False,
             )
+            AuditEventService.comment_created(
+                user=self.user,
+                auth_type=self.auth_type,
+                comment=self.instance,
+            )
             if not task.contains_comments:
                 task.contains_comments = True
                 task.save(update_fields=['contains_comments'])
@@ -844,6 +850,11 @@ class CommentService(BaseModelService):
             auth_type=self.auth_type,
             workflow=self.instance.workflow,
         )
+        AuditEventService.comment_updated(
+            user=self.user,
+            auth_type=self.auth_type,
+            comment=self.instance,
+        )
 
         return self.instance
 
@@ -882,6 +893,11 @@ class CommentService(BaseModelService):
             auth_type=self.auth_type,
             workflow=self.instance.workflow,
         )
+        AuditEventService.comment_deleted(
+            user=self.user,
+            auth_type=self.auth_type,
+            comment=self.instance,
+        )
         return self.instance
 
     def watched(self):
@@ -917,6 +933,12 @@ class CommentService(BaseModelService):
                 workflow=self.instance.workflow,
                 is_superuser=self.is_superuser,
                 auth_type=self.auth_type,
+            )
+            AuditEventService.create_reaction(
+                user=self.user,
+                auth_type=self.auth_type,
+                comment=self.instance,
+                value=value,
             )
             self._send_event_updated()
             # Don't send reactions to yourself
@@ -954,5 +976,11 @@ class CommentService(BaseModelService):
                 workflow=self.instance.workflow,
                 is_superuser=self.is_superuser,
                 auth_type=self.auth_type,
+            )
+            AuditEventService.delete_reaction(
+                user=self.user,
+                auth_type=self.auth_type,
+                comment=self.instance,
+                value=value,
             )
             self._send_event_updated()

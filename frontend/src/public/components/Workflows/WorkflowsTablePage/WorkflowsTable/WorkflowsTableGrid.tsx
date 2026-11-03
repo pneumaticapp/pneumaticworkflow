@@ -23,13 +23,7 @@ export function WorkflowsTableGrid({
   shouldSkeletonDefaultTable,
   shouldSkeletonOptionalTable,
 }: WorkflowsTableGridProps) {
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-  } = table;
+  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = table;
 
   const getTableBodyContent = () => {
     if (shouldSkeletonDefaultTable) {
@@ -71,6 +65,7 @@ export function WorkflowsTableGrid({
                   minWidth: colWidths[cell.column.id],
                 },
               })}
+              key={cell.column.id}
               className={styles['column']}
             >
               {shouldSkeletonOptionalTable || shouldSkeletonBody ? (
@@ -107,7 +102,7 @@ export function WorkflowsTableGrid({
           </tr>
         ) : (
           headerGroups.map((headerGroup) => (
-            <tr {...headerGroup.getHeaderGroupProps()}>
+            <tr {...headerGroup.getHeaderGroupProps()} key={headerGroup.id}>
               {headerGroup.headers.map((column: CustomHeaderGroup<TableColumns>) => (
                 <th
                   {...column.getHeaderProps({
@@ -118,6 +113,7 @@ export function WorkflowsTableGrid({
                       minWidth: colWidths[column.id],
                     },
                   })}
+                  key={column.id}
                   className={classNames(styles['column-header'], styles['column'])}
                 >
                   {shouldSkeletonOptionalTable ? <SkeletonDefaultCell80 /> : column.render('Header')}

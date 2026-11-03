@@ -1,9 +1,6 @@
 import { IntlShape } from 'react-intl';
 
-import {
-  mentionsRegex,
-  variableRegex,
-} from '../../../constants/defaultValues';
+import { mentionsRegex, variableRegex } from '../../../constants/defaultValues';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { truncateString } from '../../../utils/truncateString';
 import { prepareChecklistsForRendering } from '../../../utils/checklists/prepareChecklistsForRendering';
@@ -40,37 +37,36 @@ export function prepareRichTextHtml(
 ): string {
   const replaceRules: TReplaceRule[] = replaceInlineTokens
     ? [
-      {
-        regExp: mentionsRegex,
-        replaceLogic: (_match: string, mentionName: string) => (
-          `<span class='${mentionClassName}'>@${unescapeMarkdownLinkText(mentionName)}</span>`
-        ),
-      },
-      {
-        regExp: variableRegex,
-        replaceLogic: (match: string, variableApiName: string) => {
-          if (!isArrayWithItems(variables)) {
-            return match;
-          }
-
-          const variable = variables.find((item) => variableApiName === item.apiName);
-          if (!variable) {
-            return match;
-          }
-
-          const { title } = getLocalizedSystemVariable({
-            apiName: variableApiName,
-            title: variable.title,
-            formatMessage,
-          });
-
-          return `<span class="${badgeClassName} ${specificityBadgeClassName}">${truncateString(
-            title,
-            MAX_VARIABLE_LENGTH,
-          )}</span>`;
+        {
+          regExp: mentionsRegex,
+          replaceLogic: (_match: string, mentionName: string) =>
+            `<span class='${mentionClassName}'>@${unescapeMarkdownLinkText(mentionName)}</span>`,
         },
-      },
-    ]
+        {
+          regExp: variableRegex,
+          replaceLogic: (match: string, variableApiName: string) => {
+            if (!isArrayWithItems(variables)) {
+              return match;
+            }
+
+            const variable = variables.find((item) => variableApiName === item.apiName);
+            if (!variable) {
+              return match;
+            }
+
+            const { title } = getLocalizedSystemVariable({
+              apiName: variableApiName,
+              title: variable.title,
+              formatMessage,
+            });
+
+            return `<span class="${badgeClassName} ${specificityBadgeClassName}">${truncateString(
+              title,
+              MAX_VARIABLE_LENGTH,
+            )}</span>`;
+          },
+        },
+      ]
     : [];
 
   const preparedText = replaceInlineTokens

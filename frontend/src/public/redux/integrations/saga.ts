@@ -4,7 +4,12 @@ import { getIntegrationDetails } from '../../api/getIntegrationDetails';
 import { getIntegrations } from '../../api/getIntegrations';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { ERoutes } from '../../constants/routes';
-import { IApiKeyItem, IIntegrationDetailed, IIntegrationListItem, IApiKeyCreateResponse } from '../../types/integrations';
+import {
+  IApiKeyItem,
+  IIntegrationDetailed,
+  IIntegrationListItem,
+  IApiKeyCreateResponse,
+} from '../../types/integrations';
 import { history } from '../../utils/history';
 import { logger } from '../../utils/logger';
 import {

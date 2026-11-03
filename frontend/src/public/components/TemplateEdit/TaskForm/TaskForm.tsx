@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
+import classnames from 'classnames';
 
 import { TaskDescriptionEditor } from './TaskDescriptionEditor';
 import { scrollToElement } from '../../../utils/helpers';
@@ -40,6 +41,7 @@ export interface ITaskFormProps {
   tasks: ITemplateTaskClient[];
   kickoff: ITemplateKickoffClient;
   patchTask(args: TPatchTaskPayload): void;
+  embedded?: boolean;
 }
 
 export function TaskForm({
@@ -53,6 +55,7 @@ export function TaskForm({
   kickoff,
   patchTask,
   templateId,
+  embedded = false,
 }: ITaskFormProps & { templateId: number | undefined }) {
   if (!task) return null;
   const { formatMessage } = useIntl();
@@ -63,14 +66,8 @@ export function TaskForm({
     () => getTaskVariables(kickoff, tasks, task, templateId),
     [kickoff, task, tasks, templateId],
   );
-  const templateVariables = useMemo(
-    () => getVariables({ kickoff, tasks, templateId }),
-    [kickoff, tasks, templateId],
-  );
-  const listSystemVariables = useMemo(() => [
-    ...getSystemVariables(),
-    ...listVariables,
-  ], [listVariables]);
+  const templateVariables = useMemo(() => getVariables({ kickoff, tasks, templateId }), [kickoff, tasks, templateId]);
+  const listSystemVariables = useMemo(() => [...getSystemVariables(), ...listVariables], [listVariables]);
   const taskFormPartsRefs = {
     [ETaskFormParts.AssignPerformers]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.DueIn]: useRef<HTMLDivElement>(null),
@@ -110,8 +107,7 @@ export function TaskForm({
   }, [startingOrder, task.conditions, onEdit]);
 
   useLayoutEffect(() => {
-    const scrollKey =
-      scrollTarget === ETaskFormParts.Fieldsets ? ETaskFormParts.Fields : scrollTarget;
+    const scrollKey = scrollTarget === ETaskFormParts.Fieldsets ? ETaskFormParts.Fields : scrollTarget;
     const scrollTo = (scrollKey && taskFormPartsRefs[scrollKey]?.current) || wrapperRef.current;
 
     if (scrollTo) scrollToElement(scrollTo);
@@ -121,9 +117,10 @@ export function TaskForm({
     patchTask({ taskUUID: task.uuid, changedFields });
   };
 
-  const handleTaskFieldChange = (field: keyof ITemplateTaskClient) => (value: ITemplateTaskClient[keyof ITemplateTaskClient]) => {
-    setCurrentTask({ [field]: value });
-  };
+  const handleTaskFieldChange =
+    (field: keyof ITemplateTaskClient) => (value: ITemplateTaskClient[keyof ITemplateTaskClient]) => {
+      setCurrentTask({ [field]: value });
+    };
 
   const createWidget = useCallback(
     (Component, props) => {
@@ -184,7 +181,7 @@ export function TaskForm({
           patchTask={patchTask}
         />
       ),
-      widget: createWidget(TaskRenderExtraFieldsInfo, { task })
+      widget: createWidget(TaskRenderExtraFieldsInfo, { task }),
     },
     {
       formPartId: ETaskFormParts.StartsAfter,
@@ -237,7 +234,7 @@ export function TaskForm({
   ];
 
   return (
-    <div ref={wrapperRef} className={styles['task_form']}>
+    <div ref={wrapperRef} className={classnames(styles['task_form'], embedded && styles['task_form--embedded'])}>
       <div className={styles['task_form-popover']}>
         <div className={styles['task-fields-wrapper']}>
           <InputWithVariables
@@ -273,7 +270,7 @@ export function TaskForm({
             isDisabled={title === 'templates.return-to.title' && tasks.length < 2}
             label={formatMessage({ id: title })}
             containerClassName={styles['task-accordion-container']}
-            isInitiallyVisible={formPartId === scrollTarget}
+            isInitiallyVisible={embedded || formPartId === scrollTarget}
             key={title}
             innerRef={taskFormPartsRefs[formPartId]}
             widget={widget}

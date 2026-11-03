@@ -20,7 +20,13 @@ import { MergedOutputRows } from '../TaskOutputFlow/MergedOutputRows';
 
 import { KickoffMenu } from './KickoffMenu';
 import { IntlMessages } from '../../IntlMessages';
-import {  EExtraFieldType, IExtraField, ETemplateParts, ITemplateKickoffClient, ITemplateClient } from '../../../types/template';
+import {
+  EExtraFieldType,
+  IExtraField,
+  ETemplateParts,
+  ITemplateKickoffClient,
+  ITemplateClient,
+} from '../../../types/template';
 import { IFieldsetCatalogItem } from '../../../types/fieldset';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { ExtraFieldsMap } from '../ExtraFields/utils/ExtraFieldsMap';
@@ -45,6 +51,9 @@ export interface IKickoffReduxProps {
   accountId: number;
   templateStatus: ETemplateStatus;
   setKickoff(value: ITemplateKickoffClient): void;
+  forceOpen?: boolean;
+  embedded?: boolean;
+  onOpenChange?(isOpen: boolean): void;
 }
 
 export function KickoffRedux({
@@ -52,14 +61,23 @@ export function KickoffRedux({
   intl: { formatMessage },
   setKickoff,
   accountId,
+  forceOpen = false,
+  embedded = false,
+  onOpenChange,
 }: IKickoffReduxProps) {
   const dispatch = useDispatch();
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [isOpen, setIsOpen] = React.useState(forceOpen || embedded);
+
+  React.useEffect(() => {
+    if (forceOpen || embedded) {
+      setIsOpen(true);
+    }
+  }, [forceOpen, embedded]);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const variables = useWorkflowNameVariables(kickoff);
   const datasetOptions = useDatasetOptions(kickoff.fields);
   const fieldsetsCatalogLoading = useSelector(getFieldsetsCatalogIsLoading);
-  
+
   const mergedRows = useMemo(
     () => buildMergedTaskOutputRows(kickoff.fields || [], kickoff.fieldsets || []),
     [kickoff.fields, kickoff.fieldsets],
@@ -79,9 +97,15 @@ export function KickoffRedux({
     },
   ]);
 
-
   const toggleExpanded = () => {
-    setIsOpen(!isOpen);
+    if (embedded) {
+      onOpenChange?.(false);
+      return;
+    }
+
+    const nextIsOpen = !isOpen;
+    setIsOpen(nextIsOpen);
+    onOpenChange?.(nextIsOpen);
   };
 
   const handleChangeKickoff = (newKickoff: ITemplateKickoffClient) => {
@@ -199,9 +223,7 @@ export function KickoffRedux({
 
   const renderKickoffLabels = () => {
     const { fields, fieldsets } = kickoff;
-    const hasFieldsetChips = (fieldsets || []).some(
-      (taskFieldset) => isArrayWithItems(taskFieldset.fields),
-    );
+    const hasFieldsetChips = (fieldsets || []).some((taskFieldset) => isArrayWithItems(taskFieldset.fields));
 
     if (!isArrayWithItems(fields) && !hasFieldsetChips) {
       return null;
@@ -227,7 +249,10 @@ export function KickoffRedux({
   };
 
   return (
-    <div className={styles['kick-off']} ref={containerRef}>
+    <div
+      className={embedded ? `${styles['kick-off']} ${styles['kick-off--embedded']}` : styles['kick-off']}
+      ref={containerRef}
+    >
       <KickoffMenu
         isKickoffOpen={isOpen}
         isClearDisabled={isKickoffCleared(kickoff)}
@@ -236,15 +261,19 @@ export function KickoffRedux({
       />
       <div
         className={styles['header']}
-        onClick={toggleExpanded}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            toggleExpanded();
-          }
-        }}
-        tabIndex={0}
-        role="button"
-        aria-label="Toggle expand"
+        onClick={embedded ? undefined : toggleExpanded}
+        onKeyDown={
+          embedded
+            ? undefined
+            : (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  toggleExpanded();
+                }
+              }
+        }
+        tabIndex={embedded ? undefined : 0}
+        role={embedded ? undefined : 'button'}
+        aria-label={embedded ? undefined : 'Toggle expand'}
       >
         <span className={styles['title']}>
           <IntlMessages id="template.kick-off-form-title" />

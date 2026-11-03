@@ -28,7 +28,12 @@ export function FieldsetOutputsPreview({ fieldsets, onGroupClick }: IFieldsetOut
   return (
     <div className={styles['fieldset-outputs-preview']}>
       {fieldsetsWithFields.map(({ apiNameBinding, name }) => (
-        <button type="button" className={classNames(styles['fieldset-outputs-preview__group'])} key={apiNameBinding} onClick={onGroupClick}>
+        <button
+          type="button"
+          className={classNames(styles['fieldset-outputs-preview__group'])}
+          key={apiNameBinding}
+          onClick={onGroupClick}
+        >
           <span className={styles['fieldset-outputs-preview__title']}>
             {formatMessage({ id: 'fieldsets.title' })}: {name}
           </span>

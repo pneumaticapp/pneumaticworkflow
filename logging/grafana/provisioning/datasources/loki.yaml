@@ -1,0 +1,18 @@
+# Loki datasource for the Pneumatic event pipeline (plan 5.7).
+# Provisioned from a file only: the dashboard references this datasource by
+# uid, so the uid must stay `pneumatic-loki`.
+apiVersion: 1
+
+datasources:
+  - name: Loki
+    uid: pneumatic-loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    isDefault: true
+    editable: false
+    jsonData:
+      # The "Recent events" table of the account activity dashboard shows one
+      # row per log line, so the default of 1000 lines is kept explicit.
+      maxLines: 1000
+      timeout: 60

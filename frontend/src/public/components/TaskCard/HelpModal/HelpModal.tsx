@@ -7,8 +7,6 @@ import { Button } from '../../UI';
 
 import styles from './HelpModal.css';
 
-
-
 interface IHelpModalProps {
   isOpen: boolean;
   helpText: string;

@@ -9,7 +9,13 @@ import { history } from '../../utils/history';
 import { ERoutes } from '../../constants/routes';
 import { isRequestCanceled } from '../../utils/isRequestCanceled';
 
-import { IDataset, IGetDatasetsResponse, ICreateDatasetParams, IUpdateDatasetParams, EDatasetsSorting } from '../../types/dataset';
+import {
+  IDataset,
+  IGetDatasetsResponse,
+  ICreateDatasetParams,
+  IUpdateDatasetParams,
+  EDatasetsSorting,
+} from '../../types/dataset';
 import { TDeleteDatasetPayload } from './types';
 import { generateCloneName } from './utils';
 import { LIMIT_LOAD_DATASETS } from '../../constants/defaultValues';
@@ -53,7 +59,7 @@ function* loadDatasetsSaga({ payload: offset = 0 }: ReturnType<typeof loadDatase
       ordering: datasetsListSorting,
       signal: abortController.signal,
     });
-    
+
     const results = data.results || [];
     const count = data.count || 0;
 
@@ -73,17 +79,16 @@ function* loadDatasetsSaga({ payload: offset = 0 }: ReturnType<typeof loadDatase
 function* loadAllDatasetsSaga() {
   try {
     const data: IGetDatasetsResponse = yield getDatasets({
-      limit: 9999, 
-      ordering: EDatasetsSorting.NameAsc, 
+      limit: 9999,
+      ordering: EDatasetsSorting.NameAsc,
     });
-    
+
     yield put(loadAllDatasetsSuccess(data.results || []));
   } catch (error) {
     yield put(loadAllDatasetsFailed());
     logger.error('failed to load all datasets', error);
   }
 }
-
 
 function* loadDatasetForMapSaga({ payload: id }: PayloadAction<number>) {
   try {

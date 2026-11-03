@@ -50,7 +50,7 @@ describe('middleware', () => {
       expect(res.redirect).toHaveBeenCalledWith(`${ERoutes.Login}?redirectUrl=%2Fdashboard%2F`);
     });
     it('redirects already signed account owner to the Dashboard', async () => {
-      const mockUser = { is_account_owner: true, account: {is_subscribed: true} } as IAuthenticatedUser;
+      const mockUser = { is_account_owner: true, account: { is_subscribed: true } } as IAuthenticatedUser;
       (getUser as jest.Mock).mockReturnValue(mockUser);
       (parseCookies as jest.Mock).mockReturnValueOnce({ token: 'save-token' });
       const url = '/auth/signin/';
@@ -60,7 +60,7 @@ describe('middleware', () => {
       expect(res.redirect).toHaveBeenCalledWith(ERoutes.Main);
     });
     it('redirects already signed non-account-owner to the Tasks page', async () => {
-      const mockUser = { is_account_owner: false, account: {is_subscribed: true} } as IAuthenticatedUser;
+      const mockUser = { is_account_owner: false, account: { is_subscribed: true } } as IAuthenticatedUser;
       (getUser as jest.Mock).mockReturnValueOnce(mockUser);
       (parseCookies as jest.Mock).mockReturnValueOnce({ token: 'save-token' });
       const url = '/auth/signin/';

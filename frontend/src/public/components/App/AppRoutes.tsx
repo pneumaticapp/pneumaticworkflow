@@ -86,16 +86,10 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
             <Route path={ERoutes.CollectPaymentDetails} component={CollectPaymentDetails} />
             <Route path={ERoutes.AfterPaymentDetailsProvided} component={AfterPaymentDetailsProvided} />
             <Route path={ERoutes.Settings} component={Settings} />
-            <ProtectedRoute
-              path={ERoutes.Workflows}
-              hasAccess={canAccessWorkflowsObj}
-            >
+            <ProtectedRoute path={ERoutes.Workflows} hasAccess={canAccessWorkflowsObj}>
               <WorkflowsView />
             </ProtectedRoute>
-            <ProtectedRoute
-              path={ERoutes.WorkflowDetail}
-              hasAccess={canAccessWorkflowsObj}
-            >
+            <ProtectedRoute path={ERoutes.WorkflowDetail} hasAccess={canAccessWorkflowsObj}>
               <WorkflowsView />
             </ProtectedRoute>
             <ProtectedRoute path={ERoutes.TemplatesCreate} hasAccess={user.isAdmin}>
@@ -111,10 +105,7 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
               <TemplatesView />
             </ProtectedRoute>
             <Route path={ERoutes.Tasks} component={TasksView} />
-            <ProtectedRoute
-              path={ERoutes.Highlights}
-              hasAccess={canAccessWorkflowsObj}
-            >
+            <ProtectedRoute path={ERoutes.Highlights} hasAccess={canAccessWorkflowsObj}>
               <HighlightsView />
             </ProtectedRoute>
             <ProtectedRoute path={ERoutes.Team} hasAccess={user.isAdmin}>
@@ -133,16 +124,10 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
             >
               <TenantsView />
             </ProtectedRoute>
-            <ProtectedRoute
-              path={ERoutes.Datasets}
-              hasAccess={user.isAdmin || user.isAccountOwner}
-            >
+            <ProtectedRoute path={ERoutes.Datasets} hasAccess={user.isAdmin || user.isAccountOwner}>
               <DatasetsView />
             </ProtectedRoute>
-            <ProtectedRoute
-              path={ERoutes.Fieldsets}
-              hasAccess={user.isAdmin || user.isAccountOwner}
-            >
+            <ProtectedRoute path={ERoutes.Fieldsets} hasAccess={user.isAdmin || user.isAccountOwner}>
               <FieldsetsView />
             </ProtectedRoute>
 

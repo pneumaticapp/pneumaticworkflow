@@ -26,6 +26,7 @@ from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
 from src.generics.permissions import UserIsAuthenticated
+from src.logs.events import AuditEventService
 from src.openapi import (
     ACCESS_ACCOUNT_OWNER,
     ACCESS_ADMIN,
@@ -434,6 +435,11 @@ class TemplateViewSet(
                 template=template,
                 user_agent=get_user_agent(request),
             )
+        AuditEventService.template_created(
+            user=request.user,
+            auth_type=request.token_type,
+            template=template,
+        )
         return self.response_ok(serializer.get_response_data())
 
     @extend_schema(
@@ -495,6 +501,11 @@ class TemplateViewSet(
                 auth_type=request.token_type,
                 **serializer.get_analysis_counters(),
             )
+        AuditEventService.template_updated(
+            user=request.user,
+            auth_type=request.token_type,
+            template=template,
+        )
         response_serializer = self.get_serializer(instance=template)
         return self.response_ok(response_serializer.get_response_data())
 
@@ -518,6 +529,12 @@ class TemplateViewSet(
         serializer = self.get_serializer(data=template_data_clone)
         with transaction.atomic():
             serializer.save_as_draft()
+        AuditEventService.template_cloned(
+            user=request.user,
+            auth_type=request.token_type,
+            template=serializer.instance,
+            name=template_data_clone['name'],
+        )
         return self.response_ok(serializer.get_response_data())
 
     @extend_schema(
@@ -737,6 +754,11 @@ class TemplateViewSet(
             template=template,
             auth_type=request.token_type,
             is_superuser=request.is_superuser,
+        )
+        AuditEventService.template_deleted(
+            user=request.user,
+            auth_type=request.token_type,
+            template=template,
         )
         return self.response_ok()
 
@@ -1014,11 +1036,18 @@ class TemplateViewSet(
     @action(methods=['POST'], detail=True, url_path='discard-changes')
     def discard_changes(self, request, pk, *args, **kwargs):
         template = self.get_object()
-        if template.tasks.all().count() != 0:
+        template_deleted = template.tasks.all().count() == 0
+        if not template_deleted:
             slz = self.get_serializer(instance=template)
             slz.discard_changes()
-            return self.response_ok()
-        template.delete()
+        else:
+            template.delete()
+        AuditEventService.template_discarded_changes(
+            user=request.user,
+            auth_type=request.token_type,
+            template=template,
+            template_deleted=template_deleted,
+        )
         return self.response_ok()
 
     @extend_schema(
@@ -1050,6 +1079,14 @@ class TemplateViewSet(
             account_id=user.account_id,
             **filter_slz.validated_data,
         )
+        # One record per export, not one per page: the client walks
+        # the pages with offset, and only the first one is the action.
+        if not filter_slz.validated_data.get('offset'):
+            AuditEventService.templates_export(
+                user=user,
+                auth_type=request.token_type,
+                filters=filter_slz.validated_data,
+            )
         return self.paginated_response(queryset)
 
     @extend_schema(

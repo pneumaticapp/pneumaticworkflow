@@ -1,4 +1,3 @@
-/* eslint-disable */
 import React, { useState } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';

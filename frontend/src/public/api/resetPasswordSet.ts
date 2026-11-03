@@ -7,10 +7,15 @@ export interface IResetPasswordSetResponse {
 }
 
 export function resetPasswordSet(body: IConfirmResetPassword) {
-  return commonRequest<IResetPasswordSetResponse>('resetPasswordSet', {
-    method: 'POST',
-    data: mapRequestBody(body),
-  }, {
-    type: 'local',
-  });
+  return commonRequest<IResetPasswordSetResponse>(
+    'resetPasswordSet',
+    {
+      method: 'POST',
+      data: mapRequestBody(body),
+    },
+    {
+      type: 'local',
+      shouldThrow: true,
+    },
+  );
 }

@@ -66,6 +66,7 @@ def test_create_instance__all_fields__ok(mocker):
     raw_password = '213123'
     is_admin = False
     is_account_owner = True
+    is_ai = True
     language = Language.fr
     tz = 'Atlantic/Faeroe'
     date_fmt = UserDateFormat.PY_EUROPE_24
@@ -89,6 +90,7 @@ def test_create_instance__all_fields__ok(mocker):
         phone=phone,
         is_admin=is_admin,
         is_account_owner=is_account_owner,
+        is_ai=is_ai,
         status=status,
         language=language,
         timezone=tz,
@@ -109,6 +111,7 @@ def test_create_instance__all_fields__ok(mocker):
     assert user.password == safe_password
     assert user.is_admin == is_admin
     assert user.is_account_owner == is_account_owner
+    assert user.is_ai is True
     assert user.date_fmt == UserDateFormat.PY_EUROPE_24
     assert user.date_fdw == UserFirstDayWeek.FRIDAY
     assert user.password == safe_password
@@ -160,6 +163,7 @@ def test_create_instance__only_required_fields__set_defaults(mocker):
     assert user.password == safe_password
     assert user.is_admin is True
     assert user.is_account_owner is False
+    assert user.is_ai is False
     assert user.language == language
     assert user.timezone == tz
     assert user.date_fmt == UserDateFormat.PY_EUROPE_24
@@ -1253,7 +1257,11 @@ def test_private_deactivate__activate_contacts__ok(mocker):
     )
     update_users_counts_mock.assert_called_once_with()
     identify_mock.assert_called_once_with(invited_user)
-    clear_substitute_groups_mock.assert_called_once_with(invited_user)
+    clear_substitute_groups_mock.assert_called_once_with(
+        invited_user,
+        request_user=owner,
+        auth_type=AuthTokenType.USER,
+    )
 
 
 def test_deactivate_actions__ok(mocker):
@@ -3078,7 +3086,11 @@ def test_deactivate__clears_own_manager__ok(mocker):
     )
     update_users_counts_mock.assert_called_once_with()
     identify_mock.assert_called_once_with(user)
-    clear_substitute_groups_mock.assert_called_once_with(user)
+    clear_substitute_groups_mock.assert_called_once_with(
+        user,
+        request_user=owner,
+        auth_type=AuthTokenType.USER,
+    )
     send_updated_mock.assert_called_once_with(
         logging=False,
         account_id=account.id,
@@ -3134,7 +3146,11 @@ def test_deactivate__clears_subordinates__ok(mocker):
     )
     update_users_counts_mock.assert_called_once_with()
     identify_mock.assert_called_once_with(user)
-    clear_substitute_groups_mock.assert_called_once_with(user)
+    clear_substitute_groups_mock.assert_called_once_with(
+        user,
+        request_user=owner,
+        auth_type=AuthTokenType.USER,
+    )
     send_updated_mock.assert_called_once_with(
         logging=False,
         account_id=account.id,

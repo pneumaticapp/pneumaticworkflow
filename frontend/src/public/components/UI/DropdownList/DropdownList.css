@@ -1,18 +1,18 @@
 /* stylelint-disable declaration-no-important */
 
 .dropdownlist__scrollbar {
-  margin-right: 0 !important;
-  padding-right: 0 !important;
   max-height: 35.2rem;
+  padding-right: 0 !important;
+  margin-right: 0 !important;
 }
 
 .dropdownlist-sm {
   &__control {
-    padding: 0.6rem 0.8rem;
     display: flex;
+    align-items: center;
+    padding: 0.6rem 0.8rem;
     background-color: var(--pneumatic-color-black4);
     border-radius: 16px;
-    align-items: center;
 
     &:hover .dropdownlist-sm__value,
     &.is-open .dropdownlist-sm__value {
@@ -42,10 +42,10 @@
     border-bottom: 0.1rem solid var(--pneumatic-color-black16);
 
     input {
-      padding: 1rem 1.6rem;
-      padding-right: 4rem;
       display: block;
       width: 100%;
+      padding: 1rem 1.6rem;
+      padding-right: 4rem;
     }
   }
 
@@ -77,9 +77,9 @@
     @mixin text-small;
 
     position: absolute;
-    z-index: 1;
     top: 0;
     left: 1.2rem;
+    z-index: 1;
     padding: 0 0.4rem;
     color: var(--pneumatic-color-black72);
     background-color: var(--pneumatic-color-white);

@@ -5,7 +5,11 @@ import { useIntl } from 'react-intl';
 import { useDatePickerSettings } from '../../../../../../hooks/useDatePickerSettings';
 import { CustomInput } from '../CustomInput/CustomInput';
 import { ISingleDatePickerProps } from '../../types';
-import { formatDatePickerDisplayValue, normalizeDatePickerDate, toCalendarDate } from '../../utils/normalizeDatePickerDate';
+import {
+  formatDatePickerDisplayValue,
+  normalizeDatePickerDate,
+  toCalendarDate,
+} from '../../utils/normalizeDatePickerDate';
 
 import styles from '../../DatePicker.modules.css';
 

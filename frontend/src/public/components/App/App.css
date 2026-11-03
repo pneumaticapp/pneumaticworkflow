@@ -5,7 +5,7 @@
 @media print {
   /* stylelint-disable declaration-no-important */
   .pneumatic-frontend-main-wrapper {
-    overflow: visible !important;
     height: auto !important;
+    overflow: visible !important;
   }
 }

@@ -1,6 +1,5 @@
 from typing import List, Optional
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.db import IntegrityError, transaction
@@ -14,10 +13,7 @@ from src.accounts.enums import (
     UserInviteStatus,
     UserStatus,
 )
-from src.accounts.models import (
-    Contact,
-    UserInvite,
-)
+from src.accounts.models import Contact, UserInvite
 from src.accounts.serializers.user import UserWebsocketSerializer
 from src.accounts.services.account import AccountService
 from src.accounts.services.exceptions import (
@@ -27,28 +23,19 @@ from src.accounts.services.exceptions import (
     UsersLimitInvitesException,
 )
 from src.accounts.services.user import UserService
-from src.accounts.tokens import (
-    InviteToken,
-    TransferToken,
-)
-from src.analysis.mixins import (
-    BaseIdentifyMixin,
-)
+from src.accounts.tokens import InviteToken, TransferToken
+from src.analysis.mixins import BaseIdentifyMixin
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
-from src.logs.enums import AccountEventStatus
-from src.logs.service import AccountLogService
-from src.notifications.enums import EmailProvider
+from src.logs.events import AuditEventService
 from src.notifications.tasks import (
-    send_user_created_notification,
-    send_user_updated_notification,
     send_invite_notification,
+    send_user_created_notification,
+    send_user_transfer_notification,
+    send_user_updated_notification,
 )
 from src.payment.tasks import increase_plan_users
-from src.processes.services.system_workflows import (
-    SystemWorkflowService,
-)
-from src.notifications.tasks import send_user_transfer_notification
+from src.processes.services.system_workflows import SystemWorkflowService
 from src.storage.utils import sync_account_file_fields
 
 UserModel = get_user_model()
@@ -161,33 +148,14 @@ class UserInviteService(
 
         self.identify(user)
         invite_token = self._get_invite_token(user)
-        if settings.EMAIL_PROVIDER == EmailProvider.SMTP:
-            send_invite_notification.delay(
-                user_id=user.id,
-                user_email=user.email,
-                account_id=self.account.id,
-                token=invite_token,
-                logo_lg=self.account.logo_lg,
-                logging=self.account.log_api_requests,
-            )
-        else:
-            AnalyticService.users_invited(
-                invite_to=user,
-                is_superuser=self.is_superuser,
-                invite_token=invite_token,
-            )
-        if self.account.log_api_requests:
-            AccountLogService().email_message(
-                title=f'Email to: {user.email}: Invite sent',
-                request_data={
-                    'token': invite_token,
-                    'from': self.request_user.email,
-                    'to': user.email,
-                },
-                account_id=self.account.id,
-                status=AccountEventStatus.SUCCESS,
-                contractor=settings.EMAIL_PROVIDER,
-            )
+        send_invite_notification.delay(
+            user_id=user.id,
+            user_email=user.email,
+            account_id=self.account.id,
+            token=invite_token,
+            logo_lg=self.account.logo_lg,
+            logging=self.account.log_api_requests,
+        )
         AnalyticService.users_invite_sent(
             invite_from=self.request_user,
             invite_to=user,
@@ -238,13 +206,6 @@ class UserInviteService(
         another_account_user: UserModel,
     ):
         self.identify(current_account_user)
-        # TODO Do not send invite_token.
-        #   Fix in https://my.pneumatic.app/workflows/15691
-        AnalyticService.users_invited(
-            invite_to=another_account_user,
-            is_superuser=self.is_superuser,
-            invite_token=self._get_invite_token(another_account_user),
-        )
         AnalyticService.users_invite_sent(
             invite_from=self.request_user,
             invite_to=another_account_user,
@@ -286,6 +247,12 @@ class UserInviteService(
             if groups:
                 current_account_user.user_groups.set(groups)
             self._user_create_actions(current_account_user)
+            AuditEventService.invite_created(
+                user=self.request_user,
+                auth_type=self.auth_type,
+                invited_user=current_account_user,
+                is_transfer=True,
+            )
             self._user_transfer_actions(
                 current_account_user=current_account_user,
                 another_account_user=another_account_user,
@@ -326,6 +293,12 @@ class UserInviteService(
             if groups:
                 user.user_groups.set(groups)
             self._user_create_actions(user)
+            AuditEventService.invite_created(
+                user=self.request_user,
+                auth_type=self.auth_type,
+                invited_user=user,
+                is_transfer=False,
+            )
             if self.send_email:
                 self._user_invite_actions(user)
 
@@ -398,6 +371,12 @@ class UserInviteService(
                 )
             else:
                 self._user_invite_actions(user)
+            AuditEventService.invite_resent(
+                user=self.request_user,
+                auth_type=self.auth_type,
+                invited_user=user,
+                is_transfer=another_account_user is not None,
+            )
 
     def accept(
         self,
@@ -436,6 +415,14 @@ class UserInviteService(
                 user=user,
             )
             account_service.update_users_counts()
+
+            # Published here and not in the view: the endpoint is not
+            # the only way in, an SSO callback accepts the invite of
+            # an invited person through the same method.
+            AuditEventService.invite_accepted(
+                invited_user=user,
+                invited_by=invite.invited_by,
+            )
         if (
             user.account.billing_sync
             and user.account.billing_plan == BillingPlanType.PREMIUM

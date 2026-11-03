@@ -125,6 +125,7 @@ def test_reassign__with_valid_data__ok(mocker, api_client):
     service_class_mock.assert_called_once_with(
         is_superuser=False,
         auth_type='User',
+        request_user=account_owner,
         old_user=old_user,
         new_user=new_user,
     )
@@ -276,6 +277,7 @@ def test_reassign__service_exception__returns_400(mocker, api_client):
     service_class_mock.assert_called_once_with(
         is_superuser=False,
         auth_type='User',
+        request_user=account_owner,
         old_user=old_user,
         new_user=new_user,
     )

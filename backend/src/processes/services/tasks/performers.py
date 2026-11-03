@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from src.accounts.enums import UserStatus
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
+from src.logs.events import AuditEventService
 from src.notifications.tasks import (
     send_new_task_notification,
     send_new_task_websocket,
@@ -83,6 +84,12 @@ class TaskPerformersService(BasePerformersService):
     ):
         WorkflowEventService.performer_deleted_event(
             user=request_user,
+            task=task,
+            performer=user,
+        )
+        AuditEventService.task_performer_deleted(
+            user=request_user,
+            auth_type=auth_type,
             task=task,
             performer=user,
         )
@@ -192,6 +199,12 @@ class TaskPerformersService(BasePerformersService):
     ):
         WorkflowEventService.performer_created_event(
             user=request_user,
+            task=task,
+            performer=user,
+        )
+        AuditEventService.task_performer_created(
+            user=request_user,
+            auth_type=auth_type,
             task=task,
             performer=user,
         )

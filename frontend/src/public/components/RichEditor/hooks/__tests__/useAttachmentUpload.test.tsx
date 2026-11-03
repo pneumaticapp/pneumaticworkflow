@@ -18,10 +18,10 @@ jest.mock('../../../UI/Notifications', () => ({
 }));
 
 const uploadFiles = require('../../../../utils/uploadFiles').uploadFiles as jest.Mock;
-const getAttachmentTypeByUrl =
-  require('../../../Attachments/utils/getAttachmentType').getAttachmentTypeByUrl as jest.Mock;
-const getAttachmentTypeByFilename =
-  require('../../../Attachments/utils/getAttachmentType').getAttachmentTypeByFilename as jest.Mock;
+const getAttachmentTypeByUrl = require('../../../Attachments/utils/getAttachmentType')
+  .getAttachmentTypeByUrl as jest.Mock;
+const getAttachmentTypeByFilename = require('../../../Attachments/utils/getAttachmentType')
+  .getAttachmentTypeByFilename as jest.Mock;
 const NotificationManager = require('../../../UI/Notifications').NotificationManager;
 
 function TestWrapper({
@@ -35,14 +35,7 @@ function TestWrapper({
 }) {
   const handleUpload = useAttachmentUpload(editorRef, accountId);
   if (handlerRef) handlerRef.current = handleUpload;
-  return (
-    <input
-      data-testid="file-input"
-      type="file"
-      multiple
-      onChange={handleUpload}
-    />
-  );
+  return <input data-testid="file-input" type="file" multiple onChange={handleUpload} />;
 }
 
 describe('useAttachmentUpload', () => {
@@ -71,9 +64,7 @@ describe('useAttachmentUpload', () => {
         { url: 'https://a.com/1.pdf', id: 1, name: '1.pdf' },
         { url: 'https://a.com/2.jpg', id: 2, name: '2.jpg' },
       ]);
-      getAttachmentTypeByUrl.mockImplementation((url: string) =>
-        url.endsWith('.jpg') ? 'image' : 'file',
-      );
+      getAttachmentTypeByUrl.mockImplementation((url: string) => (url.endsWith('.jpg') ? 'image' : 'file'));
       render(<TestWrapper editorRef={editorRef} accountId={1} />);
       const input = screen.getByTestId('file-input');
       await userEvent.upload(input, [new File([''], '1.pdf'), new File([''], '2.jpg')]);
@@ -130,8 +121,9 @@ describe('useAttachmentUpload', () => {
 
   describe('early return', () => {
     it('does not call uploadFiles when files is empty', async () => {
-      const handlerRef: React.MutableRefObject<((e: React.ChangeEvent<HTMLInputElement>) => Promise<void>) | null> =
-        { current: null };
+      const handlerRef: React.MutableRefObject<((e: React.ChangeEvent<HTMLInputElement>) => Promise<void>) | null> = {
+        current: null,
+      };
       render(<TestWrapper editorRef={editorRef} accountId={1} handlerRef={handlerRef} />);
       const syntheticEvent = {
         target: { files: [], value: 'x' },
@@ -229,14 +221,9 @@ describe('usePasteUpload', () => {
         { url: 'https://a.com/1.png', id: 1, name: '1.png' },
         { url: 'https://a.com/2.jpg', id: 2, name: '2.jpg' },
       ]);
-      getAttachmentTypeByUrl.mockImplementation((url: string) =>
-        url.endsWith('.jpg') ? 'image' : 'image',
-      );
+      getAttachmentTypeByUrl.mockImplementation((url: string) => (url.endsWith('.jpg') ? 'image' : 'image'));
       render(<TestPasteWrapper editorRef={editorRef} accountId={1} handlerRef={handlerRef} />);
-      await handlerRef.current!([
-        new File([''], '1.png'),
-        new File([''], '2.jpg'),
-      ]);
+      await handlerRef.current!([new File([''], '1.png'), new File([''], '2.jpg')]);
       expect(dispatchCommand).toHaveBeenCalledTimes(2);
       expect(dispatchCommand).toHaveBeenNthCalledWith(1, INSERT_ATTACHMENT_COMMAND, {
         id: 1,

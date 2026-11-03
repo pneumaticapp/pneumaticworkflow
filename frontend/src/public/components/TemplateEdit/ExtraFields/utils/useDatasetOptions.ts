@@ -2,7 +2,11 @@ import { useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { IExtraField } from '../../../../types/template';
-import { getAllDatasetsList, getIsAllDatasetsLoading, getIsAllDatasetsLoaded } from '../../../../redux/selectors/datasets';
+import {
+  getAllDatasetsList,
+  getIsAllDatasetsLoading,
+  getIsAllDatasetsLoaded,
+} from '../../../../redux/selectors/datasets';
 import { loadAllDatasets } from '../../../../redux/datasets/slice';
 import { DATASET_FIELD_TYPES } from '../constants';
 
@@ -22,7 +26,13 @@ export function useDatasetOptions(fields: IExtraField[]) {
   }, [hasDatasetFields, isDatasetsLoaded, isDatasetsLoading, dispatch]);
 
   return useMemo(
-    () => datasetsList.map((dataset) => ({ label: dataset.name, value: String(dataset.id) })),
+    () =>
+      datasetsList
+        .filter(({ itemsCount }) => itemsCount > 0)
+        .map(({ name, id }) => ({ label: name, value: String(id) }))
+        .sort((firstOption, secondOption) =>
+          firstOption.label.localeCompare(secondOption.label, undefined, { numeric: true }),
+        ),
     [datasetsList],
   );
 }

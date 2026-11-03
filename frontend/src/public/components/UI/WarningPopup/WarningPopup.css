@@ -7,17 +7,20 @@
   > *:not(:last-child) {
     margin-right: 0.8rem;
   }
+
   .popup-button_submit {
     margin-right: 1.6rem;
   }
 
   @media (--mobile) {
     flex-direction: column;
+
     button,
     .popup-button_submit {
-      margin: 0 0 1.6rem;
       width: 100%;
+      margin: 0 0 1.6rem;
     }
+
     > :last-child {
       margin: 0;
     }

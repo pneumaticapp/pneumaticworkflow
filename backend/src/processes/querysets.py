@@ -15,8 +15,8 @@ from django.db.models import (
     Q,
 )
 
-from src.accounts.enums import UserType
-from src.accounts.models import UserGroup
+from src.accounts.enums import AbsenceStatus, UserType
+from src.accounts.models import UserGroup, UserVacation
 from src.generics.querysets import (
     AccountBaseQuerySet,
     BaseHardQuerySet,
@@ -463,6 +463,10 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
 
 
 class WorkflowQuerySet(WorkflowsBaseQuerySet):
+
+    def by_ids(self, ids: List[int]):
+        return self.filter(id__in=ids)
+
     def running(self):
         return self.filter(
             status__in=[WorkflowStatus.RUNNING, WorkflowStatus.DELAYED],
@@ -558,6 +562,25 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
         )
         return self.filter(
             WorkflowPermissionQuery.viewer_q(user_id),
+        )
+
+    def with_view_access(self, user_id: int):
+        """Guardian view permission or template owner/viewer/starter
+        access (rules of WorkflowMemberOrViewerPermission). Owner
+        access is a subquery, so the outer query needs no DISTINCT."""
+        return self.with_member(user_id) | self.filter(
+            pk__in=self.with_owner_viewer_or_started_by_starter(
+                user_id,
+            ).values('pk'),
+        )
+
+    def with_change_access(self, user_id: int):
+        """Guardian change permission (rule of WorkflowOwnerPermission)."""
+        from src.processes.queries import (
+            WorkflowPermissionQuery,
+        )
+        return self.filter(
+            WorkflowPermissionQuery.change_q(user_id),
         )
 
     def exclude_onboarding(self):
@@ -1133,7 +1156,10 @@ class TaskPerformerQuerySet(BaseQuerySet, BaseHardQuerySet):
         return self.filter(user_id=user_id)
 
     def by_user_or_group(self, user_id):
-        return self.filter(Q(user_id=user_id) | Q(group__users__id=user_id))
+        return self.filter(
+            Q(user_id=user_id) |
+            Q(group__users__id=user_id, group__is_deleted=False),
+        )
 
     def completed(self):
         return self.filter(is_completed=True)
@@ -1189,6 +1215,28 @@ class TaskPerformerQuerySet(BaseQuerySet, BaseHardQuerySet):
             directly_status__in=(
                 DirectlyStatus.DELETED,
             ),
+        )
+
+    def exclude_active_substitute_groups(
+        self,
+        account_id: int,
+        assigned_performers: 'TaskPerformerQuerySet',
+    ) -> 'TaskPerformerQuerySet':
+        return self.exclude(
+            type=PerformerType.GROUP,
+            group_id__in=UserVacation.objects.filter(
+                Q(user__taskperformer__in=assigned_performers)
+                | Q(
+                    user__user_groups__taskperformer__in=assigned_performers,
+                    user__user_groups__is_deleted=False,
+                ),
+                account_id=account_id,
+                absence_status__in=(
+                    AbsenceStatus.VACATION,
+                    AbsenceStatus.SICK_LEAVE,
+                ),
+                substitute_group__is_deleted=False,
+            ).values_list('substitute_group_id', flat=True),
         )
 
     def user_is_subscriber(self):

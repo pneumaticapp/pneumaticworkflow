@@ -17,13 +17,13 @@
     }
 
     p {
-      margin-bottom: 0;
       display: block;
+      margin-bottom: 0;
       font-family: Nunito, sans-serif;
       font-size: 13px;
       line-height: 16px;
-      text-align: center;
       color: #fdf7ee;
+      text-align: center;
     }
 
     span,

@@ -38,6 +38,25 @@ describe('utils', () => {
 
       await expect(result).rejects.toEqual(body);
     });
+
+    it('returns a failed promise with the error object when body is undefined and network error occurred.', async () => {
+      const networkError = new Error('connect ECONNREFUSED 127.0.0.1:8001');
+
+      const result = serverApi.get('/some/url', {});
+      const callback = (get as jest.Mock).mock.calls[0][2];
+      callback(networkError, undefined, undefined);
+
+      await expect(result).rejects.toEqual(networkError);
+    });
+    it('returns a failed promise with fallback Error when both body and error are undefined.', async () => {
+      const response = { statusCode: 500 };
+
+      const result = serverApi.get('/some/url', {});
+      const callback = (get as jest.Mock).mock.calls[0][2];
+      callback(undefined, response, undefined);
+
+      await expect(result).rejects.toEqual(new Error('Request failed with status 500'));
+    });
   });
   describe('isRouteAllowed', () => {
     it('returns true if a permitted link is provided.', () => {

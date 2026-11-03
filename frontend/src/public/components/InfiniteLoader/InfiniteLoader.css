@@ -8,13 +8,17 @@
   border-radius: 3px;
   fill: none;
   stroke: white;
-  stroke-linecap: round;
   stroke-width: 8%;
+  stroke-linecap: round;
 
   use {
-    animation: a 1s linear infinite;
     stroke: var(--pneumatic-color-link);
+    animation: a 1s linear infinite;
   }
 }
 
-@keyframes a { to { stroke-dashoffset: 0; } }
+@keyframes a {
+  to {
+    stroke-dashoffset: 0;
+  }
+}

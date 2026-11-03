@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import React from 'react';
 
 export function TableViewIcon({ fill = 'currentColor' }: React.SVGAttributes<SVGElement>) {

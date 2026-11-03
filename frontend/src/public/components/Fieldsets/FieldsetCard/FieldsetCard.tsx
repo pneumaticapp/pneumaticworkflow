@@ -6,7 +6,12 @@ import classnames from 'classnames';
 import { ModifyDropdown } from '../../UI';
 import { EModifyDropdownToggle } from '../../UI/ModifyDropdown/types';
 
-import { openEditModal, deleteFieldsetAction, cloneFieldsetAction, setCurrentFieldset } from '../../../redux/fieldsets/slice';
+import {
+  openEditModal,
+  deleteFieldsetAction,
+  cloneFieldsetAction,
+  setCurrentFieldset,
+} from '../../../redux/fieldsets/slice';
 import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
 import { sanitizeText } from '../../../utils/strings';
@@ -30,30 +35,27 @@ export function FieldsetCard({
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
-
-
   const handleEditName = () => {
-    dispatch(setCurrentFieldset({
-      id,
-      apiName,
-      name,
-      description,
-      labelPosition,
-      layout,
-      order,
-      title,
-      rules,
-      fields,
-      usage,
-    }));
+    dispatch(
+      setCurrentFieldset({
+        id,
+        apiName,
+        name,
+        description,
+        labelPosition,
+        layout,
+        order,
+        title,
+        rules,
+        fields,
+        usage,
+      }),
+    );
     dispatch(openEditModal());
   };
 
   const handleCardClick = () => {
-    history.push(
-      ERoutes.FieldsetDetail
-        .replace(':id', id.toString()),
-    );
+    history.push(ERoutes.FieldsetDetail.replace(':id', id.toString()));
   };
 
   const handleCloneFieldset = () => {
@@ -65,8 +67,6 @@ export function FieldsetCard({
 
   return (
     <div className={styles['card']} key={id}>
-
-
       <div className={styles['card__content']}>
         <div className={styles['card__header']}>
           <div
@@ -96,18 +96,12 @@ export function FieldsetCard({
           <div className={styles['card__footer']}>
             {fields.length > 0 && (
               <div className={classnames(styles['card-stats'], styles['card-stats--items'])}>
-                {formatMessage(
-                  { id: 'fieldsets.stats.fields' },
-                  { count: fields.length },
-                )}
+                {formatMessage({ id: 'fieldsets.stats.fields' }, { count: fields.length })}
               </div>
             )}
             {rules.length > 0 && (
               <div className={classnames(styles['card-stats'], styles['card-stats--rules'])}>
-                {formatMessage(
-                  { id: 'fieldsets.stats.rules' },
-                  { count: rules.length },
-                )}
+                {formatMessage({ id: 'fieldsets.stats.rules' }, { count: rules.length })}
               </div>
             )}
           </div>

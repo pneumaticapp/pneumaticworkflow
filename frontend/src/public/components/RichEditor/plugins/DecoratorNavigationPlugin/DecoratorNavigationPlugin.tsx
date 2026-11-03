@@ -137,10 +137,7 @@ function $isAtBlockEnd(): LexicalNode | null {
     return anchor.offset === topElement.getChildrenSize() ? topElement : null;
   }
 
-  if (
-    anchorNode === topElement.getLastDescendant() &&
-    anchor.offset === anchorNode.getTextContentSize()
-  ) {
+  if (anchorNode === topElement.getLastDescendant() && anchor.offset === anchorNode.getTextContentSize()) {
     return topElement;
   }
 

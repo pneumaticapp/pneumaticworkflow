@@ -1018,3 +1018,80 @@ def test_handler__api_get_404__returns_json():
     assert response.status_code == 404
     data = response.json()
     assert data['code'] == 'FILE_001'
+
+
+# --- Sentry reporting from handlers ---
+
+
+def test_handler__server_error__captured_by_sentry():
+    """5xx BaseAppError is handled locally, so it is reported explicitly."""
+    # arrange
+    app = FastAPI()
+    register_exception_handlers(app)
+    error = DatabaseConnectionError(details='db down')
+
+    @app.get('/test')
+    async def test_endpoint():
+        raise error
+
+    client = TestClient(app)
+
+    # act
+    with patch(
+        'src.shared_kernel.exceptions.exception_handler'
+        '.sentry_sdk.capture_exception',
+    ) as capture_mock:
+        response = client.get('/test')
+
+    # assert
+    assert response.status_code == 503
+    capture_mock.assert_called_once_with(error)
+
+
+def test_handler__internal_error_500__captured_by_sentry():
+    """Boundary: http_status exactly 500 is still reported."""
+    # arrange
+    app = FastAPI()
+    register_exception_handlers(app)
+    error = DatabaseOperationError(operation='insert', details='deadlock')
+
+    @app.get('/test')
+    async def test_endpoint():
+        raise error
+
+    client = TestClient(app)
+
+    # act
+    with patch(
+        'src.shared_kernel.exceptions.exception_handler'
+        '.sentry_sdk.capture_exception',
+    ) as capture_mock:
+        response = client.get('/test')
+
+    # assert
+    assert response.status_code == 500
+    capture_mock.assert_called_once_with(error)
+
+
+def test_handler__client_error__not_captured_by_sentry():
+    """4xx BaseAppError is expected traffic and must not reach Sentry."""
+    # arrange
+    app = FastAPI()
+    register_exception_handlers(app)
+
+    @app.get('/test')
+    async def test_endpoint():
+        raise DomainFileNotFoundError('test-id')
+
+    client = TestClient(app)
+
+    # act
+    with patch(
+        'src.shared_kernel.exceptions.exception_handler'
+        '.sentry_sdk.capture_exception',
+    ) as capture_mock:
+        response = client.get('/test')
+
+    # assert
+    assert response.status_code == 404
+    capture_mock.assert_not_called()

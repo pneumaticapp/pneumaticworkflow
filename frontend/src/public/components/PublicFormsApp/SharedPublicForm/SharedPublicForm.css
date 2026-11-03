@@ -1,21 +1,21 @@
 /* stylelint-disable selector-pseudo-class-no-unknown */
 :global {
   body {
-    margin: 0;
     padding: 0 16px;
+    margin: 0;
   }
 }
 
 .container {
-  margin: 0 auto;
-  padding-bottom: 32px;
   display: flex;
   flex-direction: column;
   max-width: 640px;
   min-height: 100%;
+  padding-bottom: 32px;
+  margin: 0 auto;
 
   @media (--mobile) {
-    margin: 0 32px;
     max-width: 100%;
+    margin: 0 32px;
   }
 }

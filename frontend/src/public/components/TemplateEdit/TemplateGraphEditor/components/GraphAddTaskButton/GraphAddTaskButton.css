@@ -1,0 +1,31 @@
+.graph-add-task {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  color: var(--pneumatic-color-black16);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  transition: color 0.15s ease-in-out;
+}
+
+.graph-add-task--highlighted,
+:global(.graph-item--focused) .graph-add-task {
+  color: var(--pneumatic-color-black72);
+}
+
+.graph-add-task:hover,
+.graph-add-task--highlighted:hover,
+:global(.graph-item--focused) .graph-add-task:hover {
+  color: var(--pneumatic-color-link-hover);
+}
+
+.graph-add-task svg {
+  display: block;
+  width: 2rem;
+  height: 2rem;
+}

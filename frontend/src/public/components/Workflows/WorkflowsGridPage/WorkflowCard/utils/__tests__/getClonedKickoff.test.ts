@@ -1,7 +1,11 @@
 import { IWorkflowDetailsKickoff } from '../../../../../../types/workflow';
 import { EExtraFieldType, ITemplateKickoffClient } from '../../../../../../types/template';
 import { IFieldsetRuntime } from '../../../../../../types/fieldset';
-import { makeFieldsetRuntime, makeFieldsetBindingClient, makeFieldsetField } from '../../../../../../__stubs__/fieldsets.factory';
+import {
+  makeFieldsetRuntime,
+  makeFieldsetBindingClient,
+  makeFieldsetField,
+} from '../../../../../../__stubs__/fieldsets.factory';
 import { makeExtraField } from '../../../../../../__stubs__/fields.factory';
 import { getClonedKickoff } from '../getClonedKickoff';
 
@@ -281,10 +285,7 @@ const expectedKickoff = {
       description: '',
       apiName: 'checkboxes-989',
       value: [],
-      selections: [
-        'value1',
-        'value2',
-      ],
+      selections: ['value1', 'value2'],
       attachments: [],
       order: 3,
       userId: null,
@@ -298,10 +299,7 @@ const expectedKickoff = {
       description: '',
       apiName: 'radios-990',
       value: null,
-      selections: [
-        '1',
-        '2',
-      ],
+      selections: ['1', '2'],
       attachments: [],
       order: 2,
       userId: null,

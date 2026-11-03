@@ -104,6 +104,17 @@ ACCESS_TEMPLATE_AI = access_description(
     'UserIsAdminOrAccountOwner',
 )
 
+# AI providers / agents — reads
+ACCESS_AI = access_description(
+    'UserIsAuthenticated',
+)
+
+# AI providers / agents — writes
+ACCESS_AI_ADMIN = access_description(
+    'UserIsAuthenticated',
+    'UserIsAdminOrAccountOwner',
+)
+
 # Export templates
 ACCESS_ACCOUNT_OWNER = access_description(
     'AccountOwnerPermission',

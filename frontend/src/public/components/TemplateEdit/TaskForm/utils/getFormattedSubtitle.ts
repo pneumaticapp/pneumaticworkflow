@@ -3,8 +3,7 @@ import { TTaskVariable } from '../../types';
 import { getLocalizedSystemVariable, isSystemVariable } from './getTaskVariables';
 
 export type TSubtitleSegment =
-  | { type: 'text'; value: string; id: string }
-  | { type: 'variable'; title: string; id: string };
+  { type: 'text'; value: string; id: string } | { type: 'variable'; title: string; id: string };
 
 export const getFormattedSubtitleSegments = (
   subtitle: string,
@@ -23,7 +22,7 @@ export const getFormattedSubtitleSegments = (
     }
     const apiName = match[1];
     const item = variables.find((elem) => elem.apiName === apiName);
-    
+
     let segmentTitle = item?.title ?? match[0];
     if (formatMessage && isSystemVariable(apiName)) {
       segmentTitle = getLocalizedSystemVariable({

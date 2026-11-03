@@ -9,28 +9,19 @@ import styles from './KickoffOutputs.css';
 
 export interface IRadioOutputProps extends IExtraField {}
 
-export function RadioOutput({
-  name,
-  value,
-}: IExtraField) {
+export function RadioOutput({ name, value }: IExtraField) {
   const { formatMessage } = useIntl();
 
   const renderSelections = () => {
     const defaultValue = formatMessage({ id: 'template.kick-off-form-unfilled-value' });
     const displayValue = value || defaultValue;
 
-    return (
-      <span className={styles['output__text']}>
-        {displayValue}
-      </span>
-    );
+    return <span className={styles['output__text']}>{displayValue}</span>;
   };
 
   return (
     <p className={styles['output']}>
-      <span className={styles['output__name']}>
-        {name}
-      </span>
+      <span className={styles['output__name']}>{name}</span>
       {renderSelections()}
     </p>
   );

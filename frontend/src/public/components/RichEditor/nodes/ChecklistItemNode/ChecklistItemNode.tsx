@@ -1,5 +1,3 @@
-/* eslint-disable class-methods-use-this */
-/* eslint-disable no-underscore-dangle */
 import {
   type DOMConversionMap,
   type DOMConversionOutput,
@@ -13,10 +11,7 @@ import {
 import { $createChecklistNode, $isChecklistNode } from '../ChecklistNode';
 import { createChecklistApiName } from '../../../../utils/createId';
 
-import {
-  CHECKLIST_ITEM_CLASS,
-  CHECKBOX_CLASS,
-} from './constants';
+import { CHECKLIST_ITEM_CLASS, CHECKBOX_CLASS } from './constants';
 import type { SerializedChecklistItemNode, TChecklistItemNodePayload } from './types';
 
 import styles from './ChecklistItemNode.css';
@@ -151,9 +146,7 @@ export class ChecklistItemNode extends ElementNode {
     }
 
     if (includeChildren && $isElementNode(replaceWithNode)) {
-      this.getChildren().forEach((child) =>
-        (replaceWithNode as unknown as ElementNode).append(child),
-      );
+      this.getChildren().forEach((child) => (replaceWithNode as unknown as ElementNode).append(child));
     }
     this.remove();
     if (list.getChildrenSize() === 0) {
@@ -195,13 +188,9 @@ export class ChecklistItemNode extends ElementNode {
 }
 
 export function $createChecklistItemNode(payload: TChecklistItemNodePayload): ChecklistItemNode {
-  return $applyNodeReplacement(
-    new ChecklistItemNode(payload.listApiName, payload.itemApiName),
-  );
+  return $applyNodeReplacement(new ChecklistItemNode(payload.listApiName, payload.itemApiName));
 }
 
-export function $isChecklistItemNode(
-  node: LexicalNode | null | undefined,
-): node is ChecklistItemNode {
+export function $isChecklistItemNode(node: LexicalNode | null | undefined): node is ChecklistItemNode {
   return node instanceof ChecklistItemNode;
 }

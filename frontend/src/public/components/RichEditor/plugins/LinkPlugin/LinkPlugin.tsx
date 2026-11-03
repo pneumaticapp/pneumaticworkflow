@@ -5,8 +5,6 @@ import { LinkUrlForm } from './LinkUrlForm';
 import { useLinkFormState, useLinkActions } from '../../hooks';
 import type { ILinkPluginContextValue } from './types';
 
-
-
 export const LinkPluginContext = createContext<ILinkPluginContextValue | null>(null);
 
 export function useLinkPlugin(): ILinkPluginContextValue {

@@ -146,7 +146,10 @@ export function Dropdown({
             direction="right"
             className={optionClassName}
           >
-            <DropdownToggle tag="button" className={classnames(styles['dropdown-item'], getDropdownItemColorClass(color))}>
+            <DropdownToggle
+              tag="button"
+              className={classnames(styles['dropdown-item'], getDropdownItemColorClass(color))}
+            >
               <span className={styles['label']}>{label}</span>
               <ArrowRightIcon className={styles['dropdown-item-icon']} />
             </DropdownToggle>
@@ -169,21 +172,18 @@ export function Dropdown({
         <div key={`option-${typeof label === 'string' ? label : mapKey}`}>
           {withUpperline && <hr className={styles['line']} />}
           <ConfirmableDropdownItem
-            {...(!isOptionDisabled && onClick && {
-              onClick: () => {
-                onClick?.(() => setIsOpen(false));
-                closeDropdown();
-              },
-            })}
-            cssModule={{
-              'dropdown-item': classnames(
-                styles['dropdown-item'],
-                getDropdownItemColorClass(color),
-                {
-                  [styles['dropdown-item-mobile']]: isMobile && isFromBreakdownItem,
-                  [styles['dropdown-item_disabled']]: isOptionDisabled,
+            {...(!isOptionDisabled &&
+              onClick && {
+                onClick: () => {
+                  onClick?.(() => setIsOpen(false));
+                  closeDropdown();
                 },
-              ),
+              })}
+            cssModule={{
+              'dropdown-item': classnames(styles['dropdown-item'], getDropdownItemColorClass(color), {
+                [styles['dropdown-item-mobile']]: isMobile && isFromBreakdownItem,
+                [styles['dropdown-item_disabled']]: isOptionDisabled,
+              }),
             }}
             withConfirmation={withConfirmation}
             initialConfirmationState={initialConfirmationState}

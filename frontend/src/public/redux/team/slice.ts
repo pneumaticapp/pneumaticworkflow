@@ -1,25 +1,23 @@
-import { createAction, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { checkSomeRouteIsActive } from '../../utils/history';
-import { ERoutes } from '../../constants/routes';
+import { getTeamPageByRoute } from '../../utils/team/getTeamPageByRoute';
 import { ITeamStore } from '../../types/redux';
-import { TeamPages, TInviteUsersPayload, UserInvite } from "./types";
+import { TeamPages, TInviteUsersPayload, UserInvite } from './types';
 import { TUserListItem } from '../../types/user';
 
-const initialTabTeam =
-  checkSomeRouteIsActive(ERoutes.Groups) || checkSomeRouteIsActive(ERoutes.GroupDetails)
-    ? TeamPages.Groups
-    : TeamPages.Users;
-
 const initialState: ITeamStore = {
-  page: initialTabTeam,
+  page: getTeamPageByRoute(),
   isInvitesPopupOpen: false,
   recentInvitedUsers: [],
   invitesUsersList: [],
+  createPerformerModal: {
+    isOpen: false,
+    isSubmitting: false,
+  },
 };
 
 const teamSlice = createSlice({
-  name: "team",
+  name: 'team',
   initialState,
   reducers: {
     changeTeamActiveTab: (state, action: PayloadAction<TeamPages>) => {
@@ -35,27 +33,40 @@ const teamSlice = createSlice({
       state.invitesUsersList = action.payload;
     },
     openTeamInvitesPopup: (state) => {
-      state.isInvitesPopupOpen =true;
+      state.isInvitesPopupOpen = true;
     },
     closeTeamInvitesPopup: (state) => {
       state.isInvitesPopupOpen = false;
     },
+    openCreatePerformerModal: (state) => {
+      state.createPerformerModal.isOpen = true;
+    },
+    closeCreatePerformerModal: (state) => {
+      state.createPerformerModal = { isOpen: false, isSubmitting: false };
+    },
+    createPerformerStarted: (state) => {
+      state.createPerformerModal.isSubmitting = true;
+    },
+    createPerformerFailed: (state) => {
+      state.createPerformerModal.isSubmitting = false;
+    },
   },
 });
-
-
 
 export const setTeamActivePage = createAction<TeamPages>('team/setTeamActivePage');
 export const inviteUsers = createAction<TInviteUsersPayload>('team/inviteUsers');
 export const loadInvitesUsers = createAction<void>('team/loadInvitesUsers');
 export const loadInvitesUsersFailed = createAction<void>('team/loadInvitesUsersFailed');
 
-
 export const {
   changeTeamActiveTab,
   updateTeamActiveTab,
   openTeamInvitesPopup,
   closeTeamInvitesPopup,
+  openCreatePerformerModal,
+  closeCreatePerformerModal,
+  createPerformerStarted,
+  createPerformerFailed,
   setRecentInvitedUsers,
   loadInvitesUsersSuccess,
 } = teamSlice.actions;

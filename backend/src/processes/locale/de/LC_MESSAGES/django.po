@@ -547,3 +547,18 @@ msgstr "Der Benutzer oder die Gruppe, die für ein Feld des Typs \"Benutzer\" an
 
 msgid "Guest"
 msgstr "Gast"
+
+msgid "You must specify a source step for a performer of type \"manager\"."
+msgstr "Sie müssen einen Quellschritt für einen Ausführenden vom Typ \"manager\" angeben."
+
+#, python-brace-format
+msgid "Task \"{name}\": A manager performer cannot reference its own step."
+msgstr "Aufgabe \"{name}\": Ein Ausführender vom Typ \"manager\" kann nicht auf seinen eigenen Schritt verweisen."
+
+#, python-brace-format
+msgid "Task \"{name}\": The manager performer references a non-existent step \"{step_name}\"."
+msgstr "Aufgabe \"{name}\": Der Ausführende vom Typ \"manager\" verweist auf einen nicht existierenden Schritt \"{step_name}\"."
+
+#, python-brace-format
+msgid "Task \"{name}\": Disable \"Required completion by all\" on step \"{step_name}\" to use a manager performer."
+msgstr "Aufgabe \"{name}\": Deaktivieren Sie „Abschluss durch alle erforderlich“ im Schritt \"{step_name}\", um einen Ausführenden vom Typ \"manager\" zu verwenden."

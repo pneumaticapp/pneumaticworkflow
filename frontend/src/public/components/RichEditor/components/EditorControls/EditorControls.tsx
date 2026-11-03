@@ -6,8 +6,6 @@ import type { IEditorControlsProps } from './types';
 
 import styles from './EditorControls.css';
 
-
-
 export function EditorControls({
   onSubmit,
   onCancel,

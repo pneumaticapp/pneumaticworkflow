@@ -1,0 +1,4 @@
+# Shell scripts are executed by Linux (containers, servers) and by Git Bash.
+# A CRLF checkout on Windows breaks them: the carriage return becomes part of
+# the interpreter path, so the file cannot be executed at all.
+*.sh text eol=lf

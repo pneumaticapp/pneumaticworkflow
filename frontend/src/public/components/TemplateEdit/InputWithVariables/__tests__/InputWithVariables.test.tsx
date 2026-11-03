@@ -9,12 +9,10 @@ jest.mock('../../VariableList', () => ({
 }));
 
 jest.mock('../../../RichEditor', () => ({
-  RichEditor: React.forwardRef(
-    ({ children }: { children?: React.ReactNode }, _ref: React.Ref<unknown>) =>
-      React.createElement('div', { 'data-testid': 'rich-editor' }, children),
+  RichEditor: React.forwardRef(({ children }: { children?: React.ReactNode }, _ref: React.Ref<unknown>) =>
+    React.createElement('div', { 'data-testid': 'rich-editor' }, children),
   ),
 }));
-
 
 describe('InputWithVariables', () => {
   const baseProps = {

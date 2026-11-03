@@ -79,7 +79,8 @@ export function MergedOutputRows({
           >
             <div className={kickoffStyles['kick-off-input__field']}>
               <div className={styles['flow__fieldset-header']}>
-                {formatMessage({ id: 'fieldsets.header-label' })}:{'\u00a0'}{name}
+                {formatMessage({ id: 'fieldsets.header-label' })}:{'\u00a0'}
+                {name}
               </div>
               <FieldsetEditorTitle
                 apiNameBinding={apiNameBinding}
@@ -87,11 +88,11 @@ export function MergedOutputRows({
                 onEditFieldsetTitle={onEditFieldsetTitle}
                 formatMessage={formatMessage}
               />
-              {isArrayWithItems(fields) &&
+              {isArrayWithItems(fields) && (
                 <div className={styles['flow__fieldset-nested-fields']}>
                   <ExtraFieldsLabels extraFields={fields} />
                 </div>
-              }
+              )}
             </div>
             <div className={kickoffStyles['kick-off-input__dropdown']}>
               <FieldsetFlowRowDropdown

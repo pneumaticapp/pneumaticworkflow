@@ -27,7 +27,9 @@ const makeProps = (overrides: Partial<ITabsProps<TTabOption>> = {}): ITabsProps<
 const getTabButtons = () => screen.getAllByRole('button');
 
 describe('Tabs — middle tab separator logic', () => {
-  beforeEach(() => { jest.clearAllMocks(); });
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   it('middle tab gets separator-right when first tab is active', () => {
     render(React.createElement(Tabs, makeProps({ activeValueId: 1 })));
@@ -64,7 +66,9 @@ describe('Tabs — middle tab separator logic', () => {
 });
 
 describe('Tabs — active tab and click behavior', () => {
-  beforeEach(() => { jest.clearAllMocks(); });
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   it('applies tab_active class only to the active tab', () => {
     render(React.createElement(Tabs, makeProps({ activeValueId: 2 })));
@@ -92,5 +96,19 @@ describe('Tabs — active tab and click behavior', () => {
     userEvent.click(screen.getByRole('button', { name: 'First' }));
 
     expect(onChange).not.toHaveBeenCalled();
+  });
+});
+
+describe('Tabs — variant', () => {
+  it('renders the default track without the pill modifier', () => {
+    render(React.createElement(Tabs, makeProps()));
+
+    expect(getTabButtons()[0].parentElement?.className).not.toContain('container_pill');
+  });
+
+  it('adds the pill modifier to the track for the pill variant', () => {
+    render(React.createElement(Tabs, makeProps({ variant: 'pill' })));
+
+    expect(getTabButtons()[0].parentElement?.className).toContain('container_pill');
   });
 });

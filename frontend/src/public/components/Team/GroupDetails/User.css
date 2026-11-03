@@ -11,10 +11,10 @@
   }
 
   &__avatar {
-    margin-bottom: 1.6rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-bottom: 1.6rem;
 
     @media (--desktop) {
       margin: 0;
@@ -34,9 +34,9 @@
   &__admin {
     @mixin text-small-extra;
 
-    margin-right: 1.6rem;
     display: flex;
     align-items: center;
+    margin-right: 1.6rem;
     font-weight: bold;
     text-transform: uppercase;
 
@@ -62,7 +62,7 @@
   font-size: 11px;
   font-weight: bold;
   line-height: 16px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   color: var(--pneumatic-color-black32);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }

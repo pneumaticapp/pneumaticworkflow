@@ -7,10 +7,10 @@ export function TruncatedTooltip({ label, containerClassName, trigger, delay, ch
   if (!label) return children;
 
   return (
-    <Tooltip 
-      content={<div className={styles['output-field-content__tooltip-box']}>{label}</div>} 
-      placement="top" 
-      interactive={false} 
+    <Tooltip
+      content={<div className={styles['output-field-content__tooltip-box']}>{label}</div>}
+      placement="top"
+      interactive={false}
       trigger={trigger}
       delay={delay}
       appendTo={() => document.body}

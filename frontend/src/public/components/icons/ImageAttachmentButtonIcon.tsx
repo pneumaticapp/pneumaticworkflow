@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
 
 export function ImageAttachmentButtonIcon({ fill = 'currentColor' }: React.SVGAttributes<SVGElement>) {

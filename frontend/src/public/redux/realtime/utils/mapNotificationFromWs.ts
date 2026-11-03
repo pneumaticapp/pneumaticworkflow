@@ -11,9 +11,7 @@ export type TNotificationMappingEnvelope = {
   };
 }[IWsNotificationCreatedData['type']];
 
-function mapNotificationEnvelopeToListItem(
-  envelope: TNotificationMappingEnvelope,
-): TNotificationsListItem | null {
+function mapNotificationEnvelopeToListItem(envelope: TNotificationMappingEnvelope): TNotificationsListItem | null {
   switch (envelope.type) {
     case 'comment':
     case 'mention':
@@ -153,9 +151,7 @@ function mapNotificationEnvelopeToListItem(
   }
 }
 
-export function mapNotificationCreatedDataToListItem(
-  data: IWsNotificationCreatedData,
-): TNotificationsListItem | null {
+export function mapNotificationCreatedDataToListItem(data: IWsNotificationCreatedData): TNotificationsListItem | null {
   if (!isNotificationDataType(data.type)) {
     return null;
   }

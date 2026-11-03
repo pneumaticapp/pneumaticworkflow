@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import { IExtraFieldSelection } from '../../../../types/template';
 import { createFieldSelectionApiName } from '../../../../utils/createId';

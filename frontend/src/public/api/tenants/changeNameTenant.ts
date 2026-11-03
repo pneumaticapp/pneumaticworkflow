@@ -5,7 +5,7 @@ import { mapRequestBody } from '../../utils/mappers';
 
 export interface IDeleteTenantConfig {
   id: number;
-  name: String;
+  name: string;
 }
 
 export function changeNameTenant({ id, name }: IDeleteTenantConfig) {

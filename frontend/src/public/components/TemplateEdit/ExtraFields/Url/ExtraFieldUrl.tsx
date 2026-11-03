@@ -21,17 +21,23 @@ export function ExtraFieldUrl({
   labelPosition,
   innerRef,
 }: IWorkflowExtraFieldProps) {
-  const handleChangeName = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    editField({ name: e.target.value });
-  }, [editField]);
+  const handleChangeName = React.useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      editField({ name: e.target.value });
+    },
+    [editField],
+  );
 
-  const handleChangeDescription = React.useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    if (mode === EExtraFieldMode.Kickoff) {
-      editField({ description: e.target.value });
-    } else {
-      editField({ value: e.target.value });
-    }
-  }, [editField]);
+  const handleChangeDescription = React.useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      if (mode === EExtraFieldMode.Kickoff) {
+        editField({ description: e.target.value });
+      } else {
+        editField({ value: e.target.value });
+      }
+    },
+    [editField],
+  );
 
   return (
     <FieldWithName

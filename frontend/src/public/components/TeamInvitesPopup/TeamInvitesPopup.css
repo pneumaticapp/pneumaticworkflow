@@ -3,8 +3,8 @@
 }
 
 .tabs {
-  margin: 0 -8px;
   padding-bottom: 8px;
+  margin: 0 -8px;
 }
 
 .tab {
@@ -12,8 +12,8 @@
 }
 
 .tabs-contents {
-  padding-top: 32px;
   height: calc(100vh - 170px);
+  padding-top: 32px;
 }
 
 .tab-content {
@@ -35,8 +35,8 @@
 }
 
 .title {
-  text-align: center;
   color: white;
+  text-align: center;
 }
 
 .input-field {

@@ -23,10 +23,7 @@ jest.mock('../../TaskForm/utils/getTaskVariables', () => ({
 }));
 
 jest.mock('../../FieldsetOutputsPreview/FieldsetOutputsPreview', () => ({
-  FieldsetOutputsPreview: (props: {
-    fieldsets: Array<{ apiNameBinding: string }>;
-    onGroupClick?: () => void;
-  }) =>
+  FieldsetOutputsPreview: (props: { fieldsets: Array<{ apiNameBinding: string }>; onGroupClick?: () => void }) =>
     React.createElement(
       'div',
       null,
@@ -64,18 +61,15 @@ jest.mock('../../TaskRenderReturnInfo', () => ({
 }));
 
 import { TaskItem } from '../TaskItem';
-import {
-  getKickoff,
-  getTemplateTasks,
-  getTemplateData,
-} from '../../../../redux/selectors/template';
+import { getKickoff, getTemplateTasks, getTemplateData } from '../../../../redux/selectors/template';
 
 describe('TaskItem', () => {
-  const makeTask = (overrides: Partial<ITemplateTaskClient> = {}) => makeTemplateTaskClient({
-    name: 'Task 1',
-    fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1' })],
-    ...overrides,
-  });
+  const makeTask = (overrides: Partial<ITemplateTaskClient> = {}) =>
+    makeTemplateTaskClient({
+      name: 'Task 1',
+      fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1' })],
+      ...overrides,
+    });
 
   beforeEach(() => {
     jest.clearAllMocks();

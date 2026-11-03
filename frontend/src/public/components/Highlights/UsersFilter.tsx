@@ -27,9 +27,7 @@ export function UsersFilter({
 
   const isSearchFilled = useMemo(() => searchText.length > 1, [searchText]);
 
-  const [isShowAllVisibleState, setShowAllVisibleState] = useState(
-    isSearchFilled ? false : isUsersNumberExceeded,
-  );
+  const [isShowAllVisibleState, setShowAllVisibleState] = useState(isSearchFilled ? false : isUsersNumberExceeded);
 
   const setSearchInputRef = useCallback((node: HTMLInputElement | null) => {
     if (!node || hasFocusedSearchRef.current) {
@@ -60,9 +58,7 @@ export function UsersFilter({
     }
 
     const usersToShow = users.slice(0, MAX_SHOW_USERS);
-    const isSelectedUsersHidden = selectedUsers.some(
-      (id) => !usersToShow.map(({ id: userId }) => userId).includes(id),
-    );
+    const isSelectedUsersHidden = selectedUsers.some((id) => !usersToShow.map(({ id: userId }) => userId).includes(id));
 
     if (isSelectedUsersHidden) {
       handleShowAll();

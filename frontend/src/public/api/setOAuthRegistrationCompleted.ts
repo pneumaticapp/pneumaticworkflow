@@ -3,9 +3,11 @@ import { getBrowserConfigEnv } from '../utils/getConfig';
 import { mergePaths } from '../utils/urls';
 import { EOAuthType } from '../types/auth';
 
-const { api: { urls }} = getBrowserConfigEnv();
+const {
+  api: { urls },
+} = getBrowserConfigEnv();
 
-export const OAUTH_URL_MAP: {[key in EOAuthType]: string} = {
+export const OAUTH_URL_MAP: { [key in EOAuthType]: string } = {
   [EOAuthType.Microsoft]: urls.googleAuth,
   [EOAuthType.Google]: urls.googleAuth,
   [EOAuthType.SSOAuth0]: urls.googleAuth,
@@ -17,11 +19,13 @@ export function setOAuthRegistrationCompleted(id: string, type: EOAuthType) {
     ['/api/', OAUTH_URL_MAP[type], id, '/'].reduce(mergePaths),
     {
       method: 'PATCH',
-      data: JSON.stringify({is_completed: true}),
+      data: JSON.stringify({ is_completed: true }),
       headers: {
         'Content-Type': 'application/json',
       },
-    }, {
+    },
+    {
       type: 'local',
-    });
+    },
+  );
 }

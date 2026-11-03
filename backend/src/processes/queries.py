@@ -1967,25 +1967,7 @@ class TemplateStepsQuery(
 
 
 class HighlightsQuery(GuardianOwnerJoinMixin, SqlQueryObject):
-    event_types = (
-        WorkflowEventType.COMMENT,
-        WorkflowEventType.TASK_COMPLETE,
-        WorkflowEventType.RUN,
-        WorkflowEventType.COMPLETE,
-        WorkflowEventType.ENDED,
-        WorkflowEventType.TASK_REVERT,
-        WorkflowEventType.REVERT,
-        WorkflowEventType.URGENT,
-        WorkflowEventType.NOT_URGENT,
-        WorkflowEventType.TASK_PERFORMER_CREATED,
-        WorkflowEventType.TASK_PERFORMER_DELETED,
-        WorkflowEventType.TASK_PERFORMER_GROUP_CREATED,
-        WorkflowEventType.TASK_PERFORMER_GROUP_DELETED,
-        WorkflowEventType.FORCE_DELAY,
-        WorkflowEventType.FORCE_RESUME,
-        WorkflowEventType.DUE_DATE_CHANGED,
-        WorkflowEventType.SUB_WORKFLOW_RUN,
-    )
+    event_types = WorkflowEventType.HIGHLIGHT_TYPES
 
     def __init__(
         self,
@@ -2210,25 +2192,7 @@ class UpdateWorkflowEventWatchedQuery(SqlQueryObject):
 
 
 class TemplateTitlesByEventsQuery(SqlQueryObject):
-    event_types = [
-        WorkflowEventType.COMMENT,
-        WorkflowEventType.TASK_COMPLETE,
-        WorkflowEventType.RUN,
-        WorkflowEventType.COMPLETE,
-        WorkflowEventType.ENDED,
-        WorkflowEventType.TASK_REVERT,
-        WorkflowEventType.REVERT,
-        WorkflowEventType.URGENT,
-        WorkflowEventType.NOT_URGENT,
-        WorkflowEventType.TASK_PERFORMER_CREATED,
-        WorkflowEventType.TASK_PERFORMER_DELETED,
-        WorkflowEventType.TASK_PERFORMER_GROUP_CREATED,
-        WorkflowEventType.TASK_PERFORMER_GROUP_DELETED,
-        WorkflowEventType.FORCE_DELAY,
-        WorkflowEventType.FORCE_RESUME,
-        WorkflowEventType.DUE_DATE_CHANGED,
-        WorkflowEventType.SUB_WORKFLOW_RUN,
-    ]
+    event_types = WorkflowEventType.HIGHLIGHT_TYPES
 
     def __init__(
         self,

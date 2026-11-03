@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { useSelector } from 'react-redux';
 import userEvent from '@testing-library/user-event';
@@ -29,11 +29,8 @@ jest.mock('../../Attachments', () => ({ Attachments: () => null }));
 jest.mock('../../UserData', () => ({ UserData: () => null }));
 jest.mock('../../UserDataWithGroup', () => ({
   __esModule: true,
-  default: ({
-    children,
-  }: {
-    children: (group: { firstName: string }) => React.ReactNode;
-  }) => children({ firstName: 'Engineering Team' }),
+  default: ({ children }: { children: (group: { firstName: string }) => React.ReactNode }) =>
+    children({ firstName: 'Engineering Team' }),
 }));
 jest.mock('../Ellipsis', () => ({
   Ellipsis: jest.fn(({ expand }: { expand: () => void }) => (
@@ -66,7 +63,6 @@ const mockState = {
   groups: {
     list: [{ id: 5, name: GROUP_NAME }],
   },
-  accounts: { isCreateUserModalOpen: false },
 };
 
 describe('FeedItemHeader', () => {

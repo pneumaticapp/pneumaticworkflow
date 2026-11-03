@@ -34,8 +34,8 @@
 
   svg,
   svg path {
-    fill: currentColor;
-    color: currentColor;
+    fill: currentcolor;
+    color: currentcolor;
   }
 }
 

@@ -7,7 +7,6 @@ export enum ERoutes {
   Register = '/auth/signup/',
   SignUpInvite = '/auth/signup/invite/',
 
-
   ForgotPassword = '/auth/forgot-password/',
   ResetPassword = '/auth/reset-password/',
   ExpiredInvite = '/auth/expired-invite/',
@@ -43,6 +42,7 @@ export enum ERoutes {
   Team = '/team/',
   Groups = '/team/groups/',
   GroupDetails = '/team/groups/:id',
+  AIAgents = '/team/ai-agents/',
   Reports = '/reports/',
   Help = '/help/',
   Integrations = '/integrations/',

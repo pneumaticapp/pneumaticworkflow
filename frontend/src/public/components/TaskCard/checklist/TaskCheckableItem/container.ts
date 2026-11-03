@@ -10,7 +10,8 @@ type TDispatchProps = Pick<TTaskCheckableItemReduxProps, 'markChecklistItem' | '
 
 const mapStateToProps = (
   state: IApplicationState,
-  { listApiName, itemApiName }: TTaskCheckableItemOwnProps): TStoreProps => {
+  { listApiName, itemApiName }: TTaskCheckableItemOwnProps,
+): TStoreProps => {
   const task = getCurrentTask(state);
   if (!task) {
     return {
@@ -28,9 +29,6 @@ const mapStateToProps = (
 const mapDispatchToProps: TDispatchProps = {
   markChecklistItem,
   unmarkChecklistItem,
-}
+};
 
-export const TaskCheckableItemContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(TaskCheckableItem);
+export const TaskCheckableItemContainer = connect(mapStateToProps, mapDispatchToProps)(TaskCheckableItem);

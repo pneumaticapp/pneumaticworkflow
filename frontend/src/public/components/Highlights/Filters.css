@@ -29,22 +29,22 @@
   }
 
   &__option-row {
-    overflow: hidden;
     width: 100%;
     min-width: 0;
+    overflow: hidden;
   }
 
   &__input {
     @mixin text-base;
 
-    margin-bottom: 1.6rem;
-    padding: 0.9rem 1.6rem;
     box-sizing: border-box;
     width: 100%;
+    padding: 0.9rem 1.6rem;
+    margin-bottom: 1.6rem;
+    outline: none;
     background: var(--pneumatic-color-black4);
     border: 0.1rem solid var(--pneumatic-color-black16);
     border-radius: 0.6rem;
-    outline: none;
     transition: 0.1s ease-in-out all;
 
     &:focus {
@@ -122,34 +122,34 @@
 
     /* stylelint-disable-next-line selector-pseudo-class-no-unknown */
     :global(.react-datepicker__input-container) input {
-      /* stylelint-disable-next-line declaration-no-important */
-      padding: 0 !important;
       box-sizing: border-box;
       width: 100%;
       height: 100%;
       /* stylelint-disable-next-line declaration-no-important */
+      padding: 0 !important;
+      /* stylelint-disable-next-line declaration-no-important */
       color: transparent !important;
+      /* stylelint-disable-next-line declaration-no-important */
+      caret-color: transparent !important;
       /* stylelint-disable-next-line declaration-no-important */
       background-color: transparent !important;
       /* stylelint-disable-next-line declaration-no-important */
       border: none !important;
       /* stylelint-disable-next-line declaration-no-important */
       border-radius: 0 !important;
-      /* stylelint-disable-next-line declaration-no-important */
-      caret-color: transparent !important;
     }
 
     &-display {
       position: absolute;
-      z-index: 1;
       top: 0;
       right: 0;
-      left: 0;
       bottom: 0;
-      padding: 0 1.6rem;
+      left: 0;
+      z-index: 1;
       display: flex;
-      pointer-events: none;
       align-items: center;
+      padding: 0 1.6rem;
+      pointer-events: none;
     }
 
     &-start,

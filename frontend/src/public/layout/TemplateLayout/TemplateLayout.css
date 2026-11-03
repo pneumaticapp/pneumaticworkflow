@@ -1,0 +1,65 @@
+/* stylelint-disable declaration-no-important */
+:global(.template-graph-lock) {
+  overflow: hidden;
+}
+
+.main--graph {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  margin-right: 0 !important;
+  margin-bottom: 0 !important;
+  overflow: hidden;
+}
+
+.content--graph {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.navbar-left__content {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.all-templates {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.6rem 1.6rem;
+  font-size: 1.3rem;
+  font-weight: bold;
+  line-height: 1.6rem;
+  color: var(--pneumatic-color-black100);
+  white-space: nowrap;
+  background: var(--pneumatic-color-white);
+  border-radius: 1.6rem;
+  transition: color 0.1s ease-in-out;
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}
+
+.all-templates__icon {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  overflow: hidden;
+}
+
+.all-templates__icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

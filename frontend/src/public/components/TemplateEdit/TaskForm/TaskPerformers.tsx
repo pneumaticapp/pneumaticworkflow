@@ -8,7 +8,12 @@ import { TUserListItem } from '../../../types/user';
 import { ETaskPerformerType, ITemplateTaskClient, ITemplateTaskPerformer } from '../../../types/template';
 import { TTaskVariable } from '../types';
 import { trackInviteTeamInPage } from '../../../utils/analytics';
-import { EOptionTypes, TUsersDropdownOption, UsersDropdown, getUsersDropdownOptionValue } from '../../UI/form/UsersDropdown';
+import {
+  EOptionTypes,
+  TUsersDropdownOption,
+  UsersDropdown,
+  getUsersDropdownOptionValue,
+} from '../../UI/form/UsersDropdown';
 import { getUserFullName } from '../../../utils/users';
 import { getPerformersForDropdown } from './utils/getPerformersForDropdown';
 import { EBgColorTypes, UserPerformer } from '../../UI/UserPerformer';
@@ -133,6 +138,14 @@ export function TaskPerformers({ task, tasks, users, variables, setCurrentTask }
           title={formatMessage({ id: 'templates.task-require-completion-by-all' })}
           checked={task.requireCompletionByAll}
           onChange={(e) => handleRequireCompletionByAllChange(e.currentTarget.checked)}
+        />
+      </div>
+      <div className="mb-3">
+        <Checkbox
+          checkboxId={`skipOnReturn-${task.apiName}`}
+          title={formatMessage({ id: 'templates.task-skip-on-return' })}
+          checked={task.skipOnReturn}
+          onChange={(e) => setCurrentTask({ skipOnReturn: e.currentTarget.checked })}
         />
       </div>
       <div className="mb-3">

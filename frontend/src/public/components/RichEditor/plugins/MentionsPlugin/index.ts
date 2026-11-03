@@ -1,5 +1,1 @@
-export {
-  MentionsPlugin,
-  type MentionMenuOption,
-  type MentionsPluginProps,
-} from './MentionsPlugin';
+export { MentionsPlugin, type MentionMenuOption, type MentionsPluginProps } from './MentionsPlugin';

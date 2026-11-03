@@ -98,6 +98,8 @@ import { getTaskWorkflowLog } from '../../api/getTaskWorkflowLog';
 import { sendTaskComment } from '../../api/sendTaskComment';
 import { getWorkflowAddComputedPropsToRedux } from '../../components/Workflows/utils/getWorfkflowClientProperties';
 import { ISendWorkflowLogComment } from '../workflows/types';
+import { EPermissionObjectType } from '../../types/permissions';
+import { loadObjectPermissions } from '../permissions/slice';
 
 function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
   const {
@@ -123,6 +125,16 @@ function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
     yield put(setCurrentTask(formattedTask));
 
     if (viewMode !== ETaskCardViewMode.Guest) {
+      const subWorkflowIds = (task.subWorkflows || []).map(({ id }) => id);
+      if (subWorkflowIds.length) {
+        yield put(
+          loadObjectPermissions({
+            objType: EPermissionObjectType.Workflow,
+            objIds: subWorkflowIds,
+          }),
+        );
+      }
+
       yield loadTaskWorkflow(task.workflow.id, task.id);
     } else {
       yield put(
@@ -301,7 +313,6 @@ export function* setTaskCompleted({ payload: { taskId, output, viewMode } }: TSe
   }
 
   try {
-
     const mappedOutput = mapOutputToCompleteTask(output);
 
     const usersList: TUserListItem[] = yield select(getUsers);
@@ -349,7 +360,7 @@ export function* setTaskReverted({ payload: { viewMode, taskId, comment, clearOu
 
     const outputTaskIds = clearOutputTaskIds ?? [taskId];
     removeOutputsFromLocalStorage(outputTaskIds);
-    outputTaskIds.forEach(fieldsetsStorage.remove);
+    outputTaskIds.forEach((outputTaskId) => fieldsetsStorage.remove(outputTaskId));
 
     NotificationManager.success({ message: 'tasks.task-success-revert' });
 
@@ -432,13 +443,15 @@ export function* updatePerformersSaga({ type, payload: { taskId, userId } }: TUp
 
   const fetchMethodMap = [
     {
-      check: () => type === ETaskActions.AddTaskPerformer && userId.type === ETemplateOwnerType.User && user?.type !== 'guest',
+      check: () =>
+        type === ETaskActions.AddTaskPerformer && userId.type === ETemplateOwnerType.User && user?.type !== 'guest',
       *fetch() {
         yield call(addTaskPerformer, taskId, userId.sourceId);
       },
     },
     {
-      check: () => type === ETaskActions.RemoveTaskPerformer && userId.type === ETemplateOwnerType.User && user?.type !== 'guest',
+      check: () =>
+        type === ETaskActions.RemoveTaskPerformer && userId.type === ETemplateOwnerType.User && user?.type !== 'guest',
       *fetch() {
         yield call(removeTaskPerformer, taskId, userId.sourceId);
       },
@@ -456,7 +469,8 @@ export function* updatePerformersSaga({ type, payload: { taskId, userId } }: TUp
       },
     },
     {
-      check: () => type === ETaskActions.RemoveTaskPerformer && userId.type === ETemplateOwnerType.User && user?.type === 'guest',
+      check: () =>
+        type === ETaskActions.RemoveTaskPerformer && userId.type === ETemplateOwnerType.User && user?.type === 'guest',
       *fetch() {
         yield call(removeTaskGuest, taskId, user?.email || '');
       },

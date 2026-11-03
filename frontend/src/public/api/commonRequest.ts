@@ -10,9 +10,12 @@ import { getCurrentToken } from '../utils/auth';
 import { envBackendURL } from '../constants/enviroment';
 import { isRequestCanceled } from '../utils/isRequestCanceled';
 import { isExpectedClientError } from '../utils/expectedClientErrors';
+// Brings the AxiosRequestConfig augmentation into ts-node's program (it ignores tsconfig include)
+import type {} from '../../typings/axios';
 
 import { InterceptorError } from './InterceptorError';
 import { createApiError } from './utils/createApiError';
+import { bufferNetworkError } from './networkErrorBuffer';
 
 export { InterceptorError };
 
@@ -44,6 +47,7 @@ interface ICommonRequestOptions {
   shouldThrow: boolean;
   timeOut: number;
   responseType: TResponseType;
+  expectedErrorStatuses?: number[];
 }
 
 const DEFAULT_OPTIONS: ICommonRequestOptions = {
@@ -109,23 +113,31 @@ axiosInstance.interceptors.response.use(
 
     if (error.response) {
       const responseData = error.response.data;
-      if (isExpectedClientError(responseData)) {
+      const isExpectedStatus = Boolean(error.config?.expectedErrorStatuses?.includes(error.response.status));
+      if (isExpectedStatus || isExpectedClientError(responseData)) {
         logger.info('Response Error:', error.response.status, responseData);
       } else {
         logger.error('Response Error:', error.response.status, responseData);
       }
     } else if (error.request) {
-      // Don't log error.request (XMLHttpRequest) — contains auth tokens via __sentry_xhr_v3__
-      // Don't log error.config.headers — contains Authorization Bearer token
-      logger.error('Request Error:', {
-        message: error.message,
-        code: error.code,
-        status: error.status,
-        method: error.config?.method,
-        url: error.config?.url,
-        baseURL: error.config?.baseURL,
-        timeout: error.config?.timeout,
-      });
+      if (error.code === 'ERR_NETWORK') {
+        bufferNetworkError({
+          method: error.config?.method,
+          url: error.config?.url,
+        });
+      } else {
+        // Don't log error.request (XMLHttpRequest) — contains auth tokens via __sentry_xhr_v3__
+        // Don't log error.config.headers — contains Authorization Bearer token
+        logger.error('Request Error:', {
+          message: error.message,
+          code: error.code,
+          status: error.status,
+          method: error.config?.method,
+          url: error.config?.url,
+          baseURL: error.config?.baseURL,
+          timeout: error.config?.timeout,
+        });
+      }
     } else {
       logger.error('Error:', error.message);
     }
@@ -147,7 +159,6 @@ export async function commonRequest<T>(
   options?: Partial<ICommonRequestOptions>,
 ): Promise<T>;
 
-/* eslint-disable consistent-return */
 export async function commonRequest<T>(
   rawUrl: string,
   params: Partial<AxiosRequestConfig> = {},
@@ -168,7 +179,9 @@ export async function commonRequest<T>(
   const requestBaseUrlsMap = cachedRequestBaseUrlsMap;
 
   try {
-    const { api: { urls } } = getBrowserConfigEnv();
+    const {
+      api: { urls },
+    } = getBrowserConfigEnv();
     const url = (urls as { [key in string]: string })[rawUrl] || rawUrl;
     const fullUrl = mergePaths(requestBaseUrlsMap[type], url);
 
@@ -178,6 +191,7 @@ export async function commonRequest<T>(
       withCredentials: type !== 'fileService',
       responseType: options.responseType === 'text' || options.responseType === 'empty' ? 'text' : 'json',
       validateStatus: (status) => successStatusCodes.includes(status),
+      expectedErrorStatuses: options.expectedErrorStatuses,
     };
 
     const response = await axiosInstance(fullUrl, config);
@@ -194,7 +208,5 @@ export async function commonRequest<T>(
     if (!(error instanceof InterceptorError)) {
       logger.error(error);
     }
-    
   }
 }
-/* eslint-enable consistent-return */

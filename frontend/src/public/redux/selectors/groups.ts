@@ -11,4 +11,5 @@ export const getGroupsIsLoading = (state: IApplicationState): boolean => state.g
 
 export const getCurrentGroupData = (state: IApplicationState): IGroup | null => state.groups.currentGroup.data;
 
-export const getCurrentGroupUserListSorting = (state: IApplicationState): EUserListSorting => state.groups.currentGroup.userListSorting;
+export const getCurrentGroupUserListSorting = (state: IApplicationState): EUserListSorting =>
+  state.groups.currentGroup.userListSorting;

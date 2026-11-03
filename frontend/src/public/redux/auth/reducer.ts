@@ -41,6 +41,7 @@ const EMPTY_USER: IAuthUser = {
   phone: '',
   photo: '',
   loading: false,
+  isResetPasswordCaptchaRequired: false,
   status: EUserStatus.Active,
   invitedUser,
   isAccountOwner: true,
@@ -77,14 +78,15 @@ export const INIT_STATE: IAuthUser = {
   ...normalizeSubordinates(mapToCamelCase(getBrowserConfig().user) as Record<string, any>),
 } as IAuthUser;
 
-// eslint-disable-next-line @typescript-eslint/default-param-last
 export const reducer = (state = INIT_STATE, action: TAuthActions | { type: string; payload: any }): IAuthUser => {
   switch (action.type) {
     case EAuthActions.AuthUser:
       return { ...state, loading: true };
     case EAuthActions.AuthUserSuccess:
       return {
-        ...state, loading: false, loggedState: ELoggedState.LoggedIn,
+        ...state,
+        loading: false,
+        loggedState: ELoggedState.LoggedIn,
         ...normalizeSubordinates(action.payload as Record<string, any>),
       };
     case EAuthActions.ChangePasswordSuccess:
@@ -113,6 +115,12 @@ export const reducer = (state = INIT_STATE, action: TAuthActions | { type: strin
         draftState.loading = false;
       });
     case EAuthActions.ForgotPasswordFail:
+      return {
+        ...state,
+        error: EAuthUserFailType.Common,
+        loading: false,
+        isResetPasswordCaptchaRequired: Boolean(action.payload) || state.isResetPasswordCaptchaRequired,
+      };
     case EAuthActions.ResetPasswordFail:
     case EAuthActions.ChangePasswordFail:
       return { ...state, error: EAuthUserFailType.Common, loading: false };
@@ -145,7 +153,7 @@ export const reducer = (state = INIT_STATE, action: TAuthActions | { type: strin
           draftState.managerId = managerId;
         }
         if (state.reportIds && state.reportIds.includes(userId) && state.id !== managerId) {
-          draftState.reportIds = state.reportIds.filter(id => id !== userId);
+          draftState.reportIds = state.reportIds.filter((id) => id !== userId);
         }
         if (state.id === managerId && (!state.reportIds || !state.reportIds.includes(userId))) {
           draftState.reportIds = [...(state.reportIds || []), userId];
@@ -162,7 +170,7 @@ export const reducer = (state = INIT_STATE, action: TAuthActions | { type: strin
         }
 
         if (state.id !== userId && state.reportIds) {
-          const filtered = state.reportIds.filter(rId => !reportIds.includes(rId));
+          const filtered = state.reportIds.filter((rId) => !reportIds.includes(rId));
           if (filtered.length !== state.reportIds.length) {
             draftState.reportIds = filtered;
           }

@@ -3,7 +3,9 @@ import { getBrowserConfigEnv } from '../utils/getConfig';
 import { EWebhooksTypeEvent } from '../types/webhooks';
 
 export function unsubscribeFromWebhooks(event: EWebhooksTypeEvent) {
-  const { api: { urls }} = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   const URL = urls.webhooksUnsubscribe.replace(':event', String(event));
 

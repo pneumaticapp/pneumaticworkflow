@@ -28,31 +28,36 @@ jest.mock('../../IntlMessages', () => ({
 
 jest.mock('../../UI/Buttons/Button', () => ({
   Button: (props: { label: string; disabled?: boolean; type?: string; onClick?: () => void }) =>
-    React.createElement('button', {
-      type: props.type || 'button',
-      disabled: props.disabled,
-      'data-testid': props.type === 'submit' ? 'save-button' : 'cancel-button',
-    }, props.label),
+    React.createElement(
+      'button',
+      {
+        type: props.type || 'button',
+        disabled: props.disabled,
+        'data-testid': props.type === 'submit' ? 'save-button' : 'cancel-button',
+      },
+      props.label,
+    ),
 }));
 
-const makeField = (apiName: string, order: number, overrides: Partial<IExtraField> = {}) => makeExtraField({
-  apiName,
-  name: apiName,
-  ...(order !== 0 && { order }),
-  ...overrides,
-});
+const makeField = (apiName: string, order: number, overrides: Partial<IExtraField> = {}) =>
+  makeExtraField({
+    apiName,
+    name: apiName,
+    ...(order !== 0 && { order }),
+    ...overrides,
+  });
 
-const makeFieldset = (overrides: Partial<IFieldsetRuntime> & { fields: IExtraField[] }) => makeFieldsetRuntime({
-  name: 'Fieldset',
-  ...overrides,
-});
+const makeFieldset = (overrides: Partial<IFieldsetRuntime> & { fields: IExtraField[] }) =>
+  makeFieldsetRuntime({
+    name: 'Fieldset',
+    ...overrides,
+  });
 
 const baseProps = {
   accountId: 1,
   onEditField: jest.fn(() => jest.fn()),
   onSave: jest.fn(),
 };
-
 
 const renderWithIntl = (ui: React.ReactElement) =>
   render(
@@ -72,9 +77,7 @@ describe('KickoffEdit', () => {
       fields: [makeField('f1', 1)],
       fieldsets: [],
     };
-    const fieldsets = [
-      makeFieldset({ fields: [], order: 2 }),
-    ];
+    const fieldsets = [makeFieldset({ fields: [], order: 2 })];
 
     renderWithIntl(
       <EditKickoff
@@ -130,9 +133,7 @@ describe('KickoffEdit', () => {
 
     const fieldsets: IFieldsetRuntime[] = [
       makeFieldset({
-        fields: [
-          makeField('fs-field-1', 1, { isRequired: true, value: '' }),
-        ],
+        fields: [makeField('fs-field-1', 1, { isRequired: true, value: '' })],
         order: 1,
       }),
     ];
@@ -159,9 +160,7 @@ describe('KickoffEdit', () => {
 
     const fieldsets: IFieldsetRuntime[] = [
       makeFieldset({
-        fields: [
-          makeField('fs-field-1', 1, { isRequired: true, value: 'also filled' }),
-        ],
+        fields: [makeField('fs-field-1', 1, { isRequired: true, value: 'also filled' })],
         order: 1,
       }),
     ];

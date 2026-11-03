@@ -1,9 +1,9 @@
 /* stylelint-disable declaration-no-important */
 .container {
-  margin: 0 auto;
   display: flex;
   max-width: 1088px;
   min-height: 100%;
+  margin: 0 auto;
 
   @media (--mobile) {
     flex-direction: column;
@@ -21,13 +21,13 @@
 }
 
 .left-area {
-  margin-right: 64px;
-  width: 272px;
   flex-shrink: 0;
+  width: 272px;
+  margin-right: 64px;
 
   @media (--mobile) {
-    margin-right: 0;
     width: 100%;
+    margin-right: 0;
   }
 }
 
@@ -48,8 +48,8 @@
 
 .right-area {
   flex-grow: 1;
-  min-width: 100px;
   flex-basis: 0;
+  min-width: 100px;
 }
 
 .task {
@@ -59,10 +59,10 @@
 }
 
 .cards {
+  height: calc(100vh - 265px);
   margin-top: 16px;
   margin-right: -8px;
   overflow: auto;
-  height: calc(100vh - 265px);
 
   @media (--mobile) {
     width: 100%;
@@ -92,7 +92,6 @@
 
   @media print {
     break-inside: avoid;
-    page-break-inside: avoid;
   }
 }
 
@@ -104,19 +103,19 @@
 }
 
 .search-field__label {
-  margin-bottom: 0;
   width: 100%;
+  margin-bottom: 0;
 }
 
 .empty-list-placeholder {
-  margin-top: 16px;
   display: block;
+  margin-top: 16px;
   font-family: var(--pneumatic-font-serif);
   font-size: 20px;
   font-weight: 800;
   line-height: 24px;
-  text-align: center;
   color: var(--pneumatic-color-black32);
+  text-align: center;
 }
 
 .placeholder {
@@ -138,10 +137,10 @@
   font-size: 11px;
   font-weight: 800;
   line-height: 16px;
-  text-align: center;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   color: var(--pneumatic-color-link-dark);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   background: none;
   border: none;
   transition: 0.1s ease-in-out all;

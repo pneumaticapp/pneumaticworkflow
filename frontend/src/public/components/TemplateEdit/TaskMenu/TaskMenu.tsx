@@ -36,7 +36,7 @@ export function TaskMenu({
 }: ITaskMenuProps) {
   const { formatMessage } = useIntl();
 
-  const handleOptionClick = (handler: () => void) =>  (closeDropdown: () => void) => {
+  const handleOptionClick = (handler: () => void) => (closeDropdown: () => void) => {
     closeDropdown();
     handler();
   };
@@ -104,10 +104,8 @@ export function TaskMenu({
   return (
     <div className={styles['card-more-container']}>
       <Dropdown
-        renderToggle={isOpen => (
-          <MoreIcon
-            className={classnames(styles['card-more'], isOpen && styles['card-more_active'])}
-          />
+        renderToggle={(isOpen) => (
+          <MoreIcon className={classnames(styles['card-more'], isOpen && styles['card-more_active'])} />
         )}
         options={dropdownOptions}
       />

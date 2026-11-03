@@ -32,10 +32,7 @@ export function ProfileDropdown({
   const { formatMessage } = useIntl();
   const userFullName = `${firstName} ${lastName}`.trim();
   const showCustomerPortalLink =
-    plan !== ESubscriptionPlan.Free &&
-    plan !== ESubscriptionPlan.Unknown &&
-    isAccountOwner &&
-    leaseLevel !== 'tenant';
+    plan !== ESubscriptionPlan.Free && plan !== ESubscriptionPlan.Unknown && isAccountOwner && leaseLevel !== 'tenant';
 
   const handleOptionClick = (handler: () => void) => (closeDropdown: () => void) => {
     closeDropdown();

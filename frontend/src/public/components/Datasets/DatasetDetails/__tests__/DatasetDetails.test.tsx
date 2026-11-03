@@ -6,12 +6,9 @@ import DatasetDetails from '../DatasetDetails';
 import { DatasetItemsList } from '../DatasetItemsList';
 import { Button } from '../../../UI';
 import { history } from '../../../../utils/history';
-import {
-  loadCurrentDataset,
-  resetCurrentDataset,
-  updateDatasetAction,
-} from '../../../../redux/datasets/slice';
+import { loadCurrentDataset, resetCurrentDataset, updateDatasetAction } from '../../../../redux/datasets/slice';
 import { getSortedAndFilteredDatasetItems } from '../../../../utils/dataset';
+import { EDatasetsSorting } from '../../../../types/dataset';
 import { intlMock } from '../../../../__stubs__/intlMock';
 
 jest.mock('../../../../utils/history', () => ({
@@ -45,9 +42,7 @@ jest.mock('../../DatasetModal/DatasetModal', () => ({
 }));
 
 jest.mock('../DatasetDetailsSkeleton', () => ({
-  DatasetDetailsSkeleton: jest.fn(() =>
-    React.createElement('div', { 'data-testid': 'skeleton' }),
-  ),
+  DatasetDetailsSkeleton: jest.fn(() => React.createElement('div', { 'data-testid': 'skeleton' })),
 }));
 
 jest.mock('../DatasetItemsList', () => ({
@@ -113,6 +108,10 @@ describe('DatasetDetails', () => {
     (getSortedAndFilteredDatasetItems as jest.Mock).mockReturnValue(mockDataset.items);
   });
 
+  afterEach(() => {
+    localStorage.clear();
+  });
+
   it('dispatches loadCurrentDataset({ id }) on mount with valid id', () => {
     const noDatasetState = {
       datasets: {
@@ -172,14 +171,16 @@ describe('DatasetDetails', () => {
       onSaveNewRow('Cherry');
     });
 
-    expect(mockDispatch).toHaveBeenCalledWith(updateDatasetAction({
-      id: 42,
-      items: [
-        { id: 1, value: 'Apple', order: 0 },
-        { id: 2, value: 'Banana', order: 1 },
-        { value: 'Cherry', order: 2 },
-      ],
-    }));
+    expect(mockDispatch).toHaveBeenCalledWith(
+      updateDatasetAction({
+        id: 42,
+        items: [
+          { id: 1, value: 'Apple', order: 0 },
+          { id: 2, value: 'Banana', order: 1 },
+          { value: 'Cherry', order: 2 },
+        ],
+      }),
+    );
   });
 
   it('dispatches updateDatasetAction with filtered items on handleDeleteRow', () => {
@@ -190,12 +191,12 @@ describe('DatasetDetails', () => {
       onDeleteRow(1);
     });
 
-    expect(mockDispatch).toHaveBeenCalledWith(updateDatasetAction({
-      id: 42,
-      items: [
-        { id: 2, value: 'Banana', order: 1 },
-      ],
-    }));
+    expect(mockDispatch).toHaveBeenCalledWith(
+      updateDatasetAction({
+        id: 42,
+        items: [{ id: 2, value: 'Banana', order: 1 }],
+      }),
+    );
   });
 
   it('dispatches resetCurrentDataset on unmount', () => {
@@ -206,5 +207,75 @@ describe('DatasetDetails', () => {
 
     expect(mockDispatch).toHaveBeenCalledTimes(1);
     expect(mockDispatch).toHaveBeenCalledWith(resetCurrentDataset());
+  });
+
+  describe('sorting persistence in localStorage', () => {
+    it('initializes sorting with default DateDesc when localStorage is empty', () => {
+      render(React.createElement(DatasetDetails, makeProps('42')));
+
+      expect(getItemsListProps().sorting).toBe(EDatasetsSorting.DateDesc);
+    });
+
+    it('restores saved sorting from localStorage for given dataset', () => {
+      localStorage.setItem('dataset_sorting_42', EDatasetsSorting.NameAsc);
+
+      render(React.createElement(DatasetDetails, makeProps('42')));
+
+      expect(getItemsListProps().sorting).toBe(EDatasetsSorting.NameAsc);
+    });
+
+    it('saves new sorting to localStorage and updates state on onSortingChange', () => {
+      render(React.createElement(DatasetDetails, makeProps('42')));
+
+      const onSortingChange = getItemsListProps().onSortingChange;
+
+      act(() => {
+        onSortingChange(EDatasetsSorting.NameDesc);
+      });
+
+      expect(localStorage.getItem('dataset_sorting_42')).toBe(EDatasetsSorting.NameDesc);
+      expect(getItemsListProps().sorting).toBe(EDatasetsSorting.NameDesc);
+    });
+
+    it('updates sorting when matchParamId changes without unmounting', () => {
+      localStorage.setItem('dataset_sorting_42', EDatasetsSorting.NameAsc);
+      localStorage.setItem('dataset_sorting_99', EDatasetsSorting.NameDesc);
+
+      const { rerender } = render(React.createElement(DatasetDetails, makeProps('42')));
+      expect(getItemsListProps().sorting).toBe(EDatasetsSorting.NameAsc);
+
+      rerender(React.createElement(DatasetDetails, makeProps('99')));
+      expect(getItemsListProps().sorting).toBe(EDatasetsSorting.NameDesc);
+    });
+
+    it('falls back to DateDesc if localStorage.getItem throws', () => {
+      const getItemSpy = jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+        throw new Error('Storage disabled');
+      });
+
+      render(React.createElement(DatasetDetails, makeProps('42')));
+
+      expect(getItemsListProps().sorting).toBe(EDatasetsSorting.DateDesc);
+      getItemSpy.mockRestore();
+    });
+
+    it('does not throw if localStorage.setItem throws on sorting change', () => {
+      const setItemSpy = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('Quota exceeded');
+      });
+
+      render(React.createElement(DatasetDetails, makeProps('42')));
+
+      const onSortingChange = getItemsListProps().onSortingChange;
+
+      expect(() => {
+        act(() => {
+          onSortingChange(EDatasetsSorting.NameAsc);
+        });
+      }).not.toThrow();
+
+      expect(getItemsListProps().sorting).toBe(EDatasetsSorting.NameAsc);
+      setItemSpy.mockRestore();
+    });
   });
 });

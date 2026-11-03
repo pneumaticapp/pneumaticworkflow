@@ -2,9 +2,7 @@ import { EUserStatus, TUserListItem } from '../../../../types/user';
 import { getMentionData } from '../getMentionData';
 
 jest.mock('../../../../utils/users', () => ({
-  getUserFullName: jest.fn((user: TUserListItem) =>
-    user ? `${user.firstName} ${user.lastName}`.trim() : '',
-  ),
+  getUserFullName: jest.fn((user: TUserListItem) => (user ? `${user.firstName} ${user.lastName}`.trim() : '')),
 }));
 
 const { getUserFullName } = require('../../../../utils/users') as {
@@ -95,9 +93,7 @@ describe('getMentionData', () => {
     });
 
     it('treats External status as non-Active', () => {
-      const users: TUserListItem[] = [
-        { ...baseUser, id: 1, status: EUserStatus.External },
-      ];
+      const users: TUserListItem[] = [{ ...baseUser, id: 1, status: EUserStatus.External }];
       expect(getMentionData(users)).toEqual([]);
     });
   });

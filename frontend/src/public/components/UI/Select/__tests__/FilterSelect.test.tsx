@@ -43,13 +43,7 @@ jest.mock('reactstrap', () => ({
     </button>
   ),
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <div role="menu">{children}</div>,
-  DropdownItem: ({
-    children,
-    onClick,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-  }) => (
+  DropdownItem: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => (
     <button type="button" onClick={onClick}>
       {children}
     </button>
@@ -132,13 +126,7 @@ describe('FilterSelect', () => {
   it('renders option with ReactNode label and triggers onChange on selection click', () => {
     const handleSelect = jest.fn();
     render(
-      <FilterSelect
-        {...defaultProps}
-        options={[
-          { id: 1, name: 'Template ReactNode' },
-        ]}
-        onChange={handleSelect}
-      />,
+      <FilterSelect {...defaultProps} options={[{ id: 1, name: 'Template ReactNode' }]} onChange={handleSelect} />,
     );
 
     openDropdown();

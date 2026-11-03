@@ -31,7 +31,22 @@ import { getCurrentDataset, isCurrentDatasetLoading } from '../../../redux/selec
 import { TDatasetDetailsProps } from './types';
 import styles from './DatasetDetails.css';
 
-const DatasetDetails = ({ match: { params: { id: matchParamId } } }: TDatasetDetailsProps) => {
+const getSavedSorting = (datasetId: string): EDatasetsSorting => {
+  try {
+    const savedSorting = localStorage.getItem(`dataset_sorting_${datasetId}`);
+    const validSorting = Object.values(EDatasetsSorting).find((sortingType) => sortingType === savedSorting);
+
+    return validSorting || EDatasetsSorting.DateDesc;
+  } catch {
+    return EDatasetsSorting.DateDesc;
+  }
+};
+
+const DatasetDetails = ({
+  match: {
+    params: { id: matchParamId },
+  },
+}: TDatasetDetailsProps) => {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
@@ -40,16 +55,26 @@ const DatasetDetails = ({ match: { params: { id: matchParamId } } }: TDatasetDet
   const [isAddingRow, setIsAddingRow] = useState(false);
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [searchText, setSearchText] = useState('');
-  const [sorting, setSorting] = useState<EDatasetsSorting>(EDatasetsSorting.DateDesc);
+  const [sorting, setSorting] = useState<EDatasetsSorting>(() => getSavedSorting(matchParamId));
+
+  useEffect(() => {
+    setSorting(getSavedSorting(matchParamId));
+  }, [matchParamId]);
+
+  const handleSortingChange = (newSorting: EDatasetsSorting) => {
+    setSorting(newSorting);
+    try {
+      localStorage.setItem(`dataset_sorting_${matchParamId}`, newSorting);
+    } catch {
+      // Ignore storage write errors (e.g. quota or disabled storage)
+    }
+  };
 
   const sortedItems = useMemo(() => {
     return getSortedAndFilteredDatasetItems(dataset?.items || [], searchText, sorting);
   }, [dataset?.items, searchText, sorting]);
 
-  const allItemValues = useMemo(
-    () => dataset?.items.map((i) => i.value) || [],
-    [dataset?.items],
-  );
+  const allItemValues = useMemo(() => dataset?.items.map((i) => i.value) || [], [dataset?.items]);
 
   useEffect(() => {
     const id = Number(matchParamId);
@@ -86,13 +111,12 @@ const DatasetDetails = ({ match: { params: { id: matchParamId } } }: TDatasetDet
   const handleSaveNewRow = (value: string) => {
     const maxOrder = dataset.items.reduce((max, item) => Math.max(max, item.order), 0);
 
-    dispatch(updateDatasetAction({
-      id: dataset.id,
-      items: [
-        ...dataset.items,
-        { value, order: maxOrder + 1 },
-      ],
-    }));
+    dispatch(
+      updateDatasetAction({
+        id: dataset.id,
+        items: [...dataset.items, { value, order: maxOrder + 1 }],
+      }),
+    );
 
     setIsAddingRow(false);
   };
@@ -111,20 +135,22 @@ const DatasetDetails = ({ match: { params: { id: matchParamId } } }: TDatasetDet
   };
 
   const handleEditRow = (itemId: number, newValue: string) => {
-    dispatch(updateDatasetAction({
-      id: dataset.id,
-      items: dataset.items.map((item) =>
-        item.id === itemId ? { ...item, value: newValue } : item,
-      ),
-    }));
+    dispatch(
+      updateDatasetAction({
+        id: dataset.id,
+        items: dataset.items.map((item) => (item.id === itemId ? { ...item, value: newValue } : item)),
+      }),
+    );
     setEditingItemId(null);
   };
 
   const handleDeleteRow = (itemId: number) => {
-    dispatch(updateDatasetAction({
-      id: dataset.id,
-      items: dataset.items.filter((item) => item.id !== itemId),
-    }));
+    dispatch(
+      updateDatasetAction({
+        id: dataset.id,
+        items: dataset.items.filter((item) => item.id !== itemId),
+      }),
+    );
   };
 
   return (
@@ -164,7 +190,7 @@ const DatasetDetails = ({ match: { params: { id: matchParamId } } }: TDatasetDet
         searchText={searchText}
         sorting={sorting}
         onSearchChange={setSearchText}
-        onSortingChange={setSorting}
+        onSortingChange={handleSortingChange}
         onSaveNewRow={handleSaveNewRow}
         onCancelNewRow={handleCancelNewRow}
         onStartEdit={handleStartEdit}

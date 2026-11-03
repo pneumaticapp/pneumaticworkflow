@@ -105,9 +105,9 @@ export function TaskItem({ task, index, mode, templateId }: ITaskItemProps) {
     mode === EDashboardModes.Tasks
       ? getLinkToTasks({ templateId, taskApiNAme: task.apiName })
       : getLinkToWorkflows({
-        templateId,
-        taskApiName: task.apiName,
-      });
+          templateId,
+          taskApiName: task.apiName,
+        });
 
   return (
     <div className={styles.task__container}>

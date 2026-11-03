@@ -1,4 +1,3 @@
-
 import fieldsetsReducer, {
   initialState,
   loadFieldsets,
@@ -12,7 +11,10 @@ import { IFieldsetCatalogItem } from '../../../types/fieldset';
 import { makeFieldsetCatalogItem } from '../../../__stubs__/fieldsets.factory';
 import { IFieldsetsStore } from '../../../types/redux';
 
-const makeStateWithList = (items: IFieldsetCatalogItem[], overrides: Partial<IFieldsetsStore> = {}): IFieldsetsStore => ({
+const makeStateWithList = (
+  items: IFieldsetCatalogItem[],
+  overrides: Partial<IFieldsetsStore> = {},
+): IFieldsetsStore => ({
   ...initialState,
   fieldsetsList: { count: items.length, offset: 0, items },
   ...overrides,

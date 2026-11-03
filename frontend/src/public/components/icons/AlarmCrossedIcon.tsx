@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import * as React from 'react';
 
 export function AlarmCrossedIcon({ fill = 'currentColor', ...rest }: React.SVGAttributes<SVGElement>) {

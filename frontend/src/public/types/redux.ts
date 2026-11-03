@@ -13,7 +13,9 @@ import {
   IWorkflowDetailsClient,
 } from './workflow';
 import { ITask, ITaskListItem, ITasksSettings } from './tasks';
+import { EPermissionObjectType, TObjectPermissionsById } from './permissions';
 import { IApiKeyItem, IIntegrationDetailed, IIntegrationListItem } from './integrations';
+import type { IAIStore } from '../redux/ai/types';
 import { ESettingsTabs } from './profile';
 import { IHighlightsItem, EHighlightsDateFilter } from './highlights';
 import { EDashboardTimeRange, IGettingStartedChecklist } from './dashboard';
@@ -38,6 +40,7 @@ import { IDataset, IDatasetListItem, EDatasetsSorting, TDatasetItemsSortOrder } 
 import { IFieldsetCatalogItem, EFieldsetsSorting } from './fieldset';
 import { IPagesStore } from '../redux/pages/types';
 import { TeamPages, IGroup, UserInvite } from '../redux/team/types';
+import { ITemplateGraphViewState } from '../components/TemplateEdit/TemplateGraphEditor/types';
 
 export interface IApplicationState {
   general: IGeneralStore;
@@ -63,10 +66,19 @@ export interface IApplicationState {
   task: IStoreTask;
   team: ITeamStore;
   groups: IGroupsStore;
+  ai: IAIStore;
   tenants: ITenantsStore;
   datasets: IDatasetsStore;
   fieldsets: IFieldsetsStore;
+  permissions: IPermissionsStore;
+  templateGraphView: ITemplateGraphViewState;
 }
+
+export type IPermissionsStore = {
+  [objType in EPermissionObjectType]: TObjectPermissionsById;
+} & {
+  userId: number | null;
+};
 
 export enum ELoggedState {
   LoggedIn = 'logged-in',
@@ -81,6 +93,7 @@ export interface IAuthUser extends IUnsavedUser {
   id: number;
   status: EUserStatus;
   loading: boolean;
+  isResetPasswordCaptchaRequired?: boolean;
   invitedUser: IInvitedUser;
   isAccountOwner: boolean;
   isDigestSubscriber: boolean;
@@ -167,7 +180,6 @@ export interface IAccounts {
     userWorkflowsCount: number;
     state: EDeleteUserModalState;
   };
-  isCreateUserModalOpen: boolean;
 }
 
 export interface IStoreTask {
@@ -342,6 +354,10 @@ export type ITeamStore = {
   isInvitesPopupOpen: boolean;
   recentInvitedUsers: TUserListItem[];
   invitesUsersList: UserInvite[];
+  createPerformerModal: {
+    isOpen: boolean;
+    isSubmitting: boolean;
+  };
 };
 
 export type IGroupsStore = {
@@ -380,17 +396,17 @@ export type IDatasetsStore = {
   isAllDatasetsLoading: boolean;
   isAllDatasetsLoaded: boolean;
   isLoading: boolean;
-  searchQuery: string;                
-  datasetsListSorting: EDatasetsSorting;         
+  searchQuery: string;
+  datasetsListSorting: EDatasetsSorting;
 
   isCreateModalOpen: boolean;
   isEditModalOpen: boolean;
-  
-  currentDataset: IDataset | null;    
-  isCurrentDatasetLoading: boolean;   
-  currentSearchQuery: string;         
+
+  currentDataset: IDataset | null;
+  isCurrentDatasetLoading: boolean;
+  currentSearchQuery: string;
   currentSortOrder: TDatasetItemsSortOrder;
- 
+
   datasetsMap: Record<number, IDataset>;
 };
 

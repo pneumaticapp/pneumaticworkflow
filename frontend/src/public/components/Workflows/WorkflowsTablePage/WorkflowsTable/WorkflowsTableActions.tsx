@@ -80,10 +80,10 @@ export function WorkflowsTableActions({
       toggleProps={{
         ...(isMobile
           ? {
-            'aria-label': formatMessage({
-              id: isExporting ? 'workflows.export-loading' : 'workflows.export-menu-aria',
-            }),
-          }
+              'aria-label': formatMessage({
+                id: isExporting ? 'workflows.export-loading' : 'workflows.export-menu-aria',
+              }),
+            }
           : {}),
       }}
       options={exportDropdownOptions}
@@ -100,9 +100,7 @@ export function WorkflowsTableActions({
     />
   );
 
-  const exportTooltipContentId = isExporting
-    ? 'workflows.export-loading'
-    : 'workflows.export-tooltip';
+  const exportTooltipContentId = isExporting ? 'workflows.export-loading' : 'workflows.export-tooltip';
 
   return (
     <div

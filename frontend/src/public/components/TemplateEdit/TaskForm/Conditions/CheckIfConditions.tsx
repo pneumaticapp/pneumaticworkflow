@@ -1,4 +1,3 @@
-/* eslint-disable indent */
 import React, { useEffect } from 'react';
 import produce from 'immer';
 import { useIntl } from 'react-intl';

@@ -11,18 +11,20 @@ from src.accounts.enums import (
     SourceType,
     Timezone,
 )
-from src.accounts.models import Contact
+from src.accounts.models import Contact, UserGroup
 from src.accounts.serializers.group import (
     GroupNameSerializer,
 )
 from src.accounts.messages import (
     MSG_A_0036,
+    MSG_A_0040,
     MSG_A_0046,
     MSG_A_0049,
     MSG_A_0050,
     MSG_A_0051,
     MSG_A_0053,
     MSG_A_0054,
+    MSG_A_0057,
 )
 from src.accounts.serializers.mixins import (
     VacationSerializer,
@@ -40,6 +42,7 @@ from src.generics.fields import (
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
 )
+from src.permissions.enums import PermissionObjectType
 from src.processes.enums import (
     OwnerType,
     PerformerType,
@@ -101,6 +104,8 @@ class UserSerializer(
             'date_joined_tsp',
         )
 
+    # Not AccountPrimaryKeyRelatedField(many=True): in form data it turns
+    # a missing key into [] and the update would clear the user groups.
     groups = RelatedListField(
         source='user_groups',
         child=serializers.IntegerField(),
@@ -143,6 +148,17 @@ class UserSerializer(
     def validate_is_admin(self, value):
         if value is True and not self.context['user'].is_admin:
             raise serializers.ValidationError(MSG_A_0046)
+        return value
+
+    def validate_groups(self, value):
+        if not self.context['user'].is_admin:
+            raise serializers.ValidationError(MSG_A_0057)
+        groups = UserGroup.objects.filter(
+            id__in=value,
+            account=self.context['account'],
+        )
+        if groups.count() != len(value):
+            raise serializers.ValidationError(MSG_A_0040)
         return value
 
     def validate(self, attrs):
@@ -375,3 +391,22 @@ class VacationActivateSerializer(
         if start and end and start >= end:
             raise serializers.ValidationError(MSG_A_0054)
         return attrs
+
+
+class UserPermissionRequestSerializer(
+    CustomValidationErrorMixin,
+    serializers.Serializer,
+):
+    obj_type = serializers.ChoiceField(
+        choices=PermissionObjectType.CHOICES,
+    )
+    obj_ids = CommaSeparatedListField(
+        allow_empty=False,
+        child=serializers.IntegerField(min_value=1),
+    )
+
+
+class UserPermissionResponseSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    has_view = serializers.BooleanField()
+    has_change = serializers.BooleanField()

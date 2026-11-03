@@ -7,7 +7,7 @@ import { IApplicationState } from '../../types/redux';
 type TTaskDetailDispatchProps = Pick<ITaskDetailProps, 'loadCurrentTask'>;
 type TTaskDetailStoreProps = Pick<ITaskDetailProps, 'task'>;
 
-export function mapStateToProps( { task: { data: task } }: IApplicationState): TTaskDetailStoreProps {
+export function mapStateToProps({ task: { data: task } }: IApplicationState): TTaskDetailStoreProps {
   return { task };
 }
 

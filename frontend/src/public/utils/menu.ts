@@ -14,23 +14,29 @@ export function* generateMenuItems(
 
   yield Promise.resolve(userMenuItems);
 
-  const itemsWithSubItems = Promise.all(userMenuItems.map(async item => {
-    if (!item.subsSlug) {
-      return item;
-    }
+  const itemsWithSubItems = Promise.all(
+    userMenuItems.map(async (item) => {
+      if (!item.subsSlug) {
+        return item;
+      }
 
-    const subs = await getNavMenuItem(item.subsSlug);
+      const subs = await getNavMenuItem(item.subsSlug);
 
-    return {
-      ...item,
-      subs: subs?.items ? mapArrayIAPIMenuSubToIMenuSub(subs.items) : [],
-    };
-  }));
+      return {
+        ...item,
+        subs: subs?.items ? mapArrayIAPIMenuSubToIMenuSub(subs.items) : [],
+      };
+    }),
+  );
 
   yield itemsWithSubItems;
 }
 
-export const createMenuCounter = (id: IMenuItem['id'], value: number | null, type: TMenuCounterType = 'info'): TMenuCounter | null => {
+export const createMenuCounter = (
+  id: IMenuItem['id'],
+  value: number | null,
+  type: TMenuCounterType = 'info',
+): TMenuCounter | null => {
   if (typeof value !== 'number') {
     return null;
   }
@@ -39,5 +45,5 @@ export const createMenuCounter = (id: IMenuItem['id'], value: number | null, typ
     id,
     value,
     type,
-  }
-}
+  };
+};

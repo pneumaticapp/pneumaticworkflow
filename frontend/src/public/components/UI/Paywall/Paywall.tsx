@@ -3,7 +3,7 @@ import { useIntl } from 'react-intl';
 
 import { IUnsavedUser } from '../../../types/user';
 
-import { Modal } from "..";
+import { Modal } from '..';
 import { getUserFullName } from '../../../utils/users';
 
 import styles from './Paywall.css';
@@ -27,7 +27,7 @@ export function Paywall({ owner, currentUser }: IPaywallProps) {
       <p>
         {formatMessage(
           { id: 'paywall.messageNotOwner' },
-          {name: <a href={`mailto:${owner.email}`}>{getUserFullName(owner)}</a>}
+          { name: <a href={`mailto:${owner.email}`}>{getUserFullName(owner)}</a> },
         )}
       </p>
     );

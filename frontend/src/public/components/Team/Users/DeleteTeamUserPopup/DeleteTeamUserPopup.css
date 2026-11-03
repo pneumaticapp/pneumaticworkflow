@@ -34,19 +34,20 @@
 
   .popup-button_submit {
     position: relative !important;
-    margin-right: 1.6rem;
     display: inline-flex;
+    align-items: center !important;
+    justify-content: center !important;
     width: 11.4rem;
     height: 4rem;
-    justify-content: center !important;
-    align-items: center !important;
+    margin-right: 1.6rem;
   }
 
   @media (--mobile) {
     flex-direction: column;
+
     .popup-button_submit {
-      margin: 0 0 1.6rem;
       width: 100%;
+      margin: 0 0 1.6rem;
     }
   }
 }

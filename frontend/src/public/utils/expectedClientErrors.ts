@@ -16,13 +16,14 @@ const EXPECTED_AUTH_PATTERNS = [
   'Token is expired',
   'Authentication credentials were not provided',
   'You do not have permission',
+  'Permission denied',
   'Request was throttled',
+  'Invalid login or password',
+  'Your subscription has already expired',
 ];
 
 // Validation — user input errors, not code bugs
-const EXPECTED_VALIDATION_PATTERNS = [
-  'validation_error',
-];
+const EXPECTED_VALIDATION_PATTERNS = ['validation_error'];
 
 const ALL_EXPECTED_PATTERNS = [...EXPECTED_AUTH_PATTERNS, ...EXPECTED_VALIDATION_PATTERNS];
 const EXPECTED_CLIENT_ERROR_REGEX = new RegExp(ALL_EXPECTED_PATTERNS.join('|'));
@@ -37,7 +38,20 @@ export function isExpectedClientError(responseData: string | object): boolean {
   }
 
   if (typeof responseData === 'object' && responseData !== null) {
-    return EXPECTED_CLIENT_ERROR_REGEX.test(JSON.stringify(responseData));
+    try {
+      const visitedErrorNodes = new WeakSet<object>();
+      return EXPECTED_CLIENT_ERROR_REGEX.test(
+        JSON.stringify(responseData, (_key, value) => {
+          if (typeof value === 'object' && value !== null) {
+            if (visitedErrorNodes.has(value)) return undefined;
+            visitedErrorNodes.add(value);
+          }
+          return value;
+        }),
+      );
+    } catch {
+      return false;
+    }
   }
 
   return false;

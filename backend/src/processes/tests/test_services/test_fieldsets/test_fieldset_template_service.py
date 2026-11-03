@@ -1,4 +1,5 @@
 import pytest
+
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     FieldSetLayout,
@@ -7,34 +8,33 @@ from src.processes.enums import (
     LabelPosition,
 )
 from src.processes.messages import fieldset as fs_messages
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateSelection,
+)
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
     FieldSetTemplateRuleSet,
     FieldSetTemplateRuleGroupOr,
     FieldSetTemplateRuleGroupAnd,
 )
-from src.processes.models.templates.fields import (
-    FieldTemplate,
-    FieldTemplateSelection,
-)
 from src.processes.services.exceptions import (
     FieldsetTemplateInUseException,
+    FieldsetTemplateInUseException2,
     FieldsetTemplateRuleSumMaxFieldsNotNumber,
     FieldsetTemplateSharedIdMissing,
     FieldsetTemplateTemplateIdMissing,
 )
+from src.processes.services.fieldsets.fieldset import FieldSetTemplateService
 from src.processes.services.templates.field_template import (
     FieldTemplateService,
 )
-from src.processes.services.fieldsets.fieldset import (
-    FieldSetTemplateService,
-)
 from src.processes.tests.fixtures import (
     create_test_account,
-    create_test_owner,
-    create_test_template,
     create_test_fieldset_template,
+    create_test_owner,
     create_test_shared_fieldset,
+    create_test_template,
 )
 
 pytestmark = pytest.mark.django_db
@@ -1242,9 +1242,17 @@ def test_partial_update_fields_ok(mocker):
         'src.processes.services.fieldsets.fieldset.'
         'FieldSetTemplateService.update_rulesets',
     )
+    mock_validate_rulesets = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'FieldSetTemplateService._validate_rulesets',
+    )
     mock_super_partial_update = mocker.patch(
         'src.generics.base.service.'
         'BaseModelService.partial_update',
+    )
+    fieldset_updated_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'AuditEventService.fieldset_updated',
     )
     data = {
         "fields": [
@@ -1259,6 +1267,15 @@ def test_partial_update_fields_ok(mocker):
     mock_super_partial_update.assert_not_called()
     mock_update_fields.assert_called_once_with(fields_data=data['fields'])
     mock_update_rules.assert_not_called()
+    mock_validate_rulesets.assert_called_once_with()
+    fieldset_updated_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        fieldset=fieldset,
+        update_kwargs={},
+        fields=[{"api_name": "field_1", "value": "val"}],
+        rules=None,
+    )
 
 
 def test_partial_update__rulesets__ok(mocker):
@@ -1285,6 +1302,14 @@ def test_partial_update__rulesets__ok(mocker):
     mock_update_rules = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
         'FieldSetTemplateService.update_rulesets',
+    )
+    mock_validate_rulesets = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'FieldSetTemplateService._validate_rulesets',
+    )
+    fieldset_updated_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'AuditEventService.fieldset_updated',
     )
     service = FieldSetTemplateService(user=owner, instance=fieldset)
     data = {
@@ -1313,6 +1338,15 @@ def test_partial_update__rulesets__ok(mocker):
     mock_super_partial_update.assert_not_called()
     mock_update_fields.assert_not_called()
     mock_update_rules.assert_called_once_with(rulesets_data=data['rulesets'])
+    mock_validate_rulesets.assert_called_once_with()
+    fieldset_updated_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        fieldset=fieldset,
+        update_kwargs={},
+        fields=None,
+        rules=data['rulesets'],
+    )
 
 
 def test_delete__not_in_use__ok():
@@ -2346,7 +2380,7 @@ def test__get_clone__ok(mocker):
 
     """
     Clone shared fieldset via to_json + get_new_fieldset_data +
-    create_shared_fieldset
+    _create_shared_fieldset
     """
 
     # arrange
@@ -2393,7 +2427,7 @@ def test__get_clone__ok(mocker):
     )
     create_shared_fieldset_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
-        'FieldSetTemplateService.create_shared_fieldset',
+        'FieldSetTemplateService._create_shared_fieldset',
         return_value=clone,
     )
 
@@ -2407,3 +2441,198 @@ def test__get_clone__ok(mocker):
         shared_fieldset_data=instance_data,
     )
     create_shared_fieldset_mock.assert_called_once_with(**result_data)
+
+
+def test_create_shared_fieldset__valid__emit_fieldset_created(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        auth_type=AuthTokenType.API,
+    )
+    fieldset_created_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'AuditEventService.fieldset_created',
+    )
+
+    # act
+    result = service.create_shared_fieldset(name='Contacts')
+
+    # assert
+    fieldset_created_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.API,
+        fieldset=result,
+    )
+
+
+def test_partial_update__not_used__emit_fieldset_updated(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(
+        account=account,
+        name='Contacts',
+    )
+    service = FieldSetTemplateService(
+        user=user,
+        instance=fieldset,
+        auth_type=AuthTokenType.API,
+    )
+    fieldset_updated_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'AuditEventService.fieldset_updated',
+    )
+
+    # act
+    service.partial_update(name='Clients')
+
+    # assert
+    fieldset_updated_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.API,
+        fieldset=fieldset,
+        update_kwargs={'name': 'Clients'},
+        fields=None,
+        rules=None,
+    )
+    assert fieldset.name == 'Clients'
+
+
+def test_partial_update__fieldset_in_use__not_emit(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    fieldset = create_test_shared_fieldset(account=account)
+    create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=template.tasks.get(number=1),
+        shared_fieldset=fieldset,
+    )
+    service = FieldSetTemplateService(
+        user=user,
+        instance=fieldset,
+    )
+    fieldset_updated_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'AuditEventService.fieldset_updated',
+    )
+
+    # act
+    with pytest.raises(FieldsetTemplateInUseException2):
+        service.partial_update(name='Clients')
+
+    # assert
+    fieldset_updated_mock.assert_not_called()
+
+
+def test_delete__not_used__emit_fieldset_deleted(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        instance=fieldset,
+        auth_type=AuthTokenType.API,
+    )
+    fieldset_deleted_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'AuditEventService.fieldset_deleted',
+    )
+
+    # act
+    service.delete()
+
+    # assert
+    fieldset_deleted_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.API,
+        fieldset=fieldset,
+    )
+    assert not FieldsetTemplate.objects.filter(id=fieldset.id).exists()
+
+
+def test_delete__fieldset_in_use__not_emit(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    fieldset = create_test_shared_fieldset(account=account)
+    create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=template.tasks.get(number=1),
+        shared_fieldset=fieldset,
+    )
+    service = FieldSetTemplateService(
+        user=user,
+        instance=fieldset,
+    )
+    fieldset_deleted_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'AuditEventService.fieldset_deleted',
+    )
+
+    # act
+    with pytest.raises(FieldsetTemplateInUseException):
+        service.delete()
+
+    # assert
+    fieldset_deleted_mock.assert_not_called()
+
+
+def test_get_clone__shared__emit_fieldset_cloned_only(mocker):
+
+    """ The clone is created by _create_shared_fieldset, the part
+        without the record, so it is not journaled as a creation
+        too. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(
+        account=account,
+        name='Contacts',
+    )
+    service = FieldSetTemplateService(
+        user=user,
+        instance=fieldset,
+        auth_type=AuthTokenType.API,
+    )
+    fieldset_created_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'AuditEventService.fieldset_created',
+    )
+    fieldset_cloned_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'AuditEventService.fieldset_cloned',
+    )
+
+    # act
+    clone = service.get_clone()
+
+    # assert
+    assert clone.id != fieldset.id
+    assert clone.name == 'Contacts - clone'
+    fieldset_cloned_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.API,
+        clone=clone,
+        source_fieldset=fieldset,
+    )
+    fieldset_created_mock.assert_not_called()

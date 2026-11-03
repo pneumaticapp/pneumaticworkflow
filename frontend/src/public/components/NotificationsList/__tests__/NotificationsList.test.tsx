@@ -96,19 +96,18 @@ describe('NotificationsList', () => {
   const WORKFLOW_COMPLETED_TEXT = formatMsg('notifications.workflow-completed');
   const PNEUMATIC_TITLE = formatMsg('general.pneumatic');
 
-  const makeCompleteWorkflowNotification = (
-    overrides: Partial<TNotificationsListItem> = {},
-  ): TNotificationsListItem => ({
-    id: 1,
-    status: 'new',
-    datetime: '2026-05-11T05:01:30.049960Z',
-    type: 'complete_workflow',
-    workflow: {
-      id: 34,
-      name: 'Test Workflow',
-    },
-    ...overrides,
-  } as TNotificationsListItem);
+  const makeCompleteWorkflowNotification = (overrides: Partial<TNotificationsListItem> = {}): TNotificationsListItem =>
+    ({
+      id: 1,
+      status: 'new',
+      datetime: '2026-05-11T05:01:30.049960Z',
+      type: 'complete_workflow',
+      workflow: {
+        id: 34,
+        name: 'Test Workflow',
+      },
+      ...overrides,
+    }) as TNotificationsListItem;
 
   const baseProps: INotificationsListProps = {
     users: [],

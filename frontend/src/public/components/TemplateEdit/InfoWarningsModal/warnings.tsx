@@ -34,7 +34,7 @@ export function UnassignedTasksWarning() {
       </p>
       <ul className={styles['warning-list']}>
         {links.map(({ title, url }) => (
-          <li className={styles['warning-item']}>
+          <li key={url} className={styles['warning-item']}>
             <a href={url} target="_blank" className={styles['warning-link']} rel="noreferrer">
               {title}
             </a>
@@ -53,16 +53,23 @@ export function PremiumFeaturesWarning() {
     [EPlanActions.Upgrade]: null,
     [EPlanActions.ChoosePlan]: null,
   };
-  const actionButtons = pendingActions.map((action) => actionsMap[action]).filter(Boolean);
-
   return (
     <>
       <p className={styles['warning-title']}>{formatMessage({ id: 'template.warning-premium-feature-title' })}</p>
       <p className={styles['warning-description']}>{formatMessage({ id: 'template.warning-premium-feature-desc' })}</p>
       <ul className={styles['warning-list']}>
-        {actionButtons.map((button) => (
-          <li className={styles['warning-item']}>{button}</li>
-        ))}
+        {pendingActions.map((action) => {
+          const button = actionsMap[action];
+          if (!button) {
+            return null;
+          }
+
+          return (
+            <li key={action} className={styles['warning-item']}>
+              {button}
+            </li>
+          );
+        })}
       </ul>
     </>
   );

@@ -12,12 +12,7 @@ describe('ChangePassword', () => {
 
     render(
       <IntlProvider locale="en" messages={enMessages}>
-        <ChangePassword
-          isOpen
-          handleCloseModal={jest.fn()}
-          sendChangePassword={sendChangePassword}
-          loading={false}
-        />
+        <ChangePassword isOpen handleCloseModal={jest.fn()} sendChangePassword={sendChangePassword} loading={false} />
       </IntlProvider>,
     );
 

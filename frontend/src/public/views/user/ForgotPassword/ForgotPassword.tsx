@@ -1,34 +1,48 @@
-import React, { useEffect } from 'react';
-import { Formik, FormikConfig } from 'formik';
+import React, { useEffect, useRef, useState } from 'react';
+import { Formik, FormikConfig, useFormikContext } from 'formik';
 import { NavLink } from 'react-router-dom';
 import { useIntl } from 'react-intl';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 import { ERoutes } from '../../../constants/routes';
 import { TITLES } from '../../../constants/titles';
 import { IntlMessages } from '../../../components/IntlMessages';
-import { TForgotPassword } from '../../../redux/actions';
 import { validateEmail } from '../../../utils/validators';
 import { Header, InputField, Button } from '../../../components/UI';
+import { getBrowserConfigEnv } from '../../../utils/getConfig';
 
 import styles from '../User.css';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
-import { isEnvSignup } from '../../../constants/enviroment';
+import { isEnvCaptcha, isEnvSignup } from '../../../constants/enviroment';
+
+import { ICaptchaFieldProps, IForgotPasswordProps, TForgotPasswordValues } from './types';
 
 const INITIAL_VALUES_FORMIK: TForgotPasswordValues = {
   email: '',
+  captcha: '',
 };
 
-export function ForgotPassword({ loading, sendForgotPassword }: IForgotPasswordProps) {
+export function ForgotPassword({ loading, isCaptchaRequired, sendForgotPassword }: IForgotPasswordProps) {
   const { formatMessage } = useIntl();
+  const [captchaResetSignal, setCaptchaResetSignal] = useState(0);
+  const prevLoadingRef = useRef(loading);
 
   useEffect(() => {
     document.title = TITLES.ForgotPassword;
   }, []);
 
-  const handleSubmitForm: FormikConfig<TForgotPasswordValues>['onSubmit'] = (values) => {
-    const { email } = values;
+  useEffect(() => {
+    if (prevLoadingRef.current && !loading) {
+      // captcha tokens are single-use: force a fresh challenge for a retry
+      setCaptchaResetSignal((signal) => signal + 1);
+    }
+    prevLoadingRef.current = loading;
+  }, [loading]);
 
-    sendForgotPassword({ email });
+  const handleSubmitForm: FormikConfig<TForgotPasswordValues>['onSubmit'] = (values) => {
+    const { email, captcha } = values;
+
+    sendForgotPassword({ email, captcha });
   };
 
   return (
@@ -45,6 +59,10 @@ export function ForgotPassword({ loading, sendForgotPassword }: IForgotPasswordP
             email: validateEmail,
           });
 
+          if (isCaptchaRequired && !values.captcha) {
+            errors.captcha = 'Failed verification captcha';
+          }
+
           return errors;
         }}
       >
@@ -59,6 +77,8 @@ export function ForgotPassword({ loading, sendForgotPassword }: IForgotPasswordP
               showErrorIfTouched
               containerClassName={styles['form__field']}
             />
+
+            {isEnvCaptcha && isCaptchaRequired && <CaptchaField resetSignal={captchaResetSignal} />}
 
             <Button
               type="submit"
@@ -91,11 +111,29 @@ export function ForgotPassword({ loading, sendForgotPassword }: IForgotPasswordP
   );
 }
 
-export interface IForgotPasswordProps {
-  loading?: boolean;
-  sendForgotPassword(payload: TForgotPassword): void;
-}
+function CaptchaField({ resetSignal }: ICaptchaFieldProps) {
+  const { recaptchaSecret } = getBrowserConfigEnv();
+  const { setFieldValue, validateForm } = useFormikContext<TForgotPasswordValues>();
 
-export type TForgotPasswordValues = {
-  email: string;
-};
+  useEffect(() => {
+    // Formik doesn't re-validate on external state changes
+    validateForm();
+  }, [validateForm]);
+
+  useEffect(() => {
+    if (resetSignal > 0) {
+      setFieldValue('captcha', '');
+    }
+  }, [resetSignal, setFieldValue]);
+
+  return (
+    <div className={styles['form__captcha']}>
+      <ReCAPTCHA
+        key={resetSignal}
+        sitekey={recaptchaSecret}
+        onChange={(captcha: string | null) => setFieldValue('captcha', captcha || '')}
+        theme="light"
+      />
+    </div>
+  );
+}

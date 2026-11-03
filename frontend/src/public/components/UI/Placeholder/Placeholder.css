@@ -1,8 +1,8 @@
 .container {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   color: var(--pneumatic-color-black48);
 }
 
@@ -17,16 +17,16 @@
 }
 
 .title {
-  margin: 1.6rem 0 0;
   max-width: 41.6rem;
+  margin: 1.6rem 0 0;
   text-align: center;
 }
 
 .description {
   @mixin text-base;
 
-  margin: 0.8rem 0 0;
   max-width: 41.6rem;
+  margin: 0.8rem 0 0;
   text-align: center;
 }
 

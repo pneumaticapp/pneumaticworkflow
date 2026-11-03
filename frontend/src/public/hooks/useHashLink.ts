@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { scrollToElement } from '../utils/helpers';
 import { history } from '../utils/history';
 
 type THashLinkHandler = {
@@ -11,24 +10,22 @@ type THashLinkHandler = {
 export function useHashLink(settings: THashLinkHandler[]) {
   useEffect(() => {
     const handleHashLinkUrl = () => {
-      const {hash} = history.location;
+      const { hash } = history.location;
       if (!hash) {
         return;
       }
 
-      const currentSetting = settings.find(
-        (setting) => `#${setting.hash}` === hash
-      );
+      const currentSetting = settings.find((setting) => `#${setting.hash}` === hash);
       if (!currentSetting) {
         return;
       }
 
       const { element, handle } = currentSetting;
       handle?.();
-      if (element.current) {
-        scrollToElement(element.current);
-      }
-    }
+      requestAnimationFrame(() => {
+        element.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    };
 
     handleHashLinkUrl();
 

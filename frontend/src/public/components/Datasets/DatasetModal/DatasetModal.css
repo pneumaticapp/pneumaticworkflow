@@ -10,7 +10,7 @@
 }
 
 .dataset-modal__footer {
-  margin-top: 3.2rem;
   display: flex;
   gap: 1.6rem;
+  margin-top: 3.2rem;
 }

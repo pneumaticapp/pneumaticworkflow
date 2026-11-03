@@ -536,3 +536,18 @@ msgstr ""
 
 msgid "Guest"
 msgstr ""
+
+msgid "You must specify a source step for a performer of type \"manager\"."
+msgstr ""
+
+#, python-brace-format
+msgid "Task \"{name}\": A manager performer cannot reference its own step."
+msgstr ""
+
+#, python-brace-format
+msgid "Task \"{name}\": The manager performer references a non-existent step \"{step_name}\"."
+msgstr ""
+
+#, python-brace-format
+msgid "Task \"{name}\": Disable \"Required completion by all\" on step \"{step_name}\" to use a manager performer."
+msgstr ""

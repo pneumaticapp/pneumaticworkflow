@@ -81,7 +81,11 @@ export const conditionsByFieldTypeMap: { [key in EExtraFieldType]: EConditionOpe
     EConditionOperators.Exist,
     EConditionOperators.NotExist,
   ],
-  [EStartingType.Task]: [EConditionOperators.Completed, EConditionOperators.Skipped, EConditionOperators.CompletedOrSkipped],
+  [EStartingType.Task]: [
+    EConditionOperators.Completed,
+    EConditionOperators.Skipped,
+    EConditionOperators.CompletedOrSkipped,
+  ],
   [EStartingType.Kickoff]: [EConditionOperators.Completed],
 };
 

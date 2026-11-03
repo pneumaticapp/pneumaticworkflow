@@ -2379,6 +2379,7 @@ def test_partial_update__is_urgent_changed__urgent_service_called__ok(
     urgent_service_resolve_mock.assert_called_once_with(
         workflow=workflow,
         user=user,
+        auth_type=AuthTokenType.USER,
     )
 
 
@@ -2671,6 +2672,7 @@ def test_partial_update__kickoff_and_is_urgent__all_task_services_called__ok(
     urgent_service_resolve_mock.assert_called_once_with(
         workflow=workflow,
         user=user,
+        auth_type=AuthTokenType.USER,
     )
     assert task_partial_update_mock.call_count == 1
     task_partial_update_mock.assert_has_calls(

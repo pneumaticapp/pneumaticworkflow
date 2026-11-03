@@ -1,17 +1,19 @@
 /* stylelint-disable selector-pseudo-class-no-unknown, declaration-no-important  */
-@keyframes slideIn {
+@keyframes slide-in {
   0% {
     transform: translateX(100%);
   }
+
   100% {
     transform: translateX(0);
   }
 }
 
-@keyframes slideDown {
+@keyframes slide-down {
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(100%);
   }
@@ -19,16 +21,16 @@
 
 .container {
   position: fixed;
-  z-index: 1050;
   top: 16px;
   right: 0;
   bottom: 16px;
-  overflow: hidden;
+  z-index: 1050;
   width: 480px;
   max-width: calc(100% - 16px);
+  overflow: hidden;
   background-color: white;
   border-radius: 32px 0 0 32px;
-  box-shadow: 0 8px 24px rgba(98, 98, 95, 0.08);
+  box-shadow: 0 8px 24px rgb(98 98 95 / 8%);
 
   :global .ps__rail-y {
     right: 15px !important;
@@ -40,11 +42,11 @@
 }
 
 .container_opened {
-  animation: slideIn var(--menu-collapse-time) ease-out;
+  animation: slide-in var(--menu-collapse-time) ease-out;
 }
 
 .container_closed {
-  animation: slideDown var(--menu-collapse-time) ease-out;
+  animation: slide-down var(--menu-collapse-time) ease-out;
 }
 
 .container_with-paywall {
@@ -57,18 +59,18 @@
 
 .header {
   position: relative;
-  margin-bottom: -16px;
-  padding: 0 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: 84px;
+  padding: 0 32px;
+  margin-bottom: -16px;
 }
 
 .close-button {
   padding: 0;
-  cursor: pointer;
   color: var(--separator-color);
+  cursor: pointer;
   background-color: transparent;
   border: 0;
   transition: color 0.3s;
@@ -82,16 +84,16 @@
   position: absolute;
   top: 72px;
   right: 0;
-  left: 0;
   bottom: 72px;
+  left: 0;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .notifications-list {
-  overflow: auto;
   height: calc(100vh - 100px);
+  overflow: auto;
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -105,9 +107,9 @@
 
 .notification-item {
   position: relative;
-  margin: 16px 4px;
-  padding: 0 28px 0 84px;
   display: block;
+  padding: 0 28px 0 84px;
+  margin: 16px 4px;
 
   @media (--mobile) {
     padding-left: 68px;
@@ -115,11 +117,11 @@
 
   &::before {
     position: absolute;
-    z-index: -1;
     top: -12px;
     right: 0;
-    left: 0;
     bottom: -12px;
+    left: 0;
+    z-index: -1;
     content: '';
     background-color: #fdf7ee;
     border-radius: 4px;
@@ -164,14 +166,14 @@
 }
 
 .notification-item-title {
-  margin: 0 -8px 0 0;
-  padding-right: 64px;
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding-right: 64px;
+  margin: 0 -8px 0 0;
   font-size: 15px;
   line-height: 20px;
   color: var(--pneumatic-color-black100);
-  flex-wrap: wrap;
-  align-items: center;
 }
 
 .notification-item-title__text {
@@ -179,8 +181,8 @@
 }
 
 .notification-item-title__icon {
-  margin-right: 8px;
   display: flex;
+  margin-right: 8px;
   color: var(--pneumatic-color-black32);
 }
 
@@ -255,6 +257,6 @@
 
 .feed__spinner {
   position: absolute !important;
-  align-self: center;
   top: 100% !important;
+  align-self: center;
 }

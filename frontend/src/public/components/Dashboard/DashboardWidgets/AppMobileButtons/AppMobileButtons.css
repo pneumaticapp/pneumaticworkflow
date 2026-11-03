@@ -7,7 +7,7 @@
 
   &__title {
     margin-bottom: 16px;
-    font-family: Nunito;
+    font-family: Nunito, sans-serif;
     text-align: center;
 
     @media (--mobile) {

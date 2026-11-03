@@ -5,8 +5,8 @@
 }
 
 .card-more {
-  cursor: pointer;
   color: var(--pneumatic-color-black16);
+  cursor: pointer;
   transition: color 0.1s ease-in-out;
 
   &.card-more_active,

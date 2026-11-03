@@ -2,9 +2,7 @@ import type { IRealtimeWsEnvelope, IWsNotificationCreatedData } from '../types';
 import { ERealtimeEnvelopeType, isNotificationDataType } from '../types';
 import type { TNotificationMappingEnvelope } from './mapNotificationFromWs';
 
-export function isNotificationCreatedEnvelope(
-  envelope: IRealtimeWsEnvelope,
-): envelope is IRealtimeWsEnvelope & {
+export function isNotificationCreatedEnvelope(envelope: IRealtimeWsEnvelope): envelope is IRealtimeWsEnvelope & {
   type: ERealtimeEnvelopeType.NOTIFICATION_CREATED;
   data: IWsNotificationCreatedData;
 } {

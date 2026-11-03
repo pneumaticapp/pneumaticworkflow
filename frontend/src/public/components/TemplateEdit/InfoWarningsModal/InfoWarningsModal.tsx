@@ -17,21 +17,18 @@ export function InfoWarningsModal({ isOpen, warnings, onClose }: IInfoWarningsMo
   const { formatMessage } = useIntl();
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-    >
+    <Modal isOpen={isOpen} onClose={onClose}>
       <Header tag="p" size="6">
         {formatMessage({ id: 'template.cannot-enable' })}
       </Header>
 
       <hr className={styles['line']} />
 
-      {warnings.map(Warning => (
-        <>
+      {warnings.map((Warning) => (
+        <React.Fragment key={Warning.name}>
           <Warning onClickActionButton={onClose} />
           <hr className={styles['line']} />
-        </>
+        </React.Fragment>
       ))}
 
       <Button

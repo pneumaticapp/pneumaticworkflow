@@ -1,0 +1,104 @@
+.task-card-dropdown {
+  position: relative;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+}
+
+.task-card-dropdown__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  color: var(--pneumatic-color-black48);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+.task-card-dropdown__toggle:hover,
+.task-card-dropdown__toggle[aria-expanded='true'] {
+  color: var(--pneumatic-color-link-hover);
+}
+
+.task-card-dropdown__toggle svg,
+.task-card-dropdown__item svg {
+  display: block;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+}
+
+.task-card-dropdown__menu {
+  position: absolute;
+  top: -0.2rem;
+  right: 0;
+  z-index: 4;
+  width: 19.2rem;
+  height: 8rem;
+  overflow: hidden;
+  background: var(--pneumatic-color-white);
+  border-radius: 0.8rem;
+  box-shadow: 0 0.8rem 1.6rem rgb(98 98 95 / 8%);
+}
+
+.task-card-dropdown__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: calc(100% - 0.8rem);
+  height: 3.2rem;
+  padding: 0 1.2rem;
+  margin: 0.4rem;
+  font-family: inherit;
+  font-size: 1.5rem;
+  font-weight: normal;
+  line-height: 2rem;
+  color: var(--pneumatic-color-black100);
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-radius: 0.4rem;
+}
+
+.task-card-dropdown__item:hover,
+.task-card-dropdown__confirmation {
+  background: var(--pneumatic-color-beige);
+}
+
+.task-card-dropdown__divider {
+  height: 1px;
+  margin: 0 1.6rem;
+  background: var(--pneumatic-color-black16);
+}
+
+.task-card-dropdown__delete {
+  color: var(--pneumatic-color-notification1);
+}
+
+.task-card-dropdown__confirmation {
+  gap: 0.4rem;
+  justify-content: flex-start;
+  color: var(--pneumatic-color-black32);
+  cursor: default;
+}
+
+.task-card-dropdown__confirm,
+.task-card-dropdown__cancel {
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+.task-card-dropdown__confirm {
+  color: var(--pneumatic-color-notification1);
+}
+
+.task-card-dropdown__cancel {
+  color: var(--pneumatic-color-link-hover);
+}

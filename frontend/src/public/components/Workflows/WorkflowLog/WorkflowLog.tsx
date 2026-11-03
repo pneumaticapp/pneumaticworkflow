@@ -74,10 +74,7 @@ export const WorkflowLog = ({
   const { formatMessage } = useIntl();
 
   const users = useSelector(getUsers);
-  const mentions = useMemo(
-    () => getMentionData(getNotDeletedUsers(users)),
-    [users],
-  );
+  const mentions = useMemo(() => getMentionData(getNotDeletedUsers(users)), [users]);
 
   useEffect(() => {
     return () => {
@@ -244,10 +241,10 @@ export const WorkflowLog = ({
     const filteredItems = isSkippedTasksShown
       ? items
       : items.filter(
-        (event) =>
-          event.type !== EWorkflowLogEvent.TaskSkipped &&
+          (event) =>
+            event.type !== EWorkflowLogEvent.TaskSkipped &&
             event.type !== EWorkflowLogEvent.TaskSkippedDueLackAssignedPerformers,
-      );
+        );
 
     const normalizedItems =
       isLogMinimized && minimizedLogMaxEvents ? filteredItems.slice(0, minimizedLogMaxEvents) : filteredItems;

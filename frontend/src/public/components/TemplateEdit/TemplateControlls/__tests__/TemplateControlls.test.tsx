@@ -5,10 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { TemplateControlls, ITemplateControllsProps } from '../TemplateControlls';
 import { ETemplateStatus } from '../../../../types/redux';
-import {
-  getRunnableWorkflow,
-  loadDatasetsMap,
-} from '../../utils/getRunnableWorkflow';
+import { getRunnableWorkflow, loadDatasetsMap } from '../../utils/getRunnableWorkflow';
 import { mapFieldsetBindingClientToRuntime } from '../../../../utils/mapFieldsetBindingClientToRuntime';
 import { getTemplate } from '../../../../__stubs__/templates';
 import { makeFieldsetBindingClient, makeFieldsetRuntime } from '../../../../__stubs__/fieldsets.factory';
@@ -19,8 +16,8 @@ jest.mock('../../../../utils/history', () => ({
   checkSomeRouteMatchesLocation: jest.fn(() => false),
 }));
 
-jest.mock('../../../../redux/actions', () => ({
-  discardTemplateChanges: jest.fn((p) => ({ type: 'template/discardChanges', payload: p })),
+jest.mock('../../InfoWarningsModal', () => ({
+  InfoWarningsModal: () => null,
 }));
 
 jest.mock('react-router-dom', () => ({
@@ -47,13 +44,8 @@ jest.mock('../../../UI/ShowMore', () => ({
 }));
 
 jest.mock('../../../UI/Buttons/Button', () => ({
-  Button: jest.fn(
-    (props: { label: string; onClick?: () => void; disabled?: boolean }) =>
-      React.createElement(
-        'button',
-        { type: 'button', onClick: props.onClick, disabled: props.disabled },
-        props.label,
-      ),
+  Button: jest.fn((props: { label: string; onClick?: () => void; disabled?: boolean }) =>
+    React.createElement('button', { type: 'button', onClick: props.onClick, disabled: props.disabled }, props.label),
   ),
 }));
 
@@ -63,16 +55,6 @@ jest.mock('../../../UI/WarningPopup', () => ({
 
 jest.mock('../../../UI/Notifications', () => ({
   NotificationManager: { warning: jest.fn() },
-}));
-
-jest.mock('../../../UI', () => ({
-  RouteLeavingGuard: jest.fn(
-    (props: {
-      onConfirm: (path: string) => void;
-      onReject: (path: string) => void;
-      renderControlls: (confirm: (p: string) => void, reject: (p: string) => void) => React.ReactNode;
-    }) => props.renderControlls(props.onConfirm, props.onReject),
-  ),
 }));
 
 jest.mock('../../TemplateOwners', () => ({
@@ -125,7 +107,7 @@ describe('TemplateControlls — fieldset logic', () => {
     patchTemplate: jest.fn(),
     deleteTemplate: jest.fn(),
     openRunWorkflowModal: jest.fn(),
-    setInfoWarnings: jest.fn(),
+    onTemplateDeleted: jest.fn(),
     ...overrides,
   });
 
@@ -164,19 +146,10 @@ describe('TemplateControlls — fieldset logic', () => {
     await waitFor(() => expect(openRunWorkflowModal).toHaveBeenCalledTimes(1));
 
     expect(loadDatasetsMap).toHaveBeenCalledTimes(1);
-    expect(loadDatasetsMap).toHaveBeenCalledWith(
-      template.kickoff,
-      [mappedFieldset],
-    );
+    expect(loadDatasetsMap).toHaveBeenCalledWith(template.kickoff, [mappedFieldset]);
 
     expect(getRunnableWorkflow).toHaveBeenCalledTimes(1);
-    expect(getRunnableWorkflow).toHaveBeenCalledWith(
-      template,
-      {},
-      [mappedFieldset],
-    );
+    expect(getRunnableWorkflow).toHaveBeenCalledWith(template, {}, [mappedFieldset]);
     expect(openRunWorkflowModal).toHaveBeenCalledWith(runnableWorkflow);
   });
-
-
 });

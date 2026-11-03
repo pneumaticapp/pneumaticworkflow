@@ -52,7 +52,7 @@ export function RouteLeavingGuard({
   const handleReject = () => {
     setModalVisible(false);
     setConfirmedNavigation('rejected');
-  }
+  };
 
   useEffect(() => {
     if (!lastLocation) {
@@ -62,8 +62,8 @@ export function RouteLeavingGuard({
     const actionMap = {
       confirmed: () => onConfirm(lastLocation.pathname),
       rejected: () => onReject(lastLocation.pathname),
-      none: () => { },
-    }
+      none: () => {},
+    };
 
     actionMap[confirmedNavigation]();
     setConfirmedNavigation('none');
@@ -73,20 +73,15 @@ export function RouteLeavingGuard({
     <>
       <Prompt when={when} message={handleBlockedNavigation} />
 
-      <Modal
-        isOpen={modalVisible}
-        onClose={closeModal}
-      >
+      <Modal isOpen={modalVisible} onClose={closeModal}>
         <Header tag="p" size="6">
           {title}
         </Header>
 
         <p className={styles['message']}>{message}</p>
 
-        <div className={styles['controlls']}>
-          {renderControlls(handleConfirm, handleReject)}
-        </div>
+        <div className={styles['controlls']}>{renderControlls(handleConfirm, handleReject)}</div>
       </Modal>
     </>
   );
-};
+}

@@ -1,6 +1,5 @@
 /* eslint-disable no-useless-escape */
-/* eslint-disable no-irregular-whitespace */
-/* eslint-disable max-len */
+
 import { Config } from 'react-player';
 
 import { TMenuType } from '../types/common';
@@ -45,6 +44,7 @@ export const imageUrlRegex = /(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|gif|png)/gi;
 export const varibleIdRegex = /{{field-[a-z0-9]{6}}}/;
 
 export const DASHBOARD_VIDEO_URL = 'https://pneumaticworkflow.wistia.com/medias/0ph9hqcku3';
+export const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 
 export const DEFAULT_VIDEO_PLAYER_CONFIG: Config = {
   wistia: {

@@ -8,23 +8,21 @@ import { history } from '../../utils/history';
 import { logger } from '../../utils/logger';
 import { showInvitesNotification } from '../../utils/users';
 import { fetchUsers } from '../accounts/saga';
-import { loadActiveUsersCount , teamFetchStarted } from '../accounts/slice';
+import { loadActiveUsersCount, teamFetchStarted } from '../accounts/slice';
 
 import { setGeneralLoaderVisibility } from '../general/actions';
 import { getUsers } from '../selectors/user';
 import { getInvites } from '../../api/team/getInvites';
 import { ERoutes } from '../../constants/routes';
 import { TeamPages, TInviteUsersPayload, UserInvite } from './types';
-import { 
-  changeTeamActiveTab, 
-  inviteUsers, 
-  loadInvitesUsers, 
-  loadInvitesUsersSuccess, 
-  setRecentInvitedUsers, 
-  setTeamActivePage 
+import {
+  changeTeamActiveTab,
+  inviteUsers,
+  loadInvitesUsers,
+  loadInvitesUsersSuccess,
+  setRecentInvitedUsers,
+  setTeamActivePage,
 } from './slice';
-
-
 
 function* inviteUsersSaga({
   payload: { invites, withGeneralLoader, withSuccessNotification, onStartUploading, onEndUploading, onError },
@@ -87,6 +85,10 @@ function* setTeamActiveTab({ payload: processesType }: PayloadAction<TeamPages>)
 
   if (processesType === TeamPages.Users) {
     history.push(ERoutes.Team);
+  }
+
+  if (processesType === TeamPages.AIAgents) {
+    history.push(ERoutes.AIAgents);
   }
 }
 

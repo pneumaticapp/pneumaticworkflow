@@ -46,7 +46,7 @@ exports[`SelectMenu renders correctly 1`] = `
       />
     </DropdownItem>
     <DropdownItem
-      className="dropdown-item-sm value-item undefined"
+      className="dropdown-item-sm value-item value-item__disabled"
       key="date-desc"
       onClick={[Function]}
       tag="button"

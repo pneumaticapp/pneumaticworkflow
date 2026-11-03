@@ -1,11 +1,24 @@
 import { mapFieldsetBindingsToClient, mapFieldsetTaskAPIToRuntime } from '../mapFieldsetsAPIToClient';
 import { EFieldLabelPosition } from '../../types/fieldset';
-import { makeFieldsetField, makeFieldsetBinding, makeFieldsetTaskAPI, makeFieldsetTemplateRule } from '../../__stubs__/fieldsets.factory';
+import {
+  makeFieldsetField,
+  makeFieldsetBinding,
+  makeFieldsetTaskAPI,
+  makeFieldsetTemplateRule,
+} from '../../__stubs__/fieldsets.factory';
 import { makeExtraField } from '../../__stubs__/fields.factory';
 
 describe('mapFieldsetBindingsToClient', () => {
   it('returns an empty array for empty input', () => {
     expect(mapFieldsetBindingsToClient([])).toEqual([]);
+  });
+
+  it('returns an empty array when undefined or null is provided', () => {
+    const undefinedInput = undefined as unknown as Parameters<typeof mapFieldsetBindingsToClient>[0];
+    const nullInput = null as unknown as Parameters<typeof mapFieldsetBindingsToClient>[0];
+
+    expect(mapFieldsetBindingsToClient(undefinedInput)).toEqual([]);
+    expect(mapFieldsetBindingsToClient(nullInput)).toEqual([]);
   });
 
   it('renames apiName to apiNameBinding and drops apiName', () => {
@@ -45,11 +58,19 @@ describe('mapFieldsetBindingsToClient', () => {
     expect(result.fields).toHaveLength(1);
   });
 
+  it('defaults fields to empty array when fields is missing or undefined', () => {
+    const binding = makeFieldsetBinding({
+      apiName: 'fs-no-fields',
+      fields: undefined,
+    });
+
+    const [result] = mapFieldsetBindingsToClient([binding]);
+
+    expect(result.fields).toEqual([]);
+  });
+
   it('maps multiple bindings', () => {
-    const bindings = [
-      makeFieldsetBinding({ apiName: 'fs-a' }),
-      makeFieldsetBinding({ apiName: 'fs-b' }),
-    ];
+    const bindings = [makeFieldsetBinding({ apiName: 'fs-a' }), makeFieldsetBinding({ apiName: 'fs-b' })];
 
     const results = mapFieldsetBindingsToClient(bindings);
 
@@ -64,10 +85,16 @@ describe('mapFieldsetTaskAPIToRuntime', () => {
     expect(mapFieldsetTaskAPIToRuntime([])).toEqual([]);
   });
 
+  it('returns an empty array when undefined or null is provided in runtime', () => {
+    const undefinedInput = undefined as unknown as Parameters<typeof mapFieldsetTaskAPIToRuntime>[0];
+    const nullInput = null as unknown as Parameters<typeof mapFieldsetTaskAPIToRuntime>[0];
+
+    expect(mapFieldsetTaskAPIToRuntime(undefinedInput)).toEqual([]);
+    expect(mapFieldsetTaskAPIToRuntime(nullInput)).toEqual([]);
+  });
+
   it('renames apiName to apiNameBinding and drops both id and apiName', () => {
-    const result = mapFieldsetTaskAPIToRuntime([
-      makeFieldsetTaskAPI({ id: 999, apiName: 'task-xyz' }),
-    ]);
+    const result = mapFieldsetTaskAPIToRuntime([makeFieldsetTaskAPI({ id: 999, apiName: 'task-xyz' })]);
 
     expect(result).toHaveLength(1);
     expect(result[0].apiNameBinding).toBe('task-xyz');
@@ -99,6 +126,18 @@ describe('mapFieldsetTaskAPIToRuntime', () => {
     expect(result.layout).toBe('horizontal');
     expect(result.title).toBe('Task Title');
     expect(result.fields).toHaveLength(1);
+  });
+
+  it('defaults fields to empty array when fields is missing or undefined in runtime', () => {
+    const taskFs = makeFieldsetTaskAPI({
+      id: 10,
+      apiName: 'fs-no-fields-runtime',
+      fields: undefined,
+    });
+
+    const [result] = mapFieldsetTaskAPIToRuntime([taskFs]);
+
+    expect(result.fields).toEqual([]);
   });
 
   it('maps multiple task fieldsets', () => {

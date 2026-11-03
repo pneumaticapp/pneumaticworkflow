@@ -1,4 +1,3 @@
-/* eslint-disable indent */
 import { isValidPhoneNumber } from 'react-phone-number-input';
 import { couponRegex, emailRegex, urlRegex, urlWithProtocolRegex, whitespaceRegex } from '../constants/defaultValues';
 
@@ -27,6 +26,13 @@ export const EMPTY_RULE: IRule = {
   message: '',
   isInvalid: () => false,
 };
+
+export const REQUIRED_RULES: IRule[] = [
+  {
+    message: 'validation.field-required',
+    isInvalid: isEmpty,
+  },
+];
 
 export const EMAIL_RULES: IRule[] = [
   {
@@ -245,7 +251,7 @@ export const getDatasetRowRules = (existingItems: string[]): IRule[] => [
     message: 'validation.dataset-row-exists',
     isInvalid: (value: string) => {
       const trimmedValue = (value || '').trim().toLowerCase();
-      if (!trimmedValue) return false; 
+      if (!trimmedValue) return false;
       return existingItems.some((item) => item.trim().toLowerCase() === trimmedValue);
     },
   },
@@ -271,6 +277,7 @@ export const validateZipCode = validateFieldCreator(ZIP_CODE_RULES);
 export const validateAddress = validateFieldCreator(ADDRESS_CODE_RULES);
 export const validateCity = validateFieldCreator(CITY_RULES);
 export const validateRegion = validateFieldCreator(REGION_RULES);
+export const validateRequired = validateFieldCreator(REQUIRED_RULES);
 export const validateKickoffFieldName = validateFieldCreator(KICKOFF_FIELD_NAME_RULES);
 export const validateKickoffFieldDescription = validateFieldCreator(KICKOFF_FIELD_DESCRIPTION_RULES);
 export const validateRegistrationPassword = validateFieldCreator(REGISTRATION_PASSWORD_RULES);

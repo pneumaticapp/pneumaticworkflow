@@ -14,7 +14,6 @@ import {
   usersFetchStarted,
   activeUsersCountFetchFinished,
   loadActiveUsersCount,
-  closeCreateUserModal,
   closeDeleteUserModal,
   openDeleteUserModal,
   userListSortingChanged,
@@ -29,6 +28,7 @@ import {
   changeUserManager,
   loadChangeUserReports,
   changeUserReports,
+  resendUserInvite,
 } from './slice';
 
 import {
@@ -44,7 +44,8 @@ import { EUserListSorting, EUserStatus, ICreateUserRequest, TUserListItem } from
 import { EDeleteUserModalState, IAccounts } from '../../types/redux';
 
 import { getErrorMessage } from '../../utils/getErrorMessage';
-import { getUsers, TResponseUser } from '../../api/getUsers';
+import { getUsers } from '../../api/getUsers';
+import type { TResponseUser } from '../../api/types';
 import { getPlan, TGetPlanResponse } from '../../api/getPlan';
 import { authUserSuccess, makeStripePayment, TAuthUserResult } from '../auth/actions';
 import { ERoutes } from '../../constants/routes';
@@ -66,6 +67,8 @@ import { getAccountPlan } from '../selectors/accounts';
 import { getAbsolutePath } from '../../utils/getAbsolutePath';
 import { createUser as createUserApi } from '../../api/createUser';
 import { editTeamUser } from '../../api/editTeamUser';
+import { resendInvite } from '../../api/resendInvite';
+import { submitCreatePerformer } from '../team/utils/submitCreatePerformer';
 
 /**
  * The backend API returns `subordinates_ids` (camelCased to `subordinatesIds`),
@@ -80,7 +83,10 @@ function normalizeUserReportIds(user: TUserListItem): TUserListItem {
 }
 
 export function* fetchUsers(
-  action: PayloadAction<TUsersFetchPayload> = { type: 'accounts/usersFetchStarted', payload: { showErrorNotification: true } }
+  action: PayloadAction<TUsersFetchPayload> = {
+    type: 'accounts/usersFetchStarted',
+    payload: { showErrorNotification: true },
+  },
 ) {
   const { payload: { showErrorNotification } = { showErrorNotification: true } } = action;
 
@@ -123,10 +129,12 @@ export function* fetchActiveUsersCount() {
     const accounts: ReturnType<typeof getAccountsStore> = yield select(getAccountsStore);
     const localUsers = accounts.team.list.length ? accounts.team.list : accounts.users;
 
-    yield put(activeUsersCountFetchFinished({
-      activeUsers: localUsers.length ? getActiveUsers(localUsers).length : activeUsers,
-      tenantsActiveUsers,
-    }));
+    yield put(
+      activeUsersCountFetchFinished({
+        activeUsers: localUsers.length ? getActiveUsers(localUsers).length : activeUsers,
+        tenantsActiveUsers,
+      }),
+    );
   } catch (error) {
     console.info('fetch active users count error : ', error);
   }
@@ -167,6 +175,7 @@ function* fetchTeam() {
     const rawUsers: TUserListItem[] = yield getUsers({
       type: 'user',
       status: [EUserStatus.Active, EUserStatus.Invited],
+      isAi: false,
     });
     const users = rawUsers.map(normalizeUserReportIds);
 
@@ -260,7 +269,9 @@ function* fetchDeleteUser({ payload: { userId, reassignedUserId } }: PayloadActi
   }
 }
 
-function* fetchDeclineInvite({ payload: { userId, inviteId, reassignedUserId } }: PayloadAction<TDeclineInvitePayload>) {
+function* fetchDeclineInvite({
+  payload: { userId, inviteId, reassignedUserId },
+}: PayloadAction<TDeclineInvitePayload>) {
   try {
     yield put(setDeleteUserModalState(EDeleteUserModalState.PerformingAction));
     yield call(fetchReassignWorkflows, userId, reassignedUserId);
@@ -347,16 +358,28 @@ function* startFreeSubscriptionSaga() {
 
 function* createUserSaga({ payload }: PayloadAction<ICreateUserRequest>) {
   try {
-    yield call(createUserApi, payload);
+    yield call(submitCreatePerformer, call(createUserApi, payload));
     NotificationManager.success({ message: 'team.create-user-success-msg' });
-    yield put(closeCreateUserModal());
 
     yield put(teamFetchStarted({}));
     yield put(usersFetchStarted());
     yield put(loadActiveUsersCount());
   } catch (error) {
-    NotificationManager.notifyApiError( error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     logger.error('failed to create user', error);
+  }
+}
+
+export function* resendUserInviteSaga({ payload: userId }: PayloadAction<number>) {
+  yield put(setGeneralLoaderVisibility(true));
+  try {
+    yield call(resendInvite, userId);
+    NotificationManager.success({ message: 'team.resend-invite-success-msg' });
+  } catch (error) {
+    NotificationManager.warning({ message: getErrorMessage(error) });
+    logger.error('failed to resend invite', error);
+  } finally {
+    yield put(setGeneralLoaderVisibility(false));
   }
 }
 
@@ -389,10 +412,7 @@ export function* watchChangeUserReports() {
 }
 
 export function* watchOpenDeleteUserModal() {
-  yield takeLatest(
-    [openDeleteUserModal.type, closeDeleteUserModal.type],
-    handleToggleDeleteUserModal,
-  );
+  yield takeLatest([openDeleteUserModal.type, closeDeleteUserModal.type], handleToggleDeleteUserModal);
 }
 
 export function* watchDeleteUser() {
@@ -419,6 +439,10 @@ export function* watchCreateUser() {
   yield takeEvery(createUser.type, createUserSaga);
 }
 
+export function* watchResendUserInvite() {
+  yield takeEvery(resendUserInvite.type, resendUserInviteSaga);
+}
+
 export function* rootSaga() {
   yield all([
     fork(watchFetchUser),
@@ -435,5 +459,6 @@ export function* rootSaga() {
     fork(watchCreateUser),
     fork(watchChangeUserManager),
     fork(watchChangeUserReports),
+    fork(watchResendUserInvite),
   ]);
 }

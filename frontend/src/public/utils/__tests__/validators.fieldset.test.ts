@@ -1,4 +1,3 @@
-
 import { validateFieldsetName, validateFieldsetTitle } from '../validators';
 
 describe('validateFieldsetName', () => {

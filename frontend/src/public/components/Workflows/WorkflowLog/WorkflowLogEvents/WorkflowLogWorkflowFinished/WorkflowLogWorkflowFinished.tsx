@@ -34,10 +34,7 @@ export function WorkflowLogWorkflowFinished({ userId, created, type }: TWorkflow
   );
 
   if (type !== EWorkflowLogEvent.WorkflowComplete) {
-    return renderEvent(
-      formatMessage({ id: 'general.pneumatic' }),
-      <Avatar size="lg" sizeMobile="sm" isSystemAvatar />,
-    );
+    return renderEvent(formatMessage({ id: 'general.pneumatic' }), <Avatar size="lg" sizeMobile="sm" isSystemAvatar />);
   }
 
   return (

@@ -1,7 +1,7 @@
-import { IWorkflowLogItem } from "../../types/workflow";
-import { ETaskStatus } from "../../types/tasks";
-import { EUserStatus, IUserVacation } from "../../types/user";
-import { EUserGroupType } from "../team/types";
+import { IWorkflowLogItem } from '../../types/workflow';
+import { ETaskStatus } from '../../types/tasks';
+import { EUserStatus, IUserVacation } from '../../types/user';
+import { EUserGroupType } from '../team/types';
 
 export interface IWsEnvelopeBase {
   id: string;
@@ -43,9 +43,7 @@ export type IRealtimeWsEnvelope =
   | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.NOTIFICATION_CREATED; data: IWsNotificationCreatedData })
   // process events
   | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.EVENT_CREATED; data: IWsEventCreatedData })
-  | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.EVENT_UPDATED; data: IWsEventUpdatedData })
-
-
+  | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.EVENT_UPDATED; data: IWsEventUpdatedData });
 
 // ======================= event
 
@@ -108,7 +106,6 @@ export interface IWsDueDateChangedData {
   };
   workflow: IWsNotificationWorkflowRef;
 }
-
 
 export interface IWsUrgentData {
   id: number;
@@ -244,12 +241,12 @@ export interface IWsNotificationTaskRef {
   id: number;
   name: string;
 }
-  
+
 export interface IWsNotificationDelay {
   estimatedEndDateTsp: number;
   duration: string;
 }
-  
+
 export interface IWsNotificationWorkflowRef {
   id: number;
   name: string;
@@ -297,9 +294,7 @@ export function isNotificationDataType(type: string): type is TNotificationDataT
 
 export type TNotificationWsEventType = TNotificationDataType;
 
-export const NOTIFICATION_WS_TYPES: ReadonlySet<TNotificationWsEventType> = new Set(
-  NOTIFICATION_DATA_TYPES,
-);
+export const NOTIFICATION_WS_TYPES: ReadonlySet<TNotificationWsEventType> = new Set(NOTIFICATION_DATA_TYPES);
 
 export function isNotificationWsEventType(type: string): type is TNotificationWsEventType {
   return NOTIFICATION_WS_TYPES.has(type as TNotificationWsEventType);
@@ -312,6 +307,4 @@ export type INotificationWsEnvelope = {
 
 export type TRealtimeEventType = ERealtimeEnvelopeType;
 
-export const REALTIME_EVENT_TYPES: readonly ERealtimeEnvelopeType[] = Object.values(
-  ERealtimeEnvelopeType,
-);
+export const REALTIME_EVENT_TYPES: readonly ERealtimeEnvelopeType[] = Object.values(ERealtimeEnvelopeType);

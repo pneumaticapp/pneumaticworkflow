@@ -34,7 +34,11 @@ const baseProps = {
 };
 
 const renderWithIntl = (ui: React.ReactElement) =>
-  render(<IntlProvider locale="en" messages={enMessages}>{ui}</IntlProvider>);
+  render(
+    <IntlProvider locale="en" messages={enMessages}>
+      {ui}
+    </IntlProvider>,
+  );
 
 describe('ExtraFieldDropdown', () => {
   beforeEach(() => {

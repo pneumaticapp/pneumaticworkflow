@@ -126,7 +126,14 @@ const FieldsetDetails = ({
       rules: fieldset.rules || [],
     });
     setDetailFieldsetChanges({});
-  }, [fieldset?.id, fieldset?.title, fieldset?.description, fieldset?.labelPosition, fieldset?.fields, fieldset?.rules]);
+  }, [
+    fieldset?.id,
+    fieldset?.title,
+    fieldset?.description,
+    fieldset?.labelPosition,
+    fieldset?.fields,
+    fieldset?.rules,
+  ]);
 
   const labelPositionOptions = useMemo(
     () =>
@@ -323,7 +330,7 @@ const FieldsetDetails = ({
                   onSuccess: () => {
                     history.push(fieldsetListRoute);
                   },
-                })
+                }),
               );
             }}
             onClone={handleCloneFieldset}
@@ -339,9 +346,7 @@ const FieldsetDetails = ({
       {isLinked ? (
         <div className={`${styles['usage-banner']} ${styles['usage-banner--linked']}`}>
           <div className={styles['usage-banner__row']}>
-            <span>
-              {formatMessage({ id: 'fieldsets.usage.linked' }, { count: fieldset.usage.length })}
-            </span>
+            <span>{formatMessage({ id: 'fieldsets.usage.linked' }, { count: fieldset.usage.length })}</span>
             <DropdownList
               controlSize="sm"
               className={styles['usage-banner__dropdown']}
@@ -388,10 +393,7 @@ const FieldsetDetails = ({
           <div className={styles['settings-field']}>
             <label htmlFor="fieldset-title" className={styles['settings-label']}>
               {formatMessage({ id: 'fieldsets.settings.title' })}
-              <Tooltip
-                content={formatMessage({ id: 'fieldsets.settings.title-tooltip' })}
-                placement="top"
-              >
+              <Tooltip content={formatMessage({ id: 'fieldsets.settings.title-tooltip' })} placement="top">
                 <span>
                   <FilledInfoIcon />
                 </span>
@@ -423,10 +425,7 @@ const FieldsetDetails = ({
           <div className={styles['settings-field']}>
             <label htmlFor="fieldset-description" className={styles['settings-label']}>
               {formatMessage({ id: 'fieldsets.settings.description' })}
-              <Tooltip
-                content={formatMessage({ id: 'fieldsets.settings.description-tooltip' })}
-                placement="top"
-              >
+              <Tooltip content={formatMessage({ id: 'fieldsets.settings.description-tooltip' })} placement="top">
                 <span className={styles['settings-info-icon']}>
                   <FilledInfoIcon />
                 </span>
@@ -466,25 +465,27 @@ const FieldsetDetails = ({
               {formatMessage({ id: 'fieldsets.settings.label-position' })}
             </span>
             <div ref={labelPositionRef}>
-            <FilterSelect<'id', 'name', { id: EFieldLabelPosition; name: string }>
-              optionIdKey="id"
-              optionLabelKey="name"
-              options={labelPositionOptions}
-              selectedOption={detailFieldset.labelPosition}
-              onChange={(key) => {
-                if (key && key !== detailFieldset.labelPosition) {
-                  setDetailFieldset((prev) => ({ ...prev, labelPosition: key as EFieldLabelPosition }));
-                  setDetailFieldsetChanges((prev) => ({ ...prev, labelPosition: key as EFieldLabelPosition }));
+              <FilterSelect<'id', 'name', { id: EFieldLabelPosition; name: string }>
+                optionIdKey="id"
+                optionLabelKey="name"
+                options={labelPositionOptions}
+                selectedOption={detailFieldset.labelPosition}
+                onChange={(key) => {
+                  if (key && key !== detailFieldset.labelPosition) {
+                    setDetailFieldset((prev) => ({ ...prev, labelPosition: key as EFieldLabelPosition }));
+                    setDetailFieldsetChanges((prev) => ({ ...prev, labelPosition: key as EFieldLabelPosition }));
+                  }
+                }}
+                resetFilter={() => {}}
+                placeholderText=""
+                isDisabled={isLinked}
+                containerClassname={styles['settings-select']}
+                toggleClassName={styles['settings-select__toggle']}
+                menuClassName={styles['settings-select__menu']}
+                renderPlaceholder={() =>
+                  labelPositionOptions.find((option) => option.id === detailFieldset.labelPosition)?.name || ''
                 }
-              }}
-              resetFilter={() => {}}
-              placeholderText=""
-              isDisabled={isLinked}
-              containerClassname={styles['settings-select']}
-              toggleClassName={styles['settings-select__toggle']}
-              menuClassName={styles['settings-select__menu']}
-              renderPlaceholder={() => labelPositionOptions.find((option) => option.id === detailFieldset.labelPosition)?.name || ''}
-            />
+              />
             </div>
           </div>
         </div>
@@ -498,12 +499,7 @@ const FieldsetDetails = ({
 
         <div className={classnames(styles['components'], isLinked && styles['components_disabled'])}>
           {ExtraFieldsMap.map((x) => (
-            <ExtraFieldIcon
-              {...x}
-              key={x.id}
-              onClick={() => handleCreateField(x.id)}
-              disabled={isLinked}
-            />
+            <ExtraFieldIcon {...x} key={x.id} onClick={() => handleCreateField(x.id)} disabled={isLinked} />
           ))}
         </div>
 
@@ -511,9 +507,7 @@ const FieldsetDetails = ({
           <div className={classnames(styles['fields'], isLinked && styles['fieldset_readonly'])}>
             {sortedFields.map((field, index) => {
               const readOnlyField =
-                isLinked && SINGLE_LINE_FIELD_TYPES.has(field.type)
-                  ? { ...field, type: EExtraFieldType.Text }
-                  : field;
+                isLinked && SINGLE_LINE_FIELD_TYPES.has(field.type) ? { ...field, type: EExtraFieldType.Text } : field;
 
               const IconComponent = isLinked && READONLY_FIELD_ICONS[field.type];
 
@@ -588,11 +582,7 @@ const FieldsetDetails = ({
             />
 
             {!isLinked && (
-              <button
-                type="button"
-                className={styles['rule-delete-btn']}
-                onClick={() => handleDeleteRule(index)}
-              >
+              <button type="button" className={styles['rule-delete-btn']} onClick={() => handleDeleteRule(index)}>
                 {formatMessage({ id: 'fieldsets.rule-delete' })}
               </button>
             )}

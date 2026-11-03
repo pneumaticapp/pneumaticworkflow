@@ -1,15 +1,6 @@
 import classnames from 'classnames';
 import * as React from 'react';
-import {
-  ChangeEvent,
-  forwardRef,
-  KeyboardEvent,
-  MutableRefObject,
-  ReactNode,
-  Ref,
-  useCallback,
-  useMemo,
-} from 'react';
+import { ChangeEvent, forwardRef, KeyboardEvent, MutableRefObject, ReactNode, Ref, useCallback, useMemo } from 'react';
 
 import { Field, EFieldTagName } from '../../../Field';
 import { validateKickoffFieldName } from '../../../../utils/validators';
@@ -45,10 +36,7 @@ interface IKickoffFormFieldWithNameProps {
   isNumericField?: boolean;
 }
 
-const assignInputRef = (
-  targetRef: Ref<HTMLInputElement> | undefined,
-  node: HTMLInputElement | null,
-): void => {
+const assignInputRef = (targetRef: Ref<HTMLInputElement> | undefined, node: HTMLInputElement | null): void => {
   if (!targetRef) {
     return;
   }
@@ -124,12 +112,12 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
       () =>
         onClick
           ? {
-            onClick,
-            onKeyDown: handleDescriptionWrapperKeyDown,
-            role: 'button' as const,
-            tabIndex: 0,
-            'aria-label': 'Field description',
-          }
+              onClick,
+              onKeyDown: handleDescriptionWrapperKeyDown,
+              role: 'button' as const,
+              tabIndex: 0,
+              'aria-label': 'Field description',
+            }
           : {},
       [onClick, handleDescriptionWrapperKeyDown],
     );
@@ -183,4 +171,3 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
   },
 );
 FieldWithName.displayName = 'FieldWithName';
-

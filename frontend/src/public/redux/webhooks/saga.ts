@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import { all, call, put, fork, takeEvery, select } from 'redux-saga/effects';
 import { EWebhooksActions, setWebhooksUrl, setWebhooksStatus, TAddWebhook, TRemoveWebhook } from '../actions';

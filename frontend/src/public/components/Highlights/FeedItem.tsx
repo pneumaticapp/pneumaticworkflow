@@ -68,7 +68,7 @@ export function FeedItem({
                   Icon: EditIcon,
                   size: 'lg',
                 } as TDropdownOption,
-            ]
+              ]
             : []),
           ...(template
             ? [
@@ -77,7 +77,7 @@ export function FeedItem({
                   onClick: applyTemplatesFilter(template.id),
                   size: 'lg',
                 } as TDropdownOption,
-            ]
+              ]
             : []),
           {
             label: formatMessage({ id: 'process-highlights.review-workflows-of' }, { user: userName }),
@@ -130,11 +130,11 @@ export function FeedItem({
               <div className={styles['feed-item__content']}>
                 <span className={styles['body__process-name']}>{workflowName}</span>
                 <div className={styles['info__task']}>
-                  <span className={styles['task__name']}>
+                  <div className={styles['task__name']}>
                     {type === EWorkflowLogEvent.WorkflowsReturned
                       ? formatMessage({ id: 'task.log-returned' }, { taskName: task?.name })
                       : task?.name}
-                  </span>
+                  </div>
                 </div>
               </div>
             </div>

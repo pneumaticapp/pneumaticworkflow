@@ -14,60 +14,60 @@ export const Default: Story = {
   args: {
     value: '2024-01-15',
     onChange: (date) => console.log('Date changed:', date),
-    placeholder: 'Select a date'
-  }
+    placeholder: 'Select a date',
+  },
 };
 
 export const WithTitle: Story = {
   args: {
     ...Default.args,
-    title: 'Date Field Title'
-  }
+    title: 'Date Field Title',
+  },
 };
 
 export const WithError: Story = {
   args: {
     ...Default.args,
-    errorMessage: 'Please select a valid date'
-  }
+    errorMessage: 'Please select a valid date',
+  },
 };
 
 export const Required: Story = {
   args: {
     ...Default.args,
     isRequired: true,
-    title: 'Required Date Field'
-  }
+    title: 'Required Date Field',
+  },
 };
 
 export const Disabled: Story = {
   args: {
     ...Default.args,
     disabled: true,
-    title: 'Disabled Date Field'
-  }
+    title: 'Disabled Date Field',
+  },
 };
 
 export const SmallSize: Story = {
   args: {
     ...Default.args,
     fieldSize: 'sm',
-    title: 'Small Date Field'
-  }
+    title: 'Small Date Field',
+  },
 };
 
 export const MediumSize: Story = {
   args: {
     ...Default.args,
     fieldSize: 'md',
-    title: 'Medium Date Field'
-  }
+    title: 'Medium Date Field',
+  },
 };
 
 export const LargeSize: Story = {
   args: {
     ...Default.args,
     fieldSize: 'lg',
-    title: 'Large Date Field'
-  }
+    title: 'Large Date Field',
+  },
 };

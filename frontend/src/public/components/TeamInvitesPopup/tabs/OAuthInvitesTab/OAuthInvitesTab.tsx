@@ -14,8 +14,6 @@ import { IOAuthInvitesTabProps } from './types';
 import styles from './OAuthInvitesTab.css';
 import popupStyles from '../../TeamInvitesPopup.css';
 
-
-
 const ScrollBar = PerfectScrollbar as unknown as Function;
 
 export function OAuthInvitesTab({ type, users, teamUsers }: IOAuthInvitesTabProps) {
@@ -32,7 +30,7 @@ export function OAuthInvitesTab({ type, users, teamUsers }: IOAuthInvitesTabProp
   const filteredUsers = useMemo(() => {
     return users.filter((user) => isMatchingSearchQuery(searchText, [user.email, getUserFullName(user)]));
   }, [users, searchText]);
-  
+
   const sendInvite = useCallback(
     (email: string) => () => {
       dispatch(

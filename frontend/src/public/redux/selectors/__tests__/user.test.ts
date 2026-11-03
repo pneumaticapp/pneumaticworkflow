@@ -2,6 +2,7 @@ import { ELoggedState, IApplicationState, IAuthUser } from '../../../types/redux
 import { ESubscriptionPlan } from '../../../types/account';
 import { EUserStatus } from '../../../types/user';
 import {
+  getCanAccessTemplateIntegrations,
   getCanAccessWorkflows,
   getHasExtendedInterface,
   getHasBasicInterface,
@@ -54,9 +55,10 @@ const createMockAuthUser = (overrides: Partial<IAuthUser> = {}): IAuthUser => ({
   ...overrides,
 });
 
-const createMockState = (authUserOverrides: Partial<IAuthUser> = {}): IApplicationState => ({
-  authUser: createMockAuthUser(authUserOverrides),
-} as IApplicationState);
+const createMockState = (authUserOverrides: Partial<IAuthUser> = {}): IApplicationState =>
+  ({
+    authUser: createMockAuthUser(authUserOverrides),
+  }) as IApplicationState;
 
 describe('user selectors', () => {
   describe('getIsAdmin', () => {
@@ -76,6 +78,32 @@ describe('user selectors', () => {
       const state = createMockState({ isAdmin: undefined });
 
       expect(getIsAdmin(state)).toBe(false);
+    });
+  });
+
+  describe('getCanAccessTemplateIntegrations', () => {
+    it('returns true when user is admin', () => {
+      const state = createMockState({ isAdmin: true, isAccountOwner: false });
+
+      expect(getCanAccessTemplateIntegrations(state)).toBe(true);
+    });
+
+    it('returns true when user is the account owner without the admin flag', () => {
+      const state = createMockState({ isAdmin: false, isAccountOwner: true });
+
+      expect(getCanAccessTemplateIntegrations(state)).toBe(true);
+    });
+
+    it('returns false when user is neither admin nor account owner', () => {
+      const state = createMockState({ isAdmin: false, isAccountOwner: false });
+
+      expect(getCanAccessTemplateIntegrations(state)).toBe(false);
+    });
+
+    it('returns false when both flags are undefined', () => {
+      const state = createMockState({ isAdmin: undefined, isAccountOwner: undefined });
+
+      expect(getCanAccessTemplateIntegrations(state)).toBe(false);
     });
   });
 

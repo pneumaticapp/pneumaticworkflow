@@ -1,13 +1,13 @@
 .avatar {
   display: flex;
-  font-weight: bold;
-  line-height: initial;
-  text-align: center;
-  text-transform: uppercase;
-  color: white;
-  border-radius: 50%;
   align-items: center;
   justify-content: center;
+  font-weight: bold;
+  line-height: initial;
+  color: white;
+  text-align: center;
+  text-transform: uppercase;
+  border-radius: 50%;
 
   &.is-group {
     color: var(--pneumatic-color-black72);

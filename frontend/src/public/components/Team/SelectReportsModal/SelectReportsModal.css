@@ -1,9 +1,9 @@
 .select-reports-modal {
-  padding: 30px;
   display: flex;
   flex-direction: column;
   width: 480px;
   max-width: 90vw;
+  padding: 30px;
   background-color: var(--white);
   border-radius: 4px;
 }
@@ -22,12 +22,12 @@
 }
 
 .select-reports-modal__performers {
-  margin: 16px 0 0;
-  padding: 0;
   display: flex;
-  list-style: none;
   flex-wrap: wrap;
   gap: 8px;
+  padding: 0;
+  margin: 16px 0 0;
+  list-style: none;
 }
 
 .select-reports-modal__performer-item {
@@ -36,9 +36,9 @@
 
 .select-reports-modal__buttons {
   display: flex;
+  gap: 16px;
   align-items: center;
   justify-content: flex-start;
-  gap: 16px;
 }
 
 .select-reports-modal__button-remove {

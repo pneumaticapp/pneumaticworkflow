@@ -3,7 +3,9 @@ import { getBrowserConfigEnv } from '../utils/getConfig';
 import { IGettingStartedChecklist } from '../types/dashboard';
 
 export function getGettingStartedChecklist() {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   return commonRequest<IGettingStartedChecklist>(urls.gettingStartedChecklist, {});
 }

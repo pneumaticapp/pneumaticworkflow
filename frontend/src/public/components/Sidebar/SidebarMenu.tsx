@@ -23,12 +23,7 @@ const renderIcon = ({ iconComponent: IconComponent, icon }: IMenuItem) => {
 
 const DesktopMenuItem = ({ active, containerClassnames, item, plan }: IDesktopMenuItemProps) => {
   const link = item.newWindow ? (
-    <a
-      href={item.to}
-      rel="noopener noreferrer"
-      target="_blank"
-      className={styles['sidebar__link']}
-    >
+    <a href={item.to} rel="noopener noreferrer" target="_blank" className={styles['sidebar__link']}>
       {renderIcon(item)}
       <IntlMessages id={item.label} />
     </a>
@@ -45,9 +40,7 @@ const DesktopMenuItem = ({ active, containerClassnames, item, plan }: IDesktopMe
     >
       {renderIcon(item)}
       <IntlMessages id={item.label} />
-      {typeof item.counter === 'number' && (
-        <SidebarMenuItemCounter value={item.counter} type={item.counterType} />
-      )}
+      {typeof item.counter === 'number' && <SidebarMenuItemCounter value={item.counter} type={item.counterType} />}
     </NavLink>
   );
 
@@ -74,10 +67,7 @@ export const SidebarMenu = ({
   plan,
 }: ISidebarMenuProps) => (
   <>
-    <PerfectScrollbar
-      options={{ suppressScrollX: true, wheelPropagation: false }}
-      className={styles['menu-wrapper']}
-    >
+    <PerfectScrollbar options={{ suppressScrollX: true, wheelPropagation: false }} className={styles['menu-wrapper']}>
       <ul className={styles['menu-wrapper__list']}>
         {menuItems.map((item) => {
           if (item.isHidden) {
