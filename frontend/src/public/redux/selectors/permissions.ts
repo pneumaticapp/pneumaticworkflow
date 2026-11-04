@@ -1,7 +1,7 @@
-import type { IApplicationState } from '../store';
+import type { RootState } from '../store';
 import { EPermissionObjectType } from '../../types/permissions';
 
-export const getCanChangeWorkflow = (workflowId?: number) => (state: IApplicationState) =>
+export const getCanChangeWorkflow = (workflowId?: number) => (state: RootState) =>
   Boolean(workflowId && state.permissions[EPermissionObjectType.Workflow][workflowId]?.hasChange);
 
-export const getPermissionsUserId = (state: IApplicationState) => state.permissions.userId;
+export const getPermissionsUserId = (state: RootState) => state.permissions.userId;

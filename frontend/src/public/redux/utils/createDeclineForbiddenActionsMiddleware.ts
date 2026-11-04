@@ -1,5 +1,5 @@
 import { Middleware } from 'redux';
-import type { IApplicationState } from '../store';
+import type { RootState } from '../store';
 import { EPlanActions, getPlanPendingActions } from '../../utils/getPlanPendingActions';
 import { ENotificationsActions, ETemplatesActions } from '../actions';
 
@@ -22,12 +22,12 @@ export function createDeclineForbiddenActionsMiddleware(): Middleware {
     };
 }
 
-const isTrialEnded = (getState: () => IApplicationState) => {
+const isTrialEnded = (getState: () => RootState) => {
   const {
     authUser: {
       account: { billingPlan, isSubscribed, isBlocked },
     },
-  }: IApplicationState = getState();
+  }: RootState = getState();
 
   const pendingActions = getPlanPendingActions(billingPlan, isSubscribed, isBlocked);
 

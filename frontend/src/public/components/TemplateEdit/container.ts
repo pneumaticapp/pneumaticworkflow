@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 
-import type { IApplicationState } from '../../redux/store';
+import type { RootState } from '../../redux/store';
 import {
   loadTemplate,
   loadTemplateFromSystem,
@@ -32,7 +32,7 @@ type TWorkflowDispatchProps = Pick<
   | 'loadTemplateVariablesSuccess'
 >;
 
-export function mapStateToProps(state: IApplicationState): TWorkflowStoreProps {
+export function mapStateToProps(state: RootState): TWorkflowStoreProps {
   const {
     accounts: { users },
     authUser,

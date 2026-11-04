@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 
 import { IAutoSaveStatusProps, AutoSaveStatus } from './AutoSaveStatus';
 
-import type { IApplicationState } from '../../../redux/store';
+import type { RootState } from '../../../redux/store';
 import { getPaywallType } from '../../TopNav/utils/getPaywallType';
 
 type TStoreProps = Pick<IAutoSaveStatusProps, 'templateStatus' | 'withPaywall'>;
@@ -12,7 +12,7 @@ export function mapStateToProps({
   authUser: {
     account: { billingPlan, isBlocked },
   },
-}: IApplicationState): TStoreProps {
+}: RootState): TStoreProps {
   const withPaywall = Boolean(getPaywallType(billingPlan, isBlocked));
 
   return { templateStatus, withPaywall };

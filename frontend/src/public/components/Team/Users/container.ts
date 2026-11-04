@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import { Users } from './Users';
 import { IUsersProps } from './types';
-import type { IApplicationState } from '../../../redux/store';
+import type { RootState } from '../../../redux/store';
 import { getIsUserSubsribed } from '../../../redux/selectors/user';
 import { setGeneralLoaderVisibility } from '../../../redux/actions';
 import {
@@ -40,7 +40,7 @@ type TTeamDispatchProps = Pick<
   | 'loadChangeUserReports'
 >;
 
-export function mapStateToProps(state: IApplicationState): TTeamProps {
+export function mapStateToProps(state: RootState): TTeamProps {
   const {
     accounts,
     authUser,

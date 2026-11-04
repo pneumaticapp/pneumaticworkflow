@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import type { IApplicationState } from '../../redux/store';
+import type { RootState } from '../../redux/store';
 import { ITasksProps, Tasks } from './Tasks';
 import { loadCurrentTask, openSelectTemplateModal } from '../../redux/actions';
 import {
@@ -65,7 +65,7 @@ export function mapStateToProps({
     isAdmin,
     isSupermode,
   },
-}: IApplicationState): TTasksStoreProps {
+}: RootState): TTasksStoreProps {
   const withPaywall = checkHasTopBar(Boolean(isBlocked), billingPlan, Boolean(isSupermode));
 
   return {

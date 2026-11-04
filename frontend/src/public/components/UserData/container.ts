@@ -1,13 +1,13 @@
 import { connect } from 'react-redux';
 
 import { UserDataComponent, IUserdataProps } from './UserData';
-import type { IApplicationState } from '../../redux/store';
+import type { RootState } from '../../redux/store';
 import { getUserById } from './utils/getUserById';
 
 type TStoreProps = Pick<IUserdataProps, 'user'>;
 type TOwnProps = Pick<IUserdataProps, 'userId'>;
 
-const mapStateToProps = ({ accounts: { users } }: IApplicationState, { userId }: TOwnProps): TStoreProps => {
+const mapStateToProps = ({ accounts: { users } }: RootState, { userId }: TOwnProps): TStoreProps => {
   return { user: getUserById(users, userId) };
 };
 

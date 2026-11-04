@@ -1,10 +1,10 @@
 import { IStoreNotification } from '../../types/redux';
-import type { IApplicationState } from '../store';
+import type { RootState } from '../store';
 
-export const getNotificationsStore = (state: IApplicationState): IStoreNotification => {
+export const getNotificationsStore = (state: RootState): IStoreNotification => {
   return state.notifications;
 };
 
-export const getIsNotificationsListOpen = (state: IApplicationState): boolean => {
+export const getIsNotificationsListOpen = (state: RootState): boolean => {
   return state.notifications.isNotificationsListOpen;
 };

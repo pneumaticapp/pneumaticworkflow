@@ -16,7 +16,7 @@ import {
   toggleTaskSkippedTasksVisibility,
 } from '../../redux/actions';
 import { openWorkflowLogPopup, clearWorkflow, setWorkflowFinished } from '../../redux/workflows/slice';
-import type { IApplicationState } from '../../redux/store';
+import type { RootState } from '../../redux/store';
 import { getNotDeletedUsers } from '../../utils/users';
 
 type TStoreProps = Pick<
@@ -46,7 +46,7 @@ export function mapStateToProps({
   authUser,
   task: { data: task, status, workflowLog, workflow, isWorkflowLoading },
   accounts: { users },
-}: IApplicationState): TStoreProps {
+}: RootState): TStoreProps {
   const taskStatus = task?.isCompleted ? ETaskStatus.Completed : status;
 
   return {

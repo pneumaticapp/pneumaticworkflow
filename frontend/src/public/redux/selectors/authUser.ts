@@ -1,8 +1,8 @@
 import { IAuthUser } from '../../types/redux';
-import type { IApplicationState } from '../store';
+import type { RootState } from '../store';
 
-export const getCurrentUser = (state: IApplicationState): IAuthUser => state.authUser;
+export const getCurrentUser = (state: RootState): IAuthUser => state.authUser;
 
-export const getTimezone = (state: IApplicationState): string => state.authUser.timezone;
+export const getTimezone = (state: RootState): string => state.authUser.timezone;
 
-export const getAuthUserId = (state: IApplicationState): number => state.authUser.id;
+export const getAuthUserId = (state: RootState): number => state.authUser.id;

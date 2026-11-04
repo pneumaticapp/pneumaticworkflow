@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { editModalClose, updateGroup } from '../../../../redux/actions';
 import { validateGroupName } from '../../../../utils/validators';
 import { Button, Header, InputField, Modal } from '../../../UI';
-import type { IApplicationState } from '../../../../redux/store';
+import type { RootState } from '../../../../redux/store';
 
 import styles from './EditGroupModal.css';
 
@@ -13,7 +13,7 @@ export function EditGroupModal() {
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
 
-  const { isOpen, editGroup } = useSelector(({ groups }: IApplicationState) => groups.editModal);
+  const { isOpen, editGroup } = useSelector(({ groups }: RootState) => groups.editModal);
 
   const [inputName, setInputName] = useState('');
   const [changedInput, setChangedInput] = useState(false);

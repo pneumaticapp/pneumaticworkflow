@@ -1,13 +1,13 @@
 import { connect } from 'react-redux';
 
 import { ResetPassword, IResetPasswordProps } from './ResetPassword';
-import type { IApplicationState } from '../../../redux/store';
+import type { RootState } from '../../../redux/store';
 import { sendResetPassword } from '../../../redux/auth/actions';
 
 type TResetPasswordProps = Pick<IResetPasswordProps, 'loading'>;
 type TResetPasswordDispatchProps = Pick<IResetPasswordProps, 'sendResetPassword'>;
 
-export const mapStateToProps = ({ authUser }: IApplicationState): TResetPasswordProps => {
+export const mapStateToProps = ({ authUser }: RootState): TResetPasswordProps => {
   return { loading: authUser.loading };
 };
 

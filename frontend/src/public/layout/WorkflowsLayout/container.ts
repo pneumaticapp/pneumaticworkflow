@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 import { compose } from 'redux';
 
 import { IWorkflowsLayoutComponentProps, WorkflowsLayoutComponent } from './WorkflowsLayout';
-import type { IApplicationState } from '../../redux/store';
+import type { RootState } from '../../redux/store';
 import {
   TWorkflowsFiltersStoreProps,
   createWorkflowsFiltersContainer,
@@ -37,7 +37,7 @@ const mapStateToProps = ({
     workflow,
     workflowsSettings: { view },
   },
-}: IApplicationState): TStoreProps => {
+}: RootState): TStoreProps => {
   return {
     workflowId: workflow?.id || null,
     workflowsView: view,

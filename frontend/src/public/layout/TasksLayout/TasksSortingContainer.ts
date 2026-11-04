@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 import { SelectMenu, ISelectMenuProps } from '../../components/UI';
-import type { IApplicationState } from '../../redux/store';
+import type { RootState } from '../../redux/store';
 import { changeTaskListSorting } from '../../redux/tasks/slice';
 import { processesTasksCompleteSortingValues, processesTasksSortingValues } from '../../constants/sortings';
 import { ETaskListCompleteSorting, ETaskListCompletionStatus, ETaskListSorting } from '../../types/tasks';
@@ -12,7 +12,7 @@ const mapStateToProps = ({
   tasks: {
     tasksSettings: { sorting, completionStatus },
   },
-}: IApplicationState): TMapStateToProps => {
+}: RootState): TMapStateToProps => {
   return {
     activeValue: sorting,
     values:

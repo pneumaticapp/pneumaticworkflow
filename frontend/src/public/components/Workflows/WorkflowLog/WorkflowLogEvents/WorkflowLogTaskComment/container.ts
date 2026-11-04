@@ -8,7 +8,7 @@ import {
 } from '../../../../../redux/workflows/slice';
 import { TWorkflowLogTaskCommentProps, WorkflowLogTaskComment } from './WorkflowLogTaskComment';
 
-import type { IApplicationState } from '../../../../../redux/store';
+import type { RootState } from '../../../../../redux/store';
 
 type TStoreProps = Pick<TWorkflowLogTaskCommentProps, 'currentUserId' | 'workflowModal'>;
 type TDispatchProps = Pick<
@@ -21,7 +21,7 @@ export function mapStateToProps({
   workflows: {
     workflowLog: { isOpen },
   },
-}: IApplicationState): TStoreProps {
+}: RootState): TStoreProps {
   return {
     currentUserId,
     workflowModal: isOpen,

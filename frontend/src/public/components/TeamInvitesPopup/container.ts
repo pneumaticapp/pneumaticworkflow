@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import type { IApplicationState } from '../../redux/store';
+import type { RootState } from '../../redux/store';
 import { TeamInvitesPopup } from './TeamInvitesPopup';
 import { ITeamInvitesPopupProps } from './types';
 
@@ -11,7 +11,7 @@ type TDispatchProps = Pick<ITeamInvitesPopupProps, 'closeTeamInvitesPopup'>;
 export function mapStateToProps({
   team: { isInvitesPopupOpen: isTeamInvitesOpened, invitesUsersList },
   accounts,
-}: IApplicationState): TStoreProps {
+}: RootState): TStoreProps {
   return {
     isTeamInvitesOpened,
     invitesUsersList,

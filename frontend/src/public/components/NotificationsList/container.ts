@@ -1,7 +1,7 @@
 /* prettier-ignore */
 import { connect } from 'react-redux';
 import { INotificationsListProps, NotificationsList } from './NotificationsList';
-import type { IApplicationState } from '../../redux/store';
+import type { RootState } from '../../redux/store';
 import {
   setNotificationsListIsOpen,
   removeNotificationItem,
@@ -32,7 +32,7 @@ export function mapStateToProps({
   authUser: {
     account: { billingPlan, isBlocked },
   },
-}: IApplicationState): TStoreProps {
+}: RootState): TStoreProps {
   const withPaywall = Boolean(getPaywallType(billingPlan, isBlocked));
 
   return { notifications, isLoading, withPaywall, users, totalNotificationsCount };

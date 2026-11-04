@@ -1,7 +1,7 @@
 import { ComponentType } from 'react';
 import { connect } from 'react-redux';
 
-import type { IApplicationState } from '../../redux/store';
+import type { RootState } from '../../redux/store';
 import {
   changeWorkflowsSorting,
   loadFilterTemplates as loadWorkflowsFilterTemplates,
@@ -63,7 +63,7 @@ type TDispatchProps = Pick<
   | 'clearFilters'
 >;
 
-export function mapStateToProps(state: IApplicationState): TWorkflowsFiltersStoreProps {
+export function mapStateToProps(state: RootState): TWorkflowsFiltersStoreProps {
   const {
     workflows: {
       workflowsSettings: {

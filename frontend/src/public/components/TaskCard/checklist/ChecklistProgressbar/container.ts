@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 import { getCurrentTask } from '../../../../redux/selectors/task';
-import type { IApplicationState } from '../../../../redux/store';
+import type { RootState } from '../../../../redux/store';
 import { getTaskChecklist } from '../../../../utils/tasks';
 import {
   TChecklistProgressbarReduxProps,
@@ -10,7 +10,7 @@ import {
 
 type TStoreProps = Pick<TChecklistProgressbarReduxProps, 'totalItems' | 'checkedItems'>;
 
-const mapStateToProps = (state: IApplicationState, { listApiName }: TChecklistProgressbarOwnProps): TStoreProps => {
+const mapStateToProps = (state: RootState, { listApiName }: TChecklistProgressbarOwnProps): TStoreProps => {
   const task = getCurrentTask(state);
   if (!task) {
     return {

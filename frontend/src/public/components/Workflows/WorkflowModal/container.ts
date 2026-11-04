@@ -11,7 +11,7 @@ import {
   toggleSkippedTasksVisibility,
 } from '../../../redux/workflows/slice';
 
-import type { IApplicationState } from '../../../redux/store';
+import type { RootState } from '../../../redux/store';
 import { EPermissionObjectType } from '../../../types/permissions';
 
 import { WorkflowModal, IWorkflowModalProps } from './WorkflowModal';
@@ -72,7 +72,7 @@ export function mapStateToProps({
   general: {
     fullscreenImage: { isOpen: isFullscreenImageOpen },
   },
-}: IApplicationState): TStoreProps {
+}: RootState): TStoreProps {
   const canEdit = workflow ? Boolean(permissions[EPermissionObjectType.Workflow][workflow.id]?.hasChange) : false;
 
   return {

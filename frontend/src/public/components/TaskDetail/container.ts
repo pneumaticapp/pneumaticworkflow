@@ -2,12 +2,12 @@ import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { ITaskDetailProps, TaskDetail } from './TaskDetail';
 import { loadCurrentTask } from '../../redux/actions';
-import type { IApplicationState } from '../../redux/store';
+import type { RootState } from '../../redux/store';
 
 type TTaskDetailDispatchProps = Pick<ITaskDetailProps, 'loadCurrentTask'>;
 type TTaskDetailStoreProps = Pick<ITaskDetailProps, 'task'>;
 
-export function mapStateToProps({ task: { data: task } }: IApplicationState): TTaskDetailStoreProps {
+export function mapStateToProps({ task: { data: task } }: RootState): TTaskDetailStoreProps {
   return { task };
 }
 

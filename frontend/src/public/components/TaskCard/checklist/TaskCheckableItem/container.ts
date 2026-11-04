@@ -1,17 +1,14 @@
 import { connect } from 'react-redux';
 import { markChecklistItem, unmarkChecklistItem } from '../../../../redux/actions';
 import { getCurrentTask } from '../../../../redux/selectors/task';
-import type { IApplicationState } from '../../../../redux/store';
+import type { RootState } from '../../../../redux/store';
 import { getTaskChecklistItem } from '../../../../utils/tasks';
 import { TaskCheckableItem, TTaskCheckableItemReduxProps, TTaskCheckableItemOwnProps } from './TaskCheckableItem';
 
 type TStoreProps = Pick<TTaskCheckableItemReduxProps, 'isChecked'>;
 type TDispatchProps = Pick<TTaskCheckableItemReduxProps, 'markChecklistItem' | 'unmarkChecklistItem'>;
 
-const mapStateToProps = (
-  state: IApplicationState,
-  { listApiName, itemApiName }: TTaskCheckableItemOwnProps,
-): TStoreProps => {
+const mapStateToProps = (state: RootState, { listApiName, itemApiName }: TTaskCheckableItemOwnProps): TStoreProps => {
   const task = getCurrentTask(state);
   if (!task) {
     return {

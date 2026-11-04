@@ -4,11 +4,11 @@ import { changeGroupsListSorting } from '../../../redux/actions';
 import { withSyncedQueryString } from '../../../HOCs/withSyncedQueryString';
 import { EGroupsListSorting } from '../../../types/user';
 import { Groups, IGroupsProps } from './Groups';
-import type { IApplicationState } from '../../../redux/store';
+import type { RootState } from '../../../redux/store';
 
 export type TTeamProps = Pick<IGroupsProps, 'groupsListSorting'>;
 
-export function mapStateToProps(state: IApplicationState): TTeamProps {
+export function mapStateToProps(state: RootState): TTeamProps {
   const {
     groups: { groupsListSorting },
   } = state;

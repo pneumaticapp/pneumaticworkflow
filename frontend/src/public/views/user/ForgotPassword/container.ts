@@ -2,13 +2,13 @@ import { connect } from 'react-redux';
 
 import { ForgotPassword } from './ForgotPassword';
 import { IForgotPasswordProps } from './types';
-import type { IApplicationState } from '../../../redux/store';
+import type { RootState } from '../../../redux/store';
 import { sendForgotPassword } from '../../../redux/auth/actions';
 
 type TLoginProps = Pick<IForgotPasswordProps, 'loading' | 'isCaptchaRequired'>;
 type TLoginDispatchProps = Pick<IForgotPasswordProps, 'sendForgotPassword'>;
 
-export const mapStateToProps = ({ authUser }: IApplicationState): TLoginProps => {
+export const mapStateToProps = ({ authUser }: RootState): TLoginProps => {
   return { loading: authUser.loading, isCaptchaRequired: authUser.isResetPasswordCaptchaRequired };
 };
 

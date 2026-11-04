@@ -1,49 +1,49 @@
 import { createSelector } from 'reselect';
 import { IAccounts, IAuthUser, IGenericTemplatesStore } from '../../types/redux';
-import type { IApplicationState } from '../store';
+import type { RootState } from '../store';
 import { TUserListItem } from '../../types/user';
 import { getPlanPendingActions } from '../../utils/getPlanPendingActions';
 
-export const getAuthUser = ({ authUser }: IApplicationState) => ({ authUser });
+export const getAuthUser = ({ authUser }: RootState) => ({ authUser });
 
 export const getSubscriptionPlan = ({
   authUser: {
     account: { billingPlan },
   },
-}: IApplicationState) => billingPlan;
+}: RootState) => billingPlan;
 
 export const getTrialEnded = ({
   authUser: {
     account: { trialEnded },
   },
-}: IApplicationState) => trialEnded;
+}: RootState) => trialEnded;
 
 export const getIsBlocked = ({
   authUser: {
     account: { isBlocked },
   },
-}: IApplicationState) => isBlocked;
+}: RootState) => isBlocked;
 
-export const getIsAdmin = ({ authUser }: IApplicationState) => authUser.isAdmin || false;
+export const getIsAdmin = ({ authUser }: RootState) => authUser.isAdmin || false;
 
 /** Mirrors UserIsAdminOrAccountOwner on /templates/integrations, which 403s for anyone else. */
-export const getCanAccessTemplateIntegrations = ({ authUser }: IApplicationState) =>
+export const getCanAccessTemplateIntegrations = ({ authUser }: RootState) =>
   authUser?.isAdmin || authUser?.isAccountOwner || false;
 
-export const getCanAccessWorkflows = ({ authUser }: IApplicationState) =>
+export const getCanAccessWorkflows = ({ authUser }: RootState) =>
   authUser?.isAdmin || authUser?.hasWorkflowViewerAccess || authUser?.hasWorkflowStarterAccess || false;
 
-export const getHasExtendedInterface = ({ authUser }: IApplicationState) =>
+export const getHasExtendedInterface = ({ authUser }: RootState) =>
   authUser?.isAdmin || authUser?.hasWorkflowViewerAccess || false;
 
-export const getHasBasicInterface = ({ authUser }: IApplicationState) =>
+export const getHasBasicInterface = ({ authUser }: RootState) =>
   (authUser?.hasWorkflowStarterAccess && !authUser?.hasWorkflowViewerAccess && !authUser?.isAdmin) || false;
 
 export const getIsUserSubsribed = ({
   authUser: {
     account: { isSubscribed },
   },
-}: IApplicationState) => {
+}: RootState) => {
   return isSubscribed;
 };
 
@@ -54,33 +54,33 @@ export const getUserPendingActions = createSelector(
   getPlanPendingActions,
 );
 
-export const getUserToken = (state: IApplicationState): Pick<IAuthUser, 'token'> => ({
+export const getUserToken = (state: RootState): Pick<IAuthUser, 'token'> => ({
   token: state.authUser.token || '',
 });
 
-export const getInvitedUser = (state: IApplicationState): Pick<IAuthUser, 'invitedUser'> => ({
+export const getInvitedUser = (state: RootState): Pick<IAuthUser, 'invitedUser'> => ({
   invitedUser: state.authUser.invitedUser || {},
 });
 
-export const getAccountsStore = (state: IApplicationState): IAccounts => state.accounts;
+export const getAccountsStore = (state: RootState): IAccounts => state.accounts;
 
-export const getSelectedGenericTemplates = (state: IApplicationState): Pick<IGenericTemplatesStore, 'selected'> => ({
+export const getSelectedGenericTemplates = (state: RootState): Pick<IGenericTemplatesStore, 'selected'> => ({
   selected: state.genericTemplates.selected,
 });
 
-export const getGroupsStore = ({ groups }: IApplicationState) => groups;
+export const getGroupsStore = ({ groups }: RootState) => groups;
 
-export const getUsers = (state: IApplicationState): TUserListItem[] => state.accounts.users;
+export const getUsers = (state: RootState): TUserListItem[] => state.accounts.users;
 
-export const getUserApiKeys = (state: IApplicationState) => state.integrations.apiKeys;
+export const getUserApiKeys = (state: RootState) => state.integrations.apiKeys;
 
 export const getUserApiKey = createSelector(getUserApiKeys, (apiKeys) => ({
   isLoading: apiKeys.isLoading,
   data: apiKeys.data[0]?.prefix || '',
 }));
 
-export const getUserTimezone = (state: IApplicationState): string => state.authUser.timezone;
+export const getUserTimezone = (state: RootState): string => state.authUser.timezone;
 
-export const getLanguage = ({ authUser }: IApplicationState) => authUser.language;
+export const getLanguage = ({ authUser }: RootState) => authUser.language;
 
-export const getAccountId = (state: IApplicationState): number => state.authUser.account?.id ?? -1;
+export const getAccountId = (state: RootState): number => state.authUser.account?.id ?? -1;

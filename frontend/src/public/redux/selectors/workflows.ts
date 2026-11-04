@@ -1,5 +1,5 @@
 import { IStoreWorkflows, IWorkflowLog } from '../../types/redux';
-import type { IApplicationState } from '../store';
+import type { RootState } from '../store';
 import {
   EWorkflowsLoadingStatus,
   EWorkflowsStatus,
@@ -9,54 +9,52 @@ import {
   TUserCounter,
 } from '../../types/workflow';
 
-export const getWorkflowsStore = (state: IApplicationState): IStoreWorkflows => state.workflows;
+export const getWorkflowsStore = (state: RootState): IStoreWorkflows => state.workflows;
 
-export const getWorkflowsSearchText = (state: IApplicationState): string => state.workflows.workflowsSearchText;
+export const getWorkflowsSearchText = (state: RootState): string => state.workflows.workflowsSearchText;
 
-export const getWorkflowsLoadingStatus = (state: IApplicationState): EWorkflowsLoadingStatus =>
+export const getWorkflowsLoadingStatus = (state: RootState): EWorkflowsLoadingStatus =>
   state.workflows.workflowsLoadingStatus;
 
-export const getWorkflowLog = (state: IApplicationState): IWorkflowLog => state.workflows.workflowLog;
+export const getWorkflowLog = (state: RootState): IWorkflowLog => state.workflows.workflowLog;
 
-export const getIsTuneViewModalOpen = (state: IApplicationState): boolean =>
-  state.workflows.WorkflowsTuneViewModal.isOpen;
+export const getIsTuneViewModalOpen = (state: RootState): boolean => state.workflows.WorkflowsTuneViewModal.isOpen;
 
-export const getWorkflowsView = (state: IApplicationState): EWorkflowsView => state.workflows.workflowsSettings.view;
+export const getWorkflowsView = (state: RootState): EWorkflowsView => state.workflows.workflowsSettings.view;
 
-export const getWorkflowStartersCounters = (state: IApplicationState): TUserCounter[] =>
+export const getWorkflowStartersCounters = (state: RootState): TUserCounter[] =>
   state.workflows.workflowsSettings.counters.workflowStartersCounters;
 
-export const getWorkflowPerformersCounters = (state: IApplicationState): TUserCounter[] =>
+export const getWorkflowPerformersCounters = (state: RootState): TUserCounter[] =>
   state.workflows.workflowsSettings.counters.performersCounters;
 
-export const getSavedFields = (state: IApplicationState): string[] => state.workflows.workflowsSettings.selectedFields;
+export const getSavedFields = (state: RootState): string[] => state.workflows.workflowsSettings.selectedFields;
 
-export const getLastLoadedTemplateIdForTable = (state: IApplicationState): string | null =>
+export const getLastLoadedTemplateIdForTable = (state: RootState): string | null =>
   state.workflows.workflowsSettings.lastLoadedTemplateIdForTable;
 
-export const getWorkflowTemplateListItems = (state: IApplicationState): ITemplateFilterItem[] =>
+export const getWorkflowTemplateListItems = (state: RootState): ITemplateFilterItem[] =>
   state.workflows.workflowsSettings.templateList.items;
 
-export const getWorkflowTemplateListIsLoading = (state: IApplicationState): boolean =>
+export const getWorkflowTemplateListIsLoading = (state: RootState): boolean =>
   state.workflows.workflowsSettings.templateList.isLoading;
 
-export const getWorkflowsStatus = (state: IApplicationState): EWorkflowsStatus =>
+export const getWorkflowsStatus = (state: RootState): EWorkflowsStatus =>
   state.workflows.workflowsSettings.values.statusFilter;
 
-export const getWorkflowsSorting = (state: IApplicationState): EWorkflowsSorting =>
-  state.workflows.workflowsSettings.sorting;
+export const getWorkflowsSorting = (state: RootState): EWorkflowsSorting => state.workflows.workflowsSettings.sorting;
 
-export const getWorkflowStartersIdsFilter = (state: IApplicationState): number[] =>
+export const getWorkflowStartersIdsFilter = (state: RootState): number[] =>
   state.workflows.workflowsSettings.values.workflowStartersIdsFilter;
 
-export const getWorkflowTemplatesIdsFilter = (state: IApplicationState): number[] =>
+export const getWorkflowTemplatesIdsFilter = (state: RootState): number[] =>
   state.workflows.workflowsSettings.values.templatesIdsFilter;
 
-export const getWorkflowTasksApiNamesFilter = (state: IApplicationState): string[] =>
+export const getWorkflowTasksApiNamesFilter = (state: RootState): string[] =>
   state.workflows.workflowsSettings.values.tasksApiNamesFilter;
 
-export const getWorkflowPerformersGroupsIdsFilter = (state: IApplicationState): number[] =>
+export const getWorkflowPerformersGroupsIdsFilter = (state: RootState): number[] =>
   state.workflows.workflowsSettings.values.performersGroupIdsFilter;
 
-export const getWorkflowPerformersIdsFilter = (state: IApplicationState): number[] =>
+export const getWorkflowPerformersIdsFilter = (state: RootState): number[] =>
   state.workflows.workflowsSettings.values.performersIdsFilter;

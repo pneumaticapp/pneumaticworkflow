@@ -74,5 +74,5 @@ export const persistor = persistStore(store);
 
 sagaMiddleware.run(sagas);
 
-export type IApplicationState = ReturnType<typeof store.getState>;
+export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

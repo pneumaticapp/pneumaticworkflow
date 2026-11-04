@@ -1,6 +1,6 @@
 import { IWorkflowLog } from '../../types/redux';
-import type { IApplicationState } from '../store';
+import type { RootState } from '../store';
 
-export const getWorkflowLogStore = (state: IApplicationState): IWorkflowLog => {
+export const getWorkflowLogStore = (state: RootState): IWorkflowLog => {
   return state.workflows.workflowLog;
 };

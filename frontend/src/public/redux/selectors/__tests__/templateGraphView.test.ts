@@ -1,14 +1,14 @@
-import type { IApplicationState } from '../../store';
+import type { RootState } from '../../store';
 import { EGraphViewMode } from '../../../components/TemplateEdit/TemplateGraphEditor/types';
 import { selectIsGraphCanvas, selectTemplateSelectedTaskApiName, selectTemplateViewMode } from '../templateGraphView';
 
-const createMockState = (viewMode: EGraphViewMode, selectedTaskApiName: string | null = null): IApplicationState =>
+const createMockState = (viewMode: EGraphViewMode, selectedTaskApiName: string | null = null): RootState =>
   ({
     templateGraphView: {
       viewMode,
       selectedTaskApiName,
     },
-  }) as IApplicationState;
+  }) as RootState;
 
 describe('templateGraphView selectors', () => {
   it('should return list view mode from store', () => {

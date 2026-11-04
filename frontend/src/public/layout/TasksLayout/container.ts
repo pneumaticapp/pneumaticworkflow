@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 
-import type { IApplicationState } from '../../redux/store';
+import type { RootState } from '../../redux/store';
 import {
   changeTaskListSorting,
   changeTaskListCompletionStatus,
@@ -25,7 +25,7 @@ const mapStateToProps = ({
       templateStepList,
     },
   },
-}: IApplicationState): ITasksLayoutStoreProps => {
+}: RootState): ITasksLayoutStoreProps => {
   return {
     isHasFilter,
     sorting,

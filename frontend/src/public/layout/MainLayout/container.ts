@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 
-import type { IApplicationState } from '../../redux/store';
+import type { RootState } from '../../redux/store';
 import {
   loadNotificationsList,
   authenticateUser,
@@ -31,7 +31,7 @@ export type TMainLayoutComponentDispatchProps = Pick<
   | 'loadPlan'
 >;
 
-const mapStateToProps = (state: IApplicationState): TMainLayoutComponentStoreProps => {
+const mapStateToProps = (state: RootState): TMainLayoutComponentStoreProps => {
   const {
     runWorkflowModal,
     notifications,

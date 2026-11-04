@@ -1,11 +1,11 @@
 import { IAccountPlan } from '../../types/redux';
 import { TUserListItem } from '../../types/user';
-import type { IApplicationState } from '../store';
+import type { RootState } from '../store';
 
-export const getAccountPlan = (state: IApplicationState): IAccountPlan => state.accounts.planInfo;
+export const getAccountPlan = (state: RootState): IAccountPlan => state.accounts.planInfo;
 
-export const getAccountsUsers = (state: IApplicationState): TUserListItem[] => state.accounts.users;
+export const getAccountsUsers = (state: RootState): TUserListItem[] => state.accounts.users;
 
-export const getIsCreateUserModalOpen = (state: IApplicationState): boolean => state.accounts.isCreateUserModalOpen;
+export const getIsCreateUserModalOpen = (state: RootState): boolean => state.accounts.isCreateUserModalOpen;
 
-export const getAccountsTeamList = (state: IApplicationState): TUserListItem[] => state.accounts.team.list;
+export const getAccountsTeamList = (state: RootState): TUserListItem[] => state.accounts.team.list;

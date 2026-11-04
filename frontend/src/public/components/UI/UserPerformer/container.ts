@@ -1,11 +1,11 @@
 import { connect } from 'react-redux';
 
 import { UserPerformerComponent, IUserPerformerProps } from './UserPerformer';
-import type { IApplicationState } from '../../../redux/store';
+import type { RootState } from '../../../redux/store';
 
 type TStoreProps = Pick<IUserPerformerProps, 'users'>;
 
-const mapStateToProps = ({ accounts: { users } }: IApplicationState): TStoreProps => {
+const mapStateToProps = ({ accounts: { users } }: RootState): TStoreProps => {
   return { users };
 };
 

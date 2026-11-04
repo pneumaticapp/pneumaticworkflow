@@ -10,7 +10,7 @@ import { TForegroundColor } from '../common/types';
 import { getForegroundClass } from '../common/utils/getForegroundClass';
 import { DatePickerCustom } from '../../form/DatePicker';
 import { ISingleDatePickerProps } from '../../form/DatePicker/types';
-import type { IApplicationState } from '../../../../redux/store';
+import type { RootState } from '../../../../redux/store';
 
 import styles from './DateField.css';
 import commonStyles from '../common/styles.css';
@@ -68,7 +68,7 @@ export function DateField({
   ...props
 }: TDateFieldProps) {
   const { formatMessage, messages } = useIntl();
-  const { timezone } = useSelector((state: IApplicationState) => state.authUser);
+  const { timezone } = useSelector((state: RootState) => state.authUser);
   const normalizedErrorMessage = errorMessage && (messages[errorMessage] || errorMessage);
   const selectedDate = value ? moment.tz(value, 'YYYY-MM-DD', timezone).toDate() : null;
 

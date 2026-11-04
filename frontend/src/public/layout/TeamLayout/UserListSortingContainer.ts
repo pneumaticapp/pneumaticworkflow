@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 import { SelectMenu, ISelectMenuProps } from '../../components/UI';
-import type { IApplicationState } from '../../redux/store';
+import type { RootState } from '../../redux/store';
 import { EUserListSorting } from '../../types/user';
 import { userListSortingChanged as changeUserListSorting } from '../../redux/accounts/slice';
 import { userListSortingValues } from '../../constants/sortings';
@@ -8,7 +8,7 @@ import { userListSortingValues } from '../../constants/sortings';
 type TMapStateToProps = Pick<ISelectMenuProps<EUserListSorting>, 'activeValue' | 'values'>;
 type TMapDispatchToProps = Pick<ISelectMenuProps<EUserListSorting>, 'onChange'>;
 
-const mapStateToProps = ({ accounts: { userListSorting } }: IApplicationState): TMapStateToProps => {
+const mapStateToProps = ({ accounts: { userListSorting } }: RootState): TMapStateToProps => {
   return {
     activeValue: userListSorting,
     values: userListSortingValues,

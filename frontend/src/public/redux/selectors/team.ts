@@ -1,4 +1,4 @@
-import type { IApplicationState } from '../store';
+import type { RootState } from '../store';
 import { TeamPages } from '../team/types';
 
-export const getTeamPage = (state: IApplicationState): TeamPages => state.team.page;
+export const getTeamPage = (state: RootState): TeamPages => state.team.page;

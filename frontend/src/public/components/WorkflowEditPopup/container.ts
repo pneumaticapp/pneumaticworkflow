@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 import { closeRunWorkflowModal, runWorkflow } from '../../redux/actions';
-import type { IApplicationState } from '../../redux/store';
+import type { RootState } from '../../redux/store';
 import { INullableWorkflowEditPopupProps, WorkflowEditPopup } from './WorkflowEditPopup';
 
 type TStoreProps = Pick<
@@ -12,7 +12,7 @@ type TDispatchProps = Pick<INullableWorkflowEditPopupProps, 'onRunWorkflow' | 'c
 function mapStateToProps({
   runWorkflowModal: { isOpen, isWorkflowStarting, workflow },
   authUser: { account, isAdmin, timezone },
-}: IApplicationState): TStoreProps {
+}: RootState): TStoreProps {
   return {
     isLoading: isWorkflowStarting,
     isOpen,

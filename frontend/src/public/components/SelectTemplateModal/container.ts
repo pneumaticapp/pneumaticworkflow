@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 
-import type { IApplicationState } from '../../redux/store';
+import type { RootState } from '../../redux/store';
 import {
   setSelectTemplateModalTemplates,
   loadSelectTemplateModalTemplates,
@@ -25,7 +25,7 @@ export type TMainLayoutComponentDispatchProps = Pick<
 const mapStateToProps = ({
   selectTemplateModal: { items, isLoading, isOpen, ancestorTaskId },
   authUser: { isAdmin },
-}: IApplicationState): TMainLayoutComponentStoreProps => {
+}: RootState): TMainLayoutComponentStoreProps => {
   return {
     isModalOpened: isOpen,
     isLoading,

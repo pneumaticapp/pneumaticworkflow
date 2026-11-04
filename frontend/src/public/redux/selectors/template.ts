@@ -1,14 +1,14 @@
-import type { IApplicationState } from '../store';
+import type { RootState } from '../store';
 import { ITemplateClient, ITemplateTaskClient, ITemplateKickoffClient, IExtraField } from '../../types/template';
 
-export const getTemplateData = (state: IApplicationState): ITemplateClient => {
+export const getTemplateData = (state: RootState): ITemplateClient => {
   return state.template.data;
 };
 
-export const getTemplateStatus = (state: IApplicationState) => state.template.status;
+export const getTemplateStatus = (state: RootState) => state.template.status;
 
-export const getKickoff = (state: IApplicationState): ITemplateKickoffClient => state.template.data.kickoff;
+export const getKickoff = (state: RootState): ITemplateKickoffClient => state.template.data.kickoff;
 
-export const getKickoffFields = (state: IApplicationState): IExtraField[] => state.template.data.kickoff.fields;
+export const getKickoffFields = (state: RootState): IExtraField[] => state.template.data.kickoff.fields;
 
-export const getTemplateTasks = (state: IApplicationState): ITemplateTaskClient[] => state.template.data.tasks;
+export const getTemplateTasks = (state: RootState): ITemplateTaskClient[] => state.template.data.tasks;

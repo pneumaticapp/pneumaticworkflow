@@ -3,7 +3,7 @@ import { useIntl, FormattedDate } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { IApiKeyItem } from '../../types/integrations';
-import type { IApplicationState } from '../../redux/store';
+import type { RootState } from '../../redux/store';
 import { copyToClipboard } from '../../utils/helpers';
 import { Button } from '../UI/Buttons/Button';
 import { InputField } from '../UI/Fields/InputField';
@@ -66,9 +66,9 @@ export function IntegrationsCommon() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
-  const apiKeys = useSelector((state: IApplicationState) => state.integrations.apiKeys.data);
-  const isLoading = useSelector((state: IApplicationState) => state.integrations.apiKeys.isLoading);
-  const newlyCreatedKey = useSelector((state: IApplicationState) => state.integrations.apiKeys.newlyCreatedKey);
+  const apiKeys = useSelector((state: RootState) => state.integrations.apiKeys.data);
+  const isLoading = useSelector((state: RootState) => state.integrations.apiKeys.isLoading);
+  const newlyCreatedKey = useSelector((state: RootState) => state.integrations.apiKeys.newlyCreatedKey);
 
   const [confirmDeleteId, setConfirmDeleteId] = React.useState<number | null>(null);
   const [newKeyName, setNewKeyName] = React.useState('');

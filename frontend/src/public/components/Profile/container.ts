@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 import { IProfileProps, Profile } from './Profile';
-import type { IApplicationState } from '../../redux/store';
+import type { RootState } from '../../redux/store';
 import { editCurrentUser, sendChangePassword, vacationActivate, vacationDeactivate } from '../../redux/auth/actions';
 import { setProfileSettingsActiveTab } from '../../redux/profile/actions';
 
@@ -10,7 +10,7 @@ type TProfileDispatchProps = Pick<
   'editCurrentUser' | 'sendChangePassword' | 'onChangeTab' | 'onVacationActivate' | 'onVacationDeactivate'
 >;
 
-export function mapStateToProps({ authUser, accounts }: IApplicationState): TProfileProps {
+export function mapStateToProps({ authUser, accounts }: RootState): TProfileProps {
   return {
     user: authUser,
     availableUsers: (accounts.users || []).filter((u) => u.id !== authUser.id && u.status === 'active'),

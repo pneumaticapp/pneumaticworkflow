@@ -1,6 +1,6 @@
 import { createSelector } from 'reselect';
 
-import type { IApplicationState } from '../store';
+import type { RootState } from '../store';
 import { getBrowserConfig } from '../../utils/getConfig';
 import { getPaywallType } from '../../components/TopNav/utils/getPaywallType';
 import { getAccountPlan } from './accounts';
@@ -8,8 +8,7 @@ import { getCurrentUser } from './authUser';
 import { getNotificationsStore } from './notifications';
 import { getSubscriptionPlan, getUserPendingActions } from './user';
 
-const getAccountOwnerPlan = (state: IApplicationState) =>
-  getBrowserConfig().user.account || getCurrentUser(state).account;
+const getAccountOwnerPlan = (state: RootState) => getBrowserConfig().user.account || getCurrentUser(state).account;
 
 export const getTopNavState = createSelector(
   [

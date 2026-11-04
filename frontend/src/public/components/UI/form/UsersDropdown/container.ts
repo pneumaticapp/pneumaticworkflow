@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 
-import type { IApplicationState } from '../../../../redux/store';
+import type { RootState } from '../../../../redux/store';
 import { openTeamInvitesPopup } from '../../../../redux/team/slice';
 import { TUsersDropdownOption, IUsersDropdownProps, UsersDropdownComponent } from './UsersDropdown';
 
@@ -14,7 +14,7 @@ function mapStateToProps({
   team: { isInvitesPopupOpen: isTeamInvitesModalOpen, recentInvitedUsers },
   authUser: { isAdmin },
   accounts: { users },
-}: IApplicationState): TStoreProps {
+}: RootState): TStoreProps {
   return {
     users,
     isTeamInvitesModalOpen,

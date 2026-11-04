@@ -1,5 +1,5 @@
-import type { IApplicationState } from '../store';
+import type { RootState } from '../store';
 
-export const getTemplatesModalFilter = (state: IApplicationState): number[] => {
+export const getTemplatesModalFilter = (state: RootState): number[] => {
   return state.selectTemplateModal.templatesIdsFilter;
 };

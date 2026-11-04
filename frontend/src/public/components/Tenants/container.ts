@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import type { IApplicationState } from '../../redux/store';
+import type { RootState } from '../../redux/store';
 import { ITenantsProps, Tenants } from './Tenants';
 import {
   loadTenants,
@@ -18,7 +18,7 @@ type TDispatchProps = Pick<
   'loadTenants' | 'loginPartnerSuperuser' | 'createTenant' | 'changeTenantName' | 'deleteTenant'
 >;
 
-export function mapStateToProps({ tenants }: IApplicationState): TStoreProps {
+export function mapStateToProps({ tenants }: RootState): TStoreProps {
   return {
     isLoading: tenants.isLoading,
     tenants: tenants.list,
