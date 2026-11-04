@@ -654,7 +654,7 @@ services:
   mcp:
     build:
       context: ./mcp
-    image: pneumaticworkflow/pneumatic-mcp:${TAG:-}
+    image: pneumaticworkflow/pneumatic-mcp:${TAG:-src}
     container_name: pneumatic-mcp
     profiles: ["mcp"]
     environment:
