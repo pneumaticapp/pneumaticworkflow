@@ -1,0 +1,94 @@
+name: MCP connector CI
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'mcp/**'
+      - '.github/workflows/mcp-ci.yml'
+  pull_request:
+    paths:
+      - 'mcp/**'
+      - '.github/workflows/mcp-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mcp-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: mcp
+
+jobs:
+  check:
+    name: Lint, types and tests (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Development tooling (vitest 5) needs Node 22.12+.
+        node: ['22', '24']
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: mcp/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  runtime:
+    name: Runtime smoke (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # The server supports the engines range in package.json.
+        node: ['20.19', '22', '24']
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: mcp/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - name: Start the HTTP server and check health
+        env:
+          MCP_TRANSPORT: http
+          PORT: '3000'
+          TOKEN_SECRET: ci-only-secret-0123456789abcdef0123456789
+          OAUTH_REPLAY_FILE: ${{ runner.temp }}/replay.json
+        run: |
+          : > "$OAUTH_REPLAY_FILE"
+          node dist/index.js > server.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/healthz; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:3000/healthz
+          status=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:3000/mcp -H 'Content-Type: application/json' --data '{}')
+          test "$status" = 401
+      - if: failure()
+        run: cat server.log || true
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: mcp
+          push: false
+          tags: pneumatic-mcp:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
