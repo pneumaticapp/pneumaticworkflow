@@ -2,7 +2,7 @@
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { loadIntegrationDetails } from '../../redux/actions';
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 import { IIntegrationDetailsProps, IntegrationDetails } from './IntegrationDetails';
 
 type TIntegrationDetailsStoreProps = Pick<IIntegrationDetailsProps, 'isLoading' | 'integration'>;

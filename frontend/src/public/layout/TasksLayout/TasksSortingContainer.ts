@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 import { SelectMenu, ISelectMenuProps } from '../../components/UI';
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 import { changeTaskListSorting } from '../../redux/tasks/slice';
 import { processesTasksCompleteSortingValues, processesTasksSortingValues } from '../../constants/sortings';
 import { ETaskListCompleteSorting, ETaskListCompletionStatus, ETaskListSorting } from '../../types/tasks';

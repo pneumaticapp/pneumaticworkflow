@@ -1,4 +1,4 @@
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../store';
 import { ITemplateClient, ITemplateTaskClient, ITemplateKickoffClient, IExtraField } from '../../types/template';
 
 export const getTemplateData = (state: IApplicationState): ITemplateClient => {

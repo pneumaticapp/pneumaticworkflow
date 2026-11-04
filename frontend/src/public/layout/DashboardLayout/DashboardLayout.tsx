@@ -4,7 +4,8 @@ import { useSelector, useDispatch } from 'react-redux';
 
 import { TopNavContainer } from '../../components/TopNav';
 import { EDashboardTimeRange } from '../../types/dashboard';
-import { EDashboardModes, IApplicationState } from '../../types/redux';
+import { EDashboardModes } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 import { SelectMenu, Tabs } from '../../components/UI';
 import { FilterIcon } from '../../components/icons';
 import { getCanAccessWorkflows } from '../../redux/selectors/user';

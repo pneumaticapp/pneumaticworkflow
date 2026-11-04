@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 
-import { IApplicationState } from '../../../types/redux';
+import type { IApplicationState } from '../../../redux/store';
 
 import { ITemplateControllsProps, TemplateControlls } from './TemplateControlls';
 import { patchTemplate, cloneTemplate, deleteTemplate, openRunWorkflowModal } from '../../../redux/actions';

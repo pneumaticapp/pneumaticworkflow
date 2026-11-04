@@ -1,5 +1,6 @@
-import { IAccountPlan, IApplicationState } from '../../types/redux';
+import { IAccountPlan } from '../../types/redux';
 import { TUserListItem } from '../../types/user';
+import type { IApplicationState } from '../store';
 
 export const getAccountPlan = (state: IApplicationState): IAccountPlan => state.accounts.planInfo;
 

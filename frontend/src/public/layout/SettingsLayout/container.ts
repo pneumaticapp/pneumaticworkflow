@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 import { SettingsLayoutComponent, ISettingsLayoutComponentProps } from './SettingsLayout';
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 import { setProfileSettingsActiveTab } from '../../redux/profile/actions';
 
 export type TMapStateToProps = Pick<ISettingsLayoutComponentProps, 'activeTab'>;

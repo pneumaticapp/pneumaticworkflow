@@ -2,7 +2,7 @@
 import { connect } from 'react-redux';
 import { SelectMenu, ISelectMenuProps } from '../../components/UI';
 import { ETemplatesSorting } from '../../types/workflow';
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 import { changeTemplatesSorting } from '../../redux/actions';
 import { workflowsSortingValues } from '../../constants/sortings';
 

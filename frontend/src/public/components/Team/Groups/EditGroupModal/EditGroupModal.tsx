@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { editModalClose, updateGroup } from '../../../../redux/actions';
 import { validateGroupName } from '../../../../utils/validators';
 import { Button, Header, InputField, Modal } from '../../../UI';
-import { IApplicationState } from '../../../../types/redux';
+import type { IApplicationState } from '../../../../redux/store';
 
 import styles from './EditGroupModal.css';
 

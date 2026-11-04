@@ -10,7 +10,7 @@ import { TForegroundColor } from '../common/types';
 import { getForegroundClass } from '../common/utils/getForegroundClass';
 import { DatePickerCustom } from '../../form/DatePicker';
 import { ISingleDatePickerProps } from '../../form/DatePicker/types';
-import { IApplicationState } from '../../../../types/redux';
+import type { IApplicationState } from '../../../../redux/store';
 
 import styles from './DateField.css';
 import commonStyles from '../common/styles.css';

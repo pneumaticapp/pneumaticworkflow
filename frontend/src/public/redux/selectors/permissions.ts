@@ -1,4 +1,4 @@
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../store';
 import { EPermissionObjectType } from '../../types/permissions';
 
 export const getCanChangeWorkflow = (workflowId?: number) => (state: IApplicationState) =>

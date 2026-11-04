@@ -1,4 +1,5 @@
-import { IApplicationState, IStoreTasks, ITaskList } from '../../types/redux';
+import { IStoreTasks, ITaskList } from '../../types/redux';
+import type { IApplicationState } from '../store';
 import { ETaskListCompleteSorting, ETaskListSorting, ITaskListItem, ITasksSettings } from '../../types/tasks';
 
 export const getTasksSearchText = (state: IApplicationState): string => state.tasks.tasksSearchText;

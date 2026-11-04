@@ -2,7 +2,7 @@ import { startOfToday, endOfToday, isValid } from 'date-fns';
 import { connect } from 'react-redux';
 import { AnyAction } from 'redux';
 
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 import { openWorkflowLogPopup } from '../../redux/workflows/slice';
 import {
   loadHighlights,

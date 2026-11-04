@@ -3,7 +3,7 @@ import { withRouter } from 'react-router-dom';
 import { compose } from 'redux';
 
 import { App, IAppProps } from './App';
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 import { logoutUser } from '../../redux/actions';
 
 type TAppStoreProps = Pick<

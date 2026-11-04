@@ -1,4 +1,5 @@
-import { ELoggedState, IApplicationState, IAuthUser } from '../../../types/redux';
+import { ELoggedState, IAuthUser } from '../../../types/redux';
+import type { IApplicationState } from '../../store';
 import { ESubscriptionPlan } from '../../../types/account';
 import { EUserStatus } from '../../../types/user';
 import {

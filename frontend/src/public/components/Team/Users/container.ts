@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import { Users } from './Users';
 import { IUsersProps } from './types';
-import { IApplicationState } from '../../../types/redux';
+import type { IApplicationState } from '../../../redux/store';
 import { getIsUserSubsribed } from '../../../redux/selectors/user';
 import { setGeneralLoaderVisibility } from '../../../redux/actions';
 import {

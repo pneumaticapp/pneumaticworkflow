@@ -1,5 +1,6 @@
 import { EFieldsetsSorting, IFieldsetCatalogItem } from '../../types/fieldset';
-import { IApplicationState, IFieldsetsStore, IFieldsetsList } from '../../types/redux';
+import { IFieldsetsStore, IFieldsetsList } from '../../types/redux';
+import type { IApplicationState } from '../store';
 
 export const getFieldsetsStore = (state: IApplicationState): IFieldsetsStore => state.fieldsets;
 

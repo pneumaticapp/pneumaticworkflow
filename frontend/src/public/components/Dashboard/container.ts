@@ -1,6 +1,7 @@
 import { connect } from 'react-redux';
 import { Dashboard, IDashboardProps } from './Dashboard';
-import { EDashboardModes, IApplicationState } from '../../types/redux';
+import { EDashboardModes } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 import {
   loadDashboardData,
   setDashboardTimeRange,

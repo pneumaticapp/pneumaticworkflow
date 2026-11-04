@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 import { ITenantsProps, Tenants } from './Tenants';
 import {
   loadTenants,

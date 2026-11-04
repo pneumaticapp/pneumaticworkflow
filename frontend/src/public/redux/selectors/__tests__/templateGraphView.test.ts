@@ -1,4 +1,4 @@
-import { IApplicationState } from '../../../types/redux';
+import type { IApplicationState } from '../../store';
 import { EGraphViewMode } from '../../../components/TemplateEdit/TemplateGraphEditor/types';
 import { selectIsGraphCanvas, selectTemplateSelectedTaskApiName, selectTemplateViewMode } from '../templateGraphView';
 

@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 
 import { UserPerformerComponent, IUserPerformerProps } from './UserPerformer';
-import { IApplicationState } from '../../../types/redux';
+import type { IApplicationState } from '../../../redux/store';
 
 type TStoreProps = Pick<IUserPerformerProps, 'users'>;
 

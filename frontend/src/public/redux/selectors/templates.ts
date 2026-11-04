@@ -1,11 +1,6 @@
 import { TTaskVariable } from '../../components/TemplateEdit/types';
-import {
-  IApplicationState,
-  ITemplatesList,
-  ITemplatesStore,
-  ITemplatesSystem,
-  ITemplatesSystemList,
-} from '../../types/redux';
+import { ITemplatesList, ITemplatesStore, ITemplatesSystem, ITemplatesSystemList } from '../../types/redux';
+import type { IApplicationState } from '../store';
 import { TTransformedTask } from '../../types/template';
 import { ETemplatesSorting } from '../../types/workflow';
 

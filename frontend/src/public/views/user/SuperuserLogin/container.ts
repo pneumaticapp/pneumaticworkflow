@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 
 import { SuperuserLogin, ISuperuserLoginProps } from './SuperuserLogin';
-import { IApplicationState } from '../../../types/redux';
+import type { IApplicationState } from '../../../redux/store';
 import { loginSuperuser } from '../../../redux/auth/actions';
 
 type TSuperuserLoginProps = Pick<ISuperuserLoginProps, 'loading' | 'isSuperuser'>;

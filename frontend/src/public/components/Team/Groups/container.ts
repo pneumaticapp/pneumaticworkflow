@@ -4,7 +4,7 @@ import { changeGroupsListSorting } from '../../../redux/actions';
 import { withSyncedQueryString } from '../../../HOCs/withSyncedQueryString';
 import { EGroupsListSorting } from '../../../types/user';
 import { Groups, IGroupsProps } from './Groups';
-import { IApplicationState } from '../../../types/redux';
+import type { IApplicationState } from '../../../redux/store';
 
 export type TTeamProps = Pick<IGroupsProps, 'groupsListSorting'>;
 

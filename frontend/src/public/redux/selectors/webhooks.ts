@@ -1,3 +1,3 @@
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../store';
 
 export const getWebhooks = (state: IApplicationState) => state.webhooks;

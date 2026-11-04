@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 
 import { ForgotPassword } from './ForgotPassword';
 import { IForgotPasswordProps } from './types';
-import { IApplicationState } from '../../../types/redux';
+import type { IApplicationState } from '../../../redux/store';
 import { sendForgotPassword } from '../../../redux/auth/actions';
 
 type TLoginProps = Pick<IForgotPasswordProps, 'loading' | 'isCaptchaRequired'>;

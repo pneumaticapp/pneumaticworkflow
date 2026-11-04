@@ -1,7 +1,7 @@
 import { ComponentType, createElement } from 'react';
 import { connect } from 'react-redux';
 
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 import { IWorkflowsProps } from './types';
 import { openSelectTemplateModal, openRunWorkflowModal } from '../../redux/actions';
 import {

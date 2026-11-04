@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 import { IProfileAccountProps, ProfileAccount } from './ProfileAccount';
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 import { editCurrentAccount } from '../../redux/auth/actions';
 import { setProfileSettingsActiveTab } from '../../redux/profile/actions';
 

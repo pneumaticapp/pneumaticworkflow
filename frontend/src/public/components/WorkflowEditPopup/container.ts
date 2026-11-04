@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 import { closeRunWorkflowModal, runWorkflow } from '../../redux/actions';
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 import { INullableWorkflowEditPopupProps, WorkflowEditPopup } from './WorkflowEditPopup';
 
 type TStoreProps = Pick<

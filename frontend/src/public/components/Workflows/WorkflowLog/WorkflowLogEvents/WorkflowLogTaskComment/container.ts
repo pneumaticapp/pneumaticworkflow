@@ -8,7 +8,7 @@ import {
 } from '../../../../../redux/workflows/slice';
 import { TWorkflowLogTaskCommentProps, WorkflowLogTaskComment } from './WorkflowLogTaskComment';
 
-import { IApplicationState } from '../../../../../types/redux';
+import type { IApplicationState } from '../../../../../redux/store';
 
 type TStoreProps = Pick<TWorkflowLogTaskCommentProps, 'currentUserId' | 'workflowModal'>;
 type TDispatchProps = Pick<

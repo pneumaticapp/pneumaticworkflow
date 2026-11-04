@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 
 import { UserDataComponent, IUserdataProps } from './UserData';
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 import { getUserById } from './utils/getUserById';
 
 type TStoreProps = Pick<IUserdataProps, 'user'>;

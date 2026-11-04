@@ -1,4 +1,3 @@
-import { Action } from 'redux';
 import { EGroupsListSorting, EUserListSorting, EUserStatus, IUnsavedUser, IUserVacation, TUserListItem } from './user';
 import { TNotificationsListItem } from './notifications';
 import { IAccountGenericTemplate } from './genericTemplates';
@@ -38,40 +37,7 @@ import { EWebhooksTypeEvent, IWebhook } from './webhooks';
 import { ETenantsSorting, ITenant } from './tenants';
 import { IDataset, IDatasetListItem, EDatasetsSorting, TDatasetItemsSortOrder } from './dataset';
 import { IFieldsetCatalogItem, EFieldsetsSorting } from './fieldset';
-import { IPagesStore } from '../redux/pages/types';
 import { TeamPages, IGroup, UserInvite } from '../redux/team/types';
-import { ITemplateGraphViewState } from '../components/TemplateEdit/TemplateGraphEditor/types';
-
-export interface IApplicationState {
-  general: IGeneralStore;
-  accounts: IAccounts;
-  genericTemplates: IGenericTemplatesStore;
-  authUser: IAuthUser;
-  dashboard: IDashboardStore;
-  menu: IMenu;
-  settings: ISettings;
-  notifications: IStoreNotification;
-  workflows: IStoreWorkflows;
-  profile: IStoreProfile;
-  highlights: IHighlightsStore;
-  templates: ITemplatesStore;
-  selectTemplateModal: ISelectTemplateModalStore;
-  template: ITemplateStore;
-  integrations: IIntegrationsStore;
-  runWorkflowModal: IStoreRunWorkflowModal;
-  buyPlanModal: IBuyPlanModalStore;
-  webhooks: IWebhookStore;
-  pages: IPagesStore;
-  tasks: IStoreTasks;
-  task: IStoreTask;
-  team: ITeamStore;
-  groups: IGroupsStore;
-  tenants: ITenantsStore;
-  datasets: IDatasetsStore;
-  fieldsets: IFieldsetsStore;
-  permissions: IPermissionsStore;
-  templateGraphView: ITemplateGraphViewState;
-}
 
 export type IPermissionsStore = {
   [objType in EPermissionObjectType]: TObjectPermissionsById;
@@ -301,11 +267,6 @@ export interface ITemplatesStore {
   isTemplateOwner: undefined | boolean;
 }
 
-export interface IBuyPlanModalStore {
-  isOpen: boolean;
-  headerTextId: string;
-}
-
 export enum ETemplateStatus {
   Loading = 'loading',
   LoadingFailed = 'loading-failed',
@@ -524,23 +485,4 @@ export interface IStoreRunWorkflowModal {
 
 export interface IWorkflowsTuneViewModal {
   isOpen: boolean;
-}
-
-export interface IReduxDevToolsOptions {
-  name?: string;
-  latency?: number;
-  maxAge?: number;
-  trace?: boolean | ((action: Action) => string);
-  traceLimit?: number;
-  shouldRecordChanges?: boolean;
-  shouldStartLocked?: boolean;
-  shouldHotReload?: boolean;
-  shouldCatchErrors?: boolean;
-  pauseActionType?: string;
-  autoPause?: boolean;
-  actionsBlacklist?: string | string[];
-  actionsWhitelist?: string | string[];
-  predicate?: <S, A extends Action>(state: S, action: A) => boolean;
-  actionSanitizer?: <A extends Action>(action: A, id: number) => A;
-  stateSanitizer?: <S>(state: S, index: number) => S;
 }

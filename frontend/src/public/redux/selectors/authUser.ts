@@ -1,4 +1,5 @@
-import { IApplicationState, IAuthUser } from '../../types/redux';
+import { IAuthUser } from '../../types/redux';
+import type { IApplicationState } from '../store';
 
 export const getCurrentUser = (state: IApplicationState): IAuthUser => state.authUser;
 

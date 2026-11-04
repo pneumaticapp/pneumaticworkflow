@@ -1,7 +1,7 @@
 import { ComponentType } from 'react';
 import { connect } from 'react-redux';
 
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 import {
   changeWorkflowsSorting,
   loadFilterTemplates as loadWorkflowsFilterTemplates,

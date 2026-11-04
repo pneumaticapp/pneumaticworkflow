@@ -3,7 +3,7 @@ import { useIntl, FormattedDate } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { IApiKeyItem } from '../../types/integrations';
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 import { copyToClipboard } from '../../utils/helpers';
 import { Button } from '../UI/Buttons/Button';
 import { InputField } from '../UI/Fields/InputField';

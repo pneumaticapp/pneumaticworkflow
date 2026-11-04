@@ -1,6 +1,6 @@
 import { createSelector } from 'reselect';
 
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../store';
 import { getBrowserConfig } from '../../utils/getConfig';
 import { getPaywallType } from '../../components/TopNav/utils/getPaywallType';
 import { getAccountPlan } from './accounts';

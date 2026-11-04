@@ -1,59 +1,78 @@
-import { createStore, applyMiddleware, compose } from 'redux';
-import { RootStateOrAny } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
 import createSagaMiddleware from 'redux-saga';
-import { persistStore, persistReducer, PersistConfig } from 'redux-persist';
+import { persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from 'redux-persist';
+import type { PersistConfig } from 'redux-persist';
 import localStorage from 'redux-persist/lib/storage';
-import merge from 'lodash.merge';
 import { createFilter } from 'redux-persist-transform-filter';
-
-import { IApplicationState } from '../types/redux';
-import { isClient } from '../utils/helpers';
+import type { IDashboardStore, IStoreTasks } from '../types/redux';
+import type { ITasksSettings } from '../types/tasks';
 import { createDeclineForbiddenActionsMiddleware } from './utils/createDeclineForbiddenActionsMiddleware';
-
-import { rootReducer } from './reducers';
+import { mergePersistedState } from './utils/mergePersistedState';
+import { EHighlightsActions } from './highlights/actions';
+import { reducers, rootReducer } from './reducers';
 import { rootSaga as sagas } from './sagas';
 
 const sagaMiddleware = createSagaMiddleware();
 const declineForbiddenActionsMiddleware = createDeclineForbiddenActionsMiddleware();
 
-const middlewares = [declineForbiddenActionsMiddleware, sagaMiddleware];
+const saveDashboardModeFilter = createFilter<IDashboardStore, Pick<IDashboardStore, 'mode'>>('dashboard', ['mode']);
+const saveTasksSortingFilter = createFilter<IStoreTasks, { tasksSettings: Pick<ITasksSettings, 'sorting'> }>('tasks', [
+  'tasksSettings.sorting',
+]);
 
-export const initialState = {} as IApplicationState;
+const persistConfig: PersistConfig<ReturnType<typeof reducers>> = {
+  key: 'primary',
+  storage: localStorage,
+  transforms: [saveDashboardModeFilter, saveTasksSortingFilter],
+  whitelist: ['dashboard', 'tasks'],
+  stateReconciler: mergePersistedState,
+};
 
-export function configureStore(state: IApplicationState = initialState) {
-  const saveDashboardModeFilter = createFilter<IApplicationState, {}>('dashboard', ['mode']);
-  const saveTasksSortingFilter = createFilter<IApplicationState, {}>('tasks', ['tasksSettings.sorting']);
+const persistedReducer = persistReducer(persistConfig, rootReducer);
 
-  const persistConfig: PersistConfig<IApplicationState> = {
-    key: 'primary',
-    storage: localStorage,
-    transforms: [saveDashboardModeFilter, saveTasksSortingFilter],
-    whitelist: ['dashboard', 'tasks'],
-    stateReconciler: (inbound, original) => {
-      const reconcilationResult = merge(original, inbound);
+export const store = configureStore({
+  reducer: persistedReducer,
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      thunk: false,
+      serializableCheck: {
+        ignoredActions: [
+          FLUSH,
+          REHYDRATE,
+          PAUSE,
+          PERSIST,
+          PURGE,
+          REGISTER,
+          EHighlightsActions.SetStartDate,
+          EHighlightsActions.SetEndDate,
+        ],
+        ignoredActionPaths: [
+          /^payload\.on[A-Z]\w*$/,
+          'payload.photo',
+          'payload.startDate',
+          'payload.endDate',
+          'payload.eventDateFrom',
+          'payload.eventDateTo',
+          /^payload\.\d+(\.subs\.\d+)?\.iconComponent$/,
+          /^payload\.variables\.\d+\.richSubtitle$/,
+        ],
+        ignoredPaths: [
+          'highlights.filters.startDate',
+          'highlights.filters.endDate',
+          /^menu\.items\.\d+(\.subs\.\d+)?\.iconComponent$/,
+          /^templates\.templatesVariablesMap\.\d+\.\d+\.richSubtitle$/,
+        ],
+      },
+    }).concat(declineForbiddenActionsMiddleware, sagaMiddleware),
+  devTools: {
+    trace: true,
+    traceLimit: 25,
+  },
+});
 
-      return reconcilationResult;
-    },
-  };
+export const persistor = persistStore(store);
 
-  const persistedReducer = persistReducer(persistConfig, rootReducer);
-  const composeEnhancers =
-    (isClient() &&
-      window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__?.({
-        trace: true,
-        traceLimit: 25,
-      })) ||
-    compose;
-  const store = createStore(
-    persistedReducer,
-    state as RootStateOrAny,
-    composeEnhancers(applyMiddleware(...middlewares)),
-  );
-  const persistor = persistStore(store);
+sagaMiddleware.run(sagas);
 
-  sagaMiddleware.run(sagas);
-
-  return { store, persistor };
-}
-
-export const { store, persistor } = configureStore();
+export type IApplicationState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;

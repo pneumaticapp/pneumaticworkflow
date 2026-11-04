@@ -1,4 +1,5 @@
-import { IApplicationState, IStoreTask, IWorkflowLog } from '../../types/redux';
+import { IStoreTask, IWorkflowLog } from '../../types/redux';
+import type { IApplicationState } from '../store';
 import { ITask } from '../../types/tasks';
 import { RawPerformer } from '../../types/template';
 import { ETaskStatus } from '../actions';

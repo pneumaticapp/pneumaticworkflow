@@ -1,5 +1,6 @@
 import { createSelector } from 'reselect';
-import { IAccounts, IApplicationState, IAuthUser, IGenericTemplatesStore } from '../../types/redux';
+import { IAccounts, IAuthUser, IGenericTemplatesStore } from '../../types/redux';
+import type { IApplicationState } from '../store';
 import { TUserListItem } from '../../types/user';
 import { getPlanPendingActions } from '../../utils/getPlanPendingActions';
 

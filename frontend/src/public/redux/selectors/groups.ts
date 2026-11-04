@@ -1,4 +1,4 @@
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../store';
 import { EUserListSorting } from '../../types/user';
 import { EUserGroupType, IGroup } from '../team/types';
 

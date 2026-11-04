@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 
 import { DateFormatComponent, IDateFormatProps } from './DateFormat';
-import { IApplicationState } from '../../../types/redux';
+import type { IApplicationState } from '../../../redux/store';
 
 type TStoreProps = Pick<IDateFormatProps, 'dateFmt' | 'timezone' | 'language'>;
 

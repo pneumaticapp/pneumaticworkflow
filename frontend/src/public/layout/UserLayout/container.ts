@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 
 import { IUserLayoutProps, UserLayout } from './UserLayout';
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 
 type TUserLayoutStoreProps = Pick<IUserLayoutProps, 'pages'>;
 

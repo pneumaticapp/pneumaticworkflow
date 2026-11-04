@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 
 import { Auth, IAuthUserProps } from './Auth';
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 import { logoutUser } from '../../redux/auth/actions';
 
 type TAuthUserStoreProps = Pick<IAuthUserProps, 'email'>;

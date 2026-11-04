@@ -2,7 +2,8 @@ import { Locale } from 'date-fns';
 import { enUS, ru } from 'date-fns/locale';
 import { useSelector } from 'react-redux';
 
-import { ELocale, IApplicationState } from '../types/redux';
+import { ELocale } from '../types/redux';
+import type { IApplicationState } from '../redux/store';
 
 const localeMap: { [key: string]: Locale } = {
   [ELocale.English]: enUS,

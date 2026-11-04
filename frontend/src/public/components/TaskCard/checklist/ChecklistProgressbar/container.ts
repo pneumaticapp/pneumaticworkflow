@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 import { getCurrentTask } from '../../../../redux/selectors/task';
-import { IApplicationState } from '../../../../types/redux';
+import type { IApplicationState } from '../../../../redux/store';
 import { getTaskChecklist } from '../../../../utils/tasks';
 import {
   TChecklistProgressbarReduxProps,

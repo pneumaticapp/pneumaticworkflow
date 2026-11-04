@@ -1,6 +1,6 @@
 import { createSelector } from 'reselect';
 
-import type { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../store';
 import { getUserPendingActions } from './user';
 
 const getMenu = ({ menu }: IApplicationState) => menu;

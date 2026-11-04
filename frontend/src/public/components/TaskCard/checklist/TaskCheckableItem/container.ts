@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import { markChecklistItem, unmarkChecklistItem } from '../../../../redux/actions';
 import { getCurrentTask } from '../../../../redux/selectors/task';
-import { IApplicationState } from '../../../../types/redux';
+import type { IApplicationState } from '../../../../redux/store';
 import { getTaskChecklistItem } from '../../../../utils/tasks';
 import { TaskCheckableItem, TTaskCheckableItemReduxProps, TTaskCheckableItemOwnProps } from './TaskCheckableItem';
 

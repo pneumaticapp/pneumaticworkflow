@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 
 import { IAutoSaveStatusProps, AutoSaveStatus } from './AutoSaveStatus';
 
-import { IApplicationState } from '../../../types/redux';
+import type { IApplicationState } from '../../../redux/store';
 import { getPaywallType } from '../../TopNav/utils/getPaywallType';
 
 type TStoreProps = Pick<IAutoSaveStatusProps, 'templateStatus' | 'withPaywall'>;

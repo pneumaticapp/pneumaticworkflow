@@ -16,7 +16,7 @@ import {
   toggleTaskSkippedTasksVisibility,
 } from '../../redux/actions';
 import { openWorkflowLogPopup, clearWorkflow, setWorkflowFinished } from '../../redux/workflows/slice';
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 import { getNotDeletedUsers } from '../../utils/users';
 
 type TStoreProps = Pick<

@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { ITaskDetailProps, TaskDetail } from './TaskDetail';
 import { loadCurrentTask } from '../../redux/actions';
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 
 type TTaskDetailDispatchProps = Pick<ITaskDetailProps, 'loadCurrentTask'>;
 type TTaskDetailStoreProps = Pick<ITaskDetailProps, 'task'>;

@@ -2,7 +2,7 @@
 import { connect } from 'react-redux';
 
 import { IStepNameProps, StepNameComponent } from './StepName';
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 import { loadTemplateVariables } from '../../redux/actions';
 
 type TStoreProps = Pick<IStepNameProps, 'variables'>;

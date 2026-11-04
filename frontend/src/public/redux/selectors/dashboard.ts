@@ -1,5 +1,6 @@
-import { EDashboardModes, IApplicationState, IDashboardStore, TDashboardBreakdownItem } from '../../types/redux';
+import { EDashboardModes, IDashboardStore, TDashboardBreakdownItem } from '../../types/redux';
 import { EDashboardTimeRange } from '../../types/dashboard';
+import type { IApplicationState } from '../store';
 
 export const getDashboardStore = (state: IApplicationState): IDashboardStore => state.dashboard;
 

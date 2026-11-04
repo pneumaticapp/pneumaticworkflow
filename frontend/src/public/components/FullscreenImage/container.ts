@@ -1,7 +1,7 @@
 /* prettier-ignore */
 import { connect } from 'react-redux';
 import { FullscreenImage, IFullscreenImageProps } from './FullscreenImage';
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../../redux/store';
 import { closeFullscreenImage } from '../../redux/general/actions';
 
 type TStoreProps = Pick<IFullscreenImageProps, 'url'>;

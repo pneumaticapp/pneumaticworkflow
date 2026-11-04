@@ -1,12 +1,10 @@
-import { RootStateOrAny } from 'react-redux';
 import { combineReducers } from 'redux';
+import type { AnyAction } from 'redux';
 
-import { IApplicationState } from '../types/redux';
 import { general } from './general';
 import { authUser } from './auth';
 import { dashboard } from './dashboard';
 import { genericTemplates } from './genericTemplates';
-import { initialState } from './store';
 import { menu } from './menu';
 import { notifications } from './notifications';
 import { profile } from './profile';
@@ -63,9 +61,9 @@ export const reducers = combineReducers({
   pages,
 });
 
-export const rootReducer: RootStateOrAny = (state: IApplicationState = initialState, action: any) => {
+export const rootReducer = (state: ReturnType<typeof reducers> | undefined, action: AnyAction) => {
   if (action.type === EAuthActions.LogoutUserSuccess) {
-    return reducers(initialState, action);
+    return reducers(undefined, action);
   }
 
   return reducers(state, action);

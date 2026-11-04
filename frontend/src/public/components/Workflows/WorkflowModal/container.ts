@@ -11,7 +11,7 @@ import {
   toggleSkippedTasksVisibility,
 } from '../../../redux/workflows/slice';
 
-import { IApplicationState } from '../../../types/redux';
+import type { IApplicationState } from '../../../redux/store';
 import { EPermissionObjectType } from '../../../types/permissions';
 
 import { WorkflowModal, IWorkflowModalProps } from './WorkflowModal';

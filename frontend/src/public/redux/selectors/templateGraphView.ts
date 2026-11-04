@@ -1,4 +1,4 @@
-import { IApplicationState } from '../../types/redux';
+import type { IApplicationState } from '../store';
 import { EGraphViewMode } from '../../components/TemplateEdit/TemplateGraphEditor/types';
 
 export const selectTemplateViewMode = (state: IApplicationState): EGraphViewMode => state.templateGraphView.viewMode;
