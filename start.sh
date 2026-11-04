@@ -388,6 +388,24 @@ case "$LOGS_BACKEND_VALUE" in
     ;;
 esac
 
+# 3.1.2 The Claude connector (MCP server) follows MCP_ENABLED of .env
+# --------------------------------------------------------------------
+MCP_ENABLED_VALUE=$(
+    grep -E "^\s*MCP_ENABLED=" "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | sed 's/#.*//' | tr -d '"'"'"'[:space:]' | tr '[:upper:]' '[:lower:]'
+)
+case "$MCP_ENABLED_VALUE" in
+  ""|false|no)
+    ;;
+  true|yes)
+    COMPOSE_ARGS+=('--profile' 'mcp')
+    print_info "MCP_ENABLED=true: the Claude connector runs at /mcp"
+    ;;
+  *)
+    print_error "MCP_ENABLED=$MCP_ENABLED_VALUE is not one of: true, false"
+    exit 1
+    ;;
+esac
+
 print_info "Selected configuration: $COMPOSE_LABEL"
 echo ""
 
