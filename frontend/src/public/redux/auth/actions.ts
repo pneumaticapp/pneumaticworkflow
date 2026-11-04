@@ -1,10 +1,11 @@
-import { IUnsavedUser, IUserVacation, TUserInvited } from '../../types/user';
+import type { IUnsavedUser, IUserVacation, TUserInvited } from '../../types/user';
 import { actionGenerator } from '../../utils/redux';
-import { IAuthUser, ITypedReduxAction } from '../../types/redux';
-import { IUpdateUserRequest, TUpdateUserMappedResponse } from '../../api/editProfile';
-import { IUpdateAccountRequest, IUpdatedAccount } from '../../api/editAccount';
-import { TPlanCode } from '../../types/account';
-import { IVacationActivateRequest } from '../../api/vacation';
+import type { IAuthUser } from '../../types/redux';
+import type { ITypedReduxAction } from '../types';
+import type { IUpdateUserRequest, TUpdateUserMappedResponse } from '../../api/editProfile';
+import type { IUpdateAccountRequest, IUpdatedAccount } from '../../api/editAccount';
+import type { TPlanCode } from '../../types/account';
+import type { IVacationActivateRequest } from '../../api/vacation';
 
 export const enum EAuthActions {
   AuthUser = 'AUTH_USER',

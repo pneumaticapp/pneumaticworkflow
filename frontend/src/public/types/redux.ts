@@ -390,14 +390,6 @@ export type IFieldsetsStore = {
   isCatalogLoaded: boolean;
 };
 
-export interface IAction<Type> {
-  type: Type;
-}
-
-export interface ITypedReduxAction<Type, Payload> extends IAction<Type> {
-  payload: Payload;
-}
-
 export interface IDashboardCounters {
   completed: number;
   inProgress: number;

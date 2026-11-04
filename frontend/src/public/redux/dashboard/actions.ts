@@ -3,12 +3,12 @@
 // tslint:disable: max-line-length
 
 import {
-  ITypedReduxAction,
   IDashboardCounters,
   TDashboardBreakdownItem,
   EDashboardModes,
   IDashboardStore,
 } from '../../types/redux';
+import type { ITypedReduxAction } from '../types';
 import { actionGenerator } from '../../utils/redux';
 import { EDashboardTimeRange, IGettingStartedChecklist } from '../../types/dashboard';
 

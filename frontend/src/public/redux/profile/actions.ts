@@ -1,4 +1,4 @@
-import { ITypedReduxAction } from '../../types/redux';
+import type { ITypedReduxAction } from '../types';
 import { ESettingsTabs } from '../../types/profile';
 import { actionGenerator } from '../../utils/redux';
 

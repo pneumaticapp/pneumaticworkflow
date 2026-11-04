@@ -1,10 +1,11 @@
-import { ITypedReduxAction, IWorkflowLog } from '../../types/redux';
+import type { IWorkflowLog } from '../../types/redux';
+import type { ITypedReduxAction } from '../types';
 import { actionGenerator } from '../../utils/redux';
-import { IExtraField, RawPerformer } from '../../types/template';
-import { ITask } from '../../types/tasks';
+import type { IExtraField, RawPerformer } from '../../types/template';
+import type { ITask } from '../../types/tasks';
 import { ETaskCardViewMode } from '../../components/TaskCard';
 import { EWorkflowsLogSorting, IWorkflowDetailsClient, IWorkflowLogItem } from '../../types/workflow';
-import { ISendWorkflowLogComment } from '../workflows/types';
+import type { ISendWorkflowLogComment } from '../workflows/types';
 
 export const enum ETaskActions {
   LoadCurrentTask = 'LOAD_CURRENT_TASK',

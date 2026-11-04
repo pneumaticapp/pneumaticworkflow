@@ -1,6 +1,6 @@
 /* prettier-ignore */
 // tslint:disable: max-line-length
-import { ITypedReduxAction } from '../../types/redux';
+import type { ITypedReduxAction } from '../types';
 import { EWebhooksTypeEvent, IWebhook } from '../../types/webhooks';
 import { actionGenerator } from '../../utils/redux';
 
