@@ -4,6 +4,20 @@ How to host the connector in `http` mode for a team, so Claude.ai, Claude Deskto
 
 The shared server uses OAuth: each user supplies their own Pneumatic API key on the consent page. **Do not set `PNEUMATIC_API_KEY` on the shared server.** Run **one instance**: the replay ledger and upload links live in one process (see [Architecture](../README.md#architecture) for what replicas would need).
 
+## With Pneumatic docker compose
+
+A self-hosted Pneumatic installation already contains the connector (`mcp/` of the Pneumatic repository) as the `mcp` service of `docker-compose.yml`. It is off by default.
+
+1. In the Pneumatic `.env`, set `MCP_ENABLED=true`. `start.sh` then adds the `mcp` compose profile. When running `docker compose` by hand, enable the profile yourself: `COMPOSE_PROFILES=mcp` (comma-separated with a `logs-*` profile) or `--profile mcp`.
+2. Optionally set `MCP_TOKEN_SECRET` (at least 32 characters, `openssl rand -hex 32`); it defaults to `DJANGO_SECRET_KEY`. Changing it later signs every user out. `MCP_RATE_LIMIT_PER_MINUTE`, `MCP_TOOLSETS`, `MCP_READ_ONLY` and `MCP_LOG_LEVEL` map to the variables in [Configuration](../README.md#configuration).
+3. Start Pneumatic as usual (`./start.sh`). Nothing else is needed:
+   - nginx serves the connector on the web app origin: the MCP endpoint is `FRONTEND_URL/mcp`, and `/authorize`, `/token`, `/register`, `/upload/` and `/.well-known/oauth-*` go to the connector as well. Without the profile these paths answer 502 and the rest of Pneumatic is unaffected;
+   - `PUBLIC_URL` and `PNEUMATIC_APP_URL` follow `FRONTEND_URL`, `PNEUMATIC_FILES_URL` follows `FILE_SERVICE_URL`; API and storage calls go over the internal network (`BACKEND_PRIVATE_URL`, `PNEUMATIC_FILES_INTERNAL_URL`);
+   - the replay ledger lives in the `mcp-state` volume and is created on the first start. Keep the volume on upgrades.
+4. Claude.ai reaches the connector only over HTTPS (`SSL=yes`); plain HTTP works only for clients on the same machine at `http://localhost/mcp`. With plain HTTP on any other address the connector refuses to start.
+
+The rest of this guide covers running the connector on its own, next to Pneumatic Cloud or another installation.
+
 ## Requirements
 
 - A host with Docker (or Node.js 20.19+ / 22.12+ to run `dist/index.js` directly) and a persistent directory for the replay ledger.
@@ -49,9 +63,9 @@ The shared server uses OAuth: each user supplies their own Pneumatic API key on 
    sudo install -m 0600 -o 1000 -g 1000 /dev/null /var/lib/pneumatic-connector/replay.json
    ```
 
-3. **Start the container.** Build the image from this repository, or use the image `release.yml` publishes for every version tag: `ghcr.io/pneumaticapp/pneumatic-connector:<version>` (also `X.Y` and `latest`). The package is private, so log in first with a GitHub token that has `read:packages`: `echo <token> | docker login ghcr.io -u <github-user> --password-stdin`; in the examples below replace `build: .` (or `docker build`) with that image. The examples bind the HTTP port to loopback because the TLS proxy runs on the same host; if it runs elsewhere, expose port 3000 only on a private network. The image runs as a non-root user and has a Docker health check on `GET /healthz`.
+3. **Start the container.** Build the image from `mcp/` of the Pneumatic repository, or use the published image `pneumaticworkflow/pneumatic-mcp` (`stable` with each Pneumatic release, `latest` from `master`); in the examples below replace `build: .` (or `docker build`) with that image. The examples bind the HTTP port to loopback because the TLS proxy runs on the same host; if it runs elsewhere, expose port 3000 only on a private network. The image runs as a non-root user and has a Docker health check on `GET /healthz`.
 
-   With Docker Compose (`compose.yaml` next to a clone of this repository):
+   With Docker Compose (`compose.yaml` in `mcp/` of a clone of the Pneumatic repository):
 
    ```yaml
    services:

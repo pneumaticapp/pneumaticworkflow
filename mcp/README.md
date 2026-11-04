@@ -55,7 +55,9 @@ Files go through the Pneumatic file storage (`PNEUMATIC_FILES_URL`) with the sam
 
 ## Production deployment (remote HTTP)
 
-The shared server runs in `http` mode behind a TLS reverse proxy, as **one** Docker container with a persistent volume for the replay ledger. Each user connects with their own Pneumatic API key through OAuth; do not set `PNEUMATIC_API_KEY` on the shared server. [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) covers requirements, which Pneumatic URLs to set (Cloud and self-hosted), Docker Compose and `docker run` examples, the reverse proxy, upgrades, backups and troubleshooting.
+**Self-hosted Pneumatic:** the connector ships with Pneumatic. Set `MCP_ENABLED=true` in the Pneumatic `.env` (or enable the `mcp` compose profile) and it runs at `FRONTEND_URL/mcp`; see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#with-pneumatic-docker-compose).
+
+Otherwise the shared server runs in `http` mode behind a TLS reverse proxy, as **one** Docker container with a persistent volume for the replay ledger. Each user connects with their own Pneumatic API key through OAuth; do not set `PNEUMATIC_API_KEY` on the shared server. [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) covers requirements, which Pneumatic URLs to set (Cloud and self-hosted), Docker Compose and `docker run` examples, the reverse proxy, upgrades, backups and troubleshooting.
 
 ## Claude.ai custom connector (remote)
 
@@ -82,7 +84,7 @@ Local process:
 
 ```bash
 npm ci && npm run build
-claude mcp add pneumatic --env PNEUMATIC_API_KEY=pn-... -- node /path/to/pneumatic-connector/dist/index.js
+claude mcp add pneumatic --env PNEUMATIC_API_KEY=pn-... -- node /path/to/pneumaticworkflow/mcp/dist/index.js
 ```
 
 ## Claude Desktop (local process)
@@ -94,7 +96,7 @@ claude mcp add pneumatic --env PNEUMATIC_API_KEY=pn-... -- node /path/to/pneumat
   "mcpServers": {
     "pneumatic": {
       "command": "node",
-      "args": ["/path/to/pneumatic-connector/dist/index.js"],
+      "args": ["/path/to/pneumaticworkflow/mcp/dist/index.js"],
       "env": {
         "PNEUMATIC_API_URL": "https://api.pneumatic.app",
         "PNEUMATIC_API_KEY": "pn-..."
@@ -112,6 +114,7 @@ claude mcp add pneumatic --env PNEUMATIC_API_KEY=pn-... -- node /path/to/pneumat
 | `PNEUMATIC_API_URL`            | `https://api.pneumatic.app`                                                           | Pneumatic backend URL                                                                                                                                                                                                                                                       |
 | `PNEUMATIC_API_KEY`            | —                                                                                     | Required in `stdio` mode                                                                                                                                                                                                                                                    |
 | `PNEUMATIC_FILES_URL`          | `https://my.pneumatic.app/files` for the Cloud API, otherwise unset                   | Public Pneumatic file storage URL (`FILE_SERVICE_URL` of the backend, e.g. `https://pneumatic.example.com/files`); without it file tools return `not_configured`                                                                                                            |
+| `PNEUMATIC_FILES_INTERNAL_URL` | —                                                                                     | Address the connector itself uses for file storage requests when `PNEUMATIC_FILES_URL` is not reachable from it (in the Pneumatic `docker-compose.yml`: `http://pneumatic-file-service:8000`); links still use `PNEUMATIC_FILES_URL`                                        |
 | `PNEUMATIC_APP_URL`            | `PNEUMATIC_FILES_URL` without `/files` (`https://my.pneumatic.app` for the Cloud API) | Pneumatic web app URL used for `webUrl` links in results; without it results carry no links                                                                                                                                                                                 |
 | `HOST`                         | `127.0.0.1`                                                                           | Bind address in `http` mode (`0.0.0.0` in Docker)                                                                                                                                                                                                                           |
 | `PORT`                         | `3000`                                                                                | Port in `http` mode                                                                                                                                                                                                                                                         |
@@ -136,7 +139,7 @@ Use `node --env-file=.env dist/index.js` to load variables from a file (see `.en
 - Authorization codes expire in 5 minutes, and refresh tokens are rotated on use. Replaying an already rotated refresh token more than 30 seconds later revokes the whole session (all its access and refresh tokens); a quick retry of a lost response is only rejected. Both the revocation and the 30-second grace window are recorded in the replay ledger. The durable replay ledger rejects reuse after restarts. It supports **one HTTP process only**; multiple replicas require a shared atomic store. Codes and refresh tokens issued before versioned replay protection are rejected on upgrade, so users must authorize again; existing access tokens remain valid until expiry. PKCE S256 with a 43–128 character verifier is mandatory.
 - Confidential OAuth clients registered before authentication-method enforcement must register again. Public clients continue to work.
 - Redirect URIs must be HTTPS (HTTP only on loopback) and belong to `OAUTH_ALLOWED_REDIRECT_HOSTS`.
-- The API key is sent only to `PNEUMATIC_API_URL` and `PNEUMATIC_FILES_URL`. `download_file` accepts only links under `PNEUMATIC_FILES_URL`.
+- The API key is sent only to `PNEUMATIC_API_URL` and the file storage (`PNEUMATIC_FILES_INTERNAL_URL` when set, otherwise `PNEUMATIC_FILES_URL`). `download_file` accepts only links under `PNEUMATIC_FILES_URL`.
 - `upload_file` with `sourceUrl` fetches only public HTTPS URLs on port 443 without credentials. Every resolved address, including after each of at most 3 redirects, must be public: loopback, private, link-local, metadata and reserved ranges are refused at connect time. Downloads are capped at 25 MiB and 30 seconds and never carry the API key.
 - In `http` mode each API key gets `RATE_LIMIT_PER_MINUTE` MCP requests per minute (in-memory, per process); excess requests receive HTTP 429 with `Retry-After`. The file storage has its own per-IP limits (by default 10 uploads and 100 downloads per minute), and on a shared server all users share the connector's IP.
 
@@ -145,7 +148,7 @@ Use `node --env-file=.env dist/index.js` to load variables from a file (see `.en
 - **Toolsets.** A catalog of 68 tools (66 in `stdio` mode, which has no upload links) costs context and makes tool choice harder, so deployments can offer only what their users need: for example `TOOLSETS=core,files` for everyday work and the full set for admins. `READ_ONLY=true` hides every tool that changes data (Pneumatic API keys have no read-only scope of their own).
 - **Logs.** Every HTTP request is logged as one JSON line on stderr with a request ID (`X-Request-Id` is accepted and echoed), the route, the status and the duration; every tool call that passes input-schema validation with the tool name, the outcome or error code and the duration (calls rejected by the schema are answered by the SDK and only appear as `http_request` lines). Request errors such as malformed JSON are logged as `http_error` with the route, status and error type. Logs never contain API keys, tokens, upload links, request bodies, tool arguments or results. Health checks and metric scrapes are logged at `debug`. Prompts are offered only when every tool they use is offered, and the instructions mention only offered tools.
 - **Metrics.** With `METRICS_TOKEN`, `GET /metrics` exposes `mcp_tool_calls_total{tool,outcome}`, `mcp_tool_call_seconds_total{tool}` (divide by the call count for the mean duration), `http_requests_total{route,status}` and `pneumatic_requests_total{target,method,status}` (status classes of calls to the Pneumatic API and file storage). Counters are per process. `/metrics` skips the `Host` check, so Prometheus can scrape it by container or service name.
-- **CI.** `.github/workflows/ci.yml` runs lint, format check, typecheck, tests and build on Node 22 and 24, starts the built server on Node 20.19, 22 and 24 and checks `/healthz` and the 401 on `/mcp`, and builds the Docker image. Pushing a `vX.Y.Z` tag runs `release.yml`, which checks that the tag matches `package.json` and `src/core/version.ts`, tests, and publishes the image to `ghcr.io/<owner>/<repo>` as `X.Y.Z`, `X.Y` and `latest`.
+- **CI.** `.github/workflows/mcp-ci.yml` in the Pneumatic repository runs lint, format check, typecheck, tests and build on Node 22 and 24, starts the built server on Node 20.19, 22 and 24 and checks `/healthz` and the 401 on `/mcp`, and builds the Docker image. Images are published to Docker Hub as `pneumaticworkflow/pneumatic-mcp`: `latest` on every push to `master` that touches `mcp/` (`mcp-latest-push.yml`), and the release tag plus `stable` with the other Pneumatic images (`new-tag-push.yml`).
 - **Release checks.** [docs/manual-checklist.md](docs/manual-checklist.md) lists what to verify with real clients and a real Pneumatic account before a release.
 
 ## How it works
