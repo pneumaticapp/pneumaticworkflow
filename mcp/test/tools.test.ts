@@ -657,6 +657,30 @@ describe('files', () => {
     expect(fake.requests).toHaveLength(0);
   });
 
+  it('sends storage requests to the internal URL and keeps public links', async () => {
+    const internalUrl = 'http://pneumatic-file-service:8000';
+    const storageUrls: string[] = [];
+    const isolated = await connect({
+      filesInternalUrl: internalUrl,
+      fetchFn: (input, init) => {
+        const url = String(input);
+        if (!url.startsWith(internalUrl)) {
+          return fake.fetchFn(input, init);
+        }
+        storageUrls.push(url);
+        return fake.fetchFn(`${fake.filesUrl}${url.slice(internalUrl.length)}`, init);
+      },
+    });
+
+    const uploaded = await call('upload_file', { filename: 'a.txt', contentText: 'a' }, isolated);
+    const fileUrl = `${fake.filesUrl}/${uploaded.data.fileId}`;
+    const downloaded = await call('download_file', { url: fileUrl }, isolated);
+
+    expect(storageUrls).toEqual([`${internalUrl}/upload`, `${internalUrl}/${uploaded.data.fileId}`]);
+    expect(downloaded.data).toMatchObject({ url: fileUrl, inline: true });
+    await isolated.close();
+  });
+
   it('reports missing storage configuration', async () => {
     const isolated = await connect({ storage: false });
     expect((await call('download_file', { fileId: 'abcdefgh' }, isolated)).error).toMatchObject({

@@ -97,12 +97,13 @@ function countUpstream(target: string, method: string, status: number | 'failed'
 export interface PneumaticEndpoints {
   apiUrl: string;
   filesUrl?: string;
+  filesInternalUrl?: string;
   appUrl?: string;
   fetchFn?: typeof fetch;
 }
 
 export function createPneumaticClient(
-  { apiUrl, filesUrl, appUrl, fetchFn = fetch }: PneumaticEndpoints,
+  { apiUrl, filesUrl, filesInternalUrl, appUrl, fetchFn = fetch }: PneumaticEndpoints,
   apiKey: string,
 ) {
   async function request<T>(method: string, path: string, { query, body }: RequestOptions = {}): Promise<T> {
@@ -144,7 +145,7 @@ export function createPneumaticClient(
     const send = async () => {
       let response: Response;
       try {
-        response = await fetchFn(`${filesUrl}${path}`, {
+        response = await fetchFn(`${filesInternalUrl ?? filesUrl}${path}`, {
           method,
           headers: { Accept: '*/*', Authorization: `Bearer ${apiKey}`, 'User-Agent': USER_AGENT },
           body,

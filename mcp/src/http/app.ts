@@ -197,6 +197,7 @@ export function createHttpApp(
   const clientFor = createClientFactory({
     apiUrl: config.apiUrl,
     filesUrl: config.filesUrl,
+    filesInternalUrl: config.filesInternalUrl,
     appUrl: config.appUrl,
     fetchFn,
   });

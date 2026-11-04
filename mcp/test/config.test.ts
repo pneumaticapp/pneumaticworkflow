@@ -57,6 +57,24 @@ describe('file storage configuration', () => {
       }),
     ).toMatchObject({ filesUrl: 'https://app.internal/files' });
   });
+
+  it('reads an internal storage URL only alongside the public one', () => {
+    expect(
+      loadConfig([], {
+        ...stdioEnv,
+        PNEUMATIC_FILES_URL: 'http://localhost/files',
+        PNEUMATIC_FILES_INTERNAL_URL: 'http://pneumatic-file-service:8000/',
+      }),
+    ).toMatchObject({ filesUrl: 'http://localhost/files', filesInternalUrl: 'http://pneumatic-file-service:8000' });
+    expect(loadConfig([], stdioEnv).filesInternalUrl).toBeUndefined();
+    expect(() =>
+      loadConfig([], {
+        ...stdioEnv,
+        PNEUMATIC_API_URL: 'https://pneumatic.internal',
+        PNEUMATIC_FILES_INTERNAL_URL: 'http://pneumatic-file-service:8000',
+      }),
+    ).toThrow(ConfigError);
+  });
 });
 
 describe('proxy trust', () => {

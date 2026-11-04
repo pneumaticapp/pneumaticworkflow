@@ -9,6 +9,7 @@ export interface StdioConfig extends ToolSelection {
   transport: 'stdio';
   apiUrl: string;
   filesUrl?: string;
+  filesInternalUrl?: string;
   appUrl?: string;
   apiKey: string;
 }
@@ -17,6 +18,7 @@ export interface HttpConfig extends ToolSelection {
   transport: 'http';
   apiUrl: string;
   filesUrl?: string;
+  filesInternalUrl?: string;
   appUrl?: string;
   host: string;
   port: number;
@@ -137,10 +139,23 @@ function readFilesUrl(env: NodeJS.ProcessEnv, apiUrl: string): string | undefine
   return parseBaseUrl('PNEUMATIC_FILES_URL', value).href.replace(/\/+$/, '');
 }
 
+// The public files URL can be unreachable from the connector container (e.g. http://localhost/files).
+function readFilesInternalUrl(env: NodeJS.ProcessEnv, filesUrl: string | undefined): string | undefined {
+  const value = env.PNEUMATIC_FILES_INTERNAL_URL?.trim();
+  if (!value) {
+    return undefined;
+  }
+  if (!filesUrl) {
+    throw new ConfigError('PNEUMATIC_FILES_INTERNAL_URL requires PNEUMATIC_FILES_URL');
+  }
+  return parseBaseUrl('PNEUMATIC_FILES_INTERNAL_URL', value).href.replace(/\/+$/, '');
+}
+
 export function loadConfig(argv: string[] = process.argv.slice(2), env: NodeJS.ProcessEnv = process.env): Config {
   const transport = readTransport(argv, env);
   const apiUrl = readApiUrl(env);
   const filesUrl = readFilesUrl(env, apiUrl);
+  const filesInternalUrl = readFilesInternalUrl(env, filesUrl);
   const appUrl = readAppUrl(env, filesUrl);
 
   if (transport === 'stdio') {
@@ -148,7 +163,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2), env: NodeJS.P
     if (!apiKey) {
       throw new ConfigError('PNEUMATIC_API_KEY is required in stdio mode');
     }
-    return { transport, apiUrl, filesUrl, appUrl, apiKey, ...readToolOptions(env) };
+    return { transport, apiUrl, filesUrl, filesInternalUrl, appUrl, apiKey, ...readToolOptions(env) };
   }
 
   const port = Number(env.PORT ?? 3000);
@@ -198,6 +213,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2), env: NodeJS.P
     transport,
     apiUrl,
     filesUrl,
+    filesInternalUrl,
     appUrl,
     host,
     port,

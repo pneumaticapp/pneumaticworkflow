@@ -11,15 +11,23 @@ export interface ConnectOptions extends ServerOptions {
   fetchFn?: typeof fetch;
   // false leaves PNEUMATIC_FILES_URL unset.
   storage?: boolean;
+  filesInternalUrl?: string;
   capabilities?: Record<string, unknown>;
 }
 
 export async function connectServer(
   fake: FakePneumatic,
-  { appUrl, fetchFn = fake.fetchFn, storage = true, capabilities = {}, ...options }: ConnectOptions = {},
+  {
+    appUrl,
+    fetchFn = fake.fetchFn,
+    storage = true,
+    filesInternalUrl,
+    capabilities = {},
+    ...options
+  }: ConnectOptions = {},
 ): Promise<Client> {
   const pneumatic = createPneumaticClient(
-    { apiUrl: fake.apiUrl, filesUrl: storage ? fake.filesUrl : undefined, appUrl, fetchFn },
+    { apiUrl: fake.apiUrl, filesUrl: storage ? fake.filesUrl : undefined, filesInternalUrl, appUrl, fetchFn },
     VALID_API_KEY,
   );
   const server = buildServer(pneumatic, options);
