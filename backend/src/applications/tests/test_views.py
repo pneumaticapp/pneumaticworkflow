@@ -21,6 +21,7 @@ class TestListIntegrations:
         user = create_test_user()
         first_integration = Integration.objects.create(
             name='First integration',
+            logo='https://example.test/first-logo.svg',
             short_description='This is short description',
             long_description='This is long description',
             button_text='Button',
@@ -30,6 +31,7 @@ class TestListIntegrations:
         )
         second_integration = Integration.objects.create(
             name='Second integration',
+            logo='https://example.test/second-logo.svg',
             short_description='This is short description',
             long_description='This is long description',
             button_text='Button',
@@ -39,6 +41,7 @@ class TestListIntegrations:
         )
         Integration.objects.create(
             name='Inactive integration',
+            logo='https://example.test/inactive-logo.svg',
             short_description='This is short description',
             long_description='This is long description',
             button_text='Button',
@@ -68,6 +71,7 @@ class TestRetrieveIntegration:
         user = create_test_user()
         integration = Integration.objects.create(
             name='First integration',
+            logo='https://example.test/first-logo.svg',
             short_description='This is short description',
             long_description='This is long description',
             button_text='Button',

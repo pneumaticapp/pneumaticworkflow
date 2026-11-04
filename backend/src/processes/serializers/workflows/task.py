@@ -2,6 +2,12 @@ import re
 from django.db.models import Q
 from typing import Any, Dict, List, Optional
 
+from drf_spectacular.helpers import lazy_serializer
+from drf_spectacular.utils import (
+    OpenApiExample,
+    extend_schema_field,
+    extend_schema_serializer,
+)
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -36,6 +42,7 @@ from src.processes.serializers.workflows.fieldset import (
     FieldSetSerializer,
 )
 from src.processes.serializers.workflows.task_performer import (
+    TaskUserGroupPerformerSerializer,
     get_performers_for_task,
 )
 
@@ -77,6 +84,7 @@ class WorkflowCurrentTaskSerializer(serializers.ModelSerializer):
     date_started_tsp = TimeStampField(source='date_started', read_only=True)
     date_completed_tsp = TimeStampField(source='date_completed')
 
+    @extend_schema_field(DelayInfoSerializer)
     def get_delay(self, instance: Task):
         if hasattr(instance, 'current_delay'):
             # GET /workflows qst prefetch delay to "current_delay" attribute
@@ -90,6 +98,7 @@ class WorkflowCurrentTaskSerializer(serializers.ModelSerializer):
                 return DelayInfoSerializer(delay).data
         return None
 
+    @extend_schema_field(TaskUserGroupPerformerSerializer(many=True))
     def get_performers(self, instance) -> List[Dict[str, Any]]:
         return get_performers_for_task(instance)
 
@@ -142,10 +151,11 @@ class TaskSerializer(serializers.ModelSerializer):
     is_read_only_viewer = serializers.SerializerMethodField()
     fieldsets = FieldSetSerializer(many=True)
 
+    @extend_schema_field(TaskUserGroupPerformerSerializer(many=True))
     def get_performers(self, instance) -> List[Dict[str, Any]]:
         return get_performers_for_task(instance)
 
-    def get_is_completed(self, instance):
+    def get_is_completed(self, instance) -> bool:
         #  TODO Remove in 41258
         if instance.is_completed:
             return True
@@ -163,12 +173,16 @@ class TaskSerializer(serializers.ModelSerializer):
                 return True
         return False
 
+    @extend_schema_field(DelayInfoSerializer)
     def get_delay(self, instance):
         delay = instance.get_active_delay()
         if delay:
             return DelayInfoSerializer(delay).data
         return None
 
+    @extend_schema_field(lazy_serializer(
+        'src.processes.serializers.workflows.workflow.WorkflowListSerializer',
+    )(many=True))
     def get_sub_workflows(self, instance):
         qst = Workflow.objects.raw_list_query(
             account_id=instance.account_id,
@@ -179,13 +193,17 @@ class TaskSerializer(serializers.ModelSerializer):
         )
         return WorkflowListSerializer(instance=qst, many=True).data
 
+    @extend_schema_field(lazy_serializer(
+        'src.processes.serializers.workflows.workflow.'
+        'WorkflowShortInfoSerializer',
+    )())
     def get_workflow(self, instance):
         from src.processes.serializers.workflows.workflow import (  # noqa: PLC0415
             WorkflowShortInfoSerializer,
         )
         return WorkflowShortInfoSerializer(instance=instance.workflow).data
 
-    def get_is_read_only_viewer(self, instance):
+    def get_is_read_only_viewer(self, instance) -> bool:
         """
         Determine if user has only read-only access.
         Read-only access applies to:
@@ -306,6 +324,7 @@ class TaskRevertSerializer(
         required=False,
         allow_blank=True,
         allow_null=True,
+        help_text='Non-empty explanation for returning the task to work.',
     )
 
     def validate(self, data):
@@ -315,9 +334,60 @@ class TaskRevertSerializer(
         return data
 
 
+@extend_schema_serializer(component_name='TaskRevert', examples=[
+    OpenApiExample(
+        'Revert with an explanation',
+        value={'comment': 'Please correct the invoice total.'},
+        request_only=True,
+    ),
+])
+class TaskRevertRequestSerializer(TaskRevertSerializer):
+    """Required explanation for returning a completed task to work."""
+
+    comment = serializers.CharField(
+        help_text='Required non-empty explanation for reverting the task.',
+    )
+
+
+@extend_schema_serializer(examples=[
+    OpenApiExample(
+        'Complete with typed output fields',
+        description=(
+            'For a task that defines these output api_name values. '
+            'Replace the keys, selections, user and file URL with values '
+            'from your task metadata and deployment.'
+        ),
+        value={
+            'output': {
+                'result': 'Approved',
+                'amount': 1250.5,
+                'meeting-date': 1767225600,
+                'review-options': ['Legal', 'Finance'],
+                'reviewer': 'reviewer@example.com',
+                'document': [
+                    '[invoice.pdf](https://app.example.com/files/file-id)',
+                ],
+            },
+        },
+        request_only=True,
+    ),
+])
 class TaskCompleteSerializer(
     CustomValidationErrorMixin,
     serializers.Serializer,
 ):
 
-    output = serializers.DictField(required=False)
+    output = serializers.DictField(
+        required=False,
+        help_text=(
+            'Task output values keyed by field api_name. Read the task '
+            'output metadata for types, required flags and selections. '
+            'string: text up to 140 characters; text/url: string; '
+            'number: number or numeric string; date: Unix seconds number; '
+            'radio/dropdown: selection string; checkbox: array of '
+            'selection strings; file: array of Markdown file-service '
+            'links; user: account user email or group name. '
+            'Required fields must be populated; '
+            'empty optional fields accept null, an empty string or array.'
+        ),
+    )

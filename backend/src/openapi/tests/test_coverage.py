@@ -1,7 +1,8 @@
-"""Ensure every public endpoint has @extend_schema."""
+"""Ensure the complete route registry is documented, without filtering."""
 
 import pytest
-from drf_spectacular.generators import EndpointEnumerator
+from django.urls import resolve
+from drf_spectacular.generators import EndpointEnumerator, SchemaGenerator
 from drf_spectacular.openapi import AutoSchema
 
 pytestmark = pytest.mark.django_db
@@ -123,3 +124,61 @@ def test_public_endpoints__all_decorated__ok():
         'Public endpoints without @extend_schema:\n'
         + '\n'.join(f'  - {m}' for m in missing)
     )
+
+
+def test_registered_endpoints__all_in_generated_schema__ok():
+    """Compare unfiltered routes, including explicitly excluded actions."""
+    # arrange
+    generator = SchemaGenerator()
+    enumerator = EndpointEnumerator()
+    endpoints = enumerator._get_api_endpoints(None, '')
+    schema = generator.get_schema(request=None, public=True)
+    methods = {'get', 'post', 'put', 'patch', 'delete'}
+    documented = {
+        (path, method.upper())
+        for path, item in schema['paths'].items()
+        for method in item if method in methods
+    }
+
+    # act
+    registered = set()
+    for path, _regex, method, callback in endpoints:
+        if _is_docs_path(path):
+            continue
+        view = generator.create_view(callback, method)
+        normalized = generator.coerce_path(path, method, view)
+        registered.add((normalized, method))
+
+    # These handlers are accepted by dispatch without a router action.
+    # Keep this expectation independent of schema preprocessing hooks.
+    for url, path, method in (
+        ('/accounts/user', '/accounts/user', 'PUT'),
+        ('/tenants/1', '/tenants/{id}', 'PATCH'),
+    ):
+        callback = resolve(url).func
+        assert callable(getattr(callback.cls, method.lower()))
+        assert method.lower() in callback.cls.http_method_names
+        registered.add((path, method))
+
+    # assert
+    missing = sorted(registered - documented)
+    assert not missing, f'Registered operations absent from schema: {missing}'
+    assert documented == registered
+
+
+def test_raw_http_handlers__all_have_independent_contract_cases() -> None:
+    """Detect future handlers that the stock router enumerator cannot see."""
+    endpoints = EndpointEnumerator()._get_api_endpoints(None, '')
+    handlers = set()
+    for _path, _regex, _method, callback in endpoints:
+        if not hasattr(callback, 'actions'):
+            continue
+        view = callback.cls
+        for method in ('get', 'post', 'put', 'patch', 'delete'):
+            handler = view.__dict__.get(method)
+            if callable(handler) and not hasattr(handler, 'mapping'):
+                handlers.add((view.__module__, view.__name__, method.upper()))
+    assert handlers == {
+        ('src.accounts.views.user', 'UserViewSet', 'PUT'),
+        ('src.accounts.views.tenants', 'TenantsViewSet', 'PATCH'),
+    }

@@ -23,10 +23,12 @@ from src.datasets.services.dataset_item import DataSetItemService
 from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import UserIsAuthenticated
-from src.openapi import (
-    ACCESS_ADMIN,
-    ACCESS_AUTH_OVERLIMIT,
-    DATASETS_LIST_PARAMS,
+from src.openapi.helpers import unpaginated_schema
+from src.openapi.responses import FIELD_VALIDATION_ERROR
+from src.openapi.permission_docs import ACCESS_ADMIN, ACCESS_AUTH_OVERLIMIT
+from src.openapi.parameters import DATASETS_LIST_PARAMS
+from src.openapi.responses import (
+    BULK_VALIDATION_ERROR,
     EMPTY,
     FORBIDDEN,
     NOT_FOUND,
@@ -104,6 +106,7 @@ class DatasetViewSet(
         responses={
             # Item serializer; spectacular wraps with pagination.
             200: DatasetListSerializer,
+            400: FIELD_VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
         },
@@ -200,7 +203,6 @@ class DatasetViewSet(
         description=ACCESS_ADMIN,
         responses={
             204: EMPTY,
-            400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
@@ -220,6 +222,7 @@ class DatasetViewSet(
             raise_validation_error(message=ex.message)
         return self.response_ok()
 
+    @unpaginated_schema
     @extend_schema(
         tags=['Datasets'],
         summary='Add dataset items',
@@ -227,7 +230,7 @@ class DatasetViewSet(
         request=DatasetItemSerializer(many=True),
         responses={
             200: DatasetItemSerializer(many=True),
-            400: VALIDATION_ERROR,
+            400: BULK_VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
@@ -252,6 +255,7 @@ class DatasetViewSet(
         response_serializer = self.get_serializer(instance=items, many=True)
         return self.response_ok(response_serializer.data)
 
+    @unpaginated_schema
     @extend_schema(
         tags=['Datasets'],
         summary='Replace dataset items',
@@ -259,7 +263,7 @@ class DatasetViewSet(
         request=DatasetItemSerializer(many=True),
         responses={
             200: DatasetItemSerializer(many=True),
-            400: VALIDATION_ERROR,
+            400: BULK_VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,

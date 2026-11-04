@@ -3159,13 +3159,17 @@ class TestGroupPerformerService:
             group=group,
         )
         send_new_task_websocket_mock.assert_not_called()
+        recipients = send_new_task_notification_mock.call_args.kwargs[
+            'recipients'
+        ]
+        assert sorted(recipients) == sorted([
+            (user2.id, user2.email, user2.is_new_tasks_subscriber),
+            (user3.id, user3.email, user3.is_new_tasks_subscriber),
+        ])
         send_new_task_notification_mock.assert_called_once_with(
             logging=account.log_api_requests,
             account_id=account.id,
-            recipients=[
-                (user2.id, user2.email, user2.is_new_tasks_subscriber),
-                (user3.id, user3.email, user3.is_new_tasks_subscriber),
-            ],
+            recipients=recipients,
             task_id=task.id,
             task_name=task.name,
             task_description=task.description,

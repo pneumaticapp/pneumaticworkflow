@@ -22,7 +22,7 @@ def test_get_customer_portal_link__ok(
     # arrange
     user = create_test_user(is_account_owner=True)
     cancel_url = 'http://localhost/cancel/'
-    customer_portal_link = 'checkout.stripe.com/portal?token=123wsd'
+    customer_portal_link = 'https://checkout.stripe.com/portal?token=123wsd'
 
     service_init_mock = mocker.patch.object(
         StripeService,

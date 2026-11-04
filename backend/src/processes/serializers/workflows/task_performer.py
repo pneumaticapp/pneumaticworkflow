@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from typing import Optional
 from rest_framework.serializers import (
     EmailField,
     IntegerField,
@@ -41,7 +42,7 @@ class TaskUserGroupPerformerSerializer(
     source_id = SerializerMethodField()
     date_completed_tsp = TimeStampField(source='date_completed')
 
-    def get_source_id(self, instance):
+    def get_source_id(self, instance) -> Optional[int]:
         return (
             instance.group_id if instance.type == PerformerType.GROUP
             else instance.user_id

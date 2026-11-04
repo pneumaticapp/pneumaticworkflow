@@ -14,12 +14,13 @@ from src.generics.permissions import (
     DenyAll,
     IsAuthenticated,
 )
-from src.openapi import (
+from src.openapi.permission_docs import (
     ACCESS_COMMENT_EDIT,
     ACCESS_COMMENT_REACTION,
+)
+from src.openapi.responses import (
     EMPTY,
     FORBIDDEN,
-    NOT_FOUND,
     UNAUTHORIZED,
     VALIDATION_ERROR,
 )
@@ -115,7 +116,6 @@ class CommentViewSet(
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
-            404: NOT_FOUND,
         },
     )
     def partial_update(self, request, *args, **kwargs):
@@ -145,9 +145,9 @@ class CommentViewSet(
         description=ACCESS_COMMENT_EDIT,
         responses={
             200: WorkflowEventSerializer,
+            400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
-            404: NOT_FOUND,
         },
     )
     def destroy(self, request, *args, **kwargs):
@@ -170,11 +170,12 @@ class CommentViewSet(
         tags=['Workflows'],
         summary='Mark comment as watched',
         description=ACCESS_COMMENT_REACTION,
+        request=None,
         responses={
-            200: EMPTY,
+            204: EMPTY,
+            400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
-            404: NOT_FOUND,
         },
     )
     @action(methods=('post',), detail=True)
@@ -198,11 +199,10 @@ class CommentViewSet(
         description=ACCESS_COMMENT_REACTION,
         request=CommentReactionSerializer,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
-            404: NOT_FOUND,
         },
     )
     @action(methods=('post',), detail=True, url_path='create-reaction')
@@ -228,11 +228,10 @@ class CommentViewSet(
         description=ACCESS_COMMENT_REACTION,
         request=CommentReactionSerializer,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
-            404: NOT_FOUND,
         },
     )
     @action(methods=('post',), detail=True, url_path='delete-reaction')

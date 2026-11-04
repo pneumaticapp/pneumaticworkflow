@@ -17,7 +17,10 @@ from src.processes.tests.fixtures import (
     create_test_workflow,
 )
 
-pytestmark = pytest.mark.django_db
+pytestmark = [
+    pytest.mark.django_db,
+    pytest.mark.usefixtures('validate_http_contracts'),
+]
 
 
 def test_list__ok(api_client):

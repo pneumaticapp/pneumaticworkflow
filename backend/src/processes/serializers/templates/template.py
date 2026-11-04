@@ -8,6 +8,7 @@ from django.core.exceptions import (
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema_field
 from rest_framework.serializers import (
     BooleanField,
     CharField,
@@ -830,9 +831,11 @@ class TemplateListSerializer(ModelSerializer):
     workflows_count = IntegerField(read_only=True)
     is_editable = SerializerMethodField()
 
+    @extend_schema_field(TemplateOwnerSerializer(many=True))
     def get_owners(self, instance: Template):
         return TemplateOwnerSerializer(instance.owners, many=True).data
 
+    @extend_schema_field(KickoffListSerializer)
     def get_kickoff(self, instance: Template):
         return KickoffListSerializer(instance.kickoff, many=True).data[0]
 
@@ -909,10 +912,6 @@ class TemplateAiSerializer(
         allow_blank=False,
         max_length=500,
     )
-
-
-class TemplateAiResponseSerializer(TemplateSerializer):
-    """Draft template payload from AI (fill_template_data output)."""
 
 
 class TemplateByStepsSerializer(

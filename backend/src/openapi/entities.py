@@ -15,7 +15,8 @@ class PermissionDoc:
         'template token'
     )
     PublicTemplatePermission = (
-        'Valid public or embedded template token'
+        'Valid public or embedded template token. A token for a missing or '
+        'inactive template returns 401.'
     )
 
     # Account gates
@@ -42,7 +43,8 @@ class PermissionDoc:
     )
     TemplatePresetPermission = (
         'Preset author, account owner, or admin '
-        'template owner (for account presets)'
+        'template owner (for account presets). Authenticated requests for '
+        'missing or inaccessible presets return 403.'
     )
 
     # Features
@@ -74,7 +76,8 @@ class PermissionDoc:
         'Guest user with access to workflow events'
     )
     WorkflowCommentPermission = (
-        'Workflow member or guest with comment access'
+        'Workflow member or guest with comment access. Authenticated '
+        'requests for missing or inaccessible workflows return 403.'
     )
 
     # Tasks
@@ -105,10 +108,12 @@ class PermissionDoc:
 
     # Comments
     CommentEditPermission = (
-        'Comment author (can edit/delete own comments)'
+        'Comment author (can edit/delete own comments). Authenticated '
+        'requests for missing or inaccessible comments return 403.'
     )
     CommentReactionPermission = (
-        'Workflow member with access to react to comments'
+        'Workflow member with access to react to comments. Authenticated '
+        'requests for missing or inaccessible comments return 403.'
     )
 
     # Tenants
