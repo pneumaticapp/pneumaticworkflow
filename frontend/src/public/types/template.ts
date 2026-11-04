@@ -4,7 +4,7 @@ import {
   EConditionOperators,
   ICondition,
   TConditionPredicateValue,
-} from '../components/TemplateEdit/TaskForm/Conditions';
+} from '../components/TemplateEdit/TaskForm/Conditions/types';
 import { TUploadedFile } from '../utils/uploadFiles';
 import { TSystemField } from '../components/Workflows/WorkflowsTablePage/WorkflowsTable/types';
 import { IFieldsetBinding, IFieldsetBindingClient, IFieldsetBindingMeta, IFieldsetRuntime } from './fieldset';

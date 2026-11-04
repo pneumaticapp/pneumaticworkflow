@@ -3,7 +3,8 @@ import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
 import { TTaskVariable } from '../types';
-import { RichEditor, type IRichEditorHandle } from '../../RichEditor';
+import { RichEditor } from '../../RichEditor';
+import type { IRichEditorHandle } from '../../RichEditor/types';
 import { getMentionData } from '../../RichEditor/utils/getMentionData';
 import { getUsers } from '../../../redux/selectors/user';
 import { getNotDeletedUsers } from '../../../utils/users';

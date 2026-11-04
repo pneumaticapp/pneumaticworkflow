@@ -12,7 +12,8 @@ import { handleAddNewRule, handleAddNewCondition, CONDITION_DISABLED_OPERATOR, g
 import { getSubscriptionPlan } from '../../../../redux/selectors/user';
 import { EConditionAction, TConditionRule } from './types';
 import { ESubscriptionPlan } from '../../../../types/account';
-import { ICondition, IConditionsProps, IDropdownVariable, Predicate, RichLabel } from '.';
+import { IConditionsProps, IDropdownVariable, Predicate, RichLabel } from '.';
+import type { ICondition } from './types';
 
 import styles from './Conditions.css';
 import stylesTaskForm from '../TaskForm.css';

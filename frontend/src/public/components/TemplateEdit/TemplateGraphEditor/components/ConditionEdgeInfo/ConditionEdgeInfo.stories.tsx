@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 
-import { EConditionLogicOperations, EConditionOperators } from '../../../TaskForm/Conditions';
+import { EConditionLogicOperations, EConditionOperators } from '../../../TaskForm/Conditions/types';
 import { ConditionEdgeInfo, IConditionEdgeInfoProps } from './ConditionEdgeInfo';
 
 const meta: Meta<IConditionEdgeInfoProps> = {

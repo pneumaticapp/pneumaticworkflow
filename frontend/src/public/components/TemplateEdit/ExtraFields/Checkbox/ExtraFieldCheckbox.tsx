@@ -15,7 +15,7 @@ import { PencilSmallIcon, RemoveIcon } from '../../../icons';
 import { Checkbox } from '../../../UI/Fields/Checkbox';
 import { OutputFieldContent } from '../utils/OutputFieldContent';
 
-import { IWorkflowExtraFieldProps } from '..';
+import type { IWorkflowExtraFieldProps } from '../types';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
 import fieldStyles from './ExtraFieldCheckbox.css';

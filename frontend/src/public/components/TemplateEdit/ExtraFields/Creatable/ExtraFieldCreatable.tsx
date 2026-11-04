@@ -19,7 +19,7 @@ import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { validateCheckboxAndRadioField } from '../../../../utils/validators';
 import { handleSelectionBlur, recalculateDuplicateErrors } from '../utils/handleSelectionBlur';
 
-import { IWorkflowExtraFieldProps } from '..';
+import type { IWorkflowExtraFieldProps } from '../types';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
 import inputStyles from './ExtraFieldCreatable.css';

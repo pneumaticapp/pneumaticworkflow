@@ -2,7 +2,7 @@ import {
   EConditionLogicOperations,
   EConditionOperators,
   ICondition,
-} from '../../components/TemplateEdit/TaskForm/Conditions';
+} from '../../components/TemplateEdit/TaskForm/Conditions/types';
 import { getFilledConditions } from '../../components/TemplateEdit/TaskForm/Conditions/utils/conditionsValidators';
 import { IConditionResponse, IConditionRuleResponse, TConditionRulePredicateResponse } from '../../types/template';
 import { isArrayWithItems } from '../helpers';

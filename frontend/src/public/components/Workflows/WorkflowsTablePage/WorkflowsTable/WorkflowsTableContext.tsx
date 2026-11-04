@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from 'react';
-import { TableViewContainerRef } from '.';
+import type { TableViewContainerRef } from './types';
 
 interface WorkflowsTableContextValue {
   ref: React.RefObject<TableViewContainerRef> | null;

@@ -10,7 +10,7 @@ import { TuneViewIcon, DownloadIcon } from '../../../icons';
 import { PageTitle } from '../../../PageTitle';
 import { getWorkflowTemplatesIdsFilter } from '../../../../redux/selectors/workflows';
 import { useWorkflowsExport } from '../../../../hooks/useWorkflowsExport';
-import { TWorkflowExportFormat } from '../../../../utils/workflows/exportWorkflowsToExcel';
+import type { TWorkflowExportFormat } from '../../../../utils/workflows/exportWorkflowsToExcel/types';
 import { WorkflowsTableActionsProps } from './types';
 
 import styles from './WorkflowsTable.css';

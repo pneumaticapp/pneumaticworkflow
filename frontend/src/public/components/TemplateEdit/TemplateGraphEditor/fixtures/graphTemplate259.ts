@@ -6,7 +6,7 @@ import {
   EConditionOperators,
   ICondition,
   TConditionRule,
-} from '../../TaskForm/Conditions';
+} from '../../TaskForm/Conditions/types';
 import { EStartingType } from '../../TaskForm/Conditions/utils/getDropdownOperators';
 
 const COST_CENTER_FIELD = 'field-270bb2';

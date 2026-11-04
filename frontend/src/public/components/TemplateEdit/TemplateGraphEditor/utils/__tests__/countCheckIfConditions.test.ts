@@ -3,7 +3,7 @@ import {
   EConditionLogicOperations,
   EConditionOperators,
   ICondition,
-} from '../../../TaskForm/Conditions';
+} from '../../../TaskForm/Conditions/types';
 import { countCheckIfConditions, isCheckIfCondition } from '../countCheckIfConditions';
 
 function createCondition(action: EConditionAction, field = 'field-1'): ICondition {

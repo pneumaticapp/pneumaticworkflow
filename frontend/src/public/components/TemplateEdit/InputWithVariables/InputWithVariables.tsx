@@ -4,7 +4,8 @@ import classnames from 'classnames';
 import { TTaskVariable } from '../types';
 import { removeUnknownVariableTokens } from '../../RichEditor/converters/variableMarkdown';
 import { VariableList } from '../VariableList';
-import { RichEditor, type IRichEditorHandle, type IRichEditorProps } from '../../RichEditor';
+import { RichEditor } from '../../RichEditor';
+import type { IRichEditorHandle, IRichEditorProps } from '../../RichEditor/types';
 
 import styles from './InputWithVariables.css';
 

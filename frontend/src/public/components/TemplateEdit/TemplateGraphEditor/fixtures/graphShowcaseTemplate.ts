@@ -12,7 +12,7 @@ import {
   EConditionLogicOperations,
   EConditionOperators,
   ICondition,
-} from '../../TaskForm/Conditions';
+} from '../../TaskForm/Conditions/types';
 
 const KICKOFF_FIELD_API_NAME = 'kickoff-client';
 

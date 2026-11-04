@@ -21,8 +21,8 @@ import {
   buildWorkflowsExportRows,
   buildWorkflowsXlsxBuffer,
   downloadWorkflowsExcel,
-  TWorkflowExportFormat,
 } from '../utils/workflows/exportWorkflowsToExcel';
+import type { TWorkflowExportFormat } from '../utils/workflows/exportWorkflowsToExcel/types';
 import { downloadWorkflowsCsv } from '../utils/workflows/exportWorkflowsToCsv';
 import { NotificationManager } from '../components/UI/Notifications';
 import { ALL_SYSTEM_FIELD_NAMES } from '../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';

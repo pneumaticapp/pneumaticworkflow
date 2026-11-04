@@ -1,5 +1,5 @@
 import { ITemplateClient, ITemplateTaskClient } from '../../../../types/template';
-import { EConditionAction } from '../../TaskForm/Conditions';
+import { EConditionAction } from '../../TaskForm/Conditions/types';
 import { EStartingType } from '../../TaskForm/Conditions/utils/getDropdownOperators';
 import { EGraphNodeType, IGraphState, TGraphEdge, TGraphNode } from '../types';
 import { GRAPH_CARD_Z_INDEX, GRAPH_NODE_HEIGHT, GRAPH_NODE_WIDTH } from './graphGeometry';

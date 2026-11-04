@@ -1,6 +1,6 @@
 import { ITemplateTaskClient } from '../../../../../types/template';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
-import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../../TaskForm/Conditions';
+import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../../TaskForm/Conditions/types';
 import { EStartingType } from '../../../TaskForm/Conditions/utils/getDropdownOperators';
 import { getStartTaskConditions } from '../../../TaskForm/Conditions/utils/getStartTaskConditions';
 import { IGraphNewTaskDraft } from '../../types';

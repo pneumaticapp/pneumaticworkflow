@@ -2,7 +2,7 @@ import { EExtraFieldType, ITemplateTaskClient } from '../../../../types/template
 import { makeFieldsetBindingClient } from '../../../../__stubs__/fieldsets.factory';
 import { createEmptyTaskDueDate } from '../../../../utils/dueDate/createEmptyTaskDueDate';
 import { omit } from '../../../../utils/helpers';
-import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../TaskForm/Conditions';
+import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../TaskForm/Conditions/types';
 import { getClonedTask } from '../getClonedTask';
 
 describe('getClonedTask', () => {

@@ -24,7 +24,8 @@ import { getSubscriptionPlan } from '../../../../redux/selectors/user';
 import { usePrevious } from '../../../../hooks/usePrevious';
 import { EConditionAction, TConditionRule } from './types';
 import { SelectMenu, Tooltip } from '../../../UI';
-import { ICondition, Predicate, RichLabel } from '.';
+import { Predicate, RichLabel } from '.';
+import type { ICondition } from './types';
 
 import styles from './Conditions.css';
 import stylesTaskForm from '../TaskForm.css';

@@ -23,7 +23,7 @@ import {
   createFieldsetBindingApiName,
 } from '../../../utils/createId';
 import { omit } from '../../../utils/helpers';
-import { ICondition, TConditionRule } from '../TaskForm/Conditions';
+import type { ICondition, TConditionRule } from '../TaskForm/Conditions/types';
 
 export function getClonedTask(task: ITemplateTaskClient) {
   const mapChecklist: { [old: string]: string } = {};

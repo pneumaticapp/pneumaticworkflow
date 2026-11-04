@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 
-import { RichEditor, type IRichEditorHandle } from '../../../RichEditor';
-import { type TMentionData } from '../../../RichEditor/types';
+import { RichEditor } from '../../../RichEditor';
+import type { IRichEditorHandle, TMentionData } from '../../../RichEditor/types';
 import { Avatar } from '../../../UI/Avatar';
 import { IAuthUser } from '../../../../types/redux';
 import { TUploadedFile } from '../../../../utils/uploadFiles';

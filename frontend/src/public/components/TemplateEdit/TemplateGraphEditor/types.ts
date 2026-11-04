@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { Node, Edge } from 'reactflow';
 import { ITemplateKickoffClient, ITemplateTaskClient } from '../../../types/template';
-import { EConditionLogicOperations, EConditionOperators } from '../TaskForm/Conditions';
+import { EConditionLogicOperations, EConditionOperators } from '../TaskForm/Conditions/types';
 
 export enum EGraphViewMode {
   /** Linear task list. UI label is "Line". */

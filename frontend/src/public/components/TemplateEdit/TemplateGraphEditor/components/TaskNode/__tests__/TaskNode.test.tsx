@@ -6,7 +6,11 @@ import { configure } from '@testing-library/react';
 
 import { EExtraFieldType, ETaskPerformerType, ITemplateTaskClient } from '../../../../../../types/template';
 import { createEmptyTaskDueDate } from '../../../../../../utils/dueDate/createEmptyTaskDueDate';
-import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../../../TaskForm/Conditions';
+import {
+  EConditionAction,
+  EConditionLogicOperations,
+  EConditionOperators,
+} from '../../../../TaskForm/Conditions/types';
 import { TaskNode } from '../TaskNode';
 import { EMPTY_CONNECTED_HANDLES } from '../../../utils/applyConnectedHandles';
 

@@ -1,5 +1,9 @@
 /* prettier-ignore */
-import { EConditionLogicOperations, ICondition, TConditionRule } from '../../components/TemplateEdit/TaskForm/Conditions';
+import {
+  EConditionLogicOperations,
+  ICondition,
+  TConditionRule,
+} from '../../components/TemplateEdit/TaskForm/Conditions/types';
 import { IConditionResponse, IConditionRuleResponse, TConditionRulePredicateResponse } from '../../types/template';
 import { flatten } from '../helpers';
 

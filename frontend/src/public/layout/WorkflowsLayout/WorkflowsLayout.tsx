@@ -19,10 +19,8 @@ import {
   getSortingsByStatus,
 } from '../../utils/workflows/filters';
 
-import {
-  TableViewContainerRef,
-  WorkflowsTableActions,
-} from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable';
+import { WorkflowsTableActions } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable';
+import type { TableViewContainerRef } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/types';
 import { WorkflowsTableProvider } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/WorkflowsTableContext';
 
 import { useCheckDevice } from '../../hooks/useCheckDevice';

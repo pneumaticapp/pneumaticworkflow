@@ -1,6 +1,6 @@
 import { EExtraFieldType, ITemplateClient, ITemplateTaskClient } from '../../../../../types/template';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
-import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../../TaskForm/Conditions';
+import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../../TaskForm/Conditions/types';
 import { KICKOFF_NODE_ID, templateToGraph } from '../templateToGraph';
 
 function createTask(overrides: Partial<ITemplateTaskClient> = {}): ITemplateTaskClient {

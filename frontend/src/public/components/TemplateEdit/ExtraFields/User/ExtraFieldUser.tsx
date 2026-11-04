@@ -15,7 +15,7 @@ import { getFieldValidator } from '../utils/getFieldValidator';
 import { EExtraFieldMode, ETaskPerformerType } from '../../../../types/template';
 import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { isArrayWithItems } from '../../../../utils/helpers';
-import { IWorkflowExtraFieldProps } from '..';
+import type { IWorkflowExtraFieldProps } from '../types';
 import { getNotDeletedUsers, getUserFullName } from '../../../../utils/users';
 import { getRegularGroupsList } from '../../../../redux/selectors/groups';
 import { IGroupDropdownOption } from '../../../../redux/team/types';
