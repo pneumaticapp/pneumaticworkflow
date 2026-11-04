@@ -19,8 +19,7 @@ jest.mock('react-dom/server', () => ({
   },
 }));
 import { intlMock } from '../../../__stubs__/intlMock';
-import { EExtraFieldType } from '../../../types/template';
-import { TTaskVariable } from '../../TemplateEdit/types';
+import { EExtraFieldType, TTaskVariable } from '../../../types/template';
 import {
   WORKFLOW_STARTER_VARIABLE_API_NAME,
   WORKFLOW_STARTER_VARIABLE_TITLE,

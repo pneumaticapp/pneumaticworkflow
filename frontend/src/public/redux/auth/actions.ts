@@ -1,4 +1,4 @@
-import type { IUnsavedUser, IUserVacation, TUserInvited } from '../../types/user';
+import type { IUnsavedUser, IUserRegister, IUserVacation, TAuthUserResult, TUserInvited } from '../../types/user';
 import { actionGenerator } from '../../utils/redux';
 import type { IAuthUser } from '../../types/redux';
 import type { ITypedReduxAction } from '../types';
@@ -62,18 +62,6 @@ export interface IUserCredentials {
 export type TForgotPassword = Pick<IUserCredentials, 'email'> & { captcha?: string };
 export type TChangePassword = IConfirmChangePassword;
 
-export interface IUserRegister {
-  email: string;
-  firstName: string;
-  lastName: string;
-  photo: string;
-  fromEmail: boolean;
-  timezone: string;
-  password?: string;
-  phone?: string;
-  companyName?: string;
-}
-
 export interface IConfirmResetPassword {
   newPassword: string;
   confirmNewPassword: string;
@@ -85,8 +73,6 @@ export interface IConfirmChangePassword {
   newPassword: string;
   confirmNewPassword: string;
 }
-
-export type TAuthUserResult = Omit<IAuthUser, 'loading' | 'error' | 'superUserToken' | 'loggedState'>;
 
 export type TAuthSuccessResult = Pick<IUnsavedUser, 'token'>;
 

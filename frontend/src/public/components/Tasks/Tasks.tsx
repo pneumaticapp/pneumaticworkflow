@@ -10,10 +10,16 @@ import { TasksPlaceholderIcon } from './TasksPlaceholderIcon';
 
 import { ERoutes } from '../../constants/routes';
 import { useCheckDevice } from '../../hooks/useCheckDevice';
-import { ETaskListCompleteSorting, ETaskListCompletionStatus, ETaskListSorting, ITask } from '../../types/tasks';
+import {
+  ETaskCardViewMode,
+  ETaskListCompleteSorting,
+  ETaskListCompletionStatus,
+  ETaskListSorting,
+  ITask,
+} from '../../types/tasks';
 import { TITLES } from '../../constants/titles';
 import { ITaskList } from '../../types/redux';
-import { ETaskCardViewMode, TaskCardContainer } from '../TaskCard';
+import { TaskCardContainer } from '../TaskCard';
 import { TaskPreviewCardSkeleton } from './Skeletons';
 import { TaskPreviewCard } from './TaskPreviewCard';
 import { TLoadCurrentTaskPayload } from '../../redux/actions';

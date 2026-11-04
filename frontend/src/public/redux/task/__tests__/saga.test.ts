@@ -1,6 +1,6 @@
 import { setTaskCompleted, setTaskReverted } from '../saga';
 import { ETaskActions, TSetTaskCompleted, setTaskReverted as createSetTaskRevertedAction } from '../actions';
-import { ETaskCardViewMode } from '../../../components/TaskCard';
+import { ETaskCardViewMode } from '../../../types/tasks';
 import { completeTask } from '../../../api/completeTask';
 import { revertTask } from '../../../api/revertTask';
 import {
@@ -37,14 +37,6 @@ jest.mock('../../../components/UI/Notifications', () => ({
 
 jest.mock('../../../utils/getErrorMessage', () => ({
   getErrorMessage: jest.fn(() => 'error'),
-}));
-
-jest.mock('../../../components/TaskCard', () => ({
-  ETaskCardViewMode: {
-    Single: 'single',
-    List: 'list',
-    Guest: 'guest',
-  },
 }));
 
 jest.mock('../../../utils/history', () => ({

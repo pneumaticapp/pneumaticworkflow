@@ -3,8 +3,7 @@
 /* tslint:disable:no-any */
 const commonConfig = require('../../../config/common.json');
 
-import { IUnsavedUser } from '../types/user';
-import { IInvitedUser } from '../types/redux';
+import { IInvitedUser, IUnsavedUser } from '../types/user';
 import merge from 'lodash.merge';
 import { get, set } from '../../server/utils/helpers';
 import { IPages } from '../redux/pages/types';

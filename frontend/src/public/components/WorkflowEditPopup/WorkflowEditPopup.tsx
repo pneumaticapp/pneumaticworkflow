@@ -9,7 +9,7 @@ import { ERoutes } from '../../constants/routes';
 
 import { history } from '../../utils/history';
 import { IntlMessages } from '../IntlMessages';
-import { EInputNameBackgroundColor } from '../../types/workflow';
+import { EInputNameBackgroundColor, IRunWorkflow } from '../../types/workflow';
 import { IExtraField } from '../../types/template';
 import { IFieldsetRuntime } from '../../types/fieldset';
 import { getPluralNoun, isArrayWithItems } from '../../utils/helpers';
@@ -20,7 +20,6 @@ import { getInitialKickoff } from './utils/getInitialKickoff';
 import { PlayLogoIcon } from '../icons';
 import { validateWorkflowName } from '../../utils/validators';
 import { checkExtraFieldsAreValid } from './utils/areKickoffFieldsValid';
-import { IRunWorkflow } from './types';
 import { Button } from '../UI/Buttons/Button';
 import { RichText } from '../RichText';
 import { SectionTitle } from '../UI';

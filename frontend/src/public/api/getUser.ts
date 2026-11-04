@@ -1,4 +1,4 @@
-import { TAuthUserResult } from '../redux/actions';
+import type { TAuthUserResult } from '../types/user';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { commonRequest } from './commonRequest';
 import { setJwtCookie } from '../utils/authCookie';

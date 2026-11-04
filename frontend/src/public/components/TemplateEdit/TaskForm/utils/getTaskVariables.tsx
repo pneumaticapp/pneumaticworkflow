@@ -10,14 +10,14 @@ import {
   IFieldsetBindingClient,
   EExtraFieldType,
   TTemplateFieldFieldset,
+  TTaskVariable,
+  EStartingType,
 } from '../../../../types/template';
 import { IFieldsetField, IFieldsetRuntime } from '../../../../types/fieldset';
 import { normalizeSelections } from '../../utils/normalizeSelections';
-import { TTaskVariable } from '../../types';
 import { IGetLocalizedSystemVariableParams, IGetLocalizedSystemVariableReturn } from './types';
 import { StepName } from '../../../StepName';
 import { getPreviousTasks } from './getPreviousTasks';
-import { EStartingType } from '../Conditions/utils/getDropdownOperators';
 
 export const WORKFLOW_STARTER_VARIABLE_API_NAME = 'workflow-starter';
 export const WORKFLOW_STARTER_VARIABLE_TITLE = 'Workflow starter';

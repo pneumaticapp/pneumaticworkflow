@@ -3,8 +3,7 @@ import * as React from 'react';
 import { RichText } from './RichText';
 import { createStoryTask, InteractiveRichText } from './stories/interactiveChecklistStoryUtils';
 import { DASHBOARD_VIDEO_URL } from '../../constants/defaultValues';
-import { EExtraFieldType } from '../../types/template';
-import { TTaskVariable } from '../TemplateEdit/types';
+import { EExtraFieldType, TTaskVariable } from '../../types/template';
 import {
   WORKFLOW_STARTER_VARIABLE_API_NAME,
   WORKFLOW_STARTER_VARIABLE_TITLE,

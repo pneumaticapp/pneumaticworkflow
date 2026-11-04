@@ -15,15 +15,9 @@ import {
 import { IFieldsetRuntime } from '../../types/fieldset';
 import { IAuthUser, IWorkflowLog } from '../../types/redux';
 import { IExtraField } from '../../types/template';
-import { ITask } from '../../types/tasks';
+import { ETaskCardViewMode, ITask } from '../../types/tasks';
 import { TUserListItem } from '../../types/user';
 import { IWorkflowDetails } from '../../types/workflow';
-
-export enum ETaskCardViewMode {
-  Single = 'single',
-  List = 'list',
-  Guest = 'guest',
-}
 
 export interface ITaskCardProps {
   task: ITask;

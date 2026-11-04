@@ -2,8 +2,7 @@ import type { IWorkflowLog } from '../../types/redux';
 import type { ITypedReduxAction } from '../types';
 import { actionGenerator } from '../../utils/redux';
 import type { IExtraField, RawPerformer } from '../../types/template';
-import type { ITask } from '../../types/tasks';
-import { ETaskCardViewMode } from '../../components/TaskCard';
+import { ETaskCardViewMode, ITask } from '../../types/tasks';
 import { EWorkflowsLogSorting, IWorkflowDetailsClient, IWorkflowLogItem } from '../../types/workflow';
 import type { ISendWorkflowLogComment } from '../workflows/types';
 

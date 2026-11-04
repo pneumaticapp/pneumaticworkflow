@@ -6,7 +6,7 @@ import { loadGroups } from '../../redux/actions';
 import { usersFetchStarted } from '../../redux/accounts/slice';
 import { getBrowserConfig } from '../../utils/getConfig';
 import TaskDetailContainer from '../TaskDetail';
-import { ETaskCardViewMode } from '../TaskCard';
+import { ETaskCardViewMode } from '../../types/tasks';
 import { useWhiteBackground } from '../../hooks/useWhiteBackground';
 
 import styles from './GuestTask.css';

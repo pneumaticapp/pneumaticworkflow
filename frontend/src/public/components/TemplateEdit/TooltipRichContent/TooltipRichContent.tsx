@@ -1,7 +1,7 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
 import { getFormattedSubtitleSegments } from '../TaskForm/utils/getFormattedSubtitle';
-import { TTaskVariable } from '../types';
+import { TTaskVariable } from '../../../types/template';
 import styles from './TooltipRichContent.css';
 
 interface ITooltipRichContentProps {

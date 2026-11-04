@@ -6,8 +6,8 @@ import { useIntl } from 'react-intl';
 import { history } from '../../utils/history';
 
 import { IDashboardCounterProps } from './Counters';
-import { IDashboardCounters, EDashboardModes, TDashboardBreakdownItem } from '../../types/redux';
-import { EDashboardTimeRange } from '../../types/dashboard';
+import { IDashboardCounters, EDashboardModes } from '../../types/redux';
+import { EDashboardTimeRange, TDashboardBreakdownItem } from '../../types/dashboard';
 import { DashboardCounters } from './Counters/DashboardCounters';
 import { IntlMessages } from '../IntlMessages';
 import { Header } from '../UI/Typeography/Header';

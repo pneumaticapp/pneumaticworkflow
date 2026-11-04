@@ -1,8 +1,8 @@
 import { commonRequest } from './commonRequest';
 import { mapRequestBody } from '../utils/mappers';
-import { IGenericTemplatesStore } from '../types/redux';
+import { IAccountGenericTemplate } from '../types/genericTemplates';
 
-export type TSaveAccountGenericTemplatesResponse = Pick<IGenericTemplatesStore, 'genericTemplates'>;
+export type TSaveAccountGenericTemplatesResponse = { genericTemplates: IAccountGenericTemplate[] };
 
 export function saveAccountGenericTemplates(appIds: number[]) {
   return commonRequest<TSaveAccountGenericTemplatesResponse>('accountGenericTemplates', {

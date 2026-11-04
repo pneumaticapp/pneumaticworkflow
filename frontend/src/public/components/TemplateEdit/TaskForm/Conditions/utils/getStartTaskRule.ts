@@ -1,6 +1,6 @@
 import { createConditionRuleApiName, createConditionPredicateApiName } from '../../../../../utils/createId';
 import { EConditionLogicOperations, EConditionOperators, TConditionRule } from '../types';
-import { EStartingType } from './getDropdownOperators';
+import { EStartingType } from '../../../../../types/template';
 
 export function getBaseStartRule(field: any): TConditionRule {
   return {

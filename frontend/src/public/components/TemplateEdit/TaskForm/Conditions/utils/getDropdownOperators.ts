@@ -1,10 +1,5 @@
 import { EConditionOperators } from '../types';
-import { EExtraFieldType } from '../../../../../types/template';
-
-export enum EStartingType {
-  Task = 'task',
-  Kickoff = 'kickoff',
-}
+import { EExtraFieldType, EStartingType } from '../../../../../types/template';
 
 export interface IDropdownOperator {
   operator: EConditionOperators;

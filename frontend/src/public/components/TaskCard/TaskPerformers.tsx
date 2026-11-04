@@ -19,7 +19,8 @@ import {
   UsersDropdown,
 } from '../UI/form/UsersDropdown';
 import { GuestController } from './GuestsController';
-import { ETaskCardViewMode, TTaskPerformersProps } from './types';
+import { ETaskCardViewMode } from '../../types/tasks';
+import { TTaskPerformersProps } from './types';
 
 import styles from './TaskCard.css';
 

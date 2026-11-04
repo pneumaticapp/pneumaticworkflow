@@ -24,7 +24,7 @@ import { getDashboardWorkflowBreakdown } from '../../api/dashboard/getDashboardW
 import { getDashboardTasksBreakdown } from '../../api/dashboard/getDashboardTasksBreakdown';
 import { getDashboardWorkflowsTasks } from '../../api/dashboard/getDashboardWorkflowsTasks';
 import { getDashboardTasksBySteps } from '../../api/dashboard/getDashboardTasks';
-import { EDashboardModes, IDashboardTask, TDashboardBreakdownItemResponse } from '../../types/redux';
+import { EDashboardModes } from '../../types/redux';
 import { getCanAccessWorkflows } from '../selectors/user';
 import {
   getDashboardBreakdownItems,
@@ -51,7 +51,7 @@ import {
   mapFieldsToExtraFields,
 } from '../../utils/mapFieldsetBindingClientToRuntime';
 import { getGettingStartedChecklist } from '../../api/getGettingStartedChecklist';
-import { IGettingStartedChecklist } from '../../types/dashboard';
+import { IDashboardTask, IGettingStartedChecklist, TDashboardBreakdownItemResponse } from '../../types/dashboard';
 import { loadTemplateIntegrationsStats } from '../actions';
 import { isObject } from '../../utils/mappers';
 import { NotificationManager } from '../../components/UI/Notifications';

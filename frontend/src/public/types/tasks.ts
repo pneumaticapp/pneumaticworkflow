@@ -164,3 +164,9 @@ export interface ITemplateStep {
   number: number;
   apiName: string;
 }
+
+export enum ETaskCardViewMode {
+  Single = 'single',
+  List = 'list',
+  Guest = 'guest',
+}

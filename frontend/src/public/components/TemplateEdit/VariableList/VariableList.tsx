@@ -10,7 +10,7 @@ import { Tooltip, CustomTooltip } from '../../UI';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { ExpandIcon } from '../../icons';
 import { ELearnMoreLinks } from '../../../constants/defaultValues';
-import { TTaskVariable } from '../types';
+import { TTaskVariable } from '../../../types/template';
 import { getLocalizedSystemVariable } from '../TaskForm/utils/getTaskVariables';
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
 import { TooltipRichContent } from '../TooltipRichContent';

@@ -1,3 +1,4 @@
+import type * as React from 'react';
 import { EIntegrations } from './integrations';
 import {
   EConditionAction,
@@ -410,4 +411,34 @@ export enum ETemplatesTab {
 
 export interface ITemplatesLayoutProps {
   children: JSX.Element;
+}
+
+export interface ITemplatesSystemCategories {
+  id: number;
+  order: number;
+  name: string;
+  icon: string;
+  color: string;
+  templateColor: string;
+}
+
+export enum EStartingType {
+  Task = 'task',
+  Kickoff = 'kickoff',
+}
+
+export type TTaskVariable = {
+  title: string;
+  apiName: string;
+  type: EExtraFieldType | EStartingType;
+  subtitle?: string;
+  richSubtitle?: React.ReactNode;
+  selections?: string[];
+  datasetId?: number | null;
+};
+
+export enum EGraphViewMode {
+  /** Linear task list. UI label is "Line". */
+  List = 'list',
+  Graph = 'graph',
 }

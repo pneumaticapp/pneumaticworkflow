@@ -20,7 +20,7 @@ import { TCloneTemplatePayload, TDeleteTemplatePayload, TPatchTemplatePayload } 
 import { getRunnableWorkflow, loadDatasetsMap } from '../utils/getRunnableWorkflow';
 import { mapFieldsetBindingClientToRuntime } from '../../../utils/mapFieldsetBindingClientToRuntime';
 import { ETemplateStatus } from '../../../types/redux';
-import { IRunWorkflow } from '../../WorkflowEditPopup/types';
+import { IRunWorkflow } from '../../../types/workflow';
 import { WarningPopup } from '../../UI/WarningPopup';
 import { isCreateTemplate } from '../../../utils/history';
 import { InfoWarningsModal } from '../InfoWarningsModal';

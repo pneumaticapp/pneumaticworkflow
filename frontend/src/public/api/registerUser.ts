@@ -1,5 +1,5 @@
 import { commonRequest } from './commonRequest';
-import { IUserRegister } from '../redux/auth/actions';
+import type { IUserRegister } from '../types/user';
 import { mapRequestBody } from '../utils/mappers';
 import { IUserUtm } from '../views/user/utils/utmParams';
 

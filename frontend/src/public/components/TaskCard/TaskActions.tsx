@@ -10,7 +10,8 @@ import { Tooltip } from '../UI';
 import { DateFormat } from '../UI/DateFormat';
 import { DoneInfoIcon, PlayLogoIcon, ReturnTaskInfoIcon, ReturnToIcon } from '../icons';
 import { ReturnModal } from './ReturnModal';
-import { ETaskCardViewMode, TTaskActionsProps } from './types';
+import { ETaskCardViewMode } from '../../types/tasks';
+import { TTaskActionsProps } from './types';
 
 import styles from './TaskCard.css';
 

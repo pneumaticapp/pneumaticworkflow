@@ -1,6 +1,5 @@
 import { IExtraField, IRuntimeKickoffClient } from '../types/template';
 import { isArrayWithItems } from './helpers';
-import { IRunWorkflow } from '../components/WorkflowEditPopup/types';
 import { ExtraFieldsHelper } from '../components/TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
 import { normalizeCheckboxValue } from './fields';
 import {
@@ -17,6 +16,7 @@ import {
   IWorkflowLogItem,
   WorkflowWithDateFields,
   WorkflowWithTspFields,
+  IRunWorkflow,
 } from '../types/workflow';
 import { IHighlightsItem } from '../types/highlights';
 import { TaskWithDateFields, TaskWithTspFields, TFormatTaskDates } from '../types/tasks';

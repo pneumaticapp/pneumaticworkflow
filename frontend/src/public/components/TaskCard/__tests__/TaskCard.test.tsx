@@ -1,7 +1,8 @@
 import React, { forwardRef, ReactNode } from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
 
-import { TaskCard, ETaskCardViewMode } from '../TaskCard';
+import { TaskCard } from '../TaskCard';
+import { ETaskCardViewMode } from '../../../types/tasks';
 import { EExtraFieldType, ETemplateOwnerType, IExtraField } from '../../../types/template';
 import { ETaskStatus } from '../../../redux/actions';
 import { EWorkflowStatus, EWorkflowsLogSorting } from '../../../types/workflow';

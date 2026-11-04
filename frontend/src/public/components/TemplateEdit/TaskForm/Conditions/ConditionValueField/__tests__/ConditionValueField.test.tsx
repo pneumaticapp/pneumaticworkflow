@@ -4,8 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 
 import { enMessages } from '../../../../../../lang/locales/en_US';
-import { EExtraFieldType } from '../../../../../../types/template';
-import { TTaskVariable } from '../../../../types';
+import { EExtraFieldType, TTaskVariable } from '../../../../../../types/template';
 import { EConditionLogicOperations, EConditionOperators, TConditionRule } from '../../types';
 import { ConditionValueField } from '../ConditionValueField';
 

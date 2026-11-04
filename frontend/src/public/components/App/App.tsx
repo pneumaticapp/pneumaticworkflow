@@ -6,7 +6,8 @@ import { RouteComponentProps } from 'react-router-dom';
 
 import { useShouldHideIntercom } from '../../hooks/useShouldHideIntercom';
 import { AppLocale } from '../../lang';
-import { ELocale, IAuthUser } from '../../types/redux';
+import { IAuthUser } from '../../types/redux';
+import { ELocale } from '../../types/locale';
 import { NotificationContainer } from '../UI/Notifications';
 import { FullscreenImageContainer } from '../FullscreenImage';
 import { initiatePagesTracking } from '../../utils/analytics/trackPages';

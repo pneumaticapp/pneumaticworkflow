@@ -1,4 +1,4 @@
-import { EGroupsListSorting, EUserListSorting, EUserStatus, IUnsavedUser, IUserVacation, TUserListItem } from './user';
+import { EGroupsListSorting, EUserListSorting, TAuthUserResult, TUserListItem } from './user';
 import { TNotificationsListItem } from './notifications';
 import { IAccountGenericTemplate } from './genericTemplates';
 import {
@@ -11,13 +11,14 @@ import {
   EWorkflowsLoadingStatus,
   IWorkflowClient,
   IWorkflowDetailsClient,
+  IRunWorkflow,
 } from './workflow';
 import { ITask, ITaskListItem, ITasksSettings } from './tasks';
 import { EPermissionObjectType, TObjectPermissionsById } from './permissions';
 import { IApiKeyItem, IIntegrationDetailed, IIntegrationListItem } from './integrations';
 import { ESettingsTabs } from './profile';
 import { IHighlightsItem, EHighlightsDateFilter } from './highlights';
-import { EDashboardTimeRange, IGettingStartedChecklist } from './dashboard';
+import { EDashboardTimeRange, IGettingStartedChecklist, TDashboardBreakdownItem } from './dashboard';
 import { EAuthUserFailType, ETaskStatus, ETemplatesSystemStatus } from '../redux/actions';
 import {
   ITemplateClient,
@@ -27,16 +28,17 @@ import {
   TAITemplateGenerationStatus,
   TTransformedTask,
   ITemplateTitleBaseWithCount,
+  ITemplatesSystemCategories,
+  TTaskVariable,
 } from './template';
-import { IRunWorkflow } from '../components/WorkflowEditPopup/types';
-import { TTaskVariable } from '../components/TemplateEdit/types';
 import { ETaskListStatus } from '../components/Tasks/types';
-import { ESubscriptionPlan } from './account';
+import type { IAccountPlan } from './account';
 import { IMenuItem } from './menu';
 import { EWebhooksTypeEvent, IWebhook } from './webhooks';
 import { ETenantsSorting, ITenant } from './tenants';
 import { IDataset, IDatasetListItem, EDatasetsSorting, TDatasetItemsSortOrder } from './dataset';
 import { IFieldsetCatalogItem, EFieldsetsSorting } from './fieldset';
+import { ELocale } from './locale';
 import { TeamPages, IGroup, UserInvite } from '../redux/team/types';
 
 export type IPermissionsStore = {
@@ -50,35 +52,11 @@ export enum ELoggedState {
   LoggedOut = 'logged-out',
 }
 
-export interface IAuthUser extends IUnsavedUser {
+export interface IAuthUser extends TAuthUserResult {
   error?: EAuthUserFailType;
-  isSuperuser?: boolean;
-  isSupermode?: boolean;
   superUserToken?: '';
-  id: number;
-  status: EUserStatus;
   loading: boolean;
-  isResetPasswordCaptchaRequired?: boolean;
-  invitedUser: IInvitedUser;
-  isAccountOwner: boolean;
-  isDigestSubscriber: boolean;
-  isTasksDigestSubscriber: boolean;
-  isCommentsMentionsSubscriber: boolean;
-  isNewTasksSubscriber: boolean;
-  isNewslettersSubscriber: boolean;
-  isSpecialOffersSubscriber: boolean;
   loggedState: ELoggedState;
-  language: string;
-  timezone: string;
-  dateFmt: string;
-  dateFdw: string;
-  managerId: number | null;
-  reportIds: number[];
-  vacation?: IUserVacation | null;
-}
-
-export interface IInvitedUser {
-  id: string;
 }
 
 export interface IMenu {
@@ -90,38 +68,8 @@ export interface IMenu {
   selectedMenuHasSubItems: boolean;
 }
 
-export const enum ELocale {
-  English = 'en',
-  Russian = 'ru',
-}
-
-export const enum ELocaleDirection {
-  LeftToRight = 'ltr',
-  RightToLeft = 'rtl',
-}
-
-export interface ILocaleOption {
-  id: ELocale;
-  name: string;
-  direction: ELocaleDirection;
-}
-
 export interface ISettings {
   locale: ELocale;
-}
-
-export interface IAccountPlan {
-  planExpiration: string | null; // null for free plan
-  maxUsers: number;
-  activeUsers: number | null;
-  tenantsActiveUsers: number | null;
-  maxTemplates: number | null; // null for free plan
-  activeTemplates: number;
-  ownerName: string;
-  trialEnded: boolean;
-  billingPlan: ESubscriptionPlan;
-  trialIsActive: boolean;
-  isSubscribed: boolean;
 }
 
 export enum EDeleteUserModalState {
@@ -226,15 +174,6 @@ export interface IWorkflowLog {
   isOpen: boolean;
   workflowId: number | null;
   isLoading: boolean;
-}
-
-export interface ITemplatesSystemCategories {
-  id: number;
-  order: number;
-  name: string;
-  icon: string;
-  color: string;
-  templateColor: string;
 }
 
 export interface ITemplatesSystemSelection {
@@ -396,32 +335,6 @@ export interface IDashboardCounters {
   overdue: number;
   started: number;
 }
-
-export interface IDashboardTask {
-  id: number;
-  apiName: string;
-  number: number;
-  name: string;
-  started: number | null;
-  inProgress: number;
-  overdue: number;
-  completed: number | null;
-}
-
-export type TDashboardBreakdownItemResponse = {
-  templateId: number;
-  templateName: string;
-  started: number | null;
-  inProgress: number;
-  overdue: number;
-  isActive?: boolean;
-  completed: number | null;
-};
-
-export type TDashboardBreakdownItem = TDashboardBreakdownItemResponse & {
-  tasks: IDashboardTask[];
-  areTasksLoading: boolean;
-};
 
 export enum EDashboardModes {
   Workflows = 'dashboard.workflows',

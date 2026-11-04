@@ -1,6 +1,6 @@
 import type { ITypedReduxAction } from '../types';
 import { actionGenerator } from '../../utils/redux';
-import type { IRunWorkflow } from '../../components/WorkflowEditPopup/types';
+import type { IRunWorkflow } from '../../types/workflow';
 
 export const enum ERunWorkflowModalActions {
   OpenModal = 'OPEN_RUN_WORKFLOW_MODAL',

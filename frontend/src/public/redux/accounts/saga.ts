@@ -40,13 +40,13 @@ import {
 } from './types';
 
 import { getAccountsStore } from '../selectors/user';
-import { EUserListSorting, EUserStatus, ICreateUserRequest, TUserListItem } from '../../types/user';
+import { EUserListSorting, EUserStatus, ICreateUserRequest, TAuthUserResult, TUserListItem } from '../../types/user';
 import { EDeleteUserModalState, IAccounts } from '../../types/redux';
 
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getUsers, TResponseUser } from '../../api/getUsers';
 import { getPlan, TGetPlanResponse } from '../../api/getPlan';
-import { authUserSuccess, makeStripePayment, TAuthUserResult } from '../auth/actions';
+import { authUserSuccess, makeStripePayment } from '../auth/actions';
 import { ERoutes } from '../../constants/routes';
 import { changeUserPermissions } from '../../api/changeUserPermissions';
 import { NotificationManager } from '../../components/UI/Notifications';

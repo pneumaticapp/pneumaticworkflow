@@ -4,7 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 
 import { Tabs } from '../../../../UI';
-import { EGraphViewMode, GRAPH_VIEW_TOGGLE_OPTIONS } from '../../types';
+import { EGraphViewMode } from '../../../../../types/template';
+import { GRAPH_VIEW_TOGGLE_OPTIONS } from '../../types';
 import { setViewMode } from '../../../../../redux/templateGraphView/slice';
 import { selectTemplateViewMode } from '../../../../../redux/selectors/templateGraphView';
 import styles from './GraphViewToggle.css';

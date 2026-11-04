@@ -3,7 +3,8 @@ import classnames from 'classnames';
 import { Link } from 'react-router-dom';
 
 import { IDashboardCounterProps } from '../Counters';
-import { EDashboardModes, IDashboardTask } from '../../../types/redux';
+import { EDashboardModes } from '../../../types/redux';
+import type { IDashboardTask } from '../../../types/dashboard';
 import { DashboardCounters } from '../Counters/DashboardCounters';
 import { StepName } from '../../StepName';
 import { getLinkToTasks } from '../../../utils/routes/getLinkToTasks';

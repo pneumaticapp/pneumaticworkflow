@@ -3,7 +3,7 @@ import { isSameYear, Locale } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { enUS, ru } from 'date-fns/locale';
 
-import { ELocale } from '../../../types/redux';
+import { ELocale } from '../../../types/locale';
 
 import styles from './DateFormat.css';
 

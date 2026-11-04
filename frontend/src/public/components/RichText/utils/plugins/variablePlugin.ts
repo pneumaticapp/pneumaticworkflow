@@ -4,7 +4,7 @@ import { IntlShape } from 'react-intl';
 import { variableRegex } from '../../../../constants/defaultValues';
 import { isArrayWithItems } from '../../../../utils/helpers';
 import { truncateString } from '../../../../utils/truncateString';
-import { TTaskVariable } from '../../../TemplateEdit/types';
+import { TTaskVariable } from '../../../../types/template';
 import { getLocalizedSystemVariable } from '../../../TemplateEdit/TaskForm/utils/getTaskVariables';
 
 const MAX_VARIABLE_LENGTH = 20;

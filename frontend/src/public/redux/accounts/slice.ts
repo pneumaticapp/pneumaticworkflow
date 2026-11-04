@@ -1,8 +1,8 @@
 import { createSlice, PayloadAction, createAction } from '@reduxjs/toolkit';
 
-import { EDeleteUserModalState, IAccounts, IAccountPlan } from '../../types/redux';
+import { EDeleteUserModalState, IAccounts } from '../../types/redux';
 import { EUserListSorting, EUserStatus, TUserListItem, ICreateUserRequest } from '../../types/user';
-import { ESubscriptionPlan } from '../../types/account';
+import { ESubscriptionPlan, IAccountPlan } from '../../types/account';
 
 import {
   IChangeUserAdminProps,

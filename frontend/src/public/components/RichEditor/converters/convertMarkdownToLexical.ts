@@ -2,7 +2,7 @@ import type { LexicalEditor } from 'lexical';
 import { $convertFromMarkdownString } from '@lexical/markdown';
 import { prepareChecklistsForRendering } from '../../../utils/checklists/prepareChecklistsForRendering';
 import { createMarkdownTransformers } from './transformers';
-import type { TTaskVariable } from '../../TemplateEdit/types';
+import type { TTaskVariable } from '../../../types/template';
 
 export function applyMarkdownToEditor(
   editor: LexicalEditor,

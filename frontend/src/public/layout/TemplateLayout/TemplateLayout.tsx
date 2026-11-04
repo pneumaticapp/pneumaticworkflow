@@ -5,7 +5,8 @@ import { useSelector } from 'react-redux';
 import classnames from 'classnames';
 
 import { TopNavContainer } from '../../components/TopNav';
-import { GraphViewToggle, EGraphViewMode } from '../../components/TemplateEdit/TemplateGraphEditor';
+import { GraphViewToggle } from '../../components/TemplateEdit/TemplateGraphEditor';
+import { EGraphViewMode } from '../../types/template';
 import { NavLink } from '../../components/NavLink';
 import { ERoutes } from '../../constants/routes';
 import { selectIsGraphCanvas, selectTemplateViewMode } from '../../redux/selectors/templateGraphView';

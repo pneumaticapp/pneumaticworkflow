@@ -1,5 +1,5 @@
 import { variableRegex } from '../../../../constants/defaultValues';
-import { TTaskVariable } from '../../types';
+import { TTaskVariable } from '../../../../types/template';
 import { getLocalizedSystemVariable, isSystemVariable } from './getTaskVariables';
 
 export type TSubtitleSegment =

@@ -4,10 +4,10 @@ import {
   ETaskPerformerType,
   ITemplateTaskClient,
   ITemplateTaskPerformer,
+  TTaskVariable,
 } from '../../../../types/template';
 import { TUserListItem } from '../../../../types/user';
 import { getUserFullName } from '../../../../utils/users';
-import { TTaskVariable } from '../../types';
 import { EOptionTypes, TUsersDropdownOption, getUsersDropdownOptionValue } from '../../../UI/form/UsersDropdown';
 import { IGroup } from '../../../../redux/team/types';
 

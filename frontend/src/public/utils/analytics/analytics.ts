@@ -1,9 +1,8 @@
 import * as sentry from '@sentry/react';
 import { diff } from 'deep-object-diff';
 
-import { IAccount } from '../../types/user';
+import { IAccount, TAuthUserResult } from '../../types/user';
 import { parseCookies } from '../cookie';
-import { TAuthUserResult } from '../../redux/auth/actions';
 import { TITLES } from '../../constants/titles';
 import { store } from '../../redux/store';
 import { loadAnalytics } from './segmentSnippet';

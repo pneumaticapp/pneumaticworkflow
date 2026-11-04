@@ -7,8 +7,7 @@ import {
   saveTemplateTasks,
   TTemplatesActions,
 } from '../../actions';
-import { TTransformedTask } from '../../../types/template';
-import { TTaskVariable } from '../../../components/TemplateEdit/types';
+import { TTransformedTask, TTaskVariable } from '../../../types/template';
 import { EExtraFieldType } from '../../../types/template';
 
 describe('reducer', () => {

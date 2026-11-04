@@ -7,8 +7,8 @@ import classnames from 'classnames';
 import { TaskDescriptionEditor } from './TaskDescriptionEditor';
 import { scrollToElement } from '../../../utils/helpers';
 import { TUserListItem } from '../../../types/user';
-import { ITemplateKickoffClient, ITemplateTaskClient } from '../../../types/template';
-import { TTaskVariable, TTaskFormPart, ETaskFormParts } from '../types';
+import { ITemplateKickoffClient, ITemplateTaskClient, TTaskVariable, EStartingType } from '../../../types/template';
+import { TTaskFormPart, ETaskFormParts } from '../types';
 import { OutputFormIntl } from '../OutputForm/OutputForm';
 import { ShowMore } from '../../UI/ShowMore';
 import { TaskPerformers } from './TaskPerformers';
@@ -24,7 +24,6 @@ import { getSingleLineVariables, getSystemVariables, getTaskVariables, getVariab
 
 import styles from '../TemplateEdit.css';
 
-import { EStartingType } from './Conditions/utils/getDropdownOperators';
 import { TaskItemUsers } from '../TaskItem/TaskItemUsers';
 import { TaskRenderDueIn } from '../TaskRenderDueInInfo';
 import { TaskRenderConditionsInfo } from '../TaskRenderConditionsInfo';

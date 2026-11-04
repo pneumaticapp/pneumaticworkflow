@@ -5,7 +5,8 @@ import classnames from 'classnames';
 import { useSelector } from 'react-redux';
 
 import { isArrayWithItems } from '../../../../utils/helpers';
-import { EStartingType, getDropdownOperators } from './utils/getDropdownOperators';
+import { getDropdownOperators } from './utils/getDropdownOperators';
+import { EStartingType, TTaskVariable } from '../../../../types/template';
 import { setRulesApiNamesAndIds } from './utils/setRulesApiNames';
 import {
   handleAddNewCondition,
@@ -16,7 +17,6 @@ import {
   removeEmptyRules,
 } from './utils/shared';
 
-import { TTaskVariable } from '../../types';
 import { TUserListItem } from '../../../../types/user';
 import { ESubscriptionPlan } from '../../../../types/account';
 

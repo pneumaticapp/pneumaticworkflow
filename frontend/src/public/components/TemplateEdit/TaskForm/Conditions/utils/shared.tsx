@@ -1,10 +1,8 @@
 import React from 'react';
-import { EExtraFieldType } from '../../../../../types/template';
+import { EExtraFieldType, TTaskVariable, EStartingType } from '../../../../../types/template';
 import { isArrayWithItems } from '../../../../../utils/helpers';
-import { TTaskVariable } from '../../../types';
 import { RichLabel } from '../RichLabel';
 import { EConditionAction, EConditionOperators, ICondition, TConditionRule } from '../types';
-import { EStartingType } from './getDropdownOperators';
 import { getEmptyConditions, getOneEmptyCondition } from './getEmptyConditions';
 import { getEmptyRule } from './getEmptyRule';
 import { setRulesApiNamesAndIds } from './setRulesApiNames';

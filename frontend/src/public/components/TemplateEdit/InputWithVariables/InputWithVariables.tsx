@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import classnames from 'classnames';
-import { TTaskVariable } from '../types';
+import { TTaskVariable } from '../../../types/template';
 import { removeUnknownVariableTokens } from '../../RichEditor/converters/variableMarkdown';
 import { VariableList } from '../VariableList';
 import { RichEditor } from '../../RichEditor';

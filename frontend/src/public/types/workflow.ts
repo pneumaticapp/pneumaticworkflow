@@ -9,6 +9,8 @@ import {
   RawPerformer,
   ITableViewFields,
   TTemplatePreset,
+  ITemplateClient,
+  ITemplateKickoffClient,
 } from './template';
 import { IFieldsetRuntime } from './fieldset';
 import { EProgressbarColor } from '../components/Workflows/utils/getWorfkflowClientProperties';
@@ -375,4 +377,18 @@ export interface IDropdownMenuProps {
   direction?: 'right' | 'left';
   className?: string;
   renderMenuContent?(renderedOptions: React.ReactNode): React.ReactNode;
+}
+
+export interface IRunWorkflow extends Omit<
+  Pick<ITemplateClient, 'wfNameTemplate' | 'name' | 'kickoff' | 'description'>,
+  'kickoff'
+> {
+  id: number;
+  tasksCount: number;
+  performersCount: number;
+  kickoff: ITemplateKickoffClient | IRuntimeKickoffClient;
+  isUrgent?: boolean;
+  ancestorTaskId?: number;
+  dueDate?: string;
+  loadedFieldsets?: IFieldsetRuntime[];
 }

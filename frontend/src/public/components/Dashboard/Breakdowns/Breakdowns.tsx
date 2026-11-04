@@ -2,7 +2,8 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 
 import { Button, Placeholder } from '../../UI';
-import { EDashboardModes, TDashboardBreakdownItem } from '../../../types/redux';
+import { EDashboardModes } from '../../../types/redux';
+import type { TDashboardBreakdownItem } from '../../../types/dashboard';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { ILoadBreakdownTasksPayload, IOpenRunWorkflowPayload } from '../../../redux/actions';
 

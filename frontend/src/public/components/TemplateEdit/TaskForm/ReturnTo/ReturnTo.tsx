@@ -8,8 +8,7 @@ import { TrashIcon } from '../../../icons';
 import { getFormattedDropdownOption } from '../Conditions/utils/getFormattedDropdownOption';
 import { useCheckDevice } from '../../../../hooks/useCheckDevice';
 
-import { TTaskVariable } from '../../types';
-import { ITemplateTaskClient } from '../../../../types/template';
+import { ITemplateTaskClient, TTaskVariable } from '../../../../types/template';
 
 import styles from './ReturnTo.css';
 import stylesTaskForm from '../TaskForm.css';

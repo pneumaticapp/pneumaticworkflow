@@ -1,7 +1,7 @@
 import { IntlShape } from 'react-intl';
 import MarkdownIt from 'markdown-it';
 
-import { TTaskVariable } from '../../TemplateEdit/types';
+import { TTaskVariable } from '../../../types/template';
 import { createCheckPlaceholderId } from '../../TaskCard/checklist/createCheckPlaceholderId';
 import { createProgressbarPlaceholderId } from '../../TaskCard/checklist/createProgressbarPlaceholderId';
 import { checklistPlugin } from './plugins/checklistPlugin';

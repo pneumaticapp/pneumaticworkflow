@@ -1,15 +1,14 @@
 // tslint:disable: max-line-length
-import type {
-  ITemplatesList,
-  ITemplatesSystemCategories,
-  ITemplatesSystemList,
-  ITemplatesSystemSelection,
-} from '../../types/redux';
+import type { ITemplatesList, ITemplatesSystemList, ITemplatesSystemSelection } from '../../types/redux';
 import type { ITypedReduxAction } from '../types';
 import { actionGenerator } from '../../utils/redux';
-import type { TTemplateIntegrationStatsApi, TTransformedTask } from '../../types/template';
+import type {
+  ITemplatesSystemCategories,
+  TTemplateIntegrationStatsApi,
+  TTransformedTask,
+  TTaskVariable,
+} from '../../types/template';
 import { ETemplatesSorting } from '../../types/workflow';
-import type { TTaskVariable } from '../../components/TemplateEdit/types';
 
 export const enum ETemplatesActions {
   SetCurrentTemplatesSystemStatus = 'SET_CURRENT_TEMPLATES_SYSTEM_STATUS',

@@ -8,7 +8,8 @@ import { history } from '../../utils/history';
 import { Header } from '../UI/Typeography/Header';
 import { Tooltip } from '../UI';
 import { DateFormat } from '../UI/DateFormat';
-import { ETaskCardViewMode, TTaskCardHeaderProps } from './types';
+import { ETaskCardViewMode } from '../../types/tasks';
+import { TTaskCardHeaderProps } from './types';
 
 import styles from './TaskCard.css';
 

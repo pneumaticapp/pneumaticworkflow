@@ -1,7 +1,6 @@
-import { EExtraFieldType, ITemplateClient, ITemplateTaskClient } from '../../../../../types/template';
+import { EExtraFieldType, ITemplateClient, ITemplateTaskClient, EStartingType } from '../../../../../types/template';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../../TaskForm/Conditions/types';
-import { EStartingType } from '../../../TaskForm/Conditions/utils/getDropdownOperators';
 import { getGraphEdgeLine } from '../edgeStyles';
 import { KICKOFF_NODE_ID } from '../graphConstants';
 import { GRAPH_CARD_Z_INDEX } from '../graphGeometry';

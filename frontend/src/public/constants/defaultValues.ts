@@ -3,7 +3,7 @@
 import { Config } from 'react-player';
 
 import { TMenuType } from '../types/common';
-import { ELocale, ELocaleDirection, ILocaleOption } from '../types/redux';
+import { ELocale, ELocaleDirection, ILocaleOption } from '../types/locale';
 import { EPayPeriod } from '../types/pricing';
 import { envSentry } from './enviroment';
 

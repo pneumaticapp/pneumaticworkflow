@@ -1,5 +1,5 @@
 import type { RootState } from '../store';
-import { EGraphViewMode } from '../../components/TemplateEdit/TemplateGraphEditor/types';
+import { EGraphViewMode } from '../../types/template';
 
 export const selectTemplateViewMode = (state: RootState): EGraphViewMode => state.templateGraphView.viewMode;
 

@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { debounce } from 'throttle-debounce';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
-import { ITemplatesSystemCategories } from '../../../types/redux';
+import type { ITemplatesSystemCategories } from '../../../types/template';
 import { TemplateSystemCard } from '../TemplateSystemCard/TemplateSystemCard';
 import { TemplateSystemCategoryItem } from '../TemplateSystemCategoryItem';
 import { InputField, Placeholder } from '../../UI';

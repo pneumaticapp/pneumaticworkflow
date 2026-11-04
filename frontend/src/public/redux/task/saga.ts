@@ -38,7 +38,7 @@ import {
   TChangeTaskWorkflowLogViewSettings,
 } from './actions';
 import { getTask } from '../../api/getTask';
-import { ITask, ITaskAPI } from '../../types/tasks';
+import { ETaskCardViewMode, ITask, ITaskAPI } from '../../types/tasks';
 import { logger } from '../../utils/logger';
 import { ERoutes } from '../../constants/routes';
 import { NotificationManager } from '../../components/UI/Notifications';
@@ -56,7 +56,6 @@ import {
   removeOutputFromLocalStorage,
   removeOutputsFromLocalStorage,
 } from '../../components/TaskCard/utils/storageOutputs';
-import { ETaskCardViewMode } from '../../components/TaskCard';
 
 import { TChannelAction } from '../tasks/saga';
 import { getCurrentTask, getTaskPerformers, getTaskStore } from '../selectors/task';

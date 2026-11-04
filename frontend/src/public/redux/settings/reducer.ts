@@ -1,6 +1,7 @@
 import { defaultLocale, localeOptions } from '../../constants/defaultValues';
 import { envLanguageCode } from '../../constants/enviroment';
-import type { ELocale, ISettings } from '../../types/redux';
+import type { ISettings } from '../../types/redux';
+import type { ELocale } from '../../types/locale';
 import { getBrowserConfig } from '../../utils/getConfig';
 
 import { ESettingsActions, TSettingsActions } from './actions';

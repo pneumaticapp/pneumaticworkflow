@@ -1,5 +1,4 @@
-import type { TTaskVariable } from '../../../TemplateEdit/types';
-import { EExtraFieldType } from '../../../../types/template';
+import { EExtraFieldType, TTaskVariable } from '../../../../types/template';
 import {
   createVariableTransformer,
   getVariablePayload,

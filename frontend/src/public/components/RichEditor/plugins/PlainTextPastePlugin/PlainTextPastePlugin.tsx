@@ -3,7 +3,7 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { $getSelection, $isRangeSelection, COMMAND_PRIORITY_HIGH, PASTE_COMMAND } from 'lexical';
 
 import { parseTextWithVariables, removeUnknownVariableTokens } from '../../converters/variableMarkdown';
-import type { TTaskVariable } from '../../../TemplateEdit/types';
+import type { TTaskVariable } from '../../../../types/template';
 
 const PLAIN_TEXT_PARSE_OPTIONS = {
   variablesOnly: true,

@@ -4,10 +4,9 @@ import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { DropdownList } from '../../../../UI/DropdownList';
-import { EExtraFieldType } from '../../../../../types/template';
+import { EExtraFieldType, TTaskVariable, EStartingType } from '../../../../../types/template';
 import { Field } from '../../../../Field';
 import { EUserStatus, TUserListItem } from '../../../../../types/user';
-import { TTaskVariable } from '../../../types';
 import { getUserFullName } from '../../../../../utils/users';
 import { EConditionOperators, TConditionRule } from '../types';
 import { OPERATORS_WITHOUT_VALUE } from '..';
@@ -15,7 +14,6 @@ import { DatePickerCustom } from '../../../../UI/form/DatePicker';
 import { parseUnixSeconds, toTspDate } from '../../../../../utils/dateTime';
 import { getFormattedDropdownOption } from '../utils/getFormattedDropdownOption';
 import styles from '../Conditions.css';
-import { EStartingType } from '../utils/getDropdownOperators';
 import { getRegularGroupsList } from '../../../../../redux/selectors/groups';
 import { useLazyDataset } from '../utils/useLazyDataset';
 

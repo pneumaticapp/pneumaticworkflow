@@ -1,4 +1,4 @@
-import { TTaskVariable } from '../TemplateEdit/types';
+import { TTaskVariable } from '../../types/template';
 
 export interface IRichTextProps {
   text: string | null;

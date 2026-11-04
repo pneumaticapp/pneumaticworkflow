@@ -1,5 +1,5 @@
 import type { RootState } from '../../store';
-import { EGraphViewMode } from '../../../components/TemplateEdit/TemplateGraphEditor/types';
+import { EGraphViewMode } from '../../../types/template';
 import { selectIsGraphCanvas, selectTemplateSelectedTaskApiName, selectTemplateViewMode } from '../templateGraphView';
 
 const createMockState = (viewMode: EGraphViewMode, selectedTaskApiName: string | null = null): RootState =>

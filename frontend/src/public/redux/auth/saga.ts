@@ -14,7 +14,6 @@ import {
   sendForgotPasswordSuccess,
   sendResetPasswordFail,
   sendResetPasswordSuccess,
-  TAuthUserResult,
   TEditAccount,
   TEditUser,
   TLoginUser,
@@ -31,7 +30,6 @@ import {
   TSetUserToken,
   setUserToken,
   TLoginSuperuser,
-  IUserRegister,
   TUploadUserPhoto,
   setUserPhoto,
   logoutUserSuccess,
@@ -48,7 +46,7 @@ import { ERoutes } from '../../constants/routes';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { setJwtCookie, removeAuthCookies } from '../../utils/authCookie';
 import { setOAuthRegistrationCompleted } from '../../api/setOAuthRegistrationCompleted';
-import { TUserInvited, IUserResponse } from '../../types/user';
+import { TUserInvited, IUserResponse, IUserRegister, TAuthUserResult } from '../../types/user';
 import { getAuthUser, getInvitedUser } from '../selectors/user';
 import { getOAuthId, getOAuthType } from '../../utils/auth';
 import { editProfile, IUpdateUserRequest, IUpdateUserResponse, TUpdateUserMappedResponse } from '../../api/editProfile';

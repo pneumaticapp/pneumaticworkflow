@@ -18,11 +18,11 @@ import { TaskOutputFields } from './TaskOutputFields';
 import { TaskPerformers } from './TaskPerformers';
 import { TaskWorkflowLog } from './TaskWorkflowLog';
 import { useTaskOutput } from './hooks/useTaskOutput';
-import { ETaskCardViewMode, ITaskCardProps, ITaskCardWrapperProps } from './types';
+import { ETaskCardViewMode } from '../../types/tasks';
+import { ITaskCardProps, ITaskCardWrapperProps } from './types';
 
 import styles from './TaskCard.css';
 
-export { ETaskCardViewMode } from './types';
 export type { ITaskCardProps, ITaskCardWrapperProps } from './types';
 
 export function TaskCard({

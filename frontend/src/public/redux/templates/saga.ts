@@ -39,7 +39,7 @@ import { getVariables } from '../../components/TemplateEdit/TaskForm/utils/getTa
 import { getTemplateFields, TGetTemplateFieldsResponse } from '../../api/getTemplateFields';
 import { isArrayWithItems } from '../../utils/helpers';
 import { getTemplatesSystemCategories } from '../../api/getSystemTemplatesCategories';
-import { ITemplatesSystemCategories } from '../../types/redux';
+import type { ITemplatesSystemCategories } from '../../types/template';
 import { LIMIT_LOAD_SYSTEMS_TEMPLATES, LIMIT_LOAD_TEMPLATES, varibleIdRegex } from '../../constants/defaultValues';
 import { SYSTEM_MERGED_OUTPUTS } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
 import { NotificationManager } from '../../components/UI/Notifications';

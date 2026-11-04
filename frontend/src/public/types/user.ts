@@ -181,3 +181,42 @@ export interface IUserResponse {
   subordinatesIds: number[];
   vacation?: IUserVacation | null;
 }
+
+export interface IInvitedUser {
+  id: string;
+}
+
+export interface IUserRegister {
+  email: string;
+  firstName: string;
+  lastName: string;
+  photo: string;
+  fromEmail: boolean;
+  timezone: string;
+  password?: string;
+  phone?: string;
+  companyName?: string;
+}
+
+export interface TAuthUserResult extends IUnsavedUser {
+  isSuperuser?: boolean;
+  isSupermode?: boolean;
+  id: number;
+  status: EUserStatus;
+  isResetPasswordCaptchaRequired?: boolean;
+  invitedUser: IInvitedUser;
+  isAccountOwner: boolean;
+  isDigestSubscriber: boolean;
+  isTasksDigestSubscriber: boolean;
+  isCommentsMentionsSubscriber: boolean;
+  isNewTasksSubscriber: boolean;
+  isNewslettersSubscriber: boolean;
+  isSpecialOffersSubscriber: boolean;
+  language: string;
+  timezone: string;
+  dateFmt: string;
+  dateFdw: string;
+  managerId: number | null;
+  reportIds: number[];
+  vacation?: IUserVacation | null;
+}

@@ -1,4 +1,4 @@
-import { IAccountPlan } from '../../types/redux';
+import type { IAccountPlan } from '../../types/account';
 import { TUserListItem } from '../../types/user';
 import type { RootState } from '../store';
 

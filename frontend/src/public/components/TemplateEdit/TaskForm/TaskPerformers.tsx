@@ -5,8 +5,12 @@ import classNames from 'classnames';
 
 import { Checkbox } from '../../UI/Fields/Checkbox';
 import { TUserListItem } from '../../../types/user';
-import { ETaskPerformerType, ITemplateTaskClient, ITemplateTaskPerformer } from '../../../types/template';
-import { TTaskVariable } from '../types';
+import {
+  ETaskPerformerType,
+  ITemplateTaskClient,
+  ITemplateTaskPerformer,
+  TTaskVariable,
+} from '../../../types/template';
 import { trackInviteTeamInPage } from '../../../utils/analytics';
 import {
   EOptionTypes,

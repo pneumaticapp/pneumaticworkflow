@@ -5,7 +5,7 @@ import * as React from 'react';
 import { TLoadTemplateVariablesPayload } from '../../redux/actions';
 import { RichText } from '../RichText';
 
-import { TTaskVariable } from '../TemplateEdit/types';
+import { TTaskVariable } from '../../types/template';
 
 export interface IStepNameProps {
   initialStepName: string;

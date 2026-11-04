@@ -4,8 +4,7 @@ import userEvent from '@testing-library/user-event';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { VariableList, IVariableListProps } from '../VariableList';
-import { TTaskVariable } from '../../types';
-import { EExtraFieldType } from '../../../../types/template';
+import { EExtraFieldType, TTaskVariable } from '../../../../types/template';
 import {
   WORKFLOW_STARTER_VARIABLE_API_NAME,
   WORKFLOW_STARTER_VARIABLE_TITLE,

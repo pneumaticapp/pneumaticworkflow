@@ -1,5 +1,5 @@
 import { commonRequest } from './commonRequest';
-import { IAccountPlan } from '../types/redux';
+import type { IAccountPlan } from '../types/account';
 
 export type TGetPlanResponse = IAccountPlan;
 

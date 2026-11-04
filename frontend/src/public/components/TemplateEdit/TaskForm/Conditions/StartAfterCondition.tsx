@@ -5,7 +5,8 @@ import classnames from 'classnames';
 import { useSelector } from 'react-redux';
 
 import { isArrayWithItems } from '../../../../utils/helpers';
-import { EStartingType, getDropdownOperators } from './utils/getDropdownOperators';
+import { getDropdownOperators } from './utils/getDropdownOperators';
+import { EStartingType } from '../../../../types/template';
 import { setRulesApiNamesAndIds } from './utils/setRulesApiNames';
 import { handleAddNewRule, handleAddNewCondition, CONDITION_DISABLED_OPERATOR, getDropdownSteps } from './utils/shared';
 

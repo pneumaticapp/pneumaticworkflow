@@ -2,7 +2,7 @@
 import { ITemplateClient, ITemplateTaskClient, ITemplateKickoffClient, IExtraField } from '../../../types/template';
 import { IFieldsetRuntime } from '../../../types/fieldset';
 import { setPerformersCounts } from '../../../utils/template';
-import { IRunWorkflow } from '../../WorkflowEditPopup/types';
+import { IRunWorkflow } from '../../../types/workflow';
 import { normalizeSelections } from './normalizeSelections';
 
 export type TTemplateToRunWorkflow = Pick<

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
-import { TTaskVariable } from '../types';
+import { TTaskVariable } from '../../../types/template';
 import { RichEditor } from '../../RichEditor';
 import type { IRichEditorHandle } from '../../RichEditor/types';
 import { getMentionData } from '../../RichEditor/utils/getMentionData';

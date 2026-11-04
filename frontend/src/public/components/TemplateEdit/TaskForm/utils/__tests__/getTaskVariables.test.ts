@@ -1,7 +1,12 @@
 import { createElement } from 'react';
 import { render, screen } from '@testing-library/react';
 
-import { EExtraFieldType, ITemplateKickoffClient, ITemplateTaskClient } from '../../../../../types/template';
+import {
+  EExtraFieldType,
+  ITemplateKickoffClient,
+  ITemplateTaskClient,
+  TTaskVariable,
+} from '../../../../../types/template';
 import { IFieldsetRuntime } from '../../../../../types/fieldset';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 import {
@@ -11,7 +16,6 @@ import {
 } from '../../../../../__stubs__/fieldsets.factory';
 import { makeTemplateTaskClient } from '../../../../../__stubs__/templates.factory';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
-import { TTaskVariable } from '../../../types';
 import {
   getKickoffVariables,
   getTaskVariables,

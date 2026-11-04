@@ -5,7 +5,6 @@ import {
   TOpenWorkflowLogPopupPayload,
   TRemoveWorkflowFromListPayload,
 } from '../../redux/workflows/types';
-import { IRunWorkflow } from '../WorkflowEditPopup/types';
 import { ITemplateTitle } from '../../types/template';
 import {
   EWorkflowsLoadingStatus,
@@ -14,6 +13,7 @@ import {
   EWorkflowsView,
   ITemplateFilterItem,
   TUserCounter,
+  IRunWorkflow,
 } from '../../types/workflow';
 import { TUserListItem } from '../../types/user';
 import { IGroup } from '../../redux/team/types';

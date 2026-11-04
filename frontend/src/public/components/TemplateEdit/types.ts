@@ -1,8 +1,6 @@
-import React from 'react';
-import { EExtraFieldType, ITemplateKickoffClient, ITemplateTaskClient } from '../../types/template';
+import { ITemplateKickoffClient, ITemplateTaskClient } from '../../types/template';
 import { EMoveDirections } from '../../types/workflow';
 import type { TDropdownOptionBase } from '../UI/DropdownList/types';
-import { EStartingType } from './TaskForm/Conditions/utils/getDropdownOperators';
 import type { TGraphAddTaskIntent } from './TemplateGraphEditor/types';
 
 export const enum ECustomResponsibleUsers {
@@ -13,16 +11,6 @@ export const enum ECustomResponsibleUsers {
 export interface ITemplateOwnerOption extends TDropdownOptionBase {
   id: number;
 }
-
-export type TTaskVariable = {
-  title: string;
-  apiName: string;
-  type: EExtraFieldType | EStartingType;
-  subtitle?: string;
-  richSubtitle?: React.ReactNode;
-  selections?: string[];
-  datasetId?: number | null;
-};
 
 export enum ETaskFormParts {
   CheckIf = 'checkIf',

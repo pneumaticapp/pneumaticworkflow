@@ -1,8 +1,7 @@
 import type { ReactNode, MutableRefObject } from 'react';
 import type { EditorState, LexicalEditor } from 'lexical';
 
-import type { TOutputChecklist } from '../../types/template';
-import type { TTaskVariable } from '../TemplateEdit/types';
+import type { TOutputChecklist, TTaskVariable } from '../../types/template';
 import type { TForegroundColor } from '../UI/Fields/common/types';
 
 export interface IRichEditorHandle {

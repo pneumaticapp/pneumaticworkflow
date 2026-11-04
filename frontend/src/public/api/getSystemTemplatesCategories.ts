@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { ITemplatesSystemCategories } from '../types/redux';
+import type { ITemplatesSystemCategories } from '../types/template';
 
 export type TGetSystemTemplatesCategoriesResponse = ITemplatesSystemCategories[];
 

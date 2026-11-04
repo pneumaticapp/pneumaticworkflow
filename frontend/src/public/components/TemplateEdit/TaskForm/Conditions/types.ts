@@ -1,5 +1,4 @@
-import { EExtraFieldType } from '../../../../types/template';
-import { EStartingType } from './utils/getDropdownOperators';
+import { EExtraFieldType, EStartingType } from '../../../../types/template';
 
 export interface IChecklists {
   id?: number;

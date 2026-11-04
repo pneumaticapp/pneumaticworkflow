@@ -4,7 +4,8 @@ import { ETaskStatus } from '../../redux/actions';
 import { EWorkflowsLogSorting, EWorkflowStatus } from '../../types/workflow';
 import { WorkflowLog } from '../Workflows/WorkflowLog';
 import { WorkflowLogSkeleton } from '../Workflows/WorkflowLog/WorkflowLogSkeleton';
-import { ETaskCardViewMode, TTaskWorkflowLogProps } from './types';
+import { ETaskCardViewMode } from '../../types/tasks';
+import { TTaskWorkflowLogProps } from './types';
 
 const MINIMIZED_LOG_MAX_EVENTS = 5;
 

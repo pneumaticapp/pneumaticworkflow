@@ -4,7 +4,7 @@ import { mentionsRegex, variableRegex } from '../../../constants/defaultValues';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { truncateString } from '../../../utils/truncateString';
 import { prepareChecklistsForRendering } from '../../../utils/checklists/prepareChecklistsForRendering';
-import { TTaskVariable } from '../../TemplateEdit/types';
+import { TTaskVariable } from '../../../types/template';
 import { getLocalizedSystemVariable } from '../../TemplateEdit/TaskForm/utils/getTaskVariables';
 import { unescapeMarkdownLinkText } from '../../RichEditor/utils/converters/markdownLinkText';
 import { escapeHtmlData } from './escapeHtmlData';
