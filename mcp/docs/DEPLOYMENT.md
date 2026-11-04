@@ -8,12 +8,12 @@ The shared server uses OAuth: each user supplies their own Pneumatic API key on 
 
 A self-hosted Pneumatic installation already contains the connector (`mcp/` of the Pneumatic repository) as the `mcp` service of `docker-compose.yml`. It is off by default.
 
-1. In the Pneumatic `.env`, set `MCP_ENABLED=true`. `start.sh` then adds the `mcp` compose profile. When running `docker compose` by hand, enable the profile yourself: `COMPOSE_PROFILES=mcp` (comma-separated with a `logs-*` profile) or `--profile mcp`.
+1. In the Pneumatic `.env`, set `MCP_ENABLED=true`. `start.sh` then adds the `mcp` compose profile. When running `docker compose` by hand, enable the profile yourself: `COMPOSE_PROFILES=mcp` (comma-separated with a `logs-*` profile) or `--profile mcp`. Setting `MCP_ENABLED` back to `false` makes `start.sh` remove the connector container; by hand, run `docker compose --profile mcp rm -sf mcp`.
 2. Optionally set `MCP_TOKEN_SECRET` (at least 32 characters, `openssl rand -hex 32`); it defaults to `DJANGO_SECRET_KEY`. Changing it later signs every user out. `MCP_RATE_LIMIT_PER_MINUTE`, `MCP_TOOLSETS`, `MCP_READ_ONLY` and `MCP_LOG_LEVEL` map to the variables in [Configuration](../README.md#configuration).
 3. Start Pneumatic as usual (`./start.sh`). Nothing else is needed:
    - nginx serves the connector on the web app origin: the MCP endpoint is `FRONTEND_URL/mcp`, and `/authorize`, `/token`, `/register`, `/upload/` and `/.well-known/oauth-*` go to the connector as well. Without the profile these paths answer 502 and the rest of Pneumatic is unaffected;
    - `PUBLIC_URL` and `PNEUMATIC_APP_URL` follow `FRONTEND_URL`, `PNEUMATIC_FILES_URL` follows `FILE_SERVICE_URL`; API and storage calls go over the internal network (`BACKEND_PRIVATE_URL`, `PNEUMATIC_FILES_INTERNAL_URL`);
-   - the replay ledger lives in the `mcp-state` volume and is created on the first start. Keep the volume on upgrades.
+   - the replay ledger lives in the `mcp-state` volume. The image creates it only when the volume is empty (`OAUTH_REPLAY_CREATE_IF_EMPTY=true`, set by the Pneumatic compose files); if other state is there but the ledger is gone, the connector refuses to start as described in step 2 below. Keep the volume on upgrades: removing it (for example, `docker compose down -v`) re-enables spent tokens until they expire.
 4. Claude.ai reaches the connector only over HTTPS (`SSL=yes`); plain HTTP works only for clients on the same machine at `http://localhost/mcp`. With plain HTTP on any other address the connector refuses to start.
 
 The rest of this guide covers running the connector on its own, next to Pneumatic Cloud or another installation.

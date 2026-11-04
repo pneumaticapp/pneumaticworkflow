@@ -665,6 +665,7 @@ services:
       PUBLIC_URL: ${FRONTEND_URL:-http://localhost}
       TOKEN_SECRET: ${MCP_TOKEN_SECRET:-${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}}
       OAUTH_REPLAY_FILE: /state/replay.json
+      OAUTH_REPLAY_CREATE_IF_EMPTY: "true"
       RATE_LIMIT_PER_MINUTE: ${MCP_RATE_LIMIT_PER_MINUTE:-120}
       TOOLSETS: ${MCP_TOOLSETS:-}
       READ_ONLY: ${MCP_READ_ONLY:-false}
