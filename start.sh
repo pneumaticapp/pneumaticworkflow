@@ -395,10 +395,23 @@ MCP_ENABLED_VALUE=$(
 )
 case "$MCP_ENABLED_VALUE" in
   ""|false|no)
+    # `up` without the profile leaves a connector started earlier running, and nginx keeps serving it
+    if docker container inspect pneumatic-mcp &>/dev/null; then
+        docker rm -f pneumatic-mcp >/dev/null
+        print_info "MCP_ENABLED is off: the Claude connector was removed"
+    fi
     ;;
   true|yes)
     COMPOSE_ARGS+=('--profile' 'mcp')
     print_info "MCP_ENABLED=true: the Claude connector runs at /mcp"
+    MCP_FRONTEND_URL=$(grep -E '^FRONTEND_URL=' "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2-)
+    case "$MCP_FRONTEND_URL" in
+      https://*|http://localhost|http://localhost:*|http://127.0.0.1|http://127.0.0.1:*|"")
+        ;;
+      *)
+        print_warning "The Claude connector needs HTTPS outside localhost (FRONTEND_URL=$MCP_FRONTEND_URL): it will not start until SSL=yes"
+        ;;
+    esac
     ;;
   *)
     print_error "MCP_ENABLED=$MCP_ENABLED_VALUE is not one of: true, false"
