@@ -3,6 +3,7 @@
 from rest_framework import serializers
 
 from src.authentication.enums import ResetPasswordStatus
+from src.webhooks.enums import HookEvent
 
 from src.processes.serializers.workflows.task import (
     TaskSerializer,
@@ -30,7 +31,7 @@ class ResetPasswordStatusSerializer(serializers.Serializer):
 
 class WebHookEventSerializer(serializers.Serializer):
     url = serializers.CharField(allow_null=True)
-    event = serializers.CharField()
+    event = serializers.ChoiceField(choices=HookEvent.CHOICES)
 
 
 class WebHookEventUrlSerializer(serializers.Serializer):
@@ -38,7 +39,7 @@ class WebHookEventUrlSerializer(serializers.Serializer):
 
 
 class WebhookHookSerializer(serializers.Serializer):
-    event = serializers.CharField()
+    event = serializers.ChoiceField(choices=HookEvent.CHOICES)
     id = serializers.IntegerField()
     target = serializers.URLField()
 

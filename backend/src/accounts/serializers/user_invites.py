@@ -1,3 +1,5 @@
+from typing import Optional
+
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -32,7 +34,7 @@ class UserListInviteSerializer(serializers.ModelSerializer):
 
     by_username = serializers.SerializerMethodField()
 
-    def get_by_username(self, instance):
+    def get_by_username(self, instance) -> Optional[str]:
         if instance.invited_by is not None:
             return instance.invited_by.name_by_status
         return None

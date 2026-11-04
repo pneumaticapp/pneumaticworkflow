@@ -24,21 +24,22 @@ from src.ai.services.agent import AIAgentService
 from src.ai.services.provider import AIProviderService
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import UserIsAuthenticated
-from src.openapi import (
-    ACCESS_AI,
-    ACCESS_AI_ADMIN,
+from src.openapi.internal_serializers import AIProviderResponseSerializer
+from src.openapi.permission_docs import ACCESS_AI, ACCESS_AI_ADMIN
+from src.openapi.responses import (
     EMPTY,
     FORBIDDEN,
-    LIMIT_OFFSET_PARAMS,
     NOT_FOUND,
     UNAUTHORIZED,
     VALIDATION_ERROR,
 )
+from src.openapi.parameters import LIMIT_OFFSET_PARAMS
 from src.openapi.examples import (
     AI_AGENT_CREATE_EXAMPLE,
     AI_PROVIDER_BY_VENDOR_EXAMPLE,
     AI_PROVIDER_CREATE_EXAMPLE,
 )
+from src.openapi.helpers import unpaginated_schema
 from src.utils.validation import raise_validation_error
 
 
@@ -91,7 +92,7 @@ class AIProviderViewSet(
         description=ACCESS_AI,
         parameters=LIMIT_OFFSET_PARAMS,
         responses={
-            200: AIProviderSerializer,
+            200: AIProviderResponseSerializer,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
         },
@@ -107,7 +108,7 @@ class AIProviderViewSet(
         request=AIProviderSerializer,
         examples=[AI_PROVIDER_CREATE_EXAMPLE],
         responses={
-            201: AIProviderSerializer,
+            201: AIProviderResponseSerializer,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -135,7 +136,7 @@ class AIProviderViewSet(
         request=AIProviderByVendorSerializer,
         examples=[AI_PROVIDER_BY_VENDOR_EXAMPLE],
         responses={
-            201: AIProviderSerializer,
+            201: AIProviderResponseSerializer,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -162,7 +163,7 @@ class AIProviderViewSet(
         summary='Get AI provider',
         description=ACCESS_AI,
         responses={
-            200: AIProviderSerializer,
+            200: AIProviderResponseSerializer,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
@@ -179,7 +180,7 @@ class AIProviderViewSet(
         description=ACCESS_AI_ADMIN,
         request=AIProviderSerializer,
         responses={
-            200: AIProviderSerializer,
+            200: AIProviderResponseSerializer,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -233,18 +234,28 @@ class AIProviderViewSet(
             raise_validation_error(message=ex.message)
         return self.response_ok()
 
+    @unpaginated_schema
     @extend_schema(
         tags=['AI'],
         summary='List AI provider models',
-        description=ACCESS_AI,
+        description=(
+            'Returns an unpaginated array of models available from the '
+            'provider. Provider lookup failures return 400.\n\n'
+            f'{ACCESS_AI}'
+        ),
         responses={
             200: AIModelSerializer(many=True),
+            400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
         },
     )
-    @action(methods=['get'], detail=True, url_path='models')
+    @action(
+        methods=['get'],
+        detail=True,
+        url_path='models',
+    )
     def models(self, request, *args, **kwargs):
         provider = self.get_object()
         service = AIProviderService(
@@ -270,6 +281,7 @@ class AIVendorViewSet(
         UserIsAuthenticated,
     )
 
+    @unpaginated_schema
     @extend_schema(
         tags=['AI'],
         summary='List AI vendors',

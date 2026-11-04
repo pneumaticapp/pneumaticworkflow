@@ -16,8 +16,8 @@ from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
-from src.openapi import (
-    ACCESS_PRESET,
+from src.openapi.permission_docs import ACCESS_PRESET
+from src.openapi.responses import (
     EMPTY,
     FORBIDDEN,
     NOT_FOUND,

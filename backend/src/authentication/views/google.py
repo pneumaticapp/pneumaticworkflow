@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import ObjectDoesNotExist
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
     AuthenticationFailed,
@@ -36,6 +37,18 @@ from src.generics.mixins.views import (
 )
 from src.logs.events import AuditEventService
 from src.logs.events.enums import LoginFailedReason
+from src.openapi.responses import SSO_VALIDATION_ERROR
+from src.openapi.serializers import AuthTokenResponseSerializer
+from src.openapi.responses import (
+    FORBIDDEN,
+    TOO_MANY_REQUESTS,
+    UNAUTHORIZED,
+    VALIDATION_ERROR,
+)
+from src.openapi.internal_serializers import (
+    AuthUriResponseSerializer,
+    EMPTY_OBJECT_SCHEMA,
+)
 from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
@@ -66,6 +79,25 @@ class GoogleAuthViewSet(
             return (AuthGoogleAuthUriThrottle,)
         return ()
 
+    @extend_schema(
+        tags=['Auth'],
+        summary='Exchange a Google authorization code',
+        description=(
+            'No existing session is required; Google authentication must '
+            'be enabled. Forward code and unchanged state from the Google '
+            'callback. Signs in an existing user or creates an account when '
+            'signup is enabled. Returns a Pneumatic Bearer session token.'
+        ),
+        auth=[],
+        parameters=[GoogleTokenSerializer],
+        responses={
+            200: AuthTokenResponseSerializer,
+            400: SSO_VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            429: TOO_MANY_REQUESTS,
+        },
+    )
     @action(methods=('GET',), detail=False)
     def token(self, request, *args, **kwargs):
         slz = self.get_serializer(data=request.GET)
@@ -128,6 +160,23 @@ class GoogleAuthViewSet(
                 )
             return self.response_ok({'token': token})
 
+    @extend_schema(
+        tags=['Auth'],
+        summary='Get the Google authorization URL',
+        description=(
+            'No existing session is required. Google authentication must '
+            'be enabled. Redirect the browser to auth_uri and forward the '
+            'resulting code/state to the token endpoint.'
+        ),
+        auth=[],
+        responses={
+            200: AuthUriResponseSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            429: TOO_MANY_REQUESTS,
+        },
+    )
     @action(methods=('GET',), detail=False, url_path='auth-uri')
     def auth_uri(self, request, *args, **kwargs):
         try:
@@ -140,6 +189,21 @@ class GoogleAuthViewSet(
                 'auth_uri': auth_uri,
             })
 
+    @extend_schema(
+        tags=['Auth'],
+        summary='Acknowledge the Google logout callback',
+        description=(
+            'Logs the callback and returns an empty JSON object. Requires '
+            'the Google authentication feature; it does not itself expire '
+            'a Pneumatic session. No existing session is required.'
+        ),
+        auth=[],
+        responses={
+            200: EMPTY_OBJECT_SCHEMA,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     @action(methods=('GET',), detail=False)
     def logout(self, *args, **kwargs):
         capture_sentry_message(

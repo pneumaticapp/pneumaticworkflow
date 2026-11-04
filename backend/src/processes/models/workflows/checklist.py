@@ -55,5 +55,5 @@ class ChecklistSelection(
     )()
 
     @property
-    def is_selected(self):
+    def is_selected(self) -> bool:
         return self.date_selected is not None

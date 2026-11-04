@@ -27,7 +27,13 @@ from src.generics.mixins.views import (
 )
 from src.generics.permissions import UserIsAuthenticated
 from src.logs.events import AuditEventService
-from src.openapi import (
+from src.openapi.helpers import unpaginated_schema
+from src.openapi.template_serializers import (
+    OwnedTemplateListSerializer,
+    TemplatePreviewSerializer,
+    template_contract,
+)
+from src.openapi.permission_docs import (
     ACCESS_ACCOUNT_OWNER,
     ACCESS_ADMIN,
     ACCESS_AUTH,
@@ -35,10 +41,17 @@ from src.openapi import (
     ACCESS_TEMPLATE_AI,
     ACCESS_TEMPLATE_FIELDS,
     ACCESS_TEMPLATE_OWNER,
+)
+from src.openapi.responses import (
     EMPTY,
     FORBIDDEN,
-    LIMIT_OFFSET_LEGACY_NOTE,
     NOT_FOUND,
+    TOO_MANY_REQUESTS,
+    UNAUTHORIZED,
+    VALIDATION_ERROR,
+)
+from src.openapi.helpers import LIMIT_OFFSET_LEGACY_NOTE, with_access_text
+from src.openapi.parameters import (
     TEMPLATE_EXPORT_PARAMS,
     TEMPLATE_INTEGRATIONS_PARAMS,
     TEMPLATE_STEPS_PARAMS,
@@ -46,13 +59,11 @@ from src.openapi import (
     TEMPLATE_TITLES_BY_OWNERS_PARAMS,
     TEMPLATE_TITLES_BY_TASKS_PARAMS,
     TEMPLATE_TITLES_BY_WORKFLOWS_PARAMS,
-    TOO_MANY_REQUESTS,
-    UNAUTHORIZED,
-    VALIDATION_ERROR,
-    with_access_text,
 )
 from src.openapi.examples import (
     TEMPLATE_CREATE_EXAMPLE,
+    TEMPLATE_DRAFT_EXAMPLE,
+    TEMPLATE_PREVIEW_EXAMPLE,
     WORKFLOW_RUN_EXAMPLE,
 )
 from src.processes.filters import (
@@ -92,7 +103,6 @@ from src.processes.serializers.templates.template_fields import (
     TemplateOnlyFieldsSerializer,
 )
 from src.processes.serializers.templates.template import (
-    TemplateAiResponseSerializer,
     TemplateAiSerializer,
     TemplateByNameSerializer,
     TemplateByStepsSerializer,
@@ -369,7 +379,7 @@ class TemplateViewSet(
         summary='Get template',
         description=ACCESS_TEMPLATE_OWNER,
         responses={
-            200: TemplateSerializer,
+            200: template_contract(),
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
@@ -394,10 +404,10 @@ class TemplateViewSet(
         tags=['Templates'],
         summary='Create template',
         description=ACCESS_ADMIN,
-        request=TemplateSerializer,
-        examples=[TEMPLATE_CREATE_EXAMPLE],
+        request=template_contract(),
+        examples=[TEMPLATE_CREATE_EXAMPLE, TEMPLATE_DRAFT_EXAMPLE],
         responses={
-            200: TemplateSerializer,
+            200: template_contract(),
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -445,10 +455,10 @@ class TemplateViewSet(
         tags=['Templates'],
         summary='Update template',
         description=ACCESS_TEMPLATE_OWNER,
-        request=TemplateSerializer,
-        examples=[TEMPLATE_CREATE_EXAMPLE],
+        request=template_contract(),
+        examples=[TEMPLATE_CREATE_EXAMPLE, TEMPLATE_DRAFT_EXAMPLE],
         responses={
-            200: TemplateSerializer,
+            200: template_contract(),
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -512,8 +522,9 @@ class TemplateViewSet(
         tags=['Templates'],
         summary='Clone template',
         description=ACCESS_TEMPLATE_OWNER,
+        request=None,
         responses={
-            200: TemplateSerializer,
+            200: template_contract(),
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
@@ -582,7 +593,6 @@ class TemplateViewSet(
             ),
         ],
         responses={
-            # Item serializer; spectacular wraps with pagination.
             200: TemplateListSerializer,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
@@ -631,9 +641,10 @@ class TemplateViewSet(
             ACCESS_AUTH,
         ),
         parameters=TEMPLATE_TITLES_BY_OWNERS_PARAMS,
+        filters=False,
         responses={
             # Item serializer; spectacular wraps with pagination.
-            200: TemplateListSerializer,
+            200: OwnedTemplateListSerializer(many=True),
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -756,6 +767,7 @@ class TemplateViewSet(
         )
         return self.response_ok()
 
+    @unpaginated_schema
     @extend_schema(
         tags=['Templates'],
         summary='Template titles by workflows',
@@ -780,6 +792,7 @@ class TemplateViewSet(
         response_slz = self.get_serializer(data, many=True)
         return self.response_ok(response_slz.data)
 
+    @unpaginated_schema
     @extend_schema(
         tags=['Templates'],
         summary='Template titles by events',
@@ -804,6 +817,7 @@ class TemplateViewSet(
         response_slz = self.get_serializer(data, many=True)
         return self.response_ok(response_slz.data)
 
+    @unpaginated_schema
     @extend_schema(
         tags=['Templates'],
         summary='Template titles by tasks',
@@ -828,6 +842,7 @@ class TemplateViewSet(
         response_slz = self.get_serializer(data, many=True)
         return self.response_ok(response_slz.data)
 
+    @unpaginated_schema
     @extend_schema(
         tags=['Templates'],
         summary='Template steps',
@@ -910,10 +925,14 @@ class TemplateViewSet(
     @extend_schema(
         tags=['Templates'],
         summary='Generate template with AI',
-        description=ACCESS_TEMPLATE_AI,
+        description=ACCESS_TEMPLATE_AI + (
+            '\n\nReturns an unsaved template preview without persistent IDs, '
+            'dates or public URLs. Save it with POST /templates.'
+        ),
         request=TemplateAiSerializer,
+        examples=[TEMPLATE_PREVIEW_EXAMPLE],
         responses={
-            200: TemplateAiResponseSerializer,
+            200: TemplatePreviewSerializer,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -944,7 +963,7 @@ class TemplateViewSet(
         description=ACCESS_ADMIN,
         request=TemplateByStepsSerializer,
         responses={
-            200: TemplateSerializer,
+            200: template_contract(),
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -975,7 +994,7 @@ class TemplateViewSet(
         description=ACCESS_ADMIN,
         request=TemplateByNameSerializer,
         responses={
-            200: TemplateSerializer,
+            200: template_contract(),
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -1020,6 +1039,7 @@ class TemplateViewSet(
         tags=['Templates'],
         summary='Discard template draft changes',
         description=ACCESS_TEMPLATE_OWNER,
+        request=None,
         responses={
             204: EMPTY,
             401: UNAUTHORIZED,
@@ -1052,9 +1072,10 @@ class TemplateViewSet(
             ACCESS_ACCOUNT_OWNER,
         ),
         parameters=TEMPLATE_EXPORT_PARAMS,
+        filters=False,
         responses={
             # Item serializer; spectacular wraps with pagination.
-            200: TemplateSerializer,
+            200: template_contract(many=True),
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -1083,6 +1104,7 @@ class TemplateViewSet(
             )
         return self.paginated_response(queryset)
 
+    @unpaginated_schema
     @extend_schema(
         tags=['Templates'],
         summary='List template presets',
@@ -1159,6 +1181,7 @@ class TemplateIntegrationsViewSet(
             self.request.user.account_id,
         ).exclude_onboarding()
 
+    @unpaginated_schema
     @extend_schema(
         tags=['Templates'],
         summary='List template integrations',

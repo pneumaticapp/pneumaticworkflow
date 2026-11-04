@@ -1,6 +1,10 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.utils import (
+    extend_schema,
+    extend_schema_view,
+    inline_serializer,
+)
 from rest_framework import serializers
 from rest_framework.decorators import action
 from rest_framework.generics import (
@@ -46,14 +50,22 @@ from src.logs.events import AuditEventService
 from src.notifications.tasks import (
     send_reset_password_notification,
 )
-from src.openapi import (
+from src.openapi.helpers import single_response_schema
+from src.openapi.responses import SSO_VALIDATION_ERROR
+from src.openapi.serializers import (
     AuthTokenResponseSerializer,
-    EMPTY,
-    RESET_PASSWORD_TOKEN_PARAMS,
     ResetPasswordStatusSerializer,
+)
+from src.openapi.responses import (
+    EMPTY,
+    FORBIDDEN,
+    NOT_FOUND,
     TOO_MANY_REQUESTS,
+    UNAUTHORIZED,
     VALIDATION_ERROR,
 )
+from src.openapi.parameters import RESET_PASSWORD_TOKEN_PARAMS
+from src.openapi.internal_serializers import PasswordResetRequestSerializer
 
 UserModel = get_user_model()
 
@@ -78,6 +90,11 @@ class ResetPasswordViewSet(
     @extend_schema(
         tags=['Auth'],
         summary='Check if captcha is required',
+        description=(
+            'No session is required. Returns whether a password reset '
+            'request from this visitor must include a reCAPTCHA response.'
+        ),
+        auth=[],
         responses={
             200: inline_serializer(
                 name='CaptchaResponse',
@@ -85,6 +102,7 @@ class ResetPasswordViewSet(
                     'show_captcha': serializers.BooleanField(),
                 },
             ),
+            429: TOO_MANY_REQUESTS,
         },
     )
     @action(methods=['get'], detail=False, url_path='captcha')
@@ -99,9 +117,16 @@ class ResetPasswordViewSet(
     @extend_schema(
         tags=['Auth'],
         summary='Request password reset email',
-        request=SecuredResetPasswordSerializer,
+        description=(
+            'No session is required. Check the captcha endpoint first and '
+            'include captcha when show_captcha=true. An unknown email is '
+            'acknowledged with the same empty 204 response as a known '
+            'account. SSO-only users cannot reset a local password.'
+        ),
+        auth=[],
+        request=PasswordResetRequestSerializer,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             400: VALIDATION_ERROR,
             429: TOO_MANY_REQUESTS,
         },
@@ -146,12 +171,19 @@ class ResetPasswordViewSet(
             AuditEventService.password_reset_requested(target=user)
         return self.response_ok()
 
+    @single_response_schema
     @extend_schema(
         tags=['Auth'],
         summary='Validate reset password token',
+        description=(
+            'No session is required. Reports valid/invalid status for the '
+            'token sent in the password reset email.'
+        ),
+        auth=[],
         parameters=RESET_PASSWORD_TOKEN_PARAMS,
         responses={
             200: ResetPasswordStatusSerializer,
+            400: VALIDATION_ERROR,
             429: TOO_MANY_REQUESTS,
         },
     )
@@ -168,10 +200,18 @@ class ResetPasswordViewSet(
     @extend_schema(
         tags=['Auth'],
         summary='Confirm password reset',
+        description=(
+            'No session is required. Uses the reset-email token to set the '
+            'new password, invalidates cached Pneumatic sessions and returns '
+            'a new session token. Passwords must match. This does not '
+            'revoke stored API keys or separately issued JWTs.'
+        ),
+        auth=[],
         request=ConfirmPasswordSerializer,
         responses={
             200: AuthTokenResponseSerializer,
             400: VALIDATION_ERROR,
+            404: NOT_FOUND,
             429: TOO_MANY_REQUESTS,
         },
     )
@@ -201,6 +241,29 @@ class ResetPasswordViewSet(
         return self.response_ok({'token': token})
 
 
+@extend_schema_view(
+    post=extend_schema(
+        tags=['Auth'],
+        summary='Change the current user password',
+        description=(
+            'Requires an authenticated non-guest user and private API '
+            'source-IP restrictions. Validates old_password and matching '
+            'new_password/confirm_new_password. With PRIVATE_API_CHECK_IP '
+            'enabled, API keys are rejected even from allowlisted IPs. '
+            'Expires cached sessions and '
+            'returns a replacement session token. Stored API keys and '
+            'separately issued JWTs are not revoked. SSO-only accounts '
+            'are rejected.'
+        ),
+        request=ChangePasswordSerializer,
+        responses={
+            200: AuthTokenResponseSerializer,
+            400: SSO_VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    ),
+)
 class ChangePasswordView(
     SSORestrictionMixin,
     CreateAPIView,

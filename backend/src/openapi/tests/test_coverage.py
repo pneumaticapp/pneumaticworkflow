@@ -1,7 +1,7 @@
-"""Ensure every public endpoint has @extend_schema."""
+"""Ensure the complete route registry is documented, without filtering."""
 
 import pytest
-from drf_spectacular.generators import EndpointEnumerator
+from drf_spectacular.generators import EndpointEnumerator, SchemaGenerator
 from drf_spectacular.openapi import AutoSchema
 
 pytestmark = pytest.mark.django_db
@@ -123,3 +123,32 @@ def test_public_endpoints__all_decorated__ok():
         'Public endpoints without @extend_schema:\n'
         + '\n'.join(f'  - {m}' for m in missing)
     )
+
+
+def test_registered_endpoints__all_in_generated_schema__ok():
+    """Compare unfiltered routes, including explicitly excluded actions."""
+    # arrange
+    generator = SchemaGenerator()
+    enumerator = EndpointEnumerator()
+    endpoints = enumerator._get_api_endpoints(None, '')
+    schema = generator.get_schema(request=None, public=True)
+    methods = {'get', 'post', 'put', 'patch', 'delete'}
+    documented = {
+        (path, method.upper())
+        for path, item in schema['paths'].items()
+        for method in item if method in methods
+    }
+
+    # act
+    registered = set()
+    for path, _regex, method, callback in endpoints:
+        if _is_docs_path(path):
+            continue
+        view = generator.create_view(callback, method)
+        normalized = generator.coerce_path(path, method, view)
+        registered.add((normalized, method))
+
+    # assert
+    missing = sorted(registered - documented)
+    assert not missing, f'Registered operations absent from schema: {missing}'
+    assert documented == registered

@@ -1,4 +1,4 @@
-"""Preprocessing hooks for drf-spectacular schema generation."""
+"""Optional public-only filter, unused by the complete default reference."""
 
 from typing import Any, Iterable, List, Optional, Sequence, Tuple
 

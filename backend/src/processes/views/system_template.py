@@ -22,15 +22,19 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
-from src.openapi import (
+from src.openapi.permission_docs import (
     ACCESS_STAFF_IMPORT,
     ACCESS_SYSTEM_TEMPLATE,
+)
+from src.openapi.responses import (
     EMPTY,
     FORBIDDEN,
     NOT_FOUND,
     UNAUTHORIZED,
     VALIDATION_ERROR,
 )
+from src.openapi.examples import TEMPLATE_PREVIEW_EXAMPLE
+from src.openapi.template_serializers import TemplatePreviewSerializer
 from src.processes.filters import (
     SystemTemplateFilter,
 )
@@ -43,9 +47,6 @@ from src.processes.serializers.templates.system_template import (
     LibraryTemplatesImportRequestSerializer,
     SystemTemplateCategorySerializer,
     SystemTemplateSerializer,
-)
-from src.processes.serializers.templates.template import (
-    TemplateSerializer,
 )
 from src.processes.services.system_template import (
     SystemTemplateService,
@@ -103,9 +104,14 @@ class SystemTemplateViewSet(
     @extend_schema(
         tags=['Templates'],
         summary='Fill template from system template',
-        description=ACCESS_SYSTEM_TEMPLATE,
+        description=ACCESS_SYSTEM_TEMPLATE + (
+            '\n\nReturns an unsaved template preview without persistent IDs, '
+            'dates or public URLs. Save it with POST /templates.'
+        ),
+        request=None,
+        examples=[TEMPLATE_PREVIEW_EXAMPLE],
         responses={
-            200: TemplateSerializer,
+            200: TemplatePreviewSerializer,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,

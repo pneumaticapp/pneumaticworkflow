@@ -24,15 +24,9 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
-from src.openapi import (
-    ACCESS_ACCOUNT_OWNER,
-    ACCESS_ADMIN_BASE,
-    EMPTY,
-    FORBIDDEN,
-    NOT_FOUND,
-    UNAUTHORIZED,
-    VALIDATION_ERROR,
-)
+from src.openapi.responses import FIELD_VALIDATION_ERROR
+from src.openapi.permission_docs import ACCESS_ACCOUNT_OWNER, ACCESS_ADMIN_BASE
+from src.openapi.responses import EMPTY, FORBIDDEN, NOT_FOUND, UNAUTHORIZED
 
 UserModel = get_user_model()
 
@@ -79,7 +73,7 @@ class APIKeyViewSet(
         request=APIKeySerializer,
         responses={
             201: APIKeySerializer,
-            400: VALIDATION_ERROR,
+            400: FIELD_VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
         },
@@ -105,7 +99,7 @@ class APIKeyViewSet(
         summary='Revoke API key',
         description=ACCESS_ADMIN_BASE,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
@@ -175,7 +169,7 @@ class UserAPIKeyViewSet(
         request=APIKeySerializer,
         responses={
             201: APIKeySerializer,
-            400: VALIDATION_ERROR,
+            400: FIELD_VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
@@ -204,7 +198,7 @@ class UserAPIKeyViewSet(
         summary='Revoke API key for user',
         description=ACCESS_ACCOUNT_OWNER,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,

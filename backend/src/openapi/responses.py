@@ -1,4 +1,8 @@
-from drf_spectacular.utils import OpenApiResponse
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiResponse,
+    PolymorphicProxySerializer,
+)
 from rest_framework import serializers
 
 from src.openapi.examples import (
@@ -19,7 +23,7 @@ class ValidationErrorDetailsSerializer(serializers.Serializer):
     api_name = serializers.CharField(required=False)
     task = serializers.CharField(required=False)
     field = serializers.CharField(required=False)
-    reason = serializers.CharField()
+    reason = serializers.CharField(required=False)
 
 
 class ValidationErrorSerializer(serializers.Serializer):
@@ -41,6 +45,36 @@ VALIDATION_ERROR = error_response(
     serializer=ValidationErrorSerializer,
     description='Validation error',
     example=VALIDATION_ERROR_EXAMPLE,
+)
+FIELD_VALIDATION_ERROR = OpenApiResponse(
+    response={
+        'type': 'object',
+        'additionalProperties': {
+            'type': 'array',
+            'items': {'type': 'string'},
+        },
+    },
+    description='DRF field validation errors keyed by field name.',
+    examples=[OpenApiExample(
+        'Invalid API key name',
+        value={'name': ['Ensure this field has no more than 200 characters.']},
+        response_only=True,
+    )],
+)
+SSO_VALIDATION_ERROR = OpenApiResponse(
+    response=PolymorphicProxySerializer(
+        component_name='SSOValidationError',
+        serializers=[
+            ValidationErrorSerializer,
+            serializers.ListSerializer(child=serializers.CharField()),
+        ],
+        resource_type_field_name=None,
+        many=False,
+    ),
+    description=(
+        'Field/business validation errors use code, message and details. '
+        'An SSO-only account restriction returns an array of messages.'
+    ),
 )
 UNAUTHORIZED = error_response(
     serializer=DetailErrorSerializer,

@@ -154,7 +154,7 @@ class ContextAccountSerializer(serializers.ModelSerializer):
     )
     is_blocked = serializers.SerializerMethodField()
 
-    def get_is_blocked(self, instance):
+    def get_is_blocked(self, instance) -> bool:
         return False
 
 

@@ -172,7 +172,7 @@ class Account(SoftDeleteModel):
         return True
 
     @property
-    def is_subscribed(self):
+    def is_subscribed(self) -> Optional[bool]:
 
         """ Return True if the user has active subscription or trial """
 
@@ -194,7 +194,7 @@ class Account(SoftDeleteModel):
         )
 
     @property
-    def trial_is_active(self):
+    def trial_is_active(self) -> bool:
         current_date = timezone.now()
         return bool(
             not self.trial_ended

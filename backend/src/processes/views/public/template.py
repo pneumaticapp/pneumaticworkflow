@@ -8,10 +8,11 @@ from src.generics.mixins.views import (
     AnonymousWorkflowMixin,
     CustomViewSetMixin,
 )
-from src.openapi import (
-    ACCESS_PUBLIC_TEMPLATE,
+from src.openapi.permission_docs import ACCESS_PUBLIC_TEMPLATE
+from src.openapi.responses import (
     EMPTY,
     FORBIDDEN,
+    UNAUTHORIZED,
     NOT_FOUND,
     VALIDATION_ERROR,
 )
@@ -62,6 +63,7 @@ class PublicTemplateViewSet(
         auth=[{'publicTemplateAuth': []}],
         responses={
             200: PublicTemplateResponseSerializer,
+            401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
         },
@@ -91,6 +93,7 @@ class PublicTemplateViewSet(
             200: PublicTemplateRunResponseSerializer,
             204: EMPTY,
             400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
         },

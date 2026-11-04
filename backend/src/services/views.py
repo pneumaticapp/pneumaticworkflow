@@ -6,9 +6,11 @@ from src.generics.mixins.views import (
     AnonymousMixin,
     CustomViewSetMixin,
 )
-from src.openapi import (
-    AI_DESCRIPTION_PARAMS,
+from src.openapi.parameters import AI_DESCRIPTION_PARAMS
+from src.openapi.responses import (
+    FORBIDDEN,
     TOO_MANY_REQUESTS,
+    UNAUTHORIZED,
     VALIDATION_ERROR,
 )
 from src.processes.serializers.templates.template import (
@@ -48,10 +50,20 @@ class ServicesViewSet(
     @extend_schema(
         tags=['Services'],
         summary='Generate steps from description (AI)',
+        description=(
+            'No user session is required. The AI feature must be enabled '
+            'for this deployment. description supplies the workflow goal; '
+            'the response contains a suggested template name and task '
+            'steps. Generation is throttled using the configured rate '
+            'for this anonymous endpoint.'
+        ),
+        auth=[],
         parameters=AI_DESCRIPTION_PARAMS,
         responses={
             200: TemplateByStepsSerializer,
             400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
             429: TOO_MANY_REQUESTS,
         },
     )
