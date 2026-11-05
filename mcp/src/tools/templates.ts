@@ -3,7 +3,7 @@ import * as z from 'zod/v4';
 import { ConnectorError } from '../core/errors.js';
 import { isRecord, records } from '../core/json.js';
 import { tool, type ToolDef } from '../mcp/toolDef.js';
-import type { PneumaticClient } from '../pneumatic/client.js';
+import { PneumaticApiError, type PneumaticClient } from '../pneumatic/client.js';
 import { pageResults } from '../presenters/index.js';
 import { additive, readOnly } from './annotations.js';
 import { optionalTimestamp } from './dates.js';
@@ -54,7 +54,12 @@ async function kickoffSource(client: PneumaticClient, templateId: number) {
       throw error;
     }
   }
-  const detail = await client.get(`/templates/${templateId}`).catch(() => undefined);
+  const detail = await client.get(`/templates/${templateId}`).catch((error: unknown) => {
+    if (error instanceof PneumaticApiError && (error.status === 403 || error.status === 404)) {
+      return undefined;
+    }
+    throw error;
+  });
   return isRecord(detail) ? detail : undefined;
 }
 

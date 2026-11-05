@@ -558,6 +558,27 @@ describe('get_template_kickoff', () => {
     expect(fake.requests.filter((request) => request.path === '/templates')).toHaveLength(2);
   });
 
+  it('does not launch a workflow unchecked when the template detail fails unexpectedly', async () => {
+    fake.respond((request) =>
+      request.path === '/templates/3' && request.method === 'GET'
+        ? { status: 500, body: { detail: 'Server error' } }
+        : undefined,
+    );
+    const result = await call('run_workflow', { templateId: 3, kickoff: { field: 'x' } });
+    expect(result.error).toMatchObject({ code: 'unavailable' });
+    expect(fake.lastRequest('/templates/3/run')).toBeUndefined();
+  });
+
+  it('leaves kickoff checks to Pneumatic when the template detail is forbidden', async () => {
+    fake.respond((request) =>
+      request.path === '/templates/3' && request.method === 'GET'
+        ? { status: 403, body: { detail: 'Forbidden' } }
+        : undefined,
+    );
+    expect((await call('run_workflow', { templateId: 3, kickoff: { field: 'x' } })).isError).toBe(false);
+    expect(fake.lastRequest('/templates/3/run')?.body).toMatchObject({ kickoff: { field: 'x' } });
+  });
+
   it('reports templates outside the user access as not found', async () => {
     fake.respond((request) =>
       request.path === '/templates' ? { body: { count: 1, results: [template(1)] } } : undefined,
