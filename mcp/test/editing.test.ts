@@ -203,6 +203,17 @@ describe('template editing', () => {
     expect(sent('/templates/4', 'PUT')).toBeUndefined();
   });
 
+  it('reports a missing kickoff form when removing kickoff fields', async () => {
+    fake.respond((request) =>
+      request.path === '/templates/4' && request.method === 'GET'
+        ? { body: { ...template(), kickoff: null } }
+        : undefined,
+    );
+    const result = await call('remove_template_fields', { templateId: 4, fieldApiNames: ['candidate'] });
+    expect(result.error).toMatchObject({ code: 'invalid_arguments', detail: 'The template has no kickoff form' });
+    expect(sent('/templates/4', 'PUT')).toBeUndefined();
+  });
+
   it('removes fields from a step on request', async () => {
     await call('remove_template_fields', { templateId: 4, stepApiName: 'task-screen', fieldApiNames: ['field-b'] });
     expect(sent('/templates/4', 'PUT').tasks[0].fields.map((item: any) => item.api_name)).toEqual(['field-a']);

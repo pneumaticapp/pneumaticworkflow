@@ -54,6 +54,13 @@ function assignDefined(target: Record<string, unknown>, changes: Record<string, 
   }
 }
 
+function kickoffOf(template: Record<string, unknown>): Record<string, unknown> {
+  if (!isRecord(template.kickoff)) {
+    throw new ConnectorError('invalid_arguments', 'The template has no kickoff form');
+  }
+  return template.kickoff;
+}
+
 function stepOf(template: Record<string, unknown>, stepApiName: string): RawTask {
   const task = sortedTasks(template).find((item) => item.api_name === stepApiName);
   if (!task) {
@@ -288,15 +295,7 @@ export const designerTools: ToolDef[] = [
     },
     async ({ templateId, stepApiName, fieldApiNames }, { client }) =>
       editTemplate(client, templateId, (template) => {
-        const owner =
-          stepApiName === undefined
-            ? isRecord(template.kickoff)
-              ? template.kickoff
-              : undefined
-            : sortedTasks(template).find((task) => task.api_name === stepApiName);
-        if (!owner) {
-          throw new ConnectorError('invalid_arguments', `The template has no step "${stepApiName}"`);
-        }
+        const owner = stepApiName === undefined ? kickoffOf(template) : stepOf(template, stepApiName);
         const fields = records(owner.fields);
         const unknown = fieldApiNames.filter((name) => !fields.some((item) => item.api_name === name));
         if (unknown.length) {
