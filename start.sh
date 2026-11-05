@@ -43,6 +43,10 @@ set_env_var() {
     fi
 }
 
+read_env_value() {
+    grep -E "^\s*$1=" "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | sed 's/#.*//' | tr -d '"'"'"'[:space:]'
+}
+
 strip_invisible() {
     local s
     # Remove ANSI/VT escape sequences (e.g. bracket paste mode: \e[200~ ... \e[201~)
@@ -365,11 +369,7 @@ esac
 # The root compose files declare the collector behind a profile, so it
 # stays down unless .env names a backend. Passing --profile here would
 # otherwise override a COMPOSE_PROFILES line in .env without saying so.
-# The trailing comment of a line like `LOGS_BACKEND=otlp  # the Grafana
-# machine` is cut off first: it is part of the value otherwise.
-LOGS_BACKEND_VALUE=$(
-    grep -E "^\s*LOGS_BACKEND=" "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | sed 's/#.*//' | tr -d '"'"'"'[:space:]'
-)
+LOGS_BACKEND_VALUE=$(read_env_value LOGS_BACKEND)
 case "$LOGS_BACKEND_VALUE" in
   "")
     ;;
@@ -384,6 +384,39 @@ case "$LOGS_BACKEND_VALUE" in
     ;;
   *)
     print_error "LOGS_BACKEND=$LOGS_BACKEND_VALUE is not one of: otlp, elasticsearch (leave it empty to keep the journal off)"
+    exit 1
+    ;;
+esac
+
+# 3.1.2 The Claude connector (MCP server) follows MCP_ENABLED of .env
+# --------------------------------------------------------------------
+MCP_ENABLED_VALUE=$(read_env_value MCP_ENABLED | tr '[:upper:]' '[:lower:]')
+case "$MCP_ENABLED_VALUE" in
+  ""|false)
+    if [[ ",$(read_env_value COMPOSE_PROFILES)," == *",mcp,"* ]]; then
+        print_error "MCP_ENABLED is off, but COMPOSE_PROFILES in .env still starts the Claude connector: remove mcp from COMPOSE_PROFILES or set MCP_ENABLED=true"
+        exit 1
+    fi
+    # `up` without the profile leaves a connector started earlier running, and nginx keeps serving it
+    if docker container inspect pneumatic-mcp &>/dev/null; then
+        docker rm -f pneumatic-mcp >/dev/null
+        print_info "MCP_ENABLED is off: the Claude connector was removed"
+    fi
+    ;;
+  true)
+    COMPOSE_ARGS+=('--profile' 'mcp')
+    print_info "MCP_ENABLED=true: the Claude connector runs at /mcp"
+    MCP_FRONTEND_URL=$(read_env_value FRONTEND_URL)
+    case "$MCP_FRONTEND_URL" in
+      https://*|http://localhost|http://localhost:*|http://127.0.0.1|http://127.0.0.1:*|"")
+        ;;
+      *)
+        print_warning "The Claude connector needs HTTPS outside localhost (FRONTEND_URL=$MCP_FRONTEND_URL): it will not start until FRONTEND_URL is an https:// address"
+        ;;
+    esac
+    ;;
+  *)
+    print_error "MCP_ENABLED=$MCP_ENABLED_VALUE is not one of: true, false"
     exit 1
     ;;
 esac

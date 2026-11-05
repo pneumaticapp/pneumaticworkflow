@@ -86,6 +86,7 @@ http {
 
         server_name ${SERVER_ADDRESS};
         include /etc/nginx/includes/location_bot_block.conf;
+        include /etc/nginx/includes/location_mcp.conf;
         include /etc/nginx/includes/location_frontend_common.conf;
     }
 
