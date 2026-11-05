@@ -45,12 +45,17 @@ from src.payment.tasks import (
 from src.processes.services.system_workflows import (
     SystemWorkflowService,
 )
-from src.openapi import (
+from src.openapi.responses import FIELD_VALIDATION_ERROR
+from src.openapi.permission_docs import (
     ACCESS_TENANT_ACCESS,
     ACCESS_TENANT_READ,
     ACCESS_TENANT_WRITE,
+)
+from src.openapi.serializers import (
     AuthTokenResponseSerializer,
     CountResponseSerializer,
+)
+from src.openapi.responses import (
     EMPTY,
     FORBIDDEN,
     NOT_FOUND,
@@ -69,6 +74,7 @@ UserModel = get_user_model()
         description=ACCESS_TENANT_READ,
         responses={
             200: TenantSerializer,
+            400: FIELD_VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
         },
@@ -79,6 +85,7 @@ UserModel = get_user_model()
         description=ACCESS_TENANT_ACCESS,
         responses={
             204: EMPTY,
+            400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
@@ -297,7 +304,7 @@ class TenantsViewSet(
     @extend_schema(
         tags=['Tenants'],
         summary='Get tenant access token',
-        description=ACCESS_TENANT_READ,
+        description=ACCESS_TENANT_ACCESS,
         responses={
             200: AuthTokenResponseSerializer,
             401: UNAUTHORIZED,

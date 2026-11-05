@@ -1,4 +1,5 @@
 from django.core.validators import MinValueValidator
+from drf_spectacular.utils import extend_schema_field, inline_serializer
 from rest_framework.fields import CharField, ChoiceField, IntegerField
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 from src.generics.fields import (
@@ -123,6 +124,11 @@ class SharedFieldsetTemplateSerializer(
     api_name = CharField(required=False, max_length=200)
     usage = SerializerMethodField()
 
+    @extend_schema_field(inline_serializer(
+        name='FieldsetUsageTemplate',
+        fields={'id': IntegerField(), 'name': CharField()},
+        many=True,
+    ))
     def get_usage(self, instance: FieldsetTemplate) -> list:
         prefetched = getattr(instance, '_prefetched_objects_cache', {})
         if 'child_fieldsets' in prefetched:

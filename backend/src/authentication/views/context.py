@@ -13,7 +13,8 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     IsAuthenticated,
 )
-from src.openapi import FORBIDDEN, UNAUTHORIZED
+from src.openapi.helpers import single_response_schema
+from src.openapi.responses import FORBIDDEN, UNAUTHORIZED
 
 UserModel = get_user_model()
 
@@ -25,6 +26,7 @@ class ContextUserView(
 
     permission_classes = (IsAuthenticated,)
 
+    @single_response_schema
     @extend_schema(
         tags=['Auth'],
         summary='Get current session context',

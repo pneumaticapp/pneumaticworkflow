@@ -42,7 +42,11 @@ def _mock_upload(mocker, **kwargs):
     return client_class_mock, upload_mock
 
 
-def test_get_fields_values__file_with_filename__ok(mocker):
+@pytest.mark.parametrize('content_type', [
+    'text/csv',
+    'application/vnd.ms-excel',
+])
+def test_get_fields_values__file_with_filename__ok(mocker, content_type: str):
 
     # arrange
     user = create_test_owner()
@@ -54,6 +58,10 @@ def test_get_fields_values__file_with_filename__ok(mocker):
         '</field>'
     )
     service = TaskResponseService(task=task, text=text, user=user)
+    guess_type_mock = mocker.patch(
+        'src.ai.services.response.mimetypes.guess_type',
+        return_value=(content_type, None),
+    )
 
     # act
     result = service.get_fields_values()
@@ -63,10 +71,11 @@ def test_get_fields_values__file_with_filename__ok(mocker):
         'report-1': ['[report.csv](https://files.test.com/f123)'],
     }
     client_class_mock.assert_called_once_with(user=user)
+    guess_type_mock.assert_called_once_with('report.csv')
     upload_mock.assert_called_once_with(
         file_content=b'a,b\n1,2',
         filename='report.csv',
-        content_type='text/csv',
+        content_type=content_type,
         account=task.account,
         source_type=SourceType.TASK,
         access_type=AccessType.RESTRICTED,
@@ -158,7 +167,14 @@ def test_get_fields_values__unknown_extension__default_content_type(
     )
 
 
-def test_get_fields_values__forbidden_chars__removed(mocker):
+@pytest.mark.parametrize('content_type', [
+    'text/csv',
+    'application/vnd.ms-excel',
+])
+def test_get_fields_values__forbidden_chars__removed(
+    mocker,
+    content_type: str,
+):
 
     # arrange
     user = create_test_owner()
@@ -171,6 +187,10 @@ def test_get_fields_values__forbidden_chars__removed(mocker):
         '</field>'
     )
     service = TaskResponseService(task=task, text=text, user=user)
+    guess_type_mock = mocker.patch(
+        'src.ai.services.response.mimetypes.guess_type',
+        return_value=(content_type, None),
+    )
 
     # act
     result = service.get_fields_values()
@@ -179,10 +199,11 @@ def test_get_fields_values__forbidden_chars__removed(mocker):
     assert result == {
         'report-1': ['[myreport1.csv](https://files.test.com/f123)'],
     }
+    guess_type_mock.assert_called_once_with('myreport1.csv')
     upload_mock.assert_called_once_with(
         file_content=b'content',
         filename='myreport1.csv',
-        content_type='text/csv',
+        content_type=content_type,
         account=task.account,
         source_type=SourceType.TASK,
         access_type=AccessType.RESTRICTED,

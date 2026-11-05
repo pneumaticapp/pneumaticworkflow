@@ -1,9 +1,42 @@
-from typing import Type
+from typing import Callable, Type, TypeVar
 
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse
 from rest_framework import serializers
 
 from src.openapi.entities import PermissionDoc
+
+ViewMethod = TypeVar('ViewMethod', bound=Callable)
+
+
+def unpaginated_schema(method: ViewMethod) -> ViewMethod:
+    """Disable inferred pagination without changing runtime view settings.
+
+    Apply above @extend_schema on actions returning a plain list.
+    """
+    base_schema = method.kwargs['schema']
+
+    class UnpaginatedSchema(base_schema):
+        def _get_paginator(self):
+            return None
+
+    method.kwargs['schema'] = UnpaginatedSchema
+    return method
+
+
+def single_response_schema(method: ViewMethod) -> ViewMethod:
+    """Describe one object on views whose names imply a collection."""
+    base_schema = method.kwargs['schema']
+
+    class SingleResponseSchema(base_schema):
+        def _is_list_view(self, serializer=None) -> bool:
+            return False
+
+        def _get_paginator(self):
+            return None
+
+    method.kwargs['schema'] = SingleResponseSchema
+    return method
+
 
 LIMIT_OFFSET_LEGACY_NOTE = (
     'With limit/offset — paginated envelope. '
