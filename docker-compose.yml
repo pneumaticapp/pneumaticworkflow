@@ -648,9 +648,7 @@ services:
       - pneumatic
     restart: always
 
-  # The Claude connector (MCP server). Off by default: it starts only
-  # with the "mcp" profile (COMPOSE_PROFILES=mcp, see default.env) and
-  # is published by nginx on the frontend origin at /mcp.
+  # Claude connector (MCP server), started only with the "mcp" profile, see default.env
   mcp:
     build:
       context: ./mcp

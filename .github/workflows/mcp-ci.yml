@@ -49,7 +49,6 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # The server supports the engines range in package.json.
         node: ['20.19', '22', '24']
     steps:
       - uses: actions/checkout@v5
