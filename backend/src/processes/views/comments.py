@@ -21,6 +21,7 @@ from src.openapi.permission_docs import (
 from src.openapi.responses import (
     EMPTY,
     FORBIDDEN,
+    NOT_FOUND,
     UNAUTHORIZED,
     VALIDATION_ERROR,
 )
@@ -116,6 +117,7 @@ class CommentViewSet(
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
+            404: NOT_FOUND,
         },
     )
     def partial_update(self, request, *args, **kwargs):
@@ -148,6 +150,7 @@ class CommentViewSet(
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
+            404: NOT_FOUND,
         },
     )
     def destroy(self, request, *args, **kwargs):
@@ -176,6 +179,7 @@ class CommentViewSet(
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
+            404: NOT_FOUND,
         },
     )
     @action(methods=('post',), detail=True)
@@ -203,6 +207,7 @@ class CommentViewSet(
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
+            404: NOT_FOUND,
         },
     )
     @action(methods=('post',), detail=True, url_path='create-reaction')
@@ -232,6 +237,7 @@ class CommentViewSet(
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
+            404: NOT_FOUND,
         },
     )
     @action(methods=('post',), detail=True, url_path='delete-reaction')

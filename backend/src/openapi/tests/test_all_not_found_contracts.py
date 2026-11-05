@@ -1,11 +1,16 @@
 """Real missing-resource lookups and gates that deny before object lookup."""
 
 from django.contrib.auth import get_user_model
+from _pytest.monkeypatch import MonkeyPatch
 import pytest
+from rest_framework.request import Request
 
 from src.accounts.enums import BillingPlanType, LeaseLevel
 from src.authentication.services.guest_auth import GuestJWTAuthService
+from src.generics.tests.clients import PneumaticApiClient
+from src.openapi.tests.http_contracts import HttpContract
 from src.processes.enums import PresetType
+from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.services.events import WorkflowEventService
 from src.processes.tests.fixtures import (
@@ -16,6 +21,7 @@ from src.processes.tests.fixtures import (
     create_test_template_preset,
     create_test_workflow,
 )
+from src.processes.views.comments import CommentViewSet
 
 pytestmark = pytest.mark.django_db
 UserModel = get_user_model()
@@ -121,6 +127,58 @@ def test_inaccessible_preset__permission_gate__forbidden(
     )
 
     assert response.status_code == 403
+
+
+@pytest.mark.parametrize('method,path', COMMENT_OPERATIONS)
+def test_comment__deleted_after_permission_check__not_found_contract(
+    contract_api_client: PneumaticApiClient,
+    missing_resource_owner: UserModel,
+    http_contract: HttpContract,
+    monkeypatch: MonkeyPatch,
+    method: str,
+    path: str,
+) -> None:
+    workflow = create_test_workflow(missing_resource_owner, tasks_count=1)
+    event = WorkflowEventService.comment_created_event(
+        text='Comment removed by another request',
+        task=workflow.tasks.first(), user=missing_resource_owner,
+        after_create_actions=False,
+    )
+    comment_id = event.id
+    permission_checks = []
+    original_check_permissions = CommentViewSet.check_permissions
+
+    def check_permissions_then_delete(
+        view: CommentViewSet, request: Request,
+    ) -> None:
+        original_check_permissions(view, request)
+        permission_checks.append(request.method)
+        # Reproduce deletion by another request after all real checks pass.
+        event.delete()
+
+    monkeypatch.setattr(
+        CommentViewSet, 'check_permissions', check_permissions_then_delete,
+    )
+    observations_before = len(http_contract.observations)
+
+    response = getattr(contract_api_client, method)(
+        path.format(id=comment_id),
+        data={'text': 'Updated', 'value': 'like'}, format='json',
+    )
+
+    assert permission_checks == [method.upper()]
+    assert not WorkflowEvent.objects.filter(id=comment_id).exists()
+    assert response.status_code == 404
+    assert response['Content-Type'].split(';', 1)[0] == 'application/json'
+    assert set(response.json()) == {'detail'}
+    assert response.json()['detail']
+    operation = http_contract.document['paths'][path][method]
+    assert {'403', '404'} <= set(operation['responses'])
+    observations = http_contract.observations[observations_before:]
+    assert [
+        (item['path'], item['method'], item['status'])
+        for item in observations
+    ] == [(path, method, 404)]
 
 
 @pytest.mark.parametrize('scope', [
@@ -291,8 +349,8 @@ def test_guest_workflow_comment__missing_workflow__forbidden(
     *PUBLIC_OPERATIONS,
     ('post', '/workflows/{id}/comment'),
 ))
-def test_permission_gated_operation__response_schema_omits_unreachable_404(
+def test_permission_gated_operation__documented_lookup_statuses(
     http_contract, method, path,
 ) -> None:
     responses = http_contract.document['paths'][path][method]['responses']
-    assert '404' not in responses
+    assert ('404' in responses) == ((method, path) in COMMENT_OPERATIONS)
