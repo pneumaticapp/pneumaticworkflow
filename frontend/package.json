@@ -13,6 +13,8 @@
     "npm": ">=12.0.0"
   },
   "dependencies": {
+    "@dicebear/core": "^10.7.0",
+    "@dicebear/styles": "^10.6.0",
     "@emoji-mart/data": "^1.1.2",
     "@emoji-mart/react": "^1.1.1",
     "@lexical/clipboard": "^0.21.0",

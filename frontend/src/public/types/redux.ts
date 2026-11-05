@@ -16,6 +16,7 @@ import {
 import { ITask, ITaskListItem, ITasksSettings } from './tasks';
 import { EPermissionObjectType, TObjectPermissionsById } from './permissions';
 import { IApiKeyItem, IIntegrationDetailed, IIntegrationListItem } from './integrations';
+import type { IAIStore } from '../redux/ai/types';
 import { ESettingsTabs } from './profile';
 import { IHighlightsItem, EHighlightsDateFilter } from './highlights';
 import { EDashboardTimeRange, IGettingStartedChecklist } from './dashboard';
@@ -66,6 +67,7 @@ export interface IApplicationState {
   task: IStoreTask;
   team: ITeamStore;
   groups: IGroupsStore;
+  ai: IAIStore;
   tenants: ITenantsStore;
   datasets: IDatasetsStore;
   fieldsets: IFieldsetsStore;
@@ -179,7 +181,6 @@ export interface IAccounts {
     userWorkflowsCount: number;
     state: EDeleteUserModalState;
   };
-  isCreateUserModalOpen: boolean;
 }
 
 export interface IStoreTask {
@@ -354,6 +355,10 @@ export type ITeamStore = {
   isInvitesPopupOpen: boolean;
   recentInvitedUsers: TUserListItem[];
   invitesUsersList: UserInvite[];
+  createPerformerModal: {
+    isOpen: boolean;
+    isSubmitting: boolean;
+  };
 };
 
 export type IGroupsStore = {
