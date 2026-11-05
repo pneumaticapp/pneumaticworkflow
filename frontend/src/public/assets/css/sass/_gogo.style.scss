@@ -3921,6 +3921,10 @@ select.form-control:not([size]):not([multiple]) {
     box-shadow: none !important;
   }
 
+  &:focus:not(:focus-visible) {
+    box-shadow: none;
+  }
+
   &.rc-switch-checked.custom-switch-primary {
     background: $theme-color-7 !important;
     border: 1px solid $theme-color-7 !important;
@@ -4011,6 +4015,7 @@ select.form-control:not([size]):not([multiple]) {
   min-width: 32px !important;
   height: 20px !important;
   border: 0 !important;
+  overflow: visible !important;
 }
 
 .rc-switch.custom-switch.custom-switch-small:active {

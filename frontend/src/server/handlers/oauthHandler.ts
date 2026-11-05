@@ -25,8 +25,7 @@ export function oAuthHandler(getAuthUri: string, getAuthTokenUri: string) {
           `session_state=${sessionState}`,
         ].join('&');
 
-        const responseDataToken: string = await serverApi.get(`${getAuthTokenUri}?${params}`);
-        const tokenResponse: IAuthTokenResponse = JSON.parse(responseDataToken);
+        const tokenResponse = await serverApi.get<IAuthTokenResponse>(`${getAuthTokenUri}?${params}`);
 
         setAuthCookie(req, res, tokenResponse);
 
@@ -39,9 +38,7 @@ export function oAuthHandler(getAuthUri: string, getAuthTokenUri: string) {
     }
 
     try {
-      const responseData: string = await serverApi.get(getAuthUri);
-
-      const { auth_uri: redirectUri }: IAuthURIResponse = JSON.parse(responseData);
+      const { auth_uri: redirectUri } = await serverApi.get<IAuthURIResponse>(getAuthUri);
       return res.send(JSON.stringify({ redirectUri }));
     } catch (error) {
       logServerError(error);

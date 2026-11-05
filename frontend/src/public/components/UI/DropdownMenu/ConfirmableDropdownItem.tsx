@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useIntl } from 'react-intl';
-import OutsideClickHandler from 'react-outside-click-handler';
+import OutsideClickHandler from '../OutsideClickHandler';
 
 import type { IConfirmableDropdownItemProps, TDropdownItemState } from './types';
 

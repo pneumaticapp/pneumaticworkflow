@@ -1,11 +1,9 @@
 import React from 'react';
-import { shallow } from 'enzyme';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { Users } from '../Users';
-import { TeamUserCard } from '../TeamUserCard';
-import { TeamUserSkeleton } from '../../TeamUserSkeleton';
 import { generateUser, mockLastNameUsers } from '../../../../__stubs__/users';
 import { EUserListSorting } from '../../../../types/user';
 import { loadAIAgents } from '../../../../redux/ai/slice';
@@ -41,6 +39,10 @@ jest.mock('../TeamUserCard', () => ({
       </button>
     );
   },
+}));
+
+jest.mock('../../TeamUserSkeleton', () => ({
+  TeamUserSkeleton: () => <div data-testid="team-user-skeleton" />,
 }));
 
 const buildAgent = (overrides: Partial<IAIAgent> = {}): IAIAgent => ({
@@ -81,9 +83,6 @@ describe('Users', () => {
     );
   };
 
-  const renderUsers = (userListSorting = EUserListSorting.NameAsc) =>
-    shallow(<Users userListSorting={userListSorting} />);
-
   beforeEach(() => {
     jest.clearAllMocks();
     (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
@@ -108,20 +107,19 @@ describe('Users', () => {
       users: [generateUser(1, { firstName: 'Bravo' }), generateUser(2, { firstName: 'Charlie' })],
     });
 
-    const wrapper = renderUsers();
-    wrapper.find('InputField').simulate('change', { currentTarget: { value: 'charlie' } });
-    wrapper.update();
+    render(<Users userListSorting={EUserListSorting.NameAsc} />);
+    userEvent.type(screen.getByRole('textbox'), 'charlie');
 
-    expect(wrapper.find(TeamUserCard)).toHaveLength(1);
-    expect(wrapper.find(TeamUserCard).prop('user').id).toBe(2);
+    expect(screen.getAllByTestId(/^team-user-card-/)).toHaveLength(1);
+    expect(screen.getByTestId('team-user-card-2')).toBeInTheDocument();
   });
 
   it('shows skeletons while users are loading', () => {
     mockState({ isUsersLoading: true });
 
-    const wrapper = renderUsers();
+    render(<Users userListSorting={EUserListSorting.NameAsc} />);
 
-    expect(wrapper.find(TeamUserSkeleton)).toHaveLength(3);
-    expect(wrapper.find(TeamUserCard)).toHaveLength(0);
+    expect(screen.getAllByTestId('team-user-skeleton')).toHaveLength(3);
+    expect(screen.queryByTestId(/^team-user-card-/)).not.toBeInTheDocument();
   });
 });

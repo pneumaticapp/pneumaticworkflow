@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 import ReactSelect from 'react-select';
 import type { CSSObjectWithLabel } from 'react-select';
 import PerfectScrollbar from 'react-perfect-scrollbar';
-import OutsideClickHandler from 'react-outside-click-handler';
+import OutsideClickHandler from '../OutsideClickHandler';
 
 import { ArrowDropdownIcon } from '../../icons';
 import { ControlSM } from './ControlSM';

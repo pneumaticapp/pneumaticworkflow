@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import classnames from 'classnames';
-import OutsideClickHandler from 'react-outside-click-handler';
+import OutsideClickHandler from '../OutsideClickHandler';
 
 import { ArrowRightIcon } from '../../icons';
 import { getSubmenuPlacement } from './utils/getSubmenuPlacement';

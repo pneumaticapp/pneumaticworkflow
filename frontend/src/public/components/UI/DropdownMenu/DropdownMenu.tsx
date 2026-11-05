@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import classnames from 'classnames';
-import OutsideClickHandler from 'react-outside-click-handler';
+import OutsideClickHandler from '../OutsideClickHandler';
 
 import { DropdownMenuItem } from './DropdownMenuItem';
 import { DropdownMenuPanel } from './DropdownMenuPanel';
