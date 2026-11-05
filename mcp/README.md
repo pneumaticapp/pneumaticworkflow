@@ -13,6 +13,7 @@ The connector acts with the permissions of the API key owner. Create a key in Pn
 
 **Where to start**
 
+- Use the hosted connector at `https://mcp.pneumatic.app/mcp`: [docs/USER_GUIDE.md](docs/USER_GUIDE.md). How it handles data: [docs/PRIVACY.md](docs/PRIVACY.md).
 - Host it for a team (Claude.ai, Claude Desktop, remote Claude Code): [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 - Try it on your machine: [Claude Code](#claude-code) or [Claude Desktop](#claude-desktop-local-process) as a local process.
 - Every setting: [Configuration](#configuration). How the parts fit together: [How it works](#how-it-works).
