@@ -106,7 +106,7 @@ class WorkflowListSerializer(WorkflowOwnersMixin, serializers.ModelSerializer):
             'owners',
             'tasks',
             'fields',
-            'due_date_tsp',  # TODO Remove in  41258
+            'due_date_tsp',
         )
 
     template = WorkflowTemplateSerializer()

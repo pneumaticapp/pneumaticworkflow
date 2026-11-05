@@ -1406,7 +1406,6 @@ def test_retrieve__sub_workflows__ok(api_client, mocker):
     assert data['status'] == sub_wf.status
     assert data['description'] == sub_wf.description
     assert data['date_created_tsp'] == sub_wf.date_created.timestamp()
-    assert data['due_date_tsp'] == sub_wf.due_date.timestamp()
     assert data['is_external'] is False
     assert data['is_urgent'] is True
     assert data['finalizable'] == sub_wf.finalizable

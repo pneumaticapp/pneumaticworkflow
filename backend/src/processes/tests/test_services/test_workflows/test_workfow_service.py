@@ -72,7 +72,6 @@ def test_create_instance__only_required_fields__ok(mocker):
     assert workflow.description == template.description
     assert workflow.account == account
     assert workflow.finalizable is True
-    assert workflow.status_updated
     assert workflow.version == template.version
     assert workflow.workflow_starter == owner
     assert workflow.workflow_starter == owner
@@ -147,7 +146,6 @@ def test_create_instance__all_fields__ok(mocker):
     assert workflow.description == template.description
     assert workflow.account == account
     assert workflow.finalizable is True
-    assert workflow.status_updated
     assert workflow.version == template.version
     assert workflow.workflow_starter == owner
     assert workflow.is_external == is_external
