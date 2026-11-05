@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
-import OutsideClickHandler from 'react-outside-click-handler';
+import OutsideClickHandler from '../../../../UI/OutsideClickHandler';
 
 import urlUtils from '../../../utils/urlUtils';
 import { InputField } from '../../../../UI';

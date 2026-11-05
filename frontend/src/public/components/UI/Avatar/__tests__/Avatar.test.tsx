@@ -1,12 +1,10 @@
 import * as React from 'react';
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 
-import { GroupIcon } from '../../../icons';
 import { Avatar } from '../Avatar';
-import styles from '../Avatar.css';
 
 describe('Avatar', () => {
-  it('renders image', () => {
+  it('renders profile image when photo is provided', () => {
     const url = '/some/image.png';
     const user = {
       firstName: '',
@@ -14,30 +12,26 @@ describe('Avatar', () => {
       photo: url,
       email: '',
     };
-    const wrapper = shallow(<Avatar user={user} />);
 
-    expect(wrapper.find('img').prop('src')).toEqual(url);
+    render(<Avatar user={user} />);
+
+    expect(screen.getByRole('img', { name: 'Profile' })).toHaveAttribute('src', url);
   });
 
-  it('renders initials', () => {
-    const firstName = 'Test';
-    const lastName = 'User';
-    const email = 'test@test.com';
-    const photo = '';
+  it('renders initials from first and last name', () => {
     const user = {
-      firstName,
-      lastName,
-      photo,
-      email,
+      firstName: 'Test',
+      lastName: 'User',
+      photo: '',
+      email: 'test@test.com',
     };
-    const wrapper = shallow(<Avatar user={user} />);
 
-    const avatarElement = wrapper.find(`.${styles['avatar']}`);
+    render(<Avatar user={user} />);
 
-    expect(avatarElement.text()).toEqual('TU');
+    expect(screen.getByText('TU')).toBeInTheDocument();
   });
 
-  it('does not render initials if no name passed', () => {
+  it('renders no initials when name is not provided', () => {
     const user = {
       firstName: '',
       lastName: '',
@@ -45,25 +39,39 @@ describe('Avatar', () => {
       email: '',
     };
 
-    const wrapper = shallow(<Avatar user={user} />);
+    render(<Avatar user={user} />);
 
-    const avatarElement = wrapper.find(`.${styles['avatar']}`);
-
-    expect(avatarElement.text()).toEqual('');
+    expect(screen.getByTestId('avatar-initials')).toBeEmptyDOMElement();
   });
 
-  it('does not nest container for group avatar', () => {
-    const user = {
+  describe('group avatar', () => {
+    const groupUser = {
       firstName: '',
       lastName: '',
       photo: '',
       email: '',
       type: 'group' as const,
     };
-    const wrapper = shallow(<Avatar user={user} containerClassName="avatar-container" />);
 
-    expect(wrapper.hasClass('avatar-container')).toBe(true);
-    expect(wrapper.find(GroupIcon).parents('.avatar-container')).toHaveLength(1);
-    expect(wrapper.find(GroupIcon)).toHaveLength(1);
+    it('applies containerClassName to root element', () => {
+      render(<Avatar user={groupUser} containerClassName="avatar-container" />);
+
+      expect(screen.getByTestId('avatar')).toHaveClass('avatar-container');
+    });
+
+    it('renders group icon', () => {
+      render(<Avatar user={groupUser} containerClassName="avatar-container" />);
+
+      expect(screen.getByTestId('avatar-group-icon')).toBeInTheDocument();
+    });
+
+    it('does not nest group icon in extra container', () => {
+      render(<Avatar user={groupUser} containerClassName="avatar-container" />);
+
+      const root = screen.getByTestId('avatar');
+      const groupIcon = screen.getByTestId('avatar-group-icon');
+
+      expect(groupIcon.parentElement).toBe(root);
+    });
   });
 });

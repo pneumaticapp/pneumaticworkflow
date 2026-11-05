@@ -3,7 +3,7 @@ import * as React from 'react';
 import classnames from 'classnames';
 import { usePopper } from 'react-popper';
 import { Placement } from 'popper.js';
-import OutsideClickHandler from 'react-outside-click-handler';
+import OutsideClickHandler from '../OutsideClickHandler';
 
 import { useDidUpdateEffect } from '../../../hooks/useDidUpdateEffect';
 import { ExpandIcon } from '../../icons';
