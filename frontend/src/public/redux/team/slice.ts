@@ -1,21 +1,19 @@
 import { createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { checkSomeRouteIsActive } from '../../utils/history';
-import { ERoutes } from '../../constants/routes';
+import { getTeamPageByRoute } from '../../utils/team/getTeamPageByRoute';
 import { ITeamStore } from '../../types/redux';
 import { TeamPages, TInviteUsersPayload, UserInvite } from './types';
 import { TUserListItem } from '../../types/user';
 
-const initialTabTeam =
-  checkSomeRouteIsActive(ERoutes.Groups) || checkSomeRouteIsActive(ERoutes.GroupDetails)
-    ? TeamPages.Groups
-    : TeamPages.Users;
-
 const initialState: ITeamStore = {
-  page: initialTabTeam,
+  page: getTeamPageByRoute(),
   isInvitesPopupOpen: false,
   recentInvitedUsers: [],
   invitesUsersList: [],
+  createPerformerModal: {
+    isOpen: false,
+    isSubmitting: false,
+  },
 };
 
 const teamSlice = createSlice({
@@ -40,6 +38,18 @@ const teamSlice = createSlice({
     closeTeamInvitesPopup: (state) => {
       state.isInvitesPopupOpen = false;
     },
+    openCreatePerformerModal: (state) => {
+      state.createPerformerModal.isOpen = true;
+    },
+    closeCreatePerformerModal: (state) => {
+      state.createPerformerModal = { isOpen: false, isSubmitting: false };
+    },
+    createPerformerStarted: (state) => {
+      state.createPerformerModal.isSubmitting = true;
+    },
+    createPerformerFailed: (state) => {
+      state.createPerformerModal.isSubmitting = false;
+    },
   },
 });
 
@@ -53,6 +63,10 @@ export const {
   updateTeamActiveTab,
   openTeamInvitesPopup,
   closeTeamInvitesPopup,
+  openCreatePerformerModal,
+  closeCreatePerformerModal,
+  createPerformerStarted,
+  createPerformerFailed,
   setRecentInvitedUsers,
   loadInvitesUsersSuccess,
 } = teamSlice.actions;

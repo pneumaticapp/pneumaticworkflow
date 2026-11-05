@@ -5,7 +5,9 @@
  * Precondition: run against dev with an admin account (login before or via storageState).
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
+
+const getCreateModalUserTab = (page: Page) => page.getByRole('button', { name: /^user$/i });
 
 test.describe('Team > Users — Create User (PR 44397)', () => {
   test.beforeEach(async ({ page }) => {
@@ -57,7 +59,7 @@ test.describe('Team > Users — Create User (PR 44397)', () => {
       .getByRole('button', { name: /create user/i })
       .first()
       .click();
-    await expect(page.getByTestId('create-user-modal-header')).toBeVisible();
+    await expect(getCreateModalUserTab(page)).toBeVisible();
     await expect(page.getByText('Create User').first()).toBeVisible();
 
     await expect(page.getByLabel(/first name/i)).toBeVisible();
@@ -82,7 +84,7 @@ test.describe('Team > Users — Create User (PR 44397)', () => {
       .getByRole('button', { name: /create user/i })
       .first()
       .click();
-    await expect(page.getByTestId('create-user-modal-header')).toBeVisible();
+    await expect(getCreateModalUserTab(page)).toBeVisible();
     await page.getByRole('button', { name: /^copy$/i }).click();
     await expect(page.getByText(/password copied/i)).toBeVisible();
   });
@@ -92,7 +94,7 @@ test.describe('Team > Users — Create User (PR 44397)', () => {
       .getByRole('button', { name: /create user/i })
       .first()
       .click();
-    await expect(page.getByTestId('create-user-modal-header')).toBeVisible();
+    await expect(getCreateModalUserTab(page)).toBeVisible();
     const password1 = await page
       .getByLabel(/password/i)
       .first()
@@ -102,7 +104,7 @@ test.describe('Team > Users — Create User (PR 44397)', () => {
       .getByRole('button', { name: /create user/i })
       .first()
       .click();
-    await expect(page.getByTestId('create-user-modal-header')).toBeVisible();
+    await expect(getCreateModalUserTab(page)).toBeVisible();
     const password2 = await page
       .getByLabel(/password/i)
       .first()
@@ -115,7 +117,7 @@ test.describe('Team > Users — Create User (PR 44397)', () => {
       .getByRole('button', { name: /create user/i })
       .first()
       .click();
-    await expect(page.getByTestId('create-user-modal-header')).toBeVisible();
+    await expect(getCreateModalUserTab(page)).toBeVisible();
     const emailInput = page.getByLabel(/email/i).first();
     await emailInput.clear();
     const submitBtn = page.getByRole('button', { name: /create user/i }).last();
@@ -127,7 +129,7 @@ test.describe('Team > Users — Create User (PR 44397)', () => {
       .getByRole('button', { name: /create user/i })
       .first()
       .click();
-    await expect(page.getByTestId('create-user-modal-header')).toBeVisible();
+    await expect(getCreateModalUserTab(page)).toBeVisible();
     await page.getByLabel(/email/i).first().fill('invalid');
     await page.getByLabel(/email/i).first().press('Tab');
     await expect(page.getByText('Please enter a valid Email')).toBeVisible();
@@ -138,7 +140,7 @@ test.describe('Team > Users — Create User (PR 44397)', () => {
       .getByRole('button', { name: /create user/i })
       .first()
       .click();
-    await expect(page.getByTestId('create-user-modal-header')).toBeVisible();
+    await expect(getCreateModalUserTab(page)).toBeVisible();
     await page
       .getByLabel(/password/i)
       .first()
@@ -155,7 +157,7 @@ test.describe('Team > Users — Create User (PR 44397)', () => {
       .getByRole('button', { name: /create user/i })
       .first()
       .click();
-    await expect(page.getByTestId('create-user-modal-header')).toBeVisible();
+    await expect(getCreateModalUserTab(page)).toBeVisible();
     await page
       .getByLabel(/password/i)
       .first()
@@ -173,7 +175,7 @@ test.describe('Team > Users — Create User (PR 44397)', () => {
       .getByRole('button', { name: /create user/i })
       .first()
       .click();
-    await expect(page.getByTestId('create-user-modal-header')).toBeVisible();
+    await expect(getCreateModalUserTab(page)).toBeVisible();
 
     await page.getByLabel(/first name/i).fill('E2E');
     await page.getByLabel(/last name/i).fill('User');
@@ -184,7 +186,7 @@ test.describe('Team > Users — Create User (PR 44397)', () => {
       .click();
 
     await expect(page.getByText(/successfully created|has been successfully created/i)).toBeVisible();
-    await expect(page.getByTestId('create-user-modal-header')).not.toBeVisible();
+    await expect(getCreateModalUserTab(page)).not.toBeVisible();
     await expect(page.getByText(uniqueEmail)).toBeVisible();
   });
 
@@ -194,7 +196,7 @@ test.describe('Team > Users — Create User (PR 44397)', () => {
       .getByRole('button', { name: /create user/i })
       .first()
       .click();
-    await expect(page.getByTestId('create-user-modal-header')).toBeVisible();
+    await expect(getCreateModalUserTab(page)).toBeVisible();
 
     await page.getByLabel(/first name/i).fill('E2E');
     await page.getByLabel(/last name/i).fill('Admin');
@@ -207,7 +209,7 @@ test.describe('Team > Users — Create User (PR 44397)', () => {
       .click();
 
     await expect(page.getByText(/successfully created|has been successfully created/i)).toBeVisible();
-    await expect(page.getByTestId('create-user-modal-header')).not.toBeVisible();
+    await expect(getCreateModalUserTab(page)).not.toBeVisible();
     await expect(page.getByText(uniqueEmail)).toBeVisible();
   });
 });
