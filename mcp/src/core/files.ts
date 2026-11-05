@@ -31,17 +31,22 @@ export function mediaType(header: string | null | undefined): string | undefined
   return header?.split(';')[0]?.trim() || undefined;
 }
 
+export function tryDecodeURIComponent(value: string): string | undefined {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return undefined;
+  }
+}
+
 export function filenameFromDisposition(header: string | undefined): string | undefined {
   if (!header) {
     return undefined;
   }
   const encoded = /filename\*\s*=\s*utf-8''([^;]+)/i.exec(header)?.[1];
-  if (encoded) {
-    try {
-      return decodeURIComponent(encoded.trim());
-    } catch {
-      // Fall back to the plain filename parameter.
-    }
+  const decoded = encoded === undefined ? undefined : tryDecodeURIComponent(encoded.trim());
+  if (decoded !== undefined) {
+    return decoded;
   }
   return /filename\s*=\s*"?([^";]+)"?/i.exec(header)?.[1]?.trim() || undefined;
 }

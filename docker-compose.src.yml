@@ -648,7 +648,6 @@ services:
     networks:
       - pneumatic
 
-  # Claude connector (MCP server), started only with the "mcp" profile, see default.env
   mcp:
     build:
       context: ./mcp

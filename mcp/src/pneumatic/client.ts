@@ -176,7 +176,6 @@ export function createPneumaticClient(
   return {
     filesUrl,
     appUrl,
-    // Stable per Pneumatic instance and key, used to cache account data without keeping the raw key.
     identity: hashApiKey(`${apiUrl}\n${apiKey}`),
     async upload({ data, filename, contentType }: FileUpload): Promise<StoredFile> {
       const form = new FormData();

@@ -91,7 +91,6 @@ function readTrustProxy(value: string | undefined): boolean | number | string {
   return /^\d+$/.test(trimmed) ? Number(trimmed) : trimmed;
 }
 
-// Links in results point to the Pneumatic web app; its storage URL is usually <app>/files.
 function readAppUrl(env: NodeJS.ProcessEnv, filesUrl: string | undefined): string | undefined {
   const derived = filesUrl?.endsWith('/files') ? filesUrl.slice(0, -'/files'.length) : undefined;
   const value = env.PNEUMATIC_APP_URL?.trim() || derived;
@@ -133,7 +132,6 @@ function readFilesUrl(env: NodeJS.ProcessEnv, apiUrl: string): string | undefine
   return parseBaseUrl('PNEUMATIC_FILES_URL', value);
 }
 
-// The public files URL can be unreachable from the connector container (e.g. http://localhost/files).
 function readFilesInternalUrl(env: NodeJS.ProcessEnv, filesUrl: string | undefined): string | undefined {
   const value = env.PNEUMATIC_FILES_INTERNAL_URL?.trim();
   if (!value) {

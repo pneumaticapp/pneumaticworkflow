@@ -3,7 +3,6 @@ import type { RateLimiter, RateLimiterFactory } from '../core/ports.js';
 const WINDOW_MS = 60_000;
 const MAX_TRACKED_KEYS = 10_000;
 
-// Per process: with several replicas each one enforces the limit separately.
 export function createMemoryRateLimiter(limitPerMinute: number, now: () => number = Date.now): RateLimiter {
   const hits = new Map<string, number[]>();
 

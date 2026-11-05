@@ -8,7 +8,6 @@ import { UPLOAD_RETENTION_SECONDS, type UploadRecord } from '../core/uploads.js'
 const MAX_ENTRIES = 10_000;
 const MAX_PENDING_PER_KEY = 20;
 
-// Per process: an upload link opened on another replica would not be found.
 export function createMemoryUploadStore(): UploadStore {
   const entries = new Map<string, UploadRecord>();
   const leases = new Map<string, { leaseId: string; until: number }>();

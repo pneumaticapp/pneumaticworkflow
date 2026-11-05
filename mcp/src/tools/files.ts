@@ -9,6 +9,7 @@ import {
   isValidContentType,
   MAX_INLINE_UPLOAD_BYTES,
   MAX_UPLOAD_BYTES,
+  tryDecodeURIComponent,
 } from '../core/files.js';
 import type { UploadLinks } from '../core/ports.js';
 import { UPLOAD_TTL_SECONDS } from '../core/uploads.js';
@@ -91,12 +92,7 @@ function fileIdFromUrl(value: string, filesUrl: string): string {
   const base = new URL(filesUrl);
   const prefix = `${base.pathname.replace(/\/+$/, '')}/`;
   const segment = url.pathname.startsWith(prefix) ? url.pathname.slice(prefix.length) : '';
-  let fileId = '';
-  try {
-    fileId = decodeURIComponent(segment);
-  } catch {
-    // Reported below as a foreign URL.
-  }
+  const fileId = tryDecodeURIComponent(segment) ?? '';
   if (url.host !== base.host || !segment || segment.includes('/') || !isSafeFileId(fileId)) {
     throw new ConnectorError('invalid_arguments', `Only Pneumatic file links under ${filesUrl}/ can be downloaded`);
   }

@@ -43,7 +43,6 @@ set_env_var() {
     fi
 }
 
-# Value of NAME in .env without quotes, whitespace and a trailing comment
 read_env_value() {
     grep -E "^\s*$1=" "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | sed 's/#.*//' | tr -d '"'"'"'[:space:]'
 }

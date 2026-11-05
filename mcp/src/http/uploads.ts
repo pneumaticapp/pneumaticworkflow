@@ -51,7 +51,6 @@ export function uploadLinksFor(store: UploadStore, sealer: Sealer, publicUrl: UR
   };
 }
 
-// A link is usable while its token is valid, it belongs to the token's key and no file was stored yet.
 async function openLink(store: UploadStore, sealer: Sealer, token: string) {
   const payload = sealer.open<UploadToken>('upload', token);
   const entry = payload ? await store.get(payload.uploadId) : undefined;
