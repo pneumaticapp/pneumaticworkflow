@@ -1,6 +1,5 @@
 import * as z from 'zod/v4';
 
-import { ConnectorError } from '../core/errors.js';
 import { isRecord } from '../core/json.js';
 import { tool, type ToolDef } from '../mcp/toolDef.js';
 import { additive, destructive, idempotentUpdate, readOnly } from './annotations.js';
@@ -8,7 +7,7 @@ import { optionalTimestamp, toTimestamp } from './dates.js';
 import { workflowDetail } from './details.js';
 import { fieldSpecs, prepareFieldValues } from './fields.js';
 import { present, successOutput } from './output.js';
-import { commentText, dateTime, fieldValues, id, idList, limit, offset } from './schemas.js';
+import { commentText, dateTime, fieldValues, id, idList, limit, offset, requireExactlyOne } from './schemas.js';
 
 const workflowId = id('Workflow').describe('Workflow instance ID, not its template ID');
 
@@ -204,10 +203,9 @@ export const workflowTools: ToolDef[] = [
       }),
       annotations: destructive,
     },
-    async ({ workflowId, taskId, taskApiName }, { client }) => {
-      if (!taskId && !taskApiName) {
-        throw new ConnectorError('invalid_arguments', 'Provide taskId or taskApiName');
-      }
+    async (args, { client }) => {
+      requireExactlyOne(args, ['taskId', 'taskApiName']);
+      const { workflowId, taskId, taskApiName } = args;
       await client.post(`/workflows/${workflowId}/return-to`, { task: taskId, task_api_name: taskApiName });
       return successOutput();
     },

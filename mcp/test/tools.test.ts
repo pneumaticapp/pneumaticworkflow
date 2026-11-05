@@ -201,6 +201,15 @@ describe('tool calls', () => {
     });
   });
 
+  it('returns a workflow to a task identified by exactly one of taskId and taskApiName', async () => {
+    const both = await call('return_workflow_to_task', { workflowId: 3, taskId: 4, taskApiName: 'task-a' });
+    expect(both.error).toMatchObject({ code: 'invalid_arguments', detail: expect.stringContaining('exactly one') });
+    expect(fake.lastRequest('/workflows/3/return-to')).toBeUndefined();
+
+    await call('return_workflow_to_task', { workflowId: 3, taskApiName: 'task-a' });
+    expect(fake.lastRequest('/workflows/3/return-to')?.body).toEqual({ task_api_name: 'task-a' });
+  });
+
   it('switches checklist endpoint by checked flag', async () => {
     await call('set_checklist_item', { checklistId: 9, selectionId: 99, checked: false });
     expect(fake.lastRequest('/v2/tasks/checklists/9/unmark')?.body).toEqual({ selection_id: 99 });
