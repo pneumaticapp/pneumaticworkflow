@@ -10,7 +10,6 @@ from rest_framework.fields import (
     SkipField,
     empty,
     get_error_detail,
-    set_value,
 )
 from rest_framework.serializers import as_serializer_error
 from rest_framework.settings import api_settings
@@ -420,7 +419,7 @@ class CustomValidationErrorMixin:
             except SkipField:
                 pass
             else:
-                set_value(ret, field.source_attrs, validated_value)
+                self.set_value(ret, field.source_attrs, validated_value)
 
         if errors:
             raise ValidationError(errors)

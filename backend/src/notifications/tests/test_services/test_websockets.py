@@ -2,6 +2,7 @@
 from datetime import timedelta
 
 import pytest
+from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
 from channels.testing import WebsocketCommunicator
 from django.core.exceptions import ObjectDoesNotExist
@@ -563,29 +564,36 @@ def test_send_due_date_changed__type_guest__not_sent(mocker):
     slz_mock.assert_not_called()
 
 
+@pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
 async def test_consumer_send_notification__received(mocker, api_client):
 
     # arrange
-    user = create_test_user()
-    invited = create_invited_user(user)
+    def create_notification():
+        user = create_test_user()
+        invited = create_invited_user(user)
+        workflow = create_test_workflow(user)
+        task = workflow.tasks.get(number=1)
+        notification = Notification.objects.create(
+            task_json=NotificationTaskSerializer(
+                instance=task,
+                notification_type=NotificationType.COMMENT,
+            ).data,
+            workflow_json=NotificationWorkflowSerializer(
+                instance=workflow,
+            ).data,
+            user=user,
+            author=invited,
+            account=user.account,
+            type=NotificationType.COMMENT,
+            text='Comment text',
+        )
+        return user, invited, notification, workflow
+
     token = '123456'
-    workflow = create_test_workflow(user)
-    task = workflow.tasks.get(number=1)
-    notification = Notification.objects.create(
-        task_json=NotificationTaskSerializer(
-            instance=task,
-            notification_type=NotificationType.COMMENT,
-        ).data,
-        workflow_json=NotificationWorkflowSerializer(
-            instance=workflow,
-        ).data,
-        user=user,
-        author=invited,
-        account=user.account,
-        type=NotificationType.COMMENT,
-        text='Comment text',
-    )
+    user, invited, notification, workflow = await database_sync_to_async(
+        create_notification,
+    )()
 
     service = WebSocketService(
         logging=True,
@@ -604,9 +612,9 @@ async def test_consumer_send_notification__received(mocker, api_client):
     )
     await communicator.connect()
 
-    service.send_comment(
+    await database_sync_to_async(service.send_comment)(
         user_id=user.id,
-        sync=False,
+        sync=True,
         notification=notification,
     )
 
@@ -627,9 +635,10 @@ async def test_consumer_send_notification__received(mocker, api_client):
     ws_auth_patch.assert_called_once_with(token)
 
 
+@pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
 async def test_consumer__connection__ok(mocker):
-    user = create_test_user()
+    user = await database_sync_to_async(create_test_user)()
     user_patch = mocker.patch(
         'src.authentication.'
         'middleware.PneumaticToken.get_user_from_token',
@@ -648,6 +657,7 @@ async def test_consumer__connection__ok(mocker):
     await communicator.disconnect()
 
 
+@pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
 async def test_consumer__incorrect_token__deny_connection(mocker):
     user_patch = mocker.patch(
@@ -667,6 +677,7 @@ async def test_consumer__incorrect_token__deny_connection(mocker):
     await communicator.disconnect()
 
 
+@pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
 async def test_consumer__without_token__deny_connection(mocker):
     user_patch = mocker.patch(
@@ -685,11 +696,12 @@ async def test_consumer__without_token__deny_connection(mocker):
     await communicator.disconnect()
 
 
+@pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
 async def test_consumer__ping_pong__ok(mocker, api_client):
 
     # arrange
-    user = create_test_user()
+    user = await database_sync_to_async(create_test_user)()
     user_patch = mocker.patch(
         'src.authentication.'
         'middleware.PneumaticToken.get_user_from_token',
@@ -712,6 +724,7 @@ async def test_consumer__ping_pong__ok(mocker, api_client):
     await communicator.disconnect()
 
 
+@pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     'send_side_effect',
@@ -725,7 +738,7 @@ async def test_receive__closed_socket__suppressed(
     """ Closed socket during PONG must not leak into Sentry. """
 
     # arrange
-    user = create_test_owner()
+    user = await database_sync_to_async(create_test_owner)()
     get_user_from_token_mock = mocker.patch(
         'src.authentication.'
         'middleware.PneumaticToken.get_user_from_token',
@@ -755,6 +768,7 @@ async def test_receive__closed_socket__suppressed(
     await communicator.disconnect()
 
 
+@pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     'send_side_effect',
@@ -768,7 +782,7 @@ async def test_notification__closed_socket__suppressed(
     """ Closed socket during event push must not leak into Sentry. """
 
     # arrange
-    user = create_test_owner()
+    user = await database_sync_to_async(create_test_owner)()
     notification = {'id': 1}
     get_user_from_token_mock = mocker.patch(
         'src.authentication.'

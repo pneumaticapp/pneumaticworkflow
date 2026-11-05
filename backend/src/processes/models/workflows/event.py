@@ -1,9 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import (
     ArrayField,
-    JSONField,
 )
 from django.db import models
+from django.db.models import JSONField
 
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
