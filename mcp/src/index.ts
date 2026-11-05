@@ -4,7 +4,7 @@ import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import { ConfigError, loadConfig } from './config.js';
 import { configureLog, log } from './core/log.js';
 import { createHttpApp } from './http/app.js';
-import { createClientFactory } from './pneumatic/client.js';
+import { createPneumaticClient } from './pneumatic/client.js';
 import { buildServer } from './server.js';
 
 function main() {
@@ -16,8 +16,8 @@ function main() {
   const config = loadConfig();
 
   if (config.transport === 'stdio') {
-    const client = createClientFactory(config)(config.apiKey);
-    serveStdio(() => buildServer(client, { toolsets: config.toolsets, readOnly: config.readOnly }));
+    const client = createPneumaticClient(config.pneumatic, config.apiKey);
+    serveStdio(() => buildServer(client, { toolsets: config.toolsets, isReadOnly: config.isReadOnly }));
     return;
   }
 
@@ -30,7 +30,7 @@ function main() {
     log('info', 'listening', {
       address: `http://${config.host}:${config.port}/mcp`,
       publicUrl: new URL('/mcp', config.publicUrl).href,
-      apiUrl: config.apiUrl,
+      apiUrl: config.pneumatic.apiUrl,
     });
   });
   // Docker sends SIGTERM first; finishing in-flight requests avoids cutting replay ledger writes.

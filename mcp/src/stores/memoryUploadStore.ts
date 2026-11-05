@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto';
 
 import { ConnectorError } from '../core/errors.js';
-import { UPLOAD_RETENTION_SECONDS, type UploadRecord, type UploadStore } from '../core/ports.js';
+import type { UploadStore } from '../core/ports.js';
 import { nowSeconds } from '../core/time.js';
+import { UPLOAD_RETENTION_SECONDS, type UploadRecord } from '../core/uploads.js';
 
 const MAX_ENTRIES = 10_000;
 const MAX_PENDING_PER_KEY = 20;

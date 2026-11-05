@@ -2,12 +2,14 @@ import { formatMiB, MAX_INLINE_UPLOAD_BYTES, MAX_UPLOAD_BYTES } from '../core/fi
 import { STRING_LIMIT } from '../core/limits.js';
 import type { ToolDef } from './toolDef.js';
 
+const DUPLICATING_WRITE_EXAMPLES = ['run_workflow', 'upload_file'];
+
 export function buildInstructions(tools: readonly ToolDef[]): string {
   const names = new Set(tools.map(({ name }) => name));
   const has = (...wanted: string[]) => wanted.some((name) => names.has(name));
-  const writes = tools.some(({ annotations }) => annotations.readOnlyHint !== true);
+  const hasWrites = tools.some(({ annotations }) => annotations.readOnlyHint !== true);
   const destructive = tools.filter(({ annotations }) => annotations.destructiveHint).map(({ name }) => name);
-  const nonIdempotent = ['run_workflow', 'upload_file'].filter((name) => names.has(name));
+  const duplicatingWrites = DUPLICATING_WRITE_EXAMPLES.filter((name) => names.has(name));
   const fileTargets = [
     has('complete_task') && 'complete_task output',
     has('run_workflow') && 'run_workflow kickoff',
@@ -31,8 +33,8 @@ Dates in inputs and results are ISO 8601 (UTC in results${has('get_current_user'
 Results carry webUrl links to open tasks, workflows and templates in Pneumatic, and people's names next to IDs;
 share these links with the user instead of describing where to click.`,
 
-    writes
-      ? `Writes are not idempotent: repeating ${[...nonIdempotent, 'a create or comment call'].join(', ')} creates another
+    hasWrites
+      ? `Writes are not idempotent: repeating ${[...duplicatingWrites, 'a create or comment call'].join(', ')} creates another
 object. After an uncertain write result, check the current state before retrying.`
       : `This connector is read-only: it can look things up but not change them. When the user asks for a change, say
 what would need to be done in Pneumatic instead of attempting it.`,

@@ -1,19 +1,13 @@
 import * as z from 'zod/v4';
 
-import { tool, type ToolDef } from '../mcp/toolDef.js';
-import type { PneumaticClient } from '../pneumatic/client.js';
 import { ConnectorError } from '../core/errors.js';
 import { isRecord, records } from '../core/json.js';
-import {
-  compactFor,
-  additive,
-  assignDefined,
-  destructive,
-  done,
-  fetchTemplate,
-  id,
-  idempotentUpdate,
-} from './shared.js';
+import { tool, type ToolDef } from '../mcp/toolDef.js';
+import type { PneumaticClient } from '../pneumatic/client.js';
+import { additive, destructive, idempotentUpdate } from './annotations.js';
+import { templateDetail } from './details.js';
+import { successOutput } from './output.js';
+import { id } from './schemas.js';
 import {
   appendFields,
   checklistPayload,
@@ -34,11 +28,13 @@ import {
   replaceStartRule,
   rewireSuccessors,
   sortedTasks,
+  type RawTask,
   startCondition,
   startRuleAfter,
   startsRightAfter,
   usesStartRules,
 } from './templateSteps.js';
+import { fetchTemplate } from './templates.js';
 
 const templateId = id('Template');
 
@@ -50,9 +46,20 @@ async function currentUserId(client: PneumaticClient): Promise<number> {
   return user.id;
 }
 
-export async function templateDetail(client: PneumaticClient, raw: unknown) {
-  const compact = await compactFor(client);
-  return compact.out(compact.templateDetail(raw));
+function assignDefined(target: Record<string, unknown>, changes: Record<string, unknown>) {
+  for (const [key, value] of Object.entries(changes)) {
+    if (value !== undefined) {
+      target[key] = value;
+    }
+  }
+}
+
+function stepOf(template: Record<string, unknown>, stepApiName: string): RawTask {
+  const task = sortedTasks(template).find((item) => item.api_name === stepApiName);
+  if (!task) {
+    throw new ConnectorError('invalid_arguments', `The template has no step "${stepApiName}"`);
+  }
+  return task;
 }
 
 // PUT replaces the whole template, so the current definition is sent back with only the requested changes.
@@ -214,10 +221,7 @@ export const designerTools: ToolDef[] = [
     },
     async (args, { client }) =>
       editTemplate(client, args.templateId, (template) => {
-        const task = sortedTasks(template).find((item) => item.api_name === args.stepApiName);
-        if (!task) {
-          throw new ConnectorError('invalid_arguments', `The template has no step "${args.stepApiName}"`);
-        }
+        const task = stepOf(template, args.stepApiName);
         assignDefined(task, {
           name: args.name,
           description: args.description,
@@ -346,7 +350,7 @@ export const designerTools: ToolDef[] = [
     },
     async ({ templateId }, { client }) => {
       await client.delete(`/templates/${templateId}`);
-      return done();
+      return successOutput();
     },
   ),
 ];

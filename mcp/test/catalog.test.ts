@@ -79,7 +79,7 @@ describe('toolsets and read-only mode', () => {
   });
 
   it('offers only read-only tools in read-only mode and tells the model so', () => {
-    const tools = availableTools(allTools, context, { readOnly: true });
+    const tools = availableTools(allTools, context, { isReadOnly: true });
     expect(tools.every(({ annotations }) => annotations.readOnlyHint === true)).toBe(true);
     expect(tools.map(({ name }) => name)).toEqual(
       expect.arrayContaining(['get_task', 'list_workflows', 'download_file']),
@@ -100,9 +100,9 @@ describe('toolsets and read-only mode', () => {
     allTools.map(({ name }) => name).filter((name) => new RegExp(`\\b${name}\\b`).test(text));
   const selections: ToolSelection[] = [
     {},
-    { readOnly: true },
+    { isReadOnly: true },
     ...TOOLSETS.map((toolset) => ({ toolsets: [toolset] })),
-    ...TOOLSETS.map((toolset) => ({ toolsets: [toolset], readOnly: true })),
+    ...TOOLSETS.map((toolset) => ({ toolsets: [toolset], isReadOnly: true })),
   ];
 
   it.each(selections)('never mentions a tool that is not offered (%o)', (selection) => {
@@ -122,6 +122,6 @@ describe('toolsets and read-only mode', () => {
     const names = (selection: ToolSelection) =>
       availableTools(allTools, withUploads, selection).map(({ name }) => name);
     expect(names({})).toContain('get_upload_status');
-    expect(names({ readOnly: true })).not.toContain('get_upload_status');
+    expect(names({ isReadOnly: true })).not.toContain('get_upload_status');
   });
 });

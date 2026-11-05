@@ -49,7 +49,7 @@ const conditionsOf = (task: RawTask): unknown[] => (Array.isArray(task.condition
 export const usesStartRules = (tasks: RawTask[]) => tasks.some((task) => conditionsOf(task).some(isStartCondition));
 
 // Skip conditions may sit beside the start rule and are not part of it.
-export function readStartRule(task: RawTask): StartRule | 'none' | 'complex' {
+function readStartRule(task: RawTask): StartRule | 'none' | 'complex' {
   const starts = conditionsOf(task).filter(isStartCondition);
   if (!starts.length) {
     return 'none';
@@ -72,7 +72,6 @@ export function readStartRule(task: RawTask): StartRule | 'none' | 'complex' {
     : 'complex';
 }
 
-// Whether the step starts exactly when `previous` completes (or, without `previous`, right after the kickoff).
 export function startsRightAfter(task: RawTask, previous: RawTask | undefined): boolean {
   const rule = readStartRule(task);
   if (rule === 'none' || rule === 'complex') {
@@ -82,13 +81,12 @@ export function startsRightAfter(task: RawTask, previous: RawTask | undefined): 
   return rule.after === 'kickoff' ? previousApiName === null : rule.apiName === previousApiName;
 }
 
-// Replaces only the start rule and keeps every other condition; null leaves the step without one (starts at once).
+// null leaves the step without a start rule, so it starts at once.
 export function replaceStartRule(task: RawTask, rule: StartRule | null) {
   const others = conditionsOf(task).filter((condition) => !isStartCondition(condition));
   task.conditions = rule === null ? others : [...others, startCondition(rule)];
 }
 
-// Overwrites all conditions so the steps run one after another in the given order.
 export function chainInOrder(tasks: RawTask[]) {
   tasks.forEach((task, index) => {
     task.api_name ??= newTaskApiName();
@@ -119,8 +117,7 @@ export function fieldApiNamesOf(task: RawTask): string[] {
     .map((item) => String(item.api_name));
 }
 
-// After a removal nothing may still name the removed step or field: Pneumatic does not validate drafts, so a stale
-// reference would only surface when the template is activated.
+// Pneumatic does not validate drafts, so a stale reference would only surface when the template is activated.
 export function assertUnreferenced(template: Record<string, unknown>, apiNames: string[], what: string) {
   const places = [...sortedTasks(template), { ...template, tasks: [], name: 'the kickoff form or template settings' }];
   // parents and ancestors are read-only lists Pneumatic recomputes, so they are not references.

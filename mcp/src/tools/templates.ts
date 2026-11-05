@@ -1,27 +1,30 @@
 import * as z from 'zod/v4';
 
-import { tool, type ToolDef } from '../mcp/toolDef.js';
-import { fieldSpecs, prepareFieldValues } from './fields.js';
-import type { PneumaticClient } from '../pneumatic/client.js';
-import { pageResults } from '../presenters/index.js';
 import { ConnectorError } from '../core/errors.js';
 import { isRecord, records } from '../core/json.js';
-import {
-  compactFor,
-  additive,
-  dateTime,
-  fetchTemplate,
-  fieldValues,
-  id,
-  limit,
-  offset,
-  optionalTimestamp,
-  readOnly,
-  workflowDetail,
-} from './shared.js';
+import { tool, type ToolDef } from '../mcp/toolDef.js';
+import type { PneumaticClient } from '../pneumatic/client.js';
+import { pageResults } from '../presenters/index.js';
+import { additive, readOnly } from './annotations.js';
+import { optionalTimestamp } from './dates.js';
+import { templateDetail, workflowDetail } from './details.js';
+import { fieldSpecs, prepareFieldValues } from './fields.js';
+import { present } from './output.js';
+import { dateTime, fieldValues, id, limit, offset } from './schemas.js';
 
 const KICKOFF_PAGE_SIZE = 100;
 const MAX_KICKOFF_PAGES = 20;
+
+export async function fetchTemplate(client: PneumaticClient, templateId: number): Promise<Record<string, unknown>> {
+  const raw = await client.get(`/templates/${templateId}`);
+  if (raw === null) {
+    throw new ConnectorError('not_found', 'The template is inactive and has no saved draft');
+  }
+  if (!isRecord(raw)) {
+    throw new ConnectorError('invalid_response');
+  }
+  return raw;
+}
 
 // The template list honours starter/viewer access and embeds the kickoff form, unlike GET /templates/{id}.
 async function findTemplate(client: PneumaticClient, templateId: number) {
@@ -42,8 +45,7 @@ async function findTemplate(client: PneumaticClient, templateId: number) {
   );
 }
 
-// The list honours starter access; admins may also see templates outside the first pages through the detail.
-// Without either, Pneumatic validates the values itself.
+// Admins also reach templates beyond the listed pages through the detail; without access Pneumatic validates itself.
 async function kickoffSource(client: PneumaticClient, templateId: number) {
   try {
     return await findTemplate(client, templateId);
@@ -77,9 +79,8 @@ export const templateTools: ToolDef[] = [
       annotations: readOnly,
     },
     async ({ search, isActive, ordering, limit, offset }, { client }) => {
-      const compact = await compactFor(client);
       const raw = await client.get('/templates', { search, is_active: isActive, ordering, limit, offset });
-      return compact.out(compact.page(raw, { limit, offset }, (item) => compact.template(item)));
+      return present(client, (presenter) => presenter.page(raw, { limit, offset }, (item) => presenter.template(item)));
     },
   ),
 
@@ -95,11 +96,7 @@ export const templateTools: ToolDef[] = [
       inputSchema: z.strictObject({ templateId: id('Template') }),
       annotations: readOnly,
     },
-    async ({ templateId }, { client }) => {
-      const raw = await fetchTemplate(client, templateId);
-      const compact = await compactFor(client);
-      return compact.out(compact.templateDetail(raw));
-    },
+    async ({ templateId }, { client }) => templateDetail(client, await fetchTemplate(client, templateId)),
   ),
 
   tool(
@@ -116,12 +113,11 @@ export const templateTools: ToolDef[] = [
     },
     async ({ templateId }, { client }) => {
       const template = await findTemplate(client, templateId);
-      const compact = await compactFor(client);
-      return compact.out({
+      return present(client, (presenter) => ({
         templateId,
-        ...compact.pick(template, ['name', 'description', 'is_active'], ['description']),
-        ...compact.kickoffDefinition(template.kickoff),
-      });
+        ...presenter.pick(template, ['name', 'description', 'is_active'], ['description']),
+        ...presenter.kickoffDefinition(template.kickoff),
+      }));
     },
   ),
 

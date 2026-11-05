@@ -1,9 +1,8 @@
 import { ConnectorError } from '../core/errors.js';
+import { isFileLink } from '../core/files.js';
 import { isRecord, records } from '../core/json.js';
 import { STRING_LIMIT } from '../core/limits.js';
-import { toTimestamp } from './shared.js';
-
-const FILE_LINK = /^!?\[[^\]]+\]\(\S+?(?:\s+"[^"]*")?\)$/;
+import { toTimestamp } from './dates.js';
 
 interface FieldSpec {
   apiName: string;
@@ -87,7 +86,7 @@ function convert(field: FieldSpec, value: unknown): unknown {
       const links = (Array.isArray(value) ? value : [value]).filter(
         (link) => !(typeof link === 'string' && !link.trim()),
       );
-      if (!links.every((link) => typeof link === 'string' && FILE_LINK.test(link.trim()))) {
+      if (!links.every((link) => typeof link === 'string' && isFileLink(link.trim()))) {
         invalid(field, 'expected an array of "[name](url)" links from upload_file (fieldValue) or fileLinks');
       }
       return links;

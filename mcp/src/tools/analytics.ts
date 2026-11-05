@@ -1,10 +1,13 @@
 import * as z from 'zod/v4';
 
-import { tool, type ToolDef } from '../mcp/toolDef.js';
-import { localPage } from '../presenters/index.js';
 import { ConnectorError } from '../core/errors.js';
 import { isRecord } from '../core/json.js';
-import { compactFor, id, idList, limit, offset, period, periodQuery, readOnly } from './shared.js';
+import { tool, type ToolDef } from '../mcp/toolDef.js';
+import { localPage } from '../presenters/index.js';
+import { readOnly } from './annotations.js';
+import { periodQuery } from './dates.js';
+import { present } from './output.js';
+import { id, idList, limit, offset, period } from './schemas.js';
 
 const STEP_STATS_KEYS = ['id', 'name', 'number', 'api_name', 'started', 'completed', 'in_progress', 'overdue'];
 
@@ -53,14 +56,13 @@ export const analyticsTools: ToolDef[] = [
         limit,
         offset,
       });
-      const compact = await compactFor(client);
-      return compact.out(
-        compact.page(raw, { limit, offset }, (item) => ({
-          ...compact.pick(item, ['id', 'name', 'date_created_tsp', 'date_completed_tsp']),
-          status: compact.workflowStatus(isRecord(item) ? item.status : undefined),
-          fields: compact.objects(isRecord(item) ? item.fields : undefined, (value) => ({
-            ...compact.fieldValue(value),
-            ...compact.pick(value, ['task_id']),
+      return present(client, (presenter) =>
+        presenter.page(raw, { limit, offset }, (item) => ({
+          ...presenter.pick(item, ['id', 'name', 'date_created_tsp', 'date_completed_tsp']),
+          status: presenter.workflowStatus(isRecord(item) ? item.status : undefined),
+          fields: presenter.objects(isRecord(item) ? item.fields : undefined, (value) => ({
+            ...presenter.fieldValue(value),
+            ...presenter.pick(value, ['task_id']),
           })),
         })),
       );
@@ -88,8 +90,9 @@ export const analyticsTools: ToolDef[] = [
     async ({ templateId, scope, dateFrom, dateTo, currentOnly }, { client }) => {
       const path = scope === 'all' ? '/reports/dashboard/workflows/by-tasks' : '/reports/dashboard/tasks/by-steps';
       const raw = await client.get(path, { template_id: templateId, ...periodQuery(dateFrom, dateTo, currentOnly) });
-      const compact = await compactFor(client);
-      return compact.out(compact.objects(raw, (item) => compact.pick(item, STEP_STATS_KEYS), 500));
+      return present(client, (presenter) =>
+        presenter.objects(raw, (item) => presenter.pick(item, STEP_STATS_KEYS), 500),
+      );
     },
   ),
 
@@ -135,10 +138,9 @@ export const analyticsTools: ToolDef[] = [
         current_performer_group_ids: filters.currentPerformerGroupIds,
         is_external: filters.isExternal,
       });
-      const compact = await compactFor(client);
-      return compact.out(
-        compact.page(localPage(raw, { limit, offset }), { limit, offset }, (item) =>
-          compact.pick(item, ['type', 'source_id', 'template_task_api_name', 'workflows_count']),
+      return present(client, (presenter) =>
+        presenter.page(localPage(raw, { limit, offset }), { limit, offset }, (item) =>
+          presenter.pick(item, ['type', 'source_id', 'template_task_api_name', 'workflows_count']),
         ),
       );
     },

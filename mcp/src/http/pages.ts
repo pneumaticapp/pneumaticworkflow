@@ -5,8 +5,7 @@ export interface AuthorizePageParams {
   error?: string;
 }
 
-// Only upload pages restrict form-action: CSP form-action also covers redirects after a submit, and the consent form
-// redirects to the client's callback.
+// CSP form-action also covers post-submit redirects, so the consent form that redirects to the client cannot use it.
 export function pageHeaders({ formActionSelf = false }: { formActionSelf?: boolean } = {}): Record<string, string> {
   const directives = [
     "default-src 'none'",

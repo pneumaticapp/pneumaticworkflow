@@ -19,7 +19,7 @@ function fakeUserApi() {
 describe('createApiKeyValidator', () => {
   it('caches rejected keys and treats 403 as a rejection', async () => {
     const { calls, fetchFn } = fakeUserApi();
-    const validator = createApiKeyValidator(createClientFactory({ apiUrl: 'https://pneumatic.test', fetchFn }));
+    const validator = createApiKeyValidator(createClientFactory({ apiUrl: 'https://pneumatic.test' }, fetchFn));
     expect(await validator.validate('bad')).toBeNull();
     expect(await validator.validate('bad')).toBeNull();
     expect(await validator.validate('guest')).toBeNull();
@@ -28,7 +28,7 @@ describe('createApiKeyValidator', () => {
 
   it('shares one Pneumatic call between concurrent checks of a key', async () => {
     const { calls, fetchFn } = fakeUserApi();
-    const validator = createApiKeyValidator(createClientFactory({ apiUrl: 'https://pneumatic.test', fetchFn }));
+    const validator = createApiKeyValidator(createClientFactory({ apiUrl: 'https://pneumatic.test' }, fetchFn));
     const users = await Promise.all([validator.validate('good'), validator.validate('good')]);
     expect(users).toEqual([{ id: 1 }, { id: 1 }]);
     expect(calls).toHaveLength(1);
@@ -36,7 +36,7 @@ describe('createApiKeyValidator', () => {
 
   it('caps checks of unknown keys but keeps serving cached ones', async () => {
     const { fetchFn } = fakeUserApi();
-    const validator = createApiKeyValidator(createClientFactory({ apiUrl: 'https://pneumatic.test', fetchFn }));
+    const validator = createApiKeyValidator(createClientFactory({ apiUrl: 'https://pneumatic.test' }, fetchFn));
     await validator.validate('good');
     await Promise.all(Array.from({ length: 299 }, (_, index) => validator.validate(`guess-${index}`)));
     await expect(validator.validate('guess-next')).rejects.toBeInstanceOf(ValidatorBusyError);

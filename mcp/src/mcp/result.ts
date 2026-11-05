@@ -19,8 +19,8 @@ export function success({ data, truncated = false, content = [] }: ToolOutput): 
   };
 }
 
-export function failure(error: unknown, write: boolean): CallToolResult {
-  const body = { error: publicError(toConnectorError(error), write) };
+export function failure(error: unknown, isWrite: boolean): CallToolResult {
+  const body = { error: publicError(toConnectorError(error), isWrite) };
   return {
     content: [{ type: 'text', text: JSON.stringify(body) }],
     structuredContent: body,

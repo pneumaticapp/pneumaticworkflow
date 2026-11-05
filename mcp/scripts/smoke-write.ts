@@ -1,7 +1,7 @@
 import { Client, InMemoryTransport } from '@modelcontextprotocol/client';
 
 import { loadConfig } from '../src/config.js';
-import { createClientFactory } from '../src/pneumatic/client.js';
+import { createPneumaticClient } from '../src/pneumatic/client.js';
 import { buildServer } from '../src/server.js';
 
 if (process.env.SMOKE_WRITES !== 'yes') {
@@ -13,7 +13,7 @@ const config = loadConfig(['--stdio']);
 if (config.transport !== 'stdio') {
   throw new Error('stdio configuration expected');
 }
-const server = buildServer(createClientFactory(config)(config.apiKey));
+const server = buildServer(createPneumaticClient(config.pneumatic, config.apiKey));
 const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
 const client = new Client({ name: 'smoke-write', version: '1.0.0' });
 await server.connect(serverTransport);
@@ -116,7 +116,7 @@ try {
     await step('set_checklist_item', () =>
       call('set_checklist_item', { checklistId: checklist.id, selectionId: checklist.selections[0].id, checked: true }),
     );
-    const upload = config.filesUrl
+    const upload = config.pneumatic.filesUrl
       ? await step('upload_file', async () => {
           const data = await call('upload_file', { filename: 'smoke.txt', contentText: 'Connector smoke test' });
           need(data.fieldValue, 'fieldValue');

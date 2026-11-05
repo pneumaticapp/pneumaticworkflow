@@ -43,7 +43,7 @@ export class BoundedJson {
   truncated = false;
   private textBudget = TEXT_BUDGET_BYTES;
 
-  out(data: Json) {
+  toOutput(data: Json) {
     return { data, truncated: this.truncated };
   }
 
@@ -79,8 +79,8 @@ export class BoundedJson {
       return value;
     }
     if (Array.isArray(value)) {
-      const primitive = value.every((item) => item === null || typeof item !== 'object');
-      const maxItems = primitive ? MAX_PRIMITIVE_ITEMS : MAX_GENERIC_ITEMS;
+      const isPrimitiveList = value.every((item) => item === null || typeof item !== 'object');
+      const maxItems = isPrimitiveList ? MAX_PRIMITIVE_ITEMS : MAX_GENERIC_ITEMS;
       if (value.length > maxItems || (value.length && depth >= MAX_GENERIC_DEPTH)) {
         this.truncated = true;
       }

@@ -38,8 +38,7 @@ beforeAll(async () => {
     createHttpApp(
       {
         transport: 'http',
-        apiUrl: fake.apiUrl,
-        filesUrl: fake.filesUrl,
+        pneumatic: { apiUrl: fake.apiUrl, filesUrl: fake.filesUrl },
         host: '127.0.0.1',
         port,
         publicUrl: new URL(baseUrl),
@@ -68,7 +67,7 @@ afterAll(async () => {
 
 describe('tool call telemetry', () => {
   it('logs and counts tool calls without arguments or credentials', async () => {
-    const mcpServer = buildServer(createPneumaticClient({ apiUrl: fake.apiUrl, fetchFn: fake.fetchFn }, VALID_API_KEY));
+    const mcpServer = buildServer(createPneumaticClient({ apiUrl: fake.apiUrl }, VALID_API_KEY, fake.fetchFn));
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     const client = new Client({ name: 'test', version: '1.0.0' });
     await mcpServer.connect(serverTransport);

@@ -48,15 +48,15 @@ export interface PublicError {
   detail?: string;
 }
 
-export function publicError(error: ConnectorError, write: boolean): PublicError {
+export function publicError(error: ConnectorError, isWrite: boolean): PublicError {
   let message = MESSAGES[error.code];
-  if (write && UNCERTAIN.has(error.code)) {
+  if (isWrite && UNCERTAIN.has(error.code)) {
     message += ' The outcome may be unknown; check the current state before retrying the action.';
   }
   return {
     code: error.code,
     message,
-    retryable: RETRYABLE.has(error.code) && (!write || SAFE_TO_RETRY.has(error.code)),
+    retryable: RETRYABLE.has(error.code) && (!isWrite || SAFE_TO_RETRY.has(error.code)),
     ...(error.status ? { status: error.status } : {}),
     ...(error.detail ? { detail: error.detail.slice(0, MAX_DETAIL_LENGTH) } : {}),
   };

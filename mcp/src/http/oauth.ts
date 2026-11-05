@@ -4,25 +4,24 @@ import type { OAuthMetadata } from '@modelcontextprotocol/server';
 import express, { type Request, type Response, Router } from 'express';
 
 import { isLoopbackHost } from '../core/net.js';
-import { ValidatorBusyError, type ApiKeyValidator } from './apiKeyValidator.js';
-import { pageHeaders, renderAuthorizePage, renderErrorPage } from './pages.js';
+import type { ReplayStore } from '../core/ports.js';
 import { nowSeconds } from '../core/time.js';
-import type { Sealer } from './sealer.js';
+import { ValidatorBusyError, type ApiKeyValidator } from './apiKeyValidator.js';
 import {
-  asString,
   AUTH_METHODS,
   CLIENT_PREFIX,
   CODE_PREFIX,
-  registerTokenEndpoint,
   SCOPE,
   SUPPORTED_SCOPES,
   TOKEN_FORMAT_VERSION,
-  unprefix,
   type ClientAuthMethod,
   type ClientPayload,
   type CodePayload,
 } from './oauthTokens.js';
-import type { ReplayStore } from '../core/ports.js';
+import { pageHeaders, renderAuthorizePage, renderErrorPage } from './pages.js';
+import { asString, unprefix } from './params.js';
+import type { Sealer } from './sealer.js';
+import { registerTokenEndpoint } from './tokenEndpoint.js';
 
 const CODE_TTL = 5 * 60;
 const MAX_REDIRECT_URIS = 10;
@@ -81,7 +80,7 @@ type AuthorizeResolution =
       client: ClientPayload;
       clientId: string;
       redirectUri: string;
-      redirectUriRequired: boolean;
+      isRedirectUriRequired: boolean;
       codeChallenge: string;
       state?: string;
       hiddenFields: Record<string, string>;
@@ -154,7 +153,7 @@ function resolveAuthorize(
     client,
     clientId,
     redirectUri,
-    redirectUriRequired: requestedRedirect !== undefined,
+    isRedirectUriRequired: requestedRedirect !== undefined,
     codeChallenge,
     state,
     hiddenFields,
@@ -247,15 +246,21 @@ export function createOAuthRouter({
       return;
     }
 
-    const confidential = authMethod !== 'none';
+    const isConfidential = authMethod !== 'none';
     const name = (asString(body.client_name) ?? 'MCP client').slice(0, 100);
     const clientId =
-      CLIENT_PREFIX + sealer.seal<ClientPayload>('client', { name, redirectUris, confidential, authMethod });
+      CLIENT_PREFIX +
+      sealer.seal<ClientPayload>('client', {
+        name,
+        redirectUris,
+        confidential: isConfidential,
+        authMethod,
+      });
 
     res.status(201).json({
       client_id: clientId,
       client_id_issued_at: nowSeconds(),
-      ...(confidential ? { client_secret: sealer.sign(clientId), client_secret_expires_at: 0 } : {}),
+      ...(isConfidential ? { client_secret: sealer.sign(clientId), client_secret_expires_at: 0 } : {}),
       client_name: name,
       redirect_uris: redirectUris,
       grant_types: ['authorization_code', 'refresh_token'],
@@ -313,7 +318,7 @@ export function createOAuthRouter({
           version: TOKEN_FORMAT_VERSION,
           clientId: resolution.clientId,
           redirectUri: resolution.redirectUri,
-          redirectUriRequired: resolution.redirectUriRequired,
+          redirectUriRequired: resolution.isRedirectUriRequired,
           codeChallenge: resolution.codeChallenge,
           apiKey,
           jti: randomBytes(16).toString('base64url'),

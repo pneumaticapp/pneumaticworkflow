@@ -1,32 +1,16 @@
 import * as z from 'zod/v4';
 
-import type { PneumaticClient } from '../pneumatic/client.js';
-import { forgetPeople } from '../pneumatic/directory.js';
-
-import { tool, type ToolDef } from '../mcp/toolDef.js';
 import { ConnectorError } from '../core/errors.js';
 import { isRecord } from '../core/json.js';
-import {
-  compactFor,
-  additive,
-  destructive,
-  done,
-  id,
-  idList,
-  idempotentUpdate,
-  readOnly,
-  requireExactlyOne,
-  userDetail,
-} from './shared.js';
+import { tool, type ToolDef } from '../mcp/toolDef.js';
+import { forgetPeople } from '../pneumatic/directory.js';
+import { additive, destructive, idempotentUpdate, readOnly } from './annotations.js';
+import { groupDetail, userDetail } from './details.js';
+import { present, successOutput } from './output.js';
+import { id, idList, requireExactlyOne } from './schemas.js';
 
 const userId = id('User');
 const groupId = id('Group');
-
-async function groupDetail(client: PneumaticClient, raw: unknown) {
-  forgetPeople(client);
-  const compact = await compactFor(client);
-  return compact.out(compact.pick(raw, ['id', 'name', 'type', 'users']));
-}
 
 export const peopleTools: ToolDef[] = [
   tool(
@@ -54,7 +38,7 @@ export const peopleTools: ToolDef[] = [
         new_user: args.toUserId,
         new_group: args.toGroupId,
       });
-      return done();
+      return successOutput();
     },
   ),
 
@@ -136,8 +120,8 @@ export const peopleTools: ToolDef[] = [
       requireExactlyOne(args, ['userId', 'groupId']);
       const { userId, groupId } = args;
       const path = userId === undefined ? `/accounts/groups/${groupId}` : `/accounts/users/${userId}`;
-      const compact = await compactFor(client);
-      return compact.out(compact.pick(await client.get(`${path}/count-workflows`), ['count']));
+      const raw = await client.get(`${path}/count-workflows`);
+      return present(client, (presenter) => presenter.pick(raw, ['count']));
     },
   ),
 
@@ -155,7 +139,7 @@ export const peopleTools: ToolDef[] = [
     async ({ userId }, { client }) => {
       await client.delete(`/accounts/users/${userId}`);
       forgetPeople(client);
-      return done();
+      return successOutput();
     },
   ),
 
@@ -224,7 +208,7 @@ export const peopleTools: ToolDef[] = [
     async ({ groupId }, { client }) => {
       await client.delete(`/accounts/groups/${groupId}`);
       forgetPeople(client);
-      return done();
+      return successOutput();
     },
   ),
 ];

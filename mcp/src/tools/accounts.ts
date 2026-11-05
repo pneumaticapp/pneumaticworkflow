@@ -4,7 +4,10 @@ import { ConnectorError } from '../core/errors.js';
 import { isRecord } from '../core/json.js';
 import { tool, type ToolDef } from '../mcp/toolDef.js';
 import { localPage } from '../presenters/index.js';
-import { compactFor, done, id, idList, idempotentUpdate, limit, offset, readOnly, userDetail } from './shared.js';
+import { idempotentUpdate, readOnly } from './annotations.js';
+import { userDetail } from './details.js';
+import { present, successOutput } from './output.js';
+import { id, idList, limit, offset } from './schemas.js';
 
 const isoDate = z.iso.date().describe('Date as YYYY-MM-DD');
 
@@ -20,8 +23,8 @@ export const accountTools: ToolDef[] = [
       annotations: readOnly,
     },
     async (_args, { client }) => {
-      const compact = await compactFor(client);
-      return compact.out(compact.user(await client.get('/accounts/user'), { detail: true }));
+      const raw = await client.get('/accounts/user');
+      return present(client, (presenter) => presenter.user(raw, { isDetailed: true }));
     },
   ),
 
@@ -43,9 +46,8 @@ export const accountTools: ToolDef[] = [
       annotations: readOnly,
     },
     async ({ status, type, groupIds, limit, offset }, { client }) => {
-      const compact = await compactFor(client);
       const raw = await client.get('/accounts/users', { status, type, groups: groupIds, limit, offset });
-      return compact.out(compact.page(raw, { limit, offset }, (item) => compact.user(item)));
+      return present(client, (presenter) => presenter.page(raw, { limit, offset }, (item) => presenter.user(item)));
     },
   ),
 
@@ -60,11 +62,8 @@ export const accountTools: ToolDef[] = [
       annotations: readOnly,
     },
     async ({ limit, offset = 0 }, { client }) => {
-      const compact = await compactFor(client);
       const raw = localPage(await client.get('/accounts/groups'), { limit, offset });
-      return compact.out(
-        compact.page(raw, { limit, offset }, (item) => compact.pick(item, ['id', 'name', 'type', 'users'])),
-      );
+      return present(client, (presenter) => presenter.page(raw, { limit, offset }, (item) => presenter.group(item)));
     },
   ),
 
@@ -122,16 +121,20 @@ export const accountTools: ToolDef[] = [
         client.get('/accounts/notifications', { status, limit, offset }),
         client.get('/accounts/user/counters'),
       ]);
-      const compact = await compactFor(client, { people: true });
-      return compact.out({
-        ...compact.page(raw, { limit, offset }, (item) => ({
-          ...compact.pick(item, ['id', 'type', 'status', 'text', 'datetime_tsp', 'author'], ['text']),
-          authorName: compact.userName(isRecord(item) ? item.author : undefined),
-          task: isRecord(item) && isRecord(item.task) ? compact.pick(item.task, ['id', 'name', 'due_date_tsp']) : null,
-          workflow: isRecord(item) && isRecord(item.workflow) ? compact.pick(item.workflow, ['id', 'name']) : null,
-        })),
-        activeTaskCount: isRecord(counters) ? compact.value(counters.tasks_count) : null,
-      });
+      return present(
+        client,
+        (presenter) => ({
+          ...presenter.page(raw, { limit, offset }, (item) => ({
+            ...presenter.pick(item, ['id', 'type', 'status', 'text', 'datetime_tsp', 'author'], ['text']),
+            authorName: presenter.userName(isRecord(item) ? item.author : undefined),
+            task:
+              isRecord(item) && isRecord(item.task) ? presenter.pick(item.task, ['id', 'name', 'due_date_tsp']) : null,
+            workflow: isRecord(item) && isRecord(item.workflow) ? presenter.pick(item.workflow, ['id', 'name']) : null,
+          })),
+          activeTaskCount: isRecord(counters) ? presenter.value(counters.tasks_count) : null,
+        }),
+        { shouldLoadPeople: true },
+      );
     },
   ),
 
@@ -145,7 +148,7 @@ export const accountTools: ToolDef[] = [
     },
     async ({ notificationIds }, { client }) => {
       await client.post('/accounts/notifications/read', { notifications: notificationIds });
-      return done();
+      return successOutput();
     },
   ),
 ];

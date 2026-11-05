@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { closeSync, fsyncSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
-import { open, rename, rm } from 'node:fs/promises';
+import { open } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
 import type { ReplayKind, ReplayStore } from '../core/ports.js';
@@ -21,16 +21,21 @@ function isReplayEntry(entry: unknown): entry is ReplayEntry {
   );
 }
 
-function readEntries(path: string): { entries: Map<string, number>; records: number; legacy: boolean; torn: boolean } {
+function readEntries(path: string): {
+  entries: Map<string, number>;
+  records: number;
+  isLegacy: boolean;
+  isTorn: boolean;
+} {
   const content = readFileSync(path, 'utf8');
   if (!content) {
-    return { entries: new Map(), records: 0, legacy: true, torn: false };
+    return { entries: new Map(), records: 0, isLegacy: true, isTorn: false };
   }
 
-  const legacy = !content.startsWith(HEADER);
+  const isLegacy = !content.startsWith(HEADER);
   // An unfinished last line was never synced, so its token was never issued and the line can be dropped.
-  const complete = legacy ? content : content.slice(HEADER.length, content.lastIndexOf('\n') + 1);
-  const parsed: unknown = legacy
+  const complete = isLegacy ? content : content.slice(HEADER.length, content.lastIndexOf('\n') + 1);
+  const parsed: unknown = isLegacy
     ? JSON.parse(complete)
     : complete
         .split('\n')
@@ -42,21 +47,17 @@ function readEntries(path: string): { entries: Map<string, number>; records: num
   return {
     entries: new Map(parsed),
     records: parsed.length,
-    legacy,
-    torn: !legacy && complete.length < content.length - HEADER.length,
+    isLegacy,
+    isTorn: !isLegacy && complete.length < content.length - HEADER.length,
   };
 }
 
-function snapshot(entries: Map<string, number>): string {
-  return HEADER + [...entries].map((entry) => `${JSON.stringify(entry)}\n`).join('');
-}
-
-function compactOnStartup(path: string, entries: Map<string, number>) {
+function rewriteLedger(path: string, entries: Map<string, number>) {
   const temporary = `${path}.${randomBytes(8).toString('hex')}.tmp`;
   try {
     const file = openSync(temporary, 'wx', 0o600);
     try {
-      writeFileSync(file, snapshot(entries));
+      writeFileSync(file, HEADER + [...entries].map((entry) => `${JSON.stringify(entry)}\n`).join(''));
       fsyncSync(file);
     } finally {
       closeSync(file);
@@ -73,36 +74,14 @@ function compactOnStartup(path: string, entries: Map<string, number>) {
   }
 }
 
-async function compact(path: string, entries: Map<string, number>) {
-  const temporary = `${path}.${randomBytes(8).toString('hex')}.tmp`;
-  try {
-    const file = await open(temporary, 'wx', 0o600);
-    try {
-      await file.writeFile(snapshot(entries));
-      await file.sync();
-    } finally {
-      await file.close();
-    }
-    await rename(temporary, path);
-    const directory = await open(dirname(path), 'r');
-    try {
-      await directory.sync();
-    } finally {
-      await directory.close();
-    }
-  } finally {
-    await rm(temporary, { force: true });
-  }
-}
-
 // One process only: the in-memory index and the append-only file are not shared between replicas.
 export function createFileReplayStore(path: string): ReplayStore {
   const saved = readEntries(path);
   let entries = new Map([...saved.entries].filter(([, expiry]) => expiry >= nowSeconds()));
   let records = saved.records;
   // Rewriting also removes a torn tail, which the next append would otherwise glue onto.
-  if (saved.legacy || saved.torn || entries.size !== records) {
-    compactOnStartup(path, entries);
+  if (saved.isLegacy || saved.isTorn || entries.size !== records) {
+    rewriteLedger(path, entries);
     records = entries.size;
   }
 
@@ -131,7 +110,7 @@ export function createFileReplayStore(path: string): ReplayStore {
       const result = queue.then(async () => {
         if (failed) {
           // A failed append was never acknowledged, so rewriting the file from memory restores a consistent ledger.
-          await compact(path, entries);
+          rewriteLedger(path, entries);
           failed = undefined;
         }
         const now = nowSeconds();
@@ -151,7 +130,7 @@ export function createFileReplayStore(path: string): ReplayStore {
         // Compact only when expired entries dominate; otherwise a large live ledger would be rewritten on every call.
         if (records >= COMPACT_AFTER && records >= 2 * liveCount()) {
           const current = new Map([...entries].filter(([, expiry]) => expiry >= nowSeconds()));
-          await compact(path, current);
+          rewriteLedger(path, current);
           entries = current;
           records = current.size;
         }

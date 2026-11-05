@@ -13,7 +13,7 @@ export function createMemoryRateLimiter(limitPerMinute: number, now: () => numbe
   };
 
   return {
-    async exhausted(key: string) {
+    async isExhausted(key: string) {
       return limitPerMinute > 0 && recentHits(key) >= limitPerMinute;
     },
     async acquire(key: string) {
@@ -40,6 +40,5 @@ export function createMemoryRateLimiter(limitPerMinute: number, now: () => numbe
   };
 }
 
-// Separate instances per scope already keep independent limits apart in memory.
 export const memoryRateLimiterFactory: RateLimiterFactory = (_scope, limitPerMinute) =>
   createMemoryRateLimiter(limitPerMinute);

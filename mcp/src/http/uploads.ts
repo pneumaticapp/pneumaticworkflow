@@ -2,12 +2,13 @@ import { Readable, Transform } from 'node:stream';
 
 import type { Express, Request as ExpressRequest, Response } from 'express';
 
-import type { ClientFactory } from '../pneumatic/client.js';
 import { formatMiB, isSafeFilename, isValidContentType, MAX_UPLOAD_BYTES } from '../core/files.js';
 import { hashApiKey } from '../core/keys.js';
-import { UPLOAD_TTL_SECONDS, type UploadLinks, type UploadRecord, type UploadStore } from '../core/ports.js';
-import { pageHeaders, renderErrorPage, renderUploadDonePage, renderUploadPage } from './pages.js';
+import type { UploadLinks, UploadStore } from '../core/ports.js';
 import { nowSeconds } from '../core/time.js';
+import { UPLOAD_TTL_SECONDS, type UploadRecord } from '../core/uploads.js';
+import type { ClientFactory } from '../pneumatic/client.js';
+import { pageHeaders, renderErrorPage, renderUploadDonePage, renderUploadPage } from './pages.js';
 import type { Sealer } from './sealer.js';
 
 // Longer than reading the body plus the storage upload timeout, so only a crashed process lets a lease lapse.
@@ -38,10 +39,10 @@ export function uploadLinksFor(store: UploadStore, sealer: Sealer, publicUrl: UR
       if (!entry || entry.keyHash !== keyHash) {
         return undefined;
       }
-      const expired = !entry.file && entry.expiresAt < nowSeconds();
+      const isExpired = !entry.file && entry.expiresAt < nowSeconds();
       return {
         uploadId,
-        status: entry.file ? 'ready' : expired ? 'expired' : 'pending',
+        status: entry.file ? 'ready' : isExpired ? 'expired' : 'pending',
         filename: entry.filename,
         expiresAt: entry.expiresAt,
         file: entry.file,
@@ -149,7 +150,7 @@ export function mountUploadRoutes(
     upload: { apiKey: string; entry: UploadRecord },
     leaseId: string,
   ) {
-    const retry = (status: number, error: string) =>
+    const sendUploadError = (status: number, error: string) =>
       res
         .status(status)
         .type('html')
@@ -159,14 +160,14 @@ export function mountUploadRoutes(
       file = await readFile(req);
     } catch (error) {
       return error instanceof TooLargeError
-        ? retry(413, `The file exceeds ${uploadLimit}.`)
-        : retry(400, 'The upload could not be read. Try again.');
+        ? sendUploadError(413, `The file exceeds ${uploadLimit}.`)
+        : sendUploadError(400, 'The upload could not be read. Try again.');
     }
     if (!file || !file.size) {
-      return retry(400, 'Choose a non-empty file.');
+      return sendUploadError(400, 'Choose a non-empty file.');
     }
     if (file.size > MAX_UPLOAD_BYTES) {
-      return retry(413, `The file exceeds ${uploadLimit}.`);
+      return sendUploadError(413, `The file exceeds ${uploadLimit}.`);
     }
     const name = [file.name, upload.entry.filename].find(isSafeFilename) ?? 'file';
     const contentType = isValidContentType(file.type) ? file.type : 'application/octet-stream';
@@ -174,13 +175,13 @@ export function mountUploadRoutes(
     try {
       stored = await clientFor(upload.apiKey).upload({ data: file, filename: name, contentType });
     } catch {
-      return retry(502, 'Pneumatic could not store the file. Try again later.');
+      return sendUploadError(502, 'Pneumatic could not store the file. Try again later.');
     }
     // The file is in Pneumatic now; a lost lease or store error must not invite a duplicate upload.
-    const recorded = await store
+    const isRecorded = await store
       .complete(upload.entry.uploadId, leaseId, { ...stored, name, contentType, size: file.size })
       .catch(() => false);
-    if (!recorded) {
+    if (!isRecorded) {
       res
         .status(500)
         .type('html')

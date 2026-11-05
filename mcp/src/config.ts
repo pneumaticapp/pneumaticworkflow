@@ -2,24 +2,19 @@ import { existsSync } from 'node:fs';
 
 import { isLoopbackHost, LOOPBACK_HOSTS } from './core/net.js';
 import { TOOLSETS, type Toolset, type ToolSelection } from './mcp/toolDef.js';
+import type { PneumaticEndpoints } from './pneumatic/client.js';
 
 export type Transport = 'stdio' | 'http';
 
 export interface StdioConfig extends ToolSelection {
   transport: 'stdio';
-  apiUrl: string;
-  filesUrl?: string;
-  filesInternalUrl?: string;
-  appUrl?: string;
+  pneumatic: PneumaticEndpoints;
   apiKey: string;
 }
 
 export interface HttpConfig extends ToolSelection {
   transport: 'http';
-  apiUrl: string;
-  filesUrl?: string;
-  filesInternalUrl?: string;
-  appUrl?: string;
+  pneumatic: PneumaticEndpoints;
   host: string;
   port: number;
   publicUrl: URL;
@@ -67,7 +62,7 @@ function readList(value: string | undefined): string[] | undefined {
     .filter(Boolean);
 }
 
-function parseBaseUrl(name: string, value: string): URL {
+function parseBaseUrl(name: string, value: string): string {
   let url: URL;
   try {
     url = new URL(value);
@@ -77,7 +72,7 @@ function parseBaseUrl(name: string, value: string): URL {
   if (!['http:', 'https:'].includes(url.protocol) || url.search || url.hash || url.username || url.password) {
     throw new ConfigError(`${name} must be an HTTP(S) URL without query, fragment or credentials`);
   }
-  return url;
+  return url.href.replace(/\/+$/, '');
 }
 
 // Returned as given rather than as url.href: the client identity hashes it and the files URL default compares it.
@@ -87,8 +82,7 @@ function readApiUrl(env: NodeJS.ProcessEnv): string {
   return value.replace(/\/+$/, '');
 }
 
-// Express "trust proxy": true/false, a hop count, or comma-separated subnets. The default also trusts private
-// networks because a Docker container sees the host's reverse proxy through the bridge gateway (e.g. 172.17.0.1).
+// The default trusts private networks: in Docker the host's reverse proxy arrives via the bridge gateway.
 function readTrustProxy(value: string | undefined): boolean | number | string {
   const trimmed = value?.trim() || 'loopback,uniquelocal';
   if (trimmed === 'true' || trimmed === 'false') {
@@ -104,7 +98,7 @@ function readAppUrl(env: NodeJS.ProcessEnv, filesUrl: string | undefined): strin
   if (!value) {
     return undefined;
   }
-  return parseBaseUrl('PNEUMATIC_APP_URL', value).href.replace(/\/+$/, '');
+  return parseBaseUrl('PNEUMATIC_APP_URL', value);
 }
 
 function readToolOptions(env: NodeJS.ProcessEnv): ToolSelection {
@@ -119,7 +113,7 @@ function readToolOptions(env: NodeJS.ProcessEnv): ToolSelection {
   }
   return {
     toolsets: !listed?.length || listed.includes('all') ? undefined : (listed as Toolset[]),
-    readOnly: ['true', 'yes', '1'].includes(readOnly),
+    isReadOnly: ['true', 'yes', '1'].includes(readOnly),
   };
 }
 
@@ -136,7 +130,7 @@ function readFilesUrl(env: NodeJS.ProcessEnv, apiUrl: string): string | undefine
   if (!value) {
     return undefined;
   }
-  return parseBaseUrl('PNEUMATIC_FILES_URL', value).href.replace(/\/+$/, '');
+  return parseBaseUrl('PNEUMATIC_FILES_URL', value);
 }
 
 // The public files URL can be unreachable from the connector container (e.g. http://localhost/files).
@@ -148,22 +142,30 @@ function readFilesInternalUrl(env: NodeJS.ProcessEnv, filesUrl: string | undefin
   if (!filesUrl) {
     throw new ConfigError('PNEUMATIC_FILES_INTERNAL_URL requires PNEUMATIC_FILES_URL');
   }
-  return parseBaseUrl('PNEUMATIC_FILES_INTERNAL_URL', value).href.replace(/\/+$/, '');
+  return parseBaseUrl('PNEUMATIC_FILES_INTERNAL_URL', value);
+}
+
+function readEndpoints(env: NodeJS.ProcessEnv): PneumaticEndpoints {
+  const apiUrl = readApiUrl(env);
+  const filesUrl = readFilesUrl(env, apiUrl);
+  return {
+    apiUrl,
+    filesUrl,
+    filesInternalUrl: readFilesInternalUrl(env, filesUrl),
+    appUrl: readAppUrl(env, filesUrl),
+  };
 }
 
 export function loadConfig(argv: string[] = process.argv.slice(2), env: NodeJS.ProcessEnv = process.env): Config {
   const transport = readTransport(argv, env);
-  const apiUrl = readApiUrl(env);
-  const filesUrl = readFilesUrl(env, apiUrl);
-  const filesInternalUrl = readFilesInternalUrl(env, filesUrl);
-  const appUrl = readAppUrl(env, filesUrl);
+  const pneumatic = readEndpoints(env);
 
   if (transport === 'stdio') {
     const apiKey = env.PNEUMATIC_API_KEY?.trim();
     if (!apiKey) {
       throw new ConfigError('PNEUMATIC_API_KEY is required in stdio mode');
     }
-    return { transport, apiUrl, filesUrl, filesInternalUrl, appUrl, apiKey, ...readToolOptions(env) };
+    return { transport, pneumatic, apiKey, ...readToolOptions(env) };
   }
 
   const port = Number(env.PORT ?? 3000);
@@ -211,10 +213,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2), env: NodeJS.P
 
   return {
     transport,
-    apiUrl,
-    filesUrl,
-    filesInternalUrl,
-    appUrl,
+    pneumatic,
     host,
     port,
     publicUrl,

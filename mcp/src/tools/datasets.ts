@@ -1,22 +1,15 @@
 import * as z from 'zod/v4';
 
-import type { PneumaticClient } from '../pneumatic/client.js';
-
-import { tool, type ToolDef } from '../mcp/toolDef.js';
 import { ConnectorError } from '../core/errors.js';
 import { isRecord, records } from '../core/json.js';
-import { compactFor, additive, destructive, done, id, limit, offset, readOnly } from './shared.js';
+import { tool, type ToolDef } from '../mcp/toolDef.js';
+import { additive, destructive, readOnly } from './annotations.js';
+import { datasetDetail } from './details.js';
+import { present, successOutput } from './output.js';
+import { id, limit, offset } from './schemas.js';
 
 const datasetId = id('Dataset');
 const itemValue = z.string().trim().min(1).max(200);
-
-async function datasetDetail(client: PneumaticClient, raw: unknown) {
-  const compact = await compactFor(client);
-  return compact.out({
-    ...compact.pick(raw, ['id', 'name', 'description']),
-    items: compact.objects(isRecord(raw) ? raw.items : undefined, (item) => compact.pick(item, ['id', 'value']), 1000),
-  });
-}
 
 export const datasetReadTools: ToolDef[] = [
   tool(
@@ -28,11 +21,10 @@ export const datasetReadTools: ToolDef[] = [
       annotations: readOnly,
     },
     async ({ limit, offset }, { client }) => {
-      const compact = await compactFor(client);
       const raw = await client.get('/datasets', { limit, offset });
-      return compact.out(
-        compact.page(raw, { limit, offset }, (item) =>
-          compact.pick(item, ['id', 'name', 'description', 'items_count', 'date_created_tsp']),
+      return present(client, (presenter) =>
+        presenter.page(raw, { limit, offset }, (item) =>
+          presenter.pick(item, ['id', 'name', 'description', 'items_count', 'date_created_tsp']),
         ),
       );
     },
@@ -155,7 +147,7 @@ export const datasetTools: ToolDef[] = [
     },
     async ({ datasetId }, { client }) => {
       await client.delete(`/datasets/${datasetId}`);
-      return done();
+      return successOutput();
     },
   ),
 ];

@@ -44,8 +44,10 @@ describe('file storage configuration', () => {
   const stdioEnv = { PNEUMATIC_API_KEY: 'pn-key' };
 
   it('defaults to Pneumatic Cloud storage only for the Cloud API', () => {
-    expect(loadConfig([], stdioEnv)).toMatchObject({ filesUrl: 'https://my.pneumatic.app/files' });
-    expect(loadConfig([], { ...stdioEnv, PNEUMATIC_API_URL: 'https://pneumatic.internal' }).filesUrl).toBeUndefined();
+    expect(loadConfig([], stdioEnv)).toMatchObject({ pneumatic: { filesUrl: 'https://my.pneumatic.app/files' } });
+    expect(
+      loadConfig([], { ...stdioEnv, PNEUMATIC_API_URL: 'https://pneumatic.internal' }).pneumatic.filesUrl,
+    ).toBeUndefined();
   });
 
   it('normalizes an explicit storage URL', () => {
@@ -55,7 +57,7 @@ describe('file storage configuration', () => {
         PNEUMATIC_API_URL: 'https://pneumatic.internal',
         PNEUMATIC_FILES_URL: 'https://app.internal/files/',
       }),
-    ).toMatchObject({ filesUrl: 'https://app.internal/files' });
+    ).toMatchObject({ pneumatic: { filesUrl: 'https://app.internal/files' } });
   });
 
   it('reads an internal storage URL only alongside the public one', () => {
@@ -65,8 +67,10 @@ describe('file storage configuration', () => {
         PNEUMATIC_FILES_URL: 'http://localhost/files',
         PNEUMATIC_FILES_INTERNAL_URL: 'http://pneumatic-file-service:8000/',
       }),
-    ).toMatchObject({ filesUrl: 'http://localhost/files', filesInternalUrl: 'http://pneumatic-file-service:8000' });
-    expect(loadConfig([], stdioEnv).filesInternalUrl).toBeUndefined();
+    ).toMatchObject({
+      pneumatic: { filesUrl: 'http://localhost/files', filesInternalUrl: 'http://pneumatic-file-service:8000' },
+    });
+    expect(loadConfig([], stdioEnv).pneumatic.filesInternalUrl).toBeUndefined();
     expect(() =>
       loadConfig([], {
         ...stdioEnv,
@@ -87,33 +91,35 @@ describe('proxy trust', () => {
 
 describe('web app links', () => {
   it('derives the app URL from the storage URL unless set explicitly', () => {
-    expect(loadConfig([], { PNEUMATIC_API_KEY: 'pn-key' })).toMatchObject({ appUrl: 'https://my.pneumatic.app' });
+    expect(loadConfig([], { PNEUMATIC_API_KEY: 'pn-key' })).toMatchObject({
+      pneumatic: { appUrl: 'https://my.pneumatic.app' },
+    });
     expect(
       loadConfig([], {
         PNEUMATIC_API_KEY: 'pn-key',
         PNEUMATIC_API_URL: 'https://api.internal',
         PNEUMATIC_APP_URL: 'https://app.internal/',
       }),
-    ).toMatchObject({ appUrl: 'https://app.internal' });
+    ).toMatchObject({ pneumatic: { appUrl: 'https://app.internal' } });
     expect(
-      loadConfig([], { PNEUMATIC_API_KEY: 'pn-key', PNEUMATIC_API_URL: 'https://api.internal' }).appUrl,
+      loadConfig([], { PNEUMATIC_API_KEY: 'pn-key', PNEUMATIC_API_URL: 'https://api.internal' }).pneumatic.appUrl,
     ).toBeUndefined();
     expect(
       loadConfig([], {
         PNEUMATIC_API_KEY: 'pn-key',
         PNEUMATIC_API_URL: 'https://api.internal',
         PNEUMATIC_FILES_URL: 'https://files.internal',
-      }).appUrl,
+      }).pneumatic.appUrl,
     ).toBeUndefined();
   });
 });
 
 describe('tool catalog options', () => {
   it('parses toolsets and read-only mode for both transports', () => {
-    expect(loadConfig([], { PNEUMATIC_API_KEY: 'pn-key' })).toMatchObject({ toolsets: undefined, readOnly: false });
+    expect(loadConfig([], { PNEUMATIC_API_KEY: 'pn-key' })).toMatchObject({ toolsets: undefined, isReadOnly: false });
     expect(loadConfig([], { PNEUMATIC_API_KEY: 'pn-key', TOOLSETS: 'core, Files', READ_ONLY: 'yes' })).toMatchObject({
       toolsets: ['core', 'files'],
-      readOnly: true,
+      isReadOnly: true,
     });
     expect(loadConfig([], { ...httpEnv, TOOLSETS: 'all' })).toMatchObject({ toolsets: undefined });
     expect(() => loadConfig([], { PNEUMATIC_API_KEY: 'pn-key', TOOLSETS: 'core,billing' })).toThrow(ConfigError);

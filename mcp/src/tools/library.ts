@@ -1,10 +1,12 @@
 import * as z from 'zod/v4';
 
-import { tool, type ToolDef } from '../mcp/toolDef.js';
 import { ConnectorError } from '../core/errors.js';
 import { isRecord } from '../core/json.js';
-import { templateDetail } from './designer.js';
-import { additive, compactFor, id, limit, offset, readOnly } from './shared.js';
+import { tool, type ToolDef } from '../mcp/toolDef.js';
+import { additive, readOnly } from './annotations.js';
+import { templateDetail } from './details.js';
+import { present } from './output.js';
+import { id, limit, offset } from './schemas.js';
 import { chainInOrder, sortedTasks } from './templateSteps.js';
 
 export const libraryTools: ToolDef[] = [
@@ -23,16 +25,15 @@ export const libraryTools: ToolDef[] = [
     },
     async ({ description }, { client }) => {
       const raw = await client.post('/templates/ai', { description });
-      const compact = await compactFor(client);
       if (!isRecord(raw)) {
         throw new ConnectorError('invalid_response');
       }
-      return compact.out({
-        ...compact.pick(raw, ['name']),
-        steps: compact.objects(raw.tasks, (task) =>
-          compact.pick(task, ['number', 'name', 'description'], ['description']),
+      return present(client, (presenter) => ({
+        ...presenter.pick(raw, ['name']),
+        steps: presenter.objects(raw.tasks, (task) =>
+          presenter.pick(task, ['number', 'name', 'description'], ['description']),
         ),
-      });
+      }));
     },
   ),
 
@@ -53,17 +54,16 @@ export const libraryTools: ToolDef[] = [
       annotations: readOnly,
     },
     async ({ search, categoryId, withCategories, limit, offset }, { client }) => {
-      const compact = await compactFor(client);
       const raw = await client.get('/templates/system', { search, category: categoryId, limit, offset });
-      const page = compact.page(raw, { limit, offset }, (item) =>
-        compact.pick(item, ['id', 'name', 'description', 'category']),
-      );
-      if (withCategories) {
-        page.categories = compact.objects(await client.get('/templates/system/categories'), (item) =>
-          compact.pick(item, ['id', 'name']),
-        );
-      }
-      return compact.out(page);
+      const categories = withCategories ? await client.get('/templates/system/categories') : undefined;
+      return present(client, (presenter) => ({
+        ...presenter.page(raw, { limit, offset }, (item) =>
+          presenter.pick(item, ['id', 'name', 'description', 'category']),
+        ),
+        ...(withCategories
+          ? { categories: presenter.objects(categories, (item) => presenter.pick(item, ['id', 'name'])) }
+          : {}),
+      }));
     },
   ),
 

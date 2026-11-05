@@ -2,9 +2,9 @@ import type { Client } from '@modelcontextprotocol/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { RemoteFetcher } from '../src/core/ports.js';
-import { MAX_RESULT_BYTES } from '../src/presenters/index.js';
 import { ConnectorError } from '../src/core/errors.js';
-import { toTimestamp } from '../src/tools/shared.js';
+import { MAX_RESULT_BYTES } from '../src/presenters/index.js';
+import { toTimestamp } from '../src/tools/dates.js';
 import { createFakePneumatic, VALID_API_KEY } from './fakePneumatic.js';
 import { callTool, connectServer, type ConnectOptions } from './harness.js';
 
@@ -288,7 +288,7 @@ describe('errors', () => {
   });
 });
 
-describe('compact results', () => {
+describe('presented results', () => {
   it('returns task details with camelCase keys, named statuses and file links', async () => {
     fake.respond((request) =>
       request.path === '/v2/tasks/3'

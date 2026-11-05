@@ -1,26 +1,13 @@
 import * as z from 'zod/v4';
 
-import type { PneumaticClient } from '../pneumatic/client.js';
-
-import { tool, type ToolDef } from '../mcp/toolDef.js';
-import { fieldSpecs, prepareFieldValues } from './fields.js';
 import { isRecord } from '../core/json.js';
-import {
-  compactFor,
-  additive,
-  commentText,
-  dateTime,
-  destructive,
-  done,
-  fieldValues,
-  id,
-  idempotentUpdate,
-  limit,
-  offset,
-  readOnly,
-  requireExactlyOne,
-  toTimestamp,
-} from './shared.js';
+import { tool, type ToolDef } from '../mcp/toolDef.js';
+import { additive, destructive, idempotentUpdate, readOnly } from './annotations.js';
+import { toTimestamp } from './dates.js';
+import { taskDetail } from './details.js';
+import { fieldSpecs, prepareFieldValues } from './fields.js';
+import { present, successOutput } from './output.js';
+import { commentText, dateTime, fieldValues, id, limit, offset, requireExactlyOne } from './schemas.js';
 
 const taskId = id('Task').describe('Workflow task instance ID, not a template step');
 
@@ -43,11 +30,6 @@ function performerRequest(action: 'create' | 'delete', performer: Performer) {
     return { path: `${action}-group-performer`, body: { group_id: groupId } };
   }
   return { path: `${action}-guest-performer`, body: { email: guestEmail } };
-}
-
-async function taskDetail(client: PneumaticClient, raw: unknown) {
-  const compact = await compactFor(client, { people: true });
-  return compact.out(compact.taskDetail(raw));
 }
 
 export const taskTools: ToolDef[] = [
@@ -84,8 +66,7 @@ export const taskTools: ToolDef[] = [
         limit: args.limit,
         offset: args.offset,
       });
-      const compact = await compactFor(client);
-      return compact.out(compact.page(raw, args, (item) => compact.task(item)));
+      return present(client, (presenter) => presenter.page(raw, args, (item) => presenter.task(item)));
     },
   ),
 
@@ -126,8 +107,9 @@ export const taskTools: ToolDef[] = [
         limit,
         offset,
       });
-      const compact = await compactFor(client, { people: true });
-      return compact.out(compact.page(raw, { limit, offset }, (item) => compact.event(item)));
+      return present(client, (presenter) => presenter.page(raw, { limit, offset }, (item) => presenter.event(item)), {
+        shouldLoadPeople: true,
+      });
     },
   ),
 
@@ -165,7 +147,7 @@ export const taskTools: ToolDef[] = [
     },
     async ({ taskId, comment }, { client }) => {
       await client.post(`/v2/tasks/${taskId}/revert`, { comment });
-      return done();
+      return successOutput();
     },
   ),
 
@@ -181,8 +163,8 @@ export const taskTools: ToolDef[] = [
       annotations: additive,
     },
     async ({ taskId, text }, { client }) => {
-      const compact = await compactFor(client, { people: true });
-      return compact.out(compact.event(await client.post(`/v2/tasks/${taskId}/comment`, { text })));
+      const raw = await client.post(`/v2/tasks/${taskId}/comment`, { text });
+      return present(client, (presenter) => presenter.event(raw), { shouldLoadPeople: true });
     },
   ),
 
@@ -200,7 +182,7 @@ export const taskTools: ToolDef[] = [
       } else {
         await client.post(`/v2/tasks/${taskId}/due-date`, { due_date_tsp: toTimestamp(dueDate) });
       }
-      return done();
+      return successOutput();
     },
   ),
 
@@ -215,8 +197,9 @@ export const taskTools: ToolDef[] = [
     async (args, { client }) => {
       const { path, body } = performerRequest('create', args);
       const raw = await client.post(`/v2/tasks/${args.taskId}/${path}`, body);
-      const compact = await compactFor(client);
-      return raw === null ? done() : compact.out({ success: true, guest: compact.user(raw) });
+      return raw === null
+        ? successOutput()
+        : present(client, (presenter) => ({ success: true, guest: presenter.user(raw) }));
     },
   ),
 
@@ -231,7 +214,7 @@ export const taskTools: ToolDef[] = [
     async (args, { client }) => {
       const { path, body } = performerRequest('delete', args);
       await client.post(`/v2/tasks/${args.taskId}/${path}`, body);
-      return done();
+      return successOutput();
     },
   ),
 
@@ -252,8 +235,7 @@ export const taskTools: ToolDef[] = [
       const raw = await client.post(`/v2/tasks/checklists/${checklistId}/${checked ? 'mark' : 'unmark'}`, {
         selection_id: selectionId,
       });
-      const compact = await compactFor(client);
-      return raw === null ? done() : compact.out(compact.checklist(raw));
+      return raw === null ? successOutput() : present(client, (presenter) => presenter.checklist(raw));
     },
   ),
 ];

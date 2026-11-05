@@ -1,27 +1,14 @@
 import * as z from 'zod/v4';
 
-import { tool, type ToolDef } from '../mcp/toolDef.js';
-import { fieldSpecs, prepareFieldValues } from './fields.js';
 import { ConnectorError } from '../core/errors.js';
 import { isRecord } from '../core/json.js';
-import {
-  compactFor,
-  additive,
-  commentText,
-  dateTime,
-  destructive,
-  done,
-  fieldValues,
-  id,
-  idList,
-  idempotentUpdate,
-  limit,
-  offset,
-  optionalTimestamp,
-  readOnly,
-  toTimestamp,
-  workflowDetail,
-} from './shared.js';
+import { tool, type ToolDef } from '../mcp/toolDef.js';
+import { additive, destructive, idempotentUpdate, readOnly } from './annotations.js';
+import { optionalTimestamp, toTimestamp } from './dates.js';
+import { workflowDetail } from './details.js';
+import { fieldSpecs, prepareFieldValues } from './fields.js';
+import { present, successOutput } from './output.js';
+import { commentText, dateTime, fieldValues, id, idList, limit, offset } from './schemas.js';
 
 const workflowId = id('Workflow').describe('Workflow instance ID, not its template ID');
 
@@ -75,8 +62,9 @@ export const workflowTools: ToolDef[] = [
         limit: args.limit,
         offset: args.offset,
       });
-      const compact = await compactFor(client, { people: true });
-      return compact.out(compact.page(raw, args, (item) => compact.workflow(item)));
+      return present(client, (presenter) => presenter.page(raw, args, (item) => presenter.workflow(item)), {
+        shouldLoadPeople: true,
+      });
     },
   ),
 
@@ -119,8 +107,9 @@ export const workflowTools: ToolDef[] = [
         limit,
         offset,
       });
-      const compact = await compactFor(client, { people: true });
-      return compact.out(compact.page(raw, { limit, offset }, (item) => compact.event(item)));
+      return present(client, (presenter) => presenter.page(raw, { limit, offset }, (item) => presenter.event(item)), {
+        shouldLoadPeople: true,
+      });
     },
   ),
 
@@ -137,8 +126,8 @@ export const workflowTools: ToolDef[] = [
       annotations: additive,
     },
     async ({ workflowId, text }, { client }) => {
-      const compact = await compactFor(client, { people: true });
-      return compact.out(compact.event(await client.post(`/workflows/${workflowId}/comment`, { text })));
+      const raw = await client.post(`/workflows/${workflowId}/comment`, { text });
+      return present(client, (presenter) => presenter.event(raw), { shouldLoadPeople: true });
     },
   ),
 
@@ -220,7 +209,7 @@ export const workflowTools: ToolDef[] = [
         throw new ConnectorError('invalid_arguments', 'Provide taskId or taskApiName');
       }
       await client.post(`/workflows/${workflowId}/return-to`, { task: taskId, task_api_name: taskApiName });
-      return done();
+      return successOutput();
     },
   ),
 
@@ -235,7 +224,7 @@ export const workflowTools: ToolDef[] = [
     },
     async ({ workflowId }, { client }) => {
       await client.post(`/workflows/${workflowId}/finish`);
-      return done();
+      return successOutput();
     },
   ),
 
@@ -249,7 +238,7 @@ export const workflowTools: ToolDef[] = [
     },
     async ({ workflowId }, { client }) => {
       await client.delete(`/workflows/${workflowId}`);
-      return done();
+      return successOutput();
     },
   ),
 
@@ -265,8 +254,8 @@ export const workflowTools: ToolDef[] = [
       annotations: idempotentUpdate,
     },
     async ({ commentId, text }, { client }) => {
-      const compact = await compactFor(client, { people: true });
-      return compact.out(compact.event(await client.patch(`/workflows/comments/${commentId}`, { text })));
+      const raw = await client.patch(`/workflows/comments/${commentId}`, { text });
+      return present(client, (presenter) => presenter.event(raw), { shouldLoadPeople: true });
     },
   ),
 
@@ -280,7 +269,7 @@ export const workflowTools: ToolDef[] = [
     },
     async ({ commentId }, { client }) => {
       await client.delete(`/workflows/comments/${commentId}`);
-      return done();
+      return successOutput();
     },
   ),
 
@@ -302,7 +291,7 @@ export const workflowTools: ToolDef[] = [
       await client.post(`/workflows/comments/${commentId}/${remove ? 'delete' : 'create'}-reaction`, {
         value: reaction,
       });
-      return done();
+      return successOutput();
     },
   ),
 ];

@@ -1,5 +1,6 @@
+import { fileLinksIn } from '../core/files.js';
 import { isRecord } from '../core/json.js';
-import type { PeopleDirectory } from '../core/ports.js';
+import type { PeopleDirectory } from '../core/people.js';
 import { BoundedJson, isoDate, type Json, type JsonObject } from './bounded.js';
 
 const WORKFLOW_STATUSES: Record<number, string> = { 0: 'running', 1: 'done', 3: 'snoozed' };
@@ -31,18 +32,12 @@ const EVENT_TYPES: Record<number, string> = {
   23: 'task_delegation',
 };
 
-const MARKDOWN_LINK = /!?\[[^\]]+\]\([^)\s]+(?:\s+"[^"]*")?\)/g;
-
-function fileLinks(markdown: unknown): string[] {
-  return typeof markdown === 'string' ? (markdown.match(MARKDOWN_LINK) ?? []) : [];
-}
-
 export interface PresenterOptions {
   appUrl?: string;
   people?: PeopleDirectory;
 }
 
-export class Compact extends BoundedJson {
+export class PneumaticPresenter extends BoundedJson {
   constructor(private readonly options: PresenterOptions = {}) {
     super();
   }
@@ -92,7 +87,7 @@ export class Compact extends BoundedJson {
     const record = this.requireRecord(value);
     const data = this.pick(record, ['api_name', 'name', 'type', 'is_required', 'is_hidden', 'description', 'value']);
     if (record.type === 'file') {
-      data.fileLinks = fileLinks(record.markdown_value);
+      data.fileLinks = typeof record.markdown_value === 'string' ? fileLinksIn(record.markdown_value) : [];
     }
     if (record.type === 'user') {
       Object.assign(data, this.pick(record, ['user_id', 'group_id']));
@@ -224,7 +219,7 @@ export class Compact extends BoundedJson {
     return data;
   }
 
-  workflow(value: unknown, { detail = false } = {}): JsonObject {
+  workflow(value: unknown, { isDetailed = false } = {}): JsonObject {
     const record = this.requireRecord(value);
     const data = this.pick(
       record,
@@ -240,7 +235,7 @@ export class Compact extends BoundedJson {
         'date_completed_tsp',
         'workflow_starter',
         'ancestor_task_id',
-        ...(detail ? ['owners'] : []),
+        ...(isDetailed ? ['owners'] : []),
       ],
       ['description'],
     );
@@ -252,7 +247,7 @@ export class Compact extends BoundedJson {
     }
     data.template = isRecord(record.template) ? this.pick(record.template, ['id', 'name', 'is_active']) : null;
     data.tasks = this.objects(record.tasks, (item) => this.currentTask(item));
-    if (detail) {
+    if (isDetailed) {
       const kickoff = isRecord(record.kickoff) ? record.kickoff : {};
       data.kickoff = this.objects(kickoff.output, (item) => this.fieldValue(item));
       data.kickoffFieldsets = this.fieldsets(kickoff.fieldsets, (item) => this.fieldValue(item));
@@ -362,7 +357,7 @@ export class Compact extends BoundedJson {
     return data;
   }
 
-  user(value: unknown, { detail = false } = {}): JsonObject {
+  user(value: unknown, { isDetailed = false } = {}): JsonObject {
     const record = this.requireRecord(value);
     const data = this.pick(record, [
       'id',
@@ -374,12 +369,16 @@ export class Compact extends BoundedJson {
       'is_admin',
       'is_account_owner',
       'groups',
-      ...(detail ? ['timezone', 'language', 'manager_id', 'subordinates_ids'] : []),
+      ...(isDetailed ? ['timezone', 'language', 'manager_id', 'subordinates_ids'] : []),
     ]);
-    if (detail && isRecord(record.vacation)) {
+    if (isDetailed && isRecord(record.vacation)) {
       data.vacation = this.pick(record.vacation, ['absence_status', 'start_date', 'end_date', 'substitute_user_ids']);
     }
     return data;
+  }
+
+  group(record: unknown): JsonObject {
+    return this.pick(record, ['id', 'name', 'type', 'users']);
   }
 
   attachment(record: unknown): JsonObject {

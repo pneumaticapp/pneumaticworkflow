@@ -2,17 +2,10 @@ import * as z from 'zod/v4';
 
 import { tool, type ToolDef } from '../mcp/toolDef.js';
 import { localPage } from '../presenters/index.js';
-import {
-  compactFor,
-  dateTime,
-  idList,
-  limit,
-  offset,
-  optionalTimestamp,
-  period,
-  periodQuery,
-  readOnly,
-} from './shared.js';
+import { readOnly } from './annotations.js';
+import { optionalTimestamp, periodQuery } from './dates.js';
+import { present } from './output.js';
+import { dateTime, idList, limit, offset, period } from './schemas.js';
 
 export const reportTools: ToolDef[] = [
   tool(
@@ -34,12 +27,11 @@ export const reportTools: ToolDef[] = [
     },
     async ({ scope, breakdown, dateFrom, dateTo, currentOnly, limit, offset }, { client }) => {
       const query = periodQuery(dateFrom, dateTo, currentOnly);
-      const compact = await compactFor(client);
       if (breakdown === 'template') {
         const raw = localPage(await client.get(`/reports/dashboard/${scope}/breakdown`, query), { limit, offset });
-        return compact.out(
-          compact.page(raw, { limit, offset }, (item) =>
-            compact.pick(item, [
+        return present(client, (presenter) =>
+          presenter.page(raw, { limit, offset }, (item) =>
+            presenter.pick(item, [
               'template_id',
               'template_name',
               'is_active',
@@ -52,7 +44,7 @@ export const reportTools: ToolDef[] = [
         );
       }
       const raw = await client.get(`/reports/dashboard/${scope}/overview`, query);
-      return compact.out(compact.pick(raw, ['started', 'completed', 'in_progress', 'overdue']));
+      return present(client, (presenter) => presenter.pick(raw, ['started', 'completed', 'in_progress', 'overdue']));
     },
   ),
 
@@ -84,8 +76,9 @@ export const reportTools: ToolDef[] = [
         limit: args.limit,
         offset: args.offset,
       });
-      const compact = await compactFor(client, { people: true });
-      return compact.out(compact.page(raw, args, (item) => compact.highlight(item)));
+      return present(client, (presenter) => presenter.page(raw, args, (item) => presenter.highlight(item)), {
+        shouldLoadPeople: true,
+      });
     },
   ),
 ];

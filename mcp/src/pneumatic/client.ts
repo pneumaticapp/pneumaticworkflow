@@ -99,12 +99,12 @@ export interface PneumaticEndpoints {
   filesUrl?: string;
   filesInternalUrl?: string;
   appUrl?: string;
-  fetchFn?: typeof fetch;
 }
 
 export function createPneumaticClient(
-  { apiUrl, filesUrl, filesInternalUrl, appUrl, fetchFn = fetch }: PneumaticEndpoints,
+  { apiUrl, filesUrl, filesInternalUrl, appUrl }: PneumaticEndpoints,
   apiKey: string,
+  fetchFn: typeof fetch = fetch,
 ) {
   async function request<T>(method: string, path: string, { query, body }: RequestOptions = {}): Promise<T> {
     const headers: Record<string, string> = {
@@ -237,8 +237,8 @@ export function createPneumaticClient(
 
 export type PneumaticClient = ReturnType<typeof createPneumaticClient>;
 
-export function createClientFactory(endpoints: PneumaticEndpoints) {
-  return (apiKey: string) => createPneumaticClient(endpoints, apiKey);
+export function createClientFactory(endpoints: PneumaticEndpoints, fetchFn: typeof fetch = fetch) {
+  return (apiKey: string) => createPneumaticClient(endpoints, apiKey, fetchFn);
 }
 
 export type ClientFactory = ReturnType<typeof createClientFactory>;

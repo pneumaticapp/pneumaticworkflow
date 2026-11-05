@@ -17,11 +17,11 @@ import { log } from '../core/log.js';
 import { count, renderMetrics } from '../core/metrics.js';
 import { LOOPBACK_HOSTS } from '../core/net.js';
 import type { RateLimiter, RateLimiterFactory, ReplayStore, UploadStore } from '../core/ports.js';
+import { createClientFactory } from '../pneumatic/client.js';
+import { buildServer } from '../server.js';
 import { createFileReplayStore } from '../stores/fileReplayStore.js';
 import { memoryRateLimiterFactory } from '../stores/memoryRateLimiter.js';
 import { createMemoryUploadStore } from '../stores/memoryUploadStore.js';
-import { createClientFactory } from '../pneumatic/client.js';
-import { buildServer } from '../server.js';
 import { createApiKeyValidator } from './apiKeyValidator.js';
 import { buildOAuthMetadata, createOAuthRouter } from './oauth.js';
 import { createTokenVerifier, SUPPORTED_SCOPES } from './oauthTokens.js';
@@ -71,8 +71,8 @@ const requestLog: RequestHandler = (req, res, next) => {
   res.on('finish', () => {
     const route = routeOf(req.path);
     count('http_requests_total', 'HTTP requests by route and status', { route, status: String(res.statusCode) });
-    const probe = (route === 'healthz' || route === 'metrics') && res.statusCode < 400;
-    log(res.statusCode >= 500 ? 'error' : probe ? 'debug' : 'info', 'http_request', {
+    const isProbe = (route === 'healthz' || route === 'metrics') && res.statusCode < 400;
+    log(res.statusCode >= 500 ? 'error' : isProbe ? 'debug' : 'info', 'http_request', {
       requestId,
       method: req.method,
       route,
@@ -107,7 +107,7 @@ function consentThrottle(consentFailures: RateLimiter): RequestHandler {
   return async (req, res, next) => {
     const ip = req.ip ?? 'unknown';
     // A failing limiter must not lock everyone out of signing in.
-    if (await consentFailures.exhausted(ip).catch(() => false)) {
+    if (await consentFailures.isExhausted(ip).catch(() => false)) {
       res.status(429).set('Retry-After', '60').type('text').send('Too many failed attempts. Try again in a minute.');
       return;
     }
@@ -123,14 +123,14 @@ function consentThrottle(consentFailures: RateLimiter): RequestHandler {
 function mcpRateLimit(limiter: RateLimiter): RequestHandler {
   return async (req, res, next) => {
     const apiKey = String(req.auth?.extra?.apiKey ?? '');
-    let allowed: boolean;
+    let isAllowed: boolean;
     try {
-      allowed = await limiter.acquire(hashApiKey(apiKey));
+      isAllowed = await limiter.acquire(hashApiKey(apiKey));
     } catch {
       sendJsonRpcError(res, 503, -32000, 'The connector is temporarily unavailable.', '5');
       return;
     }
-    if (allowed) {
+    if (isAllowed) {
       next();
       return;
     }
@@ -194,13 +194,7 @@ export function createHttpApp(
   const sealer = createSealer(config.tokenSecret);
   const replayStore = stores.replay ?? createFileReplayStore(config.replayFile);
   const rateLimiter = stores.rateLimiter ?? memoryRateLimiterFactory;
-  const clientFor = createClientFactory({
-    apiUrl: config.apiUrl,
-    filesUrl: config.filesUrl,
-    filesInternalUrl: config.filesInternalUrl,
-    appUrl: config.appUrl,
-    fetchFn,
-  });
+  const clientFor = createClientFactory(config.pneumatic, fetchFn);
   const validator = createApiKeyValidator(clientFor);
   const mcpLimiter = rateLimiter('mcp-key', config.rateLimitPerMinute);
   const knownHosts = [...new Set([config.publicUrl.hostname, ...LOOPBACK_HOSTS])];
@@ -222,8 +216,8 @@ export function createHttpApp(
   app.use(securityHeaders);
 
   app.get('/healthz', async (_req, res) => {
-    const healthy = await replayStore.isHealthy().catch(() => false);
-    res.status(healthy ? 200 : 503).json({ status: healthy ? 'ok' : 'unhealthy' });
+    const isHealthy = await replayStore.isHealthy().catch(() => false);
+    res.status(isHealthy ? 200 : 503).json({ status: isHealthy ? 'ok' : 'unhealthy' });
   });
 
   app.use(
@@ -245,7 +239,7 @@ export function createHttpApp(
     }),
   );
 
-  const uploads = config.filesUrl ? (stores.uploads ?? createMemoryUploadStore()) : undefined;
+  const uploads = config.pneumatic.filesUrl ? (stores.uploads ?? createMemoryUploadStore()) : undefined;
   if (uploads) {
     mountUploadRoutes(app, { store: uploads, sealer, clientFor });
   }
@@ -259,7 +253,7 @@ export function createHttpApp(
       return buildServer(clientFor(apiKey), {
         uploads: uploads && uploadLinksFor(uploads, sealer, config.publicUrl, apiKey),
         toolsets: config.toolsets,
-        readOnly: config.readOnly,
+        isReadOnly: config.isReadOnly,
       });
     }),
   );

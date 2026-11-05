@@ -1,11 +1,11 @@
 import { loadConfig } from '../src/config.js';
-import { createClientFactory, PneumaticApiError, type Query } from '../src/pneumatic/client.js';
+import { createPneumaticClient, PneumaticApiError, type Query } from '../src/pneumatic/client.js';
 
 const config = loadConfig(['--stdio']);
 if (config.transport !== 'stdio') {
   throw new Error('stdio configuration expected');
 }
-const client = createClientFactory(config)(config.apiKey);
+const client = createPneumaticClient(config.pneumatic, config.apiKey);
 const checks: Array<[string, string, Query?]> = [
   ['get_current_user', '/accounts/user'],
   ['list_users', '/accounts/users', { limit: 1 }],

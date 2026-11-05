@@ -42,9 +42,11 @@ interface ToolConfig<Schema> {
 
 export interface ToolDef extends ToolConfig<z.ZodObject> {
   name: string;
-  // Set from the module's group in src/tools/index.ts.
-  toolset?: Toolset;
   run(args: z.output<z.ZodObject>, context: ToolContext): Promise<ToolOutput>;
+}
+
+export interface CatalogTool extends ToolDef {
+  toolset: Toolset;
 }
 
 export function tool<Schema extends z.ZodObject & StandardSchemaWithJSON>(
@@ -57,19 +59,19 @@ export function tool<Schema extends z.ZodObject & StandardSchemaWithJSON>(
 
 export interface ToolSelection {
   toolsets?: readonly Toolset[];
-  readOnly?: boolean;
+  isReadOnly?: boolean;
 }
 
 export function availableTools(
-  tools: readonly ToolDef[],
+  tools: readonly CatalogTool[],
   context: ToolContext,
-  { toolsets, readOnly = false }: ToolSelection = {},
-): ToolDef[] {
+  { toolsets, isReadOnly = false }: ToolSelection = {},
+): CatalogTool[] {
   const offered = tools.filter(
     (definition) =>
       (!definition.requires || context[definition.requires] !== undefined) &&
-      (!toolsets || toolsets.includes(definition.toolset ?? 'core')) &&
-      (!readOnly || definition.annotations.readOnlyHint === true),
+      (!toolsets || toolsets.includes(definition.toolset)) &&
+      (!isReadOnly || definition.annotations.readOnlyHint === true),
   );
   const names = new Set(offered.map(({ name }) => name));
   return offered.filter(({ pairedWith }) => !pairedWith || names.has(pairedWith));
@@ -137,7 +139,7 @@ function recordToolCall(name: string, result: InputRequiredResult | CallToolResu
 
 export function registerTools(server: McpServer, tools: readonly ToolDef[], context: ToolContext) {
   for (const { name, title, description, inputSchema, annotations, run } of tools) {
-    const write = annotations.readOnlyHint !== true;
+    const isWrite = annotations.readOnlyHint !== true;
     const handle = async (args: unknown, request: ServerContext) => {
       const pending = annotations.destructiveHint ? confirmDestructive(server, request, title, args) : undefined;
       if (pending) {
@@ -146,7 +148,7 @@ export function registerTools(server: McpServer, tools: readonly ToolDef[], cont
       try {
         return success(await run(args as never, context));
       } catch (error) {
-        return failure(error, write);
+        return failure(error, isWrite);
       }
     };
     const callback = async (args: unknown, request: ServerContext) => {

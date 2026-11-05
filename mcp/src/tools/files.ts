@@ -1,6 +1,8 @@
 import * as z from 'zod/v4';
 
+import { ConnectorError } from '../core/errors.js';
 import {
+  fileLinkUrl,
   filenameFromDisposition,
   formatMiB,
   isSafeFilename,
@@ -8,20 +10,21 @@ import {
   MAX_INLINE_UPLOAD_BYTES,
   MAX_UPLOAD_BYTES,
 } from '../core/files.js';
-import { UPLOAD_TTL_SECONDS, type UploadLinks } from '../core/ports.js';
+import type { UploadLinks } from '../core/ports.js';
+import { UPLOAD_TTL_SECONDS } from '../core/uploads.js';
 import { tool, type ToolDef } from '../mcp/toolDef.js';
 import type { PneumaticClient } from '../pneumatic/client.js';
 import { fileIdSegment, isSafeFileId } from '../pneumatic/files.js';
 import { assertPublicHttpsUrl } from '../pneumatic/remoteFile.js';
-import { ConnectorError } from '../core/errors.js';
-import { additive, compactFor, limit, offset, readOnly, requireExactlyOne } from './shared.js';
+import { additive, readOnly } from './annotations.js';
+import { present } from './output.js';
+import { limit, offset, requireExactlyOne } from './schemas.js';
 
 const MAX_INLINE_BYTES = 3 * 1024 * 1024;
 const MAX_INLINE_TEXT_BYTES = 256 * 1024;
 const INLINE_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);
 const TEXT_TYPE =
   /^(?:text\/|application\/(?:json|xml|csv|yaml|x-yaml|x-ndjson)$|application\/[\w.+-]+\+(?:json|xml)$)/;
-const FILE_LINK = /^!?\[[^\]]+\]\((\S+?)(?:\s+"[^"]*")?\)$/;
 
 const EXTENSION_TYPES: Record<string, string> = {
   txt: 'text/plain',
@@ -78,7 +81,7 @@ function requireFilesUrl(client: PneumaticClient): string {
 }
 
 function fileIdFromUrl(value: string, filesUrl: string): string {
-  const link = FILE_LINK.exec(value.trim())?.[1] ?? value.trim();
+  const link = fileLinkUrl(value.trim()) ?? value.trim();
   let url: URL;
   try {
     url = new URL(link);
@@ -120,9 +123,10 @@ export const fileTools: ToolDef[] = [
       annotations: readOnly,
     },
     async ({ limit, offset }, { client }) => {
-      const compact = await compactFor(client);
       const raw = await client.get('/attachments', { limit, offset });
-      return compact.out(compact.page(raw, { limit, offset }, (item) => compact.attachment(item)));
+      return present(client, (presenter) =>
+        presenter.page(raw, { limit, offset }, (item) => presenter.attachment(item)),
+      );
     },
   ),
 
@@ -153,16 +157,16 @@ export const fileTools: ToolDef[] = [
       const file = await client.download(segment, MAX_INLINE_BYTES);
       const { data, contentType: mimeType } = file;
       const isText = TEXT_TYPE.test(mimeType);
-      const inline = data !== null && (!isText || data.length <= MAX_INLINE_TEXT_BYTES);
+      const isInline = data !== null && (!isText || data.length <= MAX_INLINE_TEXT_BYTES);
       const metadata = {
         fileId,
         name: filenameFromDisposition(file.disposition) ?? null,
         contentType: mimeType,
         size: file.size,
         url,
-        inline,
+        inline: isInline,
       };
-      if (!data || !inline) {
+      if (!data || !isInline) {
         return {
           data: {
             ...metadata,

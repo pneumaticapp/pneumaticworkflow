@@ -1,4 +1,4 @@
-import type { ToolDef, Toolset } from '../mcp/toolDef.js';
+import type { CatalogTool, ToolDef, Toolset } from '../mcp/toolDef.js';
 import { accountTools } from './accounts.js';
 import { analyticsTools } from './analytics.js';
 import { datasetReadTools, datasetTools } from './datasets.js';
@@ -11,10 +11,10 @@ import { taskTools } from './tasks.js';
 import { templateTools } from './templates.js';
 import { workflowTools } from './workflows.js';
 
-const inToolset = (toolset: Toolset, tools: readonly ToolDef[]) =>
+const inToolset = (toolset: Toolset, tools: readonly ToolDef[]): CatalogTool[] =>
   tools.map((definition) => ({ ...definition, toolset }));
 
-export const allTools: readonly ToolDef[] = [
+export const allTools: readonly CatalogTool[] = [
   ...inToolset('core', accountTools),
   ...inToolset('admin', peopleTools),
   ...inToolset('core', templateTools),

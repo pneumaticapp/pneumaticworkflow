@@ -1,4 +1,4 @@
-import type { PeopleDirectory } from '../core/ports.js';
+import type { PeopleDirectory } from '../core/people.js';
 import type { PneumaticClient } from './client.js';
 
 const TTL_MS = 5 * 60 * 1000;
@@ -38,7 +38,7 @@ async function fetchDirectory(client: PneumaticClient): Promise<PeopleDirectory>
   };
 }
 
-// Cached per account key across requests; a failed load is not cached and callers fall back to bare IDs.
+// Cached per account key across requests; on a failed load callers fall back to bare IDs.
 export function loadPeople(client: PneumaticClient): Promise<PeopleDirectory> {
   const cached = cache.get(client.identity);
   if (cached && cached.expiresAt > Date.now()) {

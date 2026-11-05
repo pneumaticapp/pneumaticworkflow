@@ -34,14 +34,13 @@ beforeAll(async () => {
   writeFileSync(join(replayDirectory, 'used.json'), '');
   const config: HttpConfig = {
     transport: 'http',
-    apiUrl: fake.apiUrl,
+    pneumatic: { apiUrl: fake.apiUrl, filesUrl: fake.filesUrl },
     host: '127.0.0.1',
     port,
     publicUrl: new URL(baseUrl),
     tokenSecret,
     replayFile: join(replayDirectory, 'used.json'),
     allowedRedirectHosts: ['claude.ai', 'localhost'],
-    filesUrl: fake.filesUrl,
     rateLimitPerMinute: 0,
     trustProxy: false,
   };
@@ -517,7 +516,7 @@ describe('authorization flow', () => {
         createHttpApp(
           {
             transport: 'http',
-            apiUrl: fake.apiUrl,
+            pneumatic: { apiUrl: fake.apiUrl },
             host: '127.0.0.1',
             port,
             publicUrl: new URL(url),
@@ -649,7 +648,7 @@ describe('health', () => {
       const url = `http://127.0.0.1:${(isolatedServer.address() as AddressInfo).port}`;
       const config: HttpConfig = {
         transport: 'http',
-        apiUrl: fake.apiUrl,
+        pneumatic: { apiUrl: fake.apiUrl },
         host: '127.0.0.1',
         port: (isolatedServer.address() as AddressInfo).port,
         publicUrl: new URL(url),
@@ -726,7 +725,7 @@ describe('MCP endpoint', () => {
         createHttpApp(
           {
             transport: 'http',
-            apiUrl: fake.apiUrl,
+            pneumatic: { apiUrl: fake.apiUrl },
             host: '127.0.0.1',
             port,
             publicUrl: new URL(url),
@@ -874,8 +873,7 @@ describe('browser uploads', () => {
         createHttpApp(
           {
             transport: 'http',
-            apiUrl: fake.apiUrl,
-            filesUrl: fake.filesUrl,
+            pneumatic: { apiUrl: fake.apiUrl, filesUrl: fake.filesUrl },
             host: '127.0.0.1',
             port,
             publicUrl: new URL(url),

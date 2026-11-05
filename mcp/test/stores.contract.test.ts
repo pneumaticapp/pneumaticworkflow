@@ -118,9 +118,9 @@ describe.each(rateLimiters)('RateLimiter contract: %s', (_name, create) => {
   it('allows the limit per key and reports exhaustion without consuming', async () => {
     const limiter = create(2);
     expect(await limiter.acquire('a')).toBe(true);
-    expect(await limiter.exhausted('a')).toBe(false);
+    expect(await limiter.isExhausted('a')).toBe(false);
     expect(await limiter.acquire('a')).toBe(true);
-    expect(await limiter.exhausted('a')).toBe(true);
+    expect(await limiter.isExhausted('a')).toBe(true);
     expect(await limiter.acquire('a')).toBe(false);
     expect(await limiter.acquire('b')).toBe(true);
   });
@@ -130,6 +130,6 @@ describe.each(rateLimiters)('RateLimiter contract: %s', (_name, create) => {
     for (let index = 0; index < 5; index += 1) {
       expect(await limiter.acquire('a')).toBe(true);
     }
-    expect(await limiter.exhausted('a')).toBe(false);
+    expect(await limiter.isExhausted('a')).toBe(false);
   });
 });

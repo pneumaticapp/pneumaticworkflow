@@ -27,8 +27,9 @@ export async function connectServer(
   }: ConnectOptions = {},
 ): Promise<Client> {
   const pneumatic = createPneumaticClient(
-    { apiUrl: fake.apiUrl, filesUrl: storage ? fake.filesUrl : undefined, filesInternalUrl, appUrl, fetchFn },
+    { apiUrl: fake.apiUrl, filesUrl: storage ? fake.filesUrl : undefined, filesInternalUrl, appUrl },
     VALID_API_KEY,
+    fetchFn,
   );
   const server = buildServer(pneumatic, options);
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();

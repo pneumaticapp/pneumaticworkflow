@@ -2,7 +2,7 @@ import * as z from 'zod/v4';
 
 import { ConnectorError } from '../core/errors.js';
 import { records } from '../core/json.js';
-import { id } from './shared.js';
+import { id } from './schemas.js';
 import type { RawTask } from './templateSteps.js';
 
 const FIELD_TYPES = [
