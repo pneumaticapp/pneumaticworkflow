@@ -7,6 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('processes', '0260_add_template_rulesets'),
+        ('processes', '0260_add_skip_on_return'),
     ]
 
     operations = [
