@@ -29,6 +29,7 @@ from src.processes.enums import (
     OwnerType,
     PerformerType,
     PresetType,
+    FieldRuleType,
     SysTemplateType,
     TaskStatus,
     TemplateOrdering,
@@ -918,6 +919,21 @@ class FieldTemplateValuesQuerySet(BaseQuerySet):
         return self.filter(api_name__in=api_names)
 
 
+class FieldTemplateRuleSetQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldTemplateRuleGroupOrQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldTemplateRuleGroupAndQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
 class FieldSelectionQuerySet(BaseQuerySet):
 
     def by_ids(self, ids: List[int]):
@@ -967,6 +983,16 @@ class TaskFieldQuerySet(BaseFieldQuerySet):
 
     def only_values(self):
         return self.values_list('value', flat=True)
+
+    def for_rules_check(self, workflow_id: int):
+        return self.filter(
+            workflow_id=workflow_id,
+        ).select_related(
+            'account',
+            'workflow',
+        ).prefetch_related(
+            'storage_attachments',
+        )
 
 
 # TODO remove legacy model after migration to file service.
@@ -1448,6 +1474,46 @@ class FieldsetTemplateQuerySet(AccountBaseQuerySet):
 class FieldsetTemplateRuleQuerySet(AccountBaseQuerySet):
 
     pass
+
+
+class FieldSetTemplateRuleSetQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldSetTemplateRuleGroupOrQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldSetTemplateRuleGroupAndQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldRuleSetQuerySet(AccountBaseQuerySet):
+
+    def for_kickoff(self):
+        return self.filter(
+            Q(type=FieldRuleType.SHOW)
+            | Q(field__kickoff__isnull=False)
+            | Q(field__fieldset__kickoff__isnull=False),
+            field__is_deleted=False,
+        )
+
+    def for_task(self, task_id: int):
+        return self.filter(
+            Q(type=FieldRuleType.SHOW)
+            | Q(field__task_id=task_id)
+            | Q(field__fieldset__task_id=task_id),
+            field__is_deleted=False,
+        )
+
+    def with_groups(self):
+        return (
+            self.select_related('field')
+            .prefetch_related('groups_or__groups_and')
+        )
 
 
 class FieldSetQuerySet(AccountBaseQuerySet):

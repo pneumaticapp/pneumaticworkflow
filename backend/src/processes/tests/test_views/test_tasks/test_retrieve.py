@@ -11,6 +11,9 @@ from src.accounts.enums import (
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
+    FieldRuleOperator,
+    FieldRuleType,
+    FieldSetRuleOperator,
     FieldType,
     OwnerRole,
     OwnerType,
@@ -32,7 +35,13 @@ from src.processes.models.workflows.checklist import (
     Checklist,
     ChecklistSelection,
 )
-from src.processes.models.workflows.fields import TaskField, FieldSelection
+from src.processes.models.workflows.fields import (
+    FieldRuleGroupAnd,
+    FieldRuleGroupOr,
+    FieldRuleSet,
+    FieldSelection,
+    TaskField,
+)
 from src.processes.models.workflows.task import (
     Delay,
     TaskPerformer,
@@ -54,6 +63,7 @@ from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
     create_test_attachment,
+    create_test_fieldset,
     create_test_fieldset_template,
     create_test_dataset,
     create_test_group,
@@ -62,7 +72,6 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_shared_fieldset,
     create_test_template,
-    create_test_user,
     create_test_workflow,
 )
 from src.utils.dates import date_format
@@ -190,20 +199,16 @@ def test_retrieve__delayed__ok(api_client, mocker):
 def test_retrieve__workflow_member__ok(api_client):
 
     # arrange
-    user = create_test_user()
-    another_user = create_test_user(
-        account=user.account,
-        email='admin@test.test',
-        is_account_owner=False,
-    )
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    another_user = create_test_admin(account=account)
     workflow = create_test_workflow(user)
     WorkflowPermissionService(workflow).grant_view(
         user=another_user,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )
-    tasks = workflow.tasks.order_by('number')
-    task = tasks[0]
+    task = workflow.tasks.order_by('number').first()
     api_client.token_authenticate(another_user)
 
     # act
@@ -236,7 +241,7 @@ def test_retrieve__account_owner_not_wf_member__ok(api_client):
 def test_retrieve__admin_not_workflow_member__permission_denied(api_client):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
+    account = create_test_account()
     user = create_test_owner(account=account)
     another_user = create_test_admin(account=account)
     workflow = create_test_workflow(user=user)
@@ -687,6 +692,58 @@ def test_retrieve__performers_type_field__ok(api_client):
             'date_completed_tsp': None,
         },
     ]
+
+
+def test_retrieve__performer_type_group_user__skip(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    group = create_test_group(account=account, users=[user])
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        group_id=group.id,
+        type=PerformerType.GROUP,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user.id,
+        type=PerformerType.GROUP_USER,
+    )
+    task.due_date = task.date_first_started + timedelta(hours=24)
+    task.save(update_fields=['due_date'])
+
+    identify_mock = mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'identify',
+    )
+    group_mock = mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'group',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+    performers = response.data['performers']
+    assert len(performers) == 1
+    assert performers == [
+        {
+            'source_id': group.id,
+            'type': PerformerType.GROUP,
+            'is_completed': False,
+            'date_completed_tsp': None,
+        },
+    ]
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
 
 
 def test_retrieve__is_urgent__ok(api_client):
@@ -1650,8 +1707,7 @@ def test_retrieve__user_is_member_in_deleted_task__not_found(api_client):
     # arrange
     user = create_test_owner()
     admin = create_test_admin(account=user.account)
-    api_client.token_authenticate(admin)
-    workflow = create_test_workflow(user, tasks_count=1)
+    workflow = create_test_workflow(user=user, tasks_count=1)
     WorkflowPermissionService(workflow).grant_view(
         user=admin,
         source_type=PermissionSource.PERFORMER,
@@ -2031,6 +2087,8 @@ def test_retrieve__task_performer__is_read_only_viewer_false(
         'group',
     )
 
+    api_client.token_authenticate(performer_user)
+
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
 
@@ -2055,13 +2113,7 @@ def test_retrieve__workflow_member__ok_read_only(
     template = create_test_template(user=template_owner)
     workflow = create_test_workflow(template=template, user=template_owner)
     task = workflow.tasks.get(number=1)
-
-    member_user = create_test_user(
-        account=account,
-        email='member@test.com',
-        is_account_owner=False,
-        is_admin=False,
-    )
+    member_user = create_test_not_admin(account=account)
     WorkflowPermissionService(workflow).grant_view(
         user=member_user,
         source_type=PermissionSource.PERFORMER,
@@ -2078,6 +2130,8 @@ def test_retrieve__workflow_member__ok_read_only(
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
+
+    api_client.token_authenticate(member_user)
 
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
@@ -2227,3 +2281,143 @@ def test_retrieve__update_from_version__fieldset_field_variable__not_changed(
     assert response.status_code == 200
     assert response.data['name'] == f'Updated task {field_value}'
     assert response.data['description'] == f'Description {field_value}'
+
+
+def test_retrieve__task_field_and_fieldset_rulesets__ok(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+
+    # 1. Output field with rulesets
+    field = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        task=task,
+        name='Amount',
+        type=FieldType.NUMBER,
+        api_name='amount-field',
+        order=1,
+    )
+    ruleset = FieldRuleSet.objects.create(
+        account=account,
+        workflow=workflow,
+        field=field,
+        name='Show when greater than 0',
+        type=FieldRuleType.SHOW,
+        message='Amount must be positive',
+        order=0,
+        api_name='ruleset-amount-1',
+    )
+    group_or = FieldRuleGroupOr.objects.create(
+        account=account,
+        workflow=workflow,
+        ruleset=ruleset,
+        api_name='group-or-1',
+    )
+    FieldRuleGroupAnd.objects.create(
+        account=account,
+        workflow=workflow,
+        group_or=group_or,
+        field=field.api_name,
+        operator=FieldRuleOperator.GREATER_THAN,
+        value='0',
+        api_name='group-and-1',
+    )
+
+    # 2. Fieldset with rulesets and field with rulesets
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='100',
+        rule_message='Sum must equal 100',
+    )
+    fieldset_field = fieldset.fields.first()
+    fieldset.rulesets.first().fields.add(fieldset_field)
+    fs_field_ruleset = FieldRuleSet.objects.create(
+        account=account,
+        workflow=workflow,
+        field=fieldset_field,
+        name='Validator for fieldset field',
+        type=FieldRuleType.VALIDATOR,
+        message='Fieldset field must not be empty',
+        order=0,
+        api_name='fs-field-ruleset-1',
+    )
+    fs_group_or = FieldRuleGroupOr.objects.create(
+        account=account,
+        workflow=workflow,
+        ruleset=fs_field_ruleset,
+        api_name='fs-group-or-1',
+    )
+    FieldRuleGroupAnd.objects.create(
+        account=account,
+        workflow=workflow,
+        group_or=fs_group_or,
+        field=fieldset_field.api_name,
+        operator=FieldRuleOperator.EXIST,
+        value=None,
+        api_name='fs-group-and-1',
+    )
+
+    mocker.patch('src.processes.views.task.TaskViewSet.identify')
+    mocker.patch('src.processes.views.task.TaskViewSet.group')
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+
+    # check output field rulesets
+    output_fields = response.data['output']
+    task_field_data = next(
+        f for f in output_fields if f['api_name'] == field.api_name
+    )
+    assert len(task_field_data['rulesets']) == 1
+    rs_data = task_field_data['rulesets'][0]
+    assert rs_data['api_name'] == ruleset.api_name
+    assert rs_data['name'] == ruleset.name
+    assert rs_data['type'] == FieldRuleType.SHOW
+    assert rs_data['message'] == ruleset.message
+    assert rs_data['order'] == 0
+    assert len(rs_data['groups_or']) == 1
+    go_data = rs_data['groups_or'][0]
+    assert go_data['api_name'] == group_or.api_name
+    assert len(go_data['groups_and']) == 1
+    ga_data = go_data['groups_and'][0]
+    assert ga_data['field'] == field.api_name
+    assert ga_data['operator'] == FieldRuleOperator.GREATER_THAN
+    assert ga_data['value'] == '0'
+
+    # check fieldsets and their rulesets
+    fieldsets = response.data['fieldsets']
+    assert len(fieldsets) == 1
+    fs_data = fieldsets[0]
+    assert fs_data['id'] == fieldset.id
+    assert len(fs_data['rulesets']) == 1
+    fs_rs_data = fs_data['rulesets'][0]
+    assert fs_rs_data['api_name'] == f'{fieldset.api_name}-rule-1'
+    assert fs_rs_data['message'] == 'Sum must equal 100'
+    assert fs_rs_data['order'] == 0
+    assert fs_rs_data['fields'] == [fieldset_field.api_name]
+    assert len(fs_rs_data['groups_or']) == 1
+    fs_go_data = fs_rs_data['groups_or'][0]
+    assert fs_go_data['api_name'] == f'{fieldset.api_name}-group-or-1'
+    assert len(fs_go_data['groups_and']) == 1
+    fs_ga_data = fs_go_data['groups_and'][0]
+    assert fs_ga_data['operator'] == FieldSetRuleOperator.SUM_EQUAL
+    assert fs_ga_data['value'] == '100'
+
+    # check fieldset field rulesets
+    assert len(fs_data['fields']) == 1
+    fs_field_data = fs_data['fields'][0]
+    assert fs_field_data['id'] == fieldset_field.id
+    assert len(fs_field_data['rulesets']) == 1
+    fs_field_rs = fs_field_data['rulesets'][0]
+    assert fs_field_rs['api_name'] == fs_field_ruleset.api_name
+    assert fs_field_rs['type'] == FieldRuleType.VALIDATOR

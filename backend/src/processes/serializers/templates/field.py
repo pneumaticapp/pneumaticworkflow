@@ -7,7 +7,13 @@ from rest_framework.serializers import (
     SerializerMethodField,
 )
 
-from src.generics.fields import AccountPrimaryKeyRelatedField
+from src.generics.fields import (
+    AccountPrimaryKeyRelatedField,
+    DocBooleanField,
+    DocCharField,
+    DocChoiceField,
+    DocIntegerField,
+)
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
@@ -24,6 +30,9 @@ from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
     CreateOrUpdateRelatedMixin,
     CustomValidationApiNameMixin,
+)
+from src.processes.serializers.templates.field_rule import (
+    FieldTemplateRuleSetSerializer,
 )
 from src.processes.serializers.templates.selection import (
     FieldTemplateSelectionSerializer,
@@ -83,6 +92,7 @@ class FieldTemplateSerializer(
             'default',
             'dataset',
             'order',
+            'rulesets',
         )
         create_or_update_fields = {
             'type',
@@ -100,16 +110,82 @@ class FieldTemplateSerializer(
             'dataset',
         }
 
-    order = IntegerField()
-    api_name = CharField(required=False, max_length=200)
+    name = DocCharField(
+        example='Leave feedback',
+        help_text='Field label shown to the user.',
+    )
+    description = DocCharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+        example='Describe how the delivery went',
+        help_text='Helper text shown under the field.',
+    )
+    type = DocChoiceField(
+        choices=FieldType.CHOICES,
+        example=FieldType.CHECKBOX,
+        help_text=(
+            'Field input type (`string`, `text`, '
+            '`checkbox`, `dropdown`, and others).'
+        ),
+    )
+    is_required = DocBooleanField(
+        required=False,
+        example=False,
+        help_text='Whether the user must fill in this field.',
+    )
+    is_hidden = DocBooleanField(
+        required=False,
+        example=True,
+        help_text=(
+            'Whether the field is hidden until a `show` '
+            'ruleset reveals it.'
+        ),
+    )
+    api_name = DocCharField(
+        required=False,
+        max_length=200,
+        example='field-1',
+        help_text='Stable unique identifier. Generated if omitted.',
+    )
+    default = DocCharField(
+        required=False,
+        allow_blank=True,
+        example='no',
+        help_text='Pre-filled value when the form opens.',
+    )
+    order = DocIntegerField(
+        example=0,
+        help_text=(
+            'Display order among fields in the fieldset. Starts at 0.'
+        ),
+    )
     dataset = AccountPrimaryKeyRelatedField(
         queryset=Dataset.objects.all(),
         required=False,
         allow_null=True,
+        example=1,
+        help_text=(
+            'Dataset id for dropdown/checkbox/radio '
+            'options. Null if options come from `selections`.'
+        ),
     )
     selections = FieldTemplateSelectionSerializer(
         many=True,
         required=False,
+        help_text=(
+            'Static options for dropdown, checkbox, or '
+            'radio. Ignored for other types.'
+        ),
+    )
+    rulesets = FieldTemplateRuleSetSerializer(
+        many=True,
+        required=False,
+        default=list,
+        help_text=(
+            'Field-level rules. `show` reveals the field; '
+            '`validator` checks its value.'
+        ),
     )
 
     def additional_validate(self, data: Dict[str, Any]):
@@ -174,6 +250,18 @@ class FieldTemplateSerializer(
                 **self.context,
             },
         )
+        self.create_or_update_related(
+            data=validated_data.get('rulesets'),
+            ancestors_data={
+                'field': instance,
+                'template': self.context['template'],
+            },
+            slz_cls=FieldTemplateRuleSetSerializer,
+            slz_context={
+                'field': instance,
+                **self.context,
+            },
+        )
         return instance
 
     def update(
@@ -209,6 +297,18 @@ class FieldTemplateSerializer(
             slz_cls=FieldTemplateSelectionSerializer,
             slz_context={
                 'field_template': instance,
+                **self.context,
+            },
+        )
+        self.create_or_update_related(
+            data=validated_data.get('rulesets'),
+            ancestors_data={
+                'field': instance,
+                'template': self.context['template'],
+            },
+            slz_cls=FieldTemplateRuleSetSerializer,
+            slz_context={
+                'field': instance,
                 **self.context,
             },
         )

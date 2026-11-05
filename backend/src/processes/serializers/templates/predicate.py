@@ -1,3 +1,5 @@
+from datetime import datetime
+from datetime import timezone as tz
 from decimal import Decimal, DecimalException
 from typing import Any, Dict, Optional
 
@@ -26,6 +28,7 @@ from src.processes.messages.template import (
     MSG_PT_0066,
     MSG_PT_0067,
     MSG_PT_0068,
+    MSG_PT_0080,
 )
 from src.processes.models.templates.conditions import PredicateTemplate
 from src.processes.serializers.templates.mixins import (
@@ -225,6 +228,14 @@ class PredicateTemplateSerializer(
                 except (TypeError, ValueError, DecimalException):
                     raise_validation_error(
                         message=MSG_PT_0063,
+                        api_name=api_name,
+                    )
+            elif field_type == FieldType.DATE:
+                try:
+                    datetime.fromtimestamp(int(value), tz=tz.utc)
+                except (TypeError, ValueError):
+                    raise_validation_error(
+                        message=MSG_PT_0080,
                         api_name=api_name,
                     )
 

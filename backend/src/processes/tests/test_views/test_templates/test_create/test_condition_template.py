@@ -1355,17 +1355,17 @@ def test_create__predicate_value_not_selection_value__ok(
 
 
 @pytest.mark.parametrize(
-    ('field_type', 'operator'),
+    ('field_type', 'operator', 'value'),
     [
-        (FieldType.RADIO, PredicateOperator.CONTAIN),
-        (FieldType.DROPDOWN, PredicateOperator.MORE_THAN),
-        (FieldType.CHECKBOX, PredicateOperator.LESS_THAN),
-        (FieldType.USER, PredicateOperator.NOT_CONTAIN),
-        (FieldType.URL, PredicateOperator.LESS_THAN),
-        (FieldType.FILE, PredicateOperator.EQUAL),
-        (FieldType.STRING, PredicateOperator.MORE_THAN),
-        (FieldType.TEXT, PredicateOperator.LESS_THAN),
-        (FieldType.DATE, PredicateOperator.CONTAIN),
+        (FieldType.RADIO, PredicateOperator.CONTAIN, 1),
+        (FieldType.DROPDOWN, PredicateOperator.MORE_THAN, 1),
+        (FieldType.CHECKBOX, PredicateOperator.LESS_THAN, 1),
+        (FieldType.USER, PredicateOperator.NOT_CONTAIN, 1),
+        (FieldType.URL, PredicateOperator.LESS_THAN, 1),
+        (FieldType.FILE, PredicateOperator.EQUAL, 1),
+        (FieldType.STRING, PredicateOperator.MORE_THAN, 1),
+        (FieldType.TEXT, PredicateOperator.LESS_THAN, 1),
+        (FieldType.DATE, PredicateOperator.CONTAIN, '1577836800'),
     ],
 )
 def test_create__disallowed_operator__validation_error(
@@ -1373,6 +1373,7 @@ def test_create__disallowed_operator__validation_error(
     api_client,
     field_type,
     operator,
+    value,
 ):
     # arrange
     condition_create_analytics_mock = mocker.patch(
@@ -1394,7 +1395,7 @@ def test_create__disallowed_operator__validation_error(
                         'field': field,
                         'field_type': field_type,
                         'operator': operator,
-                        'value': 1,
+                        'value': value,
                         'api_name': predicate_api_name,
                     },
                 ],
@@ -2858,6 +2859,87 @@ def test_create__predicate_type_number_invalid_value__validation_error(
     assert response.data['details']['api_name'] == predicate_api_name
     assert response.data['details']['reason'] == error_message
     assert 'name' not in response.data['details']
+    condition_create_analytics_mock.assert_not_called()
+
+
+def test_create__predicate_type_date_invalid_value__validation_error(
+    mocker,
+    api_client,
+):
+
+    # arrange
+    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    user = create_test_user(account=account)
+    condition_create_analytics_mock = mocker.patch(
+        'src.processes.serializers.templates.'
+        'condition.AnalyticService.templates_task_condition_created',
+    )
+    predicate_api_name = 'predicate-1'
+    field_api_name = 'date-field-1'
+    condition_data = {
+        'order': 1,
+        'action': ConditionAction.SKIP_TASK,
+        'rules': [
+            {
+                'predicates': [
+                    {
+                        'field_type': PredicateType.DATE,
+                        'operator': PredicateOperator.MORE_THAN,
+                        'api_name': predicate_api_name,
+                        'field': field_api_name,
+                        'value': '2020-01-01',
+                    },
+                ],
+            },
+        ],
+    }
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'fields': [
+                    {
+                        'order': 1,
+                        'name': 'Date',
+                        'type': FieldType.DATE,
+                        'api_name': field_api_name,
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'Step 1',
+                    'conditions': [condition_data],
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_PT_0080
+    assert response.data['details']['api_name'] == predicate_api_name
+    assert response.data['details']['reason'] == messages.MSG_PT_0080
     condition_create_analytics_mock.assert_not_called()
 
 
