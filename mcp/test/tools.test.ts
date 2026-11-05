@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { RemoteFetcher } from '../src/core/ports.js';
 import { ConnectorError } from '../src/core/errors.js';
+import { fileIdSegment } from '../src/pneumatic/files.js';
 import { MAX_RESULT_BYTES } from '../src/presenters/index.js';
 import { toTimestamp } from '../src/tools/dates.js';
 import { createFakePneumatic, VALID_API_KEY } from './fakePneumatic.js';
@@ -709,6 +710,12 @@ describe('files', () => {
     expect(storageUrls).toEqual([`${internalUrl}/upload`, `${internalUrl}/${uploaded.data.fileId}`]);
     expect(downloaded.data).toMatchObject({ url: fileUrl, inline: true });
     await isolated.close();
+  });
+
+  it('rejects unsafe file IDs as invalid arguments', async () => {
+    expect(() => fileIdSegment('../secret')).toThrow(ConnectorError);
+    expect((await call('download_file', { fileId: '../secret' })).error).toMatchObject({ code: 'invalid_arguments' });
+    expect(fake.requests).toHaveLength(0);
   });
 
   it('reports missing storage configuration', async () => {

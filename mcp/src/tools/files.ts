@@ -149,9 +149,6 @@ export const fileTools: ToolDef[] = [
       const filesUrl = requireFilesUrl(client);
       requireExactlyOne(args, ['fileId', 'url']);
       const fileId = args.fileId ?? fileIdFromUrl(args.url ?? '', filesUrl);
-      if (!isSafeFileId(fileId)) {
-        throw new ConnectorError('invalid_arguments', 'Expected a flat file ID without path or control characters');
-      }
       const segment = fileIdSegment(fileId);
       const url = `${filesUrl}/${segment}`;
       const file = await client.download(segment, MAX_INLINE_BYTES);

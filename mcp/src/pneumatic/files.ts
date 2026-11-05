@@ -1,3 +1,5 @@
+import { ConnectorError } from '../core/errors.js';
+
 const UNSAFE_CHARACTER = /[/\\?#%\p{C}\p{Zl}\p{Zp}]/u;
 
 // File IDs are storage identities, not display names: keep their exact spelling and reject path ambiguity.
@@ -14,7 +16,7 @@ export function isSafeFileId(value: string): boolean {
 
 export function fileIdSegment(value: string): string {
   if (!isSafeFileId(value)) {
-    throw new Error('Expected a safe flat file ID');
+    throw new ConnectorError('invalid_arguments', 'Expected a flat file ID without path or control characters');
   }
   return encodeURIComponent(value);
 }
