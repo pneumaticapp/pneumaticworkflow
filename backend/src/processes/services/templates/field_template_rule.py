@@ -54,15 +54,29 @@ class FieldTemplateRuleSetService(RuleGroupsSyncMixin, BaseModelService):
         if groups_or is not None:
             self._set_groups_or(groups_or_data=groups_or)
 
+    def _get_source_field(
+        self,
+        api_name: str,
+    ) -> Optional[FieldTemplate]:
+        if self.instance.template_id:
+            return FieldTemplate.objects.filter(
+                template_id=self.instance.template_id,
+                api_name=api_name,
+            ).first()
+        fieldset_id = self.instance.field.fieldset_id
+        if fieldset_id:
+            return FieldTemplate.objects.filter(
+                fieldset_id=fieldset_id,
+                api_name=api_name,
+            ).first()
+        return None
+
     def _validate(
         self,
         group_and: FieldTemplateRuleGroupAnd,
     ):
         if group_and.field:
-            source_field = FieldTemplate.objects.filter(
-                template_id=self.instance.template_id,
-                api_name=group_and.field,
-            ).first()
+            source_field = self._get_source_field(group_and.field)
             if source_field is None:
                 return
         else:

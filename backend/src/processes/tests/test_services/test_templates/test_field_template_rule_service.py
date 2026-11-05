@@ -16,6 +16,9 @@ from src.processes.models.templates.fields import (
     FieldTemplateRuleGroupOr,
     FieldTemplateRuleSet,
 )
+from src.processes.models.templates.fieldset import (
+    FieldsetTemplate,
+)
 from src.processes.services.exceptions import (
     FieldTemplateRuleSetServiceException,
 )
@@ -407,6 +410,219 @@ def test__validate__operator_not_allowed__raise_exception(
         field=field.name,
         operator=operator,
         field_type=field_type,
+    )
+
+
+def test__get_source_field__shared_fieldset__ok():
+
+    """ Source field found by fieldset_id when template_id is None """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    fieldset = FieldsetTemplate.objects.create(
+        account=account,
+        name='Shared FS',
+        is_shared=True,
+    )
+    source_field = FieldTemplate.objects.create(
+        account=account,
+        fieldset=fieldset,
+        name='Source',
+        type=FieldType.STRING,
+        order=1,
+        api_name='source-field',
+    )
+    target_field = FieldTemplate.objects.create(
+        account=account,
+        fieldset=fieldset,
+        name='Target',
+        type=FieldType.STRING,
+        order=2,
+        api_name='target-field',
+    )
+    ruleset = FieldTemplateRuleSet.objects.create(
+        field=target_field,
+        account=account,
+        name='Ruleset',
+        type=FieldRuleType.SHOW,
+    )
+    service = FieldTemplateRuleSetService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=ruleset,
+    )
+
+    # act
+    result = service._get_source_field('source-field')
+
+    # assert
+    assert result == source_field
+
+
+def test__get_source_field__shared_fieldset__not_found():
+
+    """ Source field not in same fieldset returns None """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    fieldset = FieldsetTemplate.objects.create(
+        account=account,
+        name='Shared FS',
+        is_shared=True,
+    )
+    target_field = FieldTemplate.objects.create(
+        account=account,
+        fieldset=fieldset,
+        name='Target',
+        type=FieldType.STRING,
+        order=1,
+        api_name='target-field',
+    )
+    ruleset = FieldTemplateRuleSet.objects.create(
+        field=target_field,
+        account=account,
+        name='Ruleset',
+        type=FieldRuleType.SHOW,
+    )
+    service = FieldTemplateRuleSetService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=ruleset,
+    )
+
+    # act
+    result = service._get_source_field('nonexistent-field')
+
+    # assert
+    assert result is None
+
+
+def test__validate__shared_fieldset__allowed_op__ok():
+
+    """ Validate passes for allowed operator in shared fieldset """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    fieldset = FieldsetTemplate.objects.create(
+        account=account,
+        name='Shared FS',
+        is_shared=True,
+    )
+    source_field = FieldTemplate.objects.create(
+        account=account,
+        fieldset=fieldset,
+        name='Source',
+        type=FieldType.STRING,
+        order=1,
+        api_name='source-field',
+    )
+    target_field = FieldTemplate.objects.create(
+        account=account,
+        fieldset=fieldset,
+        name='Target',
+        type=FieldType.STRING,
+        order=2,
+        api_name='target-field',
+    )
+    ruleset = FieldTemplateRuleSet.objects.create(
+        field=target_field,
+        account=account,
+        name='Ruleset',
+        type=FieldRuleType.SHOW,
+    )
+    group_or = FieldTemplateRuleGroupOr.objects.create(
+        ruleset=ruleset,
+        account=account,
+    )
+    group_and = FieldTemplateRuleGroupAnd.objects.create(
+        group_or=group_or,
+        account=account,
+        field=source_field.api_name,
+        operator=FieldRuleOperator.EQUAL,
+        value='yes',
+    )
+    service = FieldTemplateRuleSetService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=ruleset,
+    )
+
+    # act
+    result = service._validate(group_and=group_and)
+
+    # assert
+    assert result is None
+
+
+def test__validate__shared_fieldset__bad_op__exception():
+
+    """ Validate raises for disallowed operator in shared fieldset """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    fieldset = FieldsetTemplate.objects.create(
+        account=account,
+        name='Shared FS',
+        is_shared=True,
+    )
+    source_field = FieldTemplate.objects.create(
+        account=account,
+        fieldset=fieldset,
+        name='Source',
+        type=FieldType.STRING,
+        order=1,
+        api_name='source-field',
+    )
+    target_field = FieldTemplate.objects.create(
+        account=account,
+        fieldset=fieldset,
+        name='Target',
+        type=FieldType.STRING,
+        order=2,
+        api_name='target-field',
+    )
+    ruleset = FieldTemplateRuleSet.objects.create(
+        field=target_field,
+        account=account,
+        name='Ruleset',
+        type=FieldRuleType.SHOW,
+    )
+    group_or = FieldTemplateRuleGroupOr.objects.create(
+        ruleset=ruleset,
+        account=account,
+    )
+    group_and = FieldTemplateRuleGroupAnd.objects.create(
+        group_or=group_or,
+        account=account,
+        field=source_field.api_name,
+        operator=FieldRuleOperator.GREATER_THAN,
+        value='1',
+    )
+    service = FieldTemplateRuleSetService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=ruleset,
+    )
+
+    # act
+    with pytest.raises(
+        FieldTemplateRuleSetServiceException,
+    ) as ex:
+        service._validate(group_and=group_and)
+
+    # assert
+    assert ex.value.message == pt_messages.MSG_PT_0078(
+        field=source_field.name,
+        operator=FieldRuleOperator.GREATER_THAN,
+        field_type=FieldType.STRING,
     )
 
 
