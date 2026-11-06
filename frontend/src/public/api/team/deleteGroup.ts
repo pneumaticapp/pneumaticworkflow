@@ -1,7 +1,7 @@
 import { commonRequest } from '../commonRequest';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 
-import { IGroup } from '../../redux/team/types';
+import type { IGroup } from '../../types/team';
 
 export function deleteGroup(id: Pick<IGroup, 'id'>) {
   const {

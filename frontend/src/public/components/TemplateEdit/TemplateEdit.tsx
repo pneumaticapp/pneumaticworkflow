@@ -1,15 +1,16 @@
 import * as React from 'react';
 import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RouteComponentProps } from 'react-router-dom';
+import type { RouteComponentProps } from 'react-router-dom';
 
 import { ERoutes } from '../../constants/routes';
-import { TUserListItem } from '../../types/user';
+import type { TAuthUserResult, TUserListItem } from '../../types/user';
 import { getNormalizedTemplateOwners, getTemplateIdFromUrl } from '../../utils/template';
 import { checkSomeRouteIsActive, isCreateTemplate } from '../../utils/history';
-import { EGraphViewMode, ITemplateClient } from '../../types/template';
-import { TLoadTemplateVariablesSuccessPayload } from '../../redux/actions';
-import { ETemplateStatus, IAuthUser } from '../../types/redux';
+import { EGraphViewMode } from '../../types/template';
+import type { ITemplateClient } from '../../types/template';
+import type { TLoadTemplateVariablesSuccessPayload } from '../../redux/templates/actions';
+import { ETemplateStatus } from '../../redux/template/types';
 import { usePrevious } from '../../hooks/usePrevious';
 import { getSubscriptionPlan } from '../../redux/selectors/user';
 import { getIsCatalogLoaded } from '../../redux/selectors/fieldsets';
@@ -23,7 +24,7 @@ import { getGraphWeaveTemplate } from './TemplateGraphEditor/fixtures/graphWeave
 import { TemplateEditorContainer } from './TemplateEditorContainer/TemplateEditorContainer';
 
 export interface ITemplateEditProps {
-  authUser: IAuthUser;
+  authUser: TAuthUserResult;
   template: ITemplateClient;
   aiTemplate: ITemplateClient | null;
   templateStatus: ETemplateStatus;

@@ -1,5 +1,5 @@
-import { EDashboardModes, IDashboardStore } from '../../types/redux';
-import { EDashboardTimeRange, TDashboardBreakdownItem } from '../../types/dashboard';
+import type { EDashboardModes, IDashboardStore } from '../dashboard/types';
+import type { EDashboardTimeRange, TDashboardBreakdownItem } from '../../types/dashboard';
 import type { RootState } from '../store';
 
 export const getDashboardStore = (state: RootState): IDashboardStore => state.dashboard;

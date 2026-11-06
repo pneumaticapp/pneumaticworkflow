@@ -4,27 +4,23 @@ import {
   EDashboardActions,
   setDashboardCounters,
   setBreakdownItems,
-  TLoadBreakdownTasks,
   setIsDasboardLoaderVisible,
   patchBreakdownItem,
   loadGettingStartedChecklistSuccess,
   loadGettingStartedChecklistFailed,
-  TOpenRunWorkflowModalByTemplateId,
-  TOpenRunWorkflowModalSideMenu,
 } from './actions';
+import type { TLoadBreakdownTasks, TOpenRunWorkflowModalByTemplateId, TOpenRunWorkflowModalSideMenu } from './actions';
 import { setGeneralLoaderVisibility } from '../general/actions';
 
 import { logger } from '../../utils/logger';
-import {
-  getDashboardWorkflowOverviewApi,
-  IGetDashboardOverviewResponse,
-} from '../../api/dashboard/getDashboardWorkflowOverview';
+import { getDashboardWorkflowOverviewApi } from '../../api/dashboard/getDashboardWorkflowOverview';
+import type { IGetDashboardOverviewResponse } from '../../api/dashboard/getDashboardWorkflowOverview';
 import { getDashboardTasksOverview } from '../../api/dashboard/getDashboardTasksOverview';
 import { getDashboardWorkflowBreakdown } from '../../api/dashboard/getDashboardWorkflowBreakdown';
 import { getDashboardTasksBreakdown } from '../../api/dashboard/getDashboardTasksBreakdown';
 import { getDashboardWorkflowsTasks } from '../../api/dashboard/getDashboardWorkflowsTasks';
 import { getDashboardTasksBySteps } from '../../api/dashboard/getDashboardTasks';
-import { EDashboardModes } from '../../types/redux';
+import { EDashboardModes } from './types';
 import { getCanAccessWorkflows } from '../selectors/user';
 import {
   getDashboardBreakdownItems,
@@ -42,8 +38,8 @@ import { getTemplate } from '../../api/getTemplate';
 
 import { openRunWorkflowModal } from '../runWorkflowModal/actions';
 import { getRunnableWorkflow, loadDatasetsMap } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
-import { ITemplateResponse, IExtraField, ITemplateKickoffClient } from '../../types/template';
-import { IFieldsetRuntime } from '../../types/fieldset';
+import type { ITemplateResponse, IExtraField, ITemplateKickoffClient } from '../../types/template';
+import type { IFieldsetRuntime } from '../../types/fieldset';
 import { mapTemplateFieldsetsToRuntime } from '../../utils/mapTemplateFieldsetsToRuntime';
 import { mapFieldsetBindingsToClient } from '../../utils/mapFieldsetsAPIToClient';
 import {
@@ -51,8 +47,8 @@ import {
   mapFieldsToExtraFields,
 } from '../../utils/mapFieldsetBindingClientToRuntime';
 import { getGettingStartedChecklist } from '../../api/getGettingStartedChecklist';
-import { IDashboardTask, IGettingStartedChecklist, TDashboardBreakdownItemResponse } from '../../types/dashboard';
-import { loadTemplateIntegrationsStats } from '../actions';
+import type { IDashboardTask, IGettingStartedChecklist, TDashboardBreakdownItemResponse } from '../../types/dashboard';
+import { loadTemplateIntegrationsStats } from '../templates/actions';
 import { isObject } from '../../utils/mappers';
 import { NotificationManager } from '../../components/UI/Notifications';
 

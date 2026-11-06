@@ -9,8 +9,8 @@ import { isArrayWithItems } from '../../../../utils/helpers';
 import { validateInviteEmail } from '../../../../utils/validators';
 import { SuccessCheckIcon, ErrorBlockIcon } from '../../../icons';
 import { Button, InputField, Loader } from '../../../UI';
-import { TUploadingInvite, TUploadingInviteStatus } from './types';
-import { InvitesType } from '../../../../redux/team/types';
+import type { TUploadingInvite, TUploadingInviteStatus } from './types';
+import { EInvitesType } from '../../../../types/team';
 
 import styles from './EmailInvitesTab.css';
 import popupStyles from '../../TeamInvitesPopup.css';
@@ -50,7 +50,7 @@ export function EmailInvitesTab() {
       setInputValue('');
       dispatch(
         inviteUsers({
-          invites: [{ email: newInvite.email, type: InvitesType.Email }],
+          invites: [{ email: newInvite.email, type: EInvitesType.Email }],
           withSuccessNotification: true,
           onStartUploading: () => {
             setIsLoading(true);

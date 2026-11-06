@@ -1,7 +1,8 @@
-import { ReactNode } from 'react';
-import { Node, Edge } from 'reactflow';
-import { EGraphViewMode, ITemplateKickoffClient, ITemplateTaskClient } from '../../../types/template';
-import { EConditionLogicOperations, EConditionOperators } from '../TaskForm/Conditions/types';
+import type { ReactNode } from 'react';
+import type { Node, Edge } from 'reactflow';
+import { EGraphViewMode } from '../../../types/template';
+import type { ITemplateKickoffClient, ITemplateTaskClient } from '../../../types/template';
+import type { EConditionLogicOperations, EConditionOperators } from '../TaskForm/Conditions/types';
 
 export type TGraphViewModeI18nId = 'template.view-line' | 'template.view-graph';
 
@@ -150,11 +151,6 @@ export type TGraphEdge = Edge<IConditionEdgeData>;
 export interface IGraphState {
   nodes: TGraphNode[];
   edges: TGraphEdge[];
-}
-
-export interface ITemplateGraphViewState {
-  viewMode: EGraphViewMode;
-  selectedTaskApiName: string | null;
 }
 
 export interface IGraphTaskEditorPanelProps {

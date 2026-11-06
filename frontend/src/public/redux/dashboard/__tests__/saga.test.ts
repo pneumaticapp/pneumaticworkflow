@@ -2,16 +2,17 @@ import { expectSaga } from 'redux-saga-test-plan';
 import * as matchers from 'redux-saga-test-plan/matchers';
 import { call } from 'redux-saga/effects';
 
-import { loadBreakdownTasks } from '../actions';
+import { loadBreakdownTasks, openRunWorkflowModalSideMenu } from '../actions';
 import { fetchBreakdownTasks, openRunWorflowByTemplateDataSaga } from '../saga';
 import { getDashboardStore } from '../../selectors/dashboard';
 import { getCanAccessWorkflows } from '../../selectors/user';
-import { EDashboardModes, IDashboardStore } from '../../../types/redux';
-import { EDashboardTimeRange, IDashboardTask } from '../../../types/dashboard';
+import { EDashboardModes } from '../types';
+import type { IDashboardStore } from '../types';
+import { EDashboardTimeRange } from '../../../types/dashboard';
+import type { IDashboardTask } from '../../../types/dashboard';
 import { reducer } from '../reducer';
 import { getDashboardWorkflowsTasks } from '../../../api/dashboard/getDashboardWorkflowsTasks';
 import * as templatesSaga from '../../templates/saga';
-import { openRunWorkflowModalSideMenu } from '../actions';
 import { loadDatasetsMap } from '../../../components/TemplateEdit/utils/getRunnableWorkflow';
 import { openRunWorkflowModal } from '../../runWorkflowModal/actions';
 

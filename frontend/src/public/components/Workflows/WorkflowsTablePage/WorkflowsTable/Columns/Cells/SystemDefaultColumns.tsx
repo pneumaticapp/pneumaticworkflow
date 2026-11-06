@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { Column } from 'react-table';
-import { TableColumns } from '../../types';
+import type { Column } from 'react-table';
+import type { TTableColumns } from '../../types';
 import { Skeleton } from '../../../../../UI/Skeleton';
 import { ETableViewFieldsWidth } from './WorkflowTableConstants';
 
@@ -36,7 +36,7 @@ const PerformerSkeletonCell = () => (
   </div>
 );
 
-export const defaultSystemSkeletonTable: Column<TableColumns>[] = [
+export const defaultSystemSkeletonTable: Column<TTableColumns>[] = [
   {
     Header: <SkeletonDefaultCell80 />,
     accessor: 'system-column-workflow',

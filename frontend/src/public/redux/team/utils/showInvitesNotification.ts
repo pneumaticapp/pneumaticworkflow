@@ -1,14 +1,14 @@
 import type { InviteResponse } from '../../../api/sendInvites';
 import { NotificationManager } from '../../../components/UI/Notifications';
 import { getPluralNoun } from '../../../utils/helpers';
-import type { UserInvitePayload } from '../types';
+import type { IUserInvitePayload } from '../../../types/team';
 
 export interface IShowNotification {
-  (type: 'success' | 'warning', invites: UserInvitePayload[], title?: string): void;
+  (type: 'success' | 'warning', invites: IUserInvitePayload[], title?: string): void;
 }
 
 export interface IShowInvitesNotification {
-  invites: UserInvitePayload[];
+  invites: IUserInvitePayload[];
   sendInvitesResult: InviteResponse;
 }
 

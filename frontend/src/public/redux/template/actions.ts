@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import { ETemplateStatus } from '../../types/redux';
+import type { ETemplateStatus } from './types';
 import type { ITypedReduxAction } from '../types';
 import { actionGenerator } from '../../utils/redux';
 import type { ITemplateClient, ITemplateTaskClient, TAITemplateGenerationStatus } from '../../types/template';

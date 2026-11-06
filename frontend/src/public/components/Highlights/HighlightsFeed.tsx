@@ -4,19 +4,20 @@ import InfiniteScroll from 'react-infinite-scroll-component';
 import { useIntl } from 'react-intl';
 
 import { ERoutes } from '../../constants/routes';
-import { EHighlightsDateFilter, EHighlightsFilterType, IHighlightsItem } from '../../types/highlights';
+import { EHighlightsDateFilter, EHighlightsFilterType } from '../../types/highlights';
+import type { IHighlightsItem } from '../../types/highlights';
 import { TITLES } from '../../constants/titles';
 import { history } from '../../utils/history';
 import { PROCESS_HIGHLIGHTS_DATE_RANGE_MAP } from '../../utils/dateTime';
 import { UsersFilter } from './UsersFilter';
-import { ILoadHighlightsConfig } from '../../redux/highlights/actions';
-import { IHighlightsFilters } from '../../types/redux';
+import type { ILoadHighlightsConfig } from '../../redux/highlights/actions';
+import type { IHighlightsFilters } from '../../redux/highlights/types';
 import { INIT_FILTERS } from '../../redux/highlights/reducer';
 import { isArrayWithItems } from '../../utils/helpers';
-import { TUserListItem } from '../../types/user';
-import { ITemplateTitleBaseWithCount } from '../../types/template';
+import type { TUserListItem } from '../../types/user';
+import type { ITemplateTitleBaseWithCount } from '../../types/template';
 import { Placeholder, Button } from '../UI';
-import { TOpenWorkflowLogPopupPayload } from '../../redux/workflows/types';
+import type { TOpenWorkflowLogPopupPayload } from '../../redux/workflows/types';
 
 import { HighlightsPlaceholderIcon } from './HighlightsPlaceholderIcon';
 import { TemplatesFilter } from './TemplatesFilter';
@@ -25,7 +26,7 @@ import { FeedItem } from './FeedItem';
 import styles from './HighlightsFeed.css';
 import { EPageTitle } from '../../constants/defaultValues';
 import { PageTitle } from '../PageTitle/PageTitle';
-import { IGetHighlightsTitlesRequestConfig } from '../../api/getHighlightsTitles';
+import type { IGetHighlightsTitlesRequestConfig } from '../../api/getHighlightsTitles';
 
 export interface IHighlightsFeedProps {
   count: number;

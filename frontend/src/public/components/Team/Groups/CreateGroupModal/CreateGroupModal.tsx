@@ -6,7 +6,7 @@ import { validateTenantName } from '../../../../utils/validators';
 import { Button, Header, InputField, Modal } from '../../../UI';
 import type { RootState } from '../../../../redux/store';
 import { createGroup, createModalClose } from '../../../../redux/actions';
-import { EUserGroupType } from '../../../../redux/team/types';
+import { EUserGroupType } from '../../../../types/team';
 
 import styles from './CreateGroupModal.css';
 

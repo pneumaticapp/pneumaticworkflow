@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
-import { Formik, Form, FormikConfig } from 'formik';
+import { Formik, Form } from 'formik';
+import type { FormikConfig } from 'formik';
 import { useDispatch } from 'react-redux';
 
 import {
@@ -13,15 +14,17 @@ import {
 } from '../../constants/profile';
 import { FormikInputField, InputField } from '../UI/Fields/InputField';
 import { Button } from '../UI/Buttons/Button';
-import { ESettingsTabs, TPasswordFields } from '../../types/profile';
+import { ESettingsTabs } from '../../types/profile';
+import type { TPasswordFields } from '../../types/profile';
 import { TITLES } from '../../constants/titles';
-import { IUpdateUserRequest } from '../../api/editProfile';
+import type { IUpdateUserRequest } from '../../api/editProfile';
 import { validateName } from '../../utils/validators';
 import { getErrorsObject } from '../../utils/formik/getErrorsObject';
 import { Header } from '../UI/Typeography/Header';
 import { SectionTitle } from '../UI/Typeography/SectionTitle';
-import { IAuthUser } from '../../types/redux';
-import { TUserListItem, isUserAbsent } from '../../types/user';
+import type { IAuthUser } from '../../redux/auth/types';
+import { isUserAbsent } from '../../types/user';
+import type { TUserListItem } from '../../types/user';
 import { FormikCheckbox } from '../UI/Fields/Checkbox';
 import { AvatarController } from './AvatarController';
 import { FormikDropdownList } from '../UI';

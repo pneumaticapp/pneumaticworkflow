@@ -1,8 +1,9 @@
 /* eslint-disable */
 /* prettier-ignore */
-import { EMenuActions, TMenuActions } from './actions';
+import { EMenuActions } from './actions';
+import type { TMenuActions } from './actions';
 import { defaultMenuType } from '../../constants/defaultValues';
-import { IMenu } from '../../types/redux';
+import type { IMenu } from './types';
 import type { IMenuItem } from '../../types/menu';
 import merge from 'lodash.merge';
 

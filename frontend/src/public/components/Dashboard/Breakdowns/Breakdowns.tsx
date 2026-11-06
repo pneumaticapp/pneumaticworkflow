@@ -2,10 +2,10 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 
 import { Button, Placeholder } from '../../UI';
-import { EDashboardModes } from '../../../types/redux';
+import { EDashboardModes } from '../../../redux/dashboard/types';
 import type { TDashboardBreakdownItem } from '../../../types/dashboard';
 import { isArrayWithItems } from '../../../utils/helpers';
-import { ILoadBreakdownTasksPayload, IOpenRunWorkflowPayload } from '../../../redux/actions';
+import type { ILoadBreakdownTasksPayload, IOpenRunWorkflowPayload } from '../../../redux/dashboard/actions';
 
 import { DashboardPlaceholderIcon } from '../DashboardPlaceholderIcon';
 import { BreakdownItem } from './BreakdownItem';

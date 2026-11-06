@@ -3,8 +3,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
-import { TemplateControlls, ITemplateControllsProps } from '../TemplateControlls';
-import { ETemplateStatus } from '../../../../types/redux';
+import { TemplateControlls } from '../TemplateControlls';
+import type { ITemplateControllsProps } from '../TemplateControlls';
+import { ETemplateStatus } from '../../../../redux/template/types';
 import { getRunnableWorkflow, loadDatasetsMap } from '../../utils/getRunnableWorkflow';
 import { mapFieldsetBindingClientToRuntime } from '../../../../utils/mapFieldsetBindingClientToRuntime';
 import { getTemplate } from '../../../../__stubs__/templates';

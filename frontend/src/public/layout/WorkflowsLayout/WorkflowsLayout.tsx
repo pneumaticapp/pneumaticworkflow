@@ -1,17 +1,19 @@
-import React, { ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { cancelTemplateFilterRequests, loadWorkflowsList } from '../../redux/workflows/slice';
-import { TRemoveWorkflowFromListPayload } from '../../redux/workflows/types';
+import type { TRemoveWorkflowFromListPayload } from '../../redux/workflows/types';
 import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
 import { history } from '../../utils/history';
 import { WorkflowModalContainer } from '../../components/Workflows/WorkflowModal';
 import { SelectMenu, Tabs } from '../../components/UI';
-import { EWorkflowsSorting, EWorkflowsStatus, EWorkflowsView, ITemplateFilterItem } from '../../types/workflow';
+import { EWorkflowsSorting, EWorkflowsStatus, EWorkflowsView } from '../../types/workflow';
+import type { ITemplateFilterItem } from '../../types/workflow';
 import { BoxesIcon, StatusTitlesIcon, TableViewIcon } from '../../components/icons';
-import { IWorkflowsFiltersProps } from '../../components/Workflows/types';
+import type { IWorkflowsFiltersProps } from '../../components/Workflows/types';
 import {
   canFilterByCurrentPerformer,
   canFilterByTemplateStep,
@@ -20,7 +22,7 @@ import {
 } from '../../utils/workflows/filters';
 
 import { WorkflowsTableActions } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable';
-import type { TableViewContainerRef } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/types';
+import type { ITableViewContainerRef } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/types';
 import { WorkflowsTableProvider } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/WorkflowsTableContext';
 
 import { useCheckDevice } from '../../hooks/useCheckDevice';
@@ -76,7 +78,7 @@ export function WorkflowsLayoutComponent({
   const [isTableWiderThanScreen, setIsTableWiderThanScreen] = useState(false);
 
   const workflowsMainRef = useRef<HTMLDivElement>(null);
-  const tableViewContainerRef = useRef<TableViewContainerRef>(null);
+  const tableViewContainerRef = useRef<ITableViewContainerRef>(null);
   const loadingTaskRef = useRef<Set<number>>(new Set());
   const prevTemplatesIdsRef = useRef<number[]>(templatesIdsFilter);
 

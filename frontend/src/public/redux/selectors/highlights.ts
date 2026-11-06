@@ -1,4 +1,4 @@
-import { IHighlightsStore, IHighlightsFilters } from '../../types/redux';
+import type { IHighlightsFilters, IHighlightsStore } from '../highlights/types';
 import type { RootState } from '../store';
 
 export const getHighlightsStore = (state: RootState): IHighlightsStore => state.highlights;

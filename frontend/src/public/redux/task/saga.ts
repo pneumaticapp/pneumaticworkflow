@@ -1,44 +1,37 @@
-import {
-  all,
-  fork,
-  put,
-  takeEvery,
-  select,
-  call,
-  take,
-  ActionPattern,
-  ActionChannelEffect,
-  actionChannel,
-  takeLatest,
-} from 'redux-saga/effects';
-import { PayloadAction } from '@reduxjs/toolkit';
+import { all, fork, put, takeEvery, select, call, take, actionChannel, takeLatest } from 'redux-saga/effects';
+import type { ActionPattern, ActionChannelEffect } from 'redux-saga/effects';
+import type { PayloadAction } from '@reduxjs/toolkit';
 import {
   ETaskActions,
-  TLoadCurrentTask,
   setCurrentTask,
-  TSetTaskCompleted,
-  TSetTaskReverted,
   setCurrentTaskStatus,
-  ETaskStatus,
-  TAddTaskPerformer,
   changeTaskPerformers,
-  TRemoveTaskPerformer,
-  TAddTaskGuest,
-  TMarkChecklistItem,
-  TUnmarkChecklistItem,
   changeChecklistItem,
   setChecklistsHandling,
-  TSetChecklistsHandling,
-  TSetCurrentTaskDueDate,
   patchCurrentTask,
   changeTaskWorkflow,
   changeTaskWorkflowLog,
   setTaskWorkflowIsLoading,
   changeTaskWorkflowLogViewSettings,
+} from './actions';
+import type {
+  TLoadCurrentTask,
+  TSetTaskCompleted,
+  TSetTaskReverted,
+  TAddTaskPerformer,
+  TRemoveTaskPerformer,
+  TAddTaskGuest,
+  TMarkChecklistItem,
+  TUnmarkChecklistItem,
+  TSetChecklistsHandling,
+  TSetCurrentTaskDueDate,
   TChangeTaskWorkflowLogViewSettings,
 } from './actions';
+import { ETaskCardState } from './types';
+import type { IStoreTask } from './types';
 import { getTask } from '../../api/getTask';
-import { ETaskCardViewMode, ITask, ITaskAPI } from '../../types/tasks';
+import { ETaskCardViewMode } from '../../types/tasks';
+import type { ITask, ITaskAPI } from '../../types/tasks';
 import { logger } from '../../utils/logger';
 import { ERoutes } from '../../constants/routes';
 import { NotificationManager } from '../../components/UI/Notifications';
@@ -46,7 +39,7 @@ import { history } from '../../utils/history';
 import { completeTask } from '../../api/completeTask';
 import { revertTask } from '../../api/revertTask';
 import { usersFetchFinished } from '../accounts/slice';
-import { setGeneralLoaderVisibility } from '../actions';
+import { setGeneralLoaderVisibility } from '../general/actions';
 import { patchTaskInList, shiftTaskList, ETaskListActions } from '../tasks/slice';
 
 import { getErrorMessage } from '../../utils/getErrorMessage';
@@ -57,7 +50,7 @@ import {
   removeOutputsFromLocalStorage,
 } from '../../components/TaskCard/utils/storageOutputs';
 
-import { TChannelAction } from '../tasks/saga';
+import type { TChannelAction } from '../tasks/saga';
 import { getCurrentTask, getTaskPerformers, getTaskStore } from '../selectors/task';
 import { addTaskPerformer } from '../../api/addTaskPerformer';
 import { removeTaskPerformer } from '../../api/removeTaskPerformer';
@@ -65,7 +58,7 @@ import { addTaskPerformerGroup } from '../../api/addTaskPerformerGroup';
 import { removeTaskPerformerGroup } from '../../api/removeTaskPerformerGroup';
 import { addTaskGuest } from '../../api/addTaskGuest';
 import { removeTaskGuest } from '../../api/removeTaskGuest';
-import { TUserListItem } from '../../types/user';
+import type { TUserListItem } from '../../types/user';
 
 import { EResponseStatuses } from '../../constants/defaultValues';
 import { getNormalizedTask, getTaskChecklist, getTaskChecklistItem } from '../../utils/tasks';
@@ -83,20 +76,16 @@ import {
 } from '../../utils/mappers';
 import { formatDateToISOInWorkflow, toTspDate } from '../../utils/dateTime';
 
-import { IStoreTask } from '../../types/redux';
 import { getWorkflow } from '../../api/getWorkflow';
-import {
-  EWorkflowsLogSorting,
-  IWorkflowDetailsClient,
-  IWorkflowLogItem,
-  TWorkflowDetailsResponse,
-} from '../../types/workflow';
+import { EWorkflowsLogSorting } from '../../types/workflow';
+import type { IWorkflowDetailsClient, IWorkflowLogItem, TWorkflowDetailsResponse } from '../../types/workflow';
 
-import { ETemplateOwnerType, RawPerformer } from '../../types/template';
+import { ETemplateOwnerType } from '../../types/template';
+import type { RawPerformer } from '../../types/template';
 import { getTaskWorkflowLog } from '../../api/getTaskWorkflowLog';
 import { sendTaskComment } from '../../api/sendTaskComment';
 import { getWorkflowAddComputedPropsToRedux } from '../../components/Workflows/utils/getWorfkflowClientProperties';
-import { ISendWorkflowLogComment } from '../workflows/types';
+import type { ISendWorkflowLogComment } from '../types';
 import { EPermissionObjectType } from '../../types/permissions';
 import { loadObjectPermissions } from '../permissions/slice';
 
@@ -115,7 +104,7 @@ function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
       throw error;
     }
 
-    yield put(setCurrentTaskStatus(ETaskStatus.Loading));
+    yield put(setCurrentTaskStatus(ETaskCardState.Loading));
 
     const task: ITaskAPI = yield getTask(taskId);
     const normalizedTask = getNormalizedTask(task);
@@ -168,7 +157,7 @@ function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
       history.replace(ERoutes.Tasks);
     }
   } finally {
-    yield put(setCurrentTaskStatus(ETaskStatus.WaitingForAction));
+    yield put(setCurrentTaskStatus(ETaskCardState.WaitingForAction));
   }
 }
 
@@ -297,7 +286,7 @@ export function* setTaskCompleted({ payload: { taskId, output, viewMode } }: TSe
     return;
   }
 
-  yield put(setCurrentTaskStatus(ETaskStatus.Completing));
+  yield put(setCurrentTaskStatus(ETaskCardState.Completing));
 
   // wait until checklist are handled
   const task: ReturnType<typeof getCurrentTask> = yield select(getCurrentTask);
@@ -323,7 +312,7 @@ export function* setTaskCompleted({ payload: { taskId, output, viewMode } }: TSe
 
     removeOutputFromLocalStorage(taskId);
     fieldsetsStorage.remove(taskId);
-    yield put(setCurrentTaskStatus(ETaskStatus.Completed));
+    yield put(setCurrentTaskStatus(ETaskCardState.Completed));
 
     if (viewMode === ETaskCardViewMode.List) {
       yield put(shiftTaskList({ currentTaskId: taskId }));
@@ -339,7 +328,7 @@ export function* setTaskCompleted({ payload: { taskId, output, viewMode } }: TSe
       message: getErrorMessage(err),
     });
 
-    yield put(setCurrentTaskStatus(ETaskStatus.WaitingForAction));
+    yield put(setCurrentTaskStatus(ETaskCardState.WaitingForAction));
   }
 }
 
@@ -353,7 +342,7 @@ export function* setTaskReverted({ payload: { viewMode, taskId, comment, clearOu
   }
 
   try {
-    yield put(setCurrentTaskStatus(ETaskStatus.Returning));
+    yield put(setCurrentTaskStatus(ETaskCardState.Returning));
 
     yield revertTask({ id: taskId, comment });
 
@@ -376,7 +365,7 @@ export function* setTaskReverted({ payload: { viewMode, taskId, comment, clearOu
       message: getErrorMessage(err),
     });
   } finally {
-    yield put(setCurrentTaskStatus(ETaskStatus.WaitingForAction));
+    yield put(setCurrentTaskStatus(ETaskCardState.WaitingForAction));
   }
 }
 

@@ -1,12 +1,9 @@
 import uniqBy from 'lodash.uniqby';
 import { all, fork, put, takeEvery, select, takeLatest, call, delay, take, race } from 'redux-saga/effects';
-import { PayloadAction } from '@reduxjs/toolkit';
-import {
-  openRunWorkflowModal,
-  setGeneralLoaderVisibility,
-  setCurrentTask,
-  updateTaskWorkflowLogItem,
-} from '../actions';
+import type { PayloadAction } from '@reduxjs/toolkit';
+import { openRunWorkflowModal } from '../runWorkflowModal/actions';
+import { setGeneralLoaderVisibility } from '../general/actions';
+import { setCurrentTask, updateTaskWorkflowLogItem } from '../task/actions';
 import { patchTaskInList, ETaskListActions } from '../tasks/slice';
 import {
   changeWorkflow,
@@ -63,10 +60,10 @@ import {
   cancelTemplateTasksCounters,
   cancelTemplateFilterRequests,
 } from './slice';
-import {
-  IChangeWorkflowLogViewSettingsPayload,
+import type { IChangeWorkflowLogViewSettingsPayload, ISendWorkflowLogComment } from '../types';
+import type {
   ISaveWorkflowsPresetPayload,
-  ISendWorkflowLogComment,
+  IStoreWorkflows,
   TCloneWorkflowPayload,
   TDeleteWorkflowPayload,
   TEditWorkflowPayload,
@@ -77,20 +74,17 @@ import {
   TSetWorkflowResumedPayload,
   TSnoozeWorkflowPayload,
 } from './types';
-import {
+import { EWorkflowsLogSorting, EWorkflowStatus, EWorkflowTaskStatus, EWorkflowsView } from '../../types/workflow';
+import type {
   IWorkflowLogItem,
-  EWorkflowsLogSorting,
   EWorkflowsStatus,
   TUserCounter,
   TTemplateStepCounter,
-  EWorkflowStatus,
   TWorkflowResponse,
   TWorkflowDetailsResponse,
   IWorkflowClient,
   IWorkflowDetailsClient,
-  EWorkflowTaskStatus,
   IWorkflowTaskClient,
-  EWorkflowsView,
 } from '../../types/workflow';
 import { ERoutes } from '../../constants/routes';
 import {
@@ -108,18 +102,19 @@ import { getWorkflow } from '../../api/getWorkflow';
 import { getWorkflowLog } from '../../api/getWorkflowLog';
 import { returnWorkflowToTask } from '../../api/returnWorkflowToTask';
 import { history } from '../../utils/history';
-import { IStoreWorkflows } from '../../types/redux';
 import { logger } from '../../utils/logger';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { sendWorkflowComment } from '../../api/sendWorkflowComment';
 import { finishWorkflow } from '../../api/finishWorkflow';
-import { editWorkflow, IEditWorkflowResponse } from '../../api/editWorkflow';
-import { getTemplatesTitles, TGetTemplatesTitlesResponse } from '../../api/getTemplatesTitles';
-import { IRuntimeKickoffClient, ITemplateResponse, TTemplatePreset } from '../../types/template';
+import { editWorkflow } from '../../api/editWorkflow';
+import type { IEditWorkflowResponse } from '../../api/editWorkflow';
+import { getTemplatesTitles } from '../../api/getTemplatesTitles';
+import type { TGetTemplatesTitlesResponse } from '../../api/getTemplatesTitles';
+import type { IRuntimeKickoffClient, ITemplateResponse, TTemplatePreset } from '../../types/template';
 import { getWorkflowLogStore } from '../selectors/workflowLog';
 
-import { TChannelAction } from '../tasks/saga';
-import { ITemplateStep } from '../../types/tasks';
+import type { TChannelAction } from '../tasks/saga';
+import type { ITemplateStep } from '../../types/tasks';
 import { getTemplateSteps } from '../../api/getTemplateSteps';
 
 import { handleLoadTemplateVariables } from '../templates/saga';
@@ -134,11 +129,16 @@ import { getWorkflowsStartersCounters } from '../../api/getWorkflowsStartersCoun
 import { continueWorkflow } from '../../api/continueWorkflow';
 import { getWorkflowsTemplateStepsCounters } from '../../api/getWorkflowsTemplateStepsCounters';
 import { snoozeWorkflow } from '../../api/snoozeWorkflow';
-import { deleteComment, IDeleteComment } from '../../api/workflows/deleteComment';
-import { editComment, IEditComment } from '../../api/workflows/editComment';
-import { deleteReactionComment, IDeleteReaction } from '../../api/workflows/deleteReactionComment';
-import { createReactionComment, ICreateReaction } from '../../api/workflows/createReactionComment';
-import { IWatchedComment, watchedComment } from '../../api/workflows/watchedComment';
+import { deleteComment } from '../../api/workflows/deleteComment';
+import type { IDeleteComment } from '../../api/workflows/deleteComment';
+import { editComment } from '../../api/workflows/editComment';
+import type { IEditComment } from '../../api/workflows/editComment';
+import { deleteReactionComment } from '../../api/workflows/deleteReactionComment';
+import type { IDeleteReaction } from '../../api/workflows/deleteReactionComment';
+import { createReactionComment } from '../../api/workflows/createReactionComment';
+import type { ICreateReaction } from '../../api/workflows/createReactionComment';
+import { watchedComment } from '../../api/workflows/watchedComment';
+import type { IWatchedComment } from '../../api/workflows/watchedComment';
 import {
   mapBackandworkflowLogToRedux,
   mapBackendWorkflowToRedux,
@@ -151,12 +151,13 @@ import { getUserTimezone, getAuthUser, getUsers } from '../selectors/user';
 
 import { formatDateToISOInWorkflow, toTspDate } from '../../utils/dateTime';
 import { getWorkflowAddComputedPropsToRedux } from '../../components/Workflows/utils/getWorfkflowClientProperties';
-import { getTemplatePresets, TGetTemplatePresetsResponse } from '../../api/getTemplatePresets';
+import { getTemplatePresets } from '../../api/getTemplatePresets';
+import type { TGetTemplatePresetsResponse } from '../../api/getTemplatePresets';
 import { getCorrectPresetFields } from '../../components/Workflows/utils/getCorrectPresetFields';
 import { updateTemplatePresets } from '../../api/updateTemplatePresets';
 import { addTemplatePreset } from '../../api/addTemplatePreset';
 import { ALL_SYSTEM_FIELD_NAMES } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
-import { TUserListItem } from '../../types/user';
+import type { TUserListItem } from '../../types/user';
 import { isRequestCanceled } from '../../utils/isRequestCanceled';
 import { EPermissionObjectType } from '../../types/permissions';
 import { loadObjectPermissions } from '../permissions/slice';

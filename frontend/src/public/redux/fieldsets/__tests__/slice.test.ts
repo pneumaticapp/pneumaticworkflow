@@ -7,9 +7,9 @@ import fieldsetsReducer, {
   loadFieldsetsCatalogFailed,
   loadFieldsetsCatalogSuccess,
 } from '../slice';
-import { IFieldsetCatalogItem } from '../../../types/fieldset';
+import type { IFieldsetCatalogItem } from '../../../types/fieldset';
 import { makeFieldsetCatalogItem } from '../../../__stubs__/fieldsets.factory';
-import { IFieldsetsStore } from '../../../types/redux';
+import type { IFieldsetsStore } from '../types';
 
 const makeStateWithList = (
   items: IFieldsetCatalogItem[],

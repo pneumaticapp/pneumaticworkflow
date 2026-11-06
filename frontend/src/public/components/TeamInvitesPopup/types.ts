@@ -1,10 +1,10 @@
-import { TUserListItem } from '../../types/user';
-import { UserInvite } from '../../redux/team/types';
+import type { TUserListItem } from '../../types/user';
+import type { IUserInvite } from '../../types/team';
 
 export interface ITeamInvitesPopupProps {
   children?: any;
   isTeamInvitesOpened: boolean;
-  invitesUsersList: UserInvite[];
+  invitesUsersList: IUserInvite[];
   teamUsers: TUserListItem[];
   closeTeamInvitesPopup(): void;
 }

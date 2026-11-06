@@ -1,4 +1,5 @@
-import { ELoggedState, IAuthUser } from '../../../types/redux';
+import { ELoggedState } from '../../auth/types';
+import type { IAuthUser } from '../../auth/types';
 import type { RootState } from '../../store';
 import { ESubscriptionPlan } from '../../../types/account';
 import { EUserStatus } from '../../../types/user';

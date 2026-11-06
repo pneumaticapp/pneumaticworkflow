@@ -1,7 +1,7 @@
-import { ITemplatesList, ITemplatesStore, ITemplatesSystem, ITemplatesSystemList } from '../../types/redux';
+import type { ITemplatesList, ITemplatesStore, ITemplatesSystem, ITemplatesSystemList } from '../templates/types';
 import type { RootState } from '../store';
-import { TTransformedTask, TTaskVariable } from '../../types/template';
-import { ETemplatesSorting } from '../../types/workflow';
+import type { TTransformedTask, TTaskVariable } from '../../types/template';
+import type { ETemplatesSorting } from '../../types/workflow';
 
 export const getTemplatesStore = (state: RootState): ITemplatesStore => state.templates;
 

@@ -4,16 +4,16 @@ import { useIntl } from 'react-intl';
 import { RichEditor } from '../../../RichEditor';
 import type { IRichEditorHandle, TMentionData } from '../../../RichEditor/types';
 import { Avatar } from '../../../UI/Avatar';
-import { IAuthUser } from '../../../../types/redux';
-import { TUploadedFile } from '../../../../utils/uploadFiles';
-import { ISendWorkflowLogComment } from '../../../../redux/workflows/types';
+import type { TAuthUserResult } from '../../../../types/user';
+import type { TUploadedFile } from '../../../../utils/uploadFiles';
+import type { ISendWorkflowLogComment } from '../../../../redux/types';
 import { useStatePromise } from '../../../../hooks/useStatePromise';
 import { isArrayWithItems } from '../../../../utils/helpers';
 
 import styles from './PopupCommentField.css';
 
 export interface IPopupCommentFieldProps {
-  user: IAuthUser;
+  user: TAuthUserResult;
   mentions: TMentionData[];
   sendComment({ text, taskId }: ISendWorkflowLogComment): void;
   taskId?: number;

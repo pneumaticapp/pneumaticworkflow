@@ -1,6 +1,6 @@
 import type { IUnsavedUser, IUserRegister, IUserVacation, TAuthUserResult, TUserInvited } from '../../types/user';
 import { actionGenerator } from '../../utils/redux';
-import type { IAuthUser } from '../../types/redux';
+import type { EAuthUserFailType } from './types';
 import type { ITypedReduxAction } from '../types';
 import type { IUpdateUserRequest, TUpdateUserMappedResponse } from '../../api/editProfile';
 import type { IUpdateAccountRequest, IUpdatedAccount } from '../../api/editAccount';
@@ -169,11 +169,6 @@ export const authUserSuccess: (payload: TAuthUserResult) => TAuthUserSuccess = a
   TAuthUserResult
 >(EAuthActions.AuthUserSuccess);
 
-export enum EAuthUserFailType {
-  Common = 'common',
-  NotVerified = 'not-verified',
-}
-
 export type TAuthUserFail = ITypedReduxAction<EAuthActions.AuthUserFail, EAuthUserFailType>;
 export const authUserFail: (payload?: EAuthUserFailType) => TAuthUserFail = actionGenerator<
   EAuthActions.AuthUserFail,
@@ -310,10 +305,10 @@ export const deleteUserPhoto: (payload?: void) => TDeleteUserPhoto = actionGener
   void
 >(EAuthActions.DeleteUserPhoto);
 
-export type TSetUserPhoto = ITypedReduxAction<EAuthActions.SetUserPhoto, IAuthUser['photo']>;
-export const setUserPhoto: (payload: IAuthUser['photo']) => TSetUserPhoto = actionGenerator<
+export type TSetUserPhoto = ITypedReduxAction<EAuthActions.SetUserPhoto, TAuthUserResult['photo']>;
+export const setUserPhoto: (payload: TAuthUserResult['photo']) => TSetUserPhoto = actionGenerator<
   EAuthActions.SetUserPhoto,
-  IAuthUser['photo']
+  TAuthUserResult['photo']
 >(EAuthActions.SetUserPhoto);
 
 export type TMakeStripePaymentPayload = {

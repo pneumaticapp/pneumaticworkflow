@@ -1,4 +1,4 @@
 import type { RootState } from '../store';
-import { TeamPages } from '../team/types';
+import type { ETeamPages } from '../team/types';
 
-export const getTeamPage = (state: RootState): TeamPages => state.team.page;
+export const getTeamPage = (state: RootState): ETeamPages => state.team.page;

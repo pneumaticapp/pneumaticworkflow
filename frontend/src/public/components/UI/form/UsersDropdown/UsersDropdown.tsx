@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
-import { ActionMeta, FormatOptionLabelMeta } from 'react-select';
+import type { ActionMeta, FormatOptionLabelMeta } from 'react-select';
 
-import { DropdownList, Checkbox, Avatar, TAvatarUser } from '../..';
+import { DropdownList, Checkbox, Avatar } from '../..';
+import type { TAvatarUser } from '../../Avatar';
 import type { TDropdownOptionBase, IDropdownListProps } from '../../DropdownList/types';
-import { EUserStatus, TUserListItem, isUserAbsent } from '../../../../types/user';
+import { EUserStatus, isUserAbsent } from '../../../../types/user';
+import type { TUserListItem } from '../../../../types/user';
+import type { IGroup } from '../../../../types/team';
 import { BoldPlusIcon } from '../../../icons';
 import { ETaskPerformerType } from '../../../../types/template';
 import { getUserById } from '../../../UserData/utils/getUserById';
@@ -22,6 +25,13 @@ export enum EOptionTypes {
   Manager = ETaskPerformerType.Manager,
   InviteUsers = 'invite-users',
   AllUsers = 'all-users',
+}
+
+export interface IGroupDropdownOption extends Omit<IGroup, 'type'> {
+  optionType: EOptionTypes.Group;
+  label: string;
+  value: string;
+  type: ETaskPerformerType.UserGroup;
 }
 
 export type TUsersDropdownOption = TDropdownOptionBase & {

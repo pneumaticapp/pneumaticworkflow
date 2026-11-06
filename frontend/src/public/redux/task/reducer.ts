@@ -1,12 +1,15 @@
 import { produce } from 'immer';
-import { IStoreTask } from '../../types/redux';
+import { ETaskCardState } from './types';
+import type { IStoreTask } from './types';
 import { getTaskChecklist, getTaskChecklistItem } from '../../utils/tasks';
-import { ETaskActions, ETaskStatus, TTaskActions } from './actions';
-import { EWorkflowsLogSorting, IWorkflowLogItem } from '../../types/workflow';
+import { ETaskActions } from './actions';
+import type { TTaskActions } from './actions';
+import { EWorkflowsLogSorting } from '../../types/workflow';
+import type { IWorkflowLogItem } from '../../types/workflow';
 
 export const INIT_STATE: IStoreTask = {
   data: null,
-  status: ETaskStatus.WaitingForAction,
+  status: ETaskCardState.WaitingForAction,
   isWorkflowLoading: false,
   workflow: null,
   workflowLog: {

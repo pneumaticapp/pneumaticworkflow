@@ -1,17 +1,15 @@
 import { channel as createChannel } from 'redux-saga';
-import { ActionChannelEffect, ActionPattern, actionChannel, call, put, select, take } from 'redux-saga/effects';
+import { actionChannel, call, put, select, take } from 'redux-saga/effects';
+import type { ActionChannelEffect, ActionPattern } from 'redux-saga/effects';
 
-import { getNotifications, TGetNotificationsResponse } from '../../../api/getNotifications';
+import { getNotifications } from '../../../api/getNotifications';
+import type { TGetNotificationsResponse } from '../../../api/getNotifications';
 import { removeNotificationItem as removeNotificationItemApi } from '../../../api/removeNotificationItem';
-import { TNotificationsListItem } from '../../../types';
-import { IStoreNotification } from '../../../types/redux';
+import type { TNotificationsListItem } from '../../../types/notifications';
+import type { IStoreNotification } from '../types';
 import { getNotificationsStore } from '../../selectors/notifications';
-import {
-  changeNotificationsList,
-  ENotificationsActions,
-  removeNotificationItem,
-  TRemoveNotificationItem,
-} from '../actions';
+import { changeNotificationsList, ENotificationsActions, removeNotificationItem } from '../actions';
+import type { TRemoveNotificationItem } from '../actions';
 import { handleRemoveNotification, watchRemoveNotification } from '../saga';
 
 const makeNotification = (id: number): TNotificationsListItem =>

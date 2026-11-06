@@ -1,26 +1,23 @@
-import React, { ElementRef, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
+import type { ElementRef } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
-import { ETaskStatus } from '../../redux/actions';
+import { ETaskCardState } from '../../redux/task/types';
 import { getRegularGroupsList } from '../../redux/selectors/groups';
 import { ETaskPerformerType, ETemplateOwnerType } from '../../types/template';
-import { TUserListItem } from '../../types/user';
+import type { TUserListItem } from '../../types/user';
 import { EWorkflowStatus } from '../../types/workflow';
 import { trackInviteTeamInPage } from '../../utils/analytics';
 import { getUserFullName } from '../../utils/users';
 import UserDataWithGroup from '../UserDataWithGroup';
 import { EBgColorTypes, UserPerformer } from '../UI/UserPerformer';
-import {
-  EOptionTypes,
-  getUsersDropdownOptionValue,
-  TUsersDropdownOption,
-  UsersDropdown,
-} from '../UI/form/UsersDropdown';
+import { EOptionTypes, getUsersDropdownOptionValue, UsersDropdown } from '../UI/form/UsersDropdown';
+import type { TUsersDropdownOption } from '../UI/form/UsersDropdown';
 import { GuestController } from './GuestsController';
 import { ETaskCardViewMode } from '../../types/tasks';
-import { TTaskPerformersProps } from './types';
+import type { TTaskPerformersProps } from './types';
 
 import styles from './TaskCard.css';
 
@@ -38,7 +35,7 @@ export function TaskPerformers({
   const groups = useSelector(getRegularGroupsList);
   const guestsControllerRef = useRef<ElementRef<typeof GuestController> | null>(null);
   const canEditPerformers =
-    status !== ETaskStatus.Completed && workflow?.status !== EWorkflowStatus.Finished && !task.isReadOnlyViewer;
+    status !== ETaskCardState.Completed && workflow?.status !== EWorkflowStatus.Finished && !task.isReadOnlyViewer;
   const canRemovePerformer = canEditPerformers && task.performers.length > 1 && viewMode !== ETaskCardViewMode.Guest;
 
   useEffect(() => {

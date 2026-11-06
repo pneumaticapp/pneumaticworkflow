@@ -1,4 +1,4 @@
-import { ESubscriptionPlan } from './account';
+import type { ESubscriptionPlan } from './account';
 
 export type TUserType = 'user' | 'guest' | 'group';
 export interface IUnsavedUser {
@@ -219,4 +219,13 @@ export interface TAuthUserResult extends IUnsavedUser {
   managerId: number | null;
   reportIds: number[];
   vacation?: IUserVacation | null;
+}
+
+export interface IUserUtm {
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_term?: string;
+  utm_content?: string;
+  gclid?: string;
 }

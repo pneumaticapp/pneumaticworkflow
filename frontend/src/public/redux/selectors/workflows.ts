@@ -1,6 +1,7 @@
-import { IStoreWorkflows, IWorkflowLog } from '../../types/redux';
+import type { IWorkflowLog } from '../types';
+import type { IStoreWorkflows } from '../workflows/types';
 import type { RootState } from '../store';
-import {
+import type {
   EWorkflowsLoadingStatus,
   EWorkflowsStatus,
   EWorkflowsView,

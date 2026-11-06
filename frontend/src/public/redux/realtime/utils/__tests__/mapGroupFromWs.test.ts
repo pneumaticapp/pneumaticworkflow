@@ -1,4 +1,4 @@
-import { EUserGroupType } from '../../../team/types';
+import { EUserGroupType } from '../../../../types/team';
 import { mapWsGroupToGroup } from '../mapGroupFromWs';
 
 describe('mapWsGroupToGroup', () => {

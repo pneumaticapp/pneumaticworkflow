@@ -7,7 +7,7 @@ import { debounce } from 'throttle-debounce';
 
 import { InfoAlertIcon, SuccessCheckMark } from '../../icons';
 import { IntlMessages } from '../../IntlMessages';
-import { ETemplateStatus } from '../../../types/redux';
+import { ETemplateStatus } from '../../../redux/template/types';
 import { usePrevious } from '../../../hooks/usePrevious';
 
 import styles from './AutoSaveStatus.css';

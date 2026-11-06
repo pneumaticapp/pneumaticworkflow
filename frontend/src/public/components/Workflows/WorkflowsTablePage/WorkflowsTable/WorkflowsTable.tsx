@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTable, CellProps, TableOptions } from 'react-table';
+import { useTable } from 'react-table';
+import type { CellProps, TableOptions } from 'react-table';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useIntl } from 'react-intl';
 import { createPortal } from 'react-dom';
 import { debounce } from 'throttle-debounce';
 import classNames from 'classnames';
-import { IWorkflowsTableProps, TableColumns } from './types';
+import type { IWorkflowsTableProps, TTableColumns } from './types';
 import * as ColumnCells from './Columns/Cells';
 
 import { createWorkflowsPlaceholderIcon } from '../../WorkflowsPlaceholderIcon';
@@ -94,7 +95,7 @@ export function WorkflowsTable({
   );
 
   const renderWorkflowColumn = useCallback(
-    (props: CellProps<TableColumns>) => (
+    (props: CellProps<TTableColumns>) => (
       <ColumnCells.WorkflowColumn
         {...props}
         onWorkflowEnded={() => loadWorkflowsList(0)}
@@ -127,7 +128,7 @@ export function WorkflowsTable({
     renderWorkflowColumn,
   });
 
-  const options: TableOptions<TableColumns> = {
+  const options: TableOptions<TTableColumns> = {
     data,
     columns,
   };
@@ -139,7 +140,7 @@ export function WorkflowsTable({
     templateId: currentTemplateId,
   });
 
-  const table = useTable<TableColumns>(options);
+  const table = useTable<TTableColumns>(options);
 
   const isListFullLoaded =
     workflowsList.count === workflowsList.items.length &&

@@ -1,11 +1,14 @@
 import * as React from 'react';
-import { ChangeEvent, ReactNode, useCallback } from 'react';
+import { useCallback } from 'react';
+import type { ChangeEvent, ReactNode } from 'react';
 import classnames from 'classnames';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { EOptionTypes, UsersDropdown, getUsersDropdownOptionValue } from '../../../UI/form/UsersDropdown';
+import type { IGroupDropdownOption } from '../../../UI/form/UsersDropdown';
 import { getUsers } from '../../../../redux/selectors/user';
-import { EUserDropdownOptionType, TUserListItem } from '../../../../types/user';
+import { EUserDropdownOptionType } from '../../../../types/user';
+import type { TUserListItem } from '../../../../types/user';
 import { trackInviteTeamInPage } from '../../../../utils/analytics';
 import { getInputNameBackground } from '../utils/getInputNameBackground';
 import { ArrowDropdownIcon } from '../../../icons';
@@ -18,7 +21,6 @@ import { isArrayWithItems } from '../../../../utils/helpers';
 import type { IWorkflowExtraFieldProps } from '../types';
 import { getNotDeletedUsers, getUserFullName } from '../../../../utils/users';
 import { getRegularGroupsList } from '../../../../redux/selectors/groups';
-import { IGroupDropdownOption } from '../../../../redux/team/types';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
 import inputStyles from './ExtraFieldUser.css';

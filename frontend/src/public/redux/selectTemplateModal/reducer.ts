@@ -1,8 +1,9 @@
 import { produce } from 'immer';
-import { ISelectTemplateModalStore } from '../../types/redux';
-import { ITemplateListItem } from '../../types/template';
+import type { ISelectTemplateModalStore } from './types';
+import type { ITemplateListItem } from '../../types/template';
 
-import { ESelectTemplateModalActions, TSelectTemplateModalActions } from './actions';
+import { ESelectTemplateModalActions } from './actions';
+import type { TSelectTemplateModalActions } from './actions';
 
 const INIT_STATE: ISelectTemplateModalStore = {
   isOpen: false,

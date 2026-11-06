@@ -10,7 +10,7 @@ import { GroupListSortingContainer } from './GroupListSortingContainer';
 import { UserListSortingContainer } from './UserListSortingContainer';
 import { ReturnLink, Tabs } from '../../components/UI';
 import { resetUsers } from '../../redux/accounts/slice';
-import { TeamPages } from '../../redux/team/types';
+import { ETeamPages } from '../../redux/team/types';
 import { updateTeamActiveTab, setTeamActivePage } from '../../redux/team/slice';
 import { getTeamPage } from '../../redux/selectors/team';
 
@@ -29,8 +29,8 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
     dispatch(
       updateTeamActiveTab(
         checkSomeRouteIsActive(ERoutes.Groups) || checkSomeRouteIsActive(ERoutes.GroupDetails)
-          ? TeamPages.Groups
-          : TeamPages.Users,
+          ? ETeamPages.Groups
+          : ETeamPages.Users,
       ),
     );
 
@@ -45,15 +45,15 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
         <div className={styles['top-nav__item']}>
           <Tabs
             values={[
-              { id: TeamPages.Users, label: formatMessage({ id: 'team.users' }) },
-              { id: TeamPages.Groups, label: formatMessage({ id: 'team.groups' }) },
+              { id: ETeamPages.Users, label: formatMessage({ id: 'team.users' }) },
+              { id: ETeamPages.Groups, label: formatMessage({ id: 'team.groups' }) },
             ]}
             activeValueId={page}
             onChange={(activeTab) => dispatch(setTeamActivePage(activeTab))}
           />
         </div>
         <div className={styles['top-nav__item']}>
-          {page === TeamPages.Users ? <UserListSortingContainer /> : <GroupListSortingContainer />}
+          {page === ETeamPages.Users ? <UserListSortingContainer /> : <GroupListSortingContainer />}
         </div>
       </div>
     );

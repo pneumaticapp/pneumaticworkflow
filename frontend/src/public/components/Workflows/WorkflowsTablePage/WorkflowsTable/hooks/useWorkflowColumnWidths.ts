@@ -1,10 +1,11 @@
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
-import { Column } from 'react-table';
+import { useEffect, useMemo, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import type { Column } from 'react-table';
 
 import { EWorkflowsLoadingStatus } from '../../../../../types/workflow';
 import { getPerformersAvatarsWidth } from '../../../../WorkflowCardUsers/utils/getPerformersAvatarsWidth';
 import { ETableViewFieldsWidth } from '../Columns/Cells/WorkflowTableConstants';
-import { TableColumns } from '../types';
+import type { TTableColumns } from '../types';
 import { createResizeHandler } from '../utils/resizeUtils';
 
 type TUseSavedColumnWidthsParams = {
@@ -14,7 +15,7 @@ type TUseSavedColumnWidthsParams = {
 };
 
 type TUseColumnWidthsParams = {
-  columns: Column<TableColumns>[];
+  columns: Column<TTableColumns>[];
   workflowsLoadingStatus: EWorkflowsLoadingStatus;
   currentUserId?: number;
   templateId?: number;
@@ -47,7 +48,7 @@ export function useSavedColumnWidths({ currentUserId, templateId, maxPerformersC
 
 export function mergeColumnWidths(
   previousWidths: Record<string, number>,
-  columns: Column<TableColumns>[],
+  columns: Column<TTableColumns>[],
 ): Record<string, number> {
   const nextWidths = { ...previousWidths };
 

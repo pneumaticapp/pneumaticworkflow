@@ -3,9 +3,9 @@ import { useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import classnames from 'classnames';
 
-import { ITemplateClient } from '../../../types/template';
-import { IAuthUser, ETemplateStatus } from '../../../types/redux';
-import { TUserListItem } from '../../../types/user';
+import type { ITemplateClient } from '../../../types/template';
+import type { ETemplateStatus } from '../../../redux/template/types';
+import type { TAuthUserResult, TUserListItem } from '../../../types/user';
 import { useTemplateEditorController } from '../../../hooks/useTemplateEditorController';
 import { selectIsGraphCanvas, selectTemplateSelectedTaskApiName } from '../../../redux/selectors/templateGraphView';
 import { setSelectedTask } from '../../../redux/templateGraphView/slice';
@@ -20,7 +20,7 @@ import styles from '../TemplateEdit.css';
 
 export interface ITemplateEditorContainerProps {
   template: ITemplateClient;
-  authUser: IAuthUser;
+  authUser: TAuthUserResult;
   users: TUserListItem[];
   isSubscribed: boolean;
   accessConditions: boolean;

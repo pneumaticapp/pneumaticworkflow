@@ -1,13 +1,14 @@
-import React, { PropsWithChildren } from 'react';
-import { CellProps } from 'react-table';
+import React from 'react';
+import type { PropsWithChildren } from 'react';
+import type { CellProps } from 'react-table';
 import { useDispatch } from 'react-redux';
 
 import { setFilterTemplate as setWorkflowsFilterTemplate } from '../../../../../../../redux/workflows/slice';
-import { TableColumns } from '../../../types';
+import type { TTableColumns } from '../../../types';
 
 import styles from './TemplateNameColumn.css';
 
-type TProps = PropsWithChildren<CellProps<TableColumns, TableColumns['system-column-templateName']>>;
+type TProps = PropsWithChildren<CellProps<TTableColumns, TTableColumns['system-column-templateName']>>;
 
 export function TemplateNameColumn({ value: { isLegacyTemplate, legacyTemplateName, template } }: TProps) {
   const dispatch = useDispatch();

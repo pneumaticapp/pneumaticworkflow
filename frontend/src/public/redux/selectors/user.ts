@@ -1,7 +1,8 @@
 import { createSelector } from 'reselect';
-import { IAccounts, IAuthUser, IGenericTemplatesStore } from '../../types/redux';
+import type { IAccounts } from '../accounts/types';
+import type { IGenericTemplatesStore } from '../genericTemplates/types';
 import type { RootState } from '../store';
-import { TUserListItem } from '../../types/user';
+import type { TAuthUserResult, TUserListItem } from '../../types/user';
 import { getPlanPendingActions } from '../../utils/getPlanPendingActions';
 
 export const getAuthUser = ({ authUser }: RootState) => ({ authUser });
@@ -54,11 +55,11 @@ export const getUserPendingActions = createSelector(
   getPlanPendingActions,
 );
 
-export const getUserToken = (state: RootState): Pick<IAuthUser, 'token'> => ({
+export const getUserToken = (state: RootState): Pick<TAuthUserResult, 'token'> => ({
   token: state.authUser.token || '',
 });
 
-export const getInvitedUser = (state: RootState): Pick<IAuthUser, 'invitedUser'> => ({
+export const getInvitedUser = (state: RootState): Pick<TAuthUserResult, 'invitedUser'> => ({
   invitedUser: state.authUser.invitedUser || {},
 });
 

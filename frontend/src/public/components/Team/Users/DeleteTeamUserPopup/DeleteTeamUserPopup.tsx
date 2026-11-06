@@ -5,15 +5,15 @@ import { BaseModal, ModalBody, ModalFooter, ModalHeader } from '../../../UI/Base
 
 import { IntlMessages } from '../../../IntlMessages';
 
-import { EDeleteUserModalState } from '../../../../types/redux';
-import { TUserListItem } from '../../../../types/user';
+import type { TUserListItem } from '../../../../types/user';
 import { getUserFullName } from '../../../../utils/users';
 import { Loader } from '../../../UI/Loader';
 import { DropdownList } from '../../../UI/DropdownList';
 import { Button } from '../../../UI';
 
 import styles from './DeleteTeamUserPopup.css';
-import { TDeclineInvitePayload, TDeleteUserPayload } from '../../../../redux/accounts/types';
+import { EDeleteUserModalState } from '../../../../redux/accounts/types';
+import type { TDeclineInvitePayload, TDeleteUserPayload } from '../../../../redux/accounts/types';
 import { getDropdownUsersList } from './utils/getDropdownUsersList';
 
 export interface IDeleteTeamUserPopupProps {

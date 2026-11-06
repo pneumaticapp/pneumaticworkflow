@@ -1,6 +1,7 @@
 import { connect } from 'react-redux';
-import { Dashboard, IDashboardProps } from './Dashboard';
-import { EDashboardModes } from '../../types/redux';
+import { Dashboard } from './Dashboard';
+import type { IDashboardProps } from './Dashboard';
+import { EDashboardModes } from '../../redux/dashboard/types';
 import type { RootState } from '../../redux/store';
 import {
   loadDashboardData,

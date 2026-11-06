@@ -1,4 +1,4 @@
-import { IGroup } from '../../team/types';
+import type { IGroup } from '../../../types/team';
 import type { IWsGroupData } from '../types';
 
 export function mapWsGroupToGroup(group: IWsGroupData): IGroup {

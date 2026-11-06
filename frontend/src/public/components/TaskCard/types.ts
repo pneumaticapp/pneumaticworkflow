@@ -1,41 +1,35 @@
-import {
-  ETaskStatus,
+import type { TOpenModalPayload } from '../../redux/selectTemplateModal/actions';
+import type {
   TAddTaskPerformerPayload,
-  TOpenModalPayload,
   TRemoveTaskPerformerPayload,
   TSetTaskCompletedPayload,
   TSetTaskRevertedPayload,
-} from '../../redux/actions';
-import {
-  IChangeWorkflowLogViewSettingsPayload,
-  ISendWorkflowLogComment,
-  TOpenWorkflowLogPopupPayload,
-  TSetWorkflowFinishedPayload,
-} from '../../redux/workflows/types';
-import { IFieldsetRuntime } from '../../types/fieldset';
-import { IAuthUser, IWorkflowLog } from '../../types/redux';
-import { IExtraField } from '../../types/template';
-import { ETaskCardViewMode, ITask } from '../../types/tasks';
-import { TUserListItem } from '../../types/user';
-import { IWorkflowDetails } from '../../types/workflow';
+} from '../../redux/task/actions';
+import type { ETaskCardState } from '../../redux/task/types';
+import type { IChangeWorkflowLogViewSettingsPayload, ISendWorkflowLogComment, IWorkflowLog } from '../../redux/types';
+import type { TOpenWorkflowLogPopupPayload } from '../../redux/workflows/types';
+import type { IFieldsetRuntime } from '../../types/fieldset';
+import type { IExtraField } from '../../types/template';
+import type { ETaskCardViewMode, ITask } from '../../types/tasks';
+import type { TAuthUserResult, TUserListItem } from '../../types/user';
+import type { IWorkflowDetails } from '../../types/workflow';
 
 export interface ITaskCardProps {
   task: ITask;
   viewMode: ETaskCardViewMode;
   workflowLog: IWorkflowLog;
   workflow: IWorkflowDetails | null;
-  status: ETaskStatus;
+  status: ETaskCardState;
   isWorkflowLoading: boolean;
   accountId: number;
   users: TUserListItem[];
-  authUser: IAuthUser;
+  authUser: TAuthUserResult;
   helpText?: string;
   addTaskPerformer(payload: TAddTaskPerformerPayload): void;
   removeTaskPerformer(payload: TRemoveTaskPerformerPayload): void;
   changeTaskWorkflowLog(value: Partial<IWorkflowLog>): void;
   setTaskCompleted(payload: TSetTaskCompletedPayload): void;
   setTaskReverted(payload: TSetTaskRevertedPayload): void;
-  setWorkflowFinished(payload: TSetWorkflowFinishedPayload): void;
   sendTaskWorkflowLogComments(payload: ISendWorkflowLogComment): void;
   changeTaskWorkflowLogViewSettings(payload: IChangeWorkflowLogViewSettingsPayload): void;
   toggleTaskSkippedTasksVisibility(): void;
@@ -47,9 +41,9 @@ export interface ITaskCardProps {
   openSelectTemplateModal(payload: TOpenModalPayload): void;
 }
 
-export type ITaskCardWrapperProps = Omit<ITaskCardProps, 'task'> & {
+export interface ITaskCardWrapperProps extends Omit<ITaskCardProps, 'task'> {
   task: ITask | null;
-};
+}
 
 export type TTaskCardHeaderProps = Pick<ITaskCardProps, 'task' | 'viewMode' | 'workflowLog' | 'openWorkflowLogPopup'>;
 
@@ -63,7 +57,7 @@ export interface ITaskOutputFieldsProps {
   isDisabled: boolean;
   outputValues: IExtraField[];
   fieldsetOutputValues: IFieldsetRuntime[];
-  status: ETaskStatus;
+  status: ETaskCardState;
   taskId: number;
   editField(apiName: string): (changedProps: Partial<IExtraField>) => void;
   editFieldsetField(apiName: string): (changedProps: Partial<IExtraField>) => void;

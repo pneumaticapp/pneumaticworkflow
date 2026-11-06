@@ -6,7 +6,7 @@ import { parseCookies } from '../../utils/cookie';
 import { envWssURL } from '../../constants/enviroment';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { mergePaths } from '../../utils/urls';
-import type { IRealtimeWsEnvelope } from './types';
+import type { TRealtimeWsEnvelope } from './types';
 import { routeRealtimeEvent } from './utils/routeRealtimeEvent';
 import { logger } from '../../utils/logger';
 
@@ -19,10 +19,10 @@ export function* watchWsEvents() {
     `${urls.wsEvents}?auth_token=${parseCookies(document.cookie).token}`,
   );
 
-  const channel: EventChannel<IRealtimeWsEnvelope> = yield call(createWebSocketChannel, url);
+  const channel: EventChannel<TRealtimeWsEnvelope> = yield call(createWebSocketChannel, url);
 
   while (true) {
-    const envelope: IRealtimeWsEnvelope = yield take(channel);
+    const envelope: TRealtimeWsEnvelope = yield take(channel);
     try {
       yield call(routeRealtimeEvent, envelope);
     } catch (error) {

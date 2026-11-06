@@ -18,7 +18,7 @@ import { integrations } from './integrations';
 import { runWorkflowModal } from './runWorkflowModal';
 import { webhooks } from './webhooks';
 import { tenants } from './tenants';
-import { EAuthActions } from './actions';
+import { EAuthActions } from './auth/actions';
 import groups from './groups/slice';
 
 import pages from './pages/slice';

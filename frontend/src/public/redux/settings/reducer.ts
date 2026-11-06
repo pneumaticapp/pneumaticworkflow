@@ -1,10 +1,11 @@
 import { defaultLocale, localeOptions } from '../../constants/defaultValues';
 import { envLanguageCode } from '../../constants/enviroment';
-import type { ISettings } from '../../types/redux';
+import type { ISettings } from './types';
 import type { ELocale } from '../../types/locale';
 import { getBrowserConfig } from '../../utils/getConfig';
 
-import { ESettingsActions, TSettingsActions } from './actions';
+import { ESettingsActions } from './actions';
+import type { TSettingsActions } from './actions';
 
 const INIT_STATE: ISettings = {
   locale: getLocale(),

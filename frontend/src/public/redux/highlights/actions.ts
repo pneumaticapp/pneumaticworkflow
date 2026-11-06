@@ -1,5 +1,5 @@
 import { actionGenerator } from '../../utils/redux';
-import type { IHighlightsFilters } from '../../types/redux';
+import type { IHighlightsFilters } from './types';
 import type { ITypedReduxAction } from '../types';
 import type { IGetHighlightsConfig, IGetHighlightsResponse } from '../../api/getHighlights';
 import type { IGetHighlightsTitlesRequestConfig, TGetHighlightsTitlesResponse } from '../../api/getHighlightsTitles';

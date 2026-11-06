@@ -6,7 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 
 import { Templates } from '../Templates';
 import { ETemplatesSorting } from '../../../types/workflow';
-import { ETemplatesSystemStatus } from '../../../redux/actions';
+import { ETemplatesSystemStatus } from '../../../redux/templates/types';
 import { enMessages } from '../../../lang/locales/en_US';
 import { loadTemplates, loadTemplatesSystem, loadTemplatesSystemCategories } from '../../../redux/actions';
 import { INIT_STATE as INIT_TEMPLATES_STATE } from '../../../redux/templates/reducer';

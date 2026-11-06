@@ -4,7 +4,8 @@ import { persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, 
 import type { PersistConfig } from 'redux-persist';
 import localStorage from 'redux-persist/lib/storage';
 import { createFilter } from 'redux-persist-transform-filter';
-import type { IDashboardStore, IStoreTasks } from '../types/redux';
+import type { IDashboardStore } from './dashboard/types';
+import type { IStoreTasks } from './tasks/types';
 import type { ITasksSettings } from '../types/tasks';
 import { createDeclineForbiddenActionsMiddleware } from './utils/createDeclineForbiddenActionsMiddleware';
 import { mergePersistedState } from './utils/mergePersistedState';

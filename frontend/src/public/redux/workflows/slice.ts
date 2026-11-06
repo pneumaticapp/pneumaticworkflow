@@ -1,4 +1,5 @@
-import { createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAction, createSlice } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 
 import { isDesktop } from '../../utils/media';
 import { getWorkflowViewStorageState, setWorkflowViewStorageState } from '../../utils/workflows/filters';
@@ -6,21 +7,22 @@ import { isArrayWithItems, isObjectChanged } from '../../utils/helpers';
 
 import { EGeneralActions } from '../general/actions';
 
-import { IDeleteReaction } from '../../api/workflows/deleteReactionComment';
-import { ICreateReaction } from '../../api/workflows/createReactionComment';
-import { IWatchedComment } from '../../api/workflows/watchedComment';
-import { IDeleteComment } from '../../api/workflows/deleteComment';
-import { IEditComment } from '../../api/workflows/editComment';
+import type { IDeleteReaction } from '../../api/workflows/deleteReactionComment';
+import type { ICreateReaction } from '../../api/workflows/createReactionComment';
+import type { IWatchedComment } from '../../api/workflows/watchedComment';
+import type { IDeleteComment } from '../../api/workflows/deleteComment';
+import type { IEditComment } from '../../api/workflows/editComment';
 
-import { IStoreWorkflows, IWorkflowLog, IWorkflowsList } from '../../types/redux';
-import { IRuntimeKickoffClient, ITemplateTitleBaseWithCount, TTemplatePreset } from '../../types/template';
-import { ITemplateStep } from '../../types/tasks';
+import type { IRuntimeKickoffClient, ITemplateTitleBaseWithCount, TTemplatePreset } from '../../types/template';
+import type { ITemplateStep } from '../../types/tasks';
 import {
   EWorkflowsLoadingStatus,
   EWorkflowsLogSorting,
   EWorkflowsSorting,
   EWorkflowsStatus,
   EWorkflowsView,
+} from '../../types/workflow';
+import type {
   IWorkflowClient,
   IWorkflowDetailsClient,
   IWorkflowEditData,
@@ -30,10 +32,11 @@ import {
   TUserCounter,
 } from '../../types/workflow';
 
-import {
-  IChangeWorkflowLogViewSettingsPayload,
+import type { IChangeWorkflowLogViewSettingsPayload, ISendWorkflowLogComment, IWorkflowLog } from '../types';
+import type {
   ISaveWorkflowsPresetPayload,
-  ISendWorkflowLogComment,
+  IStoreWorkflows,
+  IWorkflowsList,
   TCloneWorkflowPayload,
   TDeleteWorkflowPayload,
   TEditWorkflowPayload,

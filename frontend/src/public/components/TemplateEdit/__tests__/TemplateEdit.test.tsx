@@ -8,7 +8,7 @@ import { cleanTemplateReferences } from '../../../utils/template';
 import { KickoffReduxContainer } from '../KickoffRedux';
 import { getSubscriptionPlan } from '../../../redux/selectors/user';
 import { getIsCatalogLoaded } from '../../../redux/selectors/fieldsets';
-import { ETemplateStatus } from '../../../types/redux';
+import { ETemplateStatus } from '../../../redux/template/types';
 
 jest.mock('../../../utils/template', () => ({
   cleanTemplateReferences: jest.fn((tpl: any) => tpl),

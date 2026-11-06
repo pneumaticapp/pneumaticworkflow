@@ -1,4 +1,29 @@
-import { TUserListItem } from '../../types/user';
+import type { IAccountPlan } from '../../types/account';
+import type { EUserListSorting, TUserListItem } from '../../types/user';
+
+export enum EDeleteUserModalState {
+  Closed = 'closed',
+  FetchingUserData = 'fetching-user-data',
+  WaitingForAction = 'waiting-for-action',
+  PerformingAction = 'performing-action',
+}
+
+export interface IAccounts {
+  isLoading: boolean;
+  planInfo: IAccountPlan;
+  users: TUserListItem[];
+  team: {
+    list: TUserListItem[];
+    isLoading: boolean;
+  };
+  userListSorting: EUserListSorting;
+  deleteUserModal: {
+    user: TUserListItem | null;
+    userWorkflowsCount: number;
+    state: EDeleteUserModalState;
+  };
+  isCreateUserModalOpen: boolean;
+}
 
 export type TActiveUsersCountFetchFinishedPayload = {
   activeUsers: number;

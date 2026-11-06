@@ -1,15 +1,17 @@
-import { createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAction, createSlice } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 
 import { checkSomeRouteIsActive } from '../../utils/history';
 import { ERoutes } from '../../constants/routes';
-import { ITeamStore } from '../../types/redux';
-import { TeamPages, TInviteUsersPayload, UserInvite } from './types';
-import { TUserListItem } from '../../types/user';
+import { ETeamPages } from './types';
+import type { ITeamStore, TInviteUsersPayload } from './types';
+import type { IUserInvite } from '../../types/team';
+import type { TUserListItem } from '../../types/user';
 
 const initialTabTeam =
   checkSomeRouteIsActive(ERoutes.Groups) || checkSomeRouteIsActive(ERoutes.GroupDetails)
-    ? TeamPages.Groups
-    : TeamPages.Users;
+    ? ETeamPages.Groups
+    : ETeamPages.Users;
 
 const initialState: ITeamStore = {
   page: initialTabTeam,
@@ -22,16 +24,16 @@ const teamSlice = createSlice({
   name: 'team',
   initialState,
   reducers: {
-    changeTeamActiveTab: (state, action: PayloadAction<TeamPages>) => {
+    changeTeamActiveTab: (state, action: PayloadAction<ETeamPages>) => {
       state.page = action.payload;
     },
-    updateTeamActiveTab: (state, action: PayloadAction<TeamPages>) => {
+    updateTeamActiveTab: (state, action: PayloadAction<ETeamPages>) => {
       state.page = action.payload;
     },
     setRecentInvitedUsers: (state, action: PayloadAction<TUserListItem[]>) => {
       state.recentInvitedUsers = action.payload;
     },
-    loadInvitesUsersSuccess: (state, action: PayloadAction<UserInvite[]>) => {
+    loadInvitesUsersSuccess: (state, action: PayloadAction<IUserInvite[]>) => {
       state.invitesUsersList = action.payload;
     },
     openTeamInvitesPopup: (state) => {
@@ -43,7 +45,7 @@ const teamSlice = createSlice({
   },
 });
 
-export const setTeamActivePage = createAction<TeamPages>('team/setTeamActivePage');
+export const setTeamActivePage = createAction<ETeamPages>('team/setTeamActivePage');
 export const inviteUsers = createAction<TInviteUsersPayload>('team/inviteUsers');
 export const loadInvitesUsers = createAction<void>('team/loadInvitesUsers');
 export const loadInvitesUsersFailed = createAction<void>('team/loadInvitesUsersFailed');

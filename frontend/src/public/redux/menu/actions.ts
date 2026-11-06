@@ -1,6 +1,6 @@
 /* prettier-ignore */
 import classNames from 'classnames';
-import type { IMenu } from '../../types/redux';
+import type { IMenu } from './types';
 import type { ITypedReduxAction } from '../types';
 import { actionGenerator } from '../../utils/redux';
 import type { IMenuItem, TMenuCounter } from '../../types/menu';

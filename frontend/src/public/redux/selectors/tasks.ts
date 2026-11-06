@@ -1,6 +1,6 @@
-import { IStoreTasks, ITaskList } from '../../types/redux';
+import type { IStoreTasks, ITaskList } from '../tasks/types';
 import type { RootState } from '../store';
-import { ETaskListCompleteSorting, ETaskListSorting, ITaskListItem, ITasksSettings } from '../../types/tasks';
+import type { ETaskListCompleteSorting, ETaskListSorting, ITaskListItem, ITasksSettings } from '../../types/tasks';
 
 export const getTasksSearchText = (state: RootState): string => state.tasks.tasksSearchText;
 export const getTasksStore = (state: RootState): IStoreTasks => state.tasks;

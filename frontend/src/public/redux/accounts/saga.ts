@@ -1,5 +1,5 @@
 import { all, call, fork, put, select, takeEvery, takeLatest } from 'redux-saga/effects';
-import { PayloadAction } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 import {
   teamFetchFailed,
   teamFetchFinished,
@@ -31,7 +31,9 @@ import {
   changeUserReports,
 } from './slice';
 
-import {
+import { EDeleteUserModalState } from './types';
+import type {
+  IAccounts,
   IChangeUserAdminProps,
   TOpenDeleteUserModalPayload,
   TDeleteUserPayload,
@@ -40,19 +42,22 @@ import {
 } from './types';
 
 import { getAccountsStore } from '../selectors/user';
-import { EUserListSorting, EUserStatus, ICreateUserRequest, TAuthUserResult, TUserListItem } from '../../types/user';
-import { EDeleteUserModalState, IAccounts } from '../../types/redux';
+import { EUserListSorting, EUserStatus } from '../../types/user';
+import type { ICreateUserRequest, TAuthUserResult, TUserListItem } from '../../types/user';
 
 import { getErrorMessage } from '../../utils/getErrorMessage';
-import { getUsers, TResponseUser } from '../../api/getUsers';
-import { getPlan, TGetPlanResponse } from '../../api/getPlan';
+import { getUsers } from '../../api/getUsers';
+import type { TResponseUser } from '../../api/getUsers';
+import { getPlan } from '../../api/getPlan';
+import type { TGetPlanResponse } from '../../api/getPlan';
 import { authUserSuccess, makeStripePayment } from '../auth/actions';
 import { ERoutes } from '../../constants/routes';
 import { changeUserPermissions } from '../../api/changeUserPermissions';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { deleteUser } from '../../api/deleteUser';
 import { declineInvite } from '../../api/declineInvite';
-import { countUserWorkflows, TCountUserWorkflowsResponse } from '../../api/countUserWorkflows';
+import { countUserWorkflows } from '../../api/countUserWorkflows';
+import type { TCountUserWorkflowsResponse } from '../../api/countUserWorkflows';
 import { reassignWorkflows } from '../../api/reassignWorkflows';
 import { ESubscriptionPlan } from '../../types/account';
 import { logger } from '../../utils/logger';
@@ -60,7 +65,8 @@ import { setSentryUser } from '../../utils/sentryUser';
 import { setGeneralLoaderVisibility } from '../general/actions';
 import { auth } from '../../api/auth';
 import { startFreeSubscription } from '../../api/startFreeSubscription';
-import { getActiveUsersCount, IGetActiveUsersCountResponse } from '../../api/getActiveUsersCount';
+import { getActiveUsersCount } from '../../api/getActiveUsersCount';
+import type { IGetActiveUsersCountResponse } from '../../api/getActiveUsersCount';
 import { getActiveUsers, sortUsersByStatus, sortUsersByNameAsc, sortUsersByNameDesc } from '../../utils/users';
 import { getAccountPlan } from '../selectors/accounts';
 import { getAbsolutePath } from '../../utils/getAbsolutePath';

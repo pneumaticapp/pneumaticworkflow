@@ -1,11 +1,11 @@
 import React from 'react';
 
-import { ETaskStatus } from '../../redux/actions';
+import { ETaskCardState } from '../../redux/task/types';
 import { EWorkflowsLogSorting, EWorkflowStatus } from '../../types/workflow';
 import { WorkflowLog } from '../Workflows/WorkflowLog';
 import { WorkflowLogSkeleton } from '../Workflows/WorkflowLog/WorkflowLogSkeleton';
 import { ETaskCardViewMode } from '../../types/tasks';
-import { TTaskWorkflowLogProps } from './types';
+import type { TTaskWorkflowLogProps } from './types';
 
 const MINIMIZED_LOG_MAX_EVENTS = 5;
 
@@ -40,7 +40,7 @@ export function TaskWorkflowLog({
       isLogMinimized={false}
       areTasksClickable={viewMode === ETaskCardViewMode.Single}
       minimizedLogMaxEvents={MINIMIZED_LOG_MAX_EVENTS}
-      isCommentFieldHidden={viewMode === ETaskCardViewMode.Guest && status === ETaskStatus.Completed}
+      isCommentFieldHidden={viewMode === ETaskCardViewMode.Guest && status === ETaskCardState.Completed}
       areRightTogglesHidden
       sendComment={sendTaskWorkflowLogComments}
       changeWorkflowLogViewSettings={changeTaskWorkflowLogViewSettings}

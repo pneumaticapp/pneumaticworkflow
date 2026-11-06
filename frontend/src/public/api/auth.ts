@@ -2,18 +2,22 @@ import { getToken } from './getToken';
 import { NotificationManager } from '../components/UI/Notifications';
 import { registerUser } from './registerUser';
 import { getUser } from './getUser';
-import { IUnsavedUser, IUserRegister, TUserInvited } from '../types/user';
+import type { IUnsavedUser, IUserRegister, IUserUtm, TUserInvited } from '../types/user';
 import { getErrorMessage } from '../utils/getErrorMessage';
-import { IAuthUser } from '../types/redux';
 import { acceptInvite } from './acceptInvite';
 import { logger } from '../utils/logger';
-import { IUserUtm } from '../views/user/utils/utmParams';
 import { ESubscriptionPlan } from '../types/account';
 
 import { getTokenAsSuperuser } from './getTokenAsSuperuser';
 
 const ERR_REGISTER_MSG = 'Register failed';
 const SUCCESS_REGISTER_MSG = 'Your account was successfully registered';
+
+export interface ICreateUserResponse {
+  loading: boolean;
+  token: string;
+}
+
 const EMPTY_USER_DATA: IUnsavedUser = {
   email: '',
   token: '',
@@ -73,7 +77,7 @@ class AuthCreator {
     user: IUserRegister,
     utmParams?: IUserUtm,
     captcha?: string,
-  ): Promise<Partial<IAuthUser>> => {
+  ): Promise<ICreateUserResponse> => {
     try {
       const result = await registerUser(user, utmParams, captcha);
       return {
@@ -89,7 +93,7 @@ class AuthCreator {
     }
   };
 
-  public createUserWithInvite = async (id: string, user: TUserInvited): Promise<Partial<IAuthUser>> => {
+  public createUserWithInvite = async (id: string, user: TUserInvited): Promise<ICreateUserResponse> => {
     try {
       const result = await acceptInvite(id, user);
 

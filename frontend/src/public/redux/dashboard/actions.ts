@@ -2,14 +2,14 @@
 /* prettier-ignore */
 // tslint:disable: max-line-length
 
-import {
+import type {
   IDashboardCounters,
   EDashboardModes,
   IDashboardStore,
-} from '../../types/redux';
+} from './types';
 import type { ITypedReduxAction } from '../types';
 import { actionGenerator } from '../../utils/redux';
-import { EDashboardTimeRange, IGettingStartedChecklist, TDashboardBreakdownItem } from '../../types/dashboard';
+import type { EDashboardTimeRange, IGettingStartedChecklist, TDashboardBreakdownItem } from '../../types/dashboard';
 
 export const enum EDashboardActions {
   SetIsLoaderVisible = 'SET_IS_DASHBOARD_LOADER_VISIBLE',

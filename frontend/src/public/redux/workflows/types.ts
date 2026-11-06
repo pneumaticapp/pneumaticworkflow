@@ -1,19 +1,19 @@
-import { ITemplateStep } from '../../types/tasks';
-import { IRuntimeKickoffClient, TOrderedFields } from '../../types/template';
-import { EWorkflowsLogSorting, IWorkflowClient } from '../../types/workflow';
+import type { ITemplateStep } from '../../types/tasks';
+import type { IRuntimeKickoffClient, TOrderedFields } from '../../types/template';
+import type {
+  EWorkflowsLoadingStatus,
+  IWorkflowClient,
+  IWorkflowDetailsClient,
+  IWorkflowEdit,
+  IWorkflowsSettings,
+} from '../../types/workflow';
+import type { IWorkflowLog } from '../types';
 
 export type TOpenWorkflowLogPopupPayload = {
   workflowId: number;
   redirectTo404IfNotFound?: boolean;
   shouldSetWorkflowDetailUrl?: boolean;
 };
-
-export interface IChangeWorkflowLogViewSettingsPayload {
-  id: number;
-  sorting: EWorkflowsLogSorting;
-  comments: boolean;
-  isOnlyAttachmentsShown: boolean;
-}
 
 export type TLoadWorkflowsFilterStepsPayload = {
   templateId: number;
@@ -42,11 +42,6 @@ export type TSetWorkflowFinishedPayload = {
   workflowId: number;
   onWorkflowEnded?(): void;
 };
-
-export interface ISendWorkflowLogComment {
-  text: string;
-  taskId?: number;
-}
 
 export type TDeleteWorkflowPayload = {
   workflowId: number;
@@ -86,4 +81,26 @@ export interface IStartWorkflowPayload {
   ancestorTaskId?: number;
   isUrgent?: boolean;
   dueDateTsp?: number | null;
+}
+
+export interface IWorkflowsList {
+  count: number;
+  offset: number;
+  items: IWorkflowClient[];
+}
+
+export interface IWorkflowsTuneViewModal {
+  isOpen: boolean;
+}
+
+export interface IStoreWorkflows {
+  workflowsLoadingStatus: EWorkflowsLoadingStatus;
+  isWorkflowLoading: boolean;
+  workflow: IWorkflowDetailsClient | null;
+  workflowLog: IWorkflowLog;
+  workflowEdit: IWorkflowEdit;
+  workflowsSettings: IWorkflowsSettings;
+  workflowsSearchText: string;
+  workflowsList: IWorkflowsList;
+  WorkflowsTuneViewModal: IWorkflowsTuneViewModal;
 }

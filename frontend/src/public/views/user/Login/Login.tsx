@@ -1,13 +1,14 @@
 import * as React from 'react';
 import { useEffect } from 'react';
-import { Formik, FormikConfig } from 'formik';
+import { Formik } from 'formik';
+import type { FormikConfig } from 'formik';
 import { useIntl } from 'react-intl';
 
 import { EOAuthType } from '../../../types/auth';
 import { ERoutes } from '../../../constants/routes';
 import { TITLES } from '../../../constants/titles';
 import { IntlMessages } from '../../../components/IntlMessages';
-import { EAuthUserFailType } from '../../../redux/actions';
+import { EAuthUserFailType } from '../../../redux/auth/types';
 import { NavLink } from '../../../components/NavLink';
 import { validateEmail, validatePassword } from '../../../utils/validators';
 import { getQueryStringParams, history } from '../../../utils/history';
@@ -17,7 +18,7 @@ import { saveUTMParams } from '../utils/utmParams';
 import { handleOAuthClick } from '../utils/handleOAuthClick';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
 import { isEnvGoogleAuth, isEnvMsAuth, isEnvSSOAuth, isEnvSignup, envSSOProvider } from '../../../constants/enviroment';
-import { ILoginProps, TLoginValues } from './types';
+import type { ILoginProps, TLoginValues } from './types';
 import { SSOProvider } from '../../../../server/types';
 
 import styles from '../User.css';

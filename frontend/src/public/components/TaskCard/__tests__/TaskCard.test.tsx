@@ -1,10 +1,12 @@
-import React, { forwardRef, ReactNode } from 'react';
+import React, { forwardRef } from 'react';
+import type { ReactNode } from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
 
 import { TaskCard } from '../TaskCard';
 import { ETaskCardViewMode } from '../../../types/tasks';
-import { EExtraFieldType, ETemplateOwnerType, IExtraField } from '../../../types/template';
-import { ETaskStatus } from '../../../redux/actions';
+import { EExtraFieldType, ETemplateOwnerType } from '../../../types/template';
+import type { IExtraField } from '../../../types/template';
+import { ETaskCardState } from '../../../redux/task/types';
 import { EWorkflowStatus, EWorkflowsLogSorting } from '../../../types/workflow';
 
 const mockButton = jest.fn();
@@ -254,7 +256,7 @@ const baseProps = {
   viewMode: ETaskCardViewMode.Single,
   workflowLog: baseWorkflowLog,
   workflow: null,
-  status: ETaskStatus.WaitingForAction,
+  status: ETaskCardState.WaitingForAction,
   isWorkflowLoading: false,
   accountId: 1,
   users: [],
@@ -264,7 +266,6 @@ const baseProps = {
   changeTaskWorkflowLog: jest.fn(),
   setTaskCompleted: jest.fn(),
   setTaskReverted: jest.fn(),
-  setWorkflowFinished: jest.fn(),
   sendTaskWorkflowLogComments: jest.fn(),
   changeTaskWorkflowLogViewSettings: jest.fn(),
   toggleTaskSkippedTasksVisibility: jest.fn(),

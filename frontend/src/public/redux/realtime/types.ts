@@ -1,7 +1,7 @@
-import { IWorkflowLogItem } from '../../types/workflow';
-import { ETaskStatus } from '../../types/tasks';
-import { EUserStatus, IUserVacation } from '../../types/user';
-import { EUserGroupType } from '../team/types';
+import type { IWorkflowLogItem } from '../../types/workflow';
+import type { ETaskStatus } from '../../types/tasks';
+import type { EUserStatus, IUserVacation } from '../../types/user';
+import type { EUserGroupType } from '../../types/team';
 
 export interface IWsEnvelopeBase {
   id: string;
@@ -24,7 +24,7 @@ export enum ERealtimeEnvelopeType {
   ACCOUNT_PLAN_CHANGED = 'account_plan_changed',
 }
 
-export type IRealtimeWsEnvelope =
+export type TRealtimeWsEnvelope =
   // task events
   | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.TASK_CREATED; data: IWsTaskCreatedData })
   | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.TASK_COMPLETED; data: IWsTaskCompletedData })
@@ -40,10 +40,10 @@ export type IRealtimeWsEnvelope =
   // account events
   | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.ACCOUNT_PLAN_CHANGED; data: IWsAccountPlanChangedData })
   // notification events
-  | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.NOTIFICATION_CREATED; data: IWsNotificationCreatedData })
+  | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.NOTIFICATION_CREATED; data: TWsNotificationCreatedData })
   // process events
-  | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.EVENT_CREATED; data: IWsEventCreatedData })
-  | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.EVENT_UPDATED; data: IWsEventUpdatedData });
+  | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.EVENT_CREATED; data: TWsEventCreatedData })
+  | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.EVENT_UPDATED; data: TWsEventUpdatedData });
 
 // ======================= event
 
@@ -190,7 +190,7 @@ export interface IWsCompleteTaskData {
   workflow: IWsNotificationWorkflowRef;
 }
 
-export type IWsNotificationCreatedData =
+export type TWsNotificationCreatedData =
   | IWsCommentData
   | IWsMentionData
   | IWsReactionData
@@ -203,9 +203,9 @@ export type IWsNotificationCreatedData =
   | IWsDueDateChangedData
   | IWsCompleteTaskData;
 
-export type IWsEventCreatedData = IWorkflowLogItem;
+export type TWsEventCreatedData = IWorkflowLogItem;
 
-export type IWsEventUpdatedData = IWorkflowLogItem;
+export type TWsEventUpdatedData = IWorkflowLogItem;
 
 export interface IWsUserData {
   id: number;
@@ -300,10 +300,10 @@ export function isNotificationWsEventType(type: string): type is TNotificationWs
   return NOTIFICATION_WS_TYPES.has(type as TNotificationWsEventType);
 }
 
-export type INotificationWsEnvelope = {
+export interface INotificationWsEnvelope {
   type: TNotificationWsEventType;
-  data: IWsNotificationCreatedData;
-};
+  data: TWsNotificationCreatedData;
+}
 
 export type TRealtimeEventType = ERealtimeEnvelopeType;
 

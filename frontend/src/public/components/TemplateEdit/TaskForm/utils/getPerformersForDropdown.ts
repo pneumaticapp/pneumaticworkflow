@@ -1,15 +1,11 @@
-import { IntlShape } from 'react-intl';
-import {
-  EExtraFieldType,
-  ETaskPerformerType,
-  ITemplateTaskClient,
-  ITemplateTaskPerformer,
-  TTaskVariable,
-} from '../../../../types/template';
-import { TUserListItem } from '../../../../types/user';
+import type { IntlShape } from 'react-intl';
+import { EExtraFieldType, ETaskPerformerType } from '../../../../types/template';
+import type { ITemplateTaskClient, ITemplateTaskPerformer, TTaskVariable } from '../../../../types/template';
+import type { TUserListItem } from '../../../../types/user';
 import { getUserFullName } from '../../../../utils/users';
-import { EOptionTypes, TUsersDropdownOption, getUsersDropdownOptionValue } from '../../../UI/form/UsersDropdown';
-import { IGroup } from '../../../../redux/team/types';
+import { EOptionTypes, getUsersDropdownOptionValue } from '../../../UI/form/UsersDropdown';
+import type { TUsersDropdownOption } from '../../../UI/form/UsersDropdown';
+import type { IGroup } from '../../../../types/team';
 
 export function getPerformersForDropdown(
   users: TUserListItem[],

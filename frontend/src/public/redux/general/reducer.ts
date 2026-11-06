@@ -1,7 +1,8 @@
 /* prettier-ignore */
 import { produce } from 'immer';
-import { IGeneralStore } from '../../types/redux';
-import { EGeneralActions, TGeneralActions } from './actions';
+import type { IGeneralStore } from './types';
+import { EGeneralActions } from './actions';
+import type { TGeneralActions } from './actions';
 
 const INIT_STATE: IGeneralStore = {
   isLoaderVisible: false,

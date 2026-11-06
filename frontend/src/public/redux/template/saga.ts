@@ -3,12 +3,9 @@
 /* tslint:disable:max-file-line-count */
 import {
   actionChannel,
-  ActionChannelEffect,
-  ActionPattern,
   all,
   call,
   cancelled,
-  CancelledEffect,
   delay,
   fork,
   put,
@@ -17,6 +14,7 @@ import {
   takeEvery,
   takeLatest,
 } from 'redux-saga/effects';
+import type { ActionChannelEffect, ActionPattern, CancelledEffect } from 'redux-saga/effects';
 import { buffers } from 'redux-saga';
 
 import {
@@ -31,6 +29,8 @@ import {
   setAITemplateGenerationStatus,
   setTemplate,
   setTemplateStatus,
+} from './actions';
+import type {
   TCloneTemplate,
   TDeleteTemplate,
   TDiscardChanges,
@@ -50,18 +50,17 @@ import { getTemplateData } from '../selectors/template';
 import { getTemplate } from '../../api/getTemplate';
 import { getSystemTemplate } from '../../api/getSystemTemplate';
 import { checkSomeRouteIsActive, history } from '../../utils/history';
-import { ITemplateClient, ITemplateRequest, ITemplateResponse } from '../../types/template';
+import type { ITemplateClient, ITemplateRequest, ITemplateResponse } from '../../types/template';
 import { logger } from '../../utils/logger';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { updateTemplate } from '../../api/updateTemplate';
 import { cleanTemplateReferences, getNormalizedTemplate, mapTemplateRequest } from '../../utils/template';
 import { getErrorMessage, isPaidFeatureError } from '../../utils/getErrorMessage';
 import { insertId } from '../../utils/templates/insertId';
-import { ETemplateStatus } from '../../types/redux';
-import { TUserListItem } from '../../types/user';
-import { loadTemplateIntegrationsStats, loadTemplates } from '../actions';
-import { loadFieldsetsCatalog } from '../fieldsets/slice';
-import { loadFieldsetsCatalogSuccess, loadFieldsetsCatalogFailed } from '../fieldsets/slice';
+import { ETemplateStatus } from './types';
+import type { TUserListItem } from '../../types/user';
+import { loadTemplateIntegrationsStats, loadTemplates } from '../templates/actions';
+import { loadFieldsetsCatalog, loadFieldsetsCatalogSuccess, loadFieldsetsCatalogFailed } from '../fieldsets/slice';
 import { getIsCatalogLoaded, getFieldsetsCatalogIsLoading } from '../selectors/fieldsets';
 import { copyTemplate } from '../../api/copyTemplate';
 import { deleteTemplate } from '../../api/deleteTemplate';

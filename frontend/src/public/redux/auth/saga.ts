@@ -14,6 +14,16 @@ import {
   sendForgotPasswordSuccess,
   sendResetPasswordFail,
   sendResetPasswordSuccess,
+  sendChangePasswordSuccess,
+  sendChangePasswordFail,
+  redirectToLogin,
+  setUserToken,
+  setUserPhoto,
+  logoutUserSuccess,
+  makeStripePayment,
+  vacationSuccess,
+} from './actions';
+import type {
   TEditAccount,
   TEditUser,
   TLoginUser,
@@ -22,23 +32,14 @@ import {
   TSendChangePassword,
   TSendForgotPassword,
   TSendResetPassword,
-  sendChangePasswordSuccess,
-  sendChangePasswordFail,
-  EAuthUserFailType,
-  redirectToLogin,
   TSetRedirectUrl,
   TSetUserToken,
-  setUserToken,
   TLoginSuperuser,
   TUploadUserPhoto,
-  setUserPhoto,
-  logoutUserSuccess,
   TLoginPartnerSuperuser,
   TLogoutUser,
   TMakeStripePayment,
-  makeStripePayment,
   TVacationActivate,
-  vacationSuccess,
 } from './actions';
 
 import { resendVerification } from '../../api/resendVerification';
@@ -46,41 +47,51 @@ import { ERoutes } from '../../constants/routes';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { setJwtCookie, removeAuthCookies } from '../../utils/authCookie';
 import { setOAuthRegistrationCompleted } from '../../api/setOAuthRegistrationCompleted';
-import { TUserInvited, IUserResponse, IUserRegister, TAuthUserResult } from '../../types/user';
+import type { TUserInvited, IUserResponse, IUserRegister, IUserUtm, TAuthUserResult } from '../../types/user';
 import { getAuthUser, getInvitedUser } from '../selectors/user';
 import { getOAuthId, getOAuthType } from '../../utils/auth';
-import { editProfile, IUpdateUserRequest, IUpdateUserResponse, TUpdateUserMappedResponse } from '../../api/editProfile';
+import { editProfile } from '../../api/editProfile';
+import type { IUpdateUserRequest, IUpdateUserResponse, TUpdateUserMappedResponse } from '../../api/editProfile';
 import { logger } from '../../utils/logger';
 import { mapToCamelCase } from '../../utils/mappers';
 import { resetPassword } from '../../api/resetPassword';
-import { ICustomError, getErrorMessage } from '../../utils/getErrorMessage';
-import { IResetPasswordSetResponse, resetPasswordSet } from '../../api/resetPasswordSet';
-import { editAccount, IUpdateAccountResponse } from '../../api/editAccount';
-import { changePassword, IChangePasswordResponse } from '../../api/changePassword';
+import { getErrorMessage } from '../../utils/getErrorMessage';
+import type { ICustomError } from '../../utils/getErrorMessage';
+import { resetPasswordSet } from '../../api/resetPasswordSet';
+import type { IResetPasswordSetResponse } from '../../api/resetPasswordSet';
+import { editAccount } from '../../api/editAccount';
+import type { IUpdateAccountResponse } from '../../api/editAccount';
+import { changePassword } from '../../api/changePassword';
+import type { IChangePasswordResponse } from '../../api/changePassword';
 import { analytics } from '../../utils/analytics';
 import { sendSignOut } from '../../api/sendSignOut';
 import { REDIRECT_URL_STORAGE_KEY } from '../../constants/storageKeys';
-import { getUTMParams, IUserUtm } from '../../views/user/utils/utmParams';
+import { getUTMParams } from '../../views/user/utils/utmParams';
 import { clearAppFilters, setGeneralLoaderVisibility } from '../general/actions';
 import { getQueryStringParams, history } from '../../utils/history';
 import { watchWsEvents } from '../realtime/watchWsEvents';
 import { closeAllConnections } from '../utils/webSocketConnections';
-import { TUploadedFile, uploadUserAvatar } from '../../utils/uploadFiles';
+import { uploadUserAvatar } from '../../utils/uploadFiles';
+import type { TUploadedFile } from '../../utils/uploadFiles';
 import { changePhotoProfile } from '../../api/changePhotoProfile';
-import { ELoggedState, IAuthUser } from '../../types/redux';
+import { EAuthUserFailType, ELoggedState } from './types';
+import type { IAuthUser } from './types';
 import { resetFirebaseDeviceToken } from '../../firebase';
-import { getTenantToken, IGetTenantTokenResponse } from '../../api/tenants/getTenantToken';
+import { getTenantToken } from '../../api/tenants/getTenantToken';
+import type { IGetTenantTokenResponse } from '../../api/tenants/getTenantToken';
 import { resetSuperuserToken, setSuperuserToken } from './utils/superuserToken';
 import {
   getSuperuserReturnRoute,
   resetSuperuserReturnRoute,
   setSuperuserReturnRoute,
 } from './utils/superuserReturnRoute';
-import { IMakePaymentResponse, makePayment } from '../../api/makePayment';
+import { makePayment } from '../../api/makePayment';
+import type { IMakePaymentResponse } from '../../api/makePayment';
 import { fetchPlan } from '../accounts/saga';
 import { changeUserReports } from '../accounts/slice';
 import { getAbsolutePath } from '../../utils/getAbsolutePath';
-import { ICardSetupResponse, cardSetup } from '../../api/cardSetup';
+import { cardSetup } from '../../api/cardSetup';
+import type { ICardSetupResponse } from '../../api/cardSetup';
 import { confirmPaymentDetailsProvided } from './utils/confirmPaymentDetailsProvided';
 import { createAITemplate } from './utils/createAITemplate';
 import { trackCrozdesk } from '../../utils/analytics/trackCrozdesk';
@@ -88,7 +99,7 @@ import { getBrowserConfig } from '../../utils/getConfig';
 import { getCustomerPortalLink } from '../../api/getCustomerPortalLink';
 import { setSentryUser } from '../../utils/sentryUser';
 import { createTemplateFromName } from './utils/createTemplateFromName';
-import { ITemplateResponse } from '../../types/template';
+import type { ITemplateResponse } from '../../types/template';
 import { removeLocalStorage } from '../../utils/localStorage';
 import { isEnvBilling } from '../../constants/enviroment';
 import { activateVacation, deactivateVacation } from '../../api/vacation';

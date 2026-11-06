@@ -9,9 +9,9 @@ import {
   EWorkflowLogAttachmentsModes,
   EWorkflowsLogSorting,
   EWorkflowLogEvent,
-  IWorkflowLogItem,
   EWorkflowStatus,
 } from '../../../types/workflow';
+import type { IWorkflowLogItem } from '../../../types/workflow';
 import { ETaskStatus } from '../../../types/tasks';
 import { IntlMessages } from '../../IntlMessages';
 import { isArrayWithItems } from '../../../utils/helpers';
@@ -41,7 +41,7 @@ import { WorkflowLogAddedPerformerGroup } from './WorkflowLogEvents/WorkflowLogA
 import { WorkflowLogRemovedPerformerGroup } from './WorkflowLogEvents/WorkflowLogRemovedPerformerGroup';
 
 import styles from './WorkflowLog.css';
-import { IChangeWorkflowLogViewSettingsPayload, ISendWorkflowLogComment } from '../../../redux/workflows/types';
+import type { IChangeWorkflowLogViewSettingsPayload, ISendWorkflowLogComment } from '../../../redux/types';
 import { getUsers } from '../../../redux/selectors/user';
 import { getNotDeletedUsers } from '../../../utils/users';
 import { getMentionData } from '../../RichEditor/utils/getMentionData';

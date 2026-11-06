@@ -1,4 +1,4 @@
-import { IStoreNotification } from '../../types/redux';
+import type { IStoreNotification } from '../notifications/types';
 import type { RootState } from '../store';
 
 export const getNotificationsStore = (state: RootState): IStoreNotification => {

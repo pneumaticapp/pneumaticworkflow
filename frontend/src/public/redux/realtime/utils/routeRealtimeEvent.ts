@@ -1,14 +1,16 @@
 import { call, put, select } from 'redux-saga/effects';
 
-import type { IRealtimeWsEnvelope } from '../types';
-import type { IStoreTask, IStoreWorkflows } from '../../../types/redux';
+import type { TRealtimeWsEnvelope } from '../types';
+import type { IStoreTask } from '../../task/types';
+import type { IStoreWorkflows } from '../../workflows/types';
 import { ERealtimeEnvelopeType } from '../types';
 
 import { handleAddTask, handleRemoveTask } from '../../tasks/saga';
 import { activeUsersCountFetchFinished, upsertUserFromWs, removeUserFromWs } from '../../accounts/slice';
 import { mapWsUserToListItem } from './mapUserFromWs';
 import { mapTaskCreatedDataToListItem } from './mapTaskCreatedToListItem';
-import { upsertGroupFromWs, removeGroupFromWs, updateTaskWorkflowLogItem } from '../../actions';
+import { upsertGroupFromWs, removeGroupFromWs } from '../../groups/slice';
+import { updateTaskWorkflowLogItem } from '../../task/actions';
 import { mapWsGroupToGroup } from './mapGroupFromWs';
 import { mapWsEnvelopeToWorkflowLogItem } from './mapWorkflowLogEventFromWs';
 import { mapNotificationCreatedDataToListItem } from './mapNotificationFromWs';
@@ -23,7 +25,7 @@ import { getTaskStore } from '../../selectors/task';
 import { getTasksSettings } from '../../selectors/tasks';
 import { shouldDecrementCounterOnDeleted, shouldRemoveTaskOnDeleted } from './shouldRemoveTaskOnDeleted';
 
-export function* routeRealtimeEvent(envelope: IRealtimeWsEnvelope) {
+export function* routeRealtimeEvent(envelope: TRealtimeWsEnvelope) {
   switch (envelope.type) {
     case ERealtimeEnvelopeType.TASK_CREATED: {
       const task = mapTaskCreatedDataToListItem(envelope.data);
@@ -113,7 +115,7 @@ export function* routeRealtimeEvent(envelope: IRealtimeWsEnvelope) {
       break;
     }
     default: {
-      const unexpectedEnvelope = envelope as IRealtimeWsEnvelope;
+      const unexpectedEnvelope = envelope as TRealtimeWsEnvelope;
       logger.error(`unhandled WebSocket event: ${String(unexpectedEnvelope.type)}`);
       break;
     }

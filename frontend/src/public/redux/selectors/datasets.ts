@@ -1,5 +1,5 @@
-import { EDatasetsSorting, IDataset, TDatasetItemsSortOrder, IDatasetListItem } from '../../types/dataset';
-import { IDatasetsStore, IDatasetsList } from '../../types/redux';
+import type { EDatasetsSorting, IDataset, TDatasetItemsSortOrder, IDatasetListItem } from '../../types/dataset';
+import type { IDatasetsList, IDatasetsStore } from '../datasets/types';
 import type { RootState } from '../store';
 
 export const getDatasetsStore = (state: RootState): IDatasetsStore => state.datasets;

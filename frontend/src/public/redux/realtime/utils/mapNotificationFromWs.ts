@@ -1,15 +1,15 @@
-import type { TNotificationsListItem } from '../../../types';
+import type { TNotificationsListItem } from '../../../types/notifications';
 import { toISOStringFromTsp } from '../../../utils/dateTime';
 
-import type { IWsNotificationCreatedData } from '../types';
+import type { TWsNotificationCreatedData } from '../types';
 import { isNotificationDataType } from '../types';
 
 export type TNotificationMappingEnvelope = {
-  [Type in IWsNotificationCreatedData['type']]: {
+  [Type in TWsNotificationCreatedData['type']]: {
     type: Type;
-    data: Extract<IWsNotificationCreatedData, { type: Type }>;
+    data: Extract<TWsNotificationCreatedData, { type: Type }>;
   };
-}[IWsNotificationCreatedData['type']];
+}[TWsNotificationCreatedData['type']];
 
 function mapNotificationEnvelopeToListItem(envelope: TNotificationMappingEnvelope): TNotificationsListItem | null {
   switch (envelope.type) {
@@ -151,7 +151,7 @@ function mapNotificationEnvelopeToListItem(envelope: TNotificationMappingEnvelop
   }
 }
 
-export function mapNotificationCreatedDataToListItem(data: IWsNotificationCreatedData): TNotificationsListItem | null {
+export function mapNotificationCreatedDataToListItem(data: TWsNotificationCreatedData): TNotificationsListItem | null {
   if (!isNotificationDataType(data.type)) {
     return null;
   }

@@ -7,23 +7,22 @@ import {
   changeTemplatesList,
   loadTemplates,
   loadTemplatesFailed,
-  TLoadTemplates,
-  TLoadTemplateVariables,
   loadTemplateVariablesSuccess,
   setTemplateIntegrationsStats,
-  TLoadTemplateIntegrationsStats,
   loadTemplateIntegrationsStats,
   changeTemplatesSystem,
   changeTemplatesSystemCategories,
-  ETemplatesSystemStatus,
   setCurrentTemplatesSystemStatus,
   setIsTemplateOwner,
   saveTemplateTasks,
-} from '../actions';
+} from './actions';
+import type { TLoadTemplates, TLoadTemplateVariables, TLoadTemplateIntegrationsStats } from './actions';
+import { ETemplatesSystemStatus } from './types';
 import { getTemplatesSystem } from '../../api/getSystemTemplates';
 import { getTemplatesIntegrationsStats } from '../../api/getTemplatesIntegrationsStats';
-import {
+import type {
   IExtraField,
+  ITemplatesSystemCategories,
   TTemplateFieldFieldset,
   TTemplateIntegrationStatsApi,
   TTransformedTask,
@@ -36,10 +35,10 @@ import { getTemplates, getTemplatesByOwners } from '../../api/getTemplates';
 import { history } from '../../utils/history';
 import { ERoutes } from '../../constants/routes';
 import { getVariables } from '../../components/TemplateEdit/TaskForm/utils/getTaskVariables';
-import { getTemplateFields, TGetTemplateFieldsResponse } from '../../api/getTemplateFields';
+import { getTemplateFields } from '../../api/getTemplateFields';
+import type { TGetTemplateFieldsResponse } from '../../api/getTemplateFields';
 import { isArrayWithItems } from '../../utils/helpers';
 import { getTemplatesSystemCategories } from '../../api/getSystemTemplatesCategories';
-import type { ITemplatesSystemCategories } from '../../types/template';
 import { LIMIT_LOAD_SYSTEMS_TEMPLATES, LIMIT_LOAD_TEMPLATES, varibleIdRegex } from '../../constants/defaultValues';
 import { SYSTEM_MERGED_OUTPUTS } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
 import { NotificationManager } from '../../components/UI/Notifications';

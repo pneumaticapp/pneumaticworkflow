@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useMemo } from 'react';
-import { IntlShape } from 'react-intl';
+import type { IntlShape } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { getEmptyField } from './utils/getEmptyField';
@@ -14,25 +14,20 @@ import {
   createFieldsetBinding,
   moveMergedRow,
   normalizeMergedTaskOutputOrders,
-  TMergedTaskOutputRow,
 } from '../TaskOutputFlow/mergeTaskOutputFlow';
+import type { TMergedTaskOutputRow } from '../TaskOutputFlow/mergeTaskOutputFlow';
 import { MergedOutputRows } from '../TaskOutputFlow/MergedOutputRows';
 
 import { KickoffMenu } from './KickoffMenu';
 import { IntlMessages } from '../../IntlMessages';
-import {
-  EExtraFieldType,
-  IExtraField,
-  ETemplateParts,
-  ITemplateKickoffClient,
-  ITemplateClient,
-} from '../../../types/template';
-import { IFieldsetCatalogItem } from '../../../types/fieldset';
+import { ETemplateParts } from '../../../types/template';
+import type { EExtraFieldType, IExtraField, ITemplateKickoffClient, ITemplateClient } from '../../../types/template';
+import type { IFieldsetCatalogItem } from '../../../types/fieldset';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { ExtraFieldsMap } from '../ExtraFields/utils/ExtraFieldsMap';
 import { ExtraFieldIcon } from '../ExtraFields/utils/ExtraFieldIcon';
 import { getEditedFields } from '../ExtraFields/utils/getEditedFields';
-import { ETemplateStatus } from '../../../types/redux';
+import type { ETemplateStatus } from '../../../redux/template/types';
 import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
 import { getEmptyKickoff } from '../../../utils/template';
 import { useHashLink } from '../../../hooks/useHashLink';

@@ -1,6 +1,7 @@
 import type { RootState } from '../store';
-import { EUserListSorting } from '../../types/user';
-import { EUserGroupType, IGroup } from '../team/types';
+import type { EUserListSorting } from '../../types/user';
+import { EUserGroupType } from '../../types/team';
+import type { IGroup } from '../../types/team';
 
 export const getGroupsList = (state: RootState): IGroup[] => state.groups.list;
 

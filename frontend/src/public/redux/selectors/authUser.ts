@@ -1,4 +1,4 @@
-import { IAuthUser } from '../../types/redux';
+import type { IAuthUser } from '../auth/types';
 import type { RootState } from '../store';
 
 export const getCurrentUser = (state: RootState): IAuthUser => state.authUser;

@@ -9,11 +9,11 @@ import { Link } from 'react-router-dom';
 
 import { EIntegrations } from '../../../types/integrations';
 import { TemplateIntegrationsIndicator } from '../../TemplateIntegrationsStats';
-import { IDashboardCounterProps } from '../Counters';
-import { EDashboardModes } from '../../../types/redux';
+import type { IDashboardCounterProps } from '../Counters';
+import { EDashboardModes } from '../../../redux/dashboard/types';
 import type { TDashboardBreakdownItem } from '../../../types/dashboard';
 import { DashboardCounters } from '../Counters/DashboardCounters';
-import { ILoadBreakdownTasksPayload } from '../../../redux/dashboard/actions';
+import type { ILoadBreakdownTasksPayload } from '../../../redux/dashboard/actions';
 import { getLinkToWorkflows } from '../../../utils/routes/getLinkToWorkflows';
 import { getLinkToTemplate } from '../../../utils/routes/getLinkToTemplate';
 import { EDashboardCounterType } from '../Counters/types';
@@ -34,7 +34,8 @@ import {
   WorkflowOpen,
   WorkflowMinimize,
 } from '../../icons';
-import { Dropdown, Header, Loader, TDropdownOption } from '../../UI';
+import { Dropdown, Header, Loader } from '../../UI';
+import type { TDropdownOption } from '../../UI/Dropdown';
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
 import { IntegrateButton } from '../../IntegrateButton';
 

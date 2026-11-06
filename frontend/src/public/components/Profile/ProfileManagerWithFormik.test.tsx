@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { useSelector } from 'react-redux';
 
 import { Profile } from './Profile';
-import { IAuthUser } from '../../types/redux';
+import type { IAuthUser } from '../../redux/auth/types';
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),

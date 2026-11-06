@@ -2,10 +2,12 @@ import * as React from 'react';
 import { act, render } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 
-import { IUseTemplateEditorControllerOptions, useTemplateEditorController } from '../useTemplateEditorController';
-import { ITemplateEditorController } from '../../components/TemplateEdit/types';
-import { ITemplateClient, ITemplateTaskClient } from '../../types/template';
-import { ETemplateStatus, IAuthUser } from '../../types/redux';
+import { useTemplateEditorController } from '../useTemplateEditorController';
+import type { IUseTemplateEditorControllerOptions } from '../useTemplateEditorController';
+import type { ITemplateEditorController } from '../../components/TemplateEdit/types';
+import type { ITemplateClient, ITemplateTaskClient } from '../../types/template';
+import { ETemplateStatus } from '../../redux/template/types';
+import type { TAuthUserResult } from '../../types/user';
 import { cleanTemplateReferences } from '../../utils/template';
 
 jest.mock('throttle-debounce', () => ({
@@ -61,7 +63,7 @@ const createOptions = (
   overrides: Partial<IUseTemplateEditorControllerOptions> = {},
 ): IUseTemplateEditorControllerOptions => ({
   template,
-  authUser: { id: 1 } as IAuthUser,
+  authUser: { id: 1 } as TAuthUserResult,
   accessConditions: true,
   shouldOpenFirstTask: false,
   selectedTaskApiName: null,
