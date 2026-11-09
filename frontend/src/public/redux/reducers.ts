@@ -20,6 +20,7 @@ import { webhooks } from './webhooks';
 import { tenants } from './tenants';
 import { EAuthActions } from './auth/actions';
 import groups from './groups/slice';
+import ai from './ai/slice';
 
 import pages from './pages/slice';
 import team from './team/slice';
@@ -44,6 +45,7 @@ export const reducers = combineReducers({
   settings,
   team,
   groups,
+  ai,
   task,
   tasks,
   highlights,

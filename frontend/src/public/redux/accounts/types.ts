@@ -22,7 +22,6 @@ export interface IAccounts {
     userWorkflowsCount: number;
     state: EDeleteUserModalState;
   };
-  isCreateUserModalOpen: boolean;
 }
 
 export type TActiveUsersCountFetchFinishedPayload = {

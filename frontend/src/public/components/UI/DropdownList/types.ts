@@ -1,18 +1,18 @@
-import * as React from 'react';
-import Select from 'react-select';
+import type { ComponentProps, ReactNode } from 'react';
+import type Select from 'react-select';
 
 export type TControlSize = 'lg' | 'sm';
 export type TPlacement = 'left' | 'right';
 
 export type TDropdownOptionBase = {
-  label: string | React.ReactNode;
+  label: string | ReactNode;
   sourceId?: string | null;
   value?: string;
   onClick?: () => void;
 };
 
 export interface IDropdownListProps<TOption extends TDropdownOptionBase> extends Omit<
-  React.ComponentProps<typeof Select>,
+  ComponentProps<typeof Select>,
   'options' | 'onChange'
 > {
   label?: string;

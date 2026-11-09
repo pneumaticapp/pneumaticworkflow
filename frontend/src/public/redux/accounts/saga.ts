@@ -14,7 +14,6 @@ import {
   usersFetchStarted,
   activeUsersCountFetchFinished,
   loadActiveUsersCount,
-  closeCreateUserModal,
   closeDeleteUserModal,
   openDeleteUserModal,
   userListSortingChanged,
@@ -29,6 +28,7 @@ import {
   changeUserManager,
   loadChangeUserReports,
   changeUserReports,
+  resendUserInvite,
 } from './slice';
 
 import { EDeleteUserModalState } from './types';
@@ -47,7 +47,7 @@ import type { ICreateUserRequest, TAuthUserResult, TUserListItem } from '../../t
 
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getUsers } from '../../api/getUsers';
-import type { TResponseUser } from '../../api/getUsers';
+import type { TResponseUser } from '../../api/types';
 import { getPlan } from '../../api/getPlan';
 import type { TGetPlanResponse } from '../../api/getPlan';
 import { authUserSuccess, makeStripePayment } from '../auth/actions';
@@ -72,6 +72,8 @@ import { getAccountPlan } from '../selectors/accounts';
 import { getAbsolutePath } from '../../utils/getAbsolutePath';
 import { createUser as createUserApi } from '../../api/createUser';
 import { editTeamUser } from '../../api/editTeamUser';
+import { resendInvite } from '../../api/resendInvite';
+import { submitCreatePerformer } from '../team/utils/submitCreatePerformer';
 
 /**
  * The backend API returns `subordinates_ids` (camelCased to `subordinatesIds`),
@@ -178,6 +180,7 @@ function* fetchTeam() {
     const rawUsers: TUserListItem[] = yield getUsers({
       type: 'user',
       status: [EUserStatus.Active, EUserStatus.Invited],
+      isAi: false,
     });
     const users = rawUsers.map(normalizeUserReportIds);
 
@@ -360,9 +363,8 @@ function* startFreeSubscriptionSaga() {
 
 function* createUserSaga({ payload }: PayloadAction<ICreateUserRequest>) {
   try {
-    yield call(createUserApi, payload);
+    yield call(submitCreatePerformer, call(createUserApi, payload));
     NotificationManager.success({ message: 'team.create-user-success-msg' });
-    yield put(closeCreateUserModal());
 
     yield put(teamFetchStarted({}));
     yield put(usersFetchStarted());
@@ -370,6 +372,19 @@ function* createUserSaga({ payload }: PayloadAction<ICreateUserRequest>) {
   } catch (error) {
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     logger.error('failed to create user', error);
+  }
+}
+
+export function* resendUserInviteSaga({ payload: userId }: PayloadAction<number>) {
+  yield put(setGeneralLoaderVisibility(true));
+  try {
+    yield call(resendInvite, userId);
+    NotificationManager.success({ message: 'team.resend-invite-success-msg' });
+  } catch (error) {
+    NotificationManager.warning({ message: getErrorMessage(error) });
+    logger.error('failed to resend invite', error);
+  } finally {
+    yield put(setGeneralLoaderVisibility(false));
   }
 }
 
@@ -429,6 +444,10 @@ export function* watchCreateUser() {
   yield takeEvery(createUser.type, createUserSaga);
 }
 
+export function* watchResendUserInvite() {
+  yield takeEvery(resendUserInvite.type, resendUserInviteSaga);
+}
+
 export function* rootSaga() {
   yield all([
     fork(watchFetchUser),
@@ -445,5 +464,6 @@ export function* rootSaga() {
     fork(watchCreateUser),
     fork(watchChangeUserManager),
     fork(watchChangeUserReports),
+    fork(watchResendUserInvite),
   ]);
 }

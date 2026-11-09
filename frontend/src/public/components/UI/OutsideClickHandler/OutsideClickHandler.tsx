@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useRef, useEffect } from 'react';
-import { IOutsideClickHandlerProperties } from './types';
+import type { IOutsideClickHandlerProperties } from './types';
 
 export const OutsideClickHandler = ({
   children,

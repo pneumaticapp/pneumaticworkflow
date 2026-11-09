@@ -1,88 +1,125 @@
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { Users } from '../Users';
-import { IUsersProps } from '../types';
-import { mockLastNameUsers } from '../../../../__stubs__/users';
+import { generateUser, mockLastNameUsers } from '../../../../__stubs__/users';
 import { EUserListSorting } from '../../../../types/user';
+import { loadAIAgents } from '../../../../redux/ai/slice';
+import type { IAIAgent } from '../../../../api/ai/types';
+import type { TUserListItem } from '../../../../types/user';
 
-jest.mock('../TeamUser', () => ({
-  TeamUser: ({
-    user,
-    isCurrentUser,
-    isSubscribed,
-  }: {
-    user: { id: number };
-    isCurrentUser?: boolean;
-    isSubscribed?: boolean;
-  }) => (
-    <div
-      data-testid="team-user"
-      data-user-id={user.id}
-      data-is-current-user={String(isCurrentUser)}
-      data-is-subscribed={String(isSubscribed)}
-    />
-  ),
+jest.mock('../DeleteTeamUserPopup', () => ({
+  DeleteTeamUserPopupContainer: () => null,
 }));
-jest.mock('../DeleteTeamUserPopup', () => ({ DeleteTeamUserPopupContainer: () => null }));
-jest.mock('../AddGuestsBanner', () => ({ AddGuestsBanner: () => null }));
-jest.mock('../CreateUserModal', () => ({
-  CreateUserModal: ({ isOpen }: { isOpen: boolean }) => (
-    <div data-testid="create-user-modal" data-is-open={String(isOpen)} />
-  ),
+
+jest.mock('../AddGuestsBanner', () => ({
+  AddGuestsBanner: () => null,
 }));
-jest.mock('../VacationSettingsModal', () => ({ VacationSettingsModal: () => null }));
+
+jest.mock('../../CreatePerformerModal', () => ({
+  CreatePerformerModal: () => null,
+}));
+
+jest.mock('../VacationSettingsModal', () => ({
+  VacationSettingsModal: () => null,
+}));
+
+jest.mock('../../../PageTitle', () => ({
+  PageTitle: () => null,
+}));
+
+jest.mock('../TeamUserCard', () => ({
+  TeamUserCard: ({ user }: { user: TUserListItem }) => {
+    const [expanded, setExpanded] = React.useState(false);
+    return (
+      <button type="button" data-testid={`team-user-card-${user.id}`} onClick={() => setExpanded(true)}>
+        {expanded ? 'Expanded' : 'Collapsed'}
+      </button>
+    );
+  },
+}));
+
+jest.mock('../../TeamUserSkeleton', () => ({
+  TeamUserSkeleton: () => <div data-testid="team-user-skeleton" />,
+}));
+
+const buildAgent = (overrides: Partial<IAIAgent> = {}): IAIAgent => ({
+  id: 10,
+  name: 'Research assistant',
+  photo: null,
+  isActive: true,
+  providerId: 1,
+  model: 'openai/gpt-4o',
+  systemPrompt: 'You are helpful.',
+  ...overrides,
+});
+
+interface IMockStateParams {
+  users?: TUserListItem[];
+  agents?: IAIAgent[];
+  isUsersLoading?: boolean;
+}
 
 describe('Users', () => {
-  const mockProps: IUsersProps = {
-    currentUserId: 0,
-    fetchUsers: jest.fn(),
-    loadChangeUserAdmin: jest.fn(),
-    loadChangeUserManager: jest.fn(),
-    openModal: jest.fn(),
-    users: mockLastNameUsers,
-    userListSorting: EUserListSorting.NameAsc,
-    openTeamInvitesPopup: jest.fn(),
-    setGeneralLoaderVisibility: jest.fn(),
-    trialEnded: null,
-    loadInvitesUsers: jest.fn(),
-    loadChangeUserReports: jest.fn(),
+  const mockDispatch = jest.fn();
+
+  const mockState = ({ users = mockLastNameUsers, agents = [], isUsersLoading = false }: IMockStateParams = {}) => {
+    const state = {
+      authUser: {
+        id: 0,
+        account: { isSubscribed: true, billingPlan: 'premium' },
+      },
+      accounts: {
+        team: { list: users, isLoading: isUsersLoading },
+        userListSorting: EUserListSorting.NameAsc,
+      },
+      ai: {
+        agents: { isLoading: false, list: agents },
+      },
+    };
+
+    (useSelector as jest.Mock).mockImplementation((selector) => selector(state));
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
+    mockState();
   });
 
-  it('shows the heading, search, both buttons and cards for all users', () => {
-    render(<Users {...mockProps} />);
-
-    expect(screen.getByRole('heading', { name: 'Team' })).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Search user')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Invite Team/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Create User/ })).toBeInTheDocument();
-    expect(screen.getAllByTestId('team-user')).toHaveLength(mockLastNameUsers.length);
-  });
-
-  it('marks the current user via isCurrentUser', () => {
-    render(<Users {...mockProps} />);
-
-    const cards = screen.getAllByTestId('team-user');
-
-    expect(cards[0]).toHaveAttribute('data-is-current-user', 'true');
-    expect(cards[2]).toHaveAttribute('data-is-current-user', 'false');
-  });
-
-  it('keeps the create user modal closed by default', () => {
-    render(<Users {...mockProps} />);
-
-    expect(screen.getByTestId('create-user-modal')).toHaveAttribute('data-is-open', 'false');
-  });
-
-  it('passes isSubscribed = true to all cards on the free plan', () => {
-    render(<Users {...mockProps} />);
-
-    screen.getAllByTestId('team-user').forEach((card) => {
-      expect(card).toHaveAttribute('data-is-subscribed', 'true');
+  it('lists only people and does not load AI agents', () => {
+    mockState({
+      users: [generateUser(1, { firstName: 'Bravo' }), generateUser(2, { firstName: 'Delta' })],
+      agents: [buildAgent({ id: 10, name: 'Alpha' })],
     });
+
+    render(<Users userListSorting={EUserListSorting.NameAsc} />);
+
+    expect(screen.getAllByTestId(/^team-user-card-/)).toHaveLength(2);
+    expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
+    expect(mockDispatch).not.toHaveBeenCalledWith(loadAIAgents());
+  });
+
+  it('applies the search query to users', () => {
+    mockState({
+      users: [generateUser(1, { firstName: 'Bravo' }), generateUser(2, { firstName: 'Charlie' })],
+    });
+
+    render(<Users userListSorting={EUserListSorting.NameAsc} />);
+    userEvent.type(screen.getByRole('textbox'), 'charlie');
+
+    expect(screen.getAllByTestId(/^team-user-card-/)).toHaveLength(1);
+    expect(screen.getByTestId('team-user-card-2')).toBeInTheDocument();
+  });
+
+  it('shows skeletons while users are loading', () => {
+    mockState({ isUsersLoading: true });
+
+    render(<Users userListSorting={EUserListSorting.NameAsc} />);
+
+    expect(screen.getAllByTestId('team-user-skeleton')).toHaveLength(3);
+    expect(screen.queryByTestId(/^team-user-card-/)).not.toBeInTheDocument();
   });
 });

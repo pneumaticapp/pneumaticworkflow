@@ -4,6 +4,7 @@ import type { TUserListItem } from '../../types/user';
 export enum ETeamPages {
   Users = 'users',
   Groups = 'groups',
+  AIAgents = 'ai-agents',
 }
 
 export type TInviteUsersPayload = {
@@ -20,4 +21,8 @@ export interface ITeamStore {
   isInvitesPopupOpen: boolean;
   recentInvitedUsers: TUserListItem[];
   invitesUsersList: IUserInvite[];
+  createPerformerModal: {
+    isOpen: boolean;
+    isSubmitting: boolean;
+  };
 }

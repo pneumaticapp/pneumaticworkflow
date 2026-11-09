@@ -1,1 +1,2 @@
-export * from './DropdownList';
+export { DropdownList } from './DropdownList';
+export { FormikDropdownList } from './FormikDropdownList';
