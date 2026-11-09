@@ -75,13 +75,15 @@ export const FieldsetIconPicker = ({ fieldsetsCatalogLoading, onSelectFieldset }
           <div className={pickerStyles['fieldset-picker__option-info']}>
             <span className={pickerStyles['fieldset-picker__option-name']}>{row.name}</span>
             <span className={pickerStyles['fieldset-picker__option-meta']}>
-              {row.fieldsCount} fields · {row.rulesCount} rules
+              {formatMessage({ id: 'fieldsets.stats.fields' }, { count: row.fieldsCount })}
+              {' · '}
+              {formatMessage({ id: 'fieldsets.stats.rules' }, { count: row.rulesCount })}
             </span>
           </div>
         </Tooltip>
       ),
     }));
-  }, [fieldsetsCatalogItems]);
+  }, [fieldsetsCatalogItems, formatMessage]);
 
   const handleSelectFieldset = useCallback(
     (sharedFieldsetId: number | null) => {

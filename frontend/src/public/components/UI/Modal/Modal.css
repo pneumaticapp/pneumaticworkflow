@@ -41,8 +41,8 @@
 .close-button {
   all: unset;
   position: absolute;
+  inset-inline-end: 32px;
   top: 32px;
-  right: 32px;
   color: var(--pneumatic-color-black16);
   cursor: pointer;
   transition: color 0.3s;

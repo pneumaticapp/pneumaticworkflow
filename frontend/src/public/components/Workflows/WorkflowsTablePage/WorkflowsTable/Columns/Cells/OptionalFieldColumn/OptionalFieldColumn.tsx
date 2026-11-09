@@ -1,4 +1,5 @@
 import React from 'react';
+import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 import { CellProps } from 'react-table';
 
@@ -19,6 +20,7 @@ import { getTimezone } from '../../../../../../../redux/selectors/authUser';
 type TProps = React.PropsWithChildren<CellProps<TableColumns, ITableViewFields>>;
 
 export function OptionalFieldColumn({ value }: TProps) {
+  const { formatMessage } = useIntl();
   if (!value) {
     return null;
   }
@@ -160,7 +162,9 @@ export function OptionalFieldColumn({ value }: TProps) {
         return <div className={styles['field-column__files']}>{fileElements}</div>;
       } catch (error) {
         console.error('File processing error:', error);
-        return <div className={styles['field-column__files']}>Unable to display file</div>;
+        return (
+          <div className={styles['field-column__files']}>{formatMessage({ id: 'file-service.display-failed' })}</div>
+        );
       }
     }
     return fieldValue.value;

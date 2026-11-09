@@ -102,7 +102,10 @@ export function ExtraFieldCreatable({
   );
 
   const handleAddOption = () => {
-    const newOptions = [...(selectionItems || []), getEmptySelection(selectionItems)];
+    const newOptions = [
+      ...(selectionItems || []),
+      getEmptySelection(selectionItems, intl.formatMessage({ id: 'template.new-option' })),
+    ];
     editField({ selections: newOptions });
   };
 

@@ -21,7 +21,7 @@
 }
 
 .cancel-delete-button {
-  margin-left: 16px;
+  margin-inline-start: 16px;
 }
 
 .control-buttons {
@@ -69,7 +69,7 @@
   justify-content: center;
   width: 100%;
   height: 100%;
-  font-family: 'Abhaya Libre ExtraBold', serif;
+  font-family: var(--pneumatic-font-serif);
   font-size: 18px;
   font-style: normal;
   font-weight: 800;

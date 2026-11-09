@@ -23,7 +23,7 @@ export function WebhookItem({ event, url, status }: IWebhookItemProps) {
   const [webhookUrlError, setWebhookUrlError] = useState('');
 
   const isLoading = status === EWebhooksSubscriberStatus.Loading;
-  const value = isLoading ? 'Loading...' : webhookUrlState;
+  const value = isLoading ? formatMessage({ id: 'ui.loading' }) : webhookUrlState;
 
   const WEBHOOKS_TITLES = {
     [EWebhooksTypeEvent.workflowStarted]: formatMessage({
@@ -93,6 +93,7 @@ export function WebhookItem({ event, url, status }: IWebhookItemProps) {
       <p className={styles['webhook-title']}>{WEBHOOKS_TITLES[event]}</p>
       <div className={styles['webhook-container']}>
         <InputField
+          dir={isLoading ? 'auto' : 'ltr'}
           fieldSize="md"
           value={value}
           placeholder="URL"

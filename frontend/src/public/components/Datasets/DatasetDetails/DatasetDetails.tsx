@@ -13,6 +13,7 @@ import {
 } from '../../../redux/datasets/slice';
 
 import { history } from '../../../utils/history';
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { ERoutes } from '../../../constants/routes';
 
 import { ModifyDropdown, Button } from '../../UI';
@@ -51,6 +52,7 @@ const DatasetDetails = ({
   const dispatch = useDispatch();
 
   const dataset = useSelector(getCurrentDataset);
+  useDocumentTitle('Datasets', dataset?.id === Number(matchParamId) ? dataset.name : undefined);
   const isLoading = useSelector(isCurrentDatasetLoading);
   const [isAddingRow, setIsAddingRow] = useState(false);
   const [editingItemId, setEditingItemId] = useState<number | null>(null);

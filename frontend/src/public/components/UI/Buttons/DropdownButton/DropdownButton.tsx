@@ -2,6 +2,7 @@ import * as React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
+import { isRtlLocale } from '../../../../lang/direction';
 
 import { Loader } from '../../Loader';
 import { DropdownCloseIcon, EllipsisIcon } from '../../../icons';
@@ -22,7 +23,7 @@ export interface IDropdownButtonProps {
 }
 
 export function DropdownButton({ dropdownOptions, isLoading, isDisabled, className }: IDropdownButtonProps) {
-  const { formatMessage } = useIntl();
+  const { formatMessage, locale } = useIntl();
 
   const [isActive, setActiveState] = React.useState(false);
 
@@ -63,7 +64,7 @@ export function DropdownButton({ dropdownOptions, isLoading, isDisabled, classNa
         >
           {renderIcon()}
         </DropdownToggle>
-        <DropdownMenu flip={false} className={styles['dropdown-menu']} right>
+        <DropdownMenu flip={false} className={styles['dropdown-menu']} right={!isRtlLocale(locale)}>
           {dropdownOptions.map(renderDropdownItem)}
         </DropdownMenu>
       </Dropdown>

@@ -28,18 +28,18 @@
   }
 
   &__dropdown {
-    margin-right: 16px;
+    margin-inline-end: 16px;
   }
 
   &__urgent {
     position: relative;
     top: -2px;
     min-width: 20px;
-    margin-right: 16px;
+    margin-inline-end: 16px;
   }
 
   &__title {
-    margin-right: 16px;
+    margin-inline-end: 16px;
 
     button {
       /* stylelint-disable-next-line value-no-vendor-prefix */
@@ -50,7 +50,7 @@
       -webkit-line-clamp: 1;
       line-clamp: 1;
       font-weight: bold;
-      text-align: left;
+      text-align: start;
       word-break: break-all;
       outline: none;
       background-color: transparent;

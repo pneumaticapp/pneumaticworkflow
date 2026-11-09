@@ -13,9 +13,9 @@
 }
 
 .workflows-main-table {
-  margin-right: 0 !important;
+  margin-inline-start: 7.1rem;
+  margin-inline-end: 0 !important;
   margin-bottom: 0 !important;
-  margin-left: 7.1rem;
   overflow: scroll;
   transition: margin-left 0.2s ease-out;
 

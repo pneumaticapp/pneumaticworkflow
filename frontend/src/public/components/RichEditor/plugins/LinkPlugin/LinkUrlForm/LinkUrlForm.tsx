@@ -143,6 +143,7 @@ export function LinkUrlForm({
         <div className={styles['add-url-form__url-field-wrapper']}>
           <InputField
             inputRef={urlInputRef}
+            dir="ltr"
             value={url}
             onChange={(e) => {
               setUrlError('');
@@ -155,7 +156,12 @@ export function LinkUrlForm({
             errorMessage={urlError}
           />
           <div className={styles['add-url-form__actions']}>
-            <button type="button" onClick={onClose} className={styles['add-url-form__button']} aria-label="Close">
+            <button
+              type="button"
+              onClick={onClose}
+              className={styles['add-url-form__button']}
+              aria-label={formatMessage({ id: 'accessibility.close' })}
+            >
               <SquaredCrossButtonIcon />
             </button>
             <button

@@ -59,6 +59,7 @@ export function InputField({
   // tslint:disable-next-line: trailing-comma
   ...props
 }: TInputFieldProps) {
+  const isTechnicalInput = ['email', 'url', 'tel'].includes(type);
   const [touched, setTouched] = React.useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
   const { messages, formatMessage } = useIntl();
@@ -76,6 +77,7 @@ export function InputField({
   const renderInput = () => {
     const inputClassName = classnames(
       styles['input-field'],
+      isTechnicalInput && styles['input-field_ltr'],
       icon && styles['input-field_with-icon'],
       onClear && styles['input-field_with-clearing'],
       shouldShowErrorMessage && styles['input-field_error'],
@@ -96,6 +98,7 @@ export function InputField({
         value={value}
         ref={inputRef}
         type={getInputType()}
+        dir={isTechnicalInput ? 'ltr' : undefined}
         className={inputClassName}
         disabled={disabled}
         data-testid="input-field"
@@ -116,7 +119,7 @@ export function InputField({
             onClick={() => setIsPasswordVisible((prev) => !prev)}
             className={styles['password-toggle']}
             role="button"
-            aria-label="Toggle password visibility"
+            aria-label={formatMessage({ id: 'ui.password-toggle' })}
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {

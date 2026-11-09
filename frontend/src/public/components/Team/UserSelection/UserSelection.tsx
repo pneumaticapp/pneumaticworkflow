@@ -1,4 +1,5 @@
 import React from 'react';
+import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
 import { trackInviteTeamInPage } from '../../../utils/analytics';
@@ -15,6 +16,7 @@ export interface IUserSelection {
 }
 
 export function UserSelection({ selectedUsers, onChange, onChangeSelected, onClickAllUsers }: IUserSelection) {
+  const { formatMessage } = useIntl();
   const users: ReturnType<typeof getUsers> = getNotDeletedUsers(useSelector(getUsers));
 
   const selectionsDropdownOption = users.map((item) => {
@@ -29,7 +31,7 @@ export function UserSelection({ selectedUsers, onChange, onChangeSelected, onCli
 
   return (
     <UsersDropdown
-      placeholder="Search"
+      placeholder={formatMessage({ id: 'nav.search' })}
       controlSize="sm"
       value={selectedValue}
       staticMenu
@@ -39,7 +41,7 @@ export function UserSelection({ selectedUsers, onChange, onChangeSelected, onCli
       onChange={(option) => {
         onChange(option);
       }}
-      inviteLabel="Invite member"
+      inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
       onClickInvite={() => trackInviteTeamInPage('From groups')}
       onClickAllUsers={(isSelectAll) => {
         onClickAllUsers(isSelectAll, isSelectAll ? [...users.map((user) => user.id)] : []);

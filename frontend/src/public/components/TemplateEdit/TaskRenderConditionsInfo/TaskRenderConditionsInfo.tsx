@@ -25,7 +25,7 @@ export const TaskRenderConditionsInfo = ({
   isInTaskForm,
   isStartTask,
 }: ITaskRenderConditionsInfoProps) => {
-  const { formatMessage } = useIntl();
+  const { formatMessage, locale } = useIntl();
   const billingPlan = useSelector(getSubscriptionPlan);
   const isSubscribed = useSelector(getIsUserSubsribed);
 
@@ -44,6 +44,8 @@ export const TaskRenderConditionsInfo = ({
       'tasks.task-starts-after-title-plural-2',
     ],
     formatMessage,
+    locale,
+    countMessageId: 'tasks.task-starts-after-count',
   });
 
   const checkIfConditionsText = getTriplePlural({
@@ -54,6 +56,8 @@ export const TaskRenderConditionsInfo = ({
       'tasks.task-check-if-title-plural-2',
     ],
     formatMessage,
+    locale,
+    countMessageId: 'tasks.task-check-if-count',
   });
 
   const conditionsInfoText = isStartTask ? startAfterConditionText : checkIfConditionsText;

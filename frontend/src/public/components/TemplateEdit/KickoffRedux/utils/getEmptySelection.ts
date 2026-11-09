@@ -3,15 +3,18 @@ import { IExtraFieldSelection } from '../../../../types/template';
 import { createFieldSelectionApiName } from '../../../../utils/createId';
 
 const NEW_OPTION_BASE = 'New option';
-const NEW_OPTION_REGEX = /^New option (\d+)$/;
-
-export function getEmptySelection(existingSelections?: IExtraFieldSelection[]): IExtraFieldSelection {
+export function getEmptySelection(
+  existingSelections?: IExtraFieldSelection[],
+  label = NEW_OPTION_BASE,
+): IExtraFieldSelection {
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const newOptionRegex = new RegExp(`^(?:New option|${escapedLabel}) (\\d+)$`);
   let counter = 1;
 
   if (existingSelections?.length) {
     let maxNumber = 0;
     existingSelections.forEach((s) => {
-      const match = s.value.match(NEW_OPTION_REGEX);
+      const match = s.value.match(newOptionRegex);
       if (match) {
         maxNumber = Math.max(maxNumber, parseInt(match[1], 10));
       }
@@ -20,7 +23,7 @@ export function getEmptySelection(existingSelections?: IExtraFieldSelection[]): 
   }
 
   return {
-    value: `${NEW_OPTION_BASE} ${counter}`,
+    value: `${label} ${counter}`,
     apiName: createFieldSelectionApiName(),
   };
 }

@@ -4,6 +4,8 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { enUS, ru } from 'date-fns/locale';
 
 import { ELocale } from '../../../types/redux';
+import { arSY } from '../../../lang/dateLocale';
+import { resolveLocale } from '../../../lang/locale';
 
 import styles from './DateFormat.css';
 
@@ -19,13 +21,14 @@ export const DateFormatComponent = ({ date, timezone, dateFmt, language }: IDate
   const mapLocale: { [key: string]: Locale } = {
     [ELocale.English]: enUS,
     [ELocale.Russian]: ru,
+    [ELocale.Arabic]: arSY,
   };
   // We delete the year if it is the current one
   if (isSameYear(currentDate, new Date())) dateFmt = dateFmt.replace('yyy, ', '');
 
   return (
     <span className={styles['date']}>
-      {formatInTimeZone(currentDate, timezone, dateFmt, { locale: mapLocale[language] })}
+      {formatInTimeZone(currentDate, timezone, dateFmt, { locale: mapLocale[resolveLocale(language)] })}
     </span>
   );
 };

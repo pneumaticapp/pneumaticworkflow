@@ -32,7 +32,10 @@ export function OutputFieldContent({
   }, [selections, dataset]);
 
   const handleClearDataset = () => {
-    editField({ dataset: null, selections: savedSelections || [getEmptySelection()] });
+    editField({
+      dataset: null,
+      selections: savedSelections || [getEmptySelection(undefined, intl.formatMessage({ id: 'template.new-option' }))],
+    });
   };
 
   const clearButton = (

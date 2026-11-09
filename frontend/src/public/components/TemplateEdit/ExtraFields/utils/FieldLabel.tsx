@@ -2,6 +2,7 @@ import classnames from 'classnames';
 import * as React from 'react';
 import { ChangeEvent, useCallback, useMemo, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
+import { useIntl } from 'react-intl';
 
 import { validateKickoffFieldName } from '../../../../utils/validators';
 import { EInputNameBackgroundColor } from '../../../../types/workflow';
@@ -35,6 +36,7 @@ export function FieldLabel({
   className,
   handleChangeName,
 }: IFieldLabelProps) {
+  const { formatMessage } = useIntl();
   const editInputRef = useRef<HTMLTextAreaElement | null>(null);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -86,11 +88,16 @@ export function FieldLabel({
             className={styles['kick-off-input__name-textarea']}
             data-use-input
           />
-          {isRequired && <span aria-label="required" className={styles['kick-off-required-sign']} />}
+          {isRequired && (
+            <span
+              aria-label={formatMessage({ id: 'template.kick-off-form-required' })}
+              className={styles['kick-off-required-sign']}
+            />
+          )}
           {!isFocused && (
             <button
               type="button"
-              aria-label="Edit field name"
+              aria-label={formatMessage({ id: 'accessibility.edit-field-name' })}
               onClick={handleEditNameClick}
               className={styles['kick-off-edit-name']}
             >
@@ -101,7 +108,12 @@ export function FieldLabel({
       ) : (
         <>
           <div className={styles['kick-off-input__name-readonly']}>{name}</div>
-          {isRequired && <span aria-label="required" className={styles['kick-off-required-sign']} />}
+          {isRequired && (
+            <span
+              aria-label={formatMessage({ id: 'template.kick-off-form-required' })}
+              className={styles['kick-off-required-sign']}
+            />
+          )}
         </>
       )}
     </div>

@@ -39,7 +39,7 @@
     @mixin text-small;
 
     > *:not(:last-child) {
-      margin-right: 0.8rem;
+      margin-inline-end: 0.8rem;
     }
   }
 

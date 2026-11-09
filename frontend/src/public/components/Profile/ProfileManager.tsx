@@ -32,7 +32,9 @@ export function ProfileManager({ currentUserId, managerId, onManagerChange }: IP
 
   return (
     <div className={styles['manager-section']}>
-      <SectionTitle className={styles['fields-group__title']}>Manager</SectionTitle>
+      <SectionTitle className={styles['fields-group__title']}>
+        {formatMessage({ id: 'user-info.manager' })}
+      </SectionTitle>
 
       {manager ? (
         <>
@@ -53,7 +55,7 @@ export function ProfileManager({ currentUserId, managerId, onManagerChange }: IP
           <Button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            label="Change manager"
+            label={formatMessage({ id: 'user-info.manager.change' })}
             buttonStyle="transparent-black"
             size="sm"
             className={styles['manager-card__edit-btn']}
@@ -63,7 +65,7 @@ export function ProfileManager({ currentUserId, managerId, onManagerChange }: IP
         <Button
           type="button"
           onClick={() => setIsModalOpen(true)}
-          label="Add manager"
+          label={formatMessage({ id: 'user-info.manager.add' })}
           buttonStyle="transparent-black"
           size="sm"
         />

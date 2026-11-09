@@ -18,6 +18,8 @@ export default () => ({
     presetEnv({
       features: {
         'nesting-rules': false,
+        // Native :dir() follows dir="auto" content; attribute rewrites cannot.
+        'dir-pseudo-class': false,
       },
     }),
   ],

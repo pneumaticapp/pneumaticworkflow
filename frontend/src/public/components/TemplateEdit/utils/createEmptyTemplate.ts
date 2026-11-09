@@ -11,23 +11,27 @@ export interface ICreateEmptyTemplateOptions {
   authUser: IAuthUser;
   accessConditions: boolean;
   users: TUserListItem[];
+  name?: string;
+  firstStepName?: string;
 }
 
 export function createEmptyTemplate({
   authUser,
   accessConditions,
   users,
+  name = DEFAULT_TEMPLATE_NAME,
+  firstStepName = 'First Step',
 }: ICreateEmptyTemplateOptions): ITemplateClient {
   return {
     description: '',
     kickoff: getEmptyKickoff(),
-    name: DEFAULT_TEMPLATE_NAME,
+    name,
     tasks: [
       createTemplateTask({
         authUser,
         accessConditions,
         overrides: {
-          name: 'First Step',
+          name: firstStepName,
           number: 1,
           conditions: getKickoffConditions(),
         },

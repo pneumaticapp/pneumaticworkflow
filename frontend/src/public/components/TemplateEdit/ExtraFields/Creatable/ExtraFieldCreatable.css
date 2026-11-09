@@ -8,7 +8,7 @@
   :global .react-select__control {
     padding-top: 1.1rem !important;
     padding-bottom: 1.1rem !important;
-    font-family: Nunito, sans-serif;
+    font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
     font-size: 1.5rem;
     line-height: 2rem;
     color: #262522;
@@ -76,7 +76,7 @@
     position: absolute;
     top: -99999px;
     left: -99999px;
-    font-family: Nunito, sans-serif;
+    font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
     /* stylelint-disable number-max-precision */
     font-size: 1.504rem;
     /* stylelint-enable number-max-precision */
@@ -87,7 +87,7 @@
 
 .kickoff-create-field-options-wrapper_label-left {
   min-width: 0;
-  margin-left: calc(40% + 3.2rem);
+  margin-inline-start: calc(40% + 3.2rem);
 }
 
 .kickoff-create-field-name {
@@ -133,7 +133,7 @@
 }
 
 .kickoff-create-field-option__remove {
-  margin-left: 0.8rem;
+  margin-inline-start: 0.8rem;
   cursor: pointer;
 }
 
@@ -169,7 +169,7 @@
 .kickoff-set-field-name {
   position: relative;
   display: inline-block;
-  padding-right: 0.7rem;
+  padding-inline-end: 0.7rem;
   margin-bottom: 0.8rem;
   color: var(--pneumatic-color-black72);
 }
@@ -189,7 +189,7 @@
 .kickoff-create-field__error-text {
   margin-top: 0.4rem;
   margin-bottom: 0;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
   font-size: 1.3rem;
   line-height: 1.6rem;
   color: #fc5b67;

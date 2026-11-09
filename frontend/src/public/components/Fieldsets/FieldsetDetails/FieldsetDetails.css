@@ -159,7 +159,7 @@
 
 .settings-select__menu {
   width: 100%;
-  margin-left: 0 !important;
+  margin-inline-start: 0 !important;
 
   button:focus,
   button:focus-visible,
@@ -172,7 +172,7 @@
 
 .readonly-badge {
   padding: 0.2rem 0.8rem;
-  margin-left: 1.2rem;
+  margin-inline-start: 1.2rem;
   font-size: 1.2rem;
   font-weight: 600;
   vertical-align: middle;
@@ -394,7 +394,7 @@
   padding: 0.8rem 1.6rem;
   font-weight: 600;
   color: var(--pneumatic-color-black48);
-  text-align: left;
+  text-align: start;
   border-bottom: 2px solid var(--pneumatic-color-black16);
 
   @mixin text-small;

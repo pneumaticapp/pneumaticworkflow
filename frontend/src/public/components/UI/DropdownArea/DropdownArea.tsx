@@ -3,10 +3,12 @@ import * as React from 'react';
 import classnames from 'classnames';
 import { usePopper } from 'react-popper';
 import { Placement } from 'popper.js';
+import { useIntl } from 'react-intl';
 import OutsideClickHandler from '../OutsideClickHandler';
 
 import { useDidUpdateEffect } from '../../../hooks/useDidUpdateEffect';
 import { ExpandIcon } from '../../icons';
+import { getLocaleDirection, resolveDirectionalPlacement } from '../../../lang/direction';
 
 import styles from './DropdownArea.css';
 
@@ -27,6 +29,7 @@ export type DropdownAreaHandle = {
 
 export const DropdownArea = React.forwardRef<DropdownAreaHandle, IDropdownAreaProps>(
   ({ children, toggle, title, containerClassName, placement = 'bottom-start', onOpen, onClose }, ref) => {
+    const { locale } = useIntl();
     const { useState, useImperativeHandle } = React;
     const [isOpen, setIsOpen] = useState(false);
     const [referenceElement, setReferenceElement] = useState<HTMLButtonElement | null>(null);
@@ -36,7 +39,9 @@ export const DropdownArea = React.forwardRef<DropdownAreaHandle, IDropdownAreaPr
       styles: popperStyles,
       attributes,
       update: updateDropdownPosition,
-    } = usePopper(referenceElement, popperElement, { placement });
+    } = usePopper(referenceElement, popperElement, {
+      placement: resolveDirectionalPlacement(placement, getLocaleDirection(locale)),
+    });
 
     useImperativeHandle(ref, () => ({
       updateDropdownPosition: updateDropdownPosition || (() => {}),

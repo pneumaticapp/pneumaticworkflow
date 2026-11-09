@@ -1,4 +1,3 @@
-import moment from 'moment';
 import * as React from 'react';
 import { IntlProvider } from 'react-intl';
 import classnames from 'classnames';
@@ -57,9 +56,6 @@ export function App({
   }, []);
 
   const currentAppLocale = AppLocale[locale];
-  React.useEffect(() => {
-    moment.locale(currentAppLocale.locale);
-  }, [currentAppLocale.locale]);
 
   return (
     <div className={classnames(styles['pneumatic-frontend-main-wrapper'], 'rounded')}>

@@ -7,7 +7,7 @@
 }
 
 .show_more__toggle-text {
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans);
   font-size: 1.1rem;
   font-weight: 800;
   line-height: 1.6rem;
@@ -51,16 +51,17 @@
 .show_more__button-wrapper {
   display: flex;
   justify-content: space-between;
-  padding-right: 4rem;
+  padding-inline-end: 4rem;
 
   @media (--mobile) {
-    padding-right: 0;
+    padding-inline-end: 0;
   }
 }
 
 .show_more__right-vidgets {
   div {
-    margin: 0 0 0 -0.4rem;
+    margin: 0;
+    margin-inline-start: -0.4rem;
   }
 }
 

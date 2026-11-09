@@ -1,0 +1,76 @@
+# Arabic (Syria) translations for Pneumatic.
+# Distributed under the same license as the project.
+msgid ""
+msgstr ""
+"Project-Id-Version: Pneumatic\n"
+"Language: ar_SY\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
+
+msgid "Connection to AI provider failed."
+msgstr "فشل الاتصال بمزود الذكاء الاصطناعي."
+
+msgid "AI provider request failed."
+msgstr "فشل طلب مزود الذكاء الاصطناعي."
+
+msgid "Failed to parse AI provider response."
+msgstr "تعذر تحليل استجابة مزود الذكاء الاصطناعي."
+
+msgid "An AI agent with this name already exists."
+msgstr "يوجد وكيل ذكاء اصطناعي بهذا الاسم بالفعل."
+
+msgid "Cannot delete an AI provider that is used by AI agents."
+msgstr "لا يمكن حذف مزود يستخدمه وكلاء ذكاء اصطناعي."
+
+#, python-brace-format
+msgid "Failed to get the models list ({error}), the vendor may not be compatible with the OpenAI protocol."
+msgstr "تعذر جلب قائمة النماذج ({error}). قد لا يكون المزود متوافقًا مع بروتوكول OpenAI."
+
+#, python-brace-format
+msgid "Failed to execute the chat request ({error}), the vendor may not be compatible with the OpenAI protocol."
+msgstr "تعذر تنفيذ طلب المحادثة ({error}). قد لا يكون المزود متوافقًا مع بروتوكول OpenAI."
+
+#, python-brace-format
+msgid "The request to the model \"{model}\" returned an empty response."
+msgstr "أعاد الطلب إلى النموذج \"{model}\" استجابة فارغة."
+
+#, python-brace-format
+msgid "I could not complete the task in {attempts} attempts: my answer did not pass the validation. The details are in the report {report}"
+msgstr "تعذر إكمال المهمة بعد {attempts} محاولات لأن الإجابة لم تجتز التحقق. التفاصيل في التقرير {report}"
+
+#, python-brace-format
+msgid "The agent failed to complete the task in {attempts} attempts."
+msgstr "تعذر على الوكيل إكمال المهمة بعد {attempts} محاولات."
+
+#, python-brace-format
+msgid "I could not complete the task in {attempts} attempts. Please complete it manually or check the agent provider settings. Error: {error}"
+msgstr "تعذر إكمال المهمة بعد {attempts} محاولات. أكملها يدويًا أو تحقق من إعدادات مزود الوكيل. الخطأ: {error}"
+
+#, python-brace-format
+msgid "The AI provider blocked the request ({reason})."
+msgstr "حظر مزود الذكاء الاصطناعي الطلب ({reason})."
+
+#, python-brace-format
+msgid "I could not reply to the comment in {attempts} attempts. Error: {error}"
+msgstr "تعذر الرد على التعليق بعد {attempts} محاولات. الخطأ: {error}"
+
+msgid "None of the provider models responded to the test request. Check the provider settings."
+msgstr "لم يستجب أي نموذج لدى المزود لطلب الاختبار. تحقق من إعدادات المزود."
+
+#, python-brace-format
+msgid "The selected model \"{model}\" returned an error. Try choosing another model."
+msgstr "أعاد النموذج المحدد \"{model}\" خطأ. جرّب نموذجًا آخر."
+
+#, python-brace-format
+msgid "The AI provider rejected the credentials. Error: {error}"
+msgstr "رفض مزود الذكاء الاصطناعي بيانات الاعتماد. الخطأ: {error}"
+
+#, python-brace-format
+msgid "The AI provider denied access to the requested resource. Error: {error}"
+msgstr "رفض مزود الذكاء الاصطناعي الوصول إلى المورد المطلوب. الخطأ: {error}"
+
+msgid "The provider address is not allowed: only public internet addresses can be used."
+msgstr "عنوان المزود غير مسموح. يمكن استخدام عناوين الإنترنت العامة فقط."
+

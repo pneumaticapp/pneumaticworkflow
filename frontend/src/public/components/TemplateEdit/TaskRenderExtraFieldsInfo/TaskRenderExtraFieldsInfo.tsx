@@ -22,7 +22,7 @@ export const TaskRenderExtraFieldsInfo = ({
   task: { fields, fieldsets },
   onClick,
 }: ITaskRenderExtraFieldsInfoProps) => {
-  const { formatMessage } = useIntl();
+  const { formatMessage, locale } = useIntl();
 
   const totalCount = useMemo(() => {
     return fields.length + countFieldsetOutputFields(fieldsets);
@@ -32,6 +32,8 @@ export const TaskRenderExtraFieldsInfo = ({
     counter: totalCount,
     forms: ['tasks.task-extra-field-single', 'tasks.task-extra-field-plural-1', 'tasks.task-extra-field-plural-2'],
     formatMessage,
+    locale,
+    countMessageId: 'tasks.task-extra-field-count',
   });
 
   return (

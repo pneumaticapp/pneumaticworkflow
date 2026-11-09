@@ -7,7 +7,8 @@ import WorkflowsTablePage from './WorkflowsTablePage';
 
 import { getWorkflowsView } from '../../redux/selectors/workflows';
 import { EWorkflowsView } from '../../types/workflow';
-import { TITLES } from '../../constants/titles';
+import { IApplicationState } from '../../types/redux';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { openWorkflowLogPopup, resetWorkflows } from '../../redux/workflows/slice';
 
 export interface IWorkflowsLocationMatchParams {
@@ -16,6 +17,8 @@ export interface IWorkflowsLocationMatchParams {
 
 export const Workflows = withRouter(({ match: { params } }: RouteComponentProps<IWorkflowsLocationMatchParams>) => {
   const view = useSelector(getWorkflowsView);
+  const workflow = useSelector((state: IApplicationState) => state.workflows.workflow);
+  useDocumentTitle('Workflows', params.id && workflow?.id === Number(params.id) ? workflow.name : undefined);
   const dispatch = useDispatch();
 
   const clearWorkflowsList = () => {
@@ -23,8 +26,6 @@ export const Workflows = withRouter(({ match: { params } }: RouteComponentProps<
   };
 
   React.useEffect(() => {
-    document.title = TITLES.Workflows;
-
     const workflowId = Number(params.id);
     if (workflowId) {
       dispatch(openWorkflowLogPopup({ workflowId, redirectTo404IfNotFound: true }));

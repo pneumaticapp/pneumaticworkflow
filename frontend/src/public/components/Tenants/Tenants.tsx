@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import { TITLES } from '../../constants/titles';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { TChangeTenantNamePayload, TLoginPartnerSuperuserPayload } from '../../redux/actions';
 import { TenantsSkeleton } from './TenantSkeleton/TenantsSkeleton';
 import { TStateEditModal, TStateModal, TenantModal } from './TenantModal';
@@ -22,6 +22,8 @@ export function Tenants({
   changeTenantName,
   deleteTenant,
 }: ITenantsProps) {
+  useDocumentTitle('Tenants');
+
   const { formatMessage } = useIntl();
 
   const [stateModal, setStateModal] = useState<TStateModal>({
@@ -32,7 +34,6 @@ export function Tenants({
   });
 
   useEffect(() => {
-    document.title = TITLES.Tenants;
     loadTenants();
   }, []);
 

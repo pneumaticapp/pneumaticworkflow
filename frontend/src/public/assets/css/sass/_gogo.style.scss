@@ -196,7 +196,7 @@ input {
 }
 
 h1, h2, h3 {
-  font-family: "Abhaya Libre", serif;
+  font-family: var(--pneumatic-font-serif);
 }
 
 hr {
@@ -373,7 +373,7 @@ a {
 }
 
 p {
-  font-family: "Nunito", sans-serif;
+  font-family: var(--pneumatic-font-sans);
 }
 
 .text-large {
@@ -1607,7 +1607,7 @@ a:focus-visible {
     color: $secondary-color;
     text-align: center;
     margin-top: -4px;
-    margin-left: $main-margin-xs;
+    margin-inline-start: $main-margin-xs;
     svg {
       height: 12px;
       fill: $primary-color;
@@ -1666,8 +1666,8 @@ a:focus-visible {
     width: 156px;
     height: 44px;
     position: absolute;
-    left: 0;
-    right: 0;
+    inset-inline-start: 0;
+    inset-inline-end: 0;
     margin: 0 auto;
 
     .logo {
@@ -1701,8 +1701,8 @@ a:focus-visible {
     padding: 0.6rem 1rem;
 
     @include respond-below(xs) {
-      padding-left: 0.75rem;
-      padding-right: 0.75rem;
+      padding-inline-start: 0.75rem;
+      padding-inline-end: 0.75rem;
     }
   }
 
@@ -1731,7 +1731,7 @@ a:focus-visible {
       width: 40px;
       height: 40px;
       bottom: -10px;
-      right: 3px;
+      inset-inline-end: 3px;
       text-align: center;
       cursor: pointer;
 
@@ -1758,7 +1758,7 @@ a:focus-visible {
       width: 30px;
       height: 30px;
       background: initial;
-      margin-left: 0.6rem;
+      margin-inline-start: 0.6rem;
       color: rgba($primary-color, 0.7);
 
       input {
@@ -1770,7 +1770,7 @@ a:focus-visible {
         width: 30px;
         height: 30px;
         bottom: -3px;
-        right: 0;
+        inset-inline-end: 0;
         color: inherit;
       }
 
@@ -1780,22 +1780,22 @@ a:focus-visible {
         position: fixed;
         z-index: 2;
         background: $foreground-color;
-        left: 0;
+        inset-inline-start: 0;
         top: 0;
         height: $navbar-height-xs;
-        margin-left: 15px;
+        margin-inline-start: 15px;
 
         input {
           display: block;
           width: 100%;
           height: 70px;
-          padding-left: 0;
+          padding-inline-start: 0;
         }
 
         span {
           top: 50%;
           transform: translateY(-50%);
-          right: 25px;
+          inset-inline-end: 25px;
         }
       }
     }
@@ -1871,14 +1871,14 @@ a:focus-visible {
         width: 30px;
       }
 
-      margin-left: initial;
+      margin-inline-start: initial;
 
       &:after {
         font-size: 11px;
         width: 14px;
         height: 14px;
         bottom: -3px;
-        right: -3px;
+        inset-inline-end: -3px;
       }
     }
   }
@@ -2247,30 +2247,30 @@ a:focus-visible {
 
 /* 15.Main*/
 main {
-  margin-left: 104px;
+  margin-inline-start: 104px;
   margin-top: 0;
-  margin-right: 32px;
+  margin-inline-end: 32px;
   margin-bottom: 80px;
-  transition: margin-left $menu-collapse-time;
+  transition: margin-inline-start $menu-collapse-time;
   flex-grow: 1;
   position: relative;
 
   &.sub-hidden {
-    margin-left: $main-menu-width + $main-margin;
+    margin-inline-start: $main-menu-width + $main-margin;
   }
 
   &.main-hidden {
-    margin-left: $main-margin;
+    margin-inline-start: $main-margin;
   }
 
   .container-fluid {
-    padding-left: 0;
-    padding-right: 0;
+    padding-inline-start: 0;
+    padding-inline-end: 0;
   }
 
   @include respond-below(sm) {
-    margin-left: $main-margin-xs !important;
-    margin-right: $main-margin-xs !important;
+    margin-inline-start: $main-margin-xs !important;
+    margin-inline-end: $main-margin-xs !important;
     margin-top: 30px !important;
   }
 }
@@ -5028,7 +5028,7 @@ input:-webkit-autofill {
   }
 
   &__title {
-    font-family: "Abhaya Libre", serif;
+    font-family: var(--pneumatic-font-serif);
     font-style: normal;
     font-weight: 800;
     font-size: 40px;
@@ -5185,7 +5185,7 @@ input:-webkit-autofill {
 .RichEditor-root {
   background: $foreground-color;
   border: 1px solid $separator-color;
-  font-family: "Nunito", sans-serif;
+  font-family: var(--pneumatic-font-sans);
   font-size: 14px;
   padding: 15px;
 }
@@ -5228,7 +5228,7 @@ input:-webkit-autofill {
 }
 
 .RichEditor-controls {
-  font-family: "Nunito", sans-serif;
+  font-family: var(--pneumatic-font-sans);
   font-size: 12px;
   margin-bottom: 5px;
   user-select: none;
@@ -5702,7 +5702,7 @@ input:-webkit-autofill {
   cursor: pointer;
 
   span {
-    font-family: "Nunito", sans-serif;
+    font-family: var(--pneumatic-font-sans);
     font-size: 0.94rem;
     font-weight: 400;
     margin-left: 0.5rem;
@@ -7711,7 +7711,7 @@ i.large-icon {
   padding: 0 8px;
   display: inline;
   align-self: center;
-  font-family: Nunito;
+  font-family: var(--pneumatic-font-sans);
   font-size: 13px;
   font-weight: normal;
   line-height: 18px;

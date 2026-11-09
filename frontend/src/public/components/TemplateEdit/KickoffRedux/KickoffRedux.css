@@ -28,7 +28,7 @@
 
   .title {
     display: block;
-    font-family: 'Abhaya Libre', serif;
+    font-family: var(--pneumatic-font-serif, 'Abhaya Libre', serif);
     font-size: 2rem;
     font-weight: 800;
     line-height: 2.4rem;
@@ -66,7 +66,7 @@
   .kickoff__hint {
     margin-top: 6.4rem;
     margin-bottom: 3.2rem;
-    font-family: Nunito, sans-serif;
+    font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
     font-size: 1.3rem;
     line-height: 1.6rem;
     color: var(--pneumatic-color-black48);
@@ -123,7 +123,7 @@
       input,
       .kick-off-input__name-textarea,
       .kick-off-input__name-readonly {
-        padding-left: 0;
+        padding-inline-start: 0;
 
         @mixin text-base;
       }
@@ -197,7 +197,7 @@
   }
 
   .kick-off-input__toggle-wrapper {
-    margin-left: 1.6rem;
+    margin-inline-start: 1.6rem;
   }
 
   .kick-off-input__name {
@@ -219,7 +219,7 @@
       box-sizing: border-box;
       overflow: hidden;
       text-overflow: ellipsis;
-      font-family: Nunito, sans-serif;
+      font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
       font-size: 1.3rem;
       line-height: 1.6rem;
       color: var(--pneumatic-color-black100);
@@ -259,11 +259,11 @@
       padding: 0 0.4rem;
       overflow: hidden;
       text-overflow: ellipsis;
-      font-family: Nunito, sans-serif;
+      font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
       font-size: 1.3rem;
       line-height: 1.6rem;
       color: var(--pneumatic-color-black72);
-      text-align: left;
+      text-align: start;
       outline: none;
       background: var(--pneumatic-color-beige);
       border: none;
@@ -277,10 +277,10 @@
       min-width: 0;
       max-width: 100%;
       padding: 0 0.4rem;
-      font-family: Nunito, sans-serif;
+      font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
       font-size: 1.3rem;
       line-height: 1.6rem;
-      text-align: left;
+      text-align: start;
       overflow-wrap: anywhere;
       white-space: pre-line;
     }
@@ -350,7 +350,7 @@
     input {
       width: 100%;
       padding: 1.4rem 1.6rem;
-      font-family: Nunito, sans-serif;
+      font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
       font-size: 1.5rem;
       line-height: 2rem;
       color: var(--pneumatic-color-black100);
@@ -382,7 +382,7 @@
       width: 100%;
       min-height: 12.8rem;
       padding: 1.4rem 1.6rem;
-      font-family: Nunito, sans-serif;
+      font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
       font-size: 1.5rem;
       line-height: 2rem;
       color: var(--pneumatic-color-black100);
@@ -442,9 +442,8 @@
 
   .dataset-submenu > .dropdown-menu {
     position: absolute;
+    inset-inline: auto 100%;
     top: 0;
-    right: 100%;
-    left: auto;
     width: 30.4rem;
     padding: 0.5rem 0;
     background: var(--pneumatic-color-white) !important;
@@ -479,7 +478,7 @@
   .dropdown-wrapper {
     all: unset;
     position: relative;
-    left: 1.6rem;
+    inset-inline-start: 1.6rem;
 
     .toggle:not(.toggle_active) {
       display: none;
@@ -549,7 +548,7 @@
   min-width: 4rem;
   height: 4rem;
   padding: 0;
-  margin-right: 0.8rem;
+  margin-inline-end: 0.8rem;
   cursor: pointer;
   background: var(--pneumatic-color-beige);
   border: none;
@@ -580,7 +579,7 @@
     p {
       display: block;
       margin-bottom: 0;
-      font-family: Nunito, sans-serif;
+      font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
       font-size: 1.3rem;
       line-height: 1.6rem;
       color: var(--pneumatic-color-beige);
@@ -608,7 +607,7 @@
 .label-replacement-class-name {
   width: 100%;
   padding: 1.4rem 1.6rem;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
   font-size: 1.5rem;
   line-height: 2rem;
   color: var(--default-placeholder-color);
@@ -627,7 +626,7 @@
 .kick-off-edit-name {
   all: unset;
   flex-shrink: 0;
-  margin-left: 0.4rem;
+  margin-inline-start: 0.4rem;
   color: var(--pneumatic-color-link);
   background-color: var(--pneumatic-color-white);
   transition: color 0.1s ease-in-out;

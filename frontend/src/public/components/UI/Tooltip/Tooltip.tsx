@@ -2,6 +2,8 @@ import * as React from 'react';
 import { ComponentProps } from 'react';
 import Tippy from '@tippyjs/react';
 import classnames from 'classnames';
+import { useIntl } from 'react-intl';
+import { getLocaleDirection, resolveDirectionalPlacement } from '../../../lang/direction';
 
 import styles from './Tooltip.css';
 
@@ -30,8 +32,10 @@ export const Tooltip = ({
   content,
   containerClassName,
   contentClassName,
+  placement = 'top',
   ...props
 }: ITooltipProps) => {
+  const { locale } = useIntl();
   const sizeMaxWidthMap = {
     md: 192,
     lg: 304,
@@ -53,6 +57,7 @@ export const Tooltip = ({
   return (
     <div className={classnames(classNameMap[size], isDarkBackground && styles['tooltip_dark'], containerClassName)}>
       <Tippy
+        placement={resolveDirectionalPlacement(placement, getLocaleDirection(locale))}
         interactive
         offset={offsetMap[size]}
         arrow={size === 'lg' ? LARGE_ARROW_SVG_STRING : SMALL_ARROW_SVG_STRING}

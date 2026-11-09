@@ -79,5 +79,7 @@ export const renderLinkHtml = (
     }
   }
 
-  return `<a href="${url}" target="_blank">${name}</a>`;
+  const direction = name === url ? ' dir="ltr"' : '';
+
+  return `<a href="${url}" target="_blank"${direction}>${name}</a>`;
 };

@@ -145,6 +145,7 @@ export function useMentionMenu(mentions: { id?: number; name: string; link?: str
           setHighlightedIndex(0);
           setMenuState({
             rect,
+            getAnchorRect: () => range.getBoundingClientRect(),
             anchorKey: anchorNode.getKey(),
             anchorOffset: anchor.offset,
             replaceableString,

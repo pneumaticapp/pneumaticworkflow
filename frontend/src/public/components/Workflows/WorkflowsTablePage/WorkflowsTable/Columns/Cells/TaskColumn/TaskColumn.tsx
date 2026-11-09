@@ -37,7 +37,7 @@ export function TaskColumn({
     <button
       onClick={handleClick}
       type="button"
-      aria-label="select this task for filtering"
+      aria-label={formatMessage({ id: 'workflows.filter-select-task' })}
       className={styles['single-task_button']}
     >
       <span className={classNames(styles['task'], styles['single-task'])}>{oneActiveTaskName}</span>

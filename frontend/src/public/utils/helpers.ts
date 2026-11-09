@@ -24,16 +24,26 @@ export function getPluralNoun({ counter, single, plural, includeCounter = false 
 export type TGetTriplePluralParams = {
   counter?: number;
   forms: string[];
-  formatMessage: ({ id }: { id: string }) => string;
+  formatMessage: ({ id }: { id: string }, values?: { count: number }) => string;
+  locale?: string;
+  countMessageId?: string;
 };
 
 export function getTriplePlural({
   counter,
   forms: [string1, string2, string3],
   formatMessage,
+  locale,
+  countMessageId,
 }: TGetTriplePluralParams): string {
   if (!counter) {
     return '';
+  }
+
+  // Arabic needs six plural categories and a dual form that already carries its count.
+  // Keep the existing English/Russian three-form path and its message arguments intact.
+  if (countMessageId && locale?.toLowerCase().split(/[-_]/)[0] === 'ar') {
+    return formatMessage({ id: countMessageId }, { count: counter });
   }
 
   let message;

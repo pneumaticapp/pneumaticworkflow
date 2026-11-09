@@ -3,6 +3,8 @@ import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 import { FieldProps } from 'formik';
 import PhoneInput from 'react-phone-number-input';
+import arabicLabels from 'react-phone-number-input/locale/ar.json';
+import { isRtlLocale } from '../../../lang/direction';
 
 import { InfoIcon } from '../../icons';
 import { Tooltip } from '../Tooltip';
@@ -19,7 +21,7 @@ export const Phone = ({
   ...props
 }: FieldProps & IPhoneFieldProps) => {
   const [touched, setTouched] = React.useState(false);
-  const { messages, formatMessage } = useIntl();
+  const { messages, formatMessage, locale } = useIntl();
   const shouldShowErrorMessage = errorMessage && (showErrorIfTouched ? touched : true);
   const normalizedErrorMessage = shouldShowErrorMessage && (messages[errorMessage!] || errorMessage!);
 
@@ -27,6 +29,7 @@ export const Phone = ({
     <div className={styles['phone-input']}>
       <div className={classnames(styles['phone-input__container'], shouldShowErrorMessage && styles['is-error'])}>
         <PhoneInput
+          labels={isRtlLocale(locale) ? arabicLabels : undefined}
           initialValueFormat="national"
           value=""
           onChange={(value) => {

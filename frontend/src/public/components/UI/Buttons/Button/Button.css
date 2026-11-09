@@ -41,7 +41,7 @@
     line-height: 16px;
 
     .icon {
-      margin-right: 4px;
+      margin-inline-end: 4px;
     }
   }
 
@@ -141,8 +141,7 @@
 }
 
 .button_link-dark-text {
-  padding-right: 0 !important;
-  padding-left: 0 !important;
+  padding-inline: 0 !important;
   color: var(--pneumatic-color-link-dark);
   letter-spacing: 0.05em;
   background: transparent;
@@ -161,7 +160,7 @@
 
 .button:not(.button_no-label) {
   .icon {
-    margin-right: 8px;
+    margin-inline-end: 8px;
   }
 }
 

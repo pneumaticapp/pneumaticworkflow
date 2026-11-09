@@ -30,3 +30,37 @@ export const TITLES = {
   Datasets: `Datasets ${PNEUMATIC_SUFFIX}`,
   Fieldsets: `Fieldsets ${PNEUMATIC_SUFFIX}`,
 };
+
+export type TDocumentTitle = keyof typeof TITLES;
+
+// Browser titles use the active locale. TITLES remains stable for analytics.
+export const TITLE_MESSAGE_IDS: Record<TDocumentTitle, string> = {
+  Register: 'page-title.register',
+  RegisterInvite: 'page-title.register-invite',
+  Login: 'page-title.login',
+  SuperuserLogin: 'page-title.superuser-login',
+  Main: 'page-title.dashboard',
+  Error: 'page-title.error',
+  Users: 'page-title.team',
+  Profile: 'page-title.profile',
+  AccountSettings: 'page-title.account',
+  Templates: 'page-title.templates',
+  TemplatesEdit: 'page-title.template',
+  TemplatesCreate: 'page-title.template-create',
+  Workflows: 'page-title.workflows',
+  Tasks: 'page-title.tasks',
+  TasksDetail: 'page-title.task',
+  TryForFree: 'page-title.try-for-free',
+  ForgotPassword: 'page-title.forgot-password',
+  ExpiredInvite: 'page-title.expired-invite',
+  ResetPassword: 'page-title.reset-password',
+  Team: 'page-title.team',
+  Groups: 'page-title.groups',
+  Tenants: 'page-title.tenants',
+  Pricing: 'page-title.pricing',
+  Checkout: 'page-title.checkout',
+  WorkflowHighlights: 'page-title.workflow-highlights',
+  Integrations: 'page-title.integrations',
+  Datasets: 'page-title.datasets',
+  Fieldsets: 'page-title.fieldsets',
+};

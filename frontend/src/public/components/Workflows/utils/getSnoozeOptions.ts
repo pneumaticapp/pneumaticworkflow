@@ -36,7 +36,7 @@ export function getSnoozeOptions(formatMessage: IntlShape['formatMessage'], time
     return {
       title,
       dateString: date.format('MMMM D'),
-      dateISOString: date.format(),
+      dateISOString: date.clone().locale('en').format(),
     };
   });
 

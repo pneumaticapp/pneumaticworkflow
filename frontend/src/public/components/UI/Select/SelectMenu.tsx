@@ -1,5 +1,7 @@
 import * as React from 'react';
 import classnames from 'classnames';
+import { useIntl } from 'react-intl';
+import { isRtlLocale } from '../../../lang/direction';
 import { DropdownItem, DropdownMenu, DropdownToggle, Dropdown } from 'reactstrap';
 
 import { ExpandIcon } from '../../icons';
@@ -45,6 +47,7 @@ export const SelectMenu = <T extends string>({
   positionFixed = false,
   activeValueLabelId,
 }: ISelectMenuProps<T>) => {
+  const { locale } = useIntl();
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const getIntlId = (value: T) => `sorting.${value}`;
 
@@ -85,6 +88,7 @@ export const SelectMenu = <T extends string>({
         <ExpandIcon className={classnames(styles['expand-icon'], arrowClassName)} />
       </DropdownToggle>
       <DropdownMenu
+        right={isRtlLocale(locale)}
         className={classnames(
           styles['dropdown-menu'],
           menuClassName,

@@ -36,15 +36,15 @@ enum EIntergrationTabs {
 const TABS: { id: EIntergrationTabs; label: string }[] = [
   {
     id: EIntergrationTabs.AppDirectory,
-    label: 'App Directory',
+    label: 'template.integration-tab.app-directory',
   },
   {
     id: EIntergrationTabs.ZapTemplates,
-    label: 'Zap Templates',
+    label: 'template.integration-tab.zap-templates',
   },
   {
     id: EIntergrationTabs.ZapManager,
-    label: 'Zap Manager',
+    label: 'template.integration-tab.zap-manager',
   },
   {
     id: EIntergrationTabs.API,
@@ -52,7 +52,7 @@ const TABS: { id: EIntergrationTabs; label: string }[] = [
   },
   {
     id: EIntergrationTabs.Webhook,
-    label: 'Webhooks',
+    label: 'template.integration-tab.webhooks',
   },
 ];
 
@@ -185,7 +185,9 @@ export function TemplateIntegrations() {
         <>
           <div className={styles['tab-description']}>{formatMessage({ id: 'template.intergrations-api-desc' })}</div>
           <div className={styles['code']}>
-            <div className={styles['code-inner']}>{apiCode}</div>
+            <div className={styles['code-inner']} dir="ltr">
+              {apiCode}
+            </div>
 
             {isDesktop && (
               <button
@@ -200,7 +202,7 @@ export function TemplateIntegrations() {
           <div className={styles['api-key']}>
             <p className={styles['api-key__title']}>{formatMessage({ id: 'template.intergrations-api-key' })}</p>
             <div className={styles['api-key__control']}>
-              <InputField value={apiKeyValue} fieldSize="md" />
+              <InputField value={apiKeyValue} fieldSize="md" dir={apiKey.isLoading ? 'auto' : 'ltr'} />
 
               {isDesktop && (
                 <button
@@ -242,7 +244,10 @@ export function TemplateIntegrations() {
           <Tabs
             containerClassName={styles['tabs-labels']}
             tabClassName={styles['tabs-labels__item']}
-            values={TABS}
+            values={TABS.map((tab) => ({
+              ...tab,
+              label: tab.id === EIntergrationTabs.API ? tab.label : formatMessage({ id: tab.label }),
+            }))}
             activeValueId={currentTab}
             onChange={setCurrentTab}
           />

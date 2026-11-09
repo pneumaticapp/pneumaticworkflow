@@ -1,0 +1,18 @@
+# Arabic (Syria) translations for Pneumatic.
+# Distributed under the same license as the project.
+msgid ""
+msgstr ""
+"Project-Id-Version: Pneumatic\n"
+"Language: ar_SY\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
+
+msgid "A dataset with this name already exists."
+msgstr "توجد مجموعة بيانات بهذا الاسم بالفعل."
+
+#, python-brace-format
+msgid "A dataset item with value \"{value}\" already exists."
+msgstr "يوجد عنصر بيانات بالقيمة \"{value}\" بالفعل."
+

@@ -1,0 +1,88 @@
+# Arabic (Syria) translations for Pneumatic.
+# Distributed under the same license as the project.
+msgid ""
+msgstr ""
+"Project-Id-Version: Pneumatic\n"
+"Language: ar_SY\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
+
+msgid "Token is expired."
+msgstr "انتهت صلاحية الرمز."
+
+msgid "Products list cannot be empty."
+msgstr "لا يمكن أن تكون قائمة المنتجات فارغة."
+
+#, python-brace-format
+msgid "Price with code(s) {code} not found."
+msgstr "لم يتم العثور على سعر بالرمز أو الرموز {code}."
+
+msgid "Please, contact our support for a downgrade options."
+msgstr "تواصل مع الدعم لمعرفة خيارات خفض الخطة."
+
+msgid "Subscription not exist."
+msgstr "الاشتراك غير موجود."
+
+msgid "Multiple subscriptions not allowed."
+msgstr "لا يُسمح باشتراكات متعددة."
+
+msgid "The request data does not change the subscription state."
+msgstr "لا تغيّر بيانات الطلب حالة الاشتراك."
+
+msgid "Current payment method is unavailable. Specify a new payment method to complete the action."
+msgstr "وسيلة الدفع الحالية غير متاحة. حدد وسيلة دفع جديدة لإكمال الإجراء."
+
+msgid "Payment failed. Check your payment method and balance or contact support."
+msgstr "فشل الدفع. تحقق من وسيلة الدفع والرصيد أو تواصل مع الدعم."
+
+msgid "You can only use your subscription's currency to make purchases."
+msgstr "يمكنك الشراء بعملة اشتراكك فقط."
+
+#, python-brace-format
+msgid "You cannot purchase more than {quantity} unit(s) of the \"{product}\" subscription."
+msgstr "لا يمكنك شراء أكثر من {quantity} وحدة من اشتراك \"{product}\"."
+
+#, python-brace-format
+msgid "You cannot purchase less than {quantity} unit(s) of the \"{product}\" subscription."
+msgstr "لا يمكنك شراء أقل من {quantity} وحدة من اشتراك \"{product}\"."
+
+#, python-brace-format
+msgid "You cannot purchase more than {quantity} unit(s) of the \"{product}\"."
+msgstr "لا يمكنك شراء أكثر من {quantity} وحدة من \"{product}\"."
+
+#, python-brace-format
+msgid "You cannot purchase less than {quantity} unit(s) of the \"{product}\"."
+msgstr "لا يمكنك شراء أقل من {quantity} وحدة من \"{product}\"."
+
+msgid "Unsupported subscription plan."
+msgstr "خطة الاشتراك غير مدعومة."
+
+msgid "Purchase at the archive price is disallowed."
+msgstr "لا يُسمح بالشراء بالسعر المؤرشف."
+
+msgid "No account found for this subscription."
+msgstr "لم يتم العثور على حساب لهذا الاشتراك."
+
+msgid "Billing is disabled, contact support to change the plan."
+msgstr "الفوترة معطلة. تواصل مع الدعم لتغيير الخطة."
+
+msgid "Webhook account not found."
+msgstr "حساب Webhook غير موجود."
+
+msgid "Webhook account owner not found."
+msgstr "مالك حساب Webhook غير موجود."
+
+msgid "Payments API is disabled in this project."
+msgstr "واجهة API للمدفوعات معطلة في هذا المشروع."
+
+msgid "Downgrade is not available while there is an active subscription."
+msgstr "خفض الخطة غير متاح مع وجود اشتراك نشط."
+
+msgid "Account not found."
+msgstr "الحساب غير موجود."
+
+msgid "Master account not found for tenant."
+msgstr "لم يتم العثور على الحساب الرئيسي للحساب الفرعي."
+

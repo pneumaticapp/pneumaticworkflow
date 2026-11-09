@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { useIntl } from 'react-intl';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { FORMAT_TEXT_COMMAND } from 'lexical';
 import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND, REMOVE_LIST_COMMAND } from '@lexical/list';
@@ -31,6 +32,7 @@ export function EditorToolbar({
   isModal,
   onUploadAttachments,
 }: IEditorToolbarProps): React.ReactElement {
+  const { formatMessage } = useIntl();
   const [editor] = useLexicalComposerContext();
   const { isMobile } = useCheckDevice();
   const { openLinkForm } = useLinkPlugin();
@@ -167,7 +169,7 @@ export function EditorToolbar({
                 ref={btnRef}
                 isActive={isActive}
                 tooltipText={labels.tooltip}
-                ariaLabel={labels.aria}
+                ariaLabel={formatMessage({ id: labels.aria })}
                 isModal={isModal}
                 onMouseDown={onMouseDown}
               >
@@ -183,7 +185,7 @@ export function EditorToolbar({
               <AttachmentToolbarButton
                 key={labels.aria}
                 tooltipText={labels.tooltip}
-                ariaLabel={labels.aria}
+                ariaLabel={formatMessage({ id: labels.aria })}
                 accept={accept}
                 isModal={isModal}
                 onFileChange={handleAttachmentUpload}

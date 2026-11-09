@@ -7,6 +7,7 @@ import classnames from 'classnames';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
 import { IFieldsetCatalogItem } from '../../types/fieldset';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 import { PageTitle } from '../PageTitle';
 import { EPageTitle } from '../../constants/defaultValues';
@@ -21,6 +22,7 @@ import { FieldsetCard } from './FieldsetCard';
 import styles from './Fieldsets.css';
 
 export function Fieldsets() {
+  useDocumentTitle('Fieldsets');
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
 

@@ -9,6 +9,7 @@ import { identifyAppPartOnServer } from '../../public/utils/identifyAppPart/iden
 import { isEnvAnalytics } from '../../public/constants/enviroment';
 import { resetCookie } from '../middleware';
 import { getPages } from '../middleware/utils/getPages';
+import { getLocaleAttributes, resolveLocale } from '../../public/lang/locale';
 
 export async function mainHandler(req: Request, res: Response) {
   try {
@@ -18,6 +19,7 @@ export async function mainHandler(req: Request, res: Response) {
     const pages = await getPages();
 
     const dataToRender = {
+      documentLocale: getLocaleAttributes(resolveLocale(user.language, process.env.LANGUAGE_CODE)),
       config: JSON.stringify(serverConfigToBrowser()),
       invitedUser: JSON.stringify({}),
       user: JSON.stringify(mapToCamelCase(user)),

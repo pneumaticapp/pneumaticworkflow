@@ -158,6 +158,7 @@ export const TemplateGraphEditor = ({
     <div className={styles['template-graph-editor']} data-test-id="template-graph-editor">
       <GraphAutoArrangeButton isActive={hasCustomLayout} onReset={resetLayout} />
       <ReactFlow
+        dir="ltr"
         nodes={displayNodes}
         edges={displayEdges}
         nodeTypes={nodeTypes}

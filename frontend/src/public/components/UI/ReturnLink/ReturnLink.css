@@ -16,6 +16,10 @@
 }
 
 .icon {
-  margin-right: 8px;
+  margin-inline-end: 8px;
   color: var(--pneumatic-color-black32);
+}
+
+:global([dir='rtl']) .icon {
+  transform: scaleX(-1);
 }

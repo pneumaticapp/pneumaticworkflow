@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Formik, FormikConfig } from 'formik';
 import { useIntl } from 'react-intl';
 
-import { TITLES } from '../../../constants/titles';
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { IntlMessages } from '../../../components/IntlMessages';
 import { validateEmail } from '../../../utils/validators';
 import { history } from '../../../utils/history';
@@ -18,11 +18,11 @@ const INITIAL_VALUES_FORMIK: TSuperuserLoginValues = {
 };
 
 export function SuperuserLogin({ isSuperuser, loading, loginSuperuser }: ISuperuserLoginProps) {
+  useDocumentTitle('SuperuserLogin');
+
   const { formatMessage } = useIntl();
 
   useEffect(() => {
-    document.title = TITLES.SuperuserLogin;
-
     if (!isSuperuser) {
       history.replace(ERoutes.Main);
     }

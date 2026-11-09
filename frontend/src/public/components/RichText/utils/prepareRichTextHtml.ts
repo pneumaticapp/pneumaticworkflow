@@ -8,6 +8,7 @@ import { TTaskVariable } from '../../TemplateEdit/types';
 import { getLocalizedSystemVariable } from '../../TemplateEdit/TaskForm/utils/getTaskVariables';
 import { unescapeMarkdownLinkText } from '../../RichEditor/utils/converters/markdownLinkText';
 import { escapeHtmlData } from './escapeHtmlData';
+import styles from '../RichText.css';
 
 const MAX_VARIABLE_LENGTH = 20;
 
@@ -60,7 +61,7 @@ export function prepareRichTextHtml(
               formatMessage,
             });
 
-            return `<span class="${badgeClassName} ${specificityBadgeClassName}">${truncateString(
+            return `<span class="${badgeClassName} ${specificityBadgeClassName} ${styles['bidi-isolate']}">${truncateString(
               title,
               MAX_VARIABLE_LENGTH,
             )}</span>`;

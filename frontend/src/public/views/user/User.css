@@ -24,8 +24,8 @@
 
   &::before {
     position: absolute;
+    inset-inline-start: 0;
     top: 50%;
-    left: 0;
     width: 100%;
     content: '';
     border-top: 1px solid var(--pneumatic-color-black16);

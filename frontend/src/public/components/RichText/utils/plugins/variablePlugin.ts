@@ -6,6 +6,7 @@ import { isArrayWithItems } from '../../../../utils/helpers';
 import { truncateString } from '../../../../utils/truncateString';
 import { TTaskVariable } from '../../../TemplateEdit/types';
 import { getLocalizedSystemVariable } from '../../../TemplateEdit/TaskForm/utils/getTaskVariables';
+import styles from '../../RichText.css';
 
 const MAX_VARIABLE_LENGTH = 20;
 
@@ -66,6 +67,6 @@ export const variablePlugin = (
         specificityBadgeClassName: string;
       };
 
-    return `<span class="${variableBadgeClassName} ${variableSpecificityBadgeClassName}">${md.utils.escapeHtml(token.content)}</span>`;
+    return `<span class="${variableBadgeClassName} ${variableSpecificityBadgeClassName} ${styles['bidi-isolate']}">${md.utils.escapeHtml(token.content)}</span>`;
   };
 };

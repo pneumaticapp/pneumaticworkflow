@@ -129,6 +129,7 @@ export interface IMenu {
 export const enum ELocale {
   English = 'en',
   Russian = 'ru',
+  Arabic = 'ar-sy',
 }
 
 export const enum ELocaleDirection {

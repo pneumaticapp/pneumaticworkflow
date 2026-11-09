@@ -96,6 +96,7 @@ export function RichText({
     <>
       <div
         ref={containerRef}
+        dir={isMarkdownMode ? undefined : 'auto'}
         className={classnames(styles['markdown-content'], isCollapsed && styles['collapsed-content'])}
         style={containerStyle}
         dangerouslySetInnerHTML={{ __html: renderedHtml }}

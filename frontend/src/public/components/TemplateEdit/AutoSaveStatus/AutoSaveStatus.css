@@ -10,9 +10,8 @@
 
 .container {
   position: fixed;
+  inset-inline: 104px 32px;
   top: 32px;
-  right: 32px;
-  left: 104px;
   z-index: 1030;
   display: flex;
   justify-content: center;
@@ -26,9 +25,8 @@
   }
 
   @media (--mobile) {
+    inset-inline: 0;
     top: 0;
-    right: 0;
-    left: 0;
     background: rgb(246 246 246 / 72%);
     animation: slide-in-from-top var(--menu-collapse-time) ease-out;
 
@@ -46,7 +44,7 @@
 }
 
 .icon {
-  margin-right: 8px;
+  margin-inline-end: 8px;
 }
 
 .success {
@@ -58,7 +56,7 @@
 }
 
 .retry {
-  margin-left: 5px;
+  margin-inline-start: 5px;
   color: var(--pneumatic-color-link);
   pointer-events: auto;
   cursor: pointer;

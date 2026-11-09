@@ -1,6 +1,6 @@
 .variables {
   position: absolute;
-  right: 1.6rem;
+  inset-inline-end: 1.6rem;
   bottom: 1rem;
   z-index: 2;
   display: flex;
@@ -8,5 +8,5 @@
 }
 
 .input-with-variables [data-testid='rich-editor-contenteditable'] {
-  padding-right: 6rem;
+  padding-inline-end: 6rem;
 }

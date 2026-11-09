@@ -14,6 +14,7 @@ import { setPublicAuthCookie } from './utils/cookie';
 import { getUserPublic } from './middleware/utils/getUserPublic';
 import { mapToCamelCase } from '../public/utils/mappers';
 import { SSOProvider } from './types';
+import { getLocaleAttributes, resolveLocale } from '../public/lang/locale';
 
 const webpackConfig = require('../../webpack.config');
 
@@ -77,6 +78,7 @@ export function initServer() {
         }).then((value) => value);
 
         return res.render('forms', {
+          documentLocale: getLocaleAttributes(resolveLocale(userPublic?.language, process.env.LANGUAGE_CODE)),
           env: process.env.MCS_RUN_ENV,
           config: JSON.stringify(serverConfigToBrowser()),
           user: JSON.stringify(mapToCamelCase(userPublic)),
@@ -84,6 +86,7 @@ export function initServer() {
       }
     } catch (err) {
       return res.render('forms', {
+        documentLocale: getLocaleAttributes(resolveLocale(process.env.LANGUAGE_CODE)),
         env: process.env.MCS_RUN_ENV,
         config: JSON.stringify(serverConfigToBrowser()),
         user: JSON.stringify(mapToCamelCase({})),

@@ -14,7 +14,7 @@ import {
 import { FormikInputField, InputField } from '../UI/Fields/InputField';
 import { Button } from '../UI/Buttons/Button';
 import { ESettingsTabs, TPasswordFields } from '../../types/profile';
-import { TITLES } from '../../constants/titles';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { IUpdateUserRequest } from '../../api/editProfile';
 import { validateName } from '../../utils/validators';
 import { getErrorsObject } from '../../utils/formik/getErrorsObject';
@@ -107,6 +107,8 @@ export function Profile({
   onVacationDeactivate,
   availableUsers,
 }: IProfileProps) {
+  useDocumentTitle('Profile');
+
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const [isOpenModal, setIsOpenModal] = useState(false);
@@ -131,7 +133,6 @@ export function Profile({
   const [monthFmt, yearFmt, timeFmt] = dateFmt.split(',');
 
   useEffect(() => {
-    document.title = TITLES.Profile;
     dispatch(usersFetchStarted());
     dispatch(teamFetchStarted({}));
   }, [dispatch]);
@@ -258,6 +259,7 @@ export function Profile({
             />
             <InputField
               value={email}
+              type="email"
               fieldSize="lg"
               title={formatMessage({ id: 'user.email' })}
               disabled
@@ -282,6 +284,7 @@ export function Profile({
             />
             <FormikInputField
               autoComplete="tel"
+              type="tel"
               name="phone"
               fieldSize="lg"
               title={formatMessage({ id: 'user.phone' })}

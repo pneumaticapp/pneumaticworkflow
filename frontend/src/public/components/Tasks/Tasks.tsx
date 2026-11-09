@@ -11,7 +11,7 @@ import { TasksPlaceholderIcon } from './TasksPlaceholderIcon';
 import { ERoutes } from '../../constants/routes';
 import { useCheckDevice } from '../../hooks/useCheckDevice';
 import { ETaskListCompleteSorting, ETaskListCompletionStatus, ETaskListSorting, ITask } from '../../types/tasks';
-import { TITLES } from '../../constants/titles';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ITaskList } from '../../types/redux';
 import { ETaskCardViewMode, TaskCardContainer } from '../TaskCard';
 import { TaskPreviewCardSkeleton } from './Skeletons';
@@ -74,6 +74,8 @@ export function Tasks({
   openSelectTemplateModal,
   searchTasks,
 }: ITasksProps) {
+  useDocumentTitle('Tasks');
+
   const { formatMessage } = useIntl();
 
   const [searchQuery, setSearchQuery] = useState(searchText);
@@ -88,7 +90,6 @@ export function Tasks({
   }, [searchQuery]);
 
   useEffect(() => {
-    document.title = TITLES.Tasks;
     loadTaskList(0);
 
     return () => {
@@ -257,7 +258,7 @@ export function Tasks({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.currentTarget.value)}
               className={styles['search-field']}
-              placeholder="Search Tasks"
+              placeholder={formatMessage({ id: 'tasks.search' })}
               onClear={() => setSearchQuery('')}
             />
             {renderTasksList()}

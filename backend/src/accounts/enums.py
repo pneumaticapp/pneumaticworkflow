@@ -297,6 +297,7 @@ class Language:
     de = 'de'
     fr = 'fr'
     ru = 'ru'
+    ar_sy = 'ar-sy'
 
     CHOICES = (
         (en, 'English'),
@@ -304,6 +305,7 @@ class Language:
         (de, 'German'),
         (fr, 'French'),
         (ru, 'Russian'),
+        (ar_sy, 'Arabic (Syria)'),
     )
 
     EURO_CHOICES = (
@@ -311,11 +313,12 @@ class Language:
         (es, 'Spanish'),
         (de, 'German'),
         (fr, 'French'),
+        (ar_sy, 'Arabic (Syria)'),
     )
 
-    LITERALS = Literal[en, es, de, fr, ru]
-    VALUES = (en, es, de, fr, ru)
-    EURO_VALUES = (en, es, de, fr)
+    LITERALS = Literal[en, es, de, fr, ru, ar_sy]
+    VALUES = (en, es, de, fr, ru, ar_sy)
+    EURO_VALUES = (en, es, de, fr, ar_sy)
 
 
 class UserGroupType:

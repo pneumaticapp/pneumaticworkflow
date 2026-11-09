@@ -88,7 +88,7 @@ export function IntegrateButton({
         size={buttonSize}
         className={buttonClassname}
         buttonStyle={isFromBreakdownItem ? 'transparent-black' : 'black'}
-        label="Integrate"
+        label={formatMessage({ id: 'template.more-integrate-template' })}
         wrapper="button"
         type="button"
         icon={IntegrateIcon}

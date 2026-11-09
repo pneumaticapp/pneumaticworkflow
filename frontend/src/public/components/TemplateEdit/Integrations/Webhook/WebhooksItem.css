@@ -21,7 +21,8 @@
 .webhooks-button {
   align-self: flex-start;
   padding: 10px 24px !important;
-  margin: 0 0 0 8px;
+  margin-block: 0;
+  margin-inline: 8px 0;
   font-size: 15px !important;
   font-weight: bold;
   line-height: 20px;

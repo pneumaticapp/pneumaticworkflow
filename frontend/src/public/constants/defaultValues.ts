@@ -17,6 +17,7 @@ export const defaultLocale = ELocale.English;
 export const localeOptions: ILocaleOption[] = [
   { id: ELocale.English, name: 'English - LTR', direction: ELocaleDirection.LeftToRight },
   { id: ELocale.Russian, name: 'Russian - LTR', direction: ELocaleDirection.LeftToRight },
+  { id: ELocale.Arabic, name: 'Arabic (Syria) - RTL', direction: ELocaleDirection.RightToLeft },
 ];
 
 export const DISCOVERY_CALL_URL = 'https://calendly.com/pneumaticworkflow/discovery-call';

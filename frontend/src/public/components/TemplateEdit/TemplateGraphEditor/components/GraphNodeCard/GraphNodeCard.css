@@ -14,6 +14,11 @@
   transition: box-shadow 0.2s ease;
 }
 
+/* Card text follows the UI; handles retain React Flow's physical coordinates. */
+:global(html[dir='rtl']) .graph-node-card {
+  direction: rtl;
+}
+
 .graph-node-card:hover,
 .graph-node-card--selected,
 :global(.react-flow__node.graph-item--focused) .graph-node-card {

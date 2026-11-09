@@ -114,6 +114,7 @@ export const linkifyInlineChildren = (
         linkOpen.attrs = [
           ['href', link.url],
           ['target', '_blank'],
+          ['dir', 'ltr'],
         ];
         linkOpen.level = level++;
 

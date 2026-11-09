@@ -7,14 +7,14 @@
 .dropdown-wrapper {
   flex-shrink: 0;
   width: 20px;
-  margin-right: 16px;
+  margin-inline-end: 16px;
 }
 
 .urgent-wrapper {
   display: flex;
   flex-shrink: 0;
   width: 20px;
-  margin-right: 16px;
+  margin-inline-end: 16px;
 }
 
 .card-more {

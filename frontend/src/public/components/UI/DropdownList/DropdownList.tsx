@@ -4,6 +4,7 @@ import classnames from 'classnames';
 import Select from 'react-select';
 import OutsideClickHandler from '../OutsideClickHandler';
 import { useIntl } from 'react-intl';
+import { isRtlLocale } from '../../../lang/direction';
 
 import { ControlSM, DropdownIndicator, MenuListLG, MenuListSM, MenuSM, Option } from './selectComponents';
 import type { IDropdownListProps, TControlSize, TDropdownOptionBase } from './types';
@@ -19,7 +20,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
   isMulti,
   ...restProps
 }: IDropdownListProps<TOption>) {
-  const { messages, formatMessage } = useIntl();
+  const { messages, formatMessage, locale } = useIntl();
   const [isOpen, setIsOpen] = useState(false);
   const [filterValue, setFilterValue] = useState('');
   const { errorMessage } = restProps;
@@ -66,6 +67,11 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
           )}
 
           <Select
+            isRtl={isRtlLocale(locale)}
+            menuPlacement="auto"
+            placeholder={formatMessage({ id: 'ui.select-placeholder' })}
+            noOptionsMessage={() => formatMessage({ id: 'ui.no-options' })}
+            loadingMessage={() => formatMessage({ id: 'ui.loading' })}
             isMulti={isMulti}
             closeMenuOnSelect={!isMulti}
             hideSelectedOptions={false}
@@ -102,6 +108,11 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
       )}
       <OutsideClickHandler onOutsideClick={() => setIsOpen(false)}>
         <Select
+          isRtl={isRtlLocale(locale)}
+          menuPlacement="auto"
+          placeholder={formatMessage({ id: 'ui.select-placeholder' })}
+          noOptionsMessage={() => formatMessage({ id: 'ui.no-options' })}
+          loadingMessage={() => formatMessage({ id: 'ui.loading' })}
           isMulti={isMulti}
           closeMenuOnSelect={!isMulti}
           hideSelectedOptions={false}

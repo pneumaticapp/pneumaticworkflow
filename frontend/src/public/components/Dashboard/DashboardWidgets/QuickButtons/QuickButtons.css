@@ -15,7 +15,7 @@
   width: 100%;
   padding: 16px;
   color: var(--pneumatic-color-black72) !important;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   background-color: transparent;
   border: 1px solid var(--pneumatic-color-black72);
@@ -30,7 +30,7 @@
 
   &__title {
     margin-bottom: 8px;
-    font-family: Nunito, sans-serif;
+    font-family: var(--pneumatic-font-sans);
     font-size: 15px;
     font-weight: bold;
     line-height: 20px;
@@ -43,7 +43,7 @@
   }
 
   &__icon {
-    text-align: right;
+    text-align: end;
   }
 
   &,
@@ -51,4 +51,8 @@
   svg {
     transition: all 0.1s ease-in-out;
   }
+}
+
+:global(html[dir='rtl']) .item-quick-button__icon svg {
+  transform: scaleX(-1);
 }

@@ -87,7 +87,7 @@ export function GroupUser({ user }: IGroupUserProps) {
         check: () => true,
         render: () => (
           <div className={styles['user__admin']}>
-            <p>Admin</p>
+            <p>{formatMessage({ id: 'template.user-admin' })}</p>
             <Switch
               className={classnames(
                 'custom-switch custom-switch-primary custom-switch-small',
@@ -120,7 +120,7 @@ export function GroupUser({ user }: IGroupUserProps) {
         {renderControllers()}
         <button
           type="button"
-          aria-label="Delete user in group"
+          aria-label={formatMessage({ id: 'accessibility.remove-group-user' })}
           className={styles['user__delete']}
           onClick={() => {
             dispatch(

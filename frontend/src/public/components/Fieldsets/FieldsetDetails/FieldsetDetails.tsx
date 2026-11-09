@@ -18,6 +18,7 @@ import {
 } from '../../../redux/fieldsets/slice';
 
 import { history } from '../../../utils/history';
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { ERoutes } from '../../../constants/routes';
 
 import { ModifyDropdown, Button, FilterSelect, Tooltip } from '../../UI';
@@ -85,6 +86,7 @@ const FieldsetDetails = ({
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const fieldset = useSelector(getCurrentFieldset);
+  useDocumentTitle('Fieldsets', fieldset?.id === Number(matchParamId) ? fieldset.name : undefined);
   const isLoading = useSelector(isCurrentFieldsetLoading);
   const accountId = useSelector(getAccountId);
   const { isDesktop } = useCheckDevice();

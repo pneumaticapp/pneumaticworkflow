@@ -3,6 +3,7 @@ import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 import classNames from 'classnames';
 import { history } from '../../../utils/history';
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 
 import {
   loadGroup,
@@ -47,6 +48,7 @@ export function GroupDetails({ match }: any) {
   const dispatch = useDispatch();
 
   const group: IGroup | null = useSelector(getCurrentGroupData);
+  useDocumentTitle('Groups', group?.id === Number(match.params.id) ? group.name : undefined);
   const sorting: EUserListSorting = useSelector(getCurrentGroupUserListSorting);
   const users: TUserListItem[] = useSelector(getAccountsTeamList);
 
@@ -133,7 +135,7 @@ export function GroupDetails({ match }: any) {
           <Button
             size="sm"
             icon={AddUserIcon}
-            label="Add users"
+            label={formatMessage({ id: 'group.add-user' })}
             buttonStyle="transparent-black"
             className={classNames(styles['header__config-btn'], isOpen && styles['is-active'])}
           />
@@ -190,7 +192,7 @@ export function GroupDetails({ match }: any) {
       {
         label: (
           <p className={styles['dropdown__sorting']}>
-            <span>Sort by name</span> (A-Z)
+            <span>{formatMessage({ id: 'sorting.group-name-asc' })}</span>
           </p>
         ),
         value: EUserListSorting.NameAsc,
@@ -198,7 +200,7 @@ export function GroupDetails({ match }: any) {
       {
         label: (
           <p className={styles['dropdown__sorting']}>
-            <span>Sort by name</span> (Z-A)
+            <span>{formatMessage({ id: 'sorting.group-name-desc' })}</span>
           </p>
         ),
         value: EUserListSorting.NameDesc,
@@ -206,7 +208,7 @@ export function GroupDetails({ match }: any) {
       {
         label: (
           <p className={styles['dropdown__sorting']}>
-            <span>Group by</span> status
+            <span>{formatMessage({ id: 'sorting.team-group-status' })}</span>
           </p>
         ),
         value: EUserListSorting.Status,

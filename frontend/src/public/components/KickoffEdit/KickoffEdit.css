@@ -4,7 +4,7 @@
 }
 
 .kickoff__title {
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans);
   font-size: 11px;
   font-weight: 800;
   line-height: 16px;
@@ -15,7 +15,7 @@
 
 .kickoff__description {
   margin: 0 0 16px;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans);
   font-size: 15px;
   line-height: 20px;
   color: #262522;
@@ -28,8 +28,9 @@
   /* stylelint-disable-next-line */
   :global .react-datepicker-wrapper input {
     width: 100% !important;
-    padding: 14px 50px 14px 16px !important;
-    font-family: Nunito, sans-serif !important;
+    padding-block: 14px !important;
+    padding-inline: 16px 50px !important;
+    font-family: var(--pneumatic-font-sans) !important;
     font-size: 15px !important;
     line-height: 20px !important;
     color: #262522 !important;
@@ -66,5 +67,5 @@
 }
 
 .kickoff-buttons__cancel {
-  margin-left: 16px;
+  margin-inline-start: 16px;
 }

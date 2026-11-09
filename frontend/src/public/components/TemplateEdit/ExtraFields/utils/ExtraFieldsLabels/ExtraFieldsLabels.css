@@ -17,7 +17,8 @@
 }
 
 .extra-field-label_m-4 {
-  margin: 0 0.4rem 0.4rem 0;
+  margin-block: 0 0.4rem;
+  margin-inline: 0 0.4rem;
 }
 
 .extra-field-label_clickable {

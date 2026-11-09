@@ -13,7 +13,8 @@
   &-info {
     display: flex;
     flex-direction: column;
-    margin: 0 2.8rem 0 0.8rem;
+    margin-block: 0;
+    margin-inline: 0.8rem 2.8rem;
     overflow: hidden;
     font-size: 1.5rem;
     line-height: 2rem;
@@ -32,7 +33,7 @@
 
   &-delete {
     position: absolute;
-    right: 0;
+    inset-inline-end: 0;
     color: #dcdcdb;
     cursor: pointer;
     opacity: 0;

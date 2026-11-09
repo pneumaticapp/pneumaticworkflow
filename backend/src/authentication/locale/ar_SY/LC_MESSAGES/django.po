@@ -1,0 +1,76 @@
+# Arabic (Syria) translations for Pneumatic.
+# Distributed under the same license as the project.
+msgid ""
+msgstr ""
+"Project-Id-Version: Pneumatic\n"
+"Language: ar_SY\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
+
+msgid "Access token not found for the user."
+msgstr "لم يتم العثور على رمز وصول للمستخدم."
+
+#, python-brace-format
+msgid "Your account has not been verified. A new verification link was sent to {email}."
+msgstr "لم يتم التحقق من حسابك. أُرسل رابط تحقق جديد إلى {email}."
+
+msgid "Invalid login or password."
+msgstr "بيانات الدخول أو كلمة المرور غير صحيحة."
+
+msgid "Email is not listed in profile."
+msgstr "البريد الإلكتروني غير موجود في الملف الشخصي."
+
+msgid "Error while retrieving Microsoft profile data."
+msgstr "حدث خطأ أثناء جلب بيانات ملف Microsoft."
+
+msgid "Phone number must be entered in the format: \"+99999999999\". Up to 15 digits allowed."
+msgstr "يجب إدخال رقم الهاتف بالصيغة \"+99999999999\". يُسمح بحد أقصى 15 رقمًا."
+
+msgid "Authorization header contain spaces."
+msgstr "تحتوي ترويسة التفويض على مسافات."
+
+msgid "Token is invalid."
+msgstr "الرمز غير صالح."
+
+msgid "Token is expired."
+msgstr "انتهت صلاحية الرمز."
+
+msgid "Given token not valid for guest token type."
+msgstr "الرمز المعطى غير صالح كرمز ضيف."
+
+msgid "Token contained no recognizable user identification."
+msgstr "لا يحتوي الرمز على معرّف مستخدم معروف."
+
+msgid "The current password is incorrect."
+msgstr "كلمة المرور الحالية غير صحيحة."
+
+msgid "The new password and its confirmation don't match."
+msgstr "كلمة المرور الجديدة وتأكيدها غير متطابقين."
+
+msgid "Error while retrieving Google profile data."
+msgstr "حدث خطأ أثناء جلب بيانات ملف Google."
+
+msgid "The system is configured to use a different SSO provider. Please contact your administrator."
+msgstr "النظام مهيأ لاستخدام مزود دخول موحد آخر. تواصل مع المسؤول."
+
+msgid "This account uses SSO authentication. Please sign in through your organization's SSO portal."
+msgstr "يستخدم هذا الحساب المصادقة بالدخول الموحد. سجّل الدخول عبر بوابة مؤسستك."
+
+msgid "SSO authentication is currently unavailable. Please contact support."
+msgstr "مصادقة الدخول الموحد غير متاحة حاليًا. تواصل مع الدعم."
+
+#, python-brace-format
+msgid "No active SSO configuration found for the domain: \"{domain}\"."
+msgstr "لا يوجد إعداد دخول موحد مفعّل للنطاق: \"{domain}\"."
+
+msgid "This account does not use SSO authentication. Please contact support."
+msgstr "لا يستخدم هذا الحساب مصادقة الدخول الموحد. تواصل مع الدعم."
+
+msgid "Format field is required"
+msgstr "حقل التنسيق مطلوب"
+
+msgid "This user has been deactivated. Please contact your account administrator."
+msgstr "تم تعطيل هذا المستخدم. تواصل مع مسؤول حسابك."
+

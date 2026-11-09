@@ -18,8 +18,8 @@
 
 .title {
   position: absolute;
+  inset-inline-start: 12px;
   top: 0;
-  left: 12px;
   z-index: 0;
   padding: 0 4px;
   font-size: 13px;
@@ -32,7 +32,7 @@
 
   :global .react-datepicker-wrapper input {
     width: 100% !important;
-    font-family: Nunito, sans-serif !important;
+    font-family: var(--pneumatic-font-sans) !important;
     font-size: 15px !important;
     line-height: 20px !important;
     color: var(--pneumatic-color-black100) !important;
@@ -85,7 +85,7 @@
 
 .input-field_with-icon {
   :global .react-datepicker-wrapper input {
-    padding-right: 50px;
+    padding-inline-end: 50px;
   }
 }
 
@@ -95,8 +95,8 @@
 
 .icon {
   position: absolute;
+  inset-inline-end: 0;
   top: 0;
-  right: 0;
   bottom: 0;
   display: flex;
   align-items: center;

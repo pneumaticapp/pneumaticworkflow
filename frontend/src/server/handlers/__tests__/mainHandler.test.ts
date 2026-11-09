@@ -41,6 +41,7 @@ describe('handlers', () => {
       await mainHandler(req as unknown as Request, res as unknown as Response);
 
       expect(res.render).toHaveBeenCalledWith('main', {
+        documentLocale: { lang: 'en-US', dir: 'ltr' },
         config: JSON.stringify(mockConfig),
         env,
         invitedUser: '{}',

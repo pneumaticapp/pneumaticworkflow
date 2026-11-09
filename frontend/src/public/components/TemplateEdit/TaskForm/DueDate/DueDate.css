@@ -18,7 +18,7 @@
 
 .rule-preposition {
   width: 166px;
-  margin-right: 8px;
+  margin-inline-end: 8px;
 
   @media (--mobile) {
     width: 100%;

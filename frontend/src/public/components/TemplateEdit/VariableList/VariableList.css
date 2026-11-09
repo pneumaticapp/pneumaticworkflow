@@ -23,7 +23,7 @@
 }
 
 .button__expand-icon {
-  margin-left: 4px;
+  margin-inline-start: 4px;
   color: var(--pneumatic-color-black32);
   transition: all 0.1s ease-in-out;
 }
@@ -35,11 +35,11 @@
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
   font-size: 15px;
   line-height: 20px;
   color: #262522;
-  text-align: left;
+  text-align: start;
   white-space: nowrap;
   cursor: pointer;
 
@@ -87,6 +87,6 @@
 
 .variable-list__scrollbar {
   max-height: 352px !important;
-  padding-right: 0 !important;
-  margin-right: 0 !important;
+  padding-inline-end: 0 !important;
+  margin-inline-end: 0 !important;
 }

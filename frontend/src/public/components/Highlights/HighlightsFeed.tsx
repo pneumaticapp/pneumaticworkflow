@@ -5,7 +5,7 @@ import { useIntl } from 'react-intl';
 
 import { ERoutes } from '../../constants/routes';
 import { EHighlightsDateFilter, EHighlightsFilterType, IHighlightsItem } from '../../types/highlights';
-import { TITLES } from '../../constants/titles';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { history } from '../../utils/history';
 import { PROCESS_HIGHLIGHTS_DATE_RANGE_MAP } from '../../utils/dateTime';
 import { UsersFilter } from './UsersFilter';
@@ -72,6 +72,8 @@ export function HighlightsFeed({
   loadTemplatesTitles,
   setFiltersChanged,
 }: IHighlightsFeedProps) {
+  useDocumentTitle('WorkflowHighlights');
+
   const { useCallback, useEffect, useMemo, useState } = React;
   const { formatMessage } = useIntl();
 
@@ -79,8 +81,6 @@ export function HighlightsFeed({
   const [isDateFilterReady, setIsDateFilterReady] = useState(true);
 
   useEffect(() => {
-    document.title = TITLES.WorkflowHighlights;
-
     loadHighlights({ onScroll: true });
     setIsFirstFetch(false);
 

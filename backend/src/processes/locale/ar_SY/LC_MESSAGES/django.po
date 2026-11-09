@@ -1,0 +1,584 @@
+# Arabic (Syria) translations for Pneumatic.
+# Distributed under the same license as the project.
+msgid ""
+msgstr ""
+"Project-Id-Version: Pneumatic\n"
+"Language: ar_SY\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
+
+msgid "Cannot delete a fieldset template that is used in templates."
+msgstr "لا يمكن حذف مجموعة حقول مستخدمة في القوالب."
+
+#, python-brace-format
+msgid "The sum of fields in this fieldset exceeds the allowed maximum: \"{value}\"."
+msgstr "يتجاوز مجموع حقول المجموعة الحد الأقصى المسموح: \"{value}\"."
+
+msgid "Rule \"sum_equal\" requires all fieldset fields to be of type \"number\"."
+msgstr "تتطلب القاعدة \"sum_equal\" أن تكون جميع حقول المجموعة من النوع \"number\"."
+
+msgid "Rule \"sum_equal\" value must be a number."
+msgstr "يجب أن تكون قيمة القاعدة \"sum_equal\" رقمًا."
+
+msgid "You can't pass \"snooze\" for the first task."
+msgstr "لا يمكنك تمرير \"snooze\" للمهمة الأولى."
+
+msgid "You should set task performers before setting template to active."
+msgstr "يجب تعيين منفّذي المهام قبل تفعيل القالب."
+
+msgid "One or more performers are repeated."
+msgstr "يوجد منفّذ مكرر أو أكثر."
+
+#, python-brace-format
+msgid "Some fields referenced in the conditions of task \"{name}\" do not exist."
+msgstr "بعض الحقول المستخدمة في شروط المهمة \"{name}\" غير موجودة."
+
+msgid "You must provide either a \"selections\" or a \"dataset\" for the field."
+msgstr "يجب توفير \"selections\" أو \"dataset\" للحقل."
+
+msgid "A field with a type 'User' should be required."
+msgstr "يجب أن يكون الحقل من نوع المستخدم مطلوبًا."
+
+msgid "Workflow template name is empty."
+msgstr "اسم قالب سير العمل فارغ."
+
+msgid "Some of fields in \"workflow template name\" don't exist."
+msgstr "بعض الحقول المستخدمة في اسم قالب سير العمل غير موجودة."
+
+msgid "If a \"workflow template name\" contains only an output fields, at least one of the fields must be required."
+msgstr "إذا كان اسم قالب سير العمل يحتوي على حقول مخرجات فقط، فيجب أن يكون أحدها مطلوبًا على الأقل."
+
+msgid "Kickoff form data not provided."
+msgstr "لم يتم توفير بيانات نموذج البدء."
+
+msgid "Kickoff form 'id' has incorrect value."
+msgstr "قيمة معرّف نموذج البدء غير صحيحة."
+
+msgid "Kickoff 'id' not provided."
+msgstr "لم يتم توفير معرّف نموذج البدء."
+
+msgid "Tasks data not provided, one task required."
+msgstr "لم يتم توفير بيانات المهام؛ يلزم وجود مهمة واحدة."
+
+msgid "Incorrect tasks order."
+msgstr "ترتيب المهام غير صحيح."
+
+msgid "You should set 'template owners' value."
+msgstr "يجب تعيين مالكي القالب."
+
+msgid "You cannot remove yourself from template owners."
+msgstr "لا يمكنك إزالة نفسك من مالكي القالب."
+
+msgid "One or more template owners are incorrect."
+msgstr "يوجد مالك قالب غير صحيح أو أكثر."
+
+msgid "\"Public success url\" is an invalid format."
+msgstr "تنسيق رابط إعادة التوجيه بعد الإرسال بنجاح غير صالح."
+
+msgid "Filters 'with_tasks_in_progress' and 'workflows_status' cannot be used at the same time."
+msgstr "لا يمكن استخدام عاملي التصفية \"with_tasks_in_progress\" و\"workflows_status\" في الوقت نفسه."
+
+msgid "Permission denied. You are not a template owner."
+msgstr "ليس لديك الصلاحية، فأنت لست من مالكي القالب."
+
+msgid "Inconsistent permission! Should use only for \"workflow detail\" actions."
+msgstr "صلاحية غير متوافقة. تُستخدم فقط لإجراءات تفاصيل سير العمل."
+
+msgid "The limit for creating a public id has been exceeded."
+msgstr "تم تجاوز الحد الأقصى لإنشاء معرّف عام."
+
+msgid "The limit for creating a embed id has been exceeded."
+msgstr "تم تجاوز الحد الأقصى لإنشاء معرّف تضمين."
+
+msgid "Expected date field api_name."
+msgstr "يلزم توفير api_name لحقل تاريخ."
+
+msgid "Only existing date fields can be used as a due date."
+msgstr "يمكن استخدام حقول التاريخ الموجودة فقط كتاريخ استحقاق."
+
+msgid "Expected task api_name."
+msgstr "يلزم توفير api_name للمهمة."
+
+msgid "Only previous tasks are allowed in a rule."
+msgstr "يُسمح بالمهام السابقة فقط في القاعدة."
+
+msgid "Only previous and current tasks are allowed in a rule."
+msgstr "يُسمح بالمهام السابقة والحالية فقط في القاعدة."
+
+msgid "You should set the user id for performer with the type \"user\"."
+msgstr "يجب تعيين معرّف المستخدم للمنفّذ من النوع \"user\"."
+
+msgid "Performer \"id\" should be a number."
+msgstr "يجب أن يكون معرّف المنفّذ رقمًا."
+
+msgid "One or more performers are incorrect."
+msgstr "يوجد منفّذ غير صحيح أو أكثر."
+
+msgid "A template with \"Workflow starter\" in the list of performers can not be shared. Please replace the \"workflow starter\" with another team member."
+msgstr "لا يمكن مشاركة قالب يحتوي على منشئ سير العمل ضمن المنفّذين. استبدله بعضو آخر من الفريق."
+
+msgid "You should set the field api_name for performer with the type \"field\"."
+msgstr "يجب تعيين api_name للحقل للمنفّذ من النوع \"field\"."
+
+#, python-brace-format
+msgid "Some fields referenced in the description of task \"{name}\" do not exist."
+msgstr "بعض الحقول المستخدمة في وصف المهمة \"{name}\" غير موجودة."
+
+#, python-brace-format
+msgid "Some fields in task \"{name}\" do not exist."
+msgstr "بعض حقول المهمة \"{name}\" غير موجودة."
+
+#, python-brace-format
+msgid "Task \"{name}\": If the task name contains only output fields, at least one field must be required."
+msgstr "المهمة \"{name}\": إذا كان الاسم يحتوي على حقول مخرجات فقط، فيجب أن يكون أحدها مطلوبًا على الأقل."
+
+msgid "Checklist items not exists or invalid."
+msgstr "عناصر قائمة التحقق غير موجودة أو غير صالحة."
+
+#, python-brace-format
+msgid "You can't change api_name of an existing object. Old value: \"{old}\", new value: \"{new}\"."
+msgstr "لا يمكنك تغيير api_name لكائن موجود. القيمة القديمة: \"{old}\"، والجديدة: \"{new}\"."
+
+#, python-brace-format
+msgid "Task \"{task}\": user id \"{user_id}\" doesn't exist or can't be used in this condition."
+msgstr "المهمة \"{task}\": المستخدم بالمعرّف \"{user_id}\" غير موجود أو لا يمكن استخدامه في هذا الشرط."
+
+#, python-brace-format
+msgid "Task \"{task}\": operator \"{operator}\" can't be use with type of field \"{field_type}\"."
+msgstr "المهمة \"{task}\": لا يمكن استخدام المعامل \"{operator}\" مع نوع الحقل \"{field_type}\"."
+
+#, python-brace-format
+msgid "Task \"{task}\": selection \"{selection_value}\" doesn't exist or can't be used in this condition."
+msgstr "المهمة \"{task}\": الخيار \"{selection_value}\" غير موجود أو لا يمكن استخدامه في هذا الشرط."
+
+#, python-brace-format
+msgid "Task \"{task}\": operator \"{operator}\" should have some value."
+msgstr "المهمة \"{task}\": يجب تعيين قيمة للمعامل \"{operator}\"."
+
+#, python-brace-format
+msgid "Task \"{name}\": The checklist contains a duplicate api_name \"{api_name}\". Recreate the checklist or change its api_name."
+msgstr "المهمة \"{name}\": تحتوي قائمة التحقق على api_name مكرر \"{api_name}\". أعد إنشاء القائمة أو غيّر معرّفها."
+
+#, python-brace-format
+msgid "Task \"{name}\": The checklist item contains a duplicate api_name \"{api_name}\". Recreate the item or change its api_name."
+msgstr "المهمة \"{name}\": يحتوي عنصر قائمة التحقق على api_name مكرر \"{api_name}\". أعد إنشاء العنصر أو غيّر معرّفه."
+
+#, python-brace-format
+msgid "Task \"{name}\": The condition contains a duplicate api_name \"{api_name}\". Recreate the condition or change its api_name."
+msgstr "المهمة \"{name}\": يحتوي الشرط على api_name مكرر \"{api_name}\". أعد إنشاء الشرط أو غيّر معرّفه."
+
+#, python-brace-format
+msgid "Task \"{name}\": Output field \"{field_name}\" contains a duplicate api_name \"{api_name}\". Change the api_name or recreate the output field."
+msgstr "المهمة \"{name}\": يحتوي حقل المخرجات \"{field_name}\" على api_name مكرر \"{api_name}\". غيّر المعرّف أو أعد إنشاء الحقل."
+
+#, python-brace-format
+msgid "Task \"{name}\": The condition predicate contains a duplicate api_name \"{api_name}\". Recreate the predicate or change its api_name."
+msgstr "المهمة \"{name}\": يحتوي تعبير الشرط على api_name مكرر \"{api_name}\". أعد إنشاء التعبير أو غيّر معرّفه."
+
+#, python-brace-format
+msgid "Task \"{name}\": The due date contains a duplicate api_name \"{api_name}\". Recreate the due date or change its api_name."
+msgstr "المهمة \"{name}\": يحتوي تاريخ الاستحقاق على api_name مكرر \"{api_name}\". أعد إنشاء تاريخ الاستحقاق أو غيّر معرّفه."
+
+#, python-brace-format
+msgid "Task \"{name}\": The condition rule contains a duplicate api_name \"{api_name}\". Recreate the rule or change its api_name."
+msgstr "المهمة \"{name}\": تحتوي قاعدة الشرط على api_name مكرر \"{api_name}\". أعد إنشاء القاعدة أو غيّر معرّفها."
+
+#, python-brace-format
+msgid "Task \"{name}\": The output field \"{field_name}\" contains a duplicate value in option \"{value}\". Please use a unique value."
+msgstr "المهمة \"{name}\": يحتوي حقل المخرجات \"{field_name}\" على قيمة مكررة للخيار \"{value}\". استخدم قيمة فريدة."
+
+#, python-brace-format
+msgid "Task \"{name}\": Contains a duplicate api_name \"{api_name}\". Recreate the task or change its api_name."
+msgstr "المهمة \"{name}\": تحتوي على api_name مكرر \"{api_name}\". أعد إنشاء المهمة أو غيّر معرّفها."
+
+#, python-brace-format
+msgid "Task \"{name}\": The performer contains a duplicate api_name \"{api_name}\". Recreate the performer or change its api_name."
+msgstr "المهمة \"{name}\": يحتوي المنفّذ على api_name مكرر \"{api_name}\". أعد إنشاء المنفّذ أو غيّر معرّفه."
+
+msgid "Duplicate template owners in the add owners request."
+msgstr "يوجد مالكو قالب مكررون في طلب إضافة المالكين."
+
+#, python-brace-format
+msgid "Template \"{name}\": The owners contain a duplicate api_name \"{api_name}\". Change the duplicate api_name or specify different owners."
+msgstr "القالب \"{name}\": يتضمن المالكون api_name مكررًا \"{api_name}\". غيّر المعرّف المكرر أو حدد مالكين آخرين."
+
+#, python-brace-format
+msgid "Task \"{name}\": The \"Return to\" setting refers to a non-existent task (API name: \"{api_name}\")."
+msgstr "المهمة \"{name}\": يشير إعداد الإعادة إلى مهمة غير موجودة (اسم API: \"{api_name}\")."
+
+#, python-brace-format
+msgid "Task \"{name}\": Cannot be set to return to itself."
+msgstr "المهمة \"{name}\": لا يمكن تعيينها للإعادة إلى نفسها."
+
+#, python-brace-format
+msgid "Task \"{name}\": Can be returned only to one of its ancestors."
+msgstr "المهمة \"{name}\": يمكن إعادتها إلى إحدى المهام السابقة المتصلة بها فقط."
+
+#, python-brace-format
+msgid "Task \"{task}\": Group ID \"{group_id}\" does not exist or cannot be used in this condition."
+msgstr "المهمة \"{task}\": المجموعة بالمعرّف \"{group_id}\" غير موجودة أو لا يمكن استخدامها في هذا الشرط."
+
+msgid "The value must be a number."
+msgstr "يجب أن تكون القيمة رقمًا."
+
+#, python-brace-format
+msgid "Task condition \"{name}\": Only the \"completed\" operator is allowed for the \"start_task\" action"
+msgstr "شرط المهمة \"{name}\": يُسمح بالمعامل \"completed\" فقط مع الإجراء \"start_task\""
+
+#, python-brace-format
+msgid "Task \"{name}\" has a circular dependency. Please change the \"start after\" condition."
+msgstr "تتضمن المهمة \"{name}\" اعتمادًا دائريًا. غيّر شرط البدء بعد."
+
+#, python-brace-format
+msgid "Task \"{name}\": the \"start after\" condition points to a non-existent task. Please change the \"start after\" condition."
+msgstr "المهمة \"{name}\": يشير شرط البدء بعد إلى مهمة غير موجودة. غيّر الشرط."
+
+#, python-brace-format
+msgid "Task \"{name}\": the \"check if\" condition points to a non-existent task. Please change the \"check if\" condition."
+msgstr "المهمة \"{name}\": يشير شرط التحقق إلى مهمة غير موجودة. غيّر الشرط."
+
+#, python-brace-format
+msgid "Task \"{name}\": the \"check if\" condition points to a non ancestor task. Please change the \"check if\" condition."
+msgstr "المهمة \"{name}\": يشير شرط التحقق إلى مهمة ليست ضمن المهام السابقة المتصلة بها. غيّر الشرط."
+
+msgid "Permission denied. You do not have access to this template."
+msgstr "لا تملك صلاحية الوصول إلى هذا القالب."
+
+msgid "Permission denied. You are not a template owner or viewer."
+msgstr "ليس لديك الصلاحية، فأنت لست من مالكي القالب أو المخوّلين بالاطلاع عليه."
+
+msgid "Saving files is not available, file storage does't configured. Contact support."
+msgstr "حفظ الملفات غير متاح لعدم إعداد التخزين. تواصل مع الدعم."
+
+msgid "Only \"snoozed\" workflows can be resumed."
+msgstr "يمكن استئناف مسارات العمل المؤجلة فقط."
+
+msgid "You need to resume the workflow before completing the task."
+msgstr "يجب استئناف سير العمل قبل إكمال المهمة."
+
+msgid "Task is skipped and cannot be completed."
+msgstr "تم تخطي المهمة ولا يمكن إكمالها."
+
+msgid "Check off all the items in the checklist before completing the task."
+msgstr "أكمل جميع عناصر قائمة التحقق قبل إكمال المهمة."
+
+msgid "You have already completed this task."
+msgstr "لقد أكملت هذه المهمة بالفعل."
+
+msgid "You have already completed this workflow."
+msgstr "لقد أكملت سير العمل هذا بالفعل."
+
+msgid "You are not allowed to finish this workflow."
+msgstr "لا يُسمح لك بإنهاء سير العمل هذا."
+
+msgid "Task already completed."
+msgstr "المهمة مكتملة بالفعل."
+
+msgid "You don't have permission for complete the task."
+msgstr "لا تملك صلاحية إكمال المهمة."
+
+msgid "The supplied task number is incorrect."
+msgstr "رقم المهمة المقدّم غير صحيح."
+
+msgid "The user with the specified credentials not found."
+msgstr "لم يتم العثور على مستخدم ببيانات الاعتماد المحددة."
+
+msgid "You have reached the limit of the number of guest performers."
+msgstr "وصلت إلى الحد الأقصى لعدد المنفّذين الضيوف."
+
+msgid "Deleting the last performer is not allowed."
+msgstr "لا يُسمح بحذف المنفّذ الأخير."
+
+msgid "Completed workflow cannot be changed."
+msgstr "لا يمكن تغيير سير عمل مكتمل."
+
+msgid "Available only for the active task."
+msgstr "متاح للمهمة النشطة فقط."
+
+msgid "You need to be added to the task as a performer to check off this checklist item."
+msgstr "يجب إضافتك كمنفّذ للمهمة لتتمكن من إكمال عنصر قائمة التحقق."
+
+msgid "You need to resume the workflow before check off this checklist item."
+msgstr "يجب استئناف سير العمل قبل إكمال عنصر قائمة التحقق."
+
+msgid "Permission denied."
+msgstr "ليس لديك صلاحية لتنفيذ هذا الإجراء."
+
+msgid "Please fill in the required fields."
+msgstr "يرجى ملء الحقول المطلوبة."
+
+#, python-brace-format
+msgid "Wrong argument format: \"{arg}\"."
+msgstr "تنسيق المعامل غير صحيح: \"{arg}\"."
+
+msgid "Value should be a string."
+msgstr "يجب أن تكون القيمة نصًا."
+
+#, python-brace-format
+msgid "The value of the field exceeds the limit of {limit} characters."
+msgstr "تتجاوز قيمة الحقل الحد الأقصى البالغ {limit} حرفًا."
+
+msgid "A selection with the given value does not exist."
+msgstr "لا يوجد خيار بالقيمة المعطاة."
+
+msgid "Checkbox value should be a list."
+msgstr "يجب أن تكون قيمة مربعات الاختيار قائمة."
+
+msgid "Checkbox value contains invalid selections."
+msgstr "تحتوي قيمة مربعات الاختيار على خيارات غير صالحة."
+
+msgid "Checkbox value contains non existent selections."
+msgstr "تحتوي قيمة مربعات الاختيار على خيارات غير موجودة."
+
+msgid "The date value must be an integer or a floating-point number."
+msgstr "يجب أن تكون قيمة التاريخ عددًا صحيحًا أو عشريًا."
+
+msgid "URL field value should be a string."
+msgstr "يجب أن تكون قيمة حقل الرابط نصًا."
+
+msgid "The URL is invalid."
+msgstr "الرابط غير صالح."
+
+msgid "File value should be a list of integers."
+msgstr "يجب أن تكون قيمة الملف قائمة أعداد صحيحة."
+
+msgid "Attachment not found."
+msgstr "المرفق غير موجود."
+
+msgid "The value must be the ID of an existing account user."
+msgstr "يجب أن تكون القيمة معرّف مستخدم موجود في الحساب."
+
+msgid "Save attachments failed. Service unavailable."
+msgstr "تعذر حفظ المرفقات. الخدمة غير متاحة."
+
+msgid "Blob object doesn't exist."
+msgstr "كائن التخزين غير موجود."
+
+msgid "AI service is temporarily unavailable."
+msgstr "خدمة الذكاء الاصطناعي غير متاحة مؤقتًا."
+
+msgid "Could not create template from given description."
+msgstr "تعذر إنشاء قالب من الوصف المقدّم."
+
+msgid "You've reached the limit for free AI powered template generation requests, sign up for a premium account to get unlimited access."
+msgstr "وصلت إلى الحد الأقصى للطلبات المجانية لتوليد القوالب بالذكاء الاصطناعي. اشترك بالخطة المميزة للوصول غير المحدود."
+
+msgid "Something seems to be wrong with your input, please try re phrasing your process name and description."
+msgstr "يبدو أن هناك مشكلة في المدخلات. جرّب إعادة صياغة اسم العملية ووصفها."
+
+msgid "You need to set up a system prompt for template generation. Contact administrator."
+msgstr "يجب إعداد تعليمات النظام لتوليد القوالب. تواصل مع المسؤول."
+
+msgid "You need to specify the comment text or attachments."
+msgstr "يجب تحديد نص التعليق أو المرفقات."
+
+msgid "You cannot write a comment on a completed workflow."
+msgstr "لا يمكنك التعليق على سير عمل مكتمل."
+
+msgid "You cannot change a deleted comment."
+msgstr "لا يمكنك تغيير تعليق محذوف."
+
+#, python-brace-format
+msgid "The size limit for attachments is {mb} Mb."
+msgstr "الحد الأقصى لحجم المرفقات هو {mb} ميغابايت."
+
+msgid "Due date should be greater than current."
+msgstr "يجب أن يكون تاريخ الاستحقاق بعد الوقت الحالي."
+
+msgid "Field with type \"User\" should be required."
+msgstr "يجب أن يكون الحقل من نوع المستخدم مطلوبًا."
+
+msgid "The default value for a field with type \"User\" should be an integer."
+msgstr "يجب أن تكون القيمة الافتراضية لحقل المستخدم عددًا صحيحًا."
+
+msgid "The user for a field with type \"User\" does not exist."
+msgstr "المستخدم المحدد في حقل المستخدم غير موجود."
+
+msgid "Field selections not provided."
+msgstr "لم يتم توفير خيارات الحقل."
+
+msgid "Checklist element length limit exceeded. Limit 2000 chars."
+msgstr "تجاوز طول عنصر قائمة التحقق الحد الأقصى البالغ 2000 حرف."
+
+msgid "Filter by \"assigned_to\" is only allowed for the admin."
+msgstr "يُسمح للمسؤول فقط بالتصفية حسب \"assigned_to\"."
+
+msgid "Checklist item with given id not found."
+msgstr "لم يتم العثور على عنصر قائمة التحقق بالمعرّف المعطى."
+
+msgid "You can't pass the `id` field."
+msgstr "لا يمكنك تمرير الحقل `id`."
+
+msgid "Radio and checkbox fields must have non-empty selections."
+msgstr "يجب أن تحتوي حقول الاختيار الواحد ومربعات الاختيار على خيارات غير فارغة."
+
+msgid "Value should be a object."
+msgstr "يجب أن تكون القيمة كائنًا."
+
+msgid "Value should be a list."
+msgstr "يجب أن تكون القيمة قائمة."
+
+msgid "Incorrect order of tasks."
+msgstr "ترتيب المهام غير صحيح."
+
+msgid "You must pass an \"api_name\" into every field you declare."
+msgstr "يجب تمرير \"api_name\" لكل حقل تعرّفه."
+
+msgid "Your template is disabled. Please, enable this template before running."
+msgstr "قالبك غير مفعّل. فعّله قبل التشغيل."
+
+msgid "Only \"in-progress\" workflows can be filtered by current performer."
+msgstr "يمكن تصفية مسارات العمل الجارية فقط حسب المنفّذ الحالي."
+
+msgid "The task can't be completed until all the embedded workflows are done."
+msgstr "لا يمكن إكمال المهمة حتى تنتهي جميع مسارات العمل المضمّنة."
+
+msgid "The task can't be returned until all the embedded workflows are done."
+msgstr "لا يمكن إعادة المهمة حتى تنتهي جميع مسارات العمل المضمّنة."
+
+msgid "Snoozed workflow cannot be changed."
+msgstr "لا يمكن تغيير سير عمل مؤجل."
+
+msgid "Completed task cannot be changed."
+msgstr "لا يمكن تغيير مهمة مكتملة."
+
+msgid "Embedded workflows can be created only for the workflow's active task."
+msgstr "يمكن إنشاء مسارات عمل مضمّنة للمهمة النشطة فقط."
+
+msgid "You need to be added to the task as a performer in order to create a embedded workflows."
+msgstr "يجب إضافتك كمنفّذ للمهمة لإنشاء مسارات عمل مضمّنة."
+
+msgid "You need to pass in a \"task_id\", or a \"task api_name\"."
+msgstr "يجب تمرير \"task_id\" أو \"task api_name\"."
+
+msgid "The passed in task was not found in the workflow."
+msgstr "لم يتم العثور على المهمة المقدمة في سير العمل."
+
+msgid "You can't revert from the first task."
+msgstr "لا يمكنك الإعادة من المهمة الأولى."
+
+#, python-brace-format
+msgid "Unable return to \"{task_name}\" because it was skipped by a condition."
+msgstr "لا يمكن العودة إلى \"{task_name}\" لأن شرطًا أدى إلى تخطيها."
+
+#, python-brace-format
+msgid "Unable return to \"{task_name}\", because it was skipped by a condition (as were all the tasks before it)."
+msgstr "لا يمكن العودة إلى \"{task_name}\" لأن شرطًا أدى إلى تخطيها وجميع المهام السابقة لها."
+
+msgid "A workflow can't return to a later task."
+msgstr "لا يمكن إعادة سير العمل إلى مهمة لاحقة."
+
+msgid "There is no group with the specified ID."
+msgstr "لا توجد مجموعة بالمعرّف المحدد."
+
+msgid "You must supply a comment."
+msgstr "يجب إضافة تعليق."
+
+msgid "Task not found."
+msgstr "المهمة غير موجودة."
+
+msgid "Available only for active tasks."
+msgstr "متاح للمهام النشطة فقط."
+
+msgid "You must be added to the task as a performer to complete this action."
+msgstr "يجب إضافتك كمنفّذ للمهمة لإكمال هذا الإجراء."
+
+msgid "Completed task can't be returned."
+msgstr "لا يمكن إعادة مهمة مكتملة."
+
+msgid "You cannot write a comment on a inactive task."
+msgstr "لا يمكنك التعليق على مهمة غير نشطة."
+
+msgid "The user or group specified for a \"User\" field does not exist."
+msgstr "المستخدم أو المجموعة المحددان في حقل المستخدم غير موجودين."
+
+msgid "Guest"
+msgstr "ضيف"
+
+msgid "You must specify a source step for a performer of type \"manager\"."
+msgstr "يجب تحديد خطوة مصدر للمنفّذ من النوع \"manager\"."
+
+#, python-brace-format
+msgid "Task \"{name}\": A manager performer cannot reference its own step."
+msgstr "المهمة \"{name}\": لا يمكن للمنفّذ من نوع المدير الإشارة إلى خطوته نفسها."
+
+#, python-brace-format
+msgid "Task \"{name}\": The manager performer references a non-existent step \"{step_name}\"."
+msgstr "المهمة \"{name}\": يشير منفّذ المدير إلى خطوة غير موجودة \"{step_name}\"."
+
+#, python-brace-format
+msgid "Task \"{name}\": Disable \"Required completion by all\" on step \"{step_name}\" to use a manager performer."
+msgstr "المهمة \"{name}\": عطّل خيار الإكمال من الجميع في الخطوة \"{step_name}\" لاستخدام منفّذ من نوع المدير."
+
+msgid "Cannot change a fieldset template that is used in templates."
+msgstr "لا يمكن تعديل مجموعة حقول مستخدمة في القوالب."
+
+msgid "Either \"task\" or \"kickoff\" must be provided to create a fieldset."
+msgstr "يجب توفير \"task\" أو \"kickoff\" لإنشاء مجموعة حقول."
+
+msgid "File value should be a list of Markdown links."
+msgstr "يجب أن تكون قيمة الملف قائمة روابط بصيغة Markdown."
+
+msgid "Rule \"Sum equal\" requires all fields to be of type \"number\"."
+msgstr "تتطلب قاعدة «المجموع يساوي» أن تكون جميع الحقول من النوع الرقمي \"number\"."
+
+msgid "Rule \"Sum equal\" value must be a number."
+msgstr "يجب أن تكون قيمة قاعدة «المجموع يساوي» رقمًا."
+
+msgid "Shared fieldset template with the specified id was not found."
+msgstr "لم يتم العثور على مجموعة الحقول المشتركة بالمعرّف المحدد."
+
+#, python-brace-format
+msgid "Task \"{name}\": Fieldset field \"{field_name}\" contains a duplicate api_name \"{api_name}\". Change the api_name or recreate the field."
+msgstr "المهمة «{name}»: يحتوي الحقل «{field_name}» في مجموعة الحقول على api_name مكرر «{api_name}». غيّر المعرّف أو أعد إنشاء الحقل."
+
+#, python-brace-format
+msgid "Task \"{name}\": The fieldset contains a duplicate api_name \"{api_name}\". Recreate the fieldset or change its api_name."
+msgstr "المهمة «{name}»: تحتوي مجموعة الحقول على api_name مكرر «{api_name}». أعد إنشاء المجموعة أو غيّر معرّفها."
+
+#, python-brace-format
+msgid "Task \"{name}\": The fieldset field option contains a duplicate api_name \"{api_name}\". Recreate the option or change its api_name."
+msgstr "المهمة «{name}»: يحتوي خيار الحقل في مجموعة الحقول على api_name مكرر «{api_name}». أعد إنشاء الخيار أو غيّر معرّفه."
+
+#, python-brace-format
+msgid "Task \"{name}\": The fieldset rule contains a duplicate api_name \"{api_name}\". Recreate the rule or change its api_name."
+msgstr "المهمة «{name}»: تحتوي قاعدة مجموعة الحقول على api_name مكرر «{api_name}». أعد إنشاء القاعدة أو غيّر معرّفها."
+
+#, python-brace-format
+msgid "Task condition \"{name}\": Only the \"completed\", \"skipped\", or \"completed_or_skipped\" operators are allowed for the \"start_task\" action"
+msgstr "شرط المهمة «{name}»: يُسمح فقط بالمعاملات \"completed\" أو \"skipped\" أو \"completed_or_skipped\" مع الإجراء \"start_task\""
+
+#, python-brace-format
+msgid "The sum of the fields in this field set must equal \"{value}\"."
+msgstr "يجب أن يساوي مجموع الحقول في هذه المجموعة القيمة «{value}»."
+
+#, python-brace-format
+msgid "The sum of the fields in this field set must equal one of the following values: \"{values}\"."
+msgstr "يجب أن يساوي مجموع الحقول في هذه المجموعة إحدى القيم التالية: «{values}»."
+
+msgid "The task with the specified \"api_name\" was not found in the template"
+msgstr "لم يتم العثور في القالب على مهمة بقيمة \"api_name\" المحددة"
+
+#, python-brace-format
+msgid "Unable return to \"{task_name}\" because it is skipped on return and there are no tasks before it."
+msgstr "لا يمكن العودة إلى «{task_name}» لأنها تُتخطى عند الإعادة ولا توجد مهام تسبقها."
+
+#, python-brace-format
+msgid "Unable return to \"{task_name}\" because it is skipped on return."
+msgstr "لا يمكن العودة إلى «{task_name}» لأنها تُتخطى عند الإعادة."
+
+msgid "You need to specify the comment text."
+msgstr "يجب إدخال نص التعليق."
+
+#, python-brace-format
+msgid "field \"{field}\" not found in rule \"{rule}\"."
+msgstr "لم يتم العثور على الحقل «{field}» في القاعدة «{rule}»."
+
+msgid "shared_fieldset_id is required for a template fieldset."
+msgstr "الحقل \"shared_fieldset_id\" مطلوب لمجموعة حقول القالب."
+
+msgid "template_id is required for a template fieldset."
+msgstr "الحقل \"template_id\" مطلوب لمجموعة حقول القالب."
+

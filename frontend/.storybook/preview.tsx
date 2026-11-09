@@ -8,6 +8,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { createStore, applyMiddleware } from 'redux';
 import createSagaMiddleware from 'redux-saga';
 import { IntlProvider } from 'react-intl';
+import { applyDocumentLocale } from '../src/public/lang/document';
 
 import { rootReducer } from '../src/public/redux/reducers';
 import { rootSaga } from '../src/public/redux/sagas';
@@ -23,18 +24,16 @@ import '../src/public/assets/fonts/simple-line-icons/css/simple-line-icons.css';
 import '../src/public/assets/css/sass/themes/gogo.light.yellow.scss';
 import '../src/public/assets/css/style.css';
 
-
-
 const preview: Preview = {
   decorators: [
     (Story, context) => {
       const sagaMiddleware = createSagaMiddleware();
       const customStore = context.parameters?.store
         ? createStore(
-          rootReducer,
-          { ...preview.parameters?.store, ...context.parameters.store },
-          applyMiddleware(sagaMiddleware)
-        )
+            rootReducer,
+            { ...preview.parameters?.store, ...context.parameters.store },
+            applyMiddleware(sagaMiddleware),
+          )
         : store;
 
       if (context.parameters?.store) {
@@ -42,15 +41,12 @@ const preview: Preview = {
       }
       // Get current locale from global parameters
       const locale = context.globals.locale || reactIntl.defaultLocale;
-      
+      applyDocumentLocale(locale);
+
       return (
         <Provider store={customStore}>
           <BrowserRouter>
-            <IntlProvider
-              messages={reactIntl.messages[locale]}
-              locale={locale}
-              defaultLocale={reactIntl.defaultLocale}
-            >
+            <IntlProvider messages={reactIntl.messages[locale]} locale={locale} defaultLocale={reactIntl.defaultLocale}>
               <Story />
             </IntlProvider>
           </BrowserRouter>
@@ -63,6 +59,7 @@ const preview: Preview = {
     locales: {
       en: 'English',
       ru: 'Russian',
+      'ar-sy': 'Arabic (Syria)',
     },
   },
   parameters: {
@@ -73,7 +70,7 @@ const preview: Preview = {
       },
     },
     reactIntl,
-    store: {}
+    store: {},
   },
 };
 

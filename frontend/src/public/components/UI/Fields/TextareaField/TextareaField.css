@@ -15,8 +15,8 @@
 
 .title {
   position: absolute;
+  inset-inline-start: 1.2rem;
   top: 0;
-  left: 1.2rem;
   z-index: 0;
   padding: 0 0.4rem;
   font-size: 1.3rem;

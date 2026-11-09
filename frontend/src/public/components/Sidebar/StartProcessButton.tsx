@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import classnames from 'classnames';
+import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
 import { PlayLogoIcon } from '../icons';
@@ -15,6 +16,7 @@ export interface IStartProcessButton {
 }
 
 export const StartProcessButton = memo(function StartProcessButtonContent({ tabIndex, onClick }: IStartProcessButton) {
+  const { formatMessage } = useIntl();
   const canAccessWorkflows = useSelector(getCanAccessWorkflows);
   const { isTemplateOwner } = useSelector(getTemplatesStore);
 
@@ -28,7 +30,7 @@ export const StartProcessButton = memo(function StartProcessButtonContent({ tabI
       tabIndex={tabIndex}
       className={classnames('active', styles['sidebar__start-button'])}
       onClick={onClick}
-      aria-label="Run workflow"
+      aria-label={formatMessage({ id: 'select-template.run-workflow' })}
     >
       <PlayLogoIcon className={styles['start-button__icon']} />
       <p className={styles['start-button__text']}>

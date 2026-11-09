@@ -60,7 +60,7 @@ export function FieldsetEditorTitle({
       {!isFocused && (
         <button
           type="button"
-          aria-label="Edit"
+          aria-label={formatMessage({ id: 'template.task-edit' })}
           onClick={() => inputRef.current?.focus()}
           className={kickoffStyles['kick-off-edit-name']}
         >

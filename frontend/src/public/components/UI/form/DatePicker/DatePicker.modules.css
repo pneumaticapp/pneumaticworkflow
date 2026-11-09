@@ -3,7 +3,7 @@
 }
 
 .date-picker :global(.react-datepicker__close-icon) {
-  right: 0.75rem;
+  inset-inline-end: 0.75rem;
   padding: 0;
 }
 

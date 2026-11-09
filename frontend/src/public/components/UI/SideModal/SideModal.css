@@ -1,6 +1,6 @@
 @keyframes slide-in {
   0% {
-    transform: translateX(100%);
+    transform: translateX(var(--side-modal-slide-offset, 100%));
   }
 
   100% {
@@ -14,14 +14,14 @@
   }
 
   100% {
-    transform: translateX(100%);
+    transform: translateX(var(--side-modal-slide-offset, 100%));
   }
 }
 
 .side-modal {
   position: fixed;
+  inset-inline-end: 0;
   top: 1rem;
-  right: 0;
   bottom: 1rem;
   z-index: 1050;
   width: 41.6rem;
@@ -30,11 +30,16 @@
   overflow: hidden;
   color: var(--pneumatic-color-white);
   background-color: var(--pneumatic-color-black100);
-  border-radius: 3.2rem 0 0 3.2rem;
+  border-start-start-radius: 3.2rem;
+  border-end-start-radius: 3.2rem;
+}
+
+:global([dir='rtl']) .side-modal {
+  --side-modal-slide-offset: -100%;
 }
 
 .side-modal_none-pedding-right {
-  padding-right: 0;
+  padding-inline-end: 0;
 }
 
 .side-modal_opened {
@@ -47,8 +52,8 @@
 
 .side-modal_close {
   position: absolute;
+  inset-inline-end: 2.5rem;
   top: 3rem;
-  right: 2.5rem;
   z-index: 1;
   cursor: pointer;
   background-color: transparent;
@@ -65,7 +70,7 @@
 }
 
 .side-modal_close-is-from-view-modal {
-  right: 3.7rem;
+  inset-inline-end: 3.7rem;
 }
 
 .side-modal-parts {
@@ -76,7 +81,7 @@
 
 .side-modal-parts_header {
   min-height: 2.4rem;
-  margin-right: 3rem;
+  margin-inline-end: 3rem;
 }
 
 .side-modal-parts_body {

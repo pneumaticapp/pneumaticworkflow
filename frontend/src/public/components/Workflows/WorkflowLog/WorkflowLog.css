@@ -10,8 +10,8 @@
 
 .popup-body__close-button {
   padding: 0;
+  margin-inline-start: auto;
   margin-bottom: 3.2rem;
-  margin-left: auto;
   background: none;
   border: none;
 }
@@ -45,7 +45,7 @@
 .popup-body-controls-general {
   display: flex;
   flex-wrap: wrap;
-  margin-right: 0.8rem;
+  margin-inline-end: 0.8rem;
 
   @media (--mobile) {
     flex-direction: column;
@@ -63,7 +63,7 @@
 }
 
 .popup-body-controls-general__item:not(:last-child) {
-  margin-right: 0.8rem;
+  margin-inline-end: 0.8rem;
 
   @media (--mobile) {
     margin: 0;
@@ -102,16 +102,16 @@
   font-weight: 800;
   line-height: 1.5rem;
   color: var(--pneumatic-color-black100);
-  text-align: right;
+  text-align: end;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .switch-container__button {
-  margin-left: 0.8rem;
+  margin-inline-start: 0.8rem;
 
   @media (--mobile) {
-    margin-left: auto;
+    margin-inline-start: auto;
   }
 }
 

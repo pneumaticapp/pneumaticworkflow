@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useIntl } from 'react-intl';
 import { LargeLogo, LogoCircle } from '../icons';
 
 import styles from './Logo.css';
@@ -17,10 +18,11 @@ export interface ILogoProps {
 }
 
 export function Logo({ size, theme, partnerLogoSm, partnerLogoLg, className }: ILogoProps) {
+  const { formatMessage } = useIntl();
   const renderLogoMap = [
     {
       check: () => size === 'lg' && partnerLogoLg,
-      render: () => <img src={partnerLogoLg!} alt="Logo" />,
+      render: () => <img src={partnerLogoLg!} alt={formatMessage({ id: 'accessibility.logo' })} />,
     },
     {
       check: () => size === 'lg',
@@ -42,7 +44,7 @@ export function Logo({ size, theme, partnerLogoSm, partnerLogoLg, className }: I
               width={sizePx}
               height={sizePx}
               src={partnerLogoSm}
-              alt="Logo"
+              alt={formatMessage({ id: 'accessibility.logo' })}
               className={styles['partner-small-logo']}
             />
           );

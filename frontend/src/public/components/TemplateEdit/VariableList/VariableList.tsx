@@ -13,6 +13,7 @@ import { ELearnMoreLinks } from '../../../constants/defaultValues';
 import { TTaskVariable } from '../types';
 import { getLocalizedSystemVariable } from '../TaskForm/utils/getTaskVariables';
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
+import { getLocaleDirection } from '../../../lang/direction';
 import { TooltipRichContent } from '../TooltipRichContent';
 import styles from './VariableList.css';
 
@@ -37,7 +38,7 @@ export const VariableList = ({
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
   const { isDesktop } = useCheckDevice();
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const { formatMessage } = useIntl();
+  const { formatMessage, locale } = useIntl();
   const handleOutsideClick = () => {
     if (isOpen) {
       setIsOpen(false);
@@ -86,7 +87,7 @@ export const VariableList = ({
           popperClassName={styles['variable-list__popper']}
           isOpen={isOpen}
           target={buttonRef.current!}
-          {...(isDesktop && { placement: 'bottom-end' })}
+          {...(isDesktop && { placement: getLocaleDirection(locale) === 'rtl' ? 'bottom-start' : 'bottom-end' })}
           modifiers={{
             preventOverflow: {
               enabled: false,

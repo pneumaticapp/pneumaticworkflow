@@ -1,5 +1,6 @@
 import * as React from 'react';
 import classnames from 'classnames';
+import { useIntl } from 'react-intl';
 
 import { Avatar } from '..';
 import { DeleteRoundIcon } from '../../icons';
@@ -28,6 +29,7 @@ export const UserPerformerComponent = ({
   onClick,
   bgColor = EBgColorTypes.White,
 }: IUserPerformerProps) => {
+  const { formatMessage } = useIntl();
   const bgColorClassNameMap = {
     white: styles['is-white'],
     light: styles['is-light'],
@@ -65,7 +67,7 @@ export const UserPerformerComponent = ({
           onClick={onClick}
           className={styles['user-performer__close']}
           type="button"
-          aria-label="Delete performer"
+          aria-label={formatMessage({ id: 'ui.remove-performer' })}
         >
           <DeleteRoundIcon />
         </button>

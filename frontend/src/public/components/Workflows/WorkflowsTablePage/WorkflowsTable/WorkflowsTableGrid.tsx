@@ -1,4 +1,5 @@
 import React from 'react';
+import { useIntl } from 'react-intl';
 import classNames from 'classnames';
 
 import { SKELETON_ROWS } from './constants';
@@ -23,6 +24,7 @@ export function WorkflowsTableGrid({
   shouldSkeletonDefaultTable,
   shouldSkeletonOptionalTable,
 }: WorkflowsTableGridProps) {
+  const { formatMessage } = useIntl();
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = table;
 
   const getTableBodyContent = () => {
@@ -42,7 +44,11 @@ export function WorkflowsTableGrid({
       return SKELETON_ROWS.map((row) => (
         <tr className={styles['row']} key={row}>
           {columns.map((column) => (
-            <td key={column.accessor as string} className={styles['column']} aria-label="Loading">
+            <td
+              key={column.accessor as string}
+              className={styles['column']}
+              aria-label={formatMessage({ id: 'ui.loading' })}
+            >
               <Skeleton width={getSkeletonWidth(column.width as number)} height="2rem" />
             </td>
           ))}
@@ -123,7 +129,7 @@ export function WorkflowsTableGrid({
                       style={{ height: tableHeight }}
                       onMouseDown={(event) => handleMouseDown(event, column.id, column.minWidth)}
                       role="button"
-                      aria-label={`Resize column ${column.id}`}
+                      aria-label={formatMessage({ id: 'workflows.resize-column' }, { column: column.id })}
                       tabIndex={0}
                       onKeyDown={(event) => {
                         if (event.key === 'Enter' || event.key === ' ') {

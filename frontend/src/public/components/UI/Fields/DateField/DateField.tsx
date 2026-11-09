@@ -96,7 +96,7 @@ export function DateField({
             {...props}
             disabled={disabled}
             isClearable={!icon}
-            onChange={(date) => onChange(date && new Date(moment(date).tz(timezone).format('YYYY/MM/DD')))}
+            onChange={(date) => onChange(date && new Date(moment(date).tz(timezone).locale('en').format('YYYY/MM/DD')))}
             placeholderText={placeholder}
             selected={selectedDate}
             value={value ? moment(value, 'YYYY-MM-DD').format('MMM DD, YYYY') : ''}

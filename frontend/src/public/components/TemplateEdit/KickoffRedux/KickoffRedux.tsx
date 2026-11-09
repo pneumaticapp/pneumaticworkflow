@@ -240,7 +240,7 @@ export function KickoffRedux({
         }}
         tabIndex={0}
         role="button"
-        aria-label="Toggle expand"
+        aria-label={formatMessage({ id: 'accessibility.toggle-expand' })}
       >
         {isArrayWithItems(fields) && <ExtraFieldsLabels extraFields={fields} />}
         <FieldsetOutputsPreview fieldsets={fieldsets || []} />
@@ -273,7 +273,7 @@ export function KickoffRedux({
         }
         tabIndex={embedded ? undefined : 0}
         role={embedded ? undefined : 'button'}
-        aria-label={embedded ? undefined : 'Toggle expand'}
+        aria-label={embedded ? undefined : formatMessage({ id: 'accessibility.toggle-expand' })}
       >
         <span className={styles['title']}>
           <IntlMessages id="template.kick-off-form-title" />

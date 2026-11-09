@@ -4,7 +4,7 @@
 }
 
 .btn-wrapper {
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 
 .btn-dropdown {
@@ -38,7 +38,7 @@
 .dropdown-item {
   padding: 4px 12px !important;
   color: var(--pneumatic-color-link) !important;
-  text-align: right !important;
+  text-align: end !important;
   background: var(--pneumatic-color-black100) !important;
   border-radius: 4px;
 
@@ -80,8 +80,8 @@
 
   &::before {
     position: absolute;
+    inset-inline-end: 8px;
     top: -8px;
-    right: 8px;
     width: 24px;
     height: 8px;
     content: '';

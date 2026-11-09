@@ -45,6 +45,7 @@ export const createResizeHandler = (
   templateId?: number,
 ) => {
   return (e: React.MouseEvent, colId: string, minWidth: number) => {
+    const direction = getComputedStyle(e.currentTarget).direction === 'rtl' ? -1 : 1;
     startX.current = e.clientX;
     startWidth.current = colWidths[colId];
     resizingCol.current = colId;
@@ -52,7 +53,7 @@ export const createResizeHandler = (
     const handleMouseMove = (event: MouseEvent) => {
       if (!resizingCol.current) return;
       requestAnimationFrame(() => {
-        const diff = event.clientX - startX.current;
+        const diff = (event.clientX - startX.current) * direction;
         const newWidth = Math.max(startWidth.current + diff, minWidth);
         setColWidths((prev: Record<string, number>) => {
           const newWidths = { ...prev, [resizingCol.current!]: newWidth! };

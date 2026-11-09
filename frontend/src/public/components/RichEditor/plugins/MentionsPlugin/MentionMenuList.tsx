@@ -1,10 +1,13 @@
 import React, { memo, useRef, useEffect, useLayoutEffect, useState } from 'react';
+import { useIntl } from 'react-intl';
+import { getLocaleDirection } from '../../../../lang/direction';
 import type { MentionMenuOption } from './types';
 import { getPositionRelativeToParent } from './getPositionRelativeToParent';
 import styles from './MentionsPlugin.css';
 
 type MentionMenuListProps = {
   rect: DOMRect;
+  getAnchorRect?: () => DOMRect;
   options: MentionMenuOption[];
   highlightedIndex: number;
   onSelect: (option: MentionMenuOption) => void;
@@ -13,11 +16,14 @@ type MentionMenuListProps = {
 
 function MentionMenuListComponent({
   rect,
+  getAnchorRect,
   options,
   highlightedIndex,
   onSelect,
   onHighlight,
 }: MentionMenuListProps): React.ReactElement {
+  const { locale } = useIntl();
+  const direction = getLocaleDirection(locale);
   const menuRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [visible, setVisible] = useState(false);
@@ -35,8 +41,23 @@ function MentionMenuListComponent({
   }, []);
 
   useLayoutEffect(() => {
-    setPosition(getPositionRelativeToParent(menuRef.current, rect));
-  }, [rect]);
+    let frame: number | undefined;
+    const updatePosition = () => {
+      setPosition(getPositionRelativeToParent(menuRef.current, getAnchorRect?.() ?? rect, 4, direction));
+    };
+    const scheduleUpdate = () => {
+      if (frame !== undefined) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(updatePosition);
+    };
+    updatePosition();
+    window.addEventListener('scroll', scheduleUpdate, true);
+    window.addEventListener('resize', scheduleUpdate);
+    return () => {
+      if (frame !== undefined) cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', scheduleUpdate, true);
+      window.removeEventListener('resize', scheduleUpdate);
+    };
+  }, [rect, getAnchorRect, direction]);
 
   useEffect(() => {
     const el = optionRefs.current[highlightedIndex];
@@ -50,6 +71,7 @@ function MentionMenuListComponent({
       ref={menuRef}
       className={`${styles.menu} ${visible ? styles['menu-visible'] : ''}`}
       role="listbox"
+      dir={direction}
       tabIndex={0}
       aria-activedescendant={options[highlightedIndex] ? `mention-option-${options[highlightedIndex].key}` : undefined}
       style={{
@@ -74,7 +96,7 @@ function MentionMenuListComponent({
           onClick={() => onSelect(option)}
           onMouseEnter={() => onHighlight(index)}
         >
-          {option.name}
+          <span dir="auto">{option.name}</span>
         </button>
       ))}
     </div>

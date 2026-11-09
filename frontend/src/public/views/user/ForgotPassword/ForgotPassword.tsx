@@ -5,7 +5,7 @@ import { useIntl } from 'react-intl';
 import ReCAPTCHA from 'react-google-recaptcha';
 
 import { ERoutes } from '../../../constants/routes';
-import { TITLES } from '../../../constants/titles';
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { IntlMessages } from '../../../components/IntlMessages';
 import { validateEmail } from '../../../utils/validators';
 import { Header, InputField, Button } from '../../../components/UI';
@@ -23,13 +23,11 @@ const INITIAL_VALUES_FORMIK: TForgotPasswordValues = {
 };
 
 export function ForgotPassword({ loading, isCaptchaRequired, sendForgotPassword }: IForgotPasswordProps) {
+  useDocumentTitle('ForgotPassword');
+
   const { formatMessage } = useIntl();
   const [captchaResetSignal, setCaptchaResetSignal] = useState(0);
   const prevLoadingRef = useRef(loading);
-
-  useEffect(() => {
-    document.title = TITLES.ForgotPassword;
-  }, []);
 
   useEffect(() => {
     if (prevLoadingRef.current && !loading) {
@@ -60,7 +58,7 @@ export function ForgotPassword({ loading, isCaptchaRequired, sendForgotPassword 
           });
 
           if (isCaptchaRequired && !values.captcha) {
-            errors.captcha = 'Failed verification captcha';
+            errors.captcha = formatMessage({ id: 'validation.captcha-failed' });
           }
 
           return errors;
@@ -70,6 +68,7 @@ export function ForgotPassword({ loading, isCaptchaRequired, sendForgotPassword 
           <form className={styles['form']} onSubmit={handleSubmit}>
             <InputField
               name="email"
+              type="email"
               title={formatMessage({ id: 'user.email' })}
               value={values.email}
               onChange={handleChange}

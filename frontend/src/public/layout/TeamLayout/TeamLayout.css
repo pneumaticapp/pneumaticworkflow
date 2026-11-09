@@ -9,7 +9,7 @@
   }
 
   &__item + &__item {
-    margin-left: 0.8rem;
+    margin-inline-start: 0.8rem;
 
     @media (--mobile) {
       margin: 0;

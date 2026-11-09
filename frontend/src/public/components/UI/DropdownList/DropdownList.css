@@ -2,8 +2,8 @@
 
 .dropdownlist__scrollbar {
   max-height: 35.2rem;
-  padding-right: 0 !important;
-  margin-right: 0 !important;
+  padding-inline-end: 0 !important;
+  margin-inline-end: 0 !important;
 }
 
 .dropdownlist-sm {
@@ -29,7 +29,7 @@
   }
 
   &__arrow {
-    margin-left: 4px;
+    margin-inline-start: 4px;
     color: var(--pneumatic-color-black16);
 
     &.is-open {
@@ -45,14 +45,14 @@
       display: block;
       width: 100%;
       padding: 1rem 1.6rem;
-      padding-right: 4rem;
+      padding-inline-end: 4rem;
     }
   }
 
   &__clear {
     position: absolute;
+    inset-inline-end: 1.6rem;
     top: 1rem;
-    right: 1.6rem;
     color: var(--pneumatic-color-black16);
     transition: all 0.3s ease;
 
@@ -77,8 +77,8 @@
     @mixin text-small;
 
     position: absolute;
+    inset-inline-start: 1.2rem;
     top: 0;
-    left: 1.2rem;
     z-index: 1;
     padding: 0 0.4rem;
     color: var(--pneumatic-color-black72);
@@ -87,7 +87,7 @@
 }
 
 .is-required {
-  margin-left: 0.2rem;
+  margin-inline-start: 0.2rem;
   color: var(--pneumatic-color-warning);
 }
 

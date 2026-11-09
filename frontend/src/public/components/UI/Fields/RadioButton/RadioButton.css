@@ -4,7 +4,7 @@
 
 .radio {
   display: inline-flex;
-  padding-left: 2.8rem;
+  padding-inline-start: 2.8rem;
   margin-bottom: 0;
 }
 
@@ -22,7 +22,7 @@
   box-sizing: border-box;
   width: 2rem;
   height: 2rem;
-  margin-left: -2.8rem;
+  margin-inline-start: -2.8rem;
   background-color: transparent;
   border: 0.1rem solid var(--pneumatic-color-black16);
   border-radius: 0.4rem;
@@ -30,10 +30,9 @@
 
   &::after {
     position: absolute;
+    inset-inline: 0.7rem;
     top: 0.7rem;
-    right: 0.7rem;
     bottom: 0.7rem;
-    left: 0.7rem;
     display: block;
     width: 0.6rem;
     height: 0.6rem;

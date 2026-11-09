@@ -19,7 +19,7 @@
     p {
       display: block;
       margin-bottom: 0;
-      font-family: Nunito, sans-serif;
+      font-family: var(--pneumatic-font-sans);
       font-size: 13px;
       line-height: 16px;
       color: #fdf7ee;

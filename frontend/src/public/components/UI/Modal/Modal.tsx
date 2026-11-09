@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Modal as BootstrapModal } from 'reactstrap';
 import classnames from 'classnames';
+import { useIntl } from 'react-intl';
 
 import { ClearIcon } from '../../icons';
 
@@ -14,6 +15,7 @@ interface IModalProps {
 }
 
 export function Modal({ isOpen, children, width = 'sm', onClose }: IModalProps) {
+  const { formatMessage } = useIntl();
   return (
     <BootstrapModal
       isOpen={isOpen}
@@ -29,7 +31,7 @@ export function Modal({ isOpen, children, width = 'sm', onClose }: IModalProps) 
           onClick={onClose}
           type="button"
           className={styles['close-button']}
-          aria-label="Close modal"
+          aria-label={formatMessage({ id: 'general.close' })}
           data-test-id="close"
         >
           <ClearIcon />

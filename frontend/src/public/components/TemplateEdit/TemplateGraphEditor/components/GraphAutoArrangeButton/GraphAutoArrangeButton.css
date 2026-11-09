@@ -1,6 +1,6 @@
 .graph-auto-arrange {
   position: absolute;
+  inset-inline-start: 0;
   top: 1.6rem;
-  left: 0;
   z-index: 5;
 }

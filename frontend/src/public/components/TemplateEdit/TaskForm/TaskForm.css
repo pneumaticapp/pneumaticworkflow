@@ -35,8 +35,8 @@
 
   .taskform__remove-rule {
     position: absolute;
+    inset-inline-end: 0.4rem;
     top: 1.2rem;
-    right: 0.4rem;
     padding: 0;
     color: var(--pneumatic-color-notification1);
     background: transparent;

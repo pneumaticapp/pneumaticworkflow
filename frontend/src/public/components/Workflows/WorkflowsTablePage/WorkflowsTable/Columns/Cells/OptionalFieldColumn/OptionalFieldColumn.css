@@ -4,7 +4,7 @@
 }
 
 .field-column__file-item {
-  margin-right: 0.4rem;
+  margin-inline-end: 0.4rem;
   color: var(--pneumatic-color-link-dark);
   text-decoration: none;
   cursor: pointer;
@@ -18,7 +18,7 @@
 .field-column__file-item svg {
   position: relative;
   display: inline;
-  margin-right: 0.8rem;
+  margin-inline-end: 0.8rem;
 }
 
 .field-column__image-icon {

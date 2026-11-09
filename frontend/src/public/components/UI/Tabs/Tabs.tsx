@@ -52,6 +52,7 @@ export function Tabs<TOption extends TOptionBase>({
           <button
             key={value.id}
             type="button"
+            title={typeof value.label === 'string' ? value.label : undefined}
             onClick={handleClickItem(value)}
             className={classnames(
               styles['tab'],

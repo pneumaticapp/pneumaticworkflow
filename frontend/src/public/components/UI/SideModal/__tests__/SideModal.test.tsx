@@ -8,7 +8,7 @@ jest.mock('../../../icons', () => ({ ClearIcon: () => null }));
 jest.mock('../../../../utils/history', () => ({ history: { listen: jest.fn() } }));
 
 describe('SideModal', () => {
-  const CLOSE_BUTTON_NAME = 'Close modal';
+  const CLOSE_BUTTON_NAME = 'Close';
   const CHILDREN_TEXT = 'Modal content';
   const onClose = jest.fn();
 

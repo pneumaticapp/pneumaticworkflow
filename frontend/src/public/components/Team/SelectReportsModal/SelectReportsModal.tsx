@@ -86,7 +86,7 @@ export function SelectReportsModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className={styles['select-reports-modal']}>
-        <p className={styles['select-reports-modal__title']}>Select Reports</p>
+        <p className={styles['select-reports-modal__title']}>{formatMessage({ id: 'team.select-reports' })}</p>
 
         <div className={styles['select-reports-modal__content']}>
           <UsersDropdownComponent
@@ -96,13 +96,13 @@ export function SelectReportsModal({
             value={selectedReports}
             onChange={handleAddReport as any}
             onChangeSelected={handleRemoveReport as any}
-            inviteLabel="Invite member"
+            inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
             isTeamInvitesModalOpen={false}
             recentInvitedUsers={[]}
             isAdmin={false} // don't allow inviting from here initially for simplicity
             openTeamInvitesPopup={() => dispatch(openTeamInvitesPopup())}
             onClickInvite={() => {}}
-            placeholder="Search"
+            placeholder={formatMessage({ id: 'nav.search' })}
           />
           <ul className={styles['select-reports-modal__performers']}>
             {selectedReports.map((report) => (

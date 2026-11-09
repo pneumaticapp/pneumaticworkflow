@@ -10,6 +10,7 @@ import { EUserStatus } from '../../types/user';
 import { EAuthActions, EAuthUserFailType, TAuthActions } from './actions';
 import { setCurrentPlan, changeUserManager, changeUserReports } from '../accounts/slice';
 import { ESubscriptionPlan } from '../../types/account';
+import { normalizeLocale } from '../../lang/locale';
 
 const { invitedUser } = getBrowserConfig();
 
@@ -66,6 +67,8 @@ const EMPTY_USER: IAuthUser = {
  * but internal Redux state uses `reportIds`.
  */
 function normalizeSubordinates(data: Record<string, any>): Record<string, any> {
+  const language = normalizeLocale(data?.language);
+  if (language) data = { ...data, language };
   if (data && 'subordinatesIds' in data && !('reportIds' in data)) {
     const { subordinatesIds, ...rest } = data;
     return { ...rest, reportIds: subordinatesIds };

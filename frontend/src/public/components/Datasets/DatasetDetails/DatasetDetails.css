@@ -47,20 +47,20 @@
 
   .search-field__input {
     height: auto;
-    padding-left: 2.8rem;
+    padding-inline-start: 2.8rem;
     border: 0;
   }
 
   /* stylelint-disable max-nesting-depth, selector-max-compound-selectors */
   .dataset__sorting-container {
-    padding-right: 0;
+    padding-inline-end: 0;
 
     @media (--mobile) {
       button {
         justify-content: flex-end;
 
         svg {
-          margin-left: 0;
+          margin-inline-start: 0;
         }
       }
     }

@@ -39,10 +39,10 @@
 }
 
 .extra-field-document {
-  margin-right: 1rem;
+  margin-inline-end: 1rem;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
   font-size: 1.5rem;
   line-height: 2rem;
   color: #fec336;
@@ -91,7 +91,7 @@
 }
 
 .images-list__image-container:last-child {
-  margin-right: 0;
+  margin-inline-end: 0;
 }
 
 .extra-field-image {
@@ -110,8 +110,8 @@
 .extra-field-image__delete-button {
   all: unset;
   position: absolute;
+  inset-inline-end: -0.6rem;
   top: -0.6rem;
-  right: -0.6rem;
   display: flex;
   padding: 0;
 }
@@ -169,7 +169,8 @@
 
 .extra-field-file__input-name--template {
   min-width: 0;
-  padding: 0 0.4rem 0 0;
+  padding-block: 0;
+  padding-inline: 0 0.4rem;
   overflow-wrap: break-word;
   resize: none;
   border: none;
@@ -202,7 +203,7 @@
   display: block;
   margin-top: 0.4rem;
   margin-bottom: 0;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
   font-size: 1.3rem;
   line-height: 1.6rem;
   color: #fc5b67;
@@ -226,7 +227,7 @@
 .extra-field-file__field-name {
   display: inline-block;
   max-width: 100%;
-  padding-right: 0.4rem;
+  padding-inline-end: 0.4rem;
   margin-bottom: 0.8rem;
   overflow-wrap: anywhere;
 }

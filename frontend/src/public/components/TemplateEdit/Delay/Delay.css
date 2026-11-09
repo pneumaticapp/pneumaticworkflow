@@ -1,7 +1,8 @@
 .delay {
   position: relative;
   width: 100%;
-  padding: 32px 74px 32px 32px;
+  padding-block: 32px;
+  padding-inline: 32px 74px;
   margin-bottom: 16px;
   background: white;
   border-radius: 24px;
@@ -9,8 +10,8 @@
 
 .card-more-container {
   position: absolute;
+  inset-inline-end: 32px;
   top: 32px;
-  right: 32px;
 }
 
 .card-more {
@@ -26,7 +27,7 @@
 
 .header__title {
   width: 100%;
-  font-family: 'Abhaya Libre', 'Times New Roman', Arial, serif;
+  font-family: var(--pneumatic-font-serif, 'Abhaya Libre', 'Times New Roman', Arial, serif);
   font-size: 20px;
   font-weight: 800;
   line-height: 24px;
@@ -45,7 +46,7 @@
 
 .body__hint {
   margin-bottom: 24px;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
   font-size: 15px;
   font-weight: bold;
   line-height: 20px;

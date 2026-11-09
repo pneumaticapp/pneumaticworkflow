@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { ChangeEvent, ReactNode, SVGAttributes, useState } from 'react';
 import classnames from 'classnames';
+import { useIntl } from 'react-intl';
+import { isRtlLocale } from '../../../lang/direction';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import { DropdownItem, DropdownMenu, DropdownToggle, Dropdown } from 'reactstrap';
 
@@ -118,6 +120,7 @@ export function FilterSelect<
     getOptionSelectionKey,
     id,
   } = props;
+  const { formatMessage, locale } = useIntl();
   const allOptions = flatGroupedOptions || options;
   const getSelectionKey = getOptionSelectionKey ?? ((option: TOption) => option[optionIdKey]);
   const [searchText, setSearchText] = useState('');
@@ -410,7 +413,7 @@ export function FilterSelect<
           <span className={styles['active-value__text']}>{renderPlaceholder(allOptions)}</span>
           {isMultiple && isArrayWithItems(selectedOptions) ? (
             <span
-              aria-label="Clear selected options"
+              aria-label={formatMessage({ id: 'ui.select-clear' })}
               aria-disabled={!!isDisabled}
               onClick={(e) => {
                 if (isDisabled) {
@@ -442,6 +445,7 @@ export function FilterSelect<
           )}
         </DropdownToggle>
         <DropdownMenu
+          right={isRtlLocale(locale)}
           className={classnames(
             styles['dropdown-menu'],
             styles['dropdown-menu_search'],

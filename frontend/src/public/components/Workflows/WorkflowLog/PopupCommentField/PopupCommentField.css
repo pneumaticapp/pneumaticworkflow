@@ -19,7 +19,7 @@
 .comment-field__avatar-container {
   flex-shrink: 0;
   align-self: flex-start;
-  margin-right: 1.6rem;
+  margin-inline-end: 1.6rem;
 
   @media (--mobile) {
     display: none;

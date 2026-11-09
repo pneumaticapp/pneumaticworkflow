@@ -29,5 +29,5 @@
 }
 
 .select-manager-modal__button-remove {
-  margin-left: auto;
+  margin-inline-start: auto;
 }

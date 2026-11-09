@@ -33,5 +33,5 @@
 
 .task_skeleton__button {
   display: inline-block;
-  margin-left: auto;
+  margin-inline-start: auto;
 }

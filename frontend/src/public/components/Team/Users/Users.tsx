@@ -16,7 +16,7 @@ import { SearchLargeIcon } from '../../icons';
 import { InputField } from '../../UI';
 import { AddButton } from '../../UI/Buttons/AddButton';
 import { TeamUserSkeleton } from '../TeamUserSkeleton';
-import { TITLES } from '../../../constants/titles';
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { PageTitle } from '../../PageTitle';
 import { EPageTitle } from '../../../constants/defaultValues';
 import { getIsUserSubsribed, getSubscriptionPlan } from '../../../redux/selectors/user';
@@ -34,6 +34,8 @@ import { loadInvitesUsers, openCreatePerformerModal, openTeamInvitesPopup } from
 import styles from './Users.css';
 
 export function Users({ userListSorting }: IUsersProps) {
+  useDocumentTitle('Team');
+
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
@@ -52,7 +54,6 @@ export function Users({ userListSorting }: IUsersProps) {
   useEffect(() => {
     dispatch(teamFetchStarted({}));
     dispatch(loadInvitesUsers());
-    document.title = TITLES.Team;
   }, [dispatch]);
 
   const getVisibleUsers = () => {

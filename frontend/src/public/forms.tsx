@@ -14,7 +14,7 @@ import { getFormsBasename } from './utils/identifyAppPart/constants';
 import { EPublicFormRoutes } from './constants/routes';
 import { SharedPublicForm, EmbeddedPublicForm } from './components/PublicFormsApp';
 import { AppLocale } from './lang';
-import { defaultLocale } from './constants/defaultValues';
+import { applyDocumentLocale } from './lang/document';
 
 /* polyfills */
 import 'promise-polyfill/src/polyfill';
@@ -29,7 +29,9 @@ const {
 const formsHistory = createBrowserHistory({
   basename: getFormsBasename(window.location.pathname) || '/',
 });
-const currentAppLocale = AppLocale[defaultLocale];
+const formsLocale = store.getState().settings.locale;
+const currentAppLocale = AppLocale[formsLocale];
+applyDocumentLocale(formsLocale);
 
 ReactDOM.render(
   <Provider store={store}>

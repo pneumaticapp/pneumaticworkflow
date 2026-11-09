@@ -1,6 +1,6 @@
 import { isSameYear } from 'date-fns';
 import moment from 'moment';
-import 'moment/locale/ru';
+import '../lang/momentLocale';
 
 import { PNEUMATIC_SUFFIX } from '../constants/titles';
 import { getPairedArrayItems } from './helpers';
@@ -18,7 +18,7 @@ export function getDate(dateString?: string, config?: { view: 'date' | 'day' }, 
   const { view } = config || { view: 'date' };
 
   if (!currentLocale) {
-    currentLocale = ELocale.English;
+    currentLocale = moment.locale() || ELocale.English;
   }
   date.locale(currentLocale);
 
@@ -35,6 +35,7 @@ export function getDate(dateString?: string, config?: { view: 'date' | 'day' }, 
 
 export function getTime(dateString: string, timezone: string, formatTime: string) {
   return moment(dateString)
+    .locale('en')
     .tz(timezone, false)
     .format(formatTime.split(', ')[2] === 'p' ? 'h:mma' : 'HH:mm');
 }

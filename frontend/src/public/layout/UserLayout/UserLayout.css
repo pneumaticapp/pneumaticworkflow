@@ -86,7 +86,10 @@
   height: 100%;
   padding: 80px 32px;
   background: white;
-  border-radius: 32px 0 0 32px;
+  border-start-start-radius: 32px;
+  border-start-end-radius: 0;
+  border-end-start-radius: 32px;
+  border-end-end-radius: 0;
 
   @media (--mobile) {
     height: auto;

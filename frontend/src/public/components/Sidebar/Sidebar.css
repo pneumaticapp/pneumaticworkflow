@@ -106,12 +106,12 @@
 
 .sidebar-ribbon {
   position: absolute;
+  inset-inline-end: -0.1rem;
   top: 2.4rem;
-  right: -0.1rem;
   z-index: -1;
   width: calc(100% - 2.5rem);
   height: 2.4rem;
-  text-align: right;
+  text-align: end;
 
   @media (--mobile) {
     top: 2rem;
@@ -121,7 +121,7 @@
 .sidebar-ribbon__label {
   position: relative;
   z-index: 1;
-  padding-right: 1.6rem;
+  padding-inline-end: 1.6rem;
   font-size: 1.3rem;
   font-weight: bold;
   line-height: 1.6rem;
@@ -136,8 +136,8 @@
 
 .sidebar-ribbon-tail {
   position: absolute;
+  inset-inline-end: -0.4rem;
   top: 50%;
-  right: -0.4rem;
   z-index: 0;
   margin-top: -1.2rem;
 }
@@ -154,16 +154,16 @@
 
 .counter_container {
   position: absolute;
+  inset-inline-start: 1.8rem;
   top: -0.4rem;
-  left: 1.8rem;
   display: flex;
   justify-content: flex-end;
   width: 3.7rem;
 
   @media (--mobile) {
+    inset-inline-start: -0.5rem;
     top: auto;
     bottom: 1.2rem;
-    left: -0.5rem;
   }
 }
 
@@ -195,8 +195,8 @@
     }
 
     @media (--mobile) {
+      inset-inline-start: 16.6rem;
       top: 0.3rem;
-      left: 16.6rem;
     }
   }
 }
@@ -214,16 +214,16 @@
 .logo {
   @media (--mobile) {
     position: absolute;
+    inset-inline-start: 1.6rem;
     top: 1.6rem;
-    left: 1.6rem;
     z-index: 1;
   }
 }
 
 .help {
   position: absolute;
+  inset-inline-start: 1.6rem;
   bottom: 1.6rem;
-  left: 1.6rem;
   display: flex;
   align-items: center;
   padding: 0;
@@ -239,13 +239,13 @@
 }
 
 .help-text {
-  margin-left: 1.2rem;
+  margin-inline-start: 1.2rem;
   font-size: 1.3rem;
   font-weight: bold;
   line-height: 1.6rem;
 
   @media (--mobile) {
-    margin-left: 1.6rem;
+    margin-inline-start: 1.6rem;
   }
 }
 
@@ -260,8 +260,8 @@
 
   @media (--desktop) {
     position: absolute;
+    inset-inline-start: 1.6rem;
     top: 1.6rem;
-    left: 1.6rem;
     z-index: 1;
     display: block;
     outline: none;
@@ -271,12 +271,14 @@
 
 .logo-mobile {
   position: absolute;
+  inset-inline-start: 0;
   top: 1.6rem;
-  left: 0;
   z-index: 1040;
   width: 6.4rem;
   height: 6.4rem;
-  border-radius: 0 3.2rem 3.2rem 0;
+  border-radius: 0;
+  border-start-end-radius: 3.2rem;
+  border-end-end-radius: 3.2rem;
 
   @media (--desktop) {
     display: none;
@@ -357,18 +359,18 @@
   transition: margin 0.1s ease;
 
   @media (--mobile) {
-    margin-right: 0.8rem;
+    margin-inline-end: 0.8rem;
   }
 }
 
 :global(.menu-default:not(.main-hidden)) .start-button__icon {
-  margin-right: 0.8rem;
+  margin-inline-end: 0.8rem;
 }
 
 .start-button__text {
   position: absolute;
   margin-bottom: 0;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans);
   font-size: 1.5rem;
   font-weight: 800;
   line-height: 2rem;
@@ -389,9 +391,18 @@
   justify-content: center;
 }
 
+:global(html[dir='rtl']) :global(.sidebar) {
+  --sidebar-hidden-offset: 7.2rem;
+  --sidebar-active-rotation: 0deg;
+}
+
+:global(html[dir='rtl']) .sidebar-ribbon-tail {
+  transform: scaleX(-1);
+}
+
 .menu-wrapper__list {
   width: 100%;
-  padding-left: 0;
+  padding-inline-start: 0;
   margin: auto;
   list-style: none;
 
@@ -403,14 +414,14 @@
 /* STYLES FROM GENREAL TEMPLATE */
 :global(.menu-default) :global(.main-menu) :global(li.active)::after {
   position: absolute;
+  inset-inline-end: 0;
   top: calc(50% - 0.8rem);
-  right: 0;
   width: 0.4rem;
   height: 1.6rem;
   content: ' ';
   background: var(--pneumatic-color-white);
   clip-path: polygon(0 0, 100% 50%, 0 100%);
-  transform: rotate(180deg);
+  transform: rotate(var(--sidebar-active-rotation, 180deg));
 }
 
 :global(.sub-hidden) :global(.main-menu) :global(li.active)::after {
@@ -418,6 +429,8 @@
 }
 
 :global(.sidebar) {
+  --sidebar-hidden-offset: -7.2rem;
+
   position: fixed;
   top: 0;
   bottom: 0;
@@ -431,20 +444,22 @@
 }
 
 :global(.sidebar) :global(.scrollbar-container) {
-  padding-right: 0;
-  margin-right: 0;
+  padding-inline-end: 0;
+  margin-inline-end: 0;
 }
 
 :global(.sidebar) :global(.main-menu) {
   position: fixed;
+  inset-inline-start: 0;
   top: 1rem;
   bottom: 1rem;
-  left: 0;
   z-index: 3;
   width: 20rem;
   padding-top: 6.6rem;
   padding-bottom: 6.6rem;
-  border-radius: 0 2rem 2rem 0;
+  border-radius: 0;
+  border-start-end-radius: 2rem;
+  border-end-end-radius: 2rem;
   transition:
     transform var(--menu-collapse-time),
     width var(--menu-collapse-time);
@@ -457,8 +472,8 @@
 
 :global(.main-menu) :global(.scroll) {
   height: 100%;
-  padding-right: unset;
-  margin-right: unset;
+  padding-inline-end: unset;
+  margin-inline-end: unset;
 }
 
 :global(.main-menu) :global(.scroll) :global(.ps__thumb-y) {
@@ -482,10 +497,11 @@
 }
 
 :global(.main-menu) :global(li) :global(span) {
-  padding: 0 0 0 1.6rem;
+  padding-block: 0;
+  padding-inline: 1.6rem 0;
   font-size: 1.1rem;
   line-height: 1.6rem;
-  text-align: left;
+  text-align: start;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -494,7 +510,7 @@
   display: flex;
   align-items: center;
   width: auto;
-  padding-left: 2.3rem;
+  padding-inline-start: 2.3rem;
   font-size: 1.5rem;
   font-style: normal;
   font-weight: bold;
@@ -510,12 +526,12 @@
 }
 
 :global(.main-menu) :global(ul) :global(li.active)::after {
-  right: 0;
-  left: initial;
+  inset-inline-start: initial;
+  inset-inline-end: 0;
   content: ' ';
 
   @media (--mobile) {
-    right: 0.2rem;
+    inset-inline-end: 0.2rem;
     width: 0.3rem;
     height: 6rem;
   }
@@ -542,12 +558,12 @@
   transform: none;
 
   @media (--mobile) {
-    transform: translateX(-7.2rem);
+    transform: translateX(var(--sidebar-hidden-offset));
   }
 }
 
 :global(.menu-mobile) :global(.main-menu) {
-  transform: translateX(-7.2rem);
+  transform: translateX(var(--sidebar-hidden-offset));
 }
 
 :global(.main-show-temporary) :global(.main-menu) {

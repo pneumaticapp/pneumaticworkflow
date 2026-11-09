@@ -5,7 +5,7 @@
   margin-bottom: 1px;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
   font-size: 13px;
   font-weight: normal;
   line-height: 16px;

@@ -16,8 +16,8 @@
 
 .title {
   position: absolute;
+  inset-inline-start: 12px;
   top: 0;
-  left: 12px;
   z-index: 0;
   padding: 0 4px;
   font-size: 13px;
@@ -61,11 +61,11 @@
   }
 
   .input-field_with-clearing {
-    padding-right: 43px;
+    padding-inline-end: 43px;
   }
 
   .clear-button {
-    right: 16px;
+    inset-inline-end: 16px;
   }
 }
 
@@ -77,11 +77,11 @@
   }
 
   .input-field_with-clearing {
-    padding-right: 43px;
+    padding-inline-end: 43px;
   }
 
   .clear-button {
-    right: 16px;
+    inset-inline-end: 16px;
   }
 }
 
@@ -93,17 +93,34 @@
   }
 
   .input-field_with-clearing {
-    right: 8px;
-    padding-right: 27px;
+    inset-inline-end: 8px;
+    padding-inline-end: 27px;
   }
 
   .clear-button {
-    right: 8px;
+    inset-inline-end: 8px;
   }
 }
 
 .input-field_with-icon {
-  padding-right: 50px;
+  padding-inline-end: 50px;
+}
+
+/* Technical values read LTR, while buttons retain the surrounding UI direction.
+   Reserve their space using the wrapper's direction rather than the input's. */
+:global([dir='rtl']) .input-field_ltr.input-field_with-clearing {
+  padding-right: 16px;
+  padding-left: 43px;
+}
+
+:global([dir='rtl']) .container_sm .input-field_ltr.input-field_with-clearing {
+  padding-right: 16px;
+  padding-left: 27px;
+}
+
+:global([dir='rtl']) .input-field_ltr.input-field_with-icon {
+  padding-right: 16px;
+  padding-left: 50px;
 }
 
 .input-with-rigt-content-wrapper {
@@ -112,8 +129,8 @@
 
 .icon {
   position: absolute;
+  inset-inline-end: 0;
   top: 0;
-  right: 0;
   bottom: 0;
   display: flex;
   align-items: center;
@@ -125,8 +142,8 @@
 
 .password-toggle {
   position: absolute;
+  inset-inline-end: 0;
   top: 0;
-  right: 0;
   bottom: 0;
   display: flex;
   align-items: center;

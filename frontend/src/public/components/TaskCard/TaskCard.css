@@ -86,8 +86,8 @@
 .task-name__urgent-marker {
   display: inline-flex;
   padding: 0.1rem 0.8rem;
+  margin-inline-end: 0.8rem;
   margin-top: -0.2rem;
-  margin-right: 0.8rem;
   font-size: 1.3rem;
   font-weight: normal;
   line-height: 1.6rem;
@@ -144,11 +144,11 @@
 }
 
 .performer__avatar {
-  margin-right: 0.4rem;
+  margin-inline-end: 0.4rem;
 }
 
 .performer__delete {
-  margin-left: 0.4rem;
+  margin-inline-start: 0.4rem;
   color: var(--pneumatic-color-black16);
   cursor: pointer;
   transition: color 0.1s ease-in-out;
@@ -215,7 +215,7 @@
   color: var(--pneumatic-color-warning);
 
   &-icon {
-    margin-right: 0.4rem;
+    margin-inline-end: 0.4rem;
   }
 }
 
@@ -224,8 +224,9 @@
 
   :global .react-datepicker-wrapper input {
     width: 100% !important;
-    padding: 1.4rem 5rem 1.4rem 1.6rem !important;
-    font-family: Nunito, sans-serif !important;
+    padding-block: 1.4rem !important;
+    padding-inline: 1.6rem 5rem !important;
+    font-family: var(--pneumatic-font-sans) !important;
     font-size: 1.5rem !important;
     line-height: 2rem !important;
     color: var(--pneumatic-color-black100) !important;
@@ -249,7 +250,7 @@
   display: flex;
 
   > * + * {
-    margin-left: 0.8rem;
+    margin-inline-start: 0.8rem;
   }
 }
 
@@ -277,7 +278,8 @@
   justify-content: center;
 
   &__text {
-    margin: 0 0 0 0.8rem;
+    margin-block: 0;
+    margin-inline: 0.8rem 0;
     font-size: 1.3rem;
     line-height: 1.6rem;
   }
@@ -299,7 +301,7 @@
   display: block;
   flex-shrink: 0;
   padding: 0.6rem 0;
-  margin-left: 0.8rem;
+  margin-inline-start: 0.8rem;
 
   @media (--mobile) {
     margin: 3.2rem 0 0;
@@ -316,8 +318,8 @@
   gap: 0.4rem;
   align-items: center;
   padding: 0;
+  margin-inline-start: auto;
   margin-bottom: 1.6rem;
-  margin-left: auto;
   font: inherit;
   color: var(--pneumatic-color-link-dark);
   cursor: pointer;

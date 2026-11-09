@@ -52,7 +52,9 @@ export function ProfileReports({ currentUserId, reportIds = [], editCurrentUser 
 
   return (
     <div className={styles['manager-section']}>
-      <SectionTitle className={styles['fields-group__title']}>Reports</SectionTitle>
+      <SectionTitle className={styles['fields-group__title']}>
+        {formatMessage({ id: 'user-info.reports' })}
+      </SectionTitle>
 
       {reports && reports.length > 0 ? (
         <>
@@ -75,7 +77,7 @@ export function ProfileReports({ currentUserId, reportIds = [], editCurrentUser 
           <Button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            label="Edit reports"
+            label={formatMessage({ id: 'user-info.reports.edit' })}
             buttonStyle="transparent-black"
             size="sm"
             className={styles['manager-card__edit-btn']}
@@ -85,7 +87,7 @@ export function ProfileReports({ currentUserId, reportIds = [], editCurrentUser 
         <Button
           type="button"
           onClick={() => setIsModalOpen(true)}
-          label="Add reports"
+          label={formatMessage({ id: 'user-info.reports.add' })}
           buttonStyle="transparent-black"
           size="sm"
         />

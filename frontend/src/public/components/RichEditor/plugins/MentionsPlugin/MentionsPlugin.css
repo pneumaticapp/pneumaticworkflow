@@ -22,6 +22,10 @@
   transform: scale(1);
 }
 
+.menu[dir='rtl'] {
+  transform-origin: top right;
+}
+
 .item {
   box-sizing: border-box;
   display: block;
@@ -30,7 +34,7 @@
   overflow-x: clip;
   text-overflow: ellipsis;
   color: var(--pneumatic-color-black100);
-  text-align: left;
+  text-align: start;
   white-space: nowrap;
   cursor: pointer;
   background: transparent;

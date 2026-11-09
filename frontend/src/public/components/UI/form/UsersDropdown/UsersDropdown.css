@@ -5,7 +5,7 @@
   color: var(--pneumatic-color-black100);
 
   &__icon {
-    margin-right: 0.8rem;
+    margin-inline-end: 0.8rem;
   }
 }
 
@@ -37,7 +37,7 @@
 
   &__avatar {
     flex-shrink: 0;
-    margin-right: 0.8rem;
+    margin-inline-end: 0.8rem;
   }
 
   &__checkbox,

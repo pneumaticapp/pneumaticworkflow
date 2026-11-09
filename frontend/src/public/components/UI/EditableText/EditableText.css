@@ -4,7 +4,7 @@
 
 .edit-button {
   position: relative;
-  left: 8px;
+  inset-inline-start: 8px;
   color: var(--pneumatic-color-link);
   cursor: pointer;
   transition: color 0.1s ease-in-out;

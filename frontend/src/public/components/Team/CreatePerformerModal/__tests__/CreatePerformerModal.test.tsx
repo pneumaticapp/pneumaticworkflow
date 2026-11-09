@@ -796,7 +796,7 @@ describe('CreatePerformerModal', () => {
 
     it('closes the modal through the store', async () => {
       await openModal();
-      const closeButtons = screen.getAllByRole('button', { name: 'Close modal' });
+      const closeButtons = screen.getAllByRole('button', { name: 'Close' });
       const headerCloseButton = closeButtons.find((button) => button.classList.contains('close-button'));
       expect(headerCloseButton).toBeInTheDocument();
       await userEvent.click(headerCloseButton!);

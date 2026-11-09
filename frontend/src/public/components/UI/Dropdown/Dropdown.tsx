@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import classnames from 'classnames';
+import { useIntl } from 'react-intl';
 import { UncontrolledDropdown, DropdownToggle, DropdownMenu } from 'reactstrap';
 import OutsideClickHandler from '../OutsideClickHandler';
 
@@ -11,6 +12,7 @@ import { ArrowRightIcon } from '../../icons';
 import styles from './Dropdown.css';
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
 import { Tooltip } from '../Tooltip';
+import { isRtlLocale } from '../../../lang/direction';
 
 type TDropdownItemColor = 'black' | 'green' | 'red' | 'orange';
 
@@ -74,6 +76,8 @@ export function Dropdown({
   isFromBreakdownItem,
   isDisabled = false,
 }: IDropdownProps) {
+  const { locale } = useIntl();
+  const isRtl = isRtlLocale(locale);
   const [isOpen, setIsOpen] = useState(false);
   const { isDesktop, isMobile } = useCheckDevice();
   const onToggle = () => {
@@ -143,7 +147,7 @@ export function Dropdown({
         return (
           <UncontrolledDropdown
             key={`submenu-${typeof label === 'string' ? label : mapKey}`}
-            direction="right"
+            direction={isRtl ? 'left' : 'right'}
             className={optionClassName}
           >
             <DropdownToggle
@@ -151,7 +155,7 @@ export function Dropdown({
               className={classnames(styles['dropdown-item'], getDropdownItemColorClass(color))}
             >
               <span className={styles['label']}>{label}</span>
-              <ArrowRightIcon className={styles['dropdown-item-icon']} />
+              <ArrowRightIcon className={classnames(styles['dropdown-item-icon'], styles['submenu-arrow'])} />
             </DropdownToggle>
             {subOptions ? (
               renderOptions(subOptions, level + 1)
@@ -281,6 +285,8 @@ export function DefaultDropdownMenu({
   positionFixed = false,
   container,
 }: IDropdownMenuProps) {
+  const { locale } = useIntl();
+  const alignRight = isRtlLocale(locale) ? direction === 'left' : direction === 'right';
   const content = renderMenuContent?.(renderedOptions) || renderedOptions;
 
   return (
@@ -289,11 +295,11 @@ export function DefaultDropdownMenu({
         'dropdown-menu': classnames(
           styles['dropdown-menu'],
           isWide && styles['dropdown-menu_wide'],
-          !positionFixed && styles['dropdown-menu_bootstrap-placement'],
+          !positionFixed && level === 0 && styles['dropdown-menu_bootstrap-placement'],
         ),
         show: styles['dropdown-menu_show'],
       }}
-      right={level === 0 && direction === 'right'}
+      right={level === 0 && alignRight}
       className={className}
       modifiers={{ preventOverflow: { boundariesElement: 'window' } }}
       positionFixed={positionFixed}

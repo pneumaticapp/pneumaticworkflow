@@ -1,6 +1,7 @@
 import React, { PropsWithChildren } from 'react';
 import { CellProps } from 'react-table';
 import { useDispatch } from 'react-redux';
+import { useIntl } from 'react-intl';
 
 import { setFilterWorkflowStarters as setWorkflowsFilterWorkflowStarters } from '../../../../../../../redux/workflows/slice';
 import { UserData } from '../../../../../../UserData';
@@ -13,6 +14,7 @@ import styles from './StarterColumn.css';
 type TProps = PropsWithChildren<CellProps<TableColumns, TableColumns['system-column-starter']>>;
 
 export function StarterColumn({ value: { workflowStarter, isExternal } }: TProps) {
+  const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
   return (
@@ -33,7 +35,7 @@ export function StarterColumn({ value: { workflowStarter, isExternal } }: TProps
             <button
               onClick={() => dispatch(setWorkflowsFilterWorkflowStarters([currentUser.id]))}
               type="button"
-              aria-label="select this starter for filtering"
+              aria-label={formatMessage({ id: 'workflows.filter-select-starter' })}
             >
               <Avatar user={currentUser} size="sm" withTooltip />
             </button>

@@ -32,7 +32,7 @@
 }
 
 .images-list__image-container:last-child {
-  margin-right: 0;
+  margin-inline-end: 0;
 }
 
 .images-list__image-container_loading {
@@ -56,8 +56,8 @@
 .image__delete-button {
   all: unset;
   position: absolute;
+  inset-inline-end: 0;
   top: 0;
-  right: 0;
   display: flex;
   color: var(--pneumatic-color-black88);
   cursor: pointer;
@@ -96,7 +96,7 @@
   display: flex;
   flex: 1;
   min-width: 0;
-  margin-right: 1rem;
+  margin-inline-end: 1rem;
   overflow: hidden;
   color: var(--pneumatic-color-link-dark);
   cursor: pointer;
@@ -123,7 +123,7 @@
 }
 
 .document__filename-text {
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans);
   font-size: 1.5rem;
   line-height: 2rem;
   direction: ltr;
@@ -132,7 +132,7 @@
 
 .document .document__icon {
   flex-shrink: 0;
-  margin-right: 0.8rem;
+  margin-inline-end: 0.8rem;
 }
 
 .document__delete-button {

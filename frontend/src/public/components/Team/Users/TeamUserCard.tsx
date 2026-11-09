@@ -80,8 +80,8 @@ export function TeamUserCard({ user, currentUserId, isSubscribed, onOpenVacation
       isHidden: isUserActive,
       Icon: AddUserIcon,
     },
-    { label: 'Manager', onClick: handleOpenManagerModal, isHidden: !isUserActive },
-    { label: 'Reports', onClick: handleOpenReportsModal, isHidden: !isUserActive },
+    { label: formatMessage({ id: 'user-info.manager' }), onClick: handleOpenManagerModal, isHidden: !isUserActive },
+    { label: formatMessage({ id: 'user-info.reports' }), onClick: handleOpenReportsModal, isHidden: !isUserActive },
     {
       label: formatMessage({ id: 'team.card-vacation-settings' }),
       onClick: handleOpenVacationModal,

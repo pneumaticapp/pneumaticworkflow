@@ -5,7 +5,7 @@ import { useIntl } from 'react-intl';
 
 import { confirmResetPassword, EResetPasswordStatus } from '../../../api/confirmResetPassword';
 import { ERoutes } from '../../../constants/routes';
-import { TITLES } from '../../../constants/titles';
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { getQueryStringParams, history } from '../../../utils/history';
 import { IConfirmResetPassword } from '../../../redux/actions';
 import { IntlMessages } from '../../../components/IntlMessages';
@@ -31,13 +31,11 @@ const INITIAL_VALUES_FORMIK: TResetPasswordValues = {
 };
 
 export function ResetPassword({ loading, sendResetPassword }: IResetPasswordProps) {
+  useDocumentTitle('ResetPassword');
+
   const { formatMessage } = useIntl();
 
   const [tokenLocal, setTokenLocal] = useState('');
-
-  useEffect(() => {
-    document.title = TITLES.ResetPassword;
-  }, []);
 
   useEffect(() => {
     const getToken = async () => {

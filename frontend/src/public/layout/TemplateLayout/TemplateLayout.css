@@ -10,7 +10,7 @@
   width: auto;
   min-width: 0;
   min-height: 0;
-  margin-right: 0 !important;
+  margin-inline-end: 0 !important;
   margin-bottom: 0 !important;
   overflow: hidden;
 }

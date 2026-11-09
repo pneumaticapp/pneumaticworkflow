@@ -5,7 +5,7 @@ import { useIntl } from 'react-intl';
 
 import { EOAuthType } from '../../../types/auth';
 import { ERoutes } from '../../../constants/routes';
-import { TITLES } from '../../../constants/titles';
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { IntlMessages } from '../../../components/IntlMessages';
 import { EAuthUserFailType } from '../../../redux/actions';
 import { NavLink } from '../../../components/NavLink';
@@ -29,6 +29,8 @@ const INITIAL_VALUES_FORMIK: TLoginValues = {
 };
 
 export function Login({ loading, error, loginUser, setRedirectUrl }: ILoginProps) {
+  useDocumentTitle('Login');
+
   const { formatMessage } = useIntl();
   const typeSSOProvider = envSSOProvider === SSOProvider.Auth0 ? EOAuthType.SSOAuth0 : EOAuthType.SSOOkta;
 
@@ -39,8 +41,6 @@ export function Login({ loading, error, loginUser, setRedirectUrl }: ILoginProps
 
     setRedirectUrl(redirectUrl);
     saveUTMParams();
-
-    document.title = TITLES.Login;
   }, []);
 
   const wrongCredentialsErrorMessage = () => {

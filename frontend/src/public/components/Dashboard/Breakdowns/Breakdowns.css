@@ -36,7 +36,7 @@
   flex-shrink: 0;
 
   @media (--desktop) {
-    margin-left: 1.6rem;
+    margin-inline-start: 1.6rem;
   }
 
   @media (--mobile) {
@@ -99,10 +99,10 @@
 
 .breakdown__title-text_with-image {
   width: 100%;
-  margin-left: 1.6rem;
+  margin-inline-start: 1.6rem;
 
   @media (--mobile) {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 
@@ -139,7 +139,7 @@
 }
 
 .breakdown__dashboard_task_label {
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans);
   font-size: 15px;
   font-weight: bold;
   line-height: 20px;
@@ -185,7 +185,7 @@
   }
 
   @media (--desktop) {
-    padding-right: 3.6rem;
+    padding-inline-end: 3.6rem;
   }
 
   @media (--mobile) {
@@ -202,7 +202,7 @@
 }
 
 .my_tasks__name {
-  padding-left: 0 !important;
+  padding-inline-start: 0 !important;
 }
 
 .task__number {
@@ -253,7 +253,7 @@
 }
 
 .breakdown__dashboard_cards_label {
-  font-family: 'Abhaya Libre', serif;
+  font-family: var(--pneumatic-font-serif);
   font-size: 20px;
   font-weight: 800;
   line-height: 40px;
@@ -267,7 +267,7 @@
 
 .breakdown__task_count {
   @media (--desktop) {
-    margin-left: 1.6rem;
+    margin-inline-start: 1.6rem;
   }
 
   @media (--mobile) {
@@ -282,7 +282,7 @@
 }
 
 .breakdown__card-blue {
-  margin-left: 0;
+  margin-inline-start: 0;
   background: var(--pneumatic-notification-4-light);
 }
 
@@ -295,7 +295,7 @@
 }
 
 .breakdown__card-green {
-  margin-right: 0.2rem;
+  margin-inline-end: 0.2rem;
   background: var(--pneumatic-notification-3-light);
 }
 
@@ -312,7 +312,7 @@
 .breakdown__skeleton-names {
   flex-grow: 1;
   max-width: 536px;
-  margin-right: 16px;
+  margin-inline-end: 16px;
 
   @media (--mobile) {
     display: none;
@@ -365,8 +365,7 @@
 
     > * {
       width: 100%;
-      margin-right: 0;
-      margin-left: 0;
+      margin-inline: 0;
     }
 
     > *:not(:last-child) {
@@ -388,7 +387,7 @@
 }
 
 .card__more {
-  margin-left: 16px;
+  margin-inline-start: 16px;
   color: var(--pneumatic-color-black32);
   transition: color 0.1s ease-in-out;
 }

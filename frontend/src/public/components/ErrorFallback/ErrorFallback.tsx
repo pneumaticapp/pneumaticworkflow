@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { AppLocale } from '../../lang';
+import { resolveLocale } from '../../lang/locale';
 
 import { captureException } from '../../utils/sentryCapture';
 import { getWithExpiry } from './utils/getWithExpiry';
@@ -26,6 +28,8 @@ function getErrorMessage(error: Error | unknown): string | undefined {
 }
 
 export function ErrorFallback({ error }: IErrorFallbackProps) {
+  // This boundary can render before App and its IntlProvider have mounted.
+  const locale = resolveLocale(typeof document === 'undefined' ? undefined : document.documentElement.lang);
   const message = getErrorMessage(error);
   const isChunkError = message !== undefined && chunkFailedMessage.test(message);
 
@@ -47,7 +51,7 @@ export function ErrorFallback({ error }: IErrorFallbackProps) {
 
   return (
     <div>
-      <p>Something went wrong.</p>
+      <p>{AppLocale[locale].messages['pages.error-fallback']}</p>
       <pre>{message ?? String(error)}</pre>
     </div>
   );

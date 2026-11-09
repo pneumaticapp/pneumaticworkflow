@@ -13,7 +13,7 @@
 .search__icon {
   position: absolute;
   top: 50%;
-  margin-left: 1.6rem;
+  margin-inline-start: 1.6rem;
   color: var(--pneumatic-color-black72);
   transform: translateY(-50%);
 }
@@ -23,7 +23,7 @@
 }
 
 .search-field__input {
-  padding-left: 4.8rem !important;
+  padding-inline-start: 4.8rem !important;
   background-color: var(--background-color);
 }
 

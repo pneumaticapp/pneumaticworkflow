@@ -1,8 +1,8 @@
 .return-to__container {
   position: relative;
   display: flex;
-  padding-right: 4rem;
-  margin-left: -0.4rem;
+  padding-inline-end: 4rem;
+  margin-inline-start: -0.4rem;
 
   .return-to__dropdown-container {
     width: 100%;

@@ -33,8 +33,8 @@
 
 .task-card-dropdown__menu {
   position: absolute;
+  inset-inline-end: 0;
   top: -0.2rem;
-  right: 0;
   z-index: 4;
   width: 19.2rem;
   height: 8rem;
@@ -57,7 +57,7 @@
   font-weight: normal;
   line-height: 2rem;
   color: var(--pneumatic-color-black100);
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   background: transparent;
   border: none;

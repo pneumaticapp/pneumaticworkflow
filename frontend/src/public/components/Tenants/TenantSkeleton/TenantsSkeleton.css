@@ -11,7 +11,7 @@
   &__names {
     flex-grow: 1;
     max-width: 536px;
-    margin-right: 16px;
+    margin-inline-end: 16px;
   }
 
   &__counters {

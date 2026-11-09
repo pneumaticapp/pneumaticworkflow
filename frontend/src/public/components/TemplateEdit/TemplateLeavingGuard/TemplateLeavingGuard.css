@@ -1,5 +1,6 @@
 .discard-button {
-  margin: 0 0 0 0.5rem;
+  margin-block: 0;
+  margin-inline: 0.5rem 0;
 
   @media (--mobile) {
     margin: 0.5rem 0 0;

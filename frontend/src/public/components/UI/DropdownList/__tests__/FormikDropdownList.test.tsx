@@ -35,4 +35,19 @@ describe('FormikDropdownList', () => {
 
     expect(screen.getByText('This field is required')).toBeInTheDocument();
   });
+
+  it.each(['lg', 'sm'] as const)('keeps the native listbox semantics for the %s custom menu', (controlSize) => {
+    render(
+      <DropdownList
+        label="Vendor"
+        controlSize={controlSize}
+        staticMenu={controlSize === 'sm'}
+        menuIsOpen
+        options={[{ label: 'OpenAI', value: 'openai' }]}
+      />,
+    );
+
+    expect(screen.getByRole('listbox')).toHaveAttribute('id', expect.stringContaining('-listbox'));
+    expect(screen.getByRole('option', { name: 'OpenAI' })).toBeVisible();
+  });
 });

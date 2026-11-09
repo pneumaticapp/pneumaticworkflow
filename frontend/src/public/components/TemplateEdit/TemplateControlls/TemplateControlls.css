@@ -24,8 +24,7 @@
 }
 
 .info-controls .info-control_switch {
-  margin-right: 12px;
-  margin-left: auto;
+  margin-inline: auto 12px;
 }
 
 .more-setting {
@@ -50,7 +49,7 @@
 }
 
 .more-setting__icon {
-  margin-right: 8px;
+  margin-inline-end: 8px;
 }
 
 .more-setting__text {
@@ -90,7 +89,7 @@
 
 .enable-button_disable {
   width: 40px;
-  margin-right: 8px;
+  margin-inline-end: 8px;
 }
 
 .run-button {
@@ -115,7 +114,8 @@
 }
 
 .external-links-warning__text {
-  margin: 0 0 0 8px;
+  margin-block: 0;
+  margin-inline: 8px 0;
   font-size: 15px;
   line-height: 20px;
   color: #f44336;
@@ -127,7 +127,8 @@
 }
 
 .keep-draf-button {
-  margin: 0 0 0 8px;
+  margin-block: 0;
+  margin-inline: 8px 0;
 
   @media (--mobile) {
     margin: 8px 0 0;

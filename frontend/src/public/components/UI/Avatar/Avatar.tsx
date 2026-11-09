@@ -1,5 +1,6 @@
 import * as React from 'react';
 import classnames from 'classnames';
+import { useIntl } from 'react-intl';
 
 import { EUserStatus, IUnsavedUser, TUserType } from '../../../types/user';
 import { getUserFullName } from '../../../utils/users';
@@ -54,6 +55,7 @@ export function Avatar({
   withTooltip,
   isEmpty,
 }: IAvatarProps) {
+  const { formatMessage } = useIntl();
   const tooltipTargerRef = React.useRef<HTMLDivElement>(null);
   const avatarSizeClassMap: { [key in TAvatarSize]: string } = {
     xxl: styles['avatar_xxl'],
@@ -107,7 +109,13 @@ export function Avatar({
     }
 
     if (photo) {
-      return <img className={classnames(styles['avatar'], ...sizeClasses, className)} alt="Profile" src={photo} />;
+      return (
+        <img
+          className={classnames(styles['avatar'], ...sizeClasses, className)}
+          alt={fullName || formatMessage({ id: 'nav.profile' })}
+          src={photo}
+        />
+      );
     }
 
     if (user.status === EUserStatus.Deleted) {

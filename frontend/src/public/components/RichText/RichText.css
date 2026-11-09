@@ -2,6 +2,7 @@
 .markdown-content {
   min-width: 0;
   max-width: 100%;
+  text-align: start;
   overflow-wrap: anywhere;
 
   p,
@@ -67,9 +68,21 @@
     }
   }
 
+  a,
+  .mention,
+  .bidi-isolate {
+    /* Keep inline names independent without hiding their text from an ancestor's dir=auto. */
+    unicode-bidi: plaintext;
+  }
+
+  a[dir='ltr'],
+  code {
+    unicode-bidi: isolate;
+  }
+
   ul,
   ol {
-    padding-left: 3.2rem;
+    padding-inline-start: 3.2rem;
     list-style-position: outside;
 
     li::marker {
@@ -79,6 +92,14 @@
     p:first-of-type {
       display: inline;
     }
+  }
+
+  ul:dir(rtl) > li:dir(ltr),
+  ol:dir(rtl) > li:dir(ltr),
+  ul:dir(ltr) > li:dir(rtl),
+  ol:dir(ltr) > li:dir(rtl) {
+    /* Move the inherited list indentation to the individual item's marker side. */
+    margin-inline: 3.2rem -3.2rem;
   }
 
   ul li {
@@ -152,10 +173,10 @@
 
 .more-link {
   position: absolute;
-  right: 0;
+  inset-inline-end: 0;
   bottom: 0;
   z-index: 1;
-  padding-left: 0.8rem;
+  padding-inline-start: 0.8rem;
   color: var(--pneumatic-color-link);
   white-space: nowrap;
   cursor: pointer;
@@ -175,7 +196,7 @@
   }
 
   &__hint {
-    margin-left: 0.8rem;
+    margin-inline-start: 0.8rem;
   }
 
   &__hint-icon {
@@ -217,7 +238,7 @@
     flex-shrink: 0;
     width: 2rem;
     height: 2rem;
-    margin-right: 0.8rem;
+    margin-inline-end: 0.8rem;
     background-color: transparent;
     border: 1px solid var(--pneumatic-color-black16);
     border-radius: 0.4rem;

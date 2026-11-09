@@ -3,7 +3,7 @@ import { RouteComponentProps } from 'react-router-dom';
 
 import { ETaskCardViewMode, TaskCardContainer } from '../TaskCard';
 import { TLoadCurrentTaskPayload } from '../../redux/actions';
-import { PNEUMATIC_SUFFIX, TITLES } from '../../constants/titles';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ITask } from '../../types/tasks';
 
 import styles from './TaskDetail.css';
@@ -21,11 +21,7 @@ export interface ITaskDetailProps extends RouteComponentProps {
 export function TaskDetail({ task, match, viewMode = ETaskCardViewMode.Single, loadCurrentTask }: ITaskDetailProps) {
   const { useEffect } = React;
 
-  useEffect(() => {
-    const pageTitle = task ? `${task.workflow.name} — ${task.name} ${PNEUMATIC_SUFFIX}` : TITLES.TasksDetail;
-
-    document.title = pageTitle;
-  }, [task]);
+  useDocumentTitle('TasksDetail', task ? `${task.workflow.name} — ${task.name}` : undefined);
 
   useEffect(() => {
     const { id: taskId } = match.params as ITaskDetailPathParams;

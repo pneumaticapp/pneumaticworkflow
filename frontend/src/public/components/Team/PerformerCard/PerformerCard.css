@@ -83,7 +83,7 @@
 
   &__badge {
     margin: 0;
-    margin-right: 4rem;
+    margin-inline-end: 4rem;
     font-size: 1.1rem;
     font-weight: bold;
     line-height: 1.6rem;

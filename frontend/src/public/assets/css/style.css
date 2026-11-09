@@ -14,12 +14,19 @@
 // =================== */
 
 @import './variables/color.css';
+@import './arabic.css';
+@import './legacy-direction.css';
 
 /* ===================
 // 00.1. Print
 // =================== */
 
 @import './print/print.css';
+
+:root {
+  --pneumatic-font-sans: 'Nunito', sans-serif;
+  --pneumatic-font-serif: 'Abhaya Libre', 'Times New Roman', Arial;
+}
 
 /* ===================
 // 01. Library
@@ -69,7 +76,8 @@ html {
 
 body {
   @mixin text-base;
-  font-family: 'Nunito', sans-serif;
+  text-align: start;
+  font-family: var(--pneumatic-font-sans, 'Nunito', sans-serif);
   color: var(--pneumatic-color-black100);
   background: var(--background-color);
   min-width: 320px;

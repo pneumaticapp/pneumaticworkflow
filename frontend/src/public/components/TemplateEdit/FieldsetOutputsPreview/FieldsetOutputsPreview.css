@@ -3,7 +3,8 @@
   justify-content: space-between;
   max-width: 20ch;
   padding: 0.1rem 0.8rem;
-  margin: 0 0.4rem 0.4rem 0;
+  margin-block: 0 0.4rem;
+  margin-inline: 0 0.4rem;
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: 1.3rem;

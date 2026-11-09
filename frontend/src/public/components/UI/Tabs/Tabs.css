@@ -29,8 +29,12 @@
 .tab {
   all: unset;
   flex-grow: 1;
+  min-width: 0;
   padding: 0.8rem 1.6rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
   text-align: center;
+  white-space: nowrap;
   border-radius: 1.6rem;
   transition: color 0.1s ease-in-out;
 
@@ -45,9 +49,9 @@
 }
 
 .separator-right {
-  border-right: 0.1rem dashed var(--pneumatic-color-link-hover);
+  border-inline-end: 0.1rem dashed var(--pneumatic-color-link-hover);
 }
 
 .separator-left {
-  border-left: 0.1rem dashed var(--pneumatic-color-link-hover);
+  border-inline-start: 0.1rem dashed var(--pneumatic-color-link-hover);
 }

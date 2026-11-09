@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { useIntl } from 'react-intl';
 import {
   DecoratorNode,
   type LexicalNode,
@@ -19,6 +20,7 @@ import styles from './VideoAttachmentNode.css';
 export type SerializedVideoAttachmentNode = TAttachmentPayload & SerializedLexicalNode;
 
 function VideoAttachmentComponent({ nodeKey, url }: { nodeKey: NodeKey; url: string }): React.ReactElement {
+  const { formatMessage } = useIntl();
   const [editor] = useLexicalComposerContext();
   const onDelete = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -39,7 +41,12 @@ function VideoAttachmentComponent({ nodeKey, url }: { nodeKey: NodeKey; url: str
       <video src={url} preload="auto" className={styles.video} controls onClick={(e) => e.stopPropagation()}>
         <track kind="captions" />
       </video>
-      <button type="button" aria-label="Delete video" className={styles.delete} onClick={onDelete}>
+      <button
+        type="button"
+        aria-label={formatMessage({ id: 'accessibility.delete-video' })}
+        className={styles.delete}
+        onClick={onDelete}
+      >
         <DeleteBoldIcon />
       </button>
     </div>

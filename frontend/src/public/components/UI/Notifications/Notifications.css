@@ -1,7 +1,7 @@
 .close-button {
   position: absolute;
+  inset-inline-end: 37px;
   top: 50%;
-  right: 37px;
   padding: 0;
   color: inherit;
   cursor: pointer;

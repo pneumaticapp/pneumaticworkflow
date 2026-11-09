@@ -1,15 +1,15 @@
 .sub-menu {
   width: 21.2rem;
   max-width: 21.2rem;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
   border-radius: 2.4rem;
 
   :global(.tippy-content) {
     padding: 0;
   }
 
-  &:global(.tippy-box)[data-placement^='right'] > :global(.tippy-svg-arrow) {
-    left: -0.8rem;
+  &:global(.tippy-box)[data-placement^='right'] > :global(.tippy-svg-arrow),
+  &:global(.tippy-box)[data-placement^='left'] > :global(.tippy-svg-arrow) {
     width: 0.8rem;
     height: 2.4rem;
 
@@ -17,6 +17,14 @@
       width: 2.4rem;
       height: 0.8rem;
     }
+  }
+
+  &:global(.tippy-box)[data-placement^='right'] > :global(.tippy-svg-arrow) {
+    left: -0.8rem;
+  }
+
+  &:global(.tippy-box)[data-placement^='left'] > :global(.tippy-svg-arrow) {
+    right: -0.8rem;
   }
 }
 
@@ -31,7 +39,7 @@
     padding: 3.2rem;
     margin: 0;
     font-size: 1.5rem;
-    text-align: left;
+    text-align: start;
     list-style: none;
     border-radius: 2.4rem;
   }

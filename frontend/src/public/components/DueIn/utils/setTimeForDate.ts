@@ -9,6 +9,7 @@ export const setTimeForDate = (initialDate: Date, timeString: string, timezone: 
   const [, hours, minutes = '00', period] = match;
 
   return moment(initialDate)
+    .locale('en')
     .tz(timezone)
     .set({ h: period && period === 'pm' ? +hours + 12 : +hours, m: +minutes })
     .format();

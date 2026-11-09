@@ -2,6 +2,7 @@
 /* prettier-ignore */
 import * as React from 'react';
 import classnames from 'classnames';
+import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
 import { DeleteBoldIcon } from '../icons';
@@ -20,6 +21,7 @@ export interface IImageAttachment {
 }
 
 export function ImageAttachment({ deleteFile, isDeleting, isEdit, thumbnailUrl, url, className }: IImageAttachment) {
+  const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
   const onDeleteIconClick: React.MouseEventHandler<HTMLButtonElement> = (event) => {
@@ -53,7 +55,11 @@ export function ImageAttachment({ deleteFile, isDeleting, isEdit, thumbnailUrl, 
     >
       <Loader isLoading={Boolean(isDeleting)} />
       {isEdit && (
-        <button aria-label="Delete image" className={styles['image__delete-button']} onClick={onDeleteIconClick}>
+        <button
+          aria-label={formatMessage({ id: 'accessibility.delete-image' })}
+          className={styles['image__delete-button']}
+          onClick={onDeleteIconClick}
+        >
           <DeleteBoldIcon />
         </button>
       )}

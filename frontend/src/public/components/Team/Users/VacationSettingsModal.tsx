@@ -51,7 +51,10 @@ export function VacationSettingsModal({ isOpen, onClose, user }: IVacationSettin
 
       onClose();
     } catch (error) {
-      NotificationManager.notifyApiError(error, { title: 'error.general', message: getErrorMessage(error) });
+      NotificationManager.notifyApiError(error, {
+        title: formatMessage({ id: 'pages.error-fallback' }),
+        message: getErrorMessage(error),
+      });
     } finally {
       setIsLoading(false);
     }
@@ -76,7 +79,10 @@ export function VacationSettingsModal({ isOpen, onClose, user }: IVacationSettin
 
       onClose();
     } catch (error) {
-      NotificationManager.notifyApiError(error, { title: 'error.general', message: getErrorMessage(error) });
+      NotificationManager.notifyApiError(error, {
+        title: formatMessage({ id: 'pages.error-fallback' }),
+        message: getErrorMessage(error),
+      });
     } finally {
       setIsLoading(false);
     }

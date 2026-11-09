@@ -150,7 +150,7 @@ export function TopNavContent({
               type="button"
               onClick={handleOpenNotifications}
               className={styles['notifications-button']}
-              aria-label="Notifications"
+              aria-label={formatMessage({ id: 'notifications.title' })}
             >
               {unreadNotificationsCount > 0 && (
                 <div className={styles['notification_counter_container']}>

@@ -46,7 +46,7 @@
 .search {
   position: relative;
   flex: 1;
-  margin-right: 2.4rem;
+  margin-inline-end: 2.4rem;
 
   &__icon {
     position: absolute;
@@ -57,7 +57,7 @@
 
   &-field__input {
     height: 2rem !important;
-    padding-left: 2.8rem !important;
+    padding-inline-start: 2.8rem !important;
     border: none;
   }
 }

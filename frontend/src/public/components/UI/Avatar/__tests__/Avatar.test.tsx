@@ -31,6 +31,12 @@ describe('Avatar', () => {
     expect(screen.getByText('TU')).toBeInTheDocument();
   });
 
+  it('uses the user name as alternative text when available', () => {
+    render(<Avatar user={{ firstName: 'Test', lastName: 'User', photo: '/person.png' }} />);
+
+    expect(screen.getByRole('img', { name: 'Test User' })).toHaveAttribute('src', '/person.png');
+  });
+
   it('renders no initials when name is not provided', () => {
     const user = {
       firstName: '',

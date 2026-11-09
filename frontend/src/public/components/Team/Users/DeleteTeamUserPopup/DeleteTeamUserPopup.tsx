@@ -132,7 +132,7 @@ export function DeleteTeamUserPopup({
             />
             <button
               type="button"
-              aria-label="button"
+              aria-label={formatMessage({ id: 'team.delete-cancel' })}
               className="cancel-button"
               id="team-dropdown-modal-footer-cancel-button"
               onClick={handleCloseModal}

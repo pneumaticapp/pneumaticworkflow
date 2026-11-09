@@ -74,7 +74,7 @@
 
   .tippy-box {
     position: relative;
-    font-family: Nunito, sans-serif;
+    font-family: var(--pneumatic-font-sans);
     font-size: 13px;
     line-height: 16px;
     color: var(--pneumatic-color-beige);

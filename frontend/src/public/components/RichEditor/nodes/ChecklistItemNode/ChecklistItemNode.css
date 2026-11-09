@@ -3,12 +3,12 @@
   display: flex;
   gap: 0.8rem;
   align-items: flex-start;
-  padding-left: 2.8rem;
+  padding-inline-start: 2.8rem;
 }
 
 .checkbox {
   position: absolute;
-  left: 0;
+  inset-inline-start: 0;
   width: 2rem;
   height: 2rem;
   border: 0.1rem solid var(--pneumatic-color-black16);

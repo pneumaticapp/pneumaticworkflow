@@ -9,8 +9,8 @@
   }
 
   .description {
-    margin-left: 8px;
-    font-family: Nunito, sans-serif;
+    margin-inline-start: 8px;
+    font-family: var(--pneumatic-font-sans);
     font-size: 11px;
     font-style: normal;
     font-weight: bold;
@@ -45,7 +45,7 @@
     }
 
     .description {
-      margin-left: 0;
+      margin-inline-start: 0;
     }
   }
 }

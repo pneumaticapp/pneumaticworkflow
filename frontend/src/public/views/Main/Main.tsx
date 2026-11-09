@@ -5,7 +5,7 @@ import loadable from '@loadable/component';
 
 import { DashboardLayout } from '../../layout';
 import { ERoutes } from '../../constants/routes';
-import { TITLES } from '../../constants/titles';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { Loader } from '../../components/UI';
 
 const Dashboard = loadable(
@@ -14,9 +14,7 @@ const Dashboard = loadable(
 );
 
 export const Main = () => {
-  React.useEffect(() => {
-    document.title = TITLES.Main;
-  }, []);
+  useDocumentTitle('Main');
 
   return (
     <DashboardLayout>

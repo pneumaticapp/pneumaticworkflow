@@ -10,8 +10,8 @@
 
 .graph-task-editor {
   position: fixed;
+  inset-inline-end: 0;
   top: 0;
-  right: 0;
   bottom: 0;
   z-index: 1040;
   display: flex;
@@ -24,14 +24,17 @@
   padding: 3.2rem;
   overflow: auto;
   background: var(--pneumatic-color-white);
-  border-radius: 2.4rem 0 0 2.4rem;
+  border-start-start-radius: 2.4rem;
+  border-start-end-radius: 0;
+  border-end-start-radius: 2.4rem;
+  border-end-end-radius: 0;
   box-shadow: 0 0.8rem 2.4rem rgb(98 98 95 / 8%);
 }
 
 .graph-task-editor__close {
   position: absolute;
+  inset-inline-end: 3.2rem;
   top: 4.2rem;
-  right: 3.2rem;
   z-index: 2;
   display: flex;
   align-items: center;
@@ -61,9 +64,9 @@
 }
 
 .graph-task-editor__body :global([class*='task-fields-wrapper']) {
-  padding-right: 0;
+  padding-inline-end: 0;
 }
 
 .graph-task-editor__body :global([class*='show_more__button-wrapper']) {
-  padding-right: 0;
+  padding-inline-end: 0;
 }

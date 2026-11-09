@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { AddGuestsBanner } from './AddGuestsBanner';
 import { TeamUserSkeleton } from '../TeamUserSkeleton';
-import { TITLES } from '../../../constants/titles';
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { PageTitle } from '../../PageTitle';
 import { EPageTitle } from '../../../constants/defaultValues';
 import { EGroupsListSorting } from '../../../types/user';
@@ -34,6 +34,8 @@ export interface IGroupsProps {
 }
 
 export function Groups() {
+  useDocumentTitle('Groups');
+
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
   const groups = useSelector(getRegularGroupsList);
@@ -42,7 +44,6 @@ export function Groups() {
 
   useEffect(() => {
     dispatch(teamFetchStarted({}));
-    document.title = TITLES.Groups;
   }, []);
 
   const renderSearch = () => {

@@ -39,7 +39,7 @@
     justify-content: center !important;
     width: 11.4rem;
     height: 4rem;
-    margin-right: 1.6rem;
+    margin-inline-end: 1.6rem;
   }
 
   @media (--mobile) {

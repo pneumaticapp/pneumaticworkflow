@@ -41,7 +41,7 @@
 }
 
 .button_save-container {
-  margin-right: 1.6rem;
+  margin-inline-end: 1.6rem;
 }
 
 .button_clear-container {
@@ -65,6 +65,6 @@
   min-height: 1rem;
 
   @media (--desktop) {
-    padding-left: 2.4rem;
+    padding-inline-start: 2.4rem;
   }
 }

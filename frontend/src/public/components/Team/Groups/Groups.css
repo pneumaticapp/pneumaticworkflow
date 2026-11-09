@@ -12,7 +12,7 @@
   &__icon {
     position: absolute;
     top: 50%;
-    margin-left: 16px;
+    margin-inline-start: 16px;
     color: var(--pneumatic-color-black72);
     transform: translateY(-50%);
   }
@@ -22,7 +22,7 @@
   }
 
   &-field__input {
-    padding-left: 48px !important;
+    padding-inline-start: 48px !important;
     background-color: var(--background-color);
   }
 }

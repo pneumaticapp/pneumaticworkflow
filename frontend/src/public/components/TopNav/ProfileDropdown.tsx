@@ -92,10 +92,11 @@ export function ProfileDropdown({
 
   return (
     <Dropdown
+      menuPositionFixed
       renderToggle={() => <CurrentUserAvatar size="md" />}
       toggleProps={{
         'data-test-id': 'open-user-menu-button',
-        'aria-label': 'Profile',
+        'aria-label': formatMessage({ id: 'nav.profile' }),
         className: styles['profile-button'],
       }}
       className={styles['profile-dropdown']}

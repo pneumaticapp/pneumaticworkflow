@@ -70,8 +70,8 @@
 
     @media (--desktop) {
       width: initial;
+      margin-inline-start: 8px;
       margin-top: 0;
-      margin-left: 8px;
     }
   }
 }

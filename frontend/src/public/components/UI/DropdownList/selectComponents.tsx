@@ -1,5 +1,6 @@
 import * as React from 'react';
 import classnames from 'classnames';
+import { useIntl } from 'react-intl';
 import { components } from 'react-select';
 import type { ControlProps, DropdownIndicatorProps, GroupBase, MenuListProps, OptionProps } from 'react-select';
 import PerfectScrollbar from 'react-perfect-scrollbar';
@@ -52,11 +53,13 @@ export const MenuSM = ({ children, ...props }: any) => {
   );
 };
 
-export const MenuListLG = ({ children }: MenuListProps<TDropdownOptionBase, boolean>) => {
+export const MenuListLG = ({ children, innerProps, innerRef }: MenuListProps<TDropdownOptionBase, boolean>) => {
   const ScrollBar = PerfectScrollbar as unknown as Function;
 
   return (
     <ScrollBar
+      {...innerProps}
+      containerRef={innerRef}
       className={styles['dropdownlist__scrollbar']}
       options={{ suppressScrollX: true, wheelPropagation: false }}
     >
@@ -65,7 +68,13 @@ export const MenuListLG = ({ children }: MenuListProps<TDropdownOptionBase, bool
   );
 };
 
-export const MenuListSM = ({ children, selectProps }: MenuListProps<TDropdownOptionBase, boolean>) => {
+export const MenuListSM = ({
+  children,
+  selectProps,
+  innerProps,
+  innerRef,
+}: MenuListProps<TDropdownOptionBase, boolean>) => {
+  const { formatMessage } = useIntl();
   const ScrollBar = PerfectScrollbar as unknown as Function;
   const {
     onInputChange,
@@ -102,7 +111,7 @@ export const MenuListSM = ({ children, selectProps }: MenuListProps<TDropdownOpt
             <button
               className={styles['dropdownlist-sm__clear']}
               type="button"
-              aria-label="button"
+              aria-label={formatMessage({ id: 'ui-input.clear' })}
               onClick={() =>
                 onInputChange('', {
                   action: 'input-change',
@@ -117,6 +126,8 @@ export const MenuListSM = ({ children, selectProps }: MenuListProps<TDropdownOpt
       )}
 
       <ScrollBar
+        {...innerProps}
+        containerRef={innerRef}
         className={styles['dropdownlist__scrollbar']}
         options={{ suppressScrollX: true, wheelPropagation: false }}
       >

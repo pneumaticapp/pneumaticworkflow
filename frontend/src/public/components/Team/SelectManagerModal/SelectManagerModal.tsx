@@ -94,7 +94,7 @@ export function SelectManagerModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className={styles['select-manager-modal']}>
-        <p className={styles['select-manager-modal__title']}>Select Manager</p>
+        <p className={styles['select-manager-modal__title']}>{formatMessage({ id: 'team.select-manager' })}</p>
 
         <div className={styles['select-manager-modal__content']}>
           <UsersDropdownComponent
@@ -103,13 +103,13 @@ export function SelectManagerModal({
             isMulti={false}
             value={selectedManager}
             onChange={handleChange}
-            inviteLabel="Invite member"
+            inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
             isTeamInvitesModalOpen={false}
             recentInvitedUsers={[]}
             isAdmin={false} // don't allow inviting from here initially for simplicity
             openTeamInvitesPopup={() => dispatch(openTeamInvitesPopup())}
             onClickInvite={() => {}}
-            placeholder="Search"
+            placeholder={formatMessage({ id: 'nav.search' })}
           />
         </div>
 

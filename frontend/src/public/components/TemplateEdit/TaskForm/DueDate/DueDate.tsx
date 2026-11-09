@@ -30,16 +30,16 @@ export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDue
   const [isDueDate, setIsDueDate] = useState(Boolean(duration || durationMonths));
 
   const prepositionOptions = useMemo(() => {
-    return getRulePrepositionOptions(ruleTarget);
-  }, [ruleTarget]);
+    return getRulePrepositionOptions(ruleTarget, formatMessage);
+  }, [ruleTarget, formatMessage]);
 
   const [systemRules, dateFieldsRules, tasksRules] = useMemo(() => {
-    return getRuleTargetOptions(currentTask, tasks, kickoff);
-  }, [currentTask, kickoff, tasks]);
+    return getRuleTargetOptions(currentTask, tasks, kickoff, formatMessage);
+  }, [currentTask, kickoff, tasks, formatMessage]);
 
   const currentPrepositionOption = useMemo(() => {
     return prepositionOptions.find((rule) => rule.rulePreposition === rulePreposition) || null;
-  }, [rulePreposition]);
+  }, [rulePreposition, prepositionOptions]);
 
   const currentTargetOption = useMemo(() => {
     return (
@@ -132,15 +132,15 @@ export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDue
                 isClearable={false}
                 options={[
                   {
-                    label: 'System events',
+                    label: formatMessage({ id: 'due-date.system-events' }),
                     options: systemRules,
                   },
                   {
-                    label: 'Date fields',
+                    label: formatMessage({ id: 'due-date.date-fields' }),
                     options: dateFieldsRules,
                   },
                   {
-                    label: 'Task completed',
+                    label: formatMessage({ id: 'due-date.task-completed' }),
                     options: tasksRules,
                   },
                 ]}

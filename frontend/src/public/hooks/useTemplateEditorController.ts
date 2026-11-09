@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { debounce } from 'throttle-debounce';
+import { useIntl } from 'react-intl';
 
 import { cleanTemplateReferences } from '../utils/template';
 import { moveTask } from '../utils/workflows';
@@ -41,6 +42,7 @@ export function useTemplateEditorController({
   setTemplateStatus,
   setSelectedTask,
 }: IUseTemplateEditorControllerOptions): ITemplateEditorController {
+  const { formatMessage } = useIntl();
   const { tasks } = template;
   const submitDebounced = useMemo(() => debounce(350, saveTemplate), [saveTemplate]);
   const sortedTasks = useMemo(() => [...tasks].sort((a, b) => a.number - b.number), [tasks]);
@@ -76,8 +78,12 @@ export function useTemplateEditorController({
 
   const createTask = useCallback(
     (overrides?: Partial<ITemplateTaskClient>): ITemplateTaskClient =>
-      createTemplateTask({ authUser, accessConditions, overrides }),
-    [accessConditions, authUser],
+      createTemplateTask({
+        authUser,
+        accessConditions,
+        overrides: { name: formatMessage({ id: 'templates.new-step-name' }), ...overrides },
+      }),
+    [accessConditions, authUser, formatMessage],
   );
 
   const setKickoff = useCallback(
@@ -96,36 +102,38 @@ export function useTemplateEditorController({
     const number = tasks.length + 1;
     const newTask = createTask({
       number,
-      name: `New Step ${number}`,
+      name: `${formatMessage({ id: 'templates.new-step-name' })} ${number}`,
       conditions: getStartTaskConditions(tasks[tasks.length - 1].apiName),
     });
 
     toggleTask(newTask.uuid);
     changeTasks([...tasks, newTask]);
-  }, [changeTasks, createTask, tasks, toggleTask]);
+  }, [changeTasks, createTask, tasks, toggleTask, formatMessage]);
 
   const addTaskBefore = useCallback(
     (targetTask: ITemplateTaskClient, previousTaskApiName?: string): void => {
       const newTask = createTask({
-        name: `New Step ${tasks.length + 1}`,
+        name: `${formatMessage({ id: 'templates.new-step-name' })} ${tasks.length + 1}`,
         conditions: previousTaskApiName ? getStartTaskConditions(previousTaskApiName) : getKickoffConditions(),
       });
 
       changeTasks(insertTemplateTask(tasks, newTask, targetTask.number - 1));
       toggleTask(newTask.uuid);
     },
-    [changeTasks, createTask, tasks, toggleTask],
+    [changeTasks, createTask, tasks, toggleTask, formatMessage],
   );
 
   const addTaskFromGraph = useCallback(
     (intent: TGraphAddTaskIntent): string | null => {
-      const { tasks: nextTasks, createdApiName } = insertGraphTask(tasks, intent, createTask);
+      const { tasks: nextTasks, createdApiName } = insertGraphTask(tasks, intent, (draft) =>
+        createTask({ ...draft, name: `${formatMessage({ id: 'templates.new-step-name' })} ${draft.number}` }),
+      );
       if (!createdApiName) return null;
 
       changeTasks(nextTasks);
       return createdApiName;
     },
-    [changeTasks, createTask, tasks],
+    [changeTasks, createTask, tasks, formatMessage],
   );
 
   const removeTask = useCallback(

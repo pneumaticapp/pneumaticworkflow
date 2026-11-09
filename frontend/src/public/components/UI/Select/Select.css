@@ -18,8 +18,8 @@
 
 .dropdown-menu {
   width: 19.2rem;
+  margin-inline-start: -1.6rem !important;
   margin-top: 0.6rem !important;
-  margin-left: -1.6rem !important;
 
   @media (--mobile) {
     width: 100%;
@@ -57,8 +57,8 @@
 .dropdown-menu__scrollbar {
   height: 100%;
   max-height: 20rem;
-  padding-right: 0 !important;
-  margin-right: 0 !important;
+  padding-inline-end: 0 !important;
+  margin-inline-end: 0 !important;
 }
 
 .dropdown-item_search {
@@ -153,7 +153,7 @@
   .active-value__text {
     @mixin text-truncate;
 
-    margin-right: 0.8rem;
+    margin-inline-end: 0.8rem;
   }
 
   &[aria-expanded='true'] {
@@ -164,7 +164,7 @@
 
   .expand-icon {
     flex-shrink: 0;
-    margin-left: auto;
+    margin-inline-start: auto;
     color: var(--pneumatic-color-black32);
     transition: transform 0.3s;
   }
@@ -236,7 +236,7 @@
 
 .icon {
   flex-shrink: 0;
-  margin-right: 0.4rem;
+  margin-inline-end: 0.4rem;
 }
 
 .filter-container {
@@ -246,7 +246,7 @@
 .clear-button {
   all: unset;
   flex-shrink: 0;
-  margin-left: auto;
+  margin-inline-start: auto;
   color: var(--pneumatic-color-black32);
   transition:
     transform 0.3s,

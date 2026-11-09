@@ -27,7 +27,7 @@
     @media (--desktop) {
       width: 4rem;
       margin: 0;
-      margin-right: 1.6rem;
+      margin-inline-end: 1.6rem;
     }
 
     > img {
@@ -44,7 +44,7 @@
       flex: 1;
       align-items: center;
       justify-content: space-between;
-      margin-right: 3.2rem;
+      margin-inline-end: 3.2rem;
     }
   }
 
@@ -67,7 +67,7 @@
   }
 
   &__name {
-    margin-right: 3.2rem;
+    margin-inline-end: 3.2rem;
   }
 
   &__stat {

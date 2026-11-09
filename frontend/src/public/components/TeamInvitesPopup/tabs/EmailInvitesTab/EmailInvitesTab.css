@@ -1,12 +1,12 @@
 .scrollbar {
+  padding-inline-start: 32px;
   /* stylelint-disable-next-line declaration-no-important */
-  padding-right: 32px !important;
+  padding-inline-end: 32px !important;
   padding-bottom: 32px;
-  padding-left: 32px;
-  margin-top: 32px;
+  margin-inline-start: -32px;
   /* stylelint-disable-next-line declaration-no-important */
-  margin-right: -32px !important;
-  margin-left: -32px;
+  margin-inline-end: -32px !important;
+  margin-top: 32px;
 }
 
 .form {
@@ -15,7 +15,7 @@
 }
 
 .add-btn {
-  margin-left: 8px;
+  margin-inline-start: 8px;
 }
 
 .invite {
@@ -38,7 +38,7 @@
 
 .invite__status {
   display: flex;
-  margin-left: 8px;
+  margin-inline-start: 8px;
 }
 
 .loader {

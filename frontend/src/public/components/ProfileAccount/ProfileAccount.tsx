@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 
-import { TITLES } from '../../constants/titles';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { IUpdateAccountRequest } from '../../api/editAccount';
 import { validateCompanyName } from '../../utils/validators';
 import { InputField } from '../UI/Fields/InputField';
@@ -42,15 +42,14 @@ export function ProfileAccount({
   onChangeTab,
   editCurrentAccount,
 }: IProfileAccountProps) {
+  useDocumentTitle('AccountSettings');
+
   const { formatMessage } = useIntl();
   const savedState: TEditableFields = { name, logoSm, logoLg };
   const [state, changeState] = React.useState<TEditableFields>(savedState);
   const savedStateRef = React.useRef(savedState);
   const hasNoData = !accountId && !name;
 
-  React.useEffect(() => {
-    document.title = TITLES.AccountSettings;
-  }, []);
   React.useLayoutEffect(() => {
     onChangeTab(ESettingsTabs.AccountSettings);
   }, []);

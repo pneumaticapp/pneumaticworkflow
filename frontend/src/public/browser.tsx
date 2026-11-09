@@ -12,6 +12,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { ErrorFallback } from './components/ErrorFallback';
 
 import { PersistGate } from 'redux-persist/integration/react';
+import { applyDocumentLocale } from './lang/document';
 
 /* polyfills */
 import 'promise-polyfill/src/polyfill';
@@ -38,12 +39,26 @@ if (
   (window as Window & { __REDUX_PERSISTOR_REF__?: typeof persistorRef }).__REDUX_PERSISTOR_REF__ = persistorRef;
 }
 
+let unsubscribeLocale: (() => void) | undefined;
+
 function render(App: React.ComponentType) {
   const currentStore =
     (window as Window & { __REDUX_STORE_REF__?: { current: typeof store } }).__REDUX_STORE_REF__?.current ?? store;
   const currentPersistor =
     (window as Window & { __REDUX_PERSISTOR_REF__?: { current: typeof persistor } }).__REDUX_PERSISTOR_REF__?.current ??
     persistor;
+  // Reconcile client-only preferences before rendering any page content. The
+  // early subscription also updates Moment before React's store subscribers.
+  let appliedLocale = currentStore.getState().settings.locale;
+  applyDocumentLocale(appliedLocale);
+  unsubscribeLocale?.();
+  unsubscribeLocale = currentStore.subscribe(() => {
+    const nextLocale = currentStore.getState().settings.locale;
+    if (nextLocale !== appliedLocale) {
+      appliedLocale = nextLocale;
+      applyDocumentLocale(nextLocale);
+    }
+  });
   ReactDOM.render(
     <Provider store={currentStore}>
       <React.Suspense fallback={<div className="loading" />}>

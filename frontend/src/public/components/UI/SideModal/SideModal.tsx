@@ -3,6 +3,7 @@ import { Component } from 'react';
 import classnames from 'classnames';
 import * as ReactDOM from 'react-dom';
 import OutsideClickHandler from '../OutsideClickHandler';
+import { useIntl } from 'react-intl';
 
 import { ClearIcon } from '../../icons';
 import { history } from '../../../utils/history';
@@ -22,6 +23,22 @@ export interface ISideModalPartProps {
   children?: React.ReactNode;
   className?: string;
 }
+
+const SideModalCloseButton = ({ onClose, className }: { onClose(): void; className: string }) => {
+  const { formatMessage } = useIntl();
+
+  return (
+    <button
+      onClick={onClose}
+      type="button"
+      className={className}
+      aria-label={formatMessage({ id: 'general.close' })}
+      data-test-id="close"
+    >
+      <ClearIcon />
+    </button>
+  );
+};
 
 const Header = (props: ISideModalPartProps) => {
   const { children, className } = props;
@@ -90,18 +107,13 @@ export class SideModal extends Component<ISideModalProps> {
             nonePeddingRight && styles['side-modal_none-pedding-right'],
           )}
         >
-          <button
-            onClick={onClose}
-            type="button"
+          <SideModalCloseButton
+            onClose={onClose}
             className={classnames(
               styles['side-modal_close'],
               nonePeddingRight && styles['side-modal_close-is-from-view-modal'],
             )}
-            aria-label="Close modal"
-            data-test-id="close"
-          >
-            <ClearIcon />
-          </button>
+          />
 
           <div className={classnames(styles['side-modal-parts'], className)}>{children}</div>
         </div>

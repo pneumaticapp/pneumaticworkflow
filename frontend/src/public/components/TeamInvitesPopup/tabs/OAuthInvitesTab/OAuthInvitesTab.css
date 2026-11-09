@@ -1,12 +1,12 @@
 .scrollbar {
+  padding-inline-start: 32px;
   /* stylelint-disable-next-line declaration-no-important */
-  padding-right: 32px !important;
+  padding-inline-end: 32px !important;
   padding-bottom: 32px;
-  padding-left: 32px;
-  margin-top: 32px;
+  margin-inline-start: -32px;
   /* stylelint-disable-next-line declaration-no-important */
-  margin-right: -32px !important;
-  margin-left: -32px;
+  margin-inline-end: -32px !important;
+  margin-top: 32px;
 }
 
 .user {
@@ -19,7 +19,7 @@
 }
 
 .user__avatar {
-  margin-right: 16px;
+  margin-inline-end: 16px;
 }
 
 .user-info {
@@ -44,7 +44,7 @@
 }
 
 .user__add {
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 
 .empty-list-placeholder {

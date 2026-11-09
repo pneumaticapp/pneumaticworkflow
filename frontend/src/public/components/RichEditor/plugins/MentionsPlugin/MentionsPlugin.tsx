@@ -15,6 +15,7 @@ export function MentionsPlugin({ mentions }: MentionsPluginProps): React.ReactEl
   const menuContent = (
     <MentionMenuList
       rect={menuState.rect}
+      getAnchorRect={menuState.getAnchorRect}
       options={filteredOptions}
       highlightedIndex={highlightedIndex}
       onSelect={applyMention}

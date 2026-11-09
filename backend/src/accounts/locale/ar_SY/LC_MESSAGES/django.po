@@ -1,0 +1,185 @@
+# Arabic (Syria) translations for Pneumatic.
+# Distributed under the same license as the project.
+msgid ""
+msgstr ""
+"Project-Id-Version: Pneumatic\n"
+"Language: ar_SY\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
+
+msgid "Saving files is not available, file storage does't configured. Contact support."
+msgstr "حفظ الملفات غير متاح لعدم إعداد التخزين. تواصل مع الدعم."
+
+msgid "The \"type\" or \"invited_from\" field must be specified."
+msgstr "يجب تحديد الحقل \"type\" أو \"invited_from\"."
+
+msgid "Logo change is not allowed for this account."
+msgstr "لا يُسمح بتغيير الشعار لهذا الحساب."
+
+msgid "You can't assign workflows to the same user. Please choose another one."
+msgstr "لا يمكنك إعادة إسناد مسارات العمل إلى المستخدم نفسه. اختر مستخدمًا آخر."
+
+msgid "There is already a registered user with these email."
+msgstr "يوجد مستخدم مسجل بهذا البريد الإلكتروني بالفعل."
+
+msgid "You have reached limit on invitations. Contact Support to invite more users."
+msgstr "وصلت إلى الحد الأقصى للدعوات. تواصل مع الدعم لدعوة المزيد من المستخدمين."
+
+msgid "Invite is already accepted."
+msgstr "تم قبول الدعوة بالفعل."
+
+msgid "Token is invalid."
+msgstr "الرمز غير صالح."
+
+msgid "Token is expired."
+msgstr "انتهت صلاحية الرمز."
+
+msgid "The user with the specified credentials not found."
+msgstr "لم يتم العثور على مستخدم ببيانات الاعتماد المحددة."
+
+msgid "You can't delete a user without assigning their tasks to a different user."
+msgstr "لا يمكنك حذف المستخدم قبل إسناد مهامه إلى مستخدم آخر."
+
+msgid "Reassign user does not exist."
+msgstr "المستخدم المطلوب إسناد المهام إليه غير موجود."
+
+msgid "Token is invalid or expired."
+msgstr "الرمز غير صالح أو منتهي الصلاحية."
+
+msgid "You have successfully unsubscribed."
+msgstr "تم إلغاء اشتراكك بنجاح."
+
+msgid "Email"
+msgstr "البريد الإلكتروني"
+
+msgid "First name"
+msgstr "الاسم الأول"
+
+msgid "Password"
+msgstr "كلمة المرور"
+
+msgid "Password confirmation"
+msgstr "تأكيد كلمة المرور"
+
+msgid "Enter the same password as before, for verification."
+msgstr "أدخل كلمة المرور نفسها مرة أخرى للتحقق."
+
+msgid "User info"
+msgstr "معلومات المستخدم"
+
+msgid "Status"
+msgstr "الحالة"
+
+msgid "Permissions"
+msgstr "الصلاحيات"
+
+msgid "Important dates"
+msgstr "تواريخ مهمة"
+
+msgid "This field is required."
+msgstr "هذا الحقل مطلوب."
+
+msgid "\"Master account\" does not exists."
+msgstr "الحساب الرئيسي غير موجود."
+
+msgid "\"Master account\" is not subscribed."
+msgstr "الحساب الرئيسي غير مشترك."
+
+msgid "Moving tenants between master accounts is not currently supported."
+msgstr "نقل الحسابات الفرعية بين الحسابات الرئيسية غير مدعوم حاليًا."
+
+msgid "\"Master Account\" must be blank for a non-tenant account."
+msgstr "يجب ترك الحساب الرئيسي فارغًا إذا لم يكن الحساب حسابًا فرعيًا."
+
+msgid "The \"Master account\" required for the lease level \"tenant\"."
+msgstr "الحساب الرئيسي مطلوب للحساب الفرعي ذي المستوى \"tenant\"."
+
+#, python-brace-format
+msgid "Converting from \"{prev}\" to \"{new}\" is not currently supported."
+msgstr "التحويل من \"{prev}\" إلى \"{new}\" غير مدعوم حاليًا."
+
+msgid "Primary"
+msgstr "أساسي"
+
+msgid "Subscription"
+msgstr "الاشتراك"
+
+msgid "Tenants"
+msgstr "الحسابات الفرعية"
+
+msgid "Deletion not allowed while the account contains tenants."
+msgstr "لا يُسمح بالحذف ما دام الحساب يحتوي على حسابات فرعية."
+
+msgid "Your subscription has already expired. Renew subscription or contact support."
+msgstr "انتهت صلاحية اشتراكك. جدّد الاشتراك أو تواصل مع الدعم."
+
+msgid "Only the account owner is allowed to perform this action."
+msgstr "يُسمح لمالك الحساب فقط بتنفيذ هذا الإجراء."
+
+msgid "The user count is over your plan limit. Please upgrade your plan or delete some users."
+msgstr "يتجاوز عدد المستخدمين حد خطتك. قم بالترقية أو احذف بعض المستخدمين."
+
+msgid "Granular access control is included in the Premium Plan. Upgrade your plan to access this functionality."
+msgstr "يتوفر التحكم المفصّل في الصلاحيات ضمن الخطة المميزة. قم بالترقية لاستخدام هذه الميزة."
+
+msgid "The list of group members contains a non-existent group identifier"
+msgstr "تحتوي قائمة أعضاء المجموعة على معرّف مجموعة غير موجود"
+
+msgid "The list of groups contains a non-existent group identifier"
+msgstr "تحتوي قائمة المجموعات على معرّف مجموعة غير موجود"
+
+msgid "Select a plan to complete the signup"
+msgstr "اختر خطة لإكمال التسجيل"
+
+msgid "A group cannot be assigned to the same task more than once. Please choose a different group."
+msgstr "لا يمكن إسناد المجموعة إلى المهمة نفسها أكثر من مرة. اختر مجموعة أخرى."
+
+msgid "You need to pass in old_user or old_group"
+msgstr "يجب تمرير old_user أو old_group"
+
+msgid "You need to pass in new_user or new_group"
+msgstr "يجب تمرير new_user أو new_group"
+
+#, python-brace-format
+msgid "Group with the name \"{name}\" already exists."
+msgstr "توجد مجموعة بالاسم \"{name}\" بالفعل."
+
+msgid "Permission denied. Only an administrator can grant administrator privileges."
+msgstr "ليس لديك الصلاحية. يمكن للمسؤول فقط منح صلاحيات المسؤول."
+
+msgid "You can't delete yourself."
+msgstr "لا يمكنك حذف نفسك."
+
+msgid "You can't delete the account owner."
+msgstr "لا يمكنك حذف مالك الحساب."
+
+msgid "You cannot delegate to yourself."
+msgstr "لا يمكنك تفويض نفسك."
+
+#, python-brace-format
+msgid "The following users were not found: {missing}"
+msgstr "لم يتم العثور على المستخدمين التاليين: {missing}"
+
+msgid "Select at least one substitute."
+msgstr "اختر بديلًا واحدًا على الأقل."
+
+msgid "The vacation is not active."
+msgstr "الإجازة غير مفعّلة."
+
+msgid "The status is already active."
+msgstr "الحالة مفعّلة بالفعل."
+
+msgid "The end date must be after the start date."
+msgstr "يجب أن يكون تاريخ الانتهاء بعد تاريخ البدء."
+
+msgid "A user cannot be their own manager."
+msgstr "لا يمكن أن يكون المستخدم مديرًا لنفسه."
+
+msgid "Permission denied. Only an administrator can change group membership."
+msgstr "ليس لديك الصلاحية. يمكن للمسؤول فقط تغيير عضوية المجموعات."
+
+msgid "This assignment would create a circular management hierarchy."
+msgstr "سيؤدي هذا الإسناد إلى علاقة دائرية في التسلسل الإداري."
+

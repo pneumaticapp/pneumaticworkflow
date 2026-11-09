@@ -78,7 +78,9 @@ export const GraphNodeCard = ({
             </span>
           ))}
       </div>
-      <div className={styles['graph-node-card__title']}>{title}</div>
+      <div className={styles['graph-node-card__title']} dir="auto">
+        {title}
+      </div>
       {meta}
       {addTask && <div className={styles['graph-node-card__add']}>{addTask}</div>}
     </div>

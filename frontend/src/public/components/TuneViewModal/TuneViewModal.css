@@ -17,7 +17,7 @@
 
   .tune-view-modal__body {
     flex: 1;
-    padding-right: 3.2rem;
+    padding-inline-end: 3.2rem;
     margin-bottom: 3.2rem;
     overflow-y: scroll;
 
@@ -32,7 +32,7 @@
 
     .tune-view-modal__fields-container {
       padding-bottom: 0.8rem;
-      margin-left: 1.6rem;
+      margin-inline-start: 1.6rem;
     }
   }
 
@@ -56,7 +56,7 @@
     flex-shrink: 0;
     gap: 0.8rem;
     height: 4rem;
-    margin-right: 3.2rem;
+    margin-inline-end: 3.2rem;
 
     .footer-button {
       width: 17.2rem;
@@ -66,13 +66,13 @@
 
 .tune-view-modal__task-title {
   width: fit-content;
-  margin-right: 1.6rem;
+  margin-inline-end: 1.6rem;
 
   @mixin text-overflow;
 }
 
 .tune-view-modal__task-arrow {
-  margin-right: 0.7rem;
+  margin-inline-end: 0.7rem;
   color: var(--pneumatic-color-black72);
   transition:
     transform 0.3s,
@@ -93,7 +93,7 @@
     margin-bottom: 0;
 
     .tune-view-modal__field-name {
-      margin-right: 1.6rem;
+      margin-inline-end: 1.6rem;
       color: var(--pneumatic-color-black16);
 
       @mixin text-overflow;
@@ -102,10 +102,10 @@
 }
 
 .tune-view-modal__fieldset-group {
-  padding-left: 1.2rem;
+  padding-inline-start: 1.2rem;
   margin-top: 1.6rem;
   margin-bottom: 1.6rem;
-  border-left: 3px solid var(--pneumatic-color-black72);
+  border-inline-start: 3px solid var(--pneumatic-color-black72);
 }
 
 .tune-view-modal__fieldset-title {

@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 import moment from 'moment-timezone';
 
 import { ERoutes } from '../../../constants/routes';
-import { TITLES } from '../../../constants/titles';
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { history } from '../../../utils/history';
 import { IntlMessages } from '../../../components/IntlMessages';
 import { NavLink } from '../../../components/NavLink';
@@ -36,12 +36,10 @@ const INITIAL_VALUES_FORMIK: TRegisterInviteValues = {
 };
 
 export function RegisterInvite({ loading, id, registerUserInvited }: IRegisterInviteProps) {
+  useDocumentTitle('Register');
+
   const { formatMessage } = useIntl();
   const defaultOffset = moment().utcOffset();
-
-  useEffect(() => {
-    document.title = TITLES.Register;
-  }, []);
 
   useEffect(() => {
     if (!id) {

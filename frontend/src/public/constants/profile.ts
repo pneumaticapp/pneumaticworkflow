@@ -4,6 +4,7 @@ import { TDropdownOptionBase } from '../components/UI';
 // The Russian language is present, but it should not be shown yet
 export const LANGUAGE_OPTIONS: TDropdownOptionBase[] = [
   { label: 'user-info.locale.language.english', value: 'en' },
+  { label: 'user-info.locale.language.arabic-syrian', value: 'ar-sy' },
   envLanguageCode === 'ru' && { label: 'user-info.locale.language.russia', value: 'ru' },
 ].filter(Boolean) as unknown as TDropdownOptionBase[];
 
@@ -24,6 +25,7 @@ export const TIMEZONE_OPTIONS: TDropdownOptionBase[] = [
   { label: 'user-info.locale.timezone.berlin', value: 'Europe/Berlin' },
   { label: 'user-info.locale.timezone.cairo', value: 'Africa/Cairo' },
   { label: 'user-info.locale.timezone.moscow', value: 'Europe/Moscow' },
+  { label: 'user-info.locale.timezone.damascus', value: 'Asia/Damascus' },
   { label: 'user-info.locale.timezone.dubai', value: 'Asia/Dubai' },
   { label: 'user-info.locale.timezone.karachi', value: 'Asia/Karachi' },
   { label: 'user-info.locale.timezone.dhaka', value: 'Asia/Dhaka' },

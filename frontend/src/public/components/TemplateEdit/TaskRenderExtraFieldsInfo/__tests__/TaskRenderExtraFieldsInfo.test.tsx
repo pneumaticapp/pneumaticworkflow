@@ -1,10 +1,17 @@
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
+import * as ReactIntl from 'react-intl';
 
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
 import { makeFieldsetBindingClient, makeFieldsetField } from '../../../../__stubs__/fieldsets.factory';
 import { IExtraField, IFieldsetBindingClient } from '../../../../types/template';
 import { TaskRenderExtraFieldsInfo } from '../TaskRenderExtraFieldsInfo';
+import { arMessages } from '../../../../lang/locales/ar-SY';
+import { enMessages } from '../../../../lang/locales/en_US';
+
+jest.mock('react-intl', () => ({ ...jest.requireActual('react-intl'), useIntl: jest.fn() }));
+const mockUseIntl = ReactIntl.useIntl as jest.MockedFunction<typeof ReactIntl.useIntl>;
+const ExtraFieldsInfo = TaskRenderExtraFieldsInfo as React.FC<Parameters<typeof TaskRenderExtraFieldsInfo>[0]>;
 
 const makeField = (apiName: string) =>
   makeExtraField({
@@ -15,6 +22,26 @@ const makeField = (apiName: string) =>
 const makeTask = (fields: IExtraField[], fieldsets: IFieldsetBindingClient[]) => ({ fields, fieldsets }) as any;
 
 describe('TaskRenderExtraFieldsInfo', () => {
+  beforeEach(() => {
+    mockUseIntl.mockReturnValue(ReactIntl.createIntl({ locale: 'en', messages: enMessages }));
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  it('uses the Arabic dual for own plus fieldset fields and restores English when the UI locale changes', () => {
+    const locale = mockUseIntl;
+    locale.mockReturnValue(ReactIntl.createIntl({ locale: 'ar-SY', messages: arMessages }));
+    const task = makeTask(
+      [makeField('field-1')],
+      [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', fields: [makeFieldsetField({ apiName: 'f-1' })] })],
+    );
+    const { rerender } = render(<ExtraFieldsInfo task={task} onClick={jest.fn()} />);
+
+    expect(screen.getByRole('button')).toHaveTextContent('مخرجان');
+    locale.mockReturnValue(ReactIntl.createIntl({ locale: 'en', messages: enMessages }));
+    rerender(<ExtraFieldsInfo task={task} onClick={jest.fn()} />);
+    expect(screen.getByRole('button')).toHaveTextContent('2 outputs');
+  });
+
   it('does not render when fields are empty and fieldsets are empty', () => {
     render(
       React.createElement(TaskRenderExtraFieldsInfo as React.FC<any>, {

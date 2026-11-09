@@ -7,7 +7,7 @@ import { useIntl } from 'react-intl';
 import { TLoadIntegrationDetailsPayload } from '../../redux/actions';
 import { IIntegrationDetailed } from '../../types/integrations';
 import { Loader } from '../UI/Loader';
-import { PNEUMATIC_SUFFIX, TITLES } from '../../constants/titles';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { Button } from '../UI/Buttons/Button';
 
 import styles from './IntegrationDetails.css';
@@ -30,6 +30,7 @@ export function IntegrationDetails({
 }: IIntegrationDetailsProps) {
   const { useEffect } = React;
   const { messages } = useIntl();
+  useDocumentTitle('Integrations', integration?.name || undefined);
 
   useEffect(() => {
     const { id: taskId } = match.params as ITaskDetailPathParams;
@@ -37,15 +38,7 @@ export function IntegrationDetails({
     const normalizedIntegrationId = Number(taskId);
 
     loadIntegrationDetails({ id: normalizedIntegrationId });
-
-    document.title = TITLES.Integrations;
   }, []);
-
-  React.useEffect(() => {
-    if (integration?.name) {
-      document.title = `${integration?.name} ${PNEUMATIC_SUFFIX}`;
-    }
-  }, [integration?.name]);
 
   const renderButton = () => {
     if (!integration?.url) {

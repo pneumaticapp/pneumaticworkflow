@@ -5,6 +5,10 @@
   transition: opacity 0.2s ease;
 }
 
+:global(html[dir='rtl']) .edge-label {
+  direction: rtl;
+}
+
 .edge-label--dimmed {
   pointer-events: none;
   opacity: 0.15;

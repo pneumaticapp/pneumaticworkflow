@@ -5,16 +5,14 @@
   flex-direction: column;
   justify-content: space-between;
   width: fit-content;
-  padding-right: 3.6rem;
+  padding-inline: 3.6rem;
   padding-bottom: 0.8rem;
-  padding-left: 3.6rem;
   margin: 0 auto;
   margin-bottom: -0.8rem;
 
   @media (--mobile) {
-    padding-right: 0;
+    padding-inline: 0;
     padding-bottom: 8rem;
-    padding-left: 0;
   }
 }
 
@@ -43,8 +41,7 @@
 
   td:nth-child(2),
   th:nth-child(2) {
-    padding-right: 1.5rem;
-    padding-left: 1.5rem;
+    padding-inline: 1.5rem;
   }
 
   th {
@@ -53,12 +50,12 @@
 
   td:first-child,
   th:first-child {
-    padding-left: 0;
+    padding-inline-start: 0;
   }
 
   td:last-child,
   th:last-child {
-    padding-right: 3.2rem;
+    padding-inline-end: 3.2rem;
   }
 }
 
@@ -84,7 +81,7 @@
 }
 
 .column {
-  border-right: 0.1rem solid var(--pneumatic-color-black8);
+  border-inline-end: 0.1rem solid var(--pneumatic-color-black8);
 }
 
 .row {
@@ -116,7 +113,7 @@
 
 .search-field__input {
   height: 2rem !important;
-  padding-left: 2.8rem !important;
+  padding-inline-start: 2.8rem !important;
   background-color: var(--background-color);
   border: 0;
   border-radius: 0.8rem;
@@ -146,7 +143,7 @@
 }
 
 .header-filter__arrow {
-  margin-left: 0 !important;
+  margin-inline-start: 0 !important;
 }
 
 .filter-container {
@@ -171,8 +168,8 @@
 
 .column-header__hover-zone {
   position: absolute;
+  inset-inline-end: -1.6rem;
   top: 0;
-  right: -1.6rem;
   bottom: 0;
   z-index: 1;
   width: 3.2rem;
@@ -180,8 +177,8 @@
 
 .column-header__resize {
   position: absolute;
+  inset-inline-end: 1.55rem;
   top: 0;
-  right: 1.55rem;
   z-index: 1;
   width: 0.4rem;
   height: 5.2rem;
@@ -191,12 +188,16 @@
   transform: translateX(50%);
 }
 
+:global([dir='rtl']) .column-header__resize {
+  transform: translateX(-50%);
+}
+
 .column-header__dashed-line {
   position: absolute;
+  inset-inline-end: 0.15rem;
   top: 0;
-  right: 0.15rem;
   width: 0.1rem;
-  border-right: 0.1rem solid var(--pneumatic-color-black72);
+  border-inline-end: 0.1rem solid var(--pneumatic-color-black72);
   opacity: 0;
 }
 
@@ -219,13 +220,14 @@
 
 .container__actions--wide-table {
   position: sticky;
-  left: 0;
+  inset-inline-start: 0;
   z-index: 5;
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 0 2.4rem 0 3.2rem;
+  padding-block: 0;
+  padding-inline: 3.2rem 2.4rem;
   margin-bottom: 1.6rem;
 
   @media (--mobile) {
@@ -248,7 +250,7 @@
 }
 
 .tune-view-icon {
-  margin-right: 0.2rem !important;
+  margin-inline-end: 0.2rem !important;
 }
 
 .actions-buttons {

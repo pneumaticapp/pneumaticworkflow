@@ -101,7 +101,7 @@ export const checklistPlugin = (
       result += `<div class="${styles['progressbar__container']}">${progressbar}</div>`;
     }
 
-    result += `<div class="${styles['checklist__item']}">`;
+    result += `<div class="${styles['checklist__item']}" dir="auto">`;
     result += checkbox;
     result += `<span class="${styles['checklist__content']}">`;
 

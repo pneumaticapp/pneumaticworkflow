@@ -63,7 +63,8 @@
 
 .date-started {
   flex-shrink: 0;
-  margin: 0 0 0 8px;
+  margin-block: 0;
+  margin-inline: 8px 0;
   font-size: 13px;
   line-height: 16px;
   color: var(--pneumatic-color-black48);
@@ -83,7 +84,7 @@
 }
 
 .start-responsibles__more {
-  margin-left: 8px;
+  margin-inline-start: 8px;
   font-size: 13px;
   line-height: 20px;
   color: #979795;
@@ -92,11 +93,11 @@
 .start-responsible {
   width: 20px;
   height: 20px;
-  margin-left: -4px;
+  margin-inline-start: -4px;
   cursor: default;
 
   &:first-child {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 
   img {

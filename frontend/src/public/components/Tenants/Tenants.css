@@ -20,7 +20,7 @@
   padding: 31px 32px;
   margin-bottom: 8px;
   color: var(--pneumatic-color-link-dark);
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   background: transparent;
   border: 1px solid var(--pneumatic-color-link-dark);
@@ -43,7 +43,7 @@
   }
 
   &__icon {
-    margin-right: 16px;
+    margin-inline-end: 16px;
 
     @media (--mobile) {
       margin-bottom: 16px;

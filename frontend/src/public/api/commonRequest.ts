@@ -10,6 +10,7 @@ import { getCurrentToken } from '../utils/auth';
 import { envBackendURL } from '../constants/enviroment';
 import { isRequestCanceled } from '../utils/isRequestCanceled';
 import { isExpectedClientError } from '../utils/expectedClientErrors';
+import { getLocaleAttributes } from '../lang/locale';
 // Brings the AxiosRequestConfig augmentation into ts-node's program (it ignores tsconfig include)
 import type {} from '../../typings/axios';
 
@@ -71,6 +72,10 @@ axiosInstance.interceptors.request.use(
     const token = getCurrentToken();
     const authHeaders = getAuthHeader({ token, appPart });
     const headers = new AxiosHeaders();
+
+    if (typeof document !== 'undefined' && !config.headers.has('Accept-Language')) {
+      headers.set('Accept-Language', getLocaleAttributes(document.documentElement.lang).lang);
+    }
 
     Object.entries(authHeaders).forEach(([key, value]) => {
       if (value) {

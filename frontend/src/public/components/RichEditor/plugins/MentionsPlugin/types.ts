@@ -2,6 +2,7 @@ import type { TMentionData } from '../../types';
 
 export type MenuState = {
   rect: DOMRect;
+  getAnchorRect?: () => DOMRect;
   anchorKey: string;
   anchorOffset: number;
   replaceableString: string;

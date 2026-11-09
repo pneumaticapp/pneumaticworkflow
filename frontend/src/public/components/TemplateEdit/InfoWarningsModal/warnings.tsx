@@ -15,11 +15,11 @@ export function UnassignedTasksWarning() {
 
   const links = [
     {
-      title: 'How to invite your team',
+      title: formatMessage({ id: 'template.help.invite-team' }),
       url: 'https://support.pneumatic.app/articles/5579977-inviting-your-team-to-pneumatic',
     },
     {
-      title: 'How to add free external users',
+      title: formatMessage({ id: 'template.help.external-users' }),
       url: 'https://support.pneumatic.app/articles/6145048-free-external-users',
     },
   ];

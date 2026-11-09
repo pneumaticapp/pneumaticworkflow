@@ -6,6 +6,7 @@ import classnames from 'classnames';
 
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { IDatasetListItem } from '../../types/dataset';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 import { PageTitle } from '../PageTitle';
 import { EPageTitle } from '../../constants/defaultValues';
@@ -20,6 +21,7 @@ import { DatasetCard } from './DatasetCard';
 import styles from './Datasets.css';
 
 export function Datasets() {
+  useDocumentTitle('Datasets');
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
 

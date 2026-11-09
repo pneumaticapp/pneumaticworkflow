@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useEffect, useRef } from 'react';
+import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
 
@@ -11,6 +12,7 @@ import { ITemplateClient } from '../../types/template';
 import { TLoadTemplateVariablesSuccessPayload } from '../../redux/actions';
 import { ETemplateStatus, IAuthUser } from '../../types/redux';
 import { usePrevious } from '../../hooks/usePrevious';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { getSubscriptionPlan } from '../../redux/selectors/user';
 import { getIsCatalogLoaded } from '../../redux/selectors/fieldsets';
 import { loadFieldsetsCatalog } from '../../redux/fieldsets/slice';
@@ -62,6 +64,11 @@ export function TemplateEdit({
   setTemplateStatus,
   loadTemplateVariablesSuccess,
 }: TTemplateEditProps) {
+  useDocumentTitle(
+    match.params.id ? 'TemplatesEdit' : 'TemplatesCreate',
+    match.params.id && template.id === Number(match.params.id) ? template.name : undefined,
+  );
+  const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const { owners } = template;
   const billingPlan = useSelector(getSubscriptionPlan);
@@ -72,7 +79,14 @@ export function TemplateEdit({
   const prevLocation = usePrevious(location);
   const prevTemplate = usePrevious(template);
 
-  const getEmptyTemplate = (): ITemplateClient => createEmptyTemplate({ authUser, accessConditions, users });
+  const getEmptyTemplate = (): ITemplateClient =>
+    createEmptyTemplate({
+      authUser,
+      accessConditions,
+      users,
+      name: formatMessage({ id: 'templates.new-template-name' }),
+      firstStepName: formatMessage({ id: 'templates.first-step-name' }),
+    });
 
   const initPage = (): void => {
     const { id } = match.params;

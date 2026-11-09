@@ -95,7 +95,7 @@ services:
       FORMS_URL: ${FORMS_URL:-http://localhost/forms}
       ENVIRONMENT: ${ENVIRONMENT:-Production}
       RELEASE: ${RELEASE:-1.0.0}
-      LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru
+      LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru, ar-sy
       CAPTCHA: ${CAPTCHA:-no}
       RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
       RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-}
@@ -228,7 +228,7 @@ services:
       FORMS_URL: ${FORMS_URL:-http://localhost/forms}
       ENVIRONMENT: ${ENVIRONMENT:-Production}
       RELEASE: ${RELEASE:-1.0.0}
-      LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru
+      LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru, ar-sy
       CAPTCHA: ${CAPTCHA:-no}
       RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
       RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-}
@@ -356,7 +356,7 @@ services:
       FORMS_URL: ${FORMS_URL:-http://localhost/forms}
       ENVIRONMENT: ${ENVIRONMENT:-Production}
       RELEASE: ${RELEASE:-1.0.0}
-      LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru
+      LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru, ar-sy
       CAPTCHA: ${CAPTCHA:-no}
       RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
       RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-}
@@ -485,7 +485,7 @@ services:
       FORM_DOMAIN: ${FORM_DOMAIN:-}
       MCS_RUN_ENV: ${MCS_RUN_ENV:-prod}
       NODE_OPTIONS: ${NODE_OPTIONS:---max-old-space-size=3072}
-      LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru
+      LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru, ar-sy
       CAPTCHA: ${CAPTCHA:-no}
       ANALYTICS: ${ANALYTICS:-no}
       ANALYTICS_WRITE_KEY: ${ANALYTICS_WRITE_KEY:-}

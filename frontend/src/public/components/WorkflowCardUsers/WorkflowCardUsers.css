@@ -18,7 +18,7 @@
 }
 
 .card-users > .card-user:not(:first-child) {
-  margin-left: -0.4rem;
+  margin-inline-start: -0.4rem;
 }
 
 .card-users button {
@@ -32,11 +32,11 @@
 }
 
 .card-users > button:not(:first-child) {
-  margin-left: -0.4rem;
+  margin-inline-start: -0.4rem;
 }
 
 .card-users__more {
-  margin-left: 0.8rem;
+  margin-inline-start: 0.8rem;
   font-size: 1.3rem;
   line-height: 1.6rem;
   color: var(--pneumatic-color-black48);

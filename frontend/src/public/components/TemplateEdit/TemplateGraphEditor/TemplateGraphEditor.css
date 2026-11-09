@@ -55,10 +55,9 @@
   .react-flow__node-task.graph-item--dimmed::after,
   .react-flow__node-kickoff.graph-item--dimmed::after {
     position: absolute;
+    inset-inline: 0;
     top: 0;
-    right: 0;
     bottom: 0;
-    left: 0;
     pointer-events: none;
     content: '';
     background: var(--pneumatic-color-black4);

@@ -1,6 +1,6 @@
 .template-name {
   width: 100%;
-  text-align: left;
+  text-align: start;
 
   @mixin text-truncate;
 }

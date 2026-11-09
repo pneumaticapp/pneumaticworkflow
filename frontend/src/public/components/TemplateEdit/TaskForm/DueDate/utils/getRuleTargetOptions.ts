@@ -1,3 +1,4 @@
+import type { IntlShape } from 'react-intl';
 import {
   EExtraFieldType,
   ITemplateKickoffClient,
@@ -17,6 +18,7 @@ export function getRuleTargetOptions(
   currentTask: ITemplateTaskClient,
   tasks: ITemplateTaskClient[],
   kickoff: ITemplateKickoffClient,
+  formatMessage?: IntlShape['formatMessage'],
 ): readonly [TRuleTargetOption[], TRuleTargetOption[], TRuleTargetOption[]] {
   const prevTasks = getPreviousTasks(currentTask, tasks);
   const prevDateVariables = getTaskVariables(kickoff, tasks, currentTask).filter(
@@ -25,12 +27,12 @@ export function getRuleTargetOptions(
 
   const systemRules = [
     {
-      label: 'Workflow started',
+      label: formatMessage ? formatMessage({ id: 'due-date.workflow-started' }) : 'Workflow started',
       sourceId: null,
       ruleTarget: 'workflow started',
     },
     {
-      label: 'This task started',
+      label: formatMessage ? formatMessage({ id: 'due-date.task-started' }) : 'This task started',
       sourceId: currentTask.apiName,
       ruleTarget: 'task started',
     },

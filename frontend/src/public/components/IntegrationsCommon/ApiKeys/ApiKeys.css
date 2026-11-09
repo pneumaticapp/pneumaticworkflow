@@ -16,7 +16,7 @@
     font-size: 1.4rem;
     color: var(--pneumatic-color-warning);
     background-color: var(--pneumatic-color-notification1-light);
-    border-left: 0.3rem solid var(--pneumatic-color-warning);
+    border-inline-start: 0.3rem solid var(--pneumatic-color-warning);
     border-radius: 0.4rem;
   }
 
@@ -59,7 +59,7 @@
     margin-top: 3.2rem;
 
     > * + * {
-      margin-left: 1.6rem;
+      margin-inline-start: 1.6rem;
     }
   }
 }

@@ -41,9 +41,27 @@
   /* stylelint-disable-next-line declaration-no-important */
   top: initial !important;
   /* stylelint-disable-next-line declaration-no-important */
+  right: initial !important;
+  /* stylelint-disable-next-line declaration-no-important */
   left: initial !important;
   /* stylelint-disable-next-line declaration-no-important */
   transform: initial !important;
+}
+
+/* These menus opt out of Popper's coordinates; align their physical Bootstrap
+   class to the document's inline edge instead. Fixed menus keep Popper ownership. */
+.dropdown-menu_bootstrap-placement:global(.dropdown-menu-right) {
+  /* stylelint-disable-next-line declaration-no-important */
+  right: 0 !important;
+}
+
+.dropdown-menu_bootstrap-placement:not(:global(.dropdown-menu-right)) {
+  /* stylelint-disable-next-line declaration-no-important */
+  left: 0 !important;
+}
+
+:global([dir='rtl']) .submenu-arrow {
+  transform: scaleX(-1);
 }
 
 .dropdown-menu_wide {
@@ -70,10 +88,9 @@
 
   &::before {
     position: absolute;
+    inset-inline: 0.4rem;
     top: -0.1rem;
-    right: 0.4rem;
     bottom: -0.1rem;
-    left: 0.4rem;
     z-index: -1;
     content: '';
     background: var(--pneumatic-color-beige);
@@ -148,7 +165,7 @@
 }
 
 .dropdown-item-icon {
-  margin-left: auto;
+  margin-inline-start: auto;
   color: var(--pneumatic-color-black72);
 }
 

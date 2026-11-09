@@ -1,21 +1,21 @@
 .card-users {
   display: flex;
   align-items: center;
-  margin-right: 5px;
+  margin-inline-end: 5px;
   margin-bottom: 16px;
   cursor: pointer;
 }
 
 .card-user {
-  margin-left: -4px;
+  margin-inline-start: -4px;
 
   &:first-child {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 
 .card-users__more {
-  margin-left: 8px;
+  margin-inline-start: 8px;
   font-size: 13px;
   line-height: 16px;
   color: #979795;

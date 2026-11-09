@@ -10,12 +10,12 @@
 }
 
 .top-wrapper--workflows-layout {
-  left: 0;
+  inset-inline-start: 0;
 
   @media (--mobile) {
     position: sticky;
+    inset-inline-start: 0;
     top: unset;
-    left: 0;
     margin-bottom: 3.2rem;
   }
 }
@@ -89,10 +89,11 @@
   flex-flow: row nowrap !important;
   align-items: center;
   height: auto;
-  padding: 3.2rem 3.2rem 3.2rem 10.4rem !important;
+  padding-block: 3.2rem !important;
+  padding-inline: 10.4rem 3.2rem !important;
   background: var(--navbar-background-color);
   backdrop-filter: blur(0.4rem);
-  transition: padding-left 0.2s ease-out;
+  transition: padding-inline-start 0.2s ease-out;
 
   @media (--mobile) {
     flex-wrap: wrap !important;
@@ -101,16 +102,15 @@
 }
 
 .navbar--workflows-table {
-  padding-left: 3.2rem !important;
+  padding-inline-start: 3.2rem !important;
 
   @media (--mobile) {
-    padding-left: 0 !important;
+    padding-inline-start: 0 !important;
   }
 }
 
 .navbar--workflows-grid {
-  padding-right: 0 !important;
-  padding-left: 0 !important;
+  padding-inline: 0 !important;
 }
 
 .navbar-left {
@@ -136,8 +136,8 @@
   justify-content: flex-end;
   width: auto;
   min-height: 4rem;
-  margin-left: auto;
-  text-align: right;
+  margin-inline-start: auto;
+  text-align: end;
   white-space: nowrap;
 
   @media (--mobile) {
@@ -145,7 +145,8 @@
     width: 100% !important;
     max-width: 100%;
     height: 6.4rem;
-    padding: 0 1.6rem 0 6.4rem;
+    padding-block: 0;
+    padding-inline: 6.4rem 1.6rem;
     margin-top: 1.6rem;
   }
 
@@ -172,7 +173,7 @@
 }
 
 .search_desktop {
-  margin-left: 1rem;
+  margin-inline-start: 1rem;
 
   @media (--desktop) {
     display: flex;
@@ -194,7 +195,8 @@
 }
 
 .search_mobile-opened {
-  margin: 0 1.5rem 0 1rem;
+  margin-block: 0;
+  margin-inline: 1rem 1.5rem;
 }
 
 .search__inner {
@@ -214,8 +216,8 @@
 
 .search__clear {
   position: absolute;
+  inset-inline-end: 0.5rem;
   top: 0;
-  right: 0.5rem;
   bottom: 0;
   background-color: transparent;
   border: 0;

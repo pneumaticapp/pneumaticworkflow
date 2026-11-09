@@ -23,7 +23,7 @@
     transition: all 0.1s ease;
 
     &--has-margin {
-      margin-right: 0.8rem;
+      margin-inline-end: 0.8rem;
     }
 
     &::before,

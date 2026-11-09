@@ -43,9 +43,8 @@
 
 .placeholder {
   position: absolute;
+  inset-inline: 1.6rem;
   top: 1rem;
-  right: 1.6rem;
-  left: 1.6rem;
   max-height: 8.8rem;
   color: var(--default-placeholder-color);
   pointer-events: none;
@@ -55,7 +54,7 @@
 
 :global(.lexical-rich-editor-list-ul),
 :global(.lexical-rich-editor-list-ol) {
-  padding-left: 3.2rem;
+  padding-inline-start: 3.2rem;
   list-style-position: outside;
 }
 
@@ -72,11 +71,11 @@
 }
 
 :global(.lexical-rich-editor-list-ul .lexical-rich-editor-list-item) {
-  padding-left: 0.6rem;
+  padding-inline-start: 0.6rem;
 }
 
 :global(.lexical-rich-editor-list-ol .lexical-rich-editor-list-item) {
-  padding-left: 0.8rem;
+  padding-inline-start: 0.8rem;
 }
 
 :global(.lexical-rich-editor-list-item + .lexical-rich-editor-list-item) {
@@ -153,7 +152,7 @@
 }
 
 :global(.lexical-rich-editor-checklist-ul) {
-  padding-left: 3.2rem;
+  padding-inline-start: 3.2rem;
 }
 
 :global(.lexical-rich-editor-checklist-item) {

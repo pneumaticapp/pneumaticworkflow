@@ -16,11 +16,11 @@
 .common {
   flex-shrink: 0;
   width: 272px;
-  margin-right: 64px;
+  margin-inline-end: 64px;
 
   @media (--mobile) {
     width: 100%;
-    margin-right: 0;
+    margin-inline-end: 0;
     margin-bottom: 32px;
   }
 

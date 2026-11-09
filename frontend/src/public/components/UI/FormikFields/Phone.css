@@ -28,8 +28,8 @@
 
   &__title {
     position: absolute;
+    inset-inline-start: 12px;
     top: 0;
-    left: 12px;
     z-index: 0;
     padding: 0 4px;
     font-size: 13px;
@@ -49,3 +49,19 @@
     cursor: pointer;
   }
 }
+
+/* The country picker follows UI direction; the phone number is a technical value. */
+/* stylelint-disable selector-class-pattern, custom-property-pattern */
+.phone-input :global(.PhoneInputInput) {
+  text-align: left;
+  direction: ltr;
+}
+
+.phone-input :global(.PhoneInputCountry) {
+  margin-inline: 0 var(--PhoneInputCountrySelect-marginRight);
+}
+
+.phone-input :global(.PhoneInputCountrySelectArrow) {
+  margin-inline: var(--PhoneInputCountrySelectArrow-marginLeft) 0;
+}
+/* stylelint-enable selector-class-pattern, custom-property-pattern */

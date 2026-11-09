@@ -76,13 +76,13 @@ describe('FieldLabel', () => {
     it('renders required sign when isRequired=true', () => {
       render(<FieldLabel {...kickoffProps} isRequired={true} />);
 
-      expect(screen.getByLabelText('required')).toBeInTheDocument();
+      expect(screen.getByLabelText('Required')).toBeInTheDocument();
     });
 
     it('hides required sign when isRequired=false', () => {
       render(<FieldLabel {...kickoffProps} isRequired={false} />);
 
-      expect(screen.queryByLabelText('required')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Required')).not.toBeInTheDocument();
     });
 
     it('renders edit button when textarea is not focused', () => {
@@ -122,13 +122,13 @@ describe('FieldLabel', () => {
     it('renders required sign when isRequired=true', () => {
       render(<FieldLabel {...processRunProps} isRequired={true} />);
 
-      expect(screen.getByLabelText('required')).toBeInTheDocument();
+      expect(screen.getByLabelText('Required')).toBeInTheDocument();
     });
 
     it('hides required sign when isRequired=false', () => {
       render(<FieldLabel {...processRunProps} isRequired={false} />);
 
-      expect(screen.queryByLabelText('required')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Required')).not.toBeInTheDocument();
     });
   });
 });

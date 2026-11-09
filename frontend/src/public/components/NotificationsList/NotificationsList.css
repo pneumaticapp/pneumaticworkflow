@@ -1,7 +1,7 @@
 /* stylelint-disable selector-pseudo-class-no-unknown, declaration-no-important  */
 @keyframes slide-in {
   0% {
-    transform: translateX(100%);
+    transform: translateX(calc(100% * var(--notification-slide-direction, 1)));
   }
 
   100% {
@@ -15,21 +15,24 @@
   }
 
   100% {
-    transform: translateX(100%);
+    transform: translateX(calc(100% * var(--notification-slide-direction, 1)));
   }
 }
 
 .container {
   position: fixed;
+  inset-inline-end: 0;
   top: 16px;
-  right: 0;
   bottom: 16px;
   z-index: 1050;
   width: 480px;
   max-width: calc(100% - 16px);
   overflow: hidden;
   background-color: white;
-  border-radius: 32px 0 0 32px;
+  border-start-start-radius: 32px;
+  border-start-end-radius: 0;
+  border-end-start-radius: 32px;
+  border-end-end-radius: 0;
   box-shadow: 0 8px 24px rgb(98 98 95 / 8%);
 
   :global .ps__rail-y {
@@ -108,11 +111,12 @@
 .notification-item {
   position: relative;
   display: block;
-  padding: 0 28px 0 84px;
+  padding-block: 0;
+  padding-inline: 84px 28px;
   margin: 16px 4px;
 
   @media (--mobile) {
-    padding-left: 68px;
+    padding-inline-start: 68px;
   }
 
   &::before {
@@ -140,8 +144,8 @@
 
 .notification-item__remove {
   position: absolute;
+  inset-inline-end: 28px;
   top: 0;
-  right: 28px;
   padding: 0;
   color: #dcdcdb;
   background: transparent;
@@ -160,8 +164,8 @@
 
 .notification-item__avatar {
   position: absolute;
+  inset-inline-start: 28px;
   top: 0;
-  left: 28px;
   width: 32px;
 }
 
@@ -169,20 +173,21 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  padding-right: 64px;
-  margin: 0 -8px 0 0;
+  padding-inline-end: 64px;
+  margin-block: 0;
+  margin-inline: 0 -8px;
   font-size: 15px;
   line-height: 20px;
   color: var(--pneumatic-color-black100);
 }
 
 .notification-item-title__text {
-  margin-right: 8px;
+  margin-inline-end: 8px;
 }
 
 .notification-item-title__icon {
   display: flex;
-  margin-right: 8px;
+  margin-inline-end: 8px;
   color: var(--pneumatic-color-black32);
 }
 
@@ -242,13 +247,16 @@
 
 .notification-item_new::after {
   position: absolute;
+  inset-inline-start: -4px;
   top: 0;
-  left: -4px;
   width: 8px;
   height: 40px;
   content: '';
   background-color: var(--theme-color-1);
-  border-radius: 0 4px 4px 0;
+  border-start-start-radius: 0;
+  border-start-end-radius: 4px;
+  border-end-start-radius: 0;
+  border-end-end-radius: 4px;
 
   @media (--mobile) {
     height: 32px;
@@ -259,4 +267,8 @@
   position: absolute !important;
   top: 100% !important;
   align-self: center;
+}
+
+:global(html[dir='rtl']) .container {
+  --notification-slide-direction: -1;
 }

@@ -9,7 +9,7 @@ import classNames from 'classnames';
 import { TRegisterUserPayload } from '../../../redux/actions';
 import { IntlMessages } from '../../../components/IntlMessages';
 import { ERoutes } from '../../../constants/routes';
-import { TITLES } from '../../../constants/titles';
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { validateEmail, validateName, validatePhone, validateRegistrationPassword } from '../../../utils/validators';
 import { getQueryStringParams, history } from '../../../utils/history';
 import { EOAuthType } from '../../../types/auth';
@@ -48,6 +48,8 @@ const INITIAL_VALUES_FORMIK: TRegisterValues = {
 };
 
 export function Register({ registerUser }: IRegisterProps) {
+  useDocumentTitle('Register');
+
   const { formatMessage } = useIntl();
   const { recaptchaSecret } = getBrowserConfigEnv();
   const [showCaptcha, setShowCaptcha] = useState(false);
@@ -55,7 +57,6 @@ export function Register({ registerUser }: IRegisterProps) {
   const typeSSOProvider = envSSOProvider === SSOProvider.Auth0 ? EOAuthType.SSOAuth0 : EOAuthType.SSOOkta;
 
   useEffect(() => {
-    document.title = TITLES.Register;
     saveUTMParams();
 
     if (isEnvCaptcha) {
@@ -156,7 +157,7 @@ export function Register({ registerUser }: IRegisterProps) {
           });
 
           if (showCaptcha && !values.captcha) {
-            errors.captcha = 'Failed verification captcha';
+            errors.captcha = formatMessage({ id: 'validation.captcha-failed' });
           }
 
           return errors;

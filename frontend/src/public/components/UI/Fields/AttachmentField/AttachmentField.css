@@ -16,8 +16,8 @@
 
 .title {
   position: absolute;
+  inset-inline-start: 12px;
   top: 0;
-  left: 12px;
   z-index: 0;
   padding: 0 4px;
   font-size: 13px;
@@ -64,11 +64,11 @@
   }
 
   .input-field_with-clearing {
-    padding-right: 43px;
+    padding-inline-end: 43px;
   }
 
   .clear-button {
-    right: 16px;
+    inset-inline-end: 16px;
   }
 }
 
@@ -80,11 +80,11 @@
   }
 
   .input-field_with-clearing {
-    padding-right: 43px;
+    padding-inline-end: 43px;
   }
 
   .clear-button {
-    right: 16px;
+    inset-inline-end: 16px;
   }
 }
 
@@ -96,17 +96,17 @@
   }
 
   .input-field_with-clearing {
-    right: 8px;
-    padding-right: 27px;
+    inset-inline-end: 8px;
+    padding-inline-end: 27px;
   }
 
   .clear-button {
-    right: 8px;
+    inset-inline-end: 8px;
   }
 }
 
 .input-field.input-field_with-icon {
-  padding-right: 50px;
+  padding-inline-end: 50px;
 }
 
 .input-with-rigt-content-wrapper {
@@ -115,8 +115,8 @@
 
 .icon {
   position: absolute;
+  inset-inline-end: 0;
   top: 0;
-  right: 0;
   bottom: 0;
   display: flex;
   align-items: center;

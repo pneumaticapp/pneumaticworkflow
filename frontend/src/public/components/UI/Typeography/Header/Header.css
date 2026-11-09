@@ -1,7 +1,7 @@
 .common {
   all: unset;
   display: block;
-  font-family: 'Abhaya Libre', 'Times New Roman', Arial, serif;
+  font-family: var(--pneumatic-font-serif);
   font-weight: 800;
 
   &.with-underline {

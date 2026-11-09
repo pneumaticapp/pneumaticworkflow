@@ -11,7 +11,8 @@
 }
 
 .feed-item__body {
-  padding: 1.6rem 2.4rem 1.6rem 1.6rem;
+  padding-block: 1.6rem;
+  padding-inline: 1.6rem 2.4rem;
   margin: 0 -1.6rem;
   cursor: pointer;
   background: var(--pneumatic-color-beige);
@@ -67,7 +68,7 @@
   flex-shrink: 0;
   width: 2rem;
   height: 2rem;
-  margin-right: 0.8rem;
+  margin-inline-end: 0.8rem;
   line-height: 1.8rem;
 }
 
@@ -90,12 +91,12 @@
 }
 
 .header__avatar {
-  margin-right: 0.8rem;
+  margin-inline-end: 0.8rem;
 }
 
 .header__info {
   flex-grow: 1;
-  margin-right: 2rem;
+  margin-inline-end: 2rem;
 }
 
 .info__performer {
@@ -109,7 +110,7 @@
 
   flex: 0 1 auto;
   min-width: 0;
-  margin-right: 0.8rem;
+  margin-inline-end: 0.8rem;
   color: var(--pneumatic-color-black100);
 }
 
@@ -167,7 +168,7 @@
 .performer__icon {
   align-self: start;
   height: 2rem;
-  margin-right: 0.8rem;
+  margin-inline-end: 0.8rem;
 
   & svg {
     vertical-align: top;
@@ -194,8 +195,8 @@
 
 .card-more-container {
   position: absolute;
+  inset-inline-end: 3.2rem;
   top: 3.2rem;
-  right: 3.2rem;
 }
 
 .card-more {

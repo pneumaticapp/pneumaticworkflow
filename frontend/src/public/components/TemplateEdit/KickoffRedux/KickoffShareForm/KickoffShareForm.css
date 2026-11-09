@@ -12,7 +12,8 @@
 }
 
 .share-control__text {
-  margin: 0 0 0 8px;
+  margin-block: 0;
+  margin-inline: 8px 0;
   font-size: 11px;
   font-weight: bold;
   line-height: 16px;
@@ -86,11 +87,12 @@
 .redirect-url__toggle {
   display: flex;
   align-items: center;
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 
 .redirect-url-toggle__label {
-  margin: 0 8px 0 0;
+  margin-block: 0;
+  margin-inline: 0 8px;
   font-size: 11px;
   font-weight: bold;
   line-height: 16px;

@@ -1,0 +1,47 @@
+@font-face {
+  font-family: 'Hayyakum Allah';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('../fonts/hayyakum-allah/HayyakumAllah-Light.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Hayyakum Allah';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/hayyakum-allah/HayyakumAllah-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Hayyakum Allah';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../fonts/hayyakum-allah/HayyakumAllah-Medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Hayyakum Allah';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../fonts/hayyakum-allah/HayyakumAllah-Bold.woff2') format('woff2');
+}
+
+html:lang(ar) {
+  --pneumatic-font-sans: 'Hayyakum Allah', 'Nunito', sans-serif;
+  --pneumatic-font-serif: 'Hayyakum Allah', 'Abhaya Libre', serif;
+}
+
+/* Arabic joins letters naturally; Latin tracking must not split its glyphs. */
+html:lang(ar) :is(h1, h2, h3, h4, h5, h6, p, span, a, button, input, textarea, select, label) {
+  letter-spacing: normal;
+}
+
+html:lang(ar) :is(pre, code) {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: isolate;
+}

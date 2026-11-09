@@ -14,7 +14,7 @@
 }
 
 .paywall-text {
-  padding-right: 4rem;
+  padding-inline-end: 4rem;
   margin: 0;
   font-size: 1.5rem;
   line-height: 2rem;
@@ -44,7 +44,7 @@
   position: relative;
   display: flex;
   flex-wrap: nowrap;
-  padding-right: 4rem;
+  padding-inline-end: 4rem;
   margin: -0.4rem;
 
   @media (width <= 1150px) {
@@ -53,10 +53,9 @@
 
   &.condition-rule__settings_disabled::before {
     position: absolute;
+    inset-inline: 0 4rem;
     top: 0;
-    right: 4rem;
     bottom: 0;
-    left: 0;
     z-index: 1;
     pointer-events: none;
     content: '';
@@ -82,8 +81,9 @@
         input {
           width: 100% !important;
           height: 4rem;
-          padding: 1.4rem 5rem 1.4rem 1.6rem !important;
-          font-family: Nunito, sans-serif !important;
+          padding-block: 1.4rem !important;
+          padding-inline: 1.6rem 5rem !important;
+          font-family: var(--pneumatic-font-sans, Nunito, sans-serif) !important;
           font-size: 1.5rem !important;
           line-height: 2rem !important;
           color: var(--pneumatic-color-black100) !important;

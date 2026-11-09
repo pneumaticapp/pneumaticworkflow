@@ -14,6 +14,7 @@ import {
   format,
 } from 'date-fns';
 import { useIntl } from 'react-intl';
+import { arSY } from '../lang/dateLocale';
 
 import { IWorkflowDelay, IWorkflowTaskDelay, WorkflowWithDateFields, WorkflowWithTspFields } from '../types/workflow';
 import { EHighlightsDateFilter } from '../types/highlights';
@@ -46,7 +47,7 @@ export const PROCESS_HIGHLIGHTS_DATE_RANGE_MAP = {
 export const formatDateToQuery = (date?: Date | null) => {
   if (!date) return null;
 
-  const ISOFormattedDate = moment(date).format('YYYY-MM-DDTHH:mm:ss');
+  const ISOFormattedDate = moment(date).locale('en').format('YYYY-MM-DDTHH:mm:ss');
   const query = encodeURIComponent(ISOFormattedDate);
 
   return query;
@@ -68,7 +69,7 @@ export const DELAY_TITLE_OPTIONS: IDurationFormatSettings = { trim: false };
 export const PROCESSES_LOG_TEMPLATE = 'D[d] H[h] m[m]';
 
 export const DELAY_REQUEST_TEMPLATE = 'DD hh:mm:ss';
-export const DELAY_REQUEST_OPTIONS: IDurationFormatSettings = { trim: false };
+export const DELAY_REQUEST_OPTIONS: IDurationFormatSettings = { trim: false, userLocale: 'en', useGrouping: false };
 
 export const parseDuration = (duration: string): ISplittedDuration => {
   const re = /(\d*\s?)(\d{2}):(\d{2})/im;
@@ -91,7 +92,13 @@ export const isEmptyDuration = (duration: string | null) => {
 };
 
 const removeZeroParts = (formattedDuration: string) => {
-  return formattedDuration.replace(/(^0d|\D0h|\D0m)/g, '').trim();
+  return formattedDuration.replace(/(^|\s)[0٠]+[dhmيسد](?=\s|$)/g, '').trim();
+};
+
+const localizeDurationTemplate = (template: string) => {
+  if (!moment.locale().startsWith('ar')) return template;
+  const units: Record<string, string> = { d: 'ي', h: 'س', m: 'د' };
+  return template.replace(/\[([dhm])\]/g, (_, unit: string) => `[${units[unit]}]`);
 };
 
 export const formatDuration = (duration: string | null, template: string) => {
@@ -100,11 +107,21 @@ export const formatDuration = (duration: string | null, template: string) => {
   const { days, hours, minutes } = parseDuration(duration);
   const seconds = getSeconds({ days, hours, minutes });
 
-  return removeZeroParts(momentDuration(seconds, 'seconds').format(template, DEFAULT_PRECISION, DELAY_TITLE_OPTIONS));
+  return removeZeroParts(
+    momentDuration(seconds, 'seconds').format(
+      localizeDurationTemplate(template),
+      DEFAULT_PRECISION,
+      DELAY_TITLE_OPTIONS,
+    ),
+  );
 };
 
 export const formatDurationMonths = (value: number | null) => {
   if (!value) return '';
+
+  if (moment.locale().startsWith('ar')) {
+    return new Intl.NumberFormat('ar-SY', { style: 'unit', unit: 'month', unitDisplay: 'long' }).format(value);
+  }
 
   return `${value}${value === 1 ? 'mo' : 'mos'}`;
 };
@@ -121,7 +138,9 @@ export const getZeroDuration = (duration: string | null, durationMonths: number 
 export const formatDelayRequest = ({ days, hours, minutes }: ISplittedDuration) => {
   const seconds = getSeconds({ days, hours, minutes });
 
-  return momentDuration(seconds, 'seconds').format(DELAY_REQUEST_TEMPLATE, DEFAULT_PRECISION, DELAY_REQUEST_OPTIONS);
+  return momentDuration(seconds, 'seconds')
+    .locale('en')
+    .format(DELAY_REQUEST_TEMPLATE, DEFAULT_PRECISION, DELAY_REQUEST_OPTIONS);
 };
 
 export const getSeconds = ({ days, hours, minutes }: ISplittedDuration) => {
@@ -140,7 +159,7 @@ export const getTimeDiff = (template: string, start: string, end?: string | null
   const endDate = end ? moment(end) : moment.tz(new Date(), timezone || '').utc();
   const diff = Math.abs(startDate.diff(endDate, 'seconds'));
 
-  return removeZeroParts(momentDuration(diff, 'seconds').format(template));
+  return removeZeroParts(momentDuration(diff, 'seconds').format(localizeDurationTemplate(template)));
 };
 
 export const isExpired = (deadlineDateISO: string | null, compareDateISO?: string | null) => {
@@ -156,6 +175,19 @@ export const DATE_STRING_MOMENT_TEMPLATE = 'MMM DD, YYYY';
 export const DATE_STRING_FNS_TEMPLATE = 'MMM dd, yyyy';
 
 const UNIX_SECONDS_RE = /^[0-9]+(\.[0-9]+)?$/;
+
+/** Display dates can survive a language switch before their form is submitted. */
+const parseCalendarDate = (value: string | Date) => {
+  if (typeof value !== 'string') return moment(value);
+  const isoDate = moment(value, moment.ISO_8601, true);
+  if (isoDate.isValid()) return isoDate;
+  const locales = Array.from(new Set([moment.locale(), 'en', 'ar-sy', 'ru']));
+  for (const locale of locales) {
+    const date = moment(value, DATE_STRING_MOMENT_TEMPLATE, locale, true);
+    if (date.isValid()) return date;
+  }
+  return moment(value);
+};
 
 export const parseUnixSeconds = (value: unknown): number | null => {
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -176,7 +208,7 @@ export const getEndOfDayTsp = (date: string | Date): number | null => {
   if (unixSeconds !== null) {
     return unixSeconds;
   }
-  const momentDate = moment(date);
+  const momentDate = parseCalendarDate(date);
 
   if (!momentDate.isValid()) {
     throw new Error(`getEndOfDayTsp: Invalid date. Received: ${date} (type: ${typeof date})`);
@@ -192,7 +224,7 @@ export const toDate = (date: number | string | null): Date | null => {
     return moment(unixSeconds * 1000).toDate();
   }
   if (typeof date === 'string') {
-    return moment(date).toDate();
+    return parseCalendarDate(date).toDate();
   }
   throw new Error(`toDate: Invalid date format. Received: ${date} (type: ${typeof date})`);
 };
@@ -211,7 +243,7 @@ export const toDateString = (date: Date | number | string, timezone?: string): s
       momentDate = moment.tz(unixSeconds * 1000, zone);
     } else if (typeof date === 'string') {
       const isoDate = moment.utc(date, moment.ISO_8601, true);
-      const formattedDate = moment(date, DATE_STRING_MOMENT_TEMPLATE, true);
+      const formattedDate = parseCalendarDate(date);
       momentDate = isoDate.isValid() ? isoDate.tz(zone) : formattedDate;
     } else {
       return null;
@@ -227,7 +259,7 @@ export const toDateString = (date: Date | number | string, timezone?: string): s
 
 export const toTspDate = (date?: string | Date | null): number | null => {
   if (!date) return null;
-  const momentDate = moment(date);
+  const momentDate = parseCalendarDate(date);
   if (!momentDate.isValid()) {
     throw new Error(`toTspDate: Invalid date format. Received: ${date} (type: ${typeof date})`);
   }
@@ -260,9 +292,11 @@ export const formatDateToISOInWorkflow = <T extends WorkflowWithTspFields>(
 };
 
 export function toISOStringFromTsp(dueDateTsp: number) {
-  return moment.unix(dueDateTsp).utc().format('YYYY-MM-DDTHH:mm:ss[Z]');
+  return moment.unix(dueDateTsp).utc().locale('en').format('YYYY-MM-DDTHH:mm:ss[Z]');
 }
 
 export const formatDateTimeAmPm = (timestampMs: number) => {
-  return format(new Date(timestampMs), 'MMM d, h:mmaaa');
+  return format(new Date(timestampMs), 'MMM d, h:mmaaa', {
+    locale: moment.locale().startsWith('ar') ? arSY : undefined,
+  });
 };

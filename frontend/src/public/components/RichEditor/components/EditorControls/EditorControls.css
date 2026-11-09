@@ -1,5 +1,5 @@
 .actions {
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 
 .controls {
@@ -20,5 +20,5 @@
 }
 
 .controls__send-button + .controls__send-button {
-  margin-left: 0.8rem;
+  margin-inline-start: 0.8rem;
 }

@@ -1,16 +1,14 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import classnames from 'classnames';
 
 import { IntlMessages } from '../../../components/IntlMessages';
 import { Header } from '../../../components/UI';
-import { TITLES } from '../../../constants/titles';
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 
 import styles from '../User.css';
 
 export function ExpiredInvite() {
-  useEffect(() => {
-    document.title = TITLES.ExpiredInvite;
-  }, []);
+  useDocumentTitle('ExpiredInvite');
 
   return (
     <>

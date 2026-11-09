@@ -47,10 +47,10 @@
   }
 
   & > *:not(:last-child) {
-    margin-right: 0.8rem;
+    margin-inline-end: 0.8rem;
 
     @media (--mobile) {
-      margin-right: 0;
+      margin-inline-end: 0;
       margin-bottom: 0.8rem;
     }
   }

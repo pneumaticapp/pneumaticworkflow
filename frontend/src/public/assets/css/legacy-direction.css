@@ -1,0 +1,28 @@
+/* Bounded compatibility for the Bootstrap 4 utilities and rc-switch theme
+   actually used by the application. Keep vendor coordinate styles intact. */
+/* stylelint-disable declaration-no-important */
+html[dir='rtl'] .ml-auto {
+  margin-right: auto !important;
+  margin-left: 0 !important;
+}
+
+html[dir='rtl'] .custom-switch.rc-switch::after {
+  right: 2px;
+  left: auto !important;
+  margin-right: 3px !important;
+  margin-left: 0 !important;
+  transition-property: right;
+}
+
+html[dir='rtl'] .custom-switch.rc-switch-checked::after {
+  right: 30px !important;
+}
+
+html[dir='rtl'] .custom-switch.custom-switch-small::after {
+  right: 2px !important;
+  margin: 0 !important;
+}
+
+html[dir='rtl'] .custom-switch.custom-switch-small.rc-switch-checked::after {
+  right: 14px !important;
+}

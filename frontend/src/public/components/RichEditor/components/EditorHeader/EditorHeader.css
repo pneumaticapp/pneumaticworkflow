@@ -1,8 +1,7 @@
 .title {
   position: absolute;
+  inset-inline: 1.2rem auto;
   top: 0;
-  right: auto;
-  left: 1.2rem;
   z-index: 1;
   padding: 0 0.4rem;
   font-size: 1.3rem;

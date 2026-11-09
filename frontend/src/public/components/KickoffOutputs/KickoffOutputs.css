@@ -9,7 +9,7 @@
 .header-title {
   display: flex;
   align-items: center;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans);
   font-size: 11px;
   font-weight: 800;
   line-height: 16px;
@@ -20,7 +20,8 @@
 
 .header-title__edit {
   all: unset;
-  margin: 0 0 0 10px;
+  margin-block: 0;
+  margin-inline: 10px 0;
   color: var(--pneumatic-color-link);
   transition: color 0.1s ease-in-out;
 
@@ -32,7 +33,7 @@
 .header__description {
   display: block;
   margin-top: 16px;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans);
   font-size: 15px;
   line-height: 20px;
   color: #262522;
@@ -52,7 +53,7 @@
 
 .output__name {
   display: block;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans);
   font-size: 15px;
   line-height: 20px;
   color: #262522;
@@ -60,7 +61,7 @@
 
 .output__text {
   display: block;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans);
   font-size: 15px;
   line-height: 20px;
   color: var(--pneumatic-color-black72);
@@ -69,7 +70,7 @@
 
 .output__url {
   width: 100%;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans);
   font-size: 15px;
   line-height: 20px;
   color: var(--pneumatic-color-link-dark);
@@ -83,15 +84,15 @@
 }
 
 .fieldset-output-group {
-  padding-left: 12px;
+  padding-inline-start: 12px;
   margin-top: 8px;
   margin-bottom: 8px;
-  border-left: 3px solid var(--pneumatic-color-link);
+  border-inline-start: 3px solid var(--pneumatic-color-link);
 }
 
 .fieldset-output-group__title {
   margin: 0 0 4px;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans);
   font-size: 14px;
   font-weight: bold;
   line-height: 20px;
@@ -102,7 +103,7 @@
 
 .fieldset-output-group__description {
   margin: 0 0 8px;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans);
   font-size: 13px;
   line-height: 18px;
   color: #79756d;

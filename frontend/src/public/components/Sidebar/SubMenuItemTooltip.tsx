@@ -1,5 +1,6 @@
 import React from 'react';
 import classnames from 'classnames';
+import { useIntl } from 'react-intl';
 
 import { ESubscriptionPlan } from '../../types/account';
 import { IntlMessages } from '../IntlMessages';
@@ -23,6 +24,7 @@ export const SubMenuTooltip = ({
   menuItems,
   plan = ESubscriptionPlan.Free,
 }: ISubMenuTooltipProps) => {
+  const { formatMessage } = useIntl();
   const delay = containerClassName.includes('main-hidden') ? 200 : 0;
   const content = (
     <ul>
@@ -32,7 +34,7 @@ export const SubMenuTooltip = ({
             href={item.to}
             rel="noopener noreferrer"
             target="_blank"
-            aria-label={item.label}
+            aria-label={formatMessage({ id: item.label })}
             className={styles['sub-menu__link']}
           >
             <IntlMessages id={item.label} />

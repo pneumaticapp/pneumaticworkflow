@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 
-import { TITLES } from '../../constants/titles';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { Header } from '../../components/UI/Typeography/Header';
 import { Button } from '../../components/UI/Buttons/Button';
 import { ErrorIcon } from './ErrorIcon';
@@ -13,12 +13,13 @@ import { LogoContainer } from '../../components/Logo';
 import styles from './Error.css';
 
 export function Error() {
+  useDocumentTitle('Error');
+
   const { formatMessage } = useIntl();
   const { mainPage } = getBrowserConfigEnv();
 
   React.useEffect(() => {
     document.body.classList.add('background');
-    document.title = TITLES.Error;
 
     return () => {
       document.body.classList.remove('background');

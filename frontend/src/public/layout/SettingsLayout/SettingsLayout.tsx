@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { matchPath } from 'react-router-dom';
+import { FormattedMessage } from 'react-intl';
 
 import { DashboardWidgets } from '../../components/Dashboard/DashboardWidgets';
 import { TopNavContainer } from '../../components/TopNav';
@@ -24,8 +25,8 @@ export class SettingsLayoutComponent extends React.Component<ISettingsLayoutComp
       <div className={styles['navbar-left__content']}>
         <Tabs
           values={[
-            { id: ESettingsTabs.Profile, label: 'Profile' },
-            { id: ESettingsTabs.AccountSettings, label: 'Settings' },
+            { id: ESettingsTabs.Profile, label: <FormattedMessage id="menu.settings.profile" /> },
+            { id: ESettingsTabs.AccountSettings, label: <FormattedMessage id="menu.settings" /> },
           ]}
           activeValueId={activeTab}
           onChange={onChangeTab}

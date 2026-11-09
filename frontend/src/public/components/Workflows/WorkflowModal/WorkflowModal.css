@@ -28,8 +28,8 @@
 
   .close-icon {
     position: absolute;
+    inset-inline-end: 32px;
     top: 32px;
-    right: 32px;
     width: 20px;
     height: 20px;
     vertical-align: top;
@@ -58,11 +58,11 @@
 
     .popup-title-container {
       width: 100%;
-      padding-right: 35px;
+      padding-inline-end: 35px;
       font-size: 15px;
 
       @media (--mobile) {
-        padding-right: 0;
+        padding-inline-end: 0;
       }
     }
   }
@@ -70,7 +70,7 @@
   .popup-title {
     position: relative;
     margin-bottom: 0;
-    font-family: 'Abhaya Libre', 'Times New Roman', Arial, serif;
+    font-family: var(--pneumatic-font-serif);
     font-size: 28px;
     font-weight: 800;
     line-height: 32px;
@@ -106,7 +106,7 @@
     width: 100%;
     padding: 0;
     overflow: hidden;
-    font-family: 'Abhaya Libre', 'Times New Roman', Arial, serif;
+    font-family: var(--pneumatic-font-serif);
     font-size: 28px;
     font-weight: 800;
     line-height: 32px;
@@ -172,7 +172,7 @@
 
 .action-buttons__button-text {
   align-self: center;
-  margin-left: 8px;
+  margin-inline-start: 8px;
   font-size: 13px;
   font-weight: bold;
   line-height: 16px;
@@ -182,7 +182,7 @@
 .progress-bar-text {
   align-self: flex-start;
   margin-bottom: 16px;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans);
   font-size: 11px;
   font-weight: 800;
   line-height: 16px;
@@ -223,7 +223,7 @@
 
 .popup-general-info-container {
   width: 100%;
-  padding-right: 39px;
+  padding-inline-end: 39px;
 
   @media (--desktop) {
     width: calc(100% - 112px);
@@ -239,9 +239,9 @@
   display: inline-flex;
   align-self: center;
   padding: 1px 8px;
+  margin-inline-end: 8px;
   margin-top: -2px;
-  margin-right: 8px;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans);
   font-size: 13px;
   font-weight: normal;
   line-height: 16px;
@@ -278,7 +278,8 @@
   align-items: center;
   justify-content: center;
   padding: 6px 8px;
-  margin: 0 8px 0 0;
+  margin-block: 0;
+  margin-inline: 0 8px;
   background-color: var(--pneumatic-color-black4);
   border-radius: 16px;
 
@@ -288,7 +289,7 @@
 }
 
 .workflow-starter__avatar {
-  margin-right: 4px;
+  margin-inline-end: 4px;
 }
 
 .workflow-starter__name {
@@ -310,13 +311,13 @@
 
 .workflow-due-date {
   width: 100%;
-  margin-left: auto;
-  text-align: right;
+  margin-inline-start: auto;
+  text-align: end;
 
   @media (--mobile) {
+    margin-inline-start: 0;
     margin-top: 32px;
-    margin-left: 0;
-    text-align: left;
+    text-align: start;
   }
 }
 

@@ -3,6 +3,8 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import InnerImageZoom from 'react-inner-image-zoom';
 import classnames from 'classnames';
+import { AppLocale } from '../../lang';
+import { resolveLocale } from '../../lang/locale';
 
 import { history } from '../../utils/history';
 import { ClearIcon } from '../icons';
@@ -17,6 +19,9 @@ export interface IFullscreenImageProps {
 }
 
 export function FullscreenImage({ url, closeFullscreenImage }: IFullscreenImageProps) {
+  // This overlay is mounted outside App's IntlProvider.
+  const locale = resolveLocale(typeof document === 'undefined' ? undefined : document.documentElement.lang);
+  const closeLabel = AppLocale[locale].messages['accessibility.close-image'];
   const imageRef = React.useRef<HTMLImageElement>();
   const [isZoomAvaiable, setIsZoomAvailableState] = React.useState(false);
 
@@ -69,7 +74,7 @@ export function FullscreenImage({ url, closeFullscreenImage }: IFullscreenImageP
             closeFullscreenImage();
           }
         }}
-        aria-label="Close fullscreen image"
+        aria-label={closeLabel}
       />
       <div className={styles['container']}>
         <InnerImageZoom
@@ -89,6 +94,7 @@ export function FullscreenImage({ url, closeFullscreenImage }: IFullscreenImageP
       </div>
 
       <Button
+        aria-label={closeLabel}
         onClick={closeFullscreenImage}
         icon={ClearIcon}
         className={styles['close']}

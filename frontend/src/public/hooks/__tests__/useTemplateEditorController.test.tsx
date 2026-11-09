@@ -7,6 +7,10 @@ import { ITemplateEditorController } from '../../components/TemplateEdit/types';
 import { ITemplateClient, ITemplateTaskClient } from '../../types/template';
 import { ETemplateStatus, IAuthUser } from '../../types/redux';
 import { cleanTemplateReferences } from '../../utils/template';
+import { enMessages } from '../../lang/locales/en_US';
+import { ArLang } from '../../lang/entries/ar-SY';
+
+jest.mock('react-intl', () => jest.requireActual('react-intl'));
 
 jest.mock('throttle-debounce', () => ({
   debounce: (_timeout: number, callback: () => void) => callback,
@@ -72,9 +76,13 @@ const createOptions = (
   ...overrides,
 });
 
-const renderController = (options: IUseTemplateEditorControllerOptions) =>
+const renderController = (
+  options: IUseTemplateEditorControllerOptions,
+  locale = 'en',
+  messages: Record<string, string> = enMessages,
+) =>
   render(
-    <IntlProvider locale="en">
+    <IntlProvider locale={locale} messages={messages}>
       <Probe {...options} />
     </IntlProvider>,
   );
@@ -141,5 +149,19 @@ describe('useTemplateEditorController', () => {
 
     expect(cleanTemplateReferences).toHaveBeenCalledTimes(1);
     expect(options.setTemplate).toHaveBeenCalledWith(expect.objectContaining({ kickoff, isActive: false }));
+  });
+
+  it.each(['line', 'graph'])('localizes a new %s step without renaming saved task content', (view) => {
+    const options = createOptions();
+    renderController(options, 'ar-SY', ArLang.messages);
+
+    act(() => {
+      if (view === 'graph') controller?.addTaskFromGraph({ kind: 'continue', afterId: task.apiName });
+      else controller?.addTask();
+    });
+
+    const updated = (options.setTemplate as jest.Mock).mock.calls[0][0] as ITemplateClient;
+    expect(updated.tasks[0]).toEqual(task);
+    expect(updated.tasks[1].name).toBe(`${ArLang.messages['templates.new-step-name']} 2`);
   });
 });

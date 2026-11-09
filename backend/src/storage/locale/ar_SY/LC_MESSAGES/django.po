@@ -1,0 +1,44 @@
+# Arabic (Syria) translations for Pneumatic.
+# Distributed under the same license as the project.
+msgid ""
+msgstr ""
+"Project-Id-Version: Pneumatic\n"
+"Language: ar_SY\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
+
+msgid "FILE_SERVICE_URL not configured."
+msgstr "لم يتم إعداد FILE_SERVICE_URL."
+
+msgid "Connection to file service failed."
+msgstr "فشل الاتصال بخدمة الملفات."
+
+msgid "User required for authentication."
+msgstr "المستخدم مطلوب للمصادقة."
+
+msgid "Authentication failed with file service."
+msgstr "فشلت المصادقة مع خدمة الملفات."
+
+msgid "File size exceeds maximum allowed size."
+msgstr "يتجاوز حجم الملف الحد الأقصى المسموح."
+
+msgid "File type not supported."
+msgstr "نوع الملف غير مدعوم."
+
+msgid "File service request failed."
+msgstr "فشل طلب خدمة الملفات."
+
+msgid "File service returned invalid response."
+msgstr "أعادت خدمة الملفات استجابة غير صالحة."
+
+msgid "Failed to parse file service response."
+msgstr "تعذر تحليل استجابة خدمة الملفات."
+
+msgid "File service did not return file_id."
+msgstr "لم تُعد خدمة الملفات معرّف file_id."
+
+msgid "file_id cannot be empty."
+msgstr "لا يمكن أن يكون file_id فارغًا."
+

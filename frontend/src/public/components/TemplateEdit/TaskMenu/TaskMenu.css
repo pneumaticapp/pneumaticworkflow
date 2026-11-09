@@ -1,7 +1,7 @@
 .card-more-container {
   position: absolute;
+  inset-inline-end: 32px;
   top: 32px;
-  right: 32px;
 }
 
 .card-more {

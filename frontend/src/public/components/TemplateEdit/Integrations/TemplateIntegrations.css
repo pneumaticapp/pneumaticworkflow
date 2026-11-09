@@ -15,11 +15,12 @@
 .header {
   display: flex;
   align-items: center;
-  padding-right: 30px;
+  padding-inline-end: 30px;
 }
 
 .header-title {
   width: 100%;
+  text-align: start;
   transition: color 0.1s ease-in-out;
 
   &:hover {
@@ -28,7 +29,7 @@
 }
 
 .toggle {
-  margin-right: 16px;
+  margin-inline-end: 16px;
 }
 
 .contents {
@@ -95,7 +96,7 @@
 
 .copy-button {
   all: unset;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
   font-size: 11px;
   font-style: normal;
   font-weight: bold;
@@ -113,13 +114,13 @@
 
 .code-copy-button {
   position: absolute;
-  right: 16px;
+  inset-inline-end: 16px;
   bottom: 10px;
 }
 
 .api-key-copy-button {
   position: absolute;
-  right: 16px;
+  inset-inline-end: 16px;
   bottom: 12px;
 }
 

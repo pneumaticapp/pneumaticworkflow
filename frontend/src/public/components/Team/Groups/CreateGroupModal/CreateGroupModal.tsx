@@ -69,7 +69,13 @@ export function CreateGroupModal() {
             fieldSize="md"
           />
           <div className={styles['tenant-modal__footer']}>
-            <Button type="submit" label="Create" buttonStyle="yellow" size="md" disabled={!inputName} />
+            <Button
+              type="submit"
+              label={formatMessage({ id: 'datasets.modal-button-create' })}
+              buttonStyle="yellow"
+              size="md"
+              disabled={!inputName}
+            />
             <button type="button" className="cancel-button" onClick={handleCloseModal}>
               {formatMessage({ id: 'tenants.modal-button-cancel' })}
             </button>

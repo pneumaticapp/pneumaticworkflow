@@ -38,7 +38,7 @@
 }
 
 .control-arrow {
-  margin-left: 4px;
+  margin-inline-start: 4px;
   color: var(--pneumatic-color-black16);
 }
 

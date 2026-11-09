@@ -1,13 +1,13 @@
 .fieldset-group {
-  padding-left: 16px;
+  padding-inline-start: 16px;
   margin-top: 16px;
   margin-bottom: 16px;
-  border-left: 3px solid var(--pneumatic-color-link);
+  border-inline-start: 3px solid var(--pneumatic-color-link);
 }
 
 .fieldset-group__title {
   margin: 0 0 4px;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans);
   font-size: 14px;
   font-weight: bold;
   line-height: 20px;
@@ -18,7 +18,7 @@
 
 .fieldset-group__description {
   margin: 0 0 8px;
-  font-family: Nunito, sans-serif;
+  font-family: var(--pneumatic-font-sans);
   font-size: 13px;
   line-height: 18px;
   color: #79756d;

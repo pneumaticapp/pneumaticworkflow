@@ -46,8 +46,8 @@
 
 .close {
   position: fixed;
+  inset-inline-end: 16px;
   top: 16px;
-  right: 16px;
   z-index: 2000;
 }
 

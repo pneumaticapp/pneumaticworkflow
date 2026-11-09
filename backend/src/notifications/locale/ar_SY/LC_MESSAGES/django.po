@@ -1,0 +1,86 @@
+# Arabic (Syria) translations for Pneumatic.
+# Distributed under the same license as the project.
+msgid ""
+msgstr ""
+"Project-Id-Version: Pneumatic\n"
+"Language: ar_SY\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
+
+#, python-brace-format
+msgid "Reacted {reaction} to your comment"
+msgstr "تفاعل مع تعليقك باستخدام {reaction}"
+
+msgid "You have a new task"
+msgstr "لديك مهمة جديدة"
+
+msgid "Task was returned"
+msgstr "تمت إعادة المهمة"
+
+msgid "Your task is overdue"
+msgstr "مهمتك متأخرة"
+
+msgid "You have been mentioned"
+msgstr "تمت الإشارة إليك"
+
+msgid "You have a new comment"
+msgstr "لديك تعليق جديد"
+
+msgid "Workflow was snoozed"
+msgstr "تم تأجيل سير العمل"
+
+msgid "Workflow was resumed"
+msgstr "تم استئناف سير العمل"
+
+msgid "Task due date was changed"
+msgstr "تم تغيير تاريخ استحقاق المهمة"
+
+#, python-brace-format
+msgid "Workflow: {workflow_name}\nTask: {task_name}"
+msgstr "سير العمل: {workflow_name}\nالمهمة: {task_name}"
+
+msgid "Task was completed"
+msgstr "اكتملت المهمة"
+
+msgid "You have unread notifications"
+msgstr "لديك إشعارات غير مقروءة"
+
+msgid "Password reset"
+msgstr "إعادة تعيين كلمة المرور"
+
+msgid "Profile was deactivated"
+msgstr "تم تعطيل الملف الشخصي"
+
+msgid "Profile was transfer"
+msgstr "تم نقل الملف الشخصي"
+
+msgid "Profile was verify"
+msgstr "تم التحقق من الملف الشخصي"
+
+msgid "Send workflows digest"
+msgstr "إرسال ملخص مسارات العمل"
+
+msgid "Send tasks digest"
+msgstr "إرسال ملخص المهام"
+
+msgid "Join your team"
+msgstr "انضم إلى فريقك"
+
+msgid "Workflow was completed"
+msgstr "اكتمل سير العمل"
+
+msgid "Reminder"
+msgstr "تذكير"
+
+msgid "You have unfinished task in Pneumatic"
+msgstr "لديك مهمة غير مكتملة في Pneumatic"
+
+#, python-brace-format
+msgid "You have {count} unfinished tasks in Pneumatic"
+msgstr "عدد مهامك غير المكتملة في Pneumatic: {count}"
+
+msgid "Tasks were delegated"
+msgstr "تم تفويض المهام"
+

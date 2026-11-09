@@ -7,10 +7,7 @@
   border: var(--pneumatic-color-black16) !important;
 
   &-popper {
-    top: 100% !important;
-    left: 0 !important;
     margin-top: 0 !important;
-    transform: translate3d(0, 0, 0) !important;
     z-index: 20 !important;
 
     .react-datepicker {
@@ -24,11 +21,15 @@
     }
 
     .react-datepicker__navigation--previous {
-      left: initial;
+      right: auto;
+      left: auto;
+      inset-inline-start: 1.6rem;
     }
 
     .react-datepicker__navigation--next {
-      right: 1.6rem;
+      right: auto;
+      left: auto;
+      inset-inline-end: 1.6rem;
     }
   }
 
@@ -48,13 +49,12 @@
     top: -0.7rem;
 
     &-icon {
-      top: 0;
-      left: 0;
+      position: static;
     }
 
     &-icon:before {
       top: calc(50% - 0.5rem);
-      left: 0;
+      left: calc(50% - 0.5rem);
       width: 0;
       height: 0;
       border: 0.5rem solid transparent !important;
@@ -62,13 +62,11 @@
     }
 
     &-icon--next:before {
-      transform: rotate(180deg) !important;
-      left: 1.1rem;
+      transform: rotate(var(--datepicker-next-rotation, 180deg)) !important;
     }
 
     &-icon--previous:before {
-      transform: rotate(0deg) !important;
-      left: -2rem;
+      transform: rotate(var(--datepicker-previous-rotation, 0deg)) !important;
     }
   }
 
@@ -191,6 +189,11 @@
     @mixin font-text;
     @mixin text-base 700;
   }
+}
+
+html[dir='rtl'] .react-datepicker {
+  --datepicker-next-rotation: 0deg;
+  --datepicker-previous-rotation: 180deg;
 }
 
 .react-datepicker-popper[data-placement^='top'] .react-datepicker__triangle,

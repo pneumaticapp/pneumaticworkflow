@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useState, useEffect, useRef, ReactNode, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import classnames from 'classnames';
+import { useIntl } from 'react-intl';
 
 import styles from './BaseModal.css';
 import { ClearIcon } from '../../icons';
@@ -32,6 +33,7 @@ export function BaseModal({
   zIndex = 1050,
   children,
 }: IBaseModalProps) {
+  const { formatMessage } = useIntl();
   const [isVisible, setIsVisible] = useState(false);
   const [showClass, setShowClass] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -101,7 +103,7 @@ export function BaseModal({
         role="button"
         tabIndex={0}
         onKeyDown={() => {}}
-        aria-label="Close modal"
+        aria-label={formatMessage({ id: 'general.close' })}
       />
       <div
         className={classnames(styles['modal'], styles['fade'], showClass && styles['show'])}
@@ -134,11 +136,17 @@ export function ModalHeader({
   tag: Tag = 'div',
   titleTag: TitleTag = 'h2',
 }: IModalPartProps) {
+  const { formatMessage } = useIntl();
   return (
     <Tag className={classnames(styles['modal-header'], className)}>
       <TitleTag className={styles['title']}>{children}</TitleTag>
       {toggle && (
-        <button type="button" onClick={toggle} className={styles['close-button']} aria-label="Close modal">
+        <button
+          type="button"
+          onClick={toggle}
+          className={styles['close-button']}
+          aria-label={formatMessage({ id: 'general.close' })}
+        >
           <ClearIcon />
         </button>
       )}

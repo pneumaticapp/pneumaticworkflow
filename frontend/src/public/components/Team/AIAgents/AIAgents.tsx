@@ -13,7 +13,7 @@ import { CreatePerformerModal } from '../CreatePerformerModal';
 import { ECreatePerformerModalTab } from '../CreatePerformerModal/types';
 import { EPageTitle } from '../../../constants/defaultValues';
 import { ERoutes } from '../../../constants/routes';
-import { TITLES } from '../../../constants/titles';
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { history } from '../../../utils/history';
 import { openCreatePerformerModal } from '../../../redux/team/slice';
 import { loadAIAgents, loadAIProviders } from '../../../redux/ai/slice';
@@ -27,6 +27,8 @@ import {
 import styles from './AIAgents.css';
 
 export function AIAgents() {
+  useDocumentTitle('Team');
+
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const isAgentsLoading = useSelector(getAIAgentsIsLoading);
@@ -37,7 +39,6 @@ export function AIAgents() {
   useEffect(() => {
     dispatch(loadAIAgents());
     dispatch(loadAIProviders());
-    document.title = TITLES.Team;
   }, [dispatch]);
 
   const providerNameById = new Map(providers.map((provider) => [provider.id, provider.name]));
