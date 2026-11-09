@@ -1,6 +1,5 @@
 import { createStore, applyMiddleware, compose } from 'redux';
 import { RootStateOrAny } from 'react-redux';
-import { composeWithDevTools } from 'redux-devtools-extension';
 import createSagaMiddleware from 'redux-saga';
 import { persistStore, persistReducer, PersistConfig } from 'redux-persist';
 import localStorage from 'redux-persist/lib/storage';
@@ -40,7 +39,7 @@ export function configureStore(state: IApplicationState = initialState) {
   const persistedReducer = persistReducer(persistConfig, rootReducer);
   const composeEnhancers =
     (isClient() &&
-      composeWithDevTools({
+      window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__?.({
         trace: true,
         traceLimit: 25,
       })) ||

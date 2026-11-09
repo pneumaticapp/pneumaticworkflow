@@ -1,4 +1,4 @@
-import produce from 'immer';
+import { produce } from 'immer';
 import { ISelectTemplateModalStore } from '../../types/redux';
 import { ITemplateListItem } from '../../types/template';
 

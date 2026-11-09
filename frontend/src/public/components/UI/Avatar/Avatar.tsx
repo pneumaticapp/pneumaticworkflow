@@ -93,7 +93,12 @@ export function Avatar({
     }
 
     if (user?.type === 'group') {
-      return <GroupIcon className={classnames(styles['avatar'], styles['is-group'], ...sizeClasses, className)} />;
+      return (
+        <GroupIcon
+          data-testid="avatar-group-icon"
+          className={classnames(styles['avatar'], styles['is-group'], ...sizeClasses, className)}
+        />
+      );
     }
 
     const notRegistratedStatues = [EUserStatus.Invited, EUserStatus.External];
@@ -116,13 +121,17 @@ export function Avatar({
         style={{ backgroundColor: `${backgroundColor}` }}
         className={classnames(styles['avatar'], ...sizeClasses, className)}
       >
-        {showInitials && <span className={styles['initials']}>{initials}</span>}
+        {showInitials && (
+          <span data-testid="avatar-initials" className={styles['initials']}>
+            {initials}
+          </span>
+        )}
       </div>
     );
   };
 
   return (
-    <div className={containerClassName} ref={tooltipTargerRef}>
+    <div data-testid="avatar" className={containerClassName} ref={tooltipTargerRef}>
       {renderImage()}
       {withTooltip && <CustomTooltip target={tooltipTargerRef} tooltipText={fullName} />}
     </div>

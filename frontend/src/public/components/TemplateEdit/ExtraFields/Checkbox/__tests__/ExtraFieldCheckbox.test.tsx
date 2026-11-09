@@ -23,13 +23,6 @@ jest.mock('../../../../UI/Fields/Checkbox', () => ({
   ),
 }));
 
-jest.mock('react-input-autosize', () => ({
-  __esModule: true,
-  default: jest.fn(({ value, onChange, placeholder }: { value: string; onChange: () => void; placeholder: string }) =>
-    React.createElement('input', { value: value || '', onChange, placeholder }),
-  ),
-}));
-
 jest.mock('../../../../icons', () => ({
   PencilSmallIcon: () => null,
   RemoveIcon: () => null,

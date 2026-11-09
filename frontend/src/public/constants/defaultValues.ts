@@ -140,43 +140,6 @@ export const enum ELearnMoreLinks {
 
 export const GUEST_TOKEN_STORAGE_KEY = 'guestToken';
 
-export const REMARKABLE_DISIBLE_MARKDOWN_OPTIONS = {
-  disable: {
-    inline: [
-      'text',
-      'sup',
-      'sub',
-      'newline',
-      'mark',
-      'links',
-      'ins',
-      'htmltag',
-      'footnote_ref',
-      'footnote_inline',
-      'escape',
-      'entity',
-      'emphasis',
-      'del',
-      'backticks',
-      'autolink',
-    ],
-    block: [
-      'blockquote',
-      'code',
-      'deflist',
-      'fences',
-      'footnote',
-      'heading',
-      'hr',
-      'htmlblock',
-      'lheading',
-      'list',
-      'table',
-    ],
-    core: ['abbr', 'abbr2', 'footnote_tail', 'references', 'replacements', 'smartquotes'],
-  },
-};
-
 export const enum EResponseStatuses {
   NotFound = 404,
 }
