@@ -2,7 +2,7 @@ from typing import Dict, List, Optional, Tuple
 from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import Task
-from src.processes.services.tasks.field import TaskFieldService
+from src.processes.services.tasks.fields.field import TaskFieldService
 from src.ai.services.utils import as_tag, escape_closing_tags
 
 

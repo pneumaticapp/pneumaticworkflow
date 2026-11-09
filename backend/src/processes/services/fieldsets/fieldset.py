@@ -3,11 +3,15 @@ from copy import deepcopy
 from typing import Dict, List, Optional
 
 from django.contrib.auth import get_user_model
-from django.db import transaction
+from django.db import IntegrityError, transaction
 
 from src.generics.base.service import BaseModelService
 from src.logs.events import AuditEventService
 from src.processes.enums import FieldSetLayout, LabelPosition
+from src.processes.messages.fieldset import (
+    MSG_FS_0015,
+    MSG_FS_0016,
+)
 from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
@@ -45,6 +49,7 @@ from src.processes.services.templates.ruleset_mixins import (
     TemplateRulesetsMixin,
 )
 from src.processes.utils.common import create_api_name
+from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
 
@@ -222,7 +227,58 @@ class FieldSetTemplateService(TemplateRulesetsMixin, BaseModelService):
                     **field_data_dict,
                 )
             except FieldTemplateServiceException as ex:
-                raise FieldsetTemplateServiceException(ex.message) from ex
+                raise FieldsetTemplateServiceException(
+                    ex.message,
+                ) from ex
+            except IntegrityError as ex:
+                ex_str = str(ex)
+                step_name = self._get_step_name()
+                if (
+                    'processes_fieldtemplate'
+                    '_template_api_name_unique'
+                    in ex_str
+                ):
+                    api_name = field_data_dict.get(
+                        'api_name',
+                    )
+                    raise_validation_error(
+                        api_name=api_name,
+                        message=MSG_FS_0015(
+                            name=step_name,
+                            field_name=field_data_dict.get(
+                                'name',
+                            ),
+                            api_name=api_name,
+                        ),
+                    )
+                if (
+                    'processes_fieldtemplateselection'
+                    '_template_api_name_unique'
+                    in ex_str
+                ):
+                    selections = (
+                        field_data_dict.get('selections')
+                        or []
+                    )
+                    api_names = [
+                        s.get('api_name')
+                        for s in selections
+                    ]
+                    api_name = next(
+                        (
+                            name for name in api_names
+                            if api_names.count(name) > 1
+                        ),
+                        api_names[-1] if api_names else None,
+                    )
+                    raise_validation_error(
+                        api_name=api_name,
+                        message=MSG_FS_0016(
+                            name=step_name,
+                            api_name=api_name,
+                        ),
+                    )
+                raise
 
     def _update_fields(
         self,
