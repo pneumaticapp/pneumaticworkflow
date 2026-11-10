@@ -13,6 +13,15 @@
   align-items: center;
   justify-content: center;
   width: 50%;
+  color: var(--pneumatic-color-link-text, #fff);
+
+  a {
+    color: var(--pneumatic-color-gold, #b9a779);
+
+    &:hover {
+      color: var(--pneumatic-color-link-text, #fff);
+    }
+  }
 
   @media (--mobile) {
     width: 100%;
@@ -32,6 +41,7 @@
   }
 
   &__title {
+    color: inherit;
     white-space: pre-line;
 
     @media (--mobile) {
@@ -45,7 +55,7 @@
 
     hr {
       margin: 0;
-      border-top-color: var(--pneumatic-color-black100);
+      border-top-color: rgb(255 255 255 / 32%);
     }
   }
 
@@ -54,6 +64,7 @@
     margin-top: 32px;
     font-size: 17px;
     line-height: 24px;
+    color: inherit;
     white-space: pre-line;
   }
 

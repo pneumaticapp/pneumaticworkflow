@@ -1122,7 +1122,7 @@ def test_send_reset_password__ok(mocker):
         data={
             'title': email_titles[NotificationMethod.reset_password],
             'content': (
-                'We got a request to reset your Pneumatic account password.'
+                'We got a request to reset your Masarat account password.'
             ),
             'additional_content': (
                 'A strong password includes eight or more characters '
@@ -1286,7 +1286,7 @@ def test_send_user_transfer_email__ok(mocker):
 
     # assert
     content = (
-        "Your User Profile is associated with another Pneumatic account. "
+        "Your User Profile is associated with another Masarat account. "
         "By agreeing to this invitation, you permit us to transfer your "
         "User Profile to an invitee's account. This transfer will revoke "
         "your access to your old account."
@@ -1358,7 +1358,7 @@ def test_send_verification_email__ok(mocker):
         data={
             'title': email_titles[NotificationMethod.verification],
             'content': (
-                'Thank you for signing up for Pneumatic. '
+                'Thank you for signing up for Masarat. '
                 'Please verify your email address to get started.'
             ),
             'button_text': 'Get Started',
@@ -1610,7 +1610,7 @@ def test_send_user_transfer_email__no_logo__ok(mocker):
 
     # assert
     content = (
-        "Your User Profile is associated with another Pneumatic account. "
+        "Your User Profile is associated with another Masarat account. "
         "By agreeing to this invitation, you permit us to transfer your "
         "User Profile to an invitee's account. This transfer will revoke "
         "your access to your old account."
@@ -1682,7 +1682,7 @@ def test_send_verification_email__no_logo__ok(mocker):
         data={
             'title': email_titles[NotificationMethod.verification],
             'content': (
-                'Thank you for signing up for Pneumatic. '
+                'Thank you for signing up for Masarat. '
                 'Please verify your email address to get started.'
             ),
             'button_text': 'Get Started',
@@ -2071,7 +2071,7 @@ def test_send_reminder_task(mocker):
             'content': (
                 f'Hi {user_first_name}, This is a friendly reminder that '
                 f'you still have unfinished '
-                f'tasks waiting for you in Pneumatic. Tasks count: ({count}).'
+                f'tasks waiting for you in Masarat. Tasks count: ({count}).'
             ),
             'link': link,
             'logo_lg': logo_lg,

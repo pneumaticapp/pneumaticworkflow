@@ -10,6 +10,7 @@ import { isEnvAnalytics } from '../../public/constants/enviroment';
 import { resetCookie } from '../middleware';
 import { getPages } from '../middleware/utils/getPages';
 import { getLocaleAttributes, resolveLocale } from '../../public/lang/locale';
+import { getBrandName } from '../../public/constants/branding';
 
 export async function mainHandler(req: Request, res: Response) {
   try {
@@ -17,9 +18,11 @@ export async function mainHandler(req: Request, res: Response) {
     const env = process.env.MCS_RUN_ENV || 'local';
     const user = (req.res && req.res.locals.user) || {};
     const pages = await getPages();
+    const documentLocale = getLocaleAttributes(resolveLocale(user.language, process.env.LANGUAGE_CODE));
 
     const dataToRender = {
-      documentLocale: getLocaleAttributes(resolveLocale(user.language, process.env.LANGUAGE_CODE)),
+      documentLocale,
+      brandName: getBrandName(documentLocale.lang),
       config: JSON.stringify(serverConfigToBrowser()),
       invitedUser: JSON.stringify({}),
       user: JSON.stringify(mapToCamelCase(user)),

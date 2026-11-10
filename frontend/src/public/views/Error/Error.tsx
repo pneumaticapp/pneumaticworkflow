@@ -7,7 +7,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { Header } from '../../components/UI/Typeography/Header';
 import { Button } from '../../components/UI/Buttons/Button';
 import { ErrorIcon } from './ErrorIcon';
-import { getBrowserConfigEnv } from '../../utils/getConfig';
+import { BRAND } from '../../constants/branding';
 import { LogoContainer } from '../../components/Logo';
 
 import styles from './Error.css';
@@ -16,7 +16,6 @@ export function Error() {
   useDocumentTitle('Error');
 
   const { formatMessage } = useIntl();
-  const { mainPage } = getBrowserConfigEnv();
 
   React.useEffect(() => {
     document.body.classList.add('background');
@@ -28,7 +27,7 @@ export function Error() {
 
   return (
     <div className={styles.container}>
-      <a href={mainPage}>
+      <a href={BRAND.homePath}>
         <LogoContainer size="lg" theme="light" className={styles['logo']} />
       </a>
 
@@ -58,7 +57,7 @@ export function Error() {
           { id: 'public-form.copyright' },
           {
             link: (
-              <a className={styles['copyright__link']} href={mainPage} target="_blank">
+              <a className={styles['copyright__link']} href={BRAND.homePath} target="_blank" rel="noreferrer">
                 {formatMessage({ id: 'public-form.pneumatic' })}
               </a>
             ),

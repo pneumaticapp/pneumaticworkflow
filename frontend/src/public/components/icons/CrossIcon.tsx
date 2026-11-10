@@ -8,7 +8,12 @@ export interface ICrossIconProps extends React.SVGAttributes<SVGElement> {
 
 const DEFAULT_SIZE = 32;
 
-export function CrossIcon({ fill = 'currentColor', size = 32, background = '#FEC336', ...rest }: ICrossIconProps) {
+export function CrossIcon({
+  fill = 'currentColor',
+  size = 32,
+  background = 'var(--pneumatic-color-gold)',
+  ...rest
+}: ICrossIconProps) {
   const shouldAddStyle = size !== DEFAULT_SIZE;
   const pathProps = Object.assign(
     { fill },

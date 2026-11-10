@@ -107,5 +107,5 @@
   font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
   font-size: 13px;
   line-height: 16px;
-  color: #fc5b67;
+  color: var(--pneumatic-color-warning);
 }

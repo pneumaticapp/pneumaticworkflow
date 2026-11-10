@@ -260,7 +260,7 @@
   color: var(--pneumatic-color-black100);
   text-transform: capitalize;
   cursor: pointer;
-  background: var(--pneumatic-color-link);
+  background: var(--pneumatic-color-gold);
 }
 
 .task-view__return-info {

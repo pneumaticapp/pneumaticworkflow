@@ -8,7 +8,12 @@ export interface IAddBtnIconProps extends React.SVGAttributes<SVGElement> {
 
 const DEFAULT_SIZE = 40;
 
-export function AddBtnIcon({ fill = 'currentColor', size = 40, background = '#FEC336', ...rest }: IAddBtnIconProps) {
+export function AddBtnIcon({
+  fill = 'currentColor',
+  size = 40,
+  background = 'var(--pneumatic-color-gold)',
+  ...rest
+}: IAddBtnIconProps) {
   const shouldAddStyle = size !== DEFAULT_SIZE;
   const pathProps = Object.assign(
     { fill },

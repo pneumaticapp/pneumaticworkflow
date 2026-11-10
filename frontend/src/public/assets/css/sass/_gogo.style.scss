@@ -759,24 +759,24 @@ a:focus-visible {
 }
 
 .btn-light {
-  color: $dark-btn-background;
+  color: $foreground-color;
   background-color: $light-btn-background;
   border-color: $light-btn-background;
 
   &:hover {
-    color: $dark-btn-background;
+    color: $foreground-color;
     background-color: darken($light-btn-background, 8%);
     border-color: darken($light-btn-background, 8%);
   }
 }
 
 .btn-dark {
-  color: $light-btn-background;
+  color: $brand-wheat;
   background-color: $dark-btn-background;
   border-color: $dark-btn-background;
 
   &:hover {
-    color: $light-btn-background;
+    color: $brand-wheat;
     background-color: darken($dark-btn-background, 5%);
     border-color: darken($dark-btn-background, 5%);
   }
@@ -4019,7 +4019,7 @@ select.form-control:not([size]):not([multiple]) {
 }
 
 .rc-switch.custom-switch.custom-switch-small:active {
-  background-color: #e79a26 !important;
+  background-color: $brand-forest-deep !important;
 }
 
 .rc-switch.custom-switch.custom-switch-small:after {

@@ -13,7 +13,7 @@
 
 .verification-reminder__link {
   span {
-    color: #fec336;
+    color: var(--pneumatic-color-link);
     cursor: pointer;
   }
 }

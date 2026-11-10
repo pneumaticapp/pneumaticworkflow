@@ -31,7 +31,7 @@ describe('getNotificationListItemProps', () => {
     });
 
     expect(props).toMatchObject({
-      title: 'Pneumatic',
+      title: 'Masarat',
       subtitle: 'Onboarding',
       text: 'Workflow was completed',
       link: '/workflows/42/',

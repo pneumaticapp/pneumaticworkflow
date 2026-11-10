@@ -1,4 +1,18 @@
+import { getBrandName, getOrganizationName } from '../../constants/branding';
+
+const productName = getBrandName('ar-SY');
+const organizationName = getOrganizationName('ar-SY');
+
 export const arMessages = {
+  'branding.product-name': productName,
+  'branding.organization-name': organizationName,
+  'branding.copyright': '© {year} {organizationName}',
+  'page-title.public-form': 'نموذج عام',
+  'integrations.settings.share-title': 'مشاركة نموذج البدء',
+  'integrations.settings.share-description': `أنشئ رابطًا يتيح للمستخدمين بدء مسارات العمل من خارج ${productName}`,
+  'integrations.settings.zapier-description': 'أنشئ تكاملات تبدأ عند وقوع أحداث عبر آلاف التطبيقات التي تدعمها Zapier',
+  'integrations.settings.api-description': 'طوّر تكاملات مخصّصة مع البرامج الأخرى',
+  'integrations.settings.webhooks-description': `احصل على إشعارات فورية عند وقوع أحداث محدّدة في ${productName}`,
   'page-title.register': 'إنشاء حساب',
   'page-title.register-invite': 'قبول الدعوة',
   'page-title.login': 'تسجيل الدخول',
@@ -97,14 +111,14 @@ export const arMessages = {
   'general.comment': 'تعليق',
   'general.show-more': 'المزيد',
   'general.show-more.template': 'عرض المزيد من القوالب',
-  'general.pneumatic': 'Pneumatic',
+  'general.pneumatic': productName,
   'general.upgrade': 'الترقية الآن',
   'general.start-trial': 'جرّب مجانًا لمدة 7 أيام',
   'general.start-trial-short': 'ابدأ تجربة لمدة 7 أيام',
   'general.plan-free': 'مجاني',
   'general.plan-premium': 'الخدمة الذاتية',
   'general.trial-expired': 'انتهت الفترة التجريبية، يرجى اختيار خطة',
-  'general.premium-expired': 'انتهى اشتراكك، يرجى تجديده لمتابعة استخدام Pneumatic',
+  'general.premium-expired': `انتهى اشتراكك، يرجى تجديده لمتابعة استخدام ${productName}`,
   'general.learn-more': 'معرفة المزيد',
 
   'editor.bold': 'عريض',
@@ -179,8 +193,7 @@ export const arMessages = {
   'user.register-title-invite': 'أكمل التسجيل باستخدام النموذج أدناه',
   'user.register-login-link': 'تسجيل الدخول',
   'user.register-already': 'لديك حساب مسبقًا؟ ',
-  'user.you-agree-to-pneumatic-terms':
-    'بإنشاء حساب، فإنك توافق على\n{termsOfService} و{privacyPolicy} الخاصة بـ Pneumatic',
+  'user.you-agree-to-pneumatic-terms': 'بإنشاء حساب، فإنك توافق على {termsOfService} و{privacyPolicy}',
   'user.register-terms': 'بإنشاء حساب، فإنك توافق على ',
   'user.register-terms-link': 'شروط الخدمة',
   'user.register-privacy-policy-link': 'سياسة الخصوصية',
@@ -232,8 +245,8 @@ export const arMessages = {
   'user.register-required-fields': 'جميع الحقول مطلوبة!',
   'user.logout-button': 'تسجيل الخروج',
   'user.sign-out': 'تسجيل الخروج',
-  'user.slogan': 'Pneumatic',
-  'user.logo-title': 'Pneumatic',
+  'user.slogan': productName,
+  'user.logo-title': productName,
   'user.error-credentials': 'بيانات اعتماد غير معروفة',
   'user.error-deleted': 'تم حذف المستخدم',
 
@@ -335,7 +348,7 @@ export const arMessages = {
   'user.avatar.choose-file': 'اختر ملفًا',
   'user.avatar.upload-title': 'رفع صورة شخصية',
   'user.avatar.delete-title': 'إزالة الصورة الشخصية',
-  'user.avatar.delete-text': 'هل تريد إزالة صورتك؟ سنستبدلها بصورة Pneumatic الافتراضية.',
+  'user.avatar.delete-text': `هل تريد إزالة صورتك؟ سنستبدلها بصورة ${productName} الافتراضية.`,
   'user.avatar.delete-cancel': 'إلغاء',
   'user.avatar.delete-approve': 'إزالة',
 
@@ -423,7 +436,7 @@ export const arMessages = {
   'team.empty-placeholder-title': 'لم يتم العثور على مستخدمين',
   'team.empty-placeholder-description': 'جرّب تغيير عوامل التصفية أو دعوة المزيد من الأشخاص إلى فريقك.',
 
-  'team.add-guests-banner-text': 'أضف ضيوفًا إلى مهامك للتعاون مع أشخاص ليس لديهم حساب Pneumatic.',
+  'team.add-guests-banner-text': `أضف ضيوفًا إلى مهامك للتعاون مع أشخاص ليس لديهم حساب ${productName}.`,
   'team.add-guests-banner-button': 'معرفة المزيد',
 
   'team.add-groups-banner-text': 'تعرّف على كيفية استخدام المجموعات.',
@@ -726,7 +739,7 @@ export const arMessages = {
   'template.task-conditions-validation-error': 'يرجى ملء جميع شروط المهام:',
   'template.kickoff-validation-error': 'يرجى التحقق من بيانات نموذج البدء',
   'template.generate-with-ai.title': 'مولّد القوالب',
-  'template.generate-with-ai.description': 'دع Pneumatic يولّد خطوات قالب جديد بناءً على وصفك للعملية التي تحتاجها',
+  'template.generate-with-ai.description': `أنشئ خطوات قالب جديد بمساعدة ${productName} انطلاقًا من وصف العملية التي تحتاجها`,
   'template.add': 'إضافة قالب',
   'template.clone': 'إنشاء نسخة',
   'template.discard-popup-title': 'تجاهل التغييرات؟',
@@ -943,8 +956,7 @@ export const arMessages = {
   'template.warning-unassigned-perforemers-title': 'يحتوي القالب على مهام غير مسندة',
   'template.warning-unassigned-perforemers-desc': 'يرجى إضافة منفّذين إلى مهامك.',
   'template.warning-premium-feature-title': 'يحتوي القالب على ميزات مميزة (شروط)',
-  'template.warning-premium-feature-desc':
-    'فعّل تجربتك المجانية لمدة 7 أيام لتفعيل القالب وتجربة جميع إمكانات Pneumatic.',
+  'template.warning-premium-feature-desc': `فعّل تجربتك المجانية لمدة 7 أيام لتفعيل القالب وتجربة جميع إمكانات ${productName}.`,
   'template.waning-close-button': 'فهمت',
   'template.insert-variable': 'إدراج',
   'template.intergrations.menu-edit': 'تعديل',
@@ -954,14 +966,12 @@ export const arMessages = {
   'template.intergrations-hide': 'إخفاء التكاملات',
   'template.intergrations-app-directory-desc':
     'اعرض تكاملاتك للمستخدمين من خلال دليل التطبيقات. أضف دليلًا تدعمه مكتبة Zapier إلى موقعك بسطر برمجي واحد ليتمكن المستخدمون من البحث في آلاف التطبيقات وعرض مسارات العمل الشائعة.',
-  'template.intergrations-zap-templates-desc':
-    'اربط قالب سير العمل بتطبيقاتك عبر Zapier. استخدم قوالبنا أو أنشئ أتمتة تبدأ عند بدء سير عمل أو إكماله أو إسناد مهمة أو إكمالها في Pneumatic.',
+  'template.intergrations-zap-templates-desc': `اربط قالب سير العمل بتطبيقاتك عبر Zapier. استخدم قوالبنا أو أنشئ أتمتة تبدأ عند بدء سير عمل أو إكماله أو إسناد مهمة أو إكمالها في ${productName}.`,
   'template.intergrations-zap-manager-desc':
     'أضف عمليات أتمتة Zapier المرتبطة بهذا القالب هنا لإدارتها في مكان واحد. اعرض العمليات النشطة وعدّلها وأضف عمليات جديدة.',
   'template.intergrations-api-desc':
     'إذا لم يتوفر التطبيق المطلوب في Zapier، استخدم API المفتوح الذي يعتمد JSON لتبادل البيانات. تجد هنا تمثيل القالب بصيغة JSON لمساعدتك على بناء التكاملات:',
-  'template.intergrations-webhook-desc':
-    'تتيح لك إشعارات Webhook الاشتراك في أحداث Pneumatic كي يستجيب تطبيقك لها. أدخل رابط استقبال الإشعارات للبدء.',
+  'template.intergrations-webhook-desc': `تتيح لك إشعارات Webhook الاشتراك في أحداث ${productName} كي يستجيب تطبيقك لها. أدخل رابط استقبال الإشعارات للبدء.`,
   'template.intergrations-copy-code': 'نسخ',
   'template.intergrations-code-copied': 'تم نسخ الشفرة إلى الحافظة',
   'template.intergrations-api-key': 'مفتاح API الخاص بك:',
@@ -1119,10 +1129,8 @@ export const arMessages = {
   'kickoff.menu-clear': 'مسح',
   'kickoff.share-failed': 'تعذرت مشاركة نموذج البدء',
   'kickoff.share-control': 'المشاركة والتضمين',
-  'kickoff.share-description':
-    'أنشئ رابطًا لنموذج البدء لتمكين الأشخاص دون حساب Pneumatic من الوصول إليه. شارك الرابط بالبريد أو على موقعك ليتمكنوا من فتح النموذج وبدء سير عمل جديد.',
-  'kickoff.embed-description':
-    'أضف نموذج بدء Pneumatic إلى موقعك لينسجم مع تصميمه ويتيح بدء مسارات العمل مباشرة من واجهته.',
+  'kickoff.share-description': `أنشئ رابطًا لنموذج البدء لتمكين الأشخاص دون حساب ${productName} من الوصول إليه. شارك الرابط بالبريد أو على موقعك ليتمكنوا من فتح النموذج وبدء سير عمل جديد.`,
+  'kickoff.embed-description': `أضف نموذج بدء ${productName} إلى موقعك لينسجم مع تصميمه ويتيح بدء مسارات العمل مباشرة من واجهته.`,
   'kickoff.copy-link': 'نسخ رابط المشاركة',
   'kickoff.copy-embed-code': 'نسخ شفرة التضمين',
   'kickoff.share-link-copied': 'تم نسخ رابط المشاركة إلى الحافظة',
@@ -1310,7 +1318,7 @@ export const arMessages = {
   'checkout.set-up-one-workflow': 'إعداد سير عمل واحد',
   'checkout.summary-tax': 'الضريبة',
   'checkout.summary-tax-value': '{tax}',
-  'checkout.summary-bottom-text': 'أنت تفوّض Pneumatic بتحصيل رسوم الاشتراك كل شهر أو سنة حتى تلغيه.',
+  'checkout.summary-bottom-text': 'تُحصّل رسوم الاشتراك كل شهر أو سنة حتى تلغيه.',
   'checkout.transaction-declined': 'تم رفض المعاملة. استخدم بطاقة أخرى أو تواصل مع البنك.',
   'checkout.invalid-user-amount': 'يرجى إدخال عدد صحيح من المستخدمين.',
   'checkout.invalid-card-info': 'يرجى التحقق من معلومات البطاقة.',
@@ -1380,12 +1388,12 @@ export const arMessages = {
   'dashboard.shareable-kick-off-forms': 'نماذج بدء قابلة للمشاركة',
   'dashboard.access-controls': 'التحكم في الوصول',
   'dashboard.questions': 'أسئلة؟',
-  'dashboard.free-zoom-call': 'احجز مكالمة تعريفية مجانية لمدة 15 دقيقة عبر Zoom لمساعدتك على الاستفادة من Pneumatic.',
+  'dashboard.free-zoom-call': `احجز مكالمة تعريفية مجانية لمدة 15 دقيقة عبر Zoom لمساعدتك على الاستفادة من ${productName}.`,
   'dashboard.error-fetch': 'تعذر جلب معلومات لوحة المعلومات',
   'dashboard.pa-placeholder-title':
     'هل تساءلت عن مدى نجاح فريقك في تحقيق أهدافه والوقت الذي يحتاجه لإكمال عملية عمل معتادة؟',
   'dashboard.pa-placeholder-description': 'لنبدأ! لرؤية تحليلات سير العمل، فعّل قالبك الأول وشغّل بعض مسارات العمل.',
-  'dashboard.wo-placeholder-title': 'يمنحك Pneumatic مقاييس مفصّلة لمتابعة أداء مسارات العمل.',
+  'dashboard.wo-placeholder-title': `تابع أداء مسارات عملك عبر المقاييس المفصّلة في ${productName}.`,
   'dashboard.wo-placeholder-description': 'لنبدأ! لرؤية تحليلات سير العمل، فعّل قالبك الأول وشغّل بعض مسارات العمل.',
   'dashboard.duration-minute': 'أقل من دقيقة',
   'dashboard.success-rate': '{percent}٪',
@@ -1394,7 +1402,7 @@ export const arMessages = {
   'dashboard.tasks-breakdown.tooltip-text':
     'اعرض المهام المسندة إليك موزعة حسب القالب. انقر اسم القالب لرؤية مهامه، أو اسم المهمة لفتحها وإكمالها.',
   'dashboard.plan-detail-popup-text': 'قم بالترقية إلى الخطة المميزة للاستفادة من إمكانات عمل إضافية.',
-  'dashboard.power-ups-for-pneumatic': 'إمكانات إضافية لـ Pneumatic',
+  'dashboard.power-ups-for-pneumatic': `إمكانات إضافية في ${productName}`,
   'dashboard.plan-detail-popup-text-conditional-workflow': 'يتوفر منطق سير العمل الشرطي مع الخطة المميزة',
   'dashboard.plan-detail-popup-text-shareable-kick-off-forms':
     'قم بالترقية إلى الخطة المميزة لتمكين المستخدمين الخارجيين من بدء مسارات العمل',
@@ -1411,10 +1419,10 @@ export const arMessages = {
   'dashboard.checks-condition-created': 'منطق شرطي',
   'dashboard.checks-template-publicated': 'نماذج قابلة للمشاركة',
   'dashboard.checks-learn-more': 'معرفة المزيد',
-  'dashboard.promo-title': 'إمكانات إضافية لـ Pneumatic',
+  'dashboard.promo-title': `إمكانات إضافية في ${productName}`,
   'dashboard.promo-text': 'للاستفادة من الميزات المتقدمة، قم بالترقية إلى الخطة المميزة.',
   'dashboard.promo-upgrade': 'ترقية',
-  'dashboard.app-mobile-buttons-group-title': 'تنزيل {br} تطبيق Pneumatic',
+  'dashboard.app-mobile-buttons-group-title': 'تنزيل {br} تطبيق الهاتف',
 
   'dashboard.quick-button-title': 'إعداد مسارات العمل وتشغيلها',
 
@@ -1423,8 +1431,7 @@ export const arMessages = {
     'استخدم مكتبة القوالب المجانية أو مولّد القوالب بالذكاء الاصطناعي، أو أنشئ قالبًا يدويًا من البداية.',
 
   'dashboard.quick-button-run-workflow-title': 'تشغيل سير عمل',
-  'dashboard.quick-button-run-workflow-description':
-    'ابدأ مسارات عمل جديدة من داخل Pneumatic أو من نموذج بدء مشترك أو عبر التكاملات.',
+  'dashboard.quick-button-run-workflow-description': `ابدأ مسارات عمل جديدة من داخل ${productName} أو من نموذج بدء مشترك أو عبر التكاملات.`,
 
   'dashboard.integrations-tooltip': 'استخدم التكاملات لتسريع عملك.',
   'dashboard.integrations-tooltip-link': 'معرفة المزيد',
@@ -1495,8 +1502,8 @@ export const arMessages = {
   'ai-providers.created': 'تمت إضافة المزود. يمكنك الآن إنشاء وكلاء ذكاء اصطناعي من صفحة الفريق.',
   'ai-providers.deleted': 'تم حذف المزود',
   'integrations.title': 'عمليات التكامل',
-  'integrations.title.tooltip': 'احصل على مفتاح API واربط Pneumatic بالتطبيقات الخارجية عبر Zapier أو Make.',
-  'integrations.description': 'حسّن أتمتة مسارات عملك بربط Pneumatic بالبرامج والخدمات الرائدة التي تستخدمها.',
+  'integrations.title.tooltip': `احصل على مفتاح API واربط ${productName} بالتطبيقات الخارجية عبر Zapier أو Make.`,
+  'integrations.description': `حسّن أتمتة مسارات عملك بربط ${productName} بالبرامج والخدمات الرائدة التي تستخدمها.`,
   'integrations.hint': 'لم تجد التكامل المطلوب؟ راسلنا على ',
   'integrations.list-fetch-failed': 'تعذر جلب التكاملات',
   'integrations.details-fetch-failed': 'تعذر جلب تفاصيل التكامل',
@@ -1563,7 +1570,7 @@ export const arMessages = {
   'public-form.form-hint': 'يرجى ملء نموذج البدء أدناه لتشغيل سير عمل جديد:',
   'public-form.launch': 'إرسال',
   'public-form.copyright': 'بدعم من {link}',
-  'public-form.pneumatic': 'Pneumatic',
+  'public-form.pneumatic': productName,
   'public-form.submited-title': 'تم بنجاح!',
   'public-form.submited-text': 'تم إرسال النموذج بنجاح. يمكنك ملؤه وإرساله مرة أخرى عند الحاجة.',
   'public-form.submited-button': 'ملء النموذج مجددًا',

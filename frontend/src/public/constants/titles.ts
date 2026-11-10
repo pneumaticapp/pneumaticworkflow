@@ -1,4 +1,9 @@
+import { getBrandName } from './branding';
+
+// Legacy analytics labels stay stable; browser titles use the active display brand.
 export const PNEUMATIC_SUFFIX = '| Pneumatic';
+
+export const getDocumentTitleSuffix = (locale: string): string => `| ${getBrandName(locale)}`;
 
 export const TITLES = {
   Register: `Sign Up ${PNEUMATIC_SUFFIX}`,

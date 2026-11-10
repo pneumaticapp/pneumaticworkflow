@@ -96,6 +96,7 @@ services:
       ENVIRONMENT: ${ENVIRONMENT:-Production}
       RELEASE: ${RELEASE:-1.0.0}
       LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru, ar-sy
+      DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL:-Masarat <webmaster@localhost>}"
       CAPTCHA: ${CAPTCHA:-no}
       RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
       RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-}
@@ -229,6 +230,7 @@ services:
       ENVIRONMENT: ${ENVIRONMENT:-Production}
       RELEASE: ${RELEASE:-1.0.0}
       LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru, ar-sy
+      DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL:-Masarat <webmaster@localhost>}"
       CAPTCHA: ${CAPTCHA:-no}
       RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
       RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-}
@@ -357,6 +359,7 @@ services:
       ENVIRONMENT: ${ENVIRONMENT:-Production}
       RELEASE: ${RELEASE:-1.0.0}
       LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru, ar-sy
+      DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL:-Masarat <webmaster@localhost>}"
       CAPTCHA: ${CAPTCHA:-no}
       RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
       RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-}

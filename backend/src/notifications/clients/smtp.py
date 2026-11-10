@@ -5,6 +5,12 @@ from django.core.mail import EmailMessage, get_connection
 from django.template import Context, Template
 from django.template.loader import get_template
 
+from src.branding import (
+    ORGANIZATION_NAME,
+    ORGANIZATION_NAME_AR,
+    PRODUCT_NAME,
+    PRODUCT_NAME_AR,
+)
 from src.notifications.clients import EmailClient
 from src.notifications.enums import EmailType
 from src.notifications.models import EmailTemplateModel
@@ -104,7 +110,14 @@ class SMTPEmailClient(EmailClient):
             # Use Django template loader for proper inheritance support
             template = get_template(template_name)
             subject = self._get_default_subject(template_code, message_data)
-            html_content = template.render(message_data)
+            html_content = template.render({
+                **message_data,
+                'brand_name': PRODUCT_NAME,
+                'brand_name_ar': PRODUCT_NAME_AR,
+                'brand_organization': ORGANIZATION_NAME,
+                'brand_organization_ar': ORGANIZATION_NAME_AR,
+                'brand_url': settings.FRONTEND_URL,
+            })
             return subject, html_content
         except Exception:  # noqa: BLE001
             # Template loading or rendering failed, use fallback
@@ -135,7 +148,7 @@ class SMTPEmailClient(EmailClient):
             EmailType.TASK_RETURNED: 'Task Returned',
             EmailType.OVERDUE_TASK: 'Task Overdue',
             EmailType.GUEST_NEW_TASK: 'New Task Assigned',
-            EmailType.MENTION: 'You have been mentioned on Pneumatic',
+            EmailType.MENTION: f'You have been mentioned on {PRODUCT_NAME}',
             EmailType.RESET_PASSWORD: 'Password Reset',
             EmailType.ACCOUNT_VERIFICATION: 'Account Verification',
             EmailType.USER_DEACTIVATED: 'Your account was deactivated',
@@ -143,16 +156,16 @@ class SMTPEmailClient(EmailClient):
             EmailType.WORKFLOWS_DIGEST: 'Workflows Weekly Digest',
             EmailType.TASKS_DIGEST: 'Tasks Weekly Digest',
             EmailType.UNREAD_NOTIFICATIONS: (
-                'You have unread notifications on Pneumatic'
+                f'You have unread notifications on {PRODUCT_NAME}'
             ),
             EmailType.COMPLETE_WORKFLOW: 'Workflow completed',
             EmailType.TASK_REMINDER: (
-                'Reminder: you have unfinished tasks in Pneumatic'
+                f'Reminder: you have unfinished tasks in {PRODUCT_NAME}'
             ),
             EmailType.VACATION_DELEGATION: 'Tasks have been delegated to you',
         }
 
-        return subjects.get(template_code, f'Pneumatic - {template_code}')
+        return subjects.get(template_code, f'{PRODUCT_NAME} - {template_code}')
 
     def _get_fallback_template(
         self,
@@ -164,7 +177,9 @@ class SMTPEmailClient(EmailClient):
         html_content = f"""
         <html>
         <body>
-            <h2>Pneumatic</h2>
+            <h2>{PRODUCT_NAME_AR} | {PRODUCT_NAME}</h2>
+            <p>{ORGANIZATION_NAME_AR}</p>
+            <p>{ORGANIZATION_NAME}</p>
             <p>Email notification</p>
             <p>Template: {template_code}</p>
         </body>

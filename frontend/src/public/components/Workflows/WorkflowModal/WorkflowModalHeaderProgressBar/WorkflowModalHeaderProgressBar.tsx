@@ -9,6 +9,7 @@ import { IWorkflowDetailsClient } from '../../../../types/workflow';
 import { WorkflowControlls } from '../../WorkflowControlls';
 import { Dropdown, getDropdownItemColorClass, TDropdownOption } from '../../../UI';
 import { isArrayWithItems } from '../../../../utils/helpers';
+import { EBrandColors } from '../../../../constants/brandColors';
 
 import styles from '../WorkflowModal.css';
 
@@ -127,7 +128,7 @@ export function WorkflowModalHeaderProgressBar({
     return (
       <div className={styles['progress-container-mobile']}>
         <div className={styles['progress-bar-text']}>{`Progress ${progress}%`}</div>
-        <ProgressBar progress={progress} background="#fdf7ee" color={color} />
+        <ProgressBar progress={progress} background={EBrandColors.WheatLight} color={color} />
         {renderControlls()}
       </div>
     );
@@ -135,7 +136,13 @@ export function WorkflowModalHeaderProgressBar({
 
   return (
     <div className={styles['progress-container-desktop']}>
-      <CircleProgressBar radius={49} bgColor="#fdF7ee" percent={progress} text={`${progress}%`} color={color} />
+      <CircleProgressBar
+        radius={49}
+        bgColor={EBrandColors.WheatLight}
+        percent={progress}
+        text={`${progress}%`}
+        color={color}
+      />
       {renderControlls()}
     </div>
   );

@@ -1,6 +1,6 @@
 {% comment %}
     Template variables:
-    1. logo_lg - required, but default value provided;
+    1. logo_lg - optional account logo; bilingual identity text is the default;
     2. unsubscribe_link - not required, skip block if not exists;
 {% endcomment %}
 <!DOCTYPE html>
@@ -8,7 +8,7 @@
       xmlns:o="urn:schemas-microsoft-com:office:office"
       lang="en">
 <head>
-  <title>{% block title %}Pneumatic{% endblock %}</title>
+  <title>{% block title %}{{ brand_name|default:"Masarat" }}{% endblock %}</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <!--[if mso]>
@@ -96,11 +96,11 @@
   font-size: 13px;
   line-height: 16px;
   font-family: "Arial";
-  border-top: 1px solid #262522;
+  border-top: 1px solid #161616;
 }
 
 .dynamic-content table thead tr {
-  border-bottom: 1px solid #262522 !important;
+  border-bottom: 1px solid #161616 !important;
 }
 
 .dynamic-content table tbody tr + tr {
@@ -186,7 +186,7 @@
                  cellpadding="0"
                  cellspacing="0"
                  role="presentation"
-                 style="mso-table-lspace:0;mso-table-rspace:0;background-color:#f6f6f6">
+                 style="mso-table-lspace:0;mso-table-rspace:0;background-color:#edebe0">
             <tbody>
               <tr>
                 <td>
@@ -196,7 +196,7 @@
                          cellpadding="0"
                          cellspacing="0"
                          role="presentation"
-                         style="mso-table-lspace:0;mso-table-rspace:0;background-size:auto;background-color:#f6f6f6;color:#000;border-radius:0;width:640px;margin:0 auto"
+                         style="mso-table-lspace:0;mso-table-rspace:0;background-size:auto;background-color:#edebe0;color:#000;border-radius:0;width:640px;margin:0 auto"
                          width="640">
                     <tbody>
                       <tr>
@@ -213,16 +213,27 @@
                             <tr>
                               <td class="pad">
                                 <div class="alignment" align="center" style="line-height:10px">
-                                  <a href="https://www.pneumatic.app"
+                                  <a href="{{ brand_url|default:link }}"
                                      target="_blank"
-                                     style="outline:none"
+                                     style="outline:none;text-decoration:none;color:#054239"
                                      tabindex="-1">
-                                    <img src="{{ logo_lg|default:'https://storage.googleapis.com/pneumatic-production/pneumatic_sm_logo.png' }}"
+                                    {% if logo_lg %}
+                                    <img src="{{ logo_lg }}"
                                          style="display:block;height:auto;border:0;width:160px;max-width:100%"
                                          width="160"
-                                         alt="Pneumatic"
-                                         title="Pneumatic">
+                                         alt="{{ brand_name|default:'Masarat' }}"
+                                         title="{{ brand_name|default:'Masarat' }}">
+                                    {% else %}
+                                    <span style="display:block;font-family:Arial,Helvetica,sans-serif;font-size:24px;font-weight:700;line-height:32px">
+                                      <span lang="ar" dir="rtl">{{ brand_name_ar|default:"مسارات" }}</span>
+                                      <span lang="en" dir="ltr">{{ brand_name|default:"Masarat" }}</span>
+                                    </span>
+                                    {% endif %}
                                   </a>
+                                  <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#3d3a3b;margin-top:8px">
+                                    <div lang="ar" dir="rtl">{{ brand_organization_ar|default:"وزارة الأشغال العامة والإسكان" }}</div>
+                                    <div lang="en" dir="ltr">{{ brand_organization|default:"Ministry of Public Works and Housing" }}</div>
+                                  </div>
     </div>
                               </td>
                             </tr>
@@ -247,7 +258,7 @@
                  cellpadding="0"
                  cellspacing="0"
                  role="presentation"
-                 style="mso-table-lspace:0;mso-table-rspace:0;background-color:#f6f6f6">
+                 style="mso-table-lspace:0;mso-table-rspace:0;background-color:#edebe0">
             <tbody>
               <tr>
                 <td>
@@ -257,159 +268,13 @@
                          cellpadding="0"
                          cellspacing="0"
                          role="presentation"
-                         style="mso-table-lspace:0;mso-table-rspace:0;background-color:#f6f6f6;color:#000;width:640px;margin:0 auto"
+                         style="mso-table-lspace:0;mso-table-rspace:0;background-color:#edebe0;color:#000;width:640px;margin:0 auto"
                          width="640">
                     <tbody>
                       <tr>
                         <td class="column column-1"
                             width="100%"
                             style="mso-table-lspace:0;mso-table-rspace:0;font-weight:400;text-align:left;padding-bottom:5px;padding-top:5px;vertical-align:top;border-top:0;border-right:0;border-bottom:0;border-left:0">
-                          <!-- Mobile Apps -->
-                          <table class="social_block block-1"
-                                 width="100%"
-                                 border="0"
-                                 cellpadding="0"
-                                 cellspacing="0"
-                                 role="presentation"
-                                 style="mso-table-lspace:0;mso-table-rspace:0">
-                            <tr>
-                              <td class="pad"
-                                  style="padding-bottom:10px;padding-left:10px;padding-right:10px;padding-top:20px;text-align:center">
-                                <div class="alignment" align="center">
-                                  <table class="social-table"
-                                         width="288px"
-                                         border="0"
-                                         cellpadding="0"
-                                         cellspacing="0"
-                                         role="presentation"
-                                         style="mso-table-lspace:0;mso-table-rspace:0;display:inline-block">
-                                    <tr>
-                                      <td style="padding:0 10px 0 10px">
-                                        <a href="https://apps.apple.com/app/pneumatic-workflow/id1618369634"
-                                           target="_blank">
-                                          <img src="https://userimg-assets.customeriomail.com/images/client-env-93177/1679411433462_Button%20App%20Store_01GW2BHM5X7KD71CV7J3EWV26B.png"
-                                               width="124"
-                                               height="32"
-                                               alt="Get Pneumatic Mobile App"
-                                               title="Get Pneumatic Mobile App"
-                                               style="display:block;height:auto;border:0">
-                                        </a>
-                                      </td>
-                                      <td style="padding:0 10px 0 10px">
-                                        <a href="https://play.google.com/store/apps/details?id=com.pneumatic.workflow"
-                                           target="_blank">
-                                          <img src="https://userimg-assets.customeriomail.com/images/client-env-93177/1679411434740_Button%20Google%20Play_01GW2BHNDT95MDEXVJ8YM93M2F.png"
-                                               width="124"
-                                               height="32"
-                                               alt="Get Pneumatic Mobile App"
-                                               title="Get Pneumatic Mobile App"
-                                               style="display:block;height:auto;border:0">
-                                        </a>
-                                      </td>
-                                    </tr>
-                                  </table>
-    </div>
-                              </td>
-                            </tr>
-                          </table>
-
-                          <!-- Social Links -->
-                          <table class="social_block block-2"
-                                 width="100%"
-                                 border="0"
-                                 cellpadding="10"
-                                 cellspacing="0"
-                                 role="presentation"
-                                 style="mso-table-lspace:0;mso-table-rspace:0">
-                            <tr>
-                              <td class="pad">
-                                <div class="alignment" align="center">
-                                  <table class="social-table"
-                                         width="126px"
-                                         border="0"
-                                         cellpadding="0"
-                                         cellspacing="0"
-                                         role="presentation"
-                                         style="mso-table-lspace:0;mso-table-rspace:0;display:inline-block">
-                                    <tr>
-                                      <td style="padding:0 5px 0 5px">
-                                        <a href="https://twitter.com/pneumaticapp"
-                                           target="_blank">
-                                          <img src="https://app-rsrc.getbee.io/public/resources/social-networks-icon-sets/t-only-logo-dark-gray/twitter@2x.png"
-                                               width="32"
-                                               height="32"
-                                               alt="Twitter"
-                                               title="Twitter"
-                                               style="display:block;height:auto;border:0">
-                                        </a>
-                                      </td>
-                                      <td style="padding:0 5px 0 5px">
-                                        <a href="https://www.linkedin.com/company/pneumaticapp"
-                                           target="_blank">
-                                          <img src="https://app-rsrc.getbee.io/public/resources/social-networks-icon-sets/t-only-logo-dark-gray/linkedin@2x.png"
-                                               width="32"
-                                               height="32"
-                                               alt="LinkedIn"
-                                               title="LinkedIn"
-                                               style="display:block;height:auto;border:0">
-                                        </a>
-                                      </td>
-                                      <td style="padding:0 5px 0 5px">
-                                        <a href="https://www.youtube.com/channel/UCrN4W1ThP7FKxuxySg5u6ww/"
-                                           target="_blank">
-                                          <img src="https://app-rsrc.getbee.io/public/resources/social-networks-icon-sets/t-only-logo-dark-gray/youtube@2x.png"
-                                               width="32"
-                                               height="32"
-                                               alt="YouTube"
-                                               title="YouTube"
-                                               style="display:block;height:auto;border:0">
-                                        </a>
-                                      </td>
-                                    </tr>
-                                  </table>
-  </div>
-                              </td>
-                            </tr>
-                          </table>
-
-                          <!-- Links -->
-                          <table class="text_block block-3"
-                                 width="100%"
-                                 border="0"
-                                 cellpadding="0"
-                                 cellspacing="0"
-                                 role="presentation"
-                                 style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word">
-                            <tr>
-                              <td class="pad"
-                                  style="padding-left:10px;padding-right:10px;padding-top:10px">
-                                <div style="font-family:sans-serif">
-                                  <div style="font-size:14px;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;color:#262522;line-height:1.8">
-                                    <p style="margin:0;text-align:center;">
-                                      <a href="https://zapier.com/apps/pneumatic/integrations"
-                                         target="_blank"
-                                         style="text-decoration:underline;color:#262522;">
-                                        Zapier Integration
-                                      </a>
-                                      &nbsp;
-                                      <a href="https://my.pneumatic.app/api/docs/"
-                                         target="_blank"
-                                         style="text-decoration:underline;color:#262522;">
-                                        API
-                                      </a>
-                                      &nbsp;
-                                      <a href="https://www.capterra.com/p/205883/Pneumatic/"
-                                         target="_blank"
-                                         style="text-decoration:underline;color:#262522;">
-                                        Review us on Capterra
-                                      </a>
-                                    </p>
-                                  </div>
-                                </div>
-                              </td>
-                            </tr>
-                          </table>
-
                           <!-- Copyright and Unsubscribe -->
                           <table class="text_block block-4"
                                  width="100%"
@@ -424,9 +289,9 @@
                                 <div style="font-family:sans-serif">
                                   <div style="font-size:14px;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;color:#999;line-height:1.8">
                                     <p style="margin:0;text-align:center;">
-                                      © {% now "Y" %} Pneumatic Software, Inc.<br>
-                                      8350 N Central Expy, Suite 1900,
-                                      Dallas, TX 75206
+                                      {{ brand_name|default:"Masarat" }}<br>
+                                      {{ brand_organization_ar|default:"وزارة الأشغال العامة والإسكان" }}<br>
+                                      {{ brand_organization|default:"Ministry of Public Works and Housing" }}
                                     </p>
                                     {% if unsubscribe_link %}
                                     <p style="margin:0;text-align:center;">

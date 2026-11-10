@@ -12,6 +12,7 @@ import { getPublicFormConfig } from './utils/getConfig';
 
 import { getFormsBasename } from './utils/identifyAppPart/constants';
 import { EPublicFormRoutes } from './constants/routes';
+import { BRAND } from './constants/branding';
 import { SharedPublicForm, EmbeddedPublicForm } from './components/PublicFormsApp';
 import { AppLocale } from './lang';
 import { applyDocumentLocale } from './lang/document';
@@ -21,10 +22,6 @@ import 'promise-polyfill/src/polyfill';
 import './assets/css/style.css';
 
 initSentry(getPublicFormConfig, 'forms');
-
-const {
-  config: { mainPage },
-} = getPublicFormConfig();
 
 const formsHistory = createBrowserHistory({
   basename: getFormsBasename(window.location.pathname) || '/',
@@ -42,7 +39,7 @@ ReactDOM.render(
             <Route
               path={EPublicFormRoutes.Error}
               component={() => {
-                window.location.href = mainPage;
+                window.location.href = BRAND.homePath;
                 return null;
               }}
             />

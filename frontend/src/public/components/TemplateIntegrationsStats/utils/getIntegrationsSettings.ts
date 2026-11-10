@@ -1,3 +1,4 @@
+import { IntlShape } from 'react-intl';
 import { EIntegrations } from '../../../types/integrations';
 import { ETemplateParts } from '../../../types/template';
 import { getLinkToTemplate } from '../../../utils/routes/getLinkToTemplate';
@@ -10,28 +11,31 @@ type TIntegrationSetting<T> = {
     link: T extends number ? string : null;
   };
 };
-export const getIntegrationsSettings = <T extends number | undefined>(templateId: T): TIntegrationSetting<T> => ({
+export const getIntegrationsSettings = <T extends number | undefined>(
+  templateId: T,
+  formatMessage: IntlShape['formatMessage'],
+): TIntegrationSetting<T> => ({
   [EIntegrations.Shared]: {
-    title: 'Share Kick-off',
-    description: 'Create a link to enable users to launch workflows from outside Pneumatic',
+    title: formatMessage({ id: 'integrations.settings.share-title' }),
+    description: formatMessage({ id: 'integrations.settings.share-description' }),
     anchor: getAnchor(ETemplateParts.Share),
     link: getLink(templateId, ETemplateParts.Share),
   },
   [EIntegrations.Zapier]: {
     title: 'Zapier',
-    description: 'Build tirgger-action type integrations with thousands of apps supported by zapier',
+    description: formatMessage({ id: 'integrations.settings.zapier-description' }),
     anchor: getAnchor(ETemplateParts.Zapier),
     link: getLink(templateId, ETemplateParts.Zapier),
   },
   [EIntegrations.API]: {
     title: 'API',
-    description: 'Develop highly customized integrations with any software whatsoever',
+    description: formatMessage({ id: 'integrations.settings.api-description' }),
     anchor: getAnchor(ETemplateParts.API),
     link: getLink(templateId, ETemplateParts.API),
   },
   [EIntegrations.Webhooks]: {
     title: 'Webhooks',
-    description: 'Get notifications in real time when specific events happen in Pneumatic',
+    description: formatMessage({ id: 'integrations.settings.webhooks-description' }),
     anchor: getAnchor(ETemplateParts.Webhook),
     link: getLink(templateId, ETemplateParts.Webhook),
   },

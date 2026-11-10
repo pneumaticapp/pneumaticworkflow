@@ -31,7 +31,7 @@ init_sentry()
 # ── Constants ────────────────────────────────────────────────
 
 API_DESCRIPTION = """\
-The Pneumatic Files API provides high-performance file storage \
+The Masarat Files API provides high-performance file storage \
 and streaming capabilities (powered by SeaweedFS / GCS).
 
 ### Authentication
@@ -52,7 +52,7 @@ and system templates.
 - **Secure File Serving:** Range requests, content disposition, \
 and instant streaming.
 - **Permission Validation:** Automatic permission verification \
-against Pneumatic Core Backend.\
+against Masarat Core Backend.\
 """
 
 
@@ -132,13 +132,13 @@ def _custom_openapi_schema(application: FastAPI) -> dict[str, Any]:
 # ── Application ──────────────────────────────────────────────
 
 app = FastAPI(
-    title='Pneumatic Files API',
+    title='Masarat Files API',
     description=API_DESCRIPTION,
     version='1.0.0',
     servers=[
         {
             'url': '/',
-            'description': 'Pneumatic Files API Server',
+            'description': 'Masarat Files API Server',
         },
     ],
     openapi_tags=[

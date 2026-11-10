@@ -48,11 +48,11 @@
 }
 
 .success {
-  color: #24d5a1;
+  color: var(--pneumatic-color-notification3);
 }
 
 .failed {
-  color: #fc5b67;
+  color: var(--pneumatic-color-warning);
 }
 
 .retry {

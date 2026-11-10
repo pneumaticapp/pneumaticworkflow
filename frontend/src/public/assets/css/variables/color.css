@@ -1,32 +1,49 @@
 :root {
-  --pneumatic-color-black100: #262522;
-  --pneumatic-color-black95: rgba(98, 98, 95, 0.08);
-  --pneumatic-color-black90: #404040;
-  --pneumatic-color-black88: #40403d;
-  --pneumatic-color-black72: #62625f;
+  /* Approved identity palette. Keep the Sass palette in sync. */
+  --brand-forest: #428177;
+  --brand-forest-dark: #054239;
+  --brand-forest-deep: #002623;
+  --brand-wheat-light: #edebe0;
+  --brand-wheat: #b9a779;
+  --brand-wheat-dark: #988561;
+  --brand-umber: #6b1f2a;
+  --brand-umber-dark: #4a151e;
+  --brand-umber-deep: #260f14;
+  --brand-white: #ffffff;
+  --brand-charcoal: #3d3a3b;
+  --brand-charcoal-dark: #161616;
+
+  --pneumatic-color-black100: var(--brand-charcoal-dark);
+  --pneumatic-color-black95: rgba(61, 58, 59, 0.08);
+  --pneumatic-color-black90: var(--brand-charcoal);
+  --pneumatic-color-black88: var(--brand-forest-deep);
+  --pneumatic-color-black72: var(--brand-charcoal);
   --pneumatic-color-black48: #979795;
   --pneumatic-color-black32: #b9b9b8;
   --pneumatic-color-black16: #dcdcdb;
   --pneumatic-color-black8: #eeeeed;
-  --pneumatic-color-black4: #f6f6f6;
+  --pneumatic-color-black4: var(--brand-wheat-light);
   --pneumatic-color-skeleton-gray-bg: #f1f1f1;
   --pneumatic-color-skeleton-gray-bg-highlight: #fafafa;
-  --pneumatic-color-white: #fff;
+  --pneumatic-color-white: var(--brand-white);
 
-  --pneumatic-color-beige: #fdf7ee;
-  --pneumatic-color-selection: #f0dbc3;
-  --pneumatic-color-link: #fec336;
-  --pneumatic-color-link-hover: #e79a26;
-  --pneumatic-color-link-dark: #c6720f;
+  --pneumatic-color-beige: var(--brand-wheat-light);
+  --pneumatic-color-selection: var(--brand-wheat-light);
+  --pneumatic-color-link: var(--brand-forest-dark);
+  --pneumatic-color-link-hover: var(--brand-forest-deep);
+  --pneumatic-color-link-dark: var(--brand-forest-deep);
+  --pneumatic-color-link-text: var(--brand-white);
+  --pneumatic-color-gold: var(--brand-wheat);
+  --pneumatic-color-gold-hover: var(--brand-wheat-dark);
 
-  --pneumatic-background-red: #fff2f8;
-  --pneumatic-color-warning: #fc5b67;
-  --pneumatic-color-notification1-light: rgba(254, 237, 235, 1);
-  --pneumatic-color-notification1: #f44336;
-  --pneumatic-color-red: red;
+  --pneumatic-background-red: rgba(107, 31, 42, 0.06);
+  --pneumatic-color-warning: var(--brand-umber);
+  --pneumatic-color-notification1-light: #f6eeef;
+  --pneumatic-color-notification1: var(--brand-umber);
+  --pneumatic-color-red: var(--brand-umber);
 
-  --pneumatic-color-notification3-light: rgba(238, 247, 238, 1);
-  --pneumatic-color-notification3: #4caf50;
+  --pneumatic-color-notification3-light: #f0f5f4;
+  --pneumatic-color-notification3: var(--brand-forest);
 
   --pneumatic-color-notification4: #2196f3;
   --pneumatic-color-violet: #673ab7;

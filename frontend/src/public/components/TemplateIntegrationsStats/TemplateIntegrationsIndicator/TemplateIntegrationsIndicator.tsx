@@ -21,7 +21,7 @@ export function TemplateIntegrationsIndicator({
   exlcude,
 }: TemplateIntegrationsIndicatorProps) {
   const { formatMessage } = useIntl();
-  const integrationsSettings = getIntegrationsSettings(templateId);
+  const integrationsSettings = getIntegrationsSettings(templateId, formatMessage);
 
   return (
     <TemplateIntegrationsStats templateId={templateId} exlcude={exlcude}>

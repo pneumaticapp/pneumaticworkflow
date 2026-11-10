@@ -108,7 +108,7 @@
 
     &--selected {
       background: var(--pneumatic-color-link) !important;
-      color: var(--pneumatic-color-black100) !important;
+      color: var(--pneumatic-color-link-text) !important;
     }
 
     &:not(&--disabled):hover {
@@ -243,7 +243,7 @@ html[dir='rtl'] .react-datepicker {
 
 .react-datepicker__day--in-selecting-range,
 .react-datepicker__day--in-range {
-  color: var(--pneumatic-color-black72) !important;
+  color: var(--pneumatic-color-link-text) !important;
 }
 
 .react-datepicker__time-container
@@ -268,6 +268,7 @@ html[dir='rtl'] .react-datepicker {
   ul.react-datepicker__time-list
   li.react-datepicker__time-list-item--selected:hover {
   background: var(--pneumatic-color-link) !important;
+  color: var(--pneumatic-color-link-text) !important;
 }
 
 .react-datepicker__triangle {
@@ -282,6 +283,7 @@ html[dir='rtl'] .react-datepicker {
 
 .react-datepicker__day--in-selecting-range:not(.react-datepicker__day--in-range) {
   background: var(--pneumatic-color-black16) !important;
+  color: var(--pneumatic-color-black72) !important;
 }
 
 .react-datepicker.embedded {
@@ -314,4 +316,5 @@ html[dir='rtl'] .react-datepicker {
   ul.react-datepicker__time-list
   li.react-datepicker__time-list-item--selected {
   background: var(--pneumatic-color-link) !important;
+  color: var(--pneumatic-color-link-text) !important;
 }

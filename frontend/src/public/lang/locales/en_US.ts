@@ -1,4 +1,19 @@
+import { getBrandName, getOrganizationName } from '../../constants/branding';
+
+const productName = getBrandName('en-US');
+const organizationName = getOrganizationName('en-US');
+
 export const enMessages = {
+  'branding.product-name': productName,
+  'branding.organization-name': organizationName,
+  'branding.copyright': '© {year} {organizationName}',
+  'page-title.public-form': 'Public Form',
+  'integrations.settings.share-title': 'Share Kick-off',
+  'integrations.settings.share-description': `Create a link to enable users to launch workflows from outside ${productName}`,
+  'integrations.settings.zapier-description':
+    'Build trigger-action integrations with thousands of apps supported by Zapier',
+  'integrations.settings.api-description': 'Develop highly customized integrations with other software',
+  'integrations.settings.webhooks-description': `Get notifications in real time when specific events happen in ${productName}`,
   'page-title.register': 'Sign Up',
   'page-title.register-invite': 'Accept Invite',
   'page-title.login': 'Sign In',
@@ -94,14 +109,14 @@ export const enMessages = {
   'general.comment': 'Comment',
   'general.show-more': 'More',
   'general.show-more.template': 'Show more templates',
-  'general.pneumatic': 'Pneumatic',
+  'general.pneumatic': productName,
   'general.upgrade': 'Upgrade now',
   'general.start-trial': 'Try for Free for 7 days',
   'general.start-trial-short': 'Start 7-day Trial',
   'general.plan-free': 'Free',
   'general.plan-premium': 'Self-Serve',
   'general.trial-expired': 'Your trial period is over, please choose a plan',
-  'general.premium-expired': 'You subscription has expired, please renew it to continue using Pneumatic',
+  'general.premium-expired': `You subscription has expired, please renew it to continue using ${productName}`,
   'general.learn-more': 'Learn more',
 
   'editor.bold': 'Bold',
@@ -178,8 +193,8 @@ export const enMessages = {
   'user.register-title-invite': 'Complete registration using the form below',
   'user.register-login-link': 'Login',
   'user.register-already': 'Already Registered? ',
-  'user.you-agree-to-pneumatic-terms': "By signing up, you agree to Pneumatic's \n{termsOfService} and {privacyPolicy}",
-  'user.register-terms': "By signing up, you agree to Pneumatic's ",
+  'user.you-agree-to-pneumatic-terms': 'By signing up, you agree to {termsOfService} and {privacyPolicy}',
+  'user.register-terms': 'By signing up, you agree to the ',
   'user.register-terms-link': 'Terms of Service',
   'user.register-privacy-policy-link': 'Privacy Policy',
   'user.register-link': 'Create an Account',
@@ -232,8 +247,8 @@ export const enMessages = {
   'user.register-required-fields': 'All the fields are required!',
   'user.logout-button': 'Sign Out',
   'user.sign-out': 'Sign Out',
-  'user.slogan': 'Pneumatic',
-  'user.logo-title': 'Pneumatic',
+  'user.slogan': productName,
+  'user.logo-title': productName,
   'user.error-credentials': 'Unknown credentials',
   'user.error-deleted': 'The user was deleted',
 
@@ -338,8 +353,7 @@ export const enMessages = {
   'user.avatar.choose-file': 'Choose file',
   'user.avatar.upload-title': 'Upload avatar',
   'user.avatar.delete-title': 'Remove profile photo',
-  'user.avatar.delete-text':
-    'Are you sure you want to remove your photo? We’ll replace it with a default Pneumatic avatar.',
+  'user.avatar.delete-text': `Are you sure you want to remove your photo? We’ll replace it with a default ${productName} avatar.`,
   'user.avatar.delete-cancel': 'Cancel',
   'user.avatar.delete-approve': 'Remove',
 
@@ -429,8 +443,7 @@ export const enMessages = {
   'team.empty-placeholder-title': 'No Users found',
   'team.empty-placeholder-description': 'Try changing your filter settings or invite more peoples in your team.',
 
-  'team.add-guests-banner-text':
-    'Add guests to your tasks to get input from and engage with people without a Pneumatic account.',
+  'team.add-guests-banner-text': `Add guests to your tasks to get input from and engage with people without a ${productName} account.`,
   'team.add-guests-banner-button': 'Learn more',
 
   'team.add-groups-banner-text': 'Learn more about how to use groups.',
@@ -739,8 +752,7 @@ export const enMessages = {
   'template.task-conditions-validation-error': 'Please fill in all conditions in tasks:',
   'template.kickoff-validation-error': 'Please check the data in the Kick-off form',
   'template.generate-with-ai.title': 'Template Generator',
-  'template.generate-with-ai.description':
-    'Let Pneumatic generate steps for a new template based on your description of the business process you need',
+  'template.generate-with-ai.description': `Let ${productName} generate steps for a new template based on your description of the business process you need`,
   'template.add': 'New templates',
   'template.clone': 'Clone',
   'template.discard-popup-title': 'Discard changes?',
@@ -956,8 +968,7 @@ export const enMessages = {
   'template.warning-unassigned-perforemers-title': 'The template has unassigned tasks',
   'template.warning-unassigned-perforemers-desc': 'Please add performers to your tasks.',
   'template.warning-premium-feature-title': 'The template has some premium features (conditions)',
-  'template.warning-premium-feature-desc':
-    'Please active your free 7-day trial to enable the template and experience the full power of Pneumatic.',
+  'template.warning-premium-feature-desc': `Please active your free 7-day trial to enable the template and experience the full power of ${productName}.`,
   'template.waning-close-button': 'Got it',
   'template.insert-variable': 'Insert',
   'template.intergrations.menu-edit': 'Edit',
@@ -970,8 +981,8 @@ export const enMessages = {
     " Add your dynamic app directory— powered by Zapier's library of integrations — straight to your site with just one line of code." +
     ' Users can search through thousands of available apps to pair with yours and see popular workflows at a glance.',
   'template.intergrations-zap-templates-desc':
-    'Integrate your workflow template with your other apps fast through Zapier, use any of our Zap templates for Pneumatic or build your' +
-    ' own zaps from scratch based on workflow started, workflow completed, task assigned, task completed events in Pneumatic.',
+    `Integrate your workflow template with your other apps fast through Zapier, use any of our Zap templates for ${productName} or build your` +
+    ` own zaps from scratch based on workflow started, workflow completed, task assigned, task completed events in ${productName}.`,
   'template.intergrations-zap-manager-desc':
     "Add the zaps you've connected this template to on this page so you can manage them all in one place." +
     ' View your active zaps, make changes to them, add new ones.',
@@ -979,8 +990,8 @@ export const enMessages = {
     "If the app you need isn't available in Zapier, take advantage of our open API, which utilizes the JSON format to exchange data." +
     ' Here you can find the JSON representation of your template to help you quickly build integrations using our public API:',
   'template.intergrations-webhook-desc':
-    'Webhooks allow you to subscribe to events in Pneumatic so your application can take appropriate action in response.' +
-    " Enter a URL for Pneumatic to send notifications to and you're set",
+    `Webhooks allow you to subscribe to events in ${productName} so your application can take appropriate action in response.` +
+    ` Enter a URL for ${productName} to send notifications to and you're set`,
   'template.intergrations-copy-code': 'Copy',
   'template.intergrations-code-copied': 'Code copied to clipboard',
   'template.intergrations-api-key': 'Your API Key:',
@@ -1144,12 +1155,12 @@ export const enMessages = {
   'kickoff.share-failed': 'Failed to share the Kick-off form',
   'kickoff.share-control': 'Share & Embed',
   'kickoff.share-description':
-    'You share the kick-off form by creating a link to it so it can be accessed by people without a Pneumatic account.' +
+    `You share the kick-off form by creating a link to it so it can be accessed by people without a ${productName} account.` +
     ' You can then email the link to someone or share it on your website and whoever clicks on it will be able' +
-    ' to open the Pneumatic form and launch a new workflow.',
+    ` to open the ${productName} form and launch a new workflow.`,
   'kickoff.embed-description':
-    'The embed link will create a Pneumatic kick-off form on your website that looks and feels like the rest of your website' +
-    ' to help you integrate the launching of Pneumatic processes into the interface in a smooth and seamless manner.',
+    `The embed link will create a ${productName} kick-off form on your website that looks and feels like the rest of your website` +
+    ` to help you integrate the launching of ${productName} processes into the interface in a smooth and seamless manner.`,
   'kickoff.copy-link': 'Copy share link',
   'kickoff.copy-embed-code': 'Copy embed code',
   'kickoff.share-link-copied': 'Share link copied to clipboard',
@@ -1332,8 +1343,7 @@ export const enMessages = {
   'checkout.set-up-one-workflow': 'Set up one workflow',
   'checkout.summary-tax': 'Tax',
   'checkout.summary-tax-value': '{tax}',
-  'checkout.summary-bottom-text':
-    'You authorize Pneumatic to charge you the subscription fee every month/year until you cancel.',
+  'checkout.summary-bottom-text': 'Your subscription fee will be charged every month/year until you cancel.',
   'checkout.transaction-declined': 'The transaction was declined. Please use a different card or contact your bank.',
   'checkout.invalid-user-amount': 'Please, enter a valid amount of users.',
   'checkout.invalid-card-info': 'Please, check your card information.',
@@ -1407,15 +1417,14 @@ export const enMessages = {
   'dashboard.shareable-kick-off-forms': 'Shareable kick-off forms',
   'dashboard.access-controls': 'Access controls',
   'dashboard.questions': 'questions?',
-  'dashboard.free-zoom-call':
-    'A FREE 15 minute intro Zoom call with us can make a huge difference when it comes to getting value from Pneumatic.',
+  'dashboard.free-zoom-call': `A FREE 15 minute intro Zoom call with us can make a huge difference when it comes to getting value from ${productName}.`,
   'dashboard.error-fetch': 'Failed to fetch dashboard info',
   'dashboard.pa-placeholder-title':
     'Have you ever wondered how good your team is at reaching their goals and how long it takes them to complete' +
     ' an average business process?',
   'dashboard.pa-placeholder-description':
     "Let's get you set up! To see your workflow analytics in action, enable your first workflow, and run a few processes.",
-  'dashboard.wo-placeholder-title': 'Pneumatic gives you all-one detailed metrics so you can workflow performance.',
+  'dashboard.wo-placeholder-title': `${productName} gives you all-one detailed metrics so you can workflow performance.`,
   'dashboard.wo-placeholder-description':
     "Let's get you set up! To see your workflow analytics in action, enable your first workflow, and run a few processes.",
   'dashboard.duration-minute': '<1 minute',
@@ -1428,11 +1437,10 @@ export const enMessages = {
     ' the tasks you currently have in that template. Click on the task name to go into My Tasks interface and complete the task.',
   'dashboard.plan-detail-popup-text':
     'You have to upgrade your plan to the Premium, if you want to get more work opportunities.',
-  'dashboard.power-ups-for-pneumatic': 'Power-Ups for Pneumatic',
+  'dashboard.power-ups-for-pneumatic': `Power-Ups for ${productName}`,
   'dashboard.plan-detail-popup-text-conditional-workflow':
     'Conditional Workflow Logic is available with a Premium Plan',
-  'dashboard.plan-detail-popup-text-shareable-kick-off-forms':
-    'Upgrade to the Premium Plan to have Pneumatic workflows started by external users',
+  'dashboard.plan-detail-popup-text-shareable-kick-off-forms': `Upgrade to the Premium Plan to have ${productName} workflows started by external users`,
   'dashboard.plan-detail-popup-text-access-controls':
     'Upgrade to the Premium Plan to enable granular access control in your account',
   'dashboard.workflows': 'Workflows',
@@ -1446,10 +1454,10 @@ export const enMessages = {
   'dashboard.checks-condition-created': 'Conditional logic',
   'dashboard.checks-template-publicated': 'Shareable forms',
   'dashboard.checks-learn-more': 'Learn More',
-  'dashboard.promo-title': 'Power-Ups for Pneumatic',
+  'dashboard.promo-title': `Power-Ups for ${productName}`,
   'dashboard.promo-text': 'If you want to unlock our advanced features please upgrade to our Premium Plan.',
   'dashboard.promo-upgrade': 'Upgrade',
-  'dashboard.app-mobile-buttons-group-title': 'Download {br} pneumatic app',
+  'dashboard.app-mobile-buttons-group-title': 'Download {br} the mobile app',
 
   'dashboard.quick-button-title': 'Configure and Run Workflows',
 
@@ -1458,8 +1466,7 @@ export const enMessages = {
     'You can use our free template library, our AI-powered template generator or build a template manually from scratch.',
 
   'dashboard.quick-button-run-workflow-title': 'Run Workflow',
-  'dashboard.quick-button-run-workflow-description':
-    'You can run new workflows from within Pneumatic, from a shared kick-off form or through integrations.',
+  'dashboard.quick-button-run-workflow-description': `You can run new workflows from within ${productName}, from a shared kick-off form or through integrations.`,
 
   'dashboard.integrations-tooltip': 'To speed up your work — use integration.',
   'dashboard.integrations-tooltip-link': 'Learn more',
@@ -1531,9 +1538,8 @@ export const enMessages = {
   'ai-providers.created': 'Provider added. You can now create AI agents on the Team page.',
   'ai-providers.deleted': 'Provider deleted',
   'integrations.title': 'Integrations',
-  'integrations.title.tooltip': 'Get your API key and go to Zapier or make to link up Pneumatic to external apps.',
-  'integrations.description':
-    'You can automate your workflows better. Just integrate industry-leading software right into Pneumatic.',
+  'integrations.title.tooltip': `Get your API key and go to Zapier or make to link up ${productName} to external apps.`,
+  'integrations.description': `You can automate your workflows better. Just integrate industry-leading software right into ${productName}.`,
   'integrations.hint': "Didn't find the integration you need? Email us at\u00A0",
   'integrations.list-fetch-failed': 'Failed to fetch integrations',
   'integrations.details-fetch-failed': "Failed to fetch integration's details",
@@ -1603,7 +1609,7 @@ export const enMessages = {
     'Please fill out the form below to launch a new workflow based on the kick-off form provided:',
   'public-form.launch': 'Submit',
   'public-form.copyright': 'Powered by {link}',
-  'public-form.pneumatic': 'Pneumatic',
+  'public-form.pneumatic': productName,
   'public-form.submited-title': 'Congratulations!',
   'public-form.submited-text':
     'The form has been submitted successfully. You can fill out and submit this form again if necessary.',

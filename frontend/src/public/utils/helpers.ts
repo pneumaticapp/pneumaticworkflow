@@ -4,6 +4,7 @@ import { diff } from 'deep-object-diff';
 import { EPayPeriod } from '../types/pricing';
 import { TAX_RATES } from '../constants/taxRates';
 import { NAVBAR_HEIGHT, MOBILE_NAVBAR_HEIGHT } from '../constants/defaultValues';
+import { EBrandColors } from '../constants/brandColors';
 
 const { MOBILE_MAX_WIDTH_BREAKPOINT } = require('../constants/breakpoints');
 
@@ -83,9 +84,9 @@ export function toggleValueInArray<T>(value: T, arr?: T[], key?: keyof T) {
 export type IProgressColorMap = { [breakpoint: number]: string };
 
 export const DEFAULT_MAP_PROGRESS_COLOR: IProgressColorMap = {
-  0: '#24d5a1',
-  40: '#fec336',
-  80: '#fc5b67',
+  0: EBrandColors.Forest,
+  40: EBrandColors.WheatDark,
+  80: EBrandColors.Umber,
 };
 
 export const calculateProgressColor = (percentage: number | undefined, colorMap?: IProgressColorMap) => {

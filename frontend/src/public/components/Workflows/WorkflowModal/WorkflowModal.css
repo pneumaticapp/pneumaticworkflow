@@ -13,7 +13,7 @@
 }
 
 .inwork-popup-content {
-  background: #fdf7ee !important;
+  background: var(--pneumatic-color-beige) !important;
 }
 
 .popup-header {

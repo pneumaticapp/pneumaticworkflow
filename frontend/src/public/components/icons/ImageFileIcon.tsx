@@ -1,6 +1,6 @@
 import React from 'react';
 
-export function ImageFileIcon({ fill = '#FEC336', ...rest }: React.SVGAttributes<SVGElement>) {
+export function ImageFileIcon({ fill = 'var(--pneumatic-color-link)', ...rest }: React.SVGAttributes<SVGElement>) {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill={fill} xmlns="http://www.w3.org/2000/svg" {...rest}>
       <path

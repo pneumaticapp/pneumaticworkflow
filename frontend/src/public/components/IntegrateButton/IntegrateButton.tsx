@@ -42,9 +42,8 @@ export function IntegrateButton({
   isFromBreakdownItem = false,
 }: TIntegrateButtonProps) {
   const { isDesktop } = useCheckDevice();
-  const integrationsSettings = getIntegrationsSettings(tepmlateId);
-
   const { formatMessage } = useIntl();
+  const integrationsSettings = getIntegrationsSettings(tepmlateId, formatMessage);
 
   return (
     <Tooltip

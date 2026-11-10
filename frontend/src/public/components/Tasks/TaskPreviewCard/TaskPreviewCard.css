@@ -53,7 +53,7 @@
 }
 
 .due-in_overdue {
-  color: #fc5b67;
+  color: var(--pneumatic-color-warning);
 }
 
 .workflow-name {

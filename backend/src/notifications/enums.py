@@ -2,6 +2,8 @@ from os import environ as env
 
 from typing_extensions import Literal
 
+from src.branding import PRODUCT_NAME
+
 
 class NotificationMethod:
 
@@ -203,16 +205,18 @@ email_titles = {
     NotificationMethod.workflows_digest: 'Workflows Weekly Digest',
     NotificationMethod.tasks_digest: 'Tasks Weekly Digest',
     NotificationMethod.user_deactivated: (
-        'Your Pneumatic profile was deactivated.'
+        f'Your {PRODUCT_NAME} profile was deactivated.'
     ),
-    NotificationMethod.user_transfer: 'invited you to join team on Pneumatic!',
-    NotificationMethod.verification: 'Welcome to Pneumatic!',
+    NotificationMethod.user_transfer: (
+        f'invited you to join team on {PRODUCT_NAME}!'
+    ),
+    NotificationMethod.verification: f'Welcome to {PRODUCT_NAME}!',
     NotificationMethod.invite: (
-        "✅ You've been invited to join your team in Pneumatic"
+        f"✅ You've been invited to join your team in {PRODUCT_NAME}"
     ),
     NotificationMethod.complete_workflow: 'Workflow completed',
     NotificationMethod.task_reminder: (
-        'Reminder: you have unfinished tasks in Pneumatic'
+        f'Reminder: you have unfinished tasks in {PRODUCT_NAME}'
     ),
     NotificationMethod.vacation_delegation: (
         'Tasks have been delegated to you'

@@ -7,6 +7,7 @@ import { Request, Response } from 'express';
 import { mainHandler } from '../mainHandler';
 import { serverConfigToBrowser, getConfig } from '../../../public/utils/getConfig';
 import { serverApi } from '../../utils';
+import { getBrandName } from '../../../public/constants/branding';
 
 jest.mock('../../service/checkInvite');
 jest.mock('../../utils/cookie');
@@ -42,6 +43,7 @@ describe('handlers', () => {
 
       expect(res.render).toHaveBeenCalledWith('main', {
         documentLocale: { lang: 'en-US', dir: 'ltr' },
+        brandName: 'Masarat',
         config: JSON.stringify(mockConfig),
         env,
         invitedUser: '{}',
@@ -49,6 +51,23 @@ describe('handlers', () => {
         pages: '{}',
         user: '{}',
       });
+    });
+    it.each(['en', 'ru', 'ar-sy'])('passes the canonical %s brand to the initial document title', async (language) => {
+      const req = {
+        get: jest.fn(),
+        url: '/',
+        path: '/',
+        baseUrl: '',
+        headers: {},
+        hostname: 'app.example.test',
+        res: { locals: { user: { language } } },
+      };
+      const res = { render: jest.fn(), redirect: jest.fn(), cookie: jest.fn() };
+      jest.spyOn(serverApi, 'get').mockResolvedValueOnce({});
+
+      await mainHandler(req as unknown as Request, res as unknown as Response);
+
+      expect(res.render).toHaveBeenCalledWith('main', expect.objectContaining({ brandName: getBrandName(language) }));
     });
     it('does not redirect to the “main” page if the invited user does not have the required tokens.', async () => {
       const req = {

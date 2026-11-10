@@ -3,7 +3,7 @@ import * as React from 'react';
 
 export type TVideoInfoIconProps = React.SVGAttributes<SVGElement>;
 
-export function VideoInfoIcon({ fill = '#FEC336', ...restProps }: TVideoInfoIconProps) {
+export function VideoInfoIcon({ fill = 'var(--pneumatic-color-link)', ...restProps }: TVideoInfoIconProps) {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill={fill} xmlns="http://www.w3.org/2000/svg" {...restProps}>
       <path

@@ -6,6 +6,7 @@ import { TMenuType } from '../types/common';
 import { ELocale, ELocaleDirection, ILocaleOption } from '../types/redux';
 import { EPayPeriod } from '../types/pricing';
 import { envSentry } from './enviroment';
+import { EBrandColors } from './brandColors';
 
 export const defaultMenuType: TMenuType = 'menu-default';
 
@@ -52,7 +53,7 @@ export const DEFAULT_VIDEO_PLAYER_CONFIG: Config = {
     options: {
       frameborder: 0,
       allowtransparency: true,
-      playerColor: '#fec336',
+      playerColor: EBrandColors.ForestDark,
       videoFoam: true,
       popover: true,
     },
@@ -60,20 +61,21 @@ export const DEFAULT_VIDEO_PLAYER_CONFIG: Config = {
 };
 
 export const enum EColors {
-  Primary = '#ff9e01',
-  Link = '#FEC336',
-  LinkHover = '#E79A26',
-  Black100 = '#262522',
-  Black72 = '#62625F',
+  Primary = EBrandColors.ForestDark,
+  Link = EBrandColors.ForestDark,
+  LinkHover = EBrandColors.ForestDeep,
+  Gold = EBrandColors.Wheat,
+  Black100 = EBrandColors.CharcoalDark,
+  Black72 = EBrandColors.Charcoal,
   Black48 = '#979795',
   Black32 = '#B9B9B8',
   Black16 = '#DCDCDB',
-  Notification1 = '#FC5B67',
-  Notification2 = '#FEE55A',
-  Notification3 = '#24D5A1',
+  Notification1 = EBrandColors.Umber,
+  Notification2 = EBrandColors.Wheat,
+  Notification3 = EBrandColors.Forest,
   Notification4 = '#3496C9',
   Gray = '#d7d7d7',
-  Black = '#010101',
+  Black = EBrandColors.CharcoalDark,
 }
 
 export const payTypes = [

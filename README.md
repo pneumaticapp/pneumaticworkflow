@@ -1,3 +1,13 @@
+# Masarat | مسارات
+
+Workflow management with Syrian Arabic, RTL and the visual identity of the
+Ministry of Public Works and Housing (وزارة الأشغال العامة والإسكان, MOPWH).
+See [the branding implementation record](BRANDING_IMPLEMENTATION.md) for the
+approved palette, source artwork, validation and deployment details.
+
+Masarat is based on Pneumatic. The upstream product documentation and reference
+screenshots below are retained alongside the original license and attribution.
+
 [![Documentation](https://img.shields.io/badge/docs-support.pneumatic.app-blue)](https://support.pneumatic.app/en/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
@@ -7,7 +17,7 @@
 <img width="1000" alt="Heading" src="https://github.com/user-attachments/assets/57e9d9df-24bf-42fe-a843-6f9c9b00bfac">
 
 
-# Pneumatic: All Workflows all the Time
+## Upstream Pneumatic: All Workflows all the Time
 
 
 

@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}{{ subject|default:"Pneumatic Digest" }}{% endblock %}
+{% block title %}{{ subject|default:"Masarat Digest" }}{% endblock %}
 
 {% block content %}
-<div style="margin-top:0;outline:0;font-weight:inherit;font-style:inherit;font-size:100%;font-family:'Times New Roman','Arial',serif;vertical-align:baseline;background-color:#f6f6f6;height:100%;line-height:inherit;padding:0 16px;border:0">
+<div style="margin-top:0;outline:0;font-weight:inherit;font-style:inherit;font-size:100%;font-family:'Times New Roman','Arial',serif;vertical-align:baseline;background-color:#edebe0;height:100%;line-height:inherit;padding:0 16px;border:0">
   <!-- Title Section -->
   <table align="center" style="outline:0;font-weight:inherit;font-style:inherit;font-size:100%;font-family:inherit;vertical-align:baseline;border-collapse:separate;border-spacing:0;max-width:640px;width:100%;table-layout:fixed;line-height:inherit;margin:0 auto 32px;padding:0;border:0">
     <tbody>
@@ -12,7 +12,7 @@
       <tr style="outline:0;font-weight:inherit;font-style:inherit;font-size:100%;font-family:inherit;vertical-align:baseline;border-collapse:collapse;line-height:inherit;margin:0;padding:0;border:0">
         <td align="center" style="outline:0;font-weight:normal;font-style:inherit;font-size:100%;font-family:inherit;vertical-align:baseline;text-align:left;border-collapse:collapse;line-height:inherit;margin:0;padding:0;border:0" valign="baseline">
           <p style="outline:0;font-weight:inherit;font-style:inherit;font-size:100%;font-family:inherit;vertical-align:baseline;display:block;line-height:inherit;margin:0;padding:0;border:0">
-          <span style="outline:0;font-weight:800;font-style:inherit;font-size:28px;font-family:inherit;vertical-align:baseline;line-height:32px;text-align:center;letter-spacing:-0.01em;color:#262522;display:block;margin:0;padding:0;border:0">
+          <span style="outline:0;font-weight:800;font-style:inherit;font-size:28px;font-family:inherit;vertical-align:baseline;line-height:32px;text-align:center;letter-spacing:-0.01em;color:#161616;display:block;margin:0;padding:0;border:0">
                                 {% if is_tasks_digest %}Tasks Weekly Digest{% else %}Workflows Weekly Digest{% endif %}
                             </span>
             {% if date_from and date_to %}
@@ -53,14 +53,14 @@
             <div style="margin-bottom:16px;line-height:24px">
               <div style="display:inline-block;width:74%;line-height:inherit">
                 <a href="{{ base_link }}{{ status_queries.in_progress }}" style="text-decoration:none;line-height:inherit">
-                  <span style="outline:0;font-weight:bold;font-style:inherit;font-size:20px;vertical-align:baseline;color:#ffc107;line-height:inherit;margin:0;padding:0;border:0">
+                  <span style="outline:0;font-weight:bold;font-style:inherit;font-size:20px;vertical-align:baseline;color:#054239;line-height:inherit;margin:0;padding:0;border:0">
                     {{ status_labels.in_progress }}
                   </span>
                 </a>
               </div>
               <div style="display:inline-block;width:25%;text-align:right;line-height:inherit" align="right">
                 <a href="{{ base_link }}{{ status_queries.in_progress }}" style="outline:0;font-weight:inherit;font-style:inherit;font-size:100%;font-family:inherit;vertical-align:baseline;text-decoration:none;line-height:inherit;margin:0;padding:0;border:0">
-                  <span style="outline:0;font-weight:bold;font-style:inherit;font-size:20px;font-family:inherit;vertical-align:baseline;text-align:center;letter-spacing:-0.01em;color:#ffc107;display:inline-block;line-height:inherit;margin:0;padding:0;border:0">
+                  <span style="outline:0;font-weight:bold;font-style:inherit;font-size:20px;font-family:inherit;vertical-align:baseline;text-align:center;letter-spacing:-0.01em;color:#054239;display:inline-block;line-height:inherit;margin:0;padding:0;border:0">
                     {{ in_progress|default:0 }}
                   </span>
                 </a>
@@ -121,7 +121,7 @@
                   <tr style="vertical-align:top;border-collapse:collapse;line-height:inherit">
                     <td align="left" style="text-align:left;font-family:inherit;font-weight:800;font-size:20px;line-height:24px;vertical-align:top;border-collapse:collapse" valign="top">
                       <a href="{{ base_link }}?{{ template_query_param }}={{ template.template_id }}" style="text-decoration:none;line-height:inherit">
-                        <span style="outline:0;font-weight:800;font-style:inherit;font-size:20px;font-family:'Times New Roman',serif;line-height:24px;color:#262522;display:block;margin:0;padding:0;border:0">
+                        <span style="outline:0;font-weight:800;font-style:inherit;font-size:20px;font-family:'Times New Roman',serif;line-height:24px;color:#161616;display:block;margin:0;padding:0;border:0">
                           {{ template.template_name }}
                         </span>
                       </a>
@@ -145,7 +145,7 @@
                               </div>
                             </td>
                             <td style="vertical-align:top;border-collapse:collapse;line-height:inherit" valign="top">
-                              <div style="display:table-cell;text-align:center;vertical-align:middle;width:40px;height:40px;font-weight:800;font-size:20px;border-radius:8px;background-color:#fff9e7;color:#ffc107;border-left:4px solid white;border-right:4px solid white;font-family:inherit;" align="center">
+                              <div style="display:table-cell;text-align:center;vertical-align:middle;width:40px;height:40px;font-weight:800;font-size:20px;border-radius:8px;background-color:#fff9e7;color:#054239;border-left:4px solid white;border-right:4px solid white;font-family:inherit;" align="center">
                                 {{ template.in_progress|default:0 }}
                               </div>
                             </td>
@@ -174,7 +174,7 @@
             <div style="margin-top: 16px; border-top: 1px solid #f0f0f0; padding-top: 16px;">
               <div style="width:64%;display:inline-block;vertical-align:middle;">
                 <a href="{{ base_link }}?{{ template_query_param }}={{ template.template_id }}&template-step={{ task.task_id }}" style="text-decoration: none;">
-                  <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: 800;font-style: inherit;font-size: 15px;font-family:'Arial', sans-serif;line-height: 20px;color: #262522;display: block;">
+                  <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: 800;font-style: inherit;font-size: 15px;font-family:'Arial', sans-serif;line-height: 20px;color: #161616;display: block;">
                     {{ task.task_name }}
                   </span>
                 </a>
@@ -183,7 +183,7 @@
                 <span style="display:inline-table;text-align:center;width:40px;height:32px;font-size:15px;border-radius:8px;background-color:white;color:#2196F3;border-left:4px solid white;border-right:4px solid white;font-family:'Arial',sans-serif;font-weight:bold;margin-right:4px;vertical-align:middle;">
                   <span style="display:table-cell;vertical-align:middle;">{{ task.started|default:0 }}</span>
                 </span>
-                <span style="display:inline-table;text-align:center;width:40px;height:32px;font-size:15px;border-radius:8px;background-color:white;color:#FFC107;border-left:4px solid white;border-right:4px solid white;font-family:'Arial',sans-serif;font-weight:bold;margin-right:4px;vertical-align:middle;">
+                <span style="display:inline-table;text-align:center;width:40px;height:32px;font-size:15px;border-radius:8px;background-color:white;color:#054239;border-left:4px solid white;border-right:4px solid white;font-family:'Arial',sans-serif;font-weight:bold;margin-right:4px;vertical-align:middle;">
                   <span style="display:table-cell;vertical-align:middle;">{{ task.in_progress|default:0 }}</span>
                 </span>
                 <span style="display:inline-table;text-align:center;width:40px;height:32px;font-size:15px;border-radius:8px;background-color:white;color:#F44336;border-left:4px solid white;border-right:4px solid white;font-family:'Arial',sans-serif;font-weight:bold;margin-right:4px;vertical-align:middle;">
@@ -210,7 +210,7 @@
     <tr>
       <td>
         <div style="font-family:Arial,sans-serif">
-          <div style="font-size:16px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#262522;line-height:1.8">
+          <div style="font-size:16px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#161616;line-height:1.8">
             <div class="dynamic-content">
               {{ content|safe }}
             </div>
@@ -228,14 +228,14 @@
       <td>
         <div align="center">
           {% if workflows_link %}
-          <a href="{{ workflows_link }}" target="_blank" style="text-decoration:none;display:inline-block;color:#262522;background-color:#fec336;border-radius:24px;padding:8px 32px;font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;font-size:16px;text-align:center;margin:8px;">
+          <a href="{{ workflows_link }}" target="_blank" style="text-decoration:none;display:inline-block;color:#ffffff;background-color:#054239;border-radius:24px;padding:8px 32px;font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;font-size:16px;text-align:center;margin:8px;">
             <span style="line-height:32px;">
               <strong>View Workflows</strong>
             </span>
           </a>
           {% endif %}
           {% if tasks_link %}
-          <a href="{{ tasks_link }}" target="_blank" style="text-decoration:none;display:inline-block;color:#262522;background-color:#fec336;border-radius:24px;padding:8px 32px;font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;font-size:16px;text-align:center;margin:8px;">
+          <a href="{{ tasks_link }}" target="_blank" style="text-decoration:none;display:inline-block;color:#ffffff;background-color:#054239;border-radius:24px;padding:8px 32px;font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;font-size:16px;text-align:center;margin:8px;">
             <span style="line-height:32px;">
               <strong>View Tasks</strong>
             </span>

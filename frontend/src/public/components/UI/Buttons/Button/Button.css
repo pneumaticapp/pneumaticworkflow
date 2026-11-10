@@ -74,7 +74,7 @@
 }
 
 .button_yellow {
-  color: var(--pneumatic-color-black100);
+  color: var(--pneumatic-color-link-text);
   background: var(--pneumatic-color-link);
   border-color: var(--pneumatic-color-link);
 
@@ -91,7 +91,7 @@
 }
 
 .button_black {
-  color: var(--pneumatic-color-link);
+  color: var(--pneumatic-color-gold);
   background: var(--pneumatic-color-black100);
   border-color: var(--pneumatic-color-black100);
 

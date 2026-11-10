@@ -1,4 +1,19 @@
+import { getBrandName, getOrganizationName } from '../../constants/branding';
+
+const productName = getBrandName('ru-RU');
+const organizationName = getOrganizationName('ru-RU');
+
 export const ruMessages = {
+  'branding.product-name': productName,
+  'branding.organization-name': organizationName,
+  'branding.copyright': '© {year} {organizationName}',
+  'page-title.public-form': 'Публичная форма',
+  'integrations.settings.share-title': 'Поделиться формой запуска',
+  'integrations.settings.share-description': `Создайте ссылку для запуска процессов вне ${productName}`,
+  'integrations.settings.zapier-description':
+    'Создавайте интеграции по событиям с тысячами приложений, поддерживаемых Zapier',
+  'integrations.settings.api-description': 'Создавайте индивидуальные интеграции с другими программами',
+  'integrations.settings.webhooks-description': `Получайте уведомления в реальном времени о событиях в ${productName}`,
   'page-title.register': 'Регистрация',
   'page-title.register-invite': 'Принять приглашение',
   'page-title.login': 'Вход',
@@ -97,15 +112,14 @@ export const ruMessages = {
   'general.comment': 'Комментарий',
   'general.show-more': 'Еще',
   'general.show-more.template': 'Еще шаблоны',
-  'general.pneumatic': 'Пневматик',
+  'general.pneumatic': productName,
   'general.upgrade': 'Обновить сейчас',
   'general.start-trial': 'Попробуйте бесплатно в течение 7 дней',
   'general.start-trial-short': 'Начать 7-дневную пробную программу',
   'general.plan-free': 'Бесплатно',
   'general.plan-premium': 'Самообслуживание',
   'general.trial-expired': 'Ваш пробный период закончился, пожалуйста, выберите тарифный план.',
-  'general.premium-expired':
-    'Ваша подписка истекла, пожалуйста, продлите ее, чтобы продолжить использование Pneumatic.',
+  'general.premium-expired': `Ваша подписка истекла, пожалуйста, продлите ее, чтобы продолжить использование ${productName}.`,
   'general.learn-more': 'Подробнее',
 
   'editor.bold': 'Жирный',
@@ -176,8 +190,8 @@ export const ruMessages = {
   'user.register-title-invite': 'Завершите регистрацию с помощью формы ниже.',
   'user.register-login-link': 'Вход',
   'user.register-already': 'Уже зарегистрированы?\u00A0',
-  'user.you-agree-to-pneumatic-terms': 'Регистрируясь, вы соглашаетесь с {termsOfService} и {privacyPolicy} Pneumatic.',
-  'user.register-terms': 'При регистрации вы соглашаетесь с условиями Pneumatic',
+  'user.you-agree-to-pneumatic-terms': 'Регистрируясь, вы соглашаетесь с {termsOfService} и {privacyPolicy}.',
+  'user.register-terms': 'При регистрации вы соглашаетесь с условиями ',
   'user.register-terms-link': 'Условиями обслуживания',
   'user.register-privacy-policy-link': 'Политикой конфиденциальности',
   'user.register-link': 'Создать аккаунт',
@@ -229,8 +243,8 @@ export const ruMessages = {
   'user.register-required-fields': 'Все поля обязательны для заполнения!',
   'user.logout-button': 'Выйти',
   'user.sign-out': 'Выйти',
-  'user.slogan': 'Пневматик',
-  'user.logo-title': 'Пневматик',
+  'user.slogan': productName,
+  'user.logo-title': productName,
   'user.error-credentials': 'Неизвестные учетные данные',
   'user.error-deleted': 'Пользователь был удален',
 
@@ -316,8 +330,7 @@ export const ruMessages = {
   'user.avatar.choose-file': 'Выбрать файл',
   'user.avatar.upload-title': 'Загрузить аватар',
   'user.avatar.delete-title': 'Удалить фотографию профиля',
-  'user.avatar.delete-text':
-    'Вы уверены, что хотите удалить свое фото? Мы заменим его на стандартный аватар Pneumatic.',
+  'user.avatar.delete-text': `Вы уверены, что хотите удалить свое фото? Мы заменим его на стандартный аватар ${productName}.`,
   'user.avatar.delete-cancel': 'Отмена',
   'user.avatar.delete-approve': 'Удалить',
   'users.user-list': 'Управление пользователями',
@@ -403,8 +416,7 @@ export const ruMessages = {
   'team.empty-placeholder-title': 'Пользователи не найдены',
   'team.empty-placeholder-description':
     'Попробуйте изменить настройки фильтра или пригласите еще людей в свою команду.',
-  'team.add-guests-banner-text':
-    'Добавьте гостей к своим задачам, чтобы получать от них информацию и взаимодействовать с людьми без аккаунта Pneumatic.',
+  'team.add-guests-banner-text': `Добавьте гостей к своим задачам, чтобы получать от них информацию и взаимодействовать с людьми без аккаунта ${productName}.`,
   'team.add-guests-banner-button': 'Подробнее',
   'team.search': 'Поиск пользователя',
   'team.create-user-button': 'Создать пользователя',
@@ -652,8 +664,7 @@ export const ruMessages = {
   'template.task-conditions-validation-error': 'Пожалуйста, заполните все условия в заданиях:',
   'template.kickoff-validation-error': 'Пожалуйста, проверьте данные в форме старта',
   'template.generate-with-ai.title': 'Генератор Шаблонов',
-  'template.generate-with-ai.description':
-    'Позвольте Pneumatic создать шаги для нового шаблона на основе вашего описания бизнес-процесса, который вам нужен.',
+  'template.generate-with-ai.description': `Позвольте ${productName} создать шаги для нового шаблона на основе вашего описания бизнес-процесса, который вам нужен.`,
   'template.add': 'Новые шаблоны',
   'template.clone': 'Копировать',
   'template.discard-popup-title': 'Отменить изменения?',
@@ -877,8 +888,7 @@ export const ruMessages = {
   'template.warning-unassigned-perforemers-title': 'Шаблон содержит неназначенные задачи',
   'template.warning-unassigned-perforemers-desc': 'Пожалуйста, добавьте исполнителей к своим задачам.',
   'template.warning-premium-feature-title': 'Шаблон содержит некоторые премиальные функции (условия)',
-  'template.warning-premium-feature-desc':
-    'Пожалуйста, активируйте вашу бесплатную 7-дневную пробную версию, чтобы включить шаблон и испытать всю мощь Pneumatic.',
+  'template.warning-premium-feature-desc': `Пожалуйста, активируйте вашу бесплатную 7-дневную пробную версию, чтобы включить шаблон и испытать всю мощь ${productName}.`,
   'template.waning-close-button': 'Понял',
   'template.insert-variable': 'Вставить',
   'template.intergrations.menu-edit': 'Изменить',
@@ -892,8 +902,8 @@ export const ruMessages = {
     ' тысяч доступных приложений для совместного использования с вашим и видеть популярные процессы с первого взгляда.',
   'template.intergrations-zap-templates-desc':
     'Интегрируйте ваш шаблон процесса с другими приложениями быстро через Zapier, используйте любые из наших шаблонов' +
-    ' Zap для Pneumatic или создайте свои собственные zaps с нуля на основе событий, таких как запуск процесса,' +
-    ' завершение процесса, назначение задачи, завершение задачи в Pneumatic.',
+    ` Zap для ${productName} или создайте свои собственные zaps с нуля на основе событий, таких как запуск процесса,` +
+    ` завершение процесса, назначение задачи, завершение задачи в ${productName}.`,
   'template.intergrations-zap-manager-desc':
     'Добавьте на эту страницу zaps, которые вы подключили к этому шаблону, чтобы вы могли управлять ими все в одном месте.' +
     ' Просмотрите ваши активные запы, внесите в них изменения, добавьте новые.',
@@ -902,8 +912,8 @@ export const ruMessages = {
     ' обмена данными. Здесь вы можете найти представление вашего шаблона в формате JSON, чтобы помочь вам быстро создавать интеграции' +
     ' с использованием нашего общедоступного API:',
   'template.intergrations-webhook-desc':
-    'Webhooks позволяют вам подписываться на события в Pneumatic, чтобы ваше приложение могло соответствующим образом реагировать на них.' +
-    ' Введите URL, на который Pneumatic будет отправлять уведомления, и вы готовы.',
+    `Webhooks позволяют вам подписываться на события в ${productName}, чтобы ваше приложение могло соответствующим образом реагировать на них.` +
+    ` Введите URL, на который ${productName} будет отправлять уведомления, и вы готовы.`,
   'template.intergrations-copy-code': 'Копировать',
   'template.intergrations-code-copied': 'Код скопирован в буфер обмена',
   'template.intergrations-api-key': 'Ваш API ключ:',
@@ -1058,12 +1068,12 @@ export const ruMessages = {
   'kickoff.share-failed': 'Не удалось поделиться формой "Начало работы"',
   'kickoff.share-control': 'Поделиться и Встроить',
   'kickoff.share-description':
-    'Формой запуска можно поделится, создав ссылку на нее, чтобы люди без учетной записи Pneumatic могли получить к ней доступ.' +
+    `Формой запуска можно поделится, создав ссылку на нее, чтобы люди без учетной записи ${productName} могли получить к ней доступ.` +
     ' Эту ссулку можно отправить по электронной почте или опубликовать на веб-сайте, и любой, кто нажмет на нее,' +
     ' сможет открыть форму запуска и инициировать процесс.',
   'kickoff.embed-description':
-    'Ссылка для встраивания создаст на вашем сайте форму запуска Pneumatic, которая по виду и ощущениям будет как остальная часть вашего' +
-    ' сайта, чтобы помочь вам интегрировать запуск процессов Pneumatic в интерфейс плавно и без швов.',
+    `Ссылка для встраивания создаст на вашем сайте форму запуска ${productName}, которая по виду и ощущениям будет как остальная часть вашего` +
+    ` сайта, чтобы помочь вам интегрировать запуск процессов ${productName} в интерфейс плавно и без швов.`,
   'kickoff.copy-link': 'Скопировать ссылку для общего доступа',
   'kickoff.copy-embed-code': 'Скопировать код для встраивания',
   'kickoff.share-link-copied': 'Ссылка для обмена скопирована в буфер обмена',
@@ -1234,8 +1244,7 @@ export const ruMessages = {
   'checkout.set-up-one-workflow': 'Настройте один Процесс',
   'checkout.summary-tax': 'Налог',
   'checkout.summary-tax-value': '{tax}',
-  'checkout.summary-bottom-text':
-    'Вы авторизуете Pneumatic списывать с вас подписную плату каждый месяц/год до тех пор, пока вы не отмените подписку.',
+  'checkout.summary-bottom-text': 'Плата за подписку будет списываться каждый месяц/год, пока вы не отмените подписку.',
   'checkout.transaction-declined':
     'Транзакция была отклонена. Пожалуйста, используйте другую карту или свяжитесь с вашим банком.',
   'checkout.invalid-user-amount': 'Пожалуйста, введите действительное количество пользователей.',
@@ -1308,8 +1317,7 @@ export const ruMessages = {
   'dashboard.shareable-kick-off-forms': 'Формы для старта, которыми можно поделиться',
   'dashboard.access-controls': 'Управление доступом',
   'dashboard.questions': 'вопросы?',
-  'dashboard.free-zoom-call':
-    'Бесплатный 15-минутный вводный звонок через Zoom с нами может существенно повысить ценность использования Pneumatic.',
+  'dashboard.free-zoom-call': `Бесплатный 15-минутный вводный звонок через Zoom с нами может существенно повысить ценность использования ${productName}.`,
   'dashboard.error-fetch': 'Не удалось получить информацию о панели управления',
   'dashboard.pa-placeholder-title':
     'Вы когда-нибудь задумывались о том, насколько хорош ваша команда в достижении своих целей' +
@@ -1317,8 +1325,7 @@ export const ruMessages = {
   'dashboard.pa-placeholder-description':
     'Давайте настроим вашу систему! Чтобы увидеть аналитику вашего процесса в действии,' +
     ' включите ваш первый Процесс и запустите несколько процессов.',
-  'dashboard.wo-placeholder-title':
-    'Pneumatic предоставляет вам все в одном детальные метрики, чтобы вы могли измерять производительность процесса.',
+  'dashboard.wo-placeholder-title': `${productName} предоставляет вам все в одном детальные метрики, чтобы вы могли измерять производительность процесса.`,
   'dashboard.wo-placeholder-description':
     'Давайте настроим! Чтобы увидеть аналитику вашего процесса в действии, включите ваш первый Процесс и запустите несколько процессов.',
   'dashboard.duration-minute': '<1 минута',
@@ -1332,7 +1339,7 @@ export const ruMessages = {
     ' Щелкните на имя задачи, чтобы перейти в интерфейс Мои задачи и выполнить задачу.',
   'dashboard.plan-detail-popup-text':
     'Вам необходимо перейти на тариф Премиум, если вы хотите получить больше возможностей для работы.',
-  'dashboard.power-ups-for-pneumatic': 'Усилители для пневматики',
+  'dashboard.power-ups-for-pneumatic': `Усилители для ${productName}`,
   'dashboard.plan-detail-popup-text-conditional-workflow': 'Условная логика процесса доступна с Премиальным Планом.',
   'dashboard.plan-detail-popup-text-shareable-kick-off-forms':
     'Обновитесь до Премиального Плана, чтобы иметь возможность запуска процессов внешними пользователями.',
@@ -1349,18 +1356,17 @@ export const ruMessages = {
   'dashboard.checks-condition-created': 'Условная логика',
   'dashboard.checks-template-publicated': 'Формы для общего использования',
   'dashboard.checks-learn-more': 'Подробнее',
-  'dashboard.promo-title': 'Дополнения для пневматики',
+  'dashboard.promo-title': `Дополнения для ${productName}`,
   'dashboard.promo-text':
     'Если вы хотите разблокировать наши расширенные функции, пожалуйста, перейдите на наш Премиум-план.',
   'dashboard.promo-upgrade': 'Обновить',
-  'dashboard.app-mobile-buttons-group-title': 'Скачать {br} приложение',
+  'dashboard.app-mobile-buttons-group-title': 'Скачайте {br} мобильное приложение',
   'dashboard.quick-button-title': 'Настройка и запуск процессов',
   'dashboard.quick-button-create-template-title': 'Создать шаблон',
   'dashboard.quick-button-create-template-description':
     'Вы можете использовать нашу бесплатную библиотеку шаблонов, создать шаблон при помощи ИИ или вручную с нуля.',
   'dashboard.quick-button-run-workflow-title': 'Начать процесс',
-  'dashboard.quick-button-run-workflow-description':
-    'Вы можете запускать новые процессы внутри Pneumatic, из общей формы запуска или через интеграции.',
+  'dashboard.quick-button-run-workflow-description': `Вы можете запускать новые процессы внутри ${productName}, из общей формы запуска или через интеграции.`,
   'dashboard.integrations-tooltip': 'Чтобы ускорить вашу работу — используйте интеграцию.',
   'dashboard.integrations-tooltip-link': 'Подробнее',
   'dashboard.integration-used': 'Включено',
@@ -1430,10 +1436,8 @@ export const ruMessages = {
   'ai-providers.created': 'Провайдер добавлен. Теперь можно создавать AI-агентов на странице «Команда».',
   'ai-providers.deleted': 'Провайдер удалён',
   'integrations.title': 'Интеграции',
-  'integrations.title.tooltip':
-    'Получите свой API-ключ и перейдите на Zapier или создайте ссылку для связи Pneumatic с внешними приложениями.',
-  'integrations.description':
-    'Вы можете автоматизировать свои процессы еще лучше. Просто интегрируйте ведущее в отрасли программное обеспечение прямо в Pneumatic.',
+  'integrations.title.tooltip': `Получите свой API-ключ и перейдите на Zapier или создайте ссылку для связи ${productName} с внешними приложениями.`,
+  'integrations.description': `Вы можете автоматизировать свои процессы еще лучше. Просто интегрируйте ведущее в отрасли программное обеспечение прямо в ${productName}.`,
   'integrations.hint': 'Не нашли нужную интеграцию? Напишите нам на электронную почту\u00A0',
   'integrations.list-fetch-failed': 'Не удалось получить интеграции',
   'integrations.details-fetch-failed': 'Не удалось получить детали интеграции',
@@ -1498,7 +1502,7 @@ export const ruMessages = {
     'Пожалуйста, заполните форму ниже, чтобы начать новый процесс на основе предоставленной стартовой формы:',
   'public-form.launch': 'Отправить',
   'public-form.copyright': 'Поддерживается {link}',
-  'public-form.pneumatic': 'Пневматик',
+  'public-form.pneumatic': productName,
   'public-form.submited-title': 'Поздравляем!',
   'public-form.submited-text':
     'Форма успешно отправлена. Вы можете заполнить и отправить эту форму снова, если это необходимо.',

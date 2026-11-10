@@ -46,6 +46,6 @@
 .item[aria-selected='true'] {
   position: relative;
   color: var(--pneumatic-color-link-hover);
-  background-color: #fdf7ee;
+  background-color: var(--pneumatic-color-beige);
   border-radius: 0.4rem;
 }

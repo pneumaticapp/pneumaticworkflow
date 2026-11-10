@@ -48,7 +48,7 @@ describe('WorkflowLogWorkflowFinished', () => {
       <WorkflowLogWorkflowFinished userId={1} created="2024-01-01" type={EWorkflowLogEvent.WorkflowFinished} />,
     );
 
-    expect(screen.getByText('Pneumatic')).toBeInTheDocument();
+    expect(screen.getByText('Masarat')).toBeInTheDocument();
     expect(screen.queryByText('Test User')).not.toBeInTheDocument();
     expect(screen.getByTestId('system-avatar')).toBeInTheDocument();
   });

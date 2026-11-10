@@ -88,9 +88,9 @@ msgstr "Le flux de travail a été mis en veille"
 msgid "Reminder"
 msgstr ""
 
-msgid "You have unfinished task in Pneumatic"
+msgid "You have unfinished task in Masarat"
 msgstr ""
 
 #, python-brace-format
-msgid "You have {count} unfinished tasks in Pneumatic"
+msgid "You have {count} unfinished tasks in Masarat"
 msgstr ""

@@ -2,10 +2,9 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 
 import { LogoCircle } from '../LogoCircle';
+import { BRAND } from '../../../constants/branding';
 
 const SVG_TEST_ID = 'logo-circle';
-const CIRCLE_TEST_ID = 'logo-circle-background';
-const PATH_TEST_ID = 'logo-circle-mark';
 
 describe('LogoCircle', () => {
   it('renders svg with size 40 by default', () => {
@@ -17,13 +16,14 @@ describe('LogoCircle', () => {
     expect(svg).toHaveAttribute('viewBox', '0 0 40 40');
   });
 
-  it('renders circle with center and radius equal to size / 2', () => {
-    render(<LogoCircle size={96} />);
+  it('contains the complete supplied emblem instead of cropping it into a circle', () => {
+    const { container } = render(<LogoCircle size={96} />);
+    const image = container.querySelector('image');
 
-    const circle = screen.getByTestId(CIRCLE_TEST_ID);
-    expect(circle).toHaveAttribute('cx', '48');
-    expect(circle).toHaveAttribute('cy', '48');
-    expect(circle).toHaveAttribute('r', '48');
+    expect(image).toHaveAttribute('width', '96');
+    expect(image).toHaveAttribute('height', '96');
+    expect(image).toHaveAttribute('preserveAspectRatio', 'xMidYMid meet');
+    expect(container.querySelector('circle')).toBeNull();
   });
 
   it('passes className to svg', () => {
@@ -32,16 +32,17 @@ describe('LogoCircle', () => {
     expect(screen.getByTestId(SVG_TEST_ID)).toHaveClass('test');
   });
 
-  it('scales mark when size is not 48', () => {
-    render(<LogoCircle size={96} />);
+  it('exposes the product and organization without mirroring official artwork', () => {
+    const { container } = render(<LogoCircle size={32} />);
 
-    expect(screen.getByTestId(PATH_TEST_ID)).toHaveStyle({ transform: 'scale(calc(96 / 48))' });
+    expect(screen.getByTestId(SVG_TEST_ID)).toHaveAccessibleName(`${BRAND.name} — ${BRAND.organization}`);
+    expect(container.querySelector('image')).not.toHaveAttribute('transform');
   });
 
-  it('uses dark theme colors by default', () => {
-    render(<LogoCircle />);
-
-    expect(screen.getByTestId(CIRCLE_TEST_ID)).toHaveAttribute('fill', 'var(--pneumatic-color-black100)');
-    expect(screen.getByTestId(PATH_TEST_ID)).toHaveAttribute('fill', 'var(--pneumatic-color-link)');
+  it('uses the supplied black/gold versions for light surfaces and the sidebar', () => {
+    const { container, rerender } = render(<LogoCircle />);
+    expect(container.querySelector('image')).toHaveAttribute('href', expect.stringContaining('eagle-black.svg'));
+    rerender(<LogoCircle theme="light" />);
+    expect(container.querySelector('image')).toHaveAttribute('href', expect.stringContaining('eagle-gold.svg'));
   });
 });

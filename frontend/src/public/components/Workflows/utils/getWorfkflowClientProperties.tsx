@@ -7,12 +7,13 @@ import {
   IWorkflowTaskClient,
   IWorkflowTaskDelay,
 } from '../../../types/workflow';
+import { EBrandColors } from '../../../constants/brandColors';
 
 export enum EProgressbarColor {
-  Yellow = '#FFC107',
-  Red = '#E53D00',
+  Yellow = EBrandColors.ForestDark,
+  Red = EBrandColors.Umber,
   Grey = '#979795',
-  Green = '#5FAD56',
+  Green = EBrandColors.Forest,
 }
 
 const checkOverdueTask = (task: IWorkflowTaskClient) => {

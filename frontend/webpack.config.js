@@ -109,7 +109,7 @@ module.exports = {
       templateContent: getTemplateContent('./src/public/index.ejs'),
 
       removeComments: true,
-      favicon: './src/public/assets/favicon.png',
+      favicon: './src/public/assets/favicon.ico',
     }),
     new HtmlWebpackPlugin({
       chunks: ['forms'],
@@ -117,7 +117,7 @@ module.exports = {
       templateContent: getTemplateContent('./src/public/forms.ejs'),
 
       removeComments: true,
-      favicon: './src/public/assets/favicon.png',
+      favicon: './src/public/assets/favicon.ico',
     }),
     new ForkTsCheckerWebpackPlugin(),
     ...(enableBundleAnalyzer

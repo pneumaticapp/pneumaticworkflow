@@ -43,7 +43,7 @@
 }
 
 .kickoff-create-field-name-input_error::placeholder {
-  color: #fc5b67;
+  color: var(--pneumatic-color-warning);
 }
 
 .kickoff-create-field-container__error-message {
@@ -53,7 +53,7 @@
   font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
   font-size: 13px;
   line-height: 16px;
-  color: #fc5b67;
+  color: var(--pneumatic-color-warning);
 }
 
 .kickoff-create-field-options {
@@ -138,7 +138,7 @@
   font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
   font-size: 13px;
   line-height: 16px;
-  color: #fc5b67;
+  color: var(--pneumatic-color-warning);
 }
 
 .edit-name-button {

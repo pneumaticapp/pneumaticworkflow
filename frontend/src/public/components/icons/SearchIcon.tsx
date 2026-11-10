@@ -4,7 +4,7 @@ import * as React from 'react';
 
 export interface ISearchIconProps extends React.SVGAttributes<SVGElement> {}
 
-export function SearchIcon({ fill = '#fec336', ...rest }: ISearchIconProps) {
+export function SearchIcon({ fill = 'var(--pneumatic-color-link)', ...rest }: ISearchIconProps) {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" fill={fill} xmlns="http://www.w3.org/2000/svg" {...rest}>
       <path

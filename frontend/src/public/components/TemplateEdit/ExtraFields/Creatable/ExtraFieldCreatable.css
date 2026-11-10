@@ -192,5 +192,5 @@
   font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
   font-size: 1.3rem;
   line-height: 1.6rem;
-  color: #fc5b67;
+  color: var(--pneumatic-color-warning);
 }

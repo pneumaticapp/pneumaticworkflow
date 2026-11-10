@@ -9,7 +9,7 @@ export function VideoStubIcon() {
         fillRule="evenodd"
         clipRule="evenodd"
         d="M56.666 50C56.666 37.12 67.1193 26.6667 79.9994 26.6667C92.8794 26.6667 103.333 37.12 103.333 50C103.333 62.88 92.8794 73.3334 79.9994 73.3334C67.1193 73.3334 56.666 62.88 56.666 50ZM89.3327 50L75.3327 39.5V60.5L89.3327 50Z"
-        fill="#FEC336"
+        fill="var(--pneumatic-color-white)"
       />
     </svg>
   );

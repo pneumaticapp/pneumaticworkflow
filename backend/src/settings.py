@@ -16,6 +16,7 @@ from urllib.parse import urlparse
 from configurations import Configuration, values
 from corsheaders.defaults import default_headers
 
+from src.branding import PRODUCT_NAME
 from src.notifications.enums import EmailProvider
 
 
@@ -304,9 +305,10 @@ class Common(Configuration):
     }
 
     SPECTACULAR_SETTINGS = {
-        'TITLE': 'Pneumatic Workflow API',
+        'TITLE': f'{PRODUCT_NAME} Workflow API',
         'DESCRIPTION': (
-            'The Pneumatic API gives you programmatic access to everything '
+            f'The {PRODUCT_NAME} API gives you programmatic access to '
+            'everything '
             'you can do in the product — running workflows, managing tasks, '
             'assigning performers, and integrating with internal systems.\n\n'
 
@@ -325,8 +327,8 @@ class Common(Configuration):
             'progress into your BI tools.\n'
             '- **Automated Triggers:** Start new workflows automatically '
             'when events happen in your CRM or ERP.\n'
-            '- **Task Sync:** Sync Pneumatic tasks to your internal task '
-            'trackers.\n'
+            f'- **Task Sync:** Sync {PRODUCT_NAME} tasks to your internal '
+            'task trackers.\n'
             '- **Webhook Integrations:** Subscribe to workflow events and '
             'push data to Slack, email, or custom endpoints.'
         ),
@@ -358,7 +360,10 @@ class Common(Configuration):
                 'src.authentication.enums.ResetPasswordStatus.CHOICES'
             ),
         },
-        'SERVERS': [{'url': '/', 'description': 'Pneumatic Core API Server'}],
+        'SERVERS': [{
+            'url': '/',
+            'description': f'{PRODUCT_NAME} Core API Server',
+        }],
         'TAGS': [
             {
                 'name': 'Accounts',
@@ -447,7 +452,7 @@ class Common(Configuration):
     # Email
     DEFAULT_FROM_EMAIL = env.get(
         'DEFAULT_FROM_EMAIL',
-        'Pneumatic <no-reply@pneumatic.app>',
+        'webmaster@localhost',
     )
     EMAIL_DATE_FORMAT = '%a, %d %b %Y %I:%M:%S %p UTC'
     EMAIL_PROVIDER = env.get('EMAIL_PROVIDER')

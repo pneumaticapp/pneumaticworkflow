@@ -35,7 +35,7 @@
   white-space: pre-wrap;
 
   a {
-    color: #fec336;
+    color: var(--pneumatic-color-link);
   }
 }
 
@@ -179,10 +179,10 @@
 }
 
 .dashboard-color-red {
-  color: #fc5b67;
+  color: var(--pneumatic-color-warning);
 
   &:hover {
-    color: #fc5b67;
+    color: var(--pneumatic-color-warning);
   }
 }
 
@@ -195,18 +195,18 @@
 }
 
 .dashboard-color-yellow {
-  color: #fec336;
+  color: var(--pneumatic-color-link);
 
   &:hover {
-    color: #fec336;
+    color: var(--pneumatic-color-link);
   }
 }
 
 .dashboard-color-green {
-  color: #24d5a1;
+  color: var(--pneumatic-color-notification3);
 
   &:hover {
-    color: #24d5a1;
+    color: var(--pneumatic-color-notification3);
   }
 }
 

@@ -74,12 +74,12 @@ msgstr "اكتمل سير العمل"
 msgid "Reminder"
 msgstr "تذكير"
 
-msgid "You have unfinished task in Pneumatic"
-msgstr "لديك مهمة غير مكتملة في Pneumatic"
+msgid "You have unfinished task in Masarat"
+msgstr "لديك مهمة غير مكتملة في مسارات"
 
 #, python-brace-format
-msgid "You have {count} unfinished tasks in Pneumatic"
-msgstr "عدد مهامك غير المكتملة في Pneumatic: {count}"
+msgid "You have {count} unfinished tasks in Masarat"
+msgstr "عدد مهامك غير المكتملة في مسارات: {count}"
 
 msgid "Tasks were delegated"
 msgstr "تم تفويض المهام"

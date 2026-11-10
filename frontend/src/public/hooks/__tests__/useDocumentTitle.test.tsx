@@ -25,14 +25,14 @@ describe('localized document titles', () => {
   });
 
   it.each(Object.keys(TITLES) as TDocumentTitle[])(
-    'preserves the existing English %s title and analytics constant',
+    'brands the English %s title while preserving the legacy analytics constant',
     (title) => {
       render(
         <IntlProvider locale="en-US" messages={enMessages}>
           <Probe title={title} />
         </IntlProvider>,
       );
-      expect(document.title).toBe(TITLES[title]);
+      expect(document.title).toBe(TITLES[title].replace(PNEUMATIC_SUFFIX, '| Masarat'));
     },
   );
 
@@ -42,44 +42,44 @@ describe('localized document titles', () => {
         <Probe title="Main" />
       </IntlProvider>,
     );
-    expect(document.title).toBe(TITLES.Main);
+    expect(document.title).toBe('Dashboard | Masarat');
 
     rerender(
       <IntlProvider locale="ar-SY" messages={arMessages}>
         <Probe title="Main" />
       </IntlProvider>,
     );
-    expect(document.title).toBe(`لوحة المعلومات ${PNEUMATIC_SUFFIX}`);
+    expect(document.title).toBe('لوحة المعلومات | مسارات');
 
     rerender(
       <IntlProvider locale="ru-RU" messages={ruMessages}>
         <Probe title="Main" />
       </IntlProvider>,
     );
-    expect(document.title).toBe(`Панель управления ${PNEUMATIC_SUFFIX}`);
+    expect(document.title).toBe('Панель управления | Masarat');
   });
 
   it('preserves user-entered workflow/task names and falls back to the localized page title while loading', () => {
-    const content = 'معاملة إسكان — Review 42';
+    const content = 'معاملة إسكان — Pneumatic legacy 42';
     const { rerender } = render(
       <IntlProvider locale="ar-SY" messages={arMessages}>
         <Probe title="TasksDetail" content={content} />
       </IntlProvider>,
     );
-    expect(document.title).toBe(`${content} ${PNEUMATIC_SUFFIX}`);
+    expect(document.title).toBe(`${content} | مسارات`);
 
     rerender(
       <IntlProvider locale="en-US" messages={enMessages}>
         <Probe title="TasksDetail" content={content} />
       </IntlProvider>,
     );
-    expect(document.title).toBe(`${content} ${PNEUMATIC_SUFFIX}`);
+    expect(document.title).toBe(`${content} | Masarat`);
 
     rerender(
       <IntlProvider locale="ar-SY" messages={arMessages}>
         <Probe title="TasksDetail" />
       </IntlProvider>,
     );
-    expect(document.title).toBe(`المهمة ${PNEUMATIC_SUFFIX}`);
+    expect(document.title).toBe('المهمة | مسارات');
   });
 });

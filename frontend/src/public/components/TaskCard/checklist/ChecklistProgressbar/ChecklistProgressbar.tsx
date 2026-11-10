@@ -8,6 +8,7 @@ import { EProgressbarColor } from '../../../Workflows/utils/getWorfkflowClientPr
 import { getPercent } from '../../../../utils/helpers';
 import { Tooltip } from '../../../UI';
 import { StarIcon } from '../../../icons';
+import { EBrandColors } from '../../../../constants/brandColors';
 
 import styles from '../../../RichText/RichText.css';
 
@@ -36,7 +37,7 @@ export function ChecklistProgressbar({ listApiName, checkedItems, totalItems }: 
         <ProgressBar
           progress={getPercent(checkedItems, totalItems)}
           color={EProgressbarColor.Green}
-          background="#fdf7ee"
+          background={EBrandColors.WheatLight}
         />
 
         <div className={styles['progressbar__hint']}>

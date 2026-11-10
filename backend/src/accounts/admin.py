@@ -38,6 +38,7 @@ from src.accounts.services.convert_account import (
     AccountLLConverter,
 )
 from src.authentication.views.mixins import SignUpMixin
+from src.branding import ORGANIZATION_NAME_AR, PRODUCT_NAME, PRODUCT_NAME_AR
 from src.logs.events.admin_site import JournaledAdminMixin
 from src.payment.enums import BillingPeriod
 from src.reports.tasks import (
@@ -897,5 +898,6 @@ admin.site.register(UserInvite)
 admin.site.register(SystemMessage, SystemMessageAdmin)
 admin.site.register(Contact, ContactAdmin)
 
-admin.site.site_header = 'Pneumatic admin'
+admin.site.site_header = f'{PRODUCT_NAME_AR} | {ORGANIZATION_NAME_AR}'
+admin.site.site_title = f'{PRODUCT_NAME} admin'
 admin.site.index_title = 'Apps'

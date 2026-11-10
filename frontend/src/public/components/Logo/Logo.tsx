@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
-import { LargeLogo, LogoCircle } from '../icons';
+import { LargeLogo } from '../icons/LargeLogo';
+import { LogoCircle } from '../icons/LogoCircle';
 
 import styles from './Logo.css';
 
@@ -22,7 +23,15 @@ export function Logo({ size, theme, partnerLogoSm, partnerLogoLg, className }: I
   const renderLogoMap = [
     {
       check: () => size === 'lg' && partnerLogoLg,
-      render: () => <img src={partnerLogoLg!} alt={formatMessage({ id: 'accessibility.logo' })} />,
+      render: () => (
+        <img
+          src={partnerLogoLg!}
+          width={170}
+          height={48}
+          className={styles['partner-large-logo']}
+          alt={formatMessage({ id: 'accessibility.logo' })}
+        />
+      ),
     },
     {
       check: () => size === 'lg',

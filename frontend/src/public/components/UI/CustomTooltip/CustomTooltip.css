@@ -22,7 +22,7 @@
       font-family: var(--pneumatic-font-sans);
       font-size: 13px;
       line-height: 16px;
-      color: #fdf7ee;
+      color: var(--pneumatic-color-beige);
       text-align: center;
     }
 

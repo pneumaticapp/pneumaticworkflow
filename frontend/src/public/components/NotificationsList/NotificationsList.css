@@ -127,7 +127,7 @@
     left: 0;
     z-index: -1;
     content: '';
-    background-color: #fdf7ee;
+    background-color: var(--pneumatic-color-beige);
     border-radius: 4px;
     opacity: 0;
     transition: opacity 0.1s ease-in-out;

@@ -11,6 +11,7 @@ from src.accounts.tokens import (
     UnsubscribeEmailToken,
 )
 from src.analysis.enums import MailoutType
+from src.branding import PRODUCT_NAME
 from src.logs.enums import (
     AccountEventStatus,
 )
@@ -448,7 +449,9 @@ class EmailService(NotificationService):
         user_email: str,
         **kwargs,
     ):
-        content = 'We got a request to reset your Pneumatic account password.'
+        content = (
+            f'We got a request to reset your {PRODUCT_NAME} account password.'
+        )
         additional_content = (
             'A strong password includes eight or more characters '
             'and a combination of uppercase and lowercase letters, '
@@ -538,7 +541,8 @@ class EmailService(NotificationService):
         """Send user transfer notification."""
 
         content = (
-            "Your User Profile is associated with another Pneumatic account. "
+            f"Your User Profile is associated with another {PRODUCT_NAME} "
+            "account. "
             "By agreeing to this invitation, you permit us to transfer your "
             "User Profile to an invitee's account. This transfer will revoke "
             "your access to your old account."
@@ -578,7 +582,7 @@ class EmailService(NotificationService):
         """Send verification notification."""
 
         content = (
-            'Thank you for signing up for Pneumatic. '
+            f'Thank you for signing up for {PRODUCT_NAME}. '
             'Please verify your email address to get started.'
         )
 
@@ -744,7 +748,7 @@ class EmailService(NotificationService):
         content = (
             f'Hi {user_first_name}, This is a friendly reminder that you '
             f'still have unfinished '
-            f'tasks waiting for you in Pneumatic. Tasks count: ({count}).'
+            f'tasks waiting for you in {PRODUCT_NAME}. Tasks count: ({count}).'
         )
         data = {
             'title': str(email_titles[NotificationMethod.task_reminder]),

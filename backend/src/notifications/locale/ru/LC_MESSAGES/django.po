@@ -88,9 +88,9 @@ msgstr "Процесс был отложен"
 msgid "Reminder"
 msgstr ""
 
-msgid "You have unfinished task in Pneumatic"
+msgid "You have unfinished task in Masarat"
 msgstr ""
 
 #, python-brace-format
-msgid "You have {count} unfinished tasks in Pneumatic"
+msgid "You have {count} unfinished tasks in Masarat"
 msgstr ""

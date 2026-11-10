@@ -120,6 +120,29 @@ describe('server', () => {
       expect(log).toHaveBeenCalledWith('App listening on port 8000');
     });
 
+    it.each([
+      ['https://app.example.test', '/forms', 'app.example.test', 'https://app.example.test/'],
+      ['https://app.example.test', '', 'forms.example.test', 'https://app.example.test/'],
+      [undefined, '/forms', 'app.example.test', '/'],
+      [undefined, '', 'forms.example.test', null],
+      ['/', '', 'forms.example.test', null],
+      ['https://forms.example.test', '', 'forms.example.test', null],
+    ])('routes form-root brand links safely for host %s and base %s', (host, baseUrl, hostname, target) => {
+      mockConfig = { ...mockConfig, host };
+      const { initServer } = setEnvAndGetInitServer({ NODE_ENV: 'production', SSO_AUTH: 'no' });
+      initServer();
+      const formRootHandler = router.get.mock.calls.find(([route]: [string]) => route === '/')[1];
+      const res = { redirect: jest.fn(), sendStatus: jest.fn() };
+
+      formRootHandler({ baseUrl, hostname }, res);
+
+      if (target) expect(res.redirect).toHaveBeenCalledWith(301, target);
+      else {
+        expect(res.sendStatus).toHaveBeenCalledWith(404);
+        expect(res.redirect).not.toHaveBeenCalled();
+      }
+    });
+
     it('returns port 8000 if not specified in the config', () => {
       const log = jest.spyOn(console, 'info');
       mockConfig = { ...mockConfig, port: undefined };

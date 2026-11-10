@@ -15,6 +15,7 @@ import { getUserPublic } from './middleware/utils/getUserPublic';
 import { mapToCamelCase } from '../public/utils/mappers';
 import { SSOProvider } from './types';
 import { getLocaleAttributes, resolveLocale } from '../public/lang/locale';
+import { BRAND, getBrandName } from '../public/constants/branding';
 
 const webpackConfig = require('../../webpack.config');
 
@@ -34,7 +35,7 @@ export function initServer() {
 
   const webpackCompiler = webpack(webpackConfig);
   const app = express();
-  const { host, port = 8000, formSubdomain, mainPage, firebase } = getConfig();
+  const { host, port = 8000, formSubdomain, firebase } = getConfig();
 
   if (devMode) {
     app.use(devMiddleware(webpackCompiler, { writeToDisk: true }));
@@ -64,7 +65,19 @@ export function initServer() {
   });
 
   const formsRouter = express.Router();
-  formsRouter.get('/', (_, res) => res.redirect(301, mainPage));
+  formsRouter.get('/', (req, res) => {
+    const isPathBased = req.baseUrl === FORMS_PATH_PREFIX;
+    try {
+      const appHome = new URL(BRAND.homePath, host);
+      const isWebURL = appHome.protocol === 'http:' || appHome.protocol === 'https:';
+      if (isWebURL && (isPathBased || appHome.hostname !== req.hostname)) {
+        return res.redirect(301, appHome.href);
+      }
+    } catch {
+      // A form subdomain cannot infer the application's origin from a missing host.
+    }
+    return isPathBased ? res.redirect(301, BRAND.homePath) : res.sendStatus(404);
+  });
   formsRouter.get('*', async (req, res) => {
     const token = /[^$/]+$/.exec(req.path)?.[0];
     let userPublic: any;
@@ -77,16 +90,20 @@ export function initServer() {
           resolve(publicContext);
         }).then((value) => value);
 
+        const documentLocale = getLocaleAttributes(resolveLocale(userPublic?.language, process.env.LANGUAGE_CODE));
         return res.render('forms', {
-          documentLocale: getLocaleAttributes(resolveLocale(userPublic?.language, process.env.LANGUAGE_CODE)),
+          documentLocale,
+          brandName: getBrandName(documentLocale.lang),
           env: process.env.MCS_RUN_ENV,
           config: JSON.stringify(serverConfigToBrowser()),
           user: JSON.stringify(mapToCamelCase(userPublic)),
         });
       }
     } catch (err) {
+      const documentLocale = getLocaleAttributes(resolveLocale(process.env.LANGUAGE_CODE));
       return res.render('forms', {
-        documentLocale: getLocaleAttributes(resolveLocale(process.env.LANGUAGE_CODE)),
+        documentLocale,
+        brandName: getBrandName(documentLocale.lang),
         env: process.env.MCS_RUN_ENV,
         config: JSON.stringify(serverConfigToBrowser()),
         user: JSON.stringify(mapToCamelCase({})),

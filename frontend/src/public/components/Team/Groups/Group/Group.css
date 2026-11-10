@@ -82,7 +82,7 @@
     color: #b9b9b8;
 
     &.is-active {
-      color: #e79a26;
+      color: var(--pneumatic-color-link-hover);
     }
   }
 }

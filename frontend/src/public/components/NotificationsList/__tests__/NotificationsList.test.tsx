@@ -129,7 +129,7 @@ describe('NotificationsList', () => {
   });
 
   describe('complete_workflow notification rendering', () => {
-    it('renders workflow name, "Workflow completed" text and Pneumatic title', () => {
+    it('renders workflow name, "Workflow completed" text and Masarat title', () => {
       const notification = makeCompleteWorkflowNotification({
         workflow: { id: 34, name: 'My Important Process' },
       });

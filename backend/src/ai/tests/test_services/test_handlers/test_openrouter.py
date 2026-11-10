@@ -31,7 +31,7 @@ def test_auth_headers__api_key__ok(settings):
     assert result == {
         'Authorization': 'Bearer sk-or-v1-example',
         'HTTP-Referer': 'https://app.example.com',
-        'X-Title': 'Pneumatic',
+        'X-Title': 'Masarat',
     }
 
 

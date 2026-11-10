@@ -1,0 +1,3 @@
+# Preserve source-package metadata locally without tracking AppleDouble/system files.
+._*
+.DS_Store

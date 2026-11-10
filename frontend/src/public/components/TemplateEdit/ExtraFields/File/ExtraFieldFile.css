@@ -45,7 +45,7 @@
   font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
   font-size: 1.5rem;
   line-height: 2rem;
-  color: #fec336;
+  color: var(--pneumatic-color-link);
   overflow-wrap: anywhere;
   white-space: pre-wrap;
   white-space: nowrap;
@@ -54,7 +54,7 @@
 }
 
 .document:hover {
-  color: #e79a26;
+  color: var(--pneumatic-color-link-hover);
 }
 
 .document_edit {
@@ -189,7 +189,7 @@
 }
 
 .extra-field-file__input-name-error--template::placeholder {
-  color: #fc5b67;
+  color: var(--pneumatic-color-warning);
 }
 
 .extra-field-file__edit-name-button--template {
@@ -206,7 +206,7 @@
   font-family: var(--pneumatic-font-sans, Nunito, sans-serif);
   font-size: 1.3rem;
   line-height: 1.6rem;
-  color: #fc5b67;
+  color: var(--pneumatic-color-warning);
 }
 
 .extra-field-file__upload-button-conteiner {

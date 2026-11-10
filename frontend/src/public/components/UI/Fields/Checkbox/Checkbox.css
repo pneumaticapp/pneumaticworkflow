@@ -93,6 +93,7 @@
     border: 0;
 
     &::before {
+      background-image: url("data:image/svg+xml,%0A%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.81818 10.7166L2.95455 7.79121L2 8.76633L5.81818 12.6668L14 4.30862L13.0455 3.3335L5.81818 10.7166Z' fill='white'/%3E%3C/svg%3E%0A");
       opacity: 1;
     }
   }
@@ -103,6 +104,7 @@
     border: 0;
 
     &::after {
+      background-color: var(--pneumatic-color-white);
       opacity: 1;
     }
   }

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import classnames from 'classnames';
 
-import { LogoCircle, LogoWide, UserIcon } from '../../components/icons';
+import { LogoWide, UserIcon } from '../../components/icons';
+import { BrandLockup } from '../../components/Logo/BrandLockup';
 import { Header } from '../../components/UI';
 import { history } from '../../utils/history';
 import { ERoutes } from '../../constants/routes';
 import { IPages } from '../../redux/pages/types';
+import { BRAND } from '../../constants/branding';
 
 import styles from './UserLayout.css';
 
@@ -34,8 +36,8 @@ export function UserLayout({ children, pages }: IUserLayoutProps) {
 
           {titleState && (
             <>
-              <a href="https://www.pneumatic.app/" target="_blank" rel="noreferrer">
-                <LogoCircle className={styles['info__logo']} />
+              <a href={BRAND.homePath}>
+                <BrandLockup tone="light" width={170} height={40} className={styles['info__logo']} />
               </a>
               <Header tag="h1" size="xl" className={styles['info__title']}>
                 {titleState}

@@ -30,6 +30,7 @@ import { Copyright } from '../Copyright';
 import { FormSkeleton } from '../FormSkeleton';
 import { useShouldHideIntercom } from '../../../../hooks/useShouldHideIntercom';
 import { prependHttp } from '../../../../utils/prependHttp';
+import { useDocumentTitle } from '../../../../hooks/useDocumentTitle';
 
 import submitedImage from '../images/SubmitedImage.svg';
 import ErrorImage from '../images/ErrorImage.svg';
@@ -54,6 +55,7 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
 
   const [formState, setFormState] = useState<EPublicFormState>(EPublicFormState.WaitingForAction);
   const [publicForm, setPublicForm] = useState<IPublicForm | null>(null);
+  useDocumentTitle('Templates', publicForm?.name || formatMessage({ id: 'page-title.public-form' }));
   const [captcha, setCaptcha] = useState('');
   useShouldHideIntercom();
 

@@ -2,7 +2,7 @@ import React from 'react';
 
 export type TDocumentInfoIconProps = React.SVGAttributes<SVGElement>;
 
-export function DocumentInfoIcon({ fill = '#FEC336', ...restProps }: TDocumentInfoIconProps) {
+export function DocumentInfoIcon({ fill = 'var(--pneumatic-color-link)', ...restProps }: TDocumentInfoIconProps) {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill={fill} xmlns="http://www.w3.org/2000/svg" {...restProps}>
       <path

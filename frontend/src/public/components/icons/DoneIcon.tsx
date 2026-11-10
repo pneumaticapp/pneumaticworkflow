@@ -8,7 +8,7 @@ export interface IDoneIconProps extends React.SVGAttributes<SVGElement> {
 }
 
 export function DoneIcon({
-  fill = '#24d5a1',
+  fill = 'var(--pneumatic-color-notification3)',
   width = '24',
   height = '20',
   iconSize = EIconSize.Desktop,

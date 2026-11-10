@@ -6,7 +6,7 @@ interface IFilledHelpIconProps extends Pick<React.SVGProps<SVGSVGElement>, 'clas
 }
 
 export function FilledHelpIcon({
-  fill = '#fec336',
+  fill = 'var(--pneumatic-color-link)',
   // tslint:disable-next-line: trailing-comma
   ...restProps
 }: IFilledHelpIconProps) {

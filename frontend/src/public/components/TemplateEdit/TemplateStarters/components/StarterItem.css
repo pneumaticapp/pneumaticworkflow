@@ -39,7 +39,7 @@
     opacity: 0;
 
     &:hover {
-      color: #e79a26;
+      color: var(--pneumatic-color-link-hover);
     }
   }
 }

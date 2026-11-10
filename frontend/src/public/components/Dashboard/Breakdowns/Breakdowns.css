@@ -134,7 +134,7 @@
 }
 
 .breakdown__card-no_link:hover {
-  color: #24d5a1;
+  color: var(--pneumatic-color-notification3);
   background: var(--pneumatic-notification-3-light);
 }
 

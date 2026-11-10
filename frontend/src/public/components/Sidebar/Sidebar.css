@@ -3,10 +3,10 @@
   --sidebar-bg-premium: var(--pneumatic-color-black88);
   --sidebar-color-trial: var(--pneumatic-color-black16);
   --sidebar-color-premium: var(--pneumatic-color-black16);
-  --sidebar-color-hover-trial: var(--pneumatic-color-link-hover);
-  --sidebar-color-hover-premium: var(--pneumatic-color-link-hover);
-  --sidebar-color-active-trial: var(--pneumatic-color-link-hover);
-  --sidebar-color-active-premium: var(--pneumatic-color-link-hover);
+  --sidebar-color-hover-trial: var(--pneumatic-color-gold);
+  --sidebar-color-hover-premium: var(--pneumatic-color-gold);
+  --sidebar-color-active-trial: var(--pneumatic-color-gold);
+  --sidebar-color-active-premium: var(--pneumatic-color-gold);
 }
 
 .sidebar_free {
@@ -16,7 +16,7 @@
   }
 
   :global(.active) .sidebar__link {
-    color: var(--pneumatic-color-link-hover);
+    color: var(--pneumatic-color-gold);
   }
 
   .sidebar__link {
@@ -24,7 +24,7 @@
     transition: color 0.1s ease-in-out;
 
     &:hover {
-      color: var(--pneumatic-color-link-hover);
+      color: var(--pneumatic-color-gold);
     }
   }
 

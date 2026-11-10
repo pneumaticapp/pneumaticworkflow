@@ -1,7 +1,20 @@
 {% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block branding %}
+    <h1 id="site-name">
+        <a href="{% url 'admin:index' %}">
+            <img src="{% static 'branding/eagle-gold.svg' %}"
+                 width="40" height="30" alt="وزارة الأشغال العامة والإسكان"
+                 style="vertical-align:middle;margin-inline-end:8px">
+            {{ site_header }}
+        </a>
+    </h1>
+{% endblock %}
 
 {% block extrahead %}
     {{ block.super }}
+    <link rel="icon" type="image/svg+xml" href="{% static 'branding/eagle-gold.svg' %}">
     <style>
         form .aligned ul {
             margin-left: 0;
