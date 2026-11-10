@@ -11,8 +11,8 @@ import {
   EConditionAction,
   EConditionLogicOperations,
   EConditionOperators,
-  ICondition,
-} from '../../TaskForm/Conditions/types';
+} from '../../../../types/templateTaskConditions';
+import type { ICondition } from '../../../../types/templateTaskConditions';
 
 const KICKOFF_FIELD_API_NAME = 'kickoff-client';
 

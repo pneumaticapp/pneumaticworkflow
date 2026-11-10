@@ -10,7 +10,7 @@ import {
   EConditionAction,
   EConditionLogicOperations,
   EConditionOperators,
-} from '../../../../TaskForm/Conditions/types';
+} from '../../../../../../types/templateTaskConditions';
 import { TaskNode } from '../TaskNode';
 import { EMPTY_CONNECTED_HANDLES } from '../../../utils/applyConnectedHandles';
 

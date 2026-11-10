@@ -1,12 +1,4 @@
-import { EExtraFieldType, EStartingType } from '../../../../types/template';
-
-export interface IChecklists {
-  id?: number;
-  apiName: string;
-  order: number;
-  rules: TConditionRule[];
-  action: EConditionAction;
-}
+import type { EExtraFieldType, EStartingType } from './template';
 
 export interface ICondition {
   id?: number;
@@ -69,3 +61,24 @@ export enum EConditionLogicOperations {
   And = 'and',
   Or = 'or',
 }
+
+export interface IConditionResponse {
+  id?: number;
+  apiName: string;
+  order: number;
+  rules: IConditionRuleResponse[];
+  action: EConditionAction;
+}
+
+export interface IConditionRuleResponse {
+  id?: number;
+  apiName: string;
+  predicates: TConditionRulePredicateResponse[];
+}
+
+export type TConditionRulePredicateResponse = {
+  id?: number;
+  apiName: string;
+  field: string;
+  operator: EConditionOperators;
+} & TConditionPredicateValue;

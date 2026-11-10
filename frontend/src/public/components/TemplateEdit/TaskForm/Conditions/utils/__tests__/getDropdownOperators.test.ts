@@ -1,4 +1,4 @@
-import { EConditionOperators } from '../../types';
+import { EConditionOperators } from '../../../../../../types/templateTaskConditions';
 import {
   conditionsByFieldTypeMap,
   getDropdownOperators,

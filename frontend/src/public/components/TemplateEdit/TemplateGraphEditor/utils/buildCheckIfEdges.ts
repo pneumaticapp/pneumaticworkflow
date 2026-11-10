@@ -1,5 +1,6 @@
 import { IExtraField, ITemplateClient, ITemplateTaskClient, EStartingType } from '../../../../types/template';
-import { EConditionLogicOperations, TConditionRule } from '../../TaskForm/Conditions/types';
+import { EConditionLogicOperations } from '../../../../types/templateTaskConditions';
+import type { TConditionRule } from '../../../../types/templateTaskConditions';
 import { IGraphConditionClause, TGraphEdge } from '../types';
 import { getGraphEdgeVisual } from './edgeStyles';
 import { isCheckIfCondition } from './countCheckIfConditions';

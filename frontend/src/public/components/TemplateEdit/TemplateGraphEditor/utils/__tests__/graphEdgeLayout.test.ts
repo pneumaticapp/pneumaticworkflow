@@ -1,6 +1,10 @@
 import { EExtraFieldType, ITemplateClient, ITemplateTaskClient, EStartingType } from '../../../../../types/template';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
-import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../../TaskForm/Conditions/types';
+import {
+  EConditionAction,
+  EConditionLogicOperations,
+  EConditionOperators,
+} from '../../../../../types/templateTaskConditions';
 import { GRAPH_APPROVAL_LADDER_TEMPLATE } from '../../fixtures/graphApprovalLadderTemplate';
 import { GRAPH_SHOWCASE_TEMPLATE } from '../../fixtures/graphShowcaseTemplate';
 import { GRAPH_TEMPLATE_259 } from '../../fixtures/graphTemplate259';

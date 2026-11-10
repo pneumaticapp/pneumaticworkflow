@@ -1,4 +1,4 @@
-import type { ICondition } from '../types';
+import type { ICondition } from '../../../../../types/templateTaskConditions';
 import { isArrayWithItems } from '../../../../../utils/helpers';
 
 export function shoudShowPaywall(conditions: ICondition[], isSubscribed: boolean) {

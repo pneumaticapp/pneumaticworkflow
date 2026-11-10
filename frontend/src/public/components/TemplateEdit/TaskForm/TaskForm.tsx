@@ -13,7 +13,7 @@ import { OutputFormIntl } from '../OutputForm/OutputForm';
 import { ShowMore } from '../../UI/ShowMore';
 import { TaskPerformers } from './TaskPerformers';
 import { CheckIfConditions, removeDeletedTasks, StartAfterCondition } from './Conditions';
-import type { ICondition } from './Conditions/types';
+import type { ICondition } from '../../../types/templateTaskConditions';
 import { InputWithVariables } from '../InputWithVariables';
 import { TPatchTaskPayload } from '../../../redux/actions';
 

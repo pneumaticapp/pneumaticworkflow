@@ -1,4 +1,5 @@
-import { EConditionAction, ICondition } from '../../TaskForm/Conditions/types';
+import { EConditionAction } from '../../../../types/templateTaskConditions';
+import type { ICondition } from '../../../../types/templateTaskConditions';
 import { getConditionsCount } from '../../TaskItem/utlils/getConditionsCount';
 
 const CHECK_IF_ACTIONS = new Set<EConditionAction>([EConditionAction.SkipTask, EConditionAction.EndProcess]);

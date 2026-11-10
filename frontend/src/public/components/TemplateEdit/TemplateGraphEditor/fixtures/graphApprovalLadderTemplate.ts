@@ -11,8 +11,8 @@ import {
   EConditionAction,
   EConditionLogicOperations,
   EConditionOperators,
-  ICondition,
-} from '../../TaskForm/Conditions/types';
+} from '../../../../types/templateTaskConditions';
+import type { ICondition } from '../../../../types/templateTaskConditions';
 
 const EMPTY_TEMPLATE_BASE: ITemplateClient = {
   name: 'Graph approval ladder',

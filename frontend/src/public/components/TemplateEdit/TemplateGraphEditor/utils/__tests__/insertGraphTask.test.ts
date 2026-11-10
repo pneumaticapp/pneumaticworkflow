@@ -1,6 +1,10 @@
 import { ITemplateTaskClient, EStartingType } from '../../../../../types/template';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
-import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../../TaskForm/Conditions/types';
+import {
+  EConditionAction,
+  EConditionLogicOperations,
+  EConditionOperators,
+} from '../../../../../types/templateTaskConditions';
 import { getStartTaskConditions } from '../../../TaskForm/Conditions/utils/getStartTaskConditions';
 import { IGraphNewTaskDraft } from '../../types';
 import { KICKOFF_NODE_ID } from '../graphConstants';

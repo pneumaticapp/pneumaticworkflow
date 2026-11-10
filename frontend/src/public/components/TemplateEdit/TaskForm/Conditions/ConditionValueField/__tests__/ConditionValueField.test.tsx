@@ -5,7 +5,8 @@ import { IntlProvider } from 'react-intl';
 
 import { enMessages } from '../../../../../../lang/locales/en_US';
 import { EExtraFieldType, TTaskVariable } from '../../../../../../types/template';
-import { EConditionLogicOperations, EConditionOperators, TConditionRule } from '../../types';
+import { EConditionLogicOperations, EConditionOperators } from '../../../../../../types/templateTaskConditions';
+import type { TConditionRule } from '../../../../../../types/templateTaskConditions';
 import { ConditionValueField } from '../ConditionValueField';
 
 jest.mock('react-redux', () => {

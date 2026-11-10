@@ -1,10 +1,12 @@
 /* prettier-ignore */
-import {
-  EConditionLogicOperations,
+import { EConditionLogicOperations } from '../../types/templateTaskConditions';
+import type {
   ICondition,
+  IConditionResponse,
+  IConditionRuleResponse,
   TConditionRule,
-} from '../../components/TemplateEdit/TaskForm/Conditions/types';
-import { IConditionResponse, IConditionRuleResponse, TConditionRulePredicateResponse } from '../../types/template';
+  TConditionRulePredicateResponse,
+} from '../../types/templateTaskConditions';
 import { flatten } from '../helpers';
 
 export const normalizeConditiosForFrontend = (conditions: IConditionResponse[]): ICondition[] => {

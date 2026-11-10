@@ -8,7 +8,7 @@ import { EExtraFieldType, TTaskVariable, EStartingType } from '../../../../../ty
 import { Field } from '../../../../Field';
 import { EUserStatus, TUserListItem } from '../../../../../types/user';
 import { getUserFullName } from '../../../../../utils/users';
-import { EConditionOperators, TConditionRule } from '../types';
+import type { EConditionOperators, TConditionRule } from '../../../../../types/templateTaskConditions';
 import { OPERATORS_WITHOUT_VALUE } from '..';
 import { DatePickerCustom } from '../../../../UI/form/DatePicker';
 import { parseUnixSeconds, toTspDate } from '../../../../../utils/dateTime';

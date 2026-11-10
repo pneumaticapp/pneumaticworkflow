@@ -1,4 +1,4 @@
-import { EConditionOperators } from '../types';
+import { EConditionOperators } from '../../../../../types/templateTaskConditions';
 import { EExtraFieldType, EStartingType } from '../../../../../types/template';
 
 export interface IDropdownOperator {

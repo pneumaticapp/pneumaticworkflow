@@ -4,7 +4,11 @@ import { ReactFlowProvider } from 'reactflow';
 
 import { EExtraFieldType, ETaskPerformerType, ITemplateTaskClient } from '../../../../../types/template';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
-import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../../TaskForm/Conditions/types';
+import {
+  EConditionAction,
+  EConditionLogicOperations,
+  EConditionOperators,
+} from '../../../../../types/templateTaskConditions';
 import { TaskNode } from './TaskNode';
 
 const task: ITemplateTaskClient = {

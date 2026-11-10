@@ -10,9 +10,8 @@ import {
   EConditionAction,
   EConditionLogicOperations,
   EConditionOperators,
-  ICondition,
-  TConditionRule,
-} from '../../TaskForm/Conditions/types';
+} from '../../../../types/templateTaskConditions';
+import type { ICondition, TConditionRule } from '../../../../types/templateTaskConditions';
 
 const COST_CENTER_FIELD = 'field-270bb2';
 const AMOUNT_FIELD = 'field-093a2e';

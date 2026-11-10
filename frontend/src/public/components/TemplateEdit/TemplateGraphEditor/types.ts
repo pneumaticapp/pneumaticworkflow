@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import type { Node, Edge } from 'reactflow';
 import { EGraphViewMode } from '../../../types/template';
 import type { ITemplateKickoffClient, ITemplateTaskClient } from '../../../types/template';
-import type { EConditionLogicOperations, EConditionOperators } from '../TaskForm/Conditions/types';
+import type { EConditionLogicOperations, EConditionOperators } from '../../../types/templateTaskConditions';
 
 export type TGraphViewModeI18nId = 'template.view-line' | 'template.view-graph';
 

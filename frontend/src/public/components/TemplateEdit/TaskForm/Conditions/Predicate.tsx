@@ -8,7 +8,8 @@ import { CONDITION_DISABLED_OPERATOR, OPERATORS_WITHOUT_VALUE } from './utils/sh
 import { getFormattedDropdownOption } from './utils/getFormattedDropdownOption';
 import { ConditionValueField } from './ConditionValueField';
 import { TrashIcon } from '../../../icons';
-import { EConditionLogicOperations, EConditionOperators, TConditionRule } from './types';
+import { EConditionLogicOperations, EConditionOperators } from '../../../../types/templateTaskConditions';
+import type { TConditionRule } from '../../../../types/templateTaskConditions';
 import { TUserListItem } from '../../../../types/user';
 import { IDropdownVariable } from './CheckIfConditions';
 

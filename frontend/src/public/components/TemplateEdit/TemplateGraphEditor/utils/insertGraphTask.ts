@@ -1,5 +1,6 @@
 import { ITemplateTaskClient, EStartingType } from '../../../../types/template';
-import { EConditionAction, ICondition, TConditionRule } from '../../TaskForm/Conditions/types';
+import { EConditionAction } from '../../../../types/templateTaskConditions';
+import type { ICondition, TConditionRule } from '../../../../types/templateTaskConditions';
 import { getKickoffConditions } from '../../TaskForm/Conditions/utils/getKickoffConditions';
 import { getStartTaskConditions } from '../../TaskForm/Conditions/utils/getStartTaskConditions';
 import { getBaseStartRule } from '../../TaskForm/Conditions/utils/getStartTaskRule';

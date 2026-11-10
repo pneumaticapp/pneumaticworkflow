@@ -1,10 +1,12 @@
-import {
-  EConditionLogicOperations,
+import { EConditionLogicOperations } from '../../types/templateTaskConditions';
+import type {
   EConditionOperators,
   ICondition,
-} from '../../components/TemplateEdit/TaskForm/Conditions/types';
+  IConditionResponse,
+  IConditionRuleResponse,
+  TConditionRulePredicateResponse,
+} from '../../types/templateTaskConditions';
 import { getFilledConditions } from '../../components/TemplateEdit/TaskForm/Conditions/utils/conditionsValidators';
-import { IConditionResponse, IConditionRuleResponse, TConditionRulePredicateResponse } from '../../types/template';
 import { isArrayWithItems } from '../helpers';
 
 export const normalizeConditionForBackend = (conditions: ICondition[]): IConditionResponse[] => {

@@ -1,11 +1,6 @@
 import type * as React from 'react';
 import { EIntegrations } from './integrations';
-import {
-  EConditionAction,
-  EConditionOperators,
-  ICondition,
-  TConditionPredicateValue,
-} from '../components/TemplateEdit/TaskForm/Conditions/types';
+import type { ICondition, IConditionResponse } from './templateTaskConditions';
 import { TUploadedFile } from '../utils/uploadFiles';
 import { TSystemField } from '../components/Workflows/WorkflowsTablePage/WorkflowsTable/types';
 import { IFieldsetBinding, IFieldsetBindingClient, IFieldsetBindingMeta, IFieldsetRuntime } from './fieldset';
@@ -184,14 +179,6 @@ export interface ITemplateKickoffRequest extends Omit<IKickoff, 'fieldsets'> {
   fieldsets: IFieldsetBindingMeta[];
 }
 
-export interface IConditionResponse {
-  id?: number;
-  apiName: string;
-  order: number;
-  rules: IConditionRuleResponse[];
-  action: EConditionAction;
-}
-
 export interface IDueDateAPI {
   apiName: string;
   duration: string;
@@ -199,19 +186,6 @@ export interface IDueDateAPI {
   rule: IDueDateRuleAPI;
   sourceId: string | null;
 }
-
-export interface IConditionRuleResponse {
-  id?: number;
-  apiName: string;
-  predicates: TConditionRulePredicateResponse[];
-}
-
-export type TConditionRulePredicateResponse = {
-  id?: number;
-  apiName: string;
-  field: string;
-  operator: EConditionOperators;
-} & TConditionPredicateValue;
 
 /** Fieldset template object from list API response (camelCased by commonRequest) */
 export interface IFieldsetTemplateData {

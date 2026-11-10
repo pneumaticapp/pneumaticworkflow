@@ -11,10 +11,10 @@ import { setRulesApiNamesAndIds } from './utils/setRulesApiNames';
 import { handleAddNewRule, handleAddNewCondition, CONDITION_DISABLED_OPERATOR, getDropdownSteps } from './utils/shared';
 
 import { getSubscriptionPlan } from '../../../../redux/selectors/user';
-import { EConditionAction, TConditionRule } from './types';
+import { EConditionAction } from '../../../../types/templateTaskConditions';
+import type { ICondition, TConditionRule } from '../../../../types/templateTaskConditions';
 import { ESubscriptionPlan } from '../../../../types/account';
 import { IConditionsProps, IDropdownVariable, Predicate, RichLabel } from '.';
-import type { ICondition } from './types';
 
 import styles from './Conditions.css';
 import stylesTaskForm from '../TaskForm.css';

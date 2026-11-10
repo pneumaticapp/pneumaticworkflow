@@ -7,7 +7,7 @@ import { getSubscriptionPlan, getIsUserSubsribed } from '../../../redux/selector
 import { getConditionsCount } from '../TaskItem/utlils/getConditionsCount';
 import { ESubscriptionPlan } from '../../../types/account';
 import { ITemplateTaskClient } from '../../../types/template';
-import { EConditionAction } from '../TaskForm/Conditions/types';
+import { EConditionAction } from '../../../types/templateTaskConditions';
 
 import styles from '../TemplateEdit.css';
 import { getTriplePlural } from '../../../utils/helpers';
