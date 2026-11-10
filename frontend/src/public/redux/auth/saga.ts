@@ -72,7 +72,7 @@ import { getQueryStringParams, history } from '../../utils/history';
 import { watchWsEvents } from '../realtime/watchWsEvents';
 import { closeAllConnections } from '../utils/webSocketConnections';
 import { uploadUserAvatar } from '../../utils/uploadFiles';
-import type { TUploadedFile } from '../../utils/uploadFiles';
+import type { TUploadedFile } from '../../types/attachments';
 import { changePhotoProfile } from '../../api/changePhotoProfile';
 import { EAuthUserFailType, ELoggedState } from './types';
 import type { IAuthUser } from './types';

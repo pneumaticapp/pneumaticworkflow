@@ -4,7 +4,8 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import { ExtraFieldFile } from '../ExtraFieldFile';
 import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../../../types/template';
-import { TUploadedFile, uploadFiles } from '../../../../../utils/uploadFiles';
+import type { TUploadedFile } from '../../../../../types/attachments';
+import { uploadFiles } from '../../../../../utils/uploadFiles';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 
 jest.mock('../../../../../utils/uploadFiles', () => ({

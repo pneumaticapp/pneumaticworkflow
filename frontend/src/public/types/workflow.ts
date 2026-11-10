@@ -1,5 +1,5 @@
 import { TUserId } from './user';
-import { TUploadedFile } from '../utils/uploadFiles';
+import type { TUploadedFile } from './attachments';
 import type { ITask } from './tasks';
 import { TaskWithTsp } from './taskDate';
 import type {

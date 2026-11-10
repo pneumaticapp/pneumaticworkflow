@@ -4,7 +4,7 @@ import { IntlProvider } from 'react-intl';
 
 import { enMessages } from '../../../lang/locales/en_US';
 import { ESubscriptionPlan } from '../../../types/account';
-import { TUploadedFile } from '../../../utils/uploadFiles';
+import type { TUploadedFile } from '../../../types/attachments';
 import { AttachmentField, IAttachmentFieldProps } from '../../UI/Fields/AttachmentField';
 import { IProfileAccountProps, ProfileAccount } from '../ProfileAccount';
 

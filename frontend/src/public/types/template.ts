@@ -1,7 +1,7 @@
 import type * as React from 'react';
 import { EIntegrations } from './integrations';
 import type { ICondition, IConditionAPI } from './templateTaskConditions';
-import { TUploadedFile } from '../utils/uploadFiles';
+import type { TUploadedFile } from './attachments';
 import { IFieldsetBinding, IFieldsetBindingClient, IFieldsetBindingMeta, IFieldsetRuntime } from './fieldset';
 
 export type { IFieldsetBindingClient } from './fieldset';

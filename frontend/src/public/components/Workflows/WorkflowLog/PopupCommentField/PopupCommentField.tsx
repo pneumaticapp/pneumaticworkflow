@@ -5,7 +5,7 @@ import { RichEditor } from '../../../RichEditor';
 import type { IRichEditorHandle, TMentionData } from '../../../RichEditor/types';
 import { Avatar } from '../../../UI/Avatar';
 import type { TAuthUserResult } from '../../../../types/user';
-import type { TUploadedFile } from '../../../../utils/uploadFiles';
+import type { TUploadedFile } from '../../../../types/attachments';
 import type { ISendWorkflowLogComment } from '../../../../redux/types';
 import { useStatePromise } from '../../../../hooks/useStatePromise';
 import { isArrayWithItems } from '../../../../utils/helpers';

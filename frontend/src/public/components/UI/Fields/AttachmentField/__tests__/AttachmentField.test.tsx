@@ -3,7 +3,8 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { IntlProvider } from 'react-intl';
 
 import { enMessages } from '../../../../../lang/locales/en_US';
-import { TUploadedFile, uploadFiles } from '../../../../../utils/uploadFiles';
+import type { TUploadedFile } from '../../../../../types/attachments';
+import { uploadFiles } from '../../../../../utils/uploadFiles';
 import { AttachmentField } from '../AttachmentField';
 import { getImageDimensions } from '../utils/getImageDimensions';
 
