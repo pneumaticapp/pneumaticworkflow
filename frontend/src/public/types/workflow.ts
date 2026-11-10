@@ -16,7 +16,6 @@ import type {
   TTemplateFieldFieldset,
 } from './template';
 import { IFieldsetRuntime } from './fieldset';
-import { EProgressbarColor } from '../components/Workflows/utils/getWorfkflowClientProperties';
 
 export type WorkflowWithDateFields = {
   dueDate: string | null;
@@ -142,6 +141,13 @@ export interface IWorkflowTaskDelay {
   endDate: string;
   estimatedEndDate: string;
   estimatedEndDateTsp: number | null;
+}
+
+export enum EProgressbarColor {
+  Yellow = '#FFC107',
+  Red = '#E53D00',
+  Grey = '#979795',
+  Green = '#5FAD56',
 }
 
 export interface IWorkflowTaskClient extends IWorkflowTaskItem {

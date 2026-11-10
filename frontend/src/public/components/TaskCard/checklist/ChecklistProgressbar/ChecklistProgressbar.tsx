@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 
 import { createProgressbarPlaceholderId } from '../createProgressbarPlaceholderId';
 import { ProgressBar } from '../../../ProgressBar';
-import { EProgressbarColor } from '../../../Workflows/utils/getWorfkflowClientProperties';
+import { EProgressbarColor } from '../../../../types/workflow';
 import { getPercent } from '../../../../utils/helpers';
 import { Tooltip } from '../../../UI';
 import { StarIcon } from '../../../icons';

@@ -1,6 +1,5 @@
-import { EWorkflowStatus } from '../../../types/workflow';
+import { EProgressbarColor, EWorkflowStatus } from '../../../types/workflow';
 import { getDueInData } from '../../DueIn/utils/getDueInData';
-import { EProgressbarColor } from './getWorfkflowClientProperties';
 
 export function getWorkflowProgressColor(
   workflowStatus: EWorkflowStatus,

@@ -2,10 +2,9 @@ import React, { ReactElement, ReactNode } from 'react';
 
 import { Tooltip } from '../UI';
 import { ProgressBarGrid } from './ProgressBarGrid';
-import { IWorkflowTaskClient } from '../../types/workflow';
+import { EProgressbarColor, IWorkflowTaskClient } from '../../types/workflow';
 
 import styles from './ProgressBar.css';
-import { EProgressbarColor } from '../Workflows/utils/getWorfkflowClientProperties';
 
 export interface IProgressBarProps {
   tasks?: IWorkflowTaskClient[];
