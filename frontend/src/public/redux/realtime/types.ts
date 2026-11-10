@@ -3,6 +3,10 @@ import type { ETaskStatus } from '../../types/tasks';
 import type { EUserStatus, IUserVacation } from '../../types/user';
 import type { EUserGroupType } from '../../types/team';
 
+export interface WebSocketWithRemoveFlag extends WebSocket {
+  shouldRemove?: boolean;
+}
+
 export interface IWsEnvelopeBase {
   id: string;
   dateCreatedTsp: number;
