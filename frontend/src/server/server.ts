@@ -50,10 +50,7 @@ export function initServer() {
   app.use('/assets/', express.static('assets'));
   app.use('/static/', express.static('public'));
 
-  app.post('/api/:path(*)', apiProxy('post'));
-  app.get('/api/:path(*)', apiProxy('get'));
-  app.patch('/api/:path(*)', apiProxy('patch'));
-  app.delete('/api/:path(*)', apiProxy('delete'));
+  app.use('/api/:path(*)', apiProxy());
 
   app.get('/firebase-messaging-sw.js', (req, res) => {
     res.setHeader('Content-Type', 'text/javascript');

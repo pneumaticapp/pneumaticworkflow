@@ -53,7 +53,9 @@ export const SubMenuTooltip = ({
       placement="right"
       size="lg"
     >
-      <div className={styles['sub-menu__trigger']}>{children}</div>
+      <div className={styles['sub-menu__trigger']} data-testid="sub-menu-trigger">
+        {children}
+      </div>
     </Tooltip>
   );
 };

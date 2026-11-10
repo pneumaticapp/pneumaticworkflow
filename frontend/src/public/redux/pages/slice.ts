@@ -6,7 +6,7 @@ import { IPages, IPagesStore } from './types';
 const { pages } = getBrowserConfig();
 
 const initialState: IPagesStore = {
-  list: pages ? JSON.parse(String(pages)) : [],
+  list: pages || [],
 };
 
 const pagesSlice = createSlice({

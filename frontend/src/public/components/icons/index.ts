@@ -3,8 +3,6 @@ export * from './CloseIcon';
 export * from './ClearIcon';
 export * from './AddBtnIcon';
 export * from './DescriptionIcon';
-export * from './MenuIcon';
-export * from './MobileMenuIcon';
 export * from './GoogleIcon';
 export * from './MicrosoftIcon';
 export * from './LogoCircle';

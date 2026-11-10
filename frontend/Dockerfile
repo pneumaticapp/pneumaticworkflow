@@ -13,7 +13,7 @@ RUN npm install -g npm@12.2.1 pm2
 WORKDIR /pneumatic_frontend
 ADD package-lock.json /pneumatic_frontend/package-lock.json
 ADD package.json /pneumatic_frontend/package.json
-RUN npm ci --legacy-peer-deps --ignore-scripts
+RUN npm ci --ignore-scripts
 
 ADD . /pneumatic_frontend/
 

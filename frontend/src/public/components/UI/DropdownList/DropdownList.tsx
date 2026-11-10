@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useState } from 'react';
 import classnames from 'classnames';
 import Select from 'react-select';
-import OutsideClickHandler from 'react-outside-click-handler';
+import OutsideClickHandler from '../OutsideClickHandler';
 import { useIntl } from 'react-intl';
 
 import { ControlSM, DropdownIndicator, MenuListLG, MenuListSM, MenuSM, Option } from './selectComponents';
