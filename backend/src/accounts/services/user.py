@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.db import IntegrityError, transaction
+from django.utils.crypto import get_random_string
 
 from src.accounts.enums import (
     Language,
@@ -94,7 +95,13 @@ class UserService(
 
         if not password:
             if not raw_password:
-                raw_password = UserModel.objects.make_random_password()
+                raw_password = get_random_string(
+                    length=10,
+                    allowed_chars=(
+                        'abcdefghjkmnpqrstuvwxyz'
+                        'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+                    ),
+                )
             password = make_password(raw_password)
 
         if is_account_owner:
