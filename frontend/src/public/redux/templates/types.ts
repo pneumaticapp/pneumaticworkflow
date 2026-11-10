@@ -4,9 +4,8 @@ import type {
   ITemplatesSystemCategories,
   TTaskVariable,
   TTemplateIntegrationStats,
-  TTransformedTask,
 } from '../../types/template';
-import type { ETemplatesSorting } from '../../types/workflow';
+import type { ETemplatesSorting, TTransformedTask } from '../../types/workflow';
 
 export enum ETemplatesSystemStatus {
   WaitingForAction = 'waiting-for-action',

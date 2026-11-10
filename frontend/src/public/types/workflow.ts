@@ -2,7 +2,7 @@ import { TUserId } from './user';
 import { TUploadedFile } from '../utils/uploadFiles';
 import type { ITask } from './tasks';
 import { TaskWithTsp } from './taskDate';
-import {
+import type {
   IRuntimeKickoffClient,
   IExtraField,
   ITemplateTitle,
@@ -13,6 +13,7 @@ import {
   ITemplateClient,
   ITemplateKickoffClient,
   ITemplateStep,
+  TTemplateFieldFieldset,
 } from './template';
 import { IFieldsetRuntime } from './fieldset';
 import { EProgressbarColor } from '../components/Workflows/utils/getWorfkflowClientProperties';
@@ -394,3 +395,22 @@ export interface IRunWorkflow extends Omit<
   dueDate?: string;
   loadedFieldsets?: IFieldsetRuntime[];
 }
+
+export type TSystemField = {
+  apiName: string;
+  name: string;
+  isDisabled: boolean;
+  hasNotTooltip: boolean;
+};
+
+export type TRuntimeMergedOutputPart =
+  | { kind: 'field'; field: IExtraField }
+  | { kind: 'fieldset'; data: IFieldsetRuntime | TTemplateFieldFieldset }
+  | { kind: 'system'; field: TSystemField };
+
+export type TTransformedTask = {
+  apiName: string;
+  name: string;
+  needSteName?: boolean | null;
+  mergedOutputs: TRuntimeMergedOutputPart[];
+};

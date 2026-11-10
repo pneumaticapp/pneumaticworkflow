@@ -22,13 +22,6 @@ export type TTableColumns = {
   [key: string]: ITableViewFields;
 };
 
-export type TSystemField = {
-  apiName: string;
-  name: string;
-  isDisabled: boolean;
-  hasNotTooltip: boolean;
-};
-
 export type TWorkflowColumn = Column<TTableColumns> & {
   columnType: keyof typeof EColumnWidthMinWidth;
 };

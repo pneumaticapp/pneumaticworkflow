@@ -2,7 +2,6 @@ import type * as React from 'react';
 import { EIntegrations } from './integrations';
 import type { ICondition, IConditionAPI } from './templateTaskConditions';
 import { TUploadedFile } from '../utils/uploadFiles';
-import { TSystemField } from '../components/Workflows/WorkflowsTablePage/WorkflowsTable/types';
 import { IFieldsetBinding, IFieldsetBindingClient, IFieldsetBindingMeta, IFieldsetRuntime } from './fieldset';
 
 export type { IFieldsetBindingClient } from './fieldset';
@@ -50,18 +49,6 @@ export interface ITemplateOwner {
 
 export type ITemplateViewer = ITemplateOwner;
 export type ITemplateStarter = ITemplateOwner;
-
-export type TRuntimeMergedOutputPart =
-  | { kind: 'field'; field: IExtraField }
-  | { kind: 'fieldset'; data: IFieldsetRuntime | TTemplateFieldFieldset }
-  | { kind: 'system'; field: TSystemField };
-
-export type TTransformedTask = {
-  apiName: string;
-  name: string;
-  needSteName?: boolean | null;
-  mergedOutputs: TRuntimeMergedOutputPart[];
-};
 
 export type TTemplateFieldFieldset = Pick<
   IFieldsetRuntime,

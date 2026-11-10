@@ -25,8 +25,8 @@ import type {
   ITemplatesSystemCategories,
   TTemplateFieldFieldset,
   TTemplateIntegrationStatsApi,
-  TTransformedTask,
 } from '../../types/template';
+import type { TTransformedTask } from '../../types/workflow';
 import { buildRuntimeMergedOutputParts } from '../../components/TemplateEdit/TaskOutputFlow/mergeTaskOutputFlow';
 import { logger } from '../../utils/logger';
 import { getErrorMessage } from '../../utils/getErrorMessage';

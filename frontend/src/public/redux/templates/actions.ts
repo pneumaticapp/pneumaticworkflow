@@ -2,13 +2,8 @@
 import type { ETemplatesSystemStatus, ITemplatesList, ITemplatesSystemList, ITemplatesSystemSelection } from './types';
 import type { ITypedReduxAction } from '../types';
 import { actionGenerator } from '../../utils/redux';
-import type {
-  ITemplatesSystemCategories,
-  TTemplateIntegrationStatsApi,
-  TTransformedTask,
-  TTaskVariable,
-} from '../../types/template';
-import type { ETemplatesSorting } from '../../types/workflow';
+import type { ITemplatesSystemCategories, TTemplateIntegrationStatsApi, TTaskVariable } from '../../types/template';
+import type { ETemplatesSorting, TTransformedTask } from '../../types/workflow';
 
 export const enum ETemplatesActions {
   SetCurrentTemplatesSystemStatus = 'SET_CURRENT_TEMPLATES_SYSTEM_STATUS',
