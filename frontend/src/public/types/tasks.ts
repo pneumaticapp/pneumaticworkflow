@@ -1,24 +1,11 @@
-import { IWorkflow, IWorkflowClient, WorkflowWithTsp } from './workflow';
-import { IExtraField, ITemplateTitleBaseWithCount, RawPerformer } from './template';
+import type { IWorkflow, IWorkflowClient, WorkflowWithTsp } from './workflow';
+import { IExtraField, ITemplateStep, ITemplateTitleBaseWithCount, RawPerformer } from './template';
 import { IFieldsetRuntime, IFieldsetTaskAPI } from './fieldset';
+import { TaskWithTsp } from './taskDate';
 
 export type TTaskWorkflow = Pick<IWorkflow, 'id' | 'name' | 'status' | 'dateCompleted'> & {
   templateName: string;
 };
-
-export type TaskWithDateFields = {
-  dueDate: string | null;
-  dateStarted: string;
-  dateCompleted: string | null;
-};
-
-export type TaskWithTspFields = {
-  dueDateTsp: number | null;
-  dateStartedTsp: number;
-  dateCompletedTsp: number | null;
-};
-
-export type TaskWithTsp<T> = Omit<T, keyof TaskWithDateFields> & TaskWithTspFields;
 
 export type TFormatTaskDates = {
   output?: IExtraField[];
@@ -156,13 +143,6 @@ export interface ITasksSettings {
     items: ITemplateTitleBaseWithCount[];
     isLoading: boolean;
   };
-}
-
-export interface ITemplateStep {
-  id: number;
-  name: string;
-  number: number;
-  apiName: string;
 }
 
 export enum ETaskCardViewMode {

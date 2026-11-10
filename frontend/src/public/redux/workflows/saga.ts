@@ -110,11 +110,10 @@ import { editWorkflow } from '../../api/editWorkflow';
 import type { IEditWorkflowResponse } from '../../api/editWorkflow';
 import { getTemplatesTitles } from '../../api/getTemplatesTitles';
 import type { TGetTemplatesTitlesResponse } from '../../api/getTemplatesTitles';
-import type { IRuntimeKickoffClient, ITemplateResponse, TTemplatePreset } from '../../types/template';
+import type { IRuntimeKickoffClient, ITemplateResponse, ITemplateStep, TTemplatePreset } from '../../types/template';
 import { getWorkflowLogStore } from '../selectors/workflowLog';
 
 import type { TChannelAction } from '../tasks/saga';
-import type { ITemplateStep } from '../../types/tasks';
 import { getTemplateSteps } from '../../api/getTemplateSteps';
 
 import { handleLoadTemplateVariables } from '../templates/saga';

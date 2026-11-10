@@ -12,13 +12,8 @@ import { FilterSelect, Tabs, ReturnLink } from '../../components/UI';
 import { checkSomeRouteIsActive, history } from '../../utils/history';
 import { reactElementToText } from '../../utils/reactElementToText';
 import { ITopNavOwnProps } from '../../components/TopNav/TopNav';
-import {
-  ETaskListCompleteSorting,
-  ETaskListCompletionStatus,
-  ETaskListSorting,
-  ITemplateStep,
-} from '../../types/tasks';
-import { ITemplateTitleBaseWithCount } from '../../types/template';
+import { ETaskListCompleteSorting, ETaskListCompletionStatus, ETaskListSorting } from '../../types/tasks';
+import { ITemplateStep, ITemplateTitleBaseWithCount } from '../../types/template';
 import { StepName } from '../../components/StepName';
 import { WorkflowModalContainer } from '../../components/Workflows/WorkflowModal';
 

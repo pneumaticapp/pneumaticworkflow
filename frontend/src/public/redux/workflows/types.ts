@@ -1,5 +1,4 @@
-import type { ITemplateStep } from '../../types/tasks';
-import type { IRuntimeKickoffClient, TOrderedFields } from '../../types/template';
+import type { IRuntimeKickoffClient, ITemplateStep, TOrderedFields } from '../../types/template';
 import type {
   EWorkflowsLoadingStatus,
   IWorkflowClient,

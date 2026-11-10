@@ -1,6 +1,7 @@
 import { TUserId } from './user';
 import { TUploadedFile } from '../utils/uploadFiles';
-import { ITask, ITemplateStep, TaskWithTsp } from './tasks';
+import type { ITask } from './tasks';
+import { TaskWithTsp } from './taskDate';
 import {
   IRuntimeKickoffClient,
   IExtraField,
@@ -11,6 +12,7 @@ import {
   TTemplatePreset,
   ITemplateClient,
   ITemplateKickoffClient,
+  ITemplateStep,
 } from './template';
 import { IFieldsetRuntime } from './fieldset';
 import { EProgressbarColor } from '../components/Workflows/utils/getWorfkflowClientProperties';

@@ -1,8 +1,8 @@
 import { createAction, createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { ETaskListCompletionStatus, ETaskListSorting } from '../../types/tasks';
-import type { ETaskListCompleteSorting, ITaskListItem, ITasksSettings, ITemplateStep } from '../../types/tasks';
-import type { ITemplateTitleBaseWithCount } from '../../types/template';
+import type { ETaskListCompleteSorting, ITaskListItem, ITasksSettings } from '../../types/tasks';
+import type { ITemplateStep, ITemplateTitleBaseWithCount } from '../../types/template';
 import { isObjectChanged } from '../../utils/helpers';
 import { EGeneralActions } from '../general/actions';
 import { ETaskListStatus } from './types';

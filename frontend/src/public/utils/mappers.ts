@@ -19,7 +19,8 @@ import {
   IRunWorkflow,
 } from '../types/workflow';
 import { IHighlightsItem } from '../types/highlights';
-import { TaskWithDateFields, TaskWithTspFields, TFormatTaskDates } from '../types/tasks';
+import { TaskWithDateFields, TaskWithTspFields } from '../types/taskDate';
+import { TFormatTaskDates } from '../types/tasks';
 import { getWorkflowAddComputedPropsToRedux } from '../components/Workflows/utils/getWorfkflowClientProperties';
 import { IStartWorkflowPayload, TEditWorkflowPayload } from '../redux/workflows/types';
 

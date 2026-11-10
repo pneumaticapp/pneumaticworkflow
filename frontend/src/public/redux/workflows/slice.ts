@@ -13,8 +13,12 @@ import type { IWatchedComment } from '../../api/workflows/watchedComment';
 import type { IDeleteComment } from '../../api/workflows/deleteComment';
 import type { IEditComment } from '../../api/workflows/editComment';
 
-import type { IRuntimeKickoffClient, ITemplateTitleBaseWithCount, TTemplatePreset } from '../../types/template';
-import type { ITemplateStep } from '../../types/tasks';
+import type {
+  IRuntimeKickoffClient,
+  ITemplateStep,
+  ITemplateTitleBaseWithCount,
+  TTemplatePreset,
+} from '../../types/template';
 import {
   EWorkflowsLoadingStatus,
   EWorkflowsLogSorting,
