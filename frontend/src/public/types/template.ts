@@ -1,6 +1,6 @@
 import type * as React from 'react';
 import { EIntegrations } from './integrations';
-import type { ICondition, IConditionResponse } from './templateTaskConditions';
+import type { ICondition, IConditionAPI } from './templateTaskConditions';
 import { TUploadedFile } from '../utils/uploadFiles';
 import { TSystemField } from '../components/Workflows/WorkflowsTablePage/WorkflowsTable/types';
 import { IFieldsetBinding, IFieldsetBindingClient, IFieldsetBindingMeta, IFieldsetRuntime } from './fieldset';
@@ -157,7 +157,7 @@ export interface ITemplateTaskResponse extends Omit<
   'uuid' | 'conditions' | 'rawDueDate' | 'apiName' | 'id' | 'fieldsets'
 > {
   id: number;
-  conditions: IConditionResponse[];
+  conditions: IConditionAPI[];
   rawDueDate: IDueDateAPI | null;
   dueIn?: string | null; // deprecated
   apiName?: string;
@@ -170,7 +170,7 @@ export interface ITemplateRequest extends Omit<ITemplate, 'tasks' | 'kickoff'> {
 }
 
 export interface ITemplateTaskRequest extends Omit<ITemplateTask, 'uuid' | 'conditions' | 'rawDueDate' | 'fieldsets'> {
-  conditions: IConditionResponse[];
+  conditions: IConditionAPI[];
   rawDueDate: IDueDateAPI | null;
   fieldsets: IFieldsetBindingMeta[];
 }

@@ -62,21 +62,21 @@ export enum EConditionLogicOperations {
   Or = 'or',
 }
 
-export interface IConditionResponse {
+export interface IConditionAPI {
   id?: number;
   apiName: string;
   order: number;
-  rules: IConditionRuleResponse[];
+  rules: IConditionRuleAPI[];
   action: EConditionAction;
 }
 
-export interface IConditionRuleResponse {
+export interface IConditionRuleAPI {
   id?: number;
   apiName: string;
-  predicates: TConditionRulePredicateResponse[];
+  predicates: TConditionRulePredicateAPI[];
 }
 
-export type TConditionRulePredicateResponse = {
+export type TConditionRulePredicateAPI = {
   id?: number;
   apiName: string;
   field: string;

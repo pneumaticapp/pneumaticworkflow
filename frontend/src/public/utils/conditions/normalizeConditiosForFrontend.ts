@@ -2,17 +2,17 @@
 import { EConditionLogicOperations } from '../../types/templateTaskConditions';
 import type {
   ICondition,
-  IConditionResponse,
-  IConditionRuleResponse,
+  IConditionAPI,
+  IConditionRuleAPI,
   TConditionRule,
-  TConditionRulePredicateResponse,
+  TConditionRulePredicateAPI,
 } from '../../types/templateTaskConditions';
 import { flatten } from '../helpers';
 
-export const normalizeConditiosForFrontend = (conditions: IConditionResponse[]): ICondition[] => {
+export const normalizeConditiosForFrontend = (conditions: IConditionAPI[]): ICondition[] => {
   const getConditionRule = (
-    rule: IConditionRuleResponse,
-    predicate: TConditionRulePredicateResponse,
+    rule: IConditionRuleAPI,
+    predicate: TConditionRulePredicateAPI,
     logicOperation: TConditionRule['logicOperation'],
   ): TConditionRule => {
     return {
@@ -28,7 +28,7 @@ export const normalizeConditiosForFrontend = (conditions: IConditionResponse[]):
     } as TConditionRule;
   };
 
-  const getNormalizedCondition = (condition: IConditionResponse): ICondition => {
+  const getNormalizedCondition = (condition: IConditionAPI): ICondition => {
     const normalizedRules = condition.rules.map((rule, ruleIndex) => {
       const { predicates } = rule;
 

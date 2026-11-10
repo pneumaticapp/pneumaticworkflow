@@ -2,20 +2,20 @@ import { EConditionLogicOperations } from '../../types/templateTaskConditions';
 import type {
   EConditionOperators,
   ICondition,
-  IConditionResponse,
-  IConditionRuleResponse,
-  TConditionRulePredicateResponse,
+  IConditionAPI,
+  IConditionRuleAPI,
+  TConditionRulePredicateAPI,
 } from '../../types/templateTaskConditions';
 import { getFilledConditions } from '../../components/TemplateEdit/TaskForm/Conditions/utils/conditionsValidators';
 import { isArrayWithItems } from '../helpers';
 
-export const normalizeConditionForBackend = (conditions: ICondition[]): IConditionResponse[] => {
-  const normalizeCondition = (condition: ICondition, index: number): IConditionResponse | null => {
+export const normalizeConditionForBackend = (conditions: ICondition[]): IConditionAPI[] => {
+  const normalizeCondition = (condition: ICondition, index: number): IConditionAPI | null => {
     if (!isArrayWithItems(condition.rules)) {
       return null;
     }
 
-    const normalizedRules: IConditionRuleResponse[] = condition.rules.reduce((acc, item) => {
+    const normalizedRules: IConditionRuleAPI[] = condition.rules.reduce((acc, item) => {
       const newPredicate = {
         id: item.predicateId,
         apiName: item.predicateApiName,
@@ -23,7 +23,7 @@ export const normalizeConditionForBackend = (conditions: ICondition[]): IConditi
         operator: item.operator as EConditionOperators,
         fieldType: item.fieldType,
         value: item.fieldType === 'number' && item?.value ? String(item.value).replace(',', '.') : item.value,
-      } as TConditionRulePredicateResponse;
+      } as TConditionRulePredicateAPI;
 
       const [lastRule] = acc.slice(-1);
 
@@ -32,7 +32,7 @@ export const normalizeConditionForBackend = (conditions: ICondition[]): IConditi
           id: item.ruleId,
           apiName: item.ruleApiName,
           predicates: [newPredicate],
-        } as IConditionRuleResponse;
+        } as IConditionRuleAPI;
 
         return [...acc, newRule];
       }
@@ -40,10 +40,10 @@ export const normalizeConditionForBackend = (conditions: ICondition[]): IConditi
       const newLastRule = {
         ...lastRule,
         predicates: [...lastRule.predicates, newPredicate],
-      } as IConditionRuleResponse;
+      } as IConditionRuleAPI;
 
       return [...acc.slice(0, -1), newLastRule];
-    }, [] as IConditionRuleResponse[]);
+    }, [] as IConditionRuleAPI[]);
 
     return {
       id: condition.id,
@@ -54,5 +54,5 @@ export const normalizeConditionForBackend = (conditions: ICondition[]): IConditi
     };
   };
 
-  return getFilledConditions(conditions).map(normalizeCondition).filter(Boolean) as IConditionResponse[];
+  return getFilledConditions(conditions).map(normalizeCondition).filter(Boolean) as IConditionAPI[];
 };
