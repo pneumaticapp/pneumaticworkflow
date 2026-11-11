@@ -92,7 +92,8 @@ import { changeUserReports } from '../accounts/slice';
 import { getAbsolutePath } from '../../utils/getAbsolutePath';
 import { cardSetup } from '../../api/cardSetup';
 import type { ICardSetupResponse } from '../../api/cardSetup';
-import { confirmPaymentDetailsProvided } from './utils/confirmPaymentDetailsProvided';
+import { confirmPaymentDetails } from '../../api/confirmPaymentDetails';
+import { showPaymentSuccessMessage } from './utils/showPaymentSuccessMessage';
 import { createAITemplate } from './utils/createAITemplate';
 import { trackCrozdesk } from '../../utils/analytics/trackCrozdesk';
 import { getBrowserConfig } from '../../utils/getConfig';
@@ -542,6 +543,22 @@ export function* makeStripePaymentSaga({
 
     logger.error(error);
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+  }
+}
+
+function* confirmPaymentDetailsProvided() {
+  try {
+    if (!history.location.search) throw new Error('No token provided');
+    const { token } = getQueryStringParams(history.location.search);
+    if (!token) throw new Error('No token provided');
+    yield call(confirmPaymentDetails, { token });
+    yield fetchPlan();
+    yield authenticateUser();
+    showPaymentSuccessMessage();
+  } catch (error) {
+    logger.error(error);
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+    history.push(ERoutes.Tasks);
   }
 }
 
