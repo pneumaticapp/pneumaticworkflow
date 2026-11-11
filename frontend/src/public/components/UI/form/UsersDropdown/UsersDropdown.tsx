@@ -3,7 +3,9 @@ import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import type { ActionMeta, FormatOptionLabelMeta } from 'react-select';
 
-import { DropdownList, Checkbox, Avatar } from '../..';
+import { DropdownList } from '../../DropdownList';
+import { Checkbox } from '../../Fields/Checkbox';
+import { Avatar } from '../../Avatar';
 import type { TAvatarUser } from '../../Avatar';
 import type { TDropdownOptionBase, IDropdownListProps } from '../../DropdownList/types';
 import { EUserStatus, isUserAbsent } from '../../../../types/user';

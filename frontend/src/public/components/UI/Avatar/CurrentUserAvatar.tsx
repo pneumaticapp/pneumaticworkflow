@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { useSelector } from 'react-redux';
 
-import { IAvatarProps, Avatar } from '.';
+import { Avatar } from './Avatar';
+import type { IAvatarProps } from './Avatar';
 
 import { getAuthUser } from '../../../redux/selectors/user';
 

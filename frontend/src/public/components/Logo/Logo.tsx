@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { LargeLogo, LogoCircle } from '../icons';
+import { LargeLogo } from '../icons/LargeLogo';
+import { LogoCircle } from '../icons/LogoCircle';
 
 import styles from './Logo.css';
 

@@ -5,13 +5,29 @@ import { IntlProvider } from 'react-intl';
 import { enMessages } from '../../../../../lang/locales/en_US';
 import { EUserStatus } from '../../../../../types/user';
 import { EOptionTypes, UsersDropdownComponent } from '../UsersDropdown';
+import type { TUsersDropdownOption } from '../UsersDropdown';
 
-jest.mock('../../..', () => ({
+jest.mock('../../../Avatar', () => ({
   Avatar: () => null,
+}));
+
+jest.mock('../../../Fields/Checkbox', () => ({
   Checkbox: ({ title }: { title: React.ReactNode }) => <span>{title}</span>,
-  DropdownList: ({ options, formatOptionLabel }: any) => (
+}));
+
+jest.mock('../../../DropdownList', () => ({
+  DropdownList: ({
+    options,
+    formatOptionLabel,
+  }: {
+    options: TUsersDropdownOption[];
+    formatOptionLabel: (
+      option: TUsersDropdownOption,
+      meta: { context: 'menu'; selectValue: TUsersDropdownOption[] },
+    ) => React.ReactNode;
+  }) => (
     <div>
-      {options.map((option: any) => (
+      {options.map((option) => (
         <div key={option.value}>{formatOptionLabel(option, { context: 'menu', selectValue: [] })}</div>
       ))}
     </div>

@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 
-import { getIntegrationsSettings, TemplateIntegrationsStats } from '..';
+import { getIntegrationsSettings } from '../utils/getIntegrationsSettings';
 import { ELearnMoreLinks } from '../../../constants/defaultValues';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { Tooltip } from '../../UI';
-import { ITemplateIntegrationsStatsProps } from '../TemplateIntegrationsStats';
+import { TemplateIntegrationsStats } from '../TemplateIntegrationsStats';
+import type { ITemplateIntegrationsStatsProps } from '../TemplateIntegrationsStats';
 
 import styles from './TemplateIntegrationsIndicator.css';
 

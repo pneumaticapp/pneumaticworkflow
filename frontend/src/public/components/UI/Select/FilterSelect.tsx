@@ -8,7 +8,8 @@ import OutsideClickHandler from '../OutsideClickHandler';
 import { ClearIcon, ExpandIcon } from '../../icons';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { Skeleton } from '../Skeleton';
-import { Checkbox, InputField } from '..';
+import { Checkbox } from '../Fields/Checkbox';
+import { InputField } from '../Fields/InputField';
 
 import styles from './Select.css';
 

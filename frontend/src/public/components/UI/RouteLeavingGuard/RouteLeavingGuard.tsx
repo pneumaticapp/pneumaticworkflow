@@ -2,7 +2,8 @@ import { Location } from 'history';
 import React, { useEffect, useState } from 'react';
 import { Prompt } from 'react-router-dom';
 
-import { Header, Modal } from '..';
+import { Header } from '../Typeography/Header';
+import { Modal } from '../Modal';
 
 import styles from './RouteLeavingGuard.css';
 

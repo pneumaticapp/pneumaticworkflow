@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { memo } from 'react';
 import { Link } from 'react-router-dom';
-import { Header } from '../../index';
+import { Header } from '../../Typeography/Header';
 import { IAddCardButtonProps } from './types';
 
 import styles from './AddCardButton.css';

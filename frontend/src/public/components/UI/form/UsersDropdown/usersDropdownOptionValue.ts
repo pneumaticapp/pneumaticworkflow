@@ -1,4 +1,4 @@
-import { EOptionTypes, TUsersDropdownOption } from './UsersDropdown';
+import type { EOptionTypes, TUsersDropdownOption } from './UsersDropdown';
 
 export const getUsersDropdownOptionValue = (optionType: EOptionTypes, id: number | string): string =>
   `${optionType}-${id}`;

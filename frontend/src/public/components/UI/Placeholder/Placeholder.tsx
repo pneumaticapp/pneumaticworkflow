@@ -3,7 +3,7 @@ import classnames from 'classnames';
 
 import { TPlaceholderMood, IPlaceholderIconProps } from './types';
 
-import { Header } from '..';
+import { Header } from '../Typeography/Header';
 
 import styles from './Placeholder.css';
 
