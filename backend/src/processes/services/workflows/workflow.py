@@ -235,10 +235,9 @@ class WorkflowService(
         for field_rules in rules_by_field.values():
             field = fields_by_api_name[field_rules[0].field.api_name]
             was_hidden = field.is_hidden
-            service = FieldRuleCheckService(field)
+            service = FieldRuleCheckService(field, user.timezone)
             service.apply_rulesets(
                 field_rules,
-                timezone_name=user.timezone,
                 fields_by_api_name=fields_by_api_name,
             )
             if field.is_hidden != was_hidden:

@@ -157,9 +157,8 @@ class TestFieldRuleCheckService:
         )
 
         # act
-        FieldRuleCheckService(ruleset.field).apply_rulesets(
+        FieldRuleCheckService(ruleset.field, user.timezone).apply_rulesets(
             [ruleset],
-            timezone_name=user.timezone,
             fields_by_api_name=field_map(source_field, target_field),
         )
 
@@ -217,9 +216,8 @@ class TestFieldRuleCheckService:
         )
 
         # act
-        FieldRuleCheckService(ruleset.field).apply_rulesets(
+        FieldRuleCheckService(ruleset.field, user.timezone).apply_rulesets(
             [ruleset],
-            timezone_name=user.timezone,
             fields_by_api_name=field_map(source_field, target_field),
         )
 
@@ -261,9 +259,8 @@ class TestFieldRuleCheckService:
         )
 
         # act
-        FieldRuleCheckService(ruleset.field).apply_rulesets(
+        FieldRuleCheckService(ruleset.field, user.timezone).apply_rulesets(
             [ruleset],
-            timezone_name=user.timezone,
             fields_by_api_name=field_map(target_field),
         )
 
@@ -299,9 +296,8 @@ class TestFieldRuleCheckService:
         )
 
         # act
-        FieldRuleCheckService(ruleset.field).apply_rulesets(
+        FieldRuleCheckService(ruleset.field, user.timezone).apply_rulesets(
             [ruleset],
-            timezone_name=user.timezone,
             fields_by_api_name=field_map(target_field),
         )
 
@@ -394,9 +390,8 @@ class TestFieldRuleCheckService:
         )
 
         # act
-        FieldRuleCheckService(ruleset_1.field).apply_rulesets(
+        FieldRuleCheckService(ruleset_1.field, user.timezone).apply_rulesets(
             [ruleset_1, ruleset_2],
-            timezone_name=user.timezone,
             fields_by_api_name=field_map(
                 source_1,
                 source_2,
@@ -449,9 +444,8 @@ class TestFieldRuleCheckService:
         )
 
         # act
-        FieldRuleCheckService(ruleset.field).apply_rulesets(
+        FieldRuleCheckService(ruleset.field, user.timezone).apply_rulesets(
             [ruleset],
-            timezone_name=user.timezone,
             fields_by_api_name=field_map(target_field),
         )
 
@@ -501,9 +495,8 @@ class TestFieldRuleCheckService:
         )
 
         # act & assert: does not raise
-        FieldRuleCheckService(ruleset.field).apply_rulesets(
+        FieldRuleCheckService(ruleset.field, user.timezone).apply_rulesets(
             [ruleset],
-            timezone_name=user.timezone,
             fields_by_api_name=field_map(field),
         )
 
@@ -543,9 +536,8 @@ class TestFieldRuleCheckService:
         )
 
         # act & assert: does not raise
-        FieldRuleCheckService(ruleset.field).apply_rulesets(
+        FieldRuleCheckService(ruleset.field, user.timezone).apply_rulesets(
             [ruleset],
-            timezone_name=user.timezone,
             fields_by_api_name=field_map(field),
         )
 
@@ -579,9 +571,8 @@ class TestFieldRuleCheckService:
         )
 
         # act & assert: does not raise
-        FieldRuleCheckService(ruleset.field).apply_rulesets(
+        FieldRuleCheckService(ruleset.field, user.timezone).apply_rulesets(
             [ruleset],
-            timezone_name=user.timezone,
             fields_by_api_name=field_map(field),
         )
 
@@ -629,9 +620,8 @@ class TestFieldRuleCheckService:
 
         # act & assert
         with pytest.raises(FieldRuleCheckServiceException) as exc_info:
-            FieldRuleCheckService(ruleset.field).apply_rulesets(
+            FieldRuleCheckService(ruleset.field, user.timezone).apply_rulesets(
                 [ruleset],
-                timezone_name=user.timezone,
                 fields_by_api_name=field_map(field),
             )
 
@@ -684,9 +674,8 @@ class TestFieldRuleCheckService:
 
         # act & assert
         with pytest.raises(FieldRuleCheckServiceException) as exc_info:
-            FieldRuleCheckService(ruleset.field).apply_rulesets(
+            FieldRuleCheckService(ruleset.field, user.timezone).apply_rulesets(
                 [ruleset],
-                timezone_name=user.timezone,
                 fields_by_api_name=field_map(field),
             )
 
@@ -737,9 +726,8 @@ class TestFieldRuleCheckService:
         )
 
         # act & assert: does not raise because field is hidden
-        FieldRuleCheckService(ruleset.field).apply_rulesets(
+        FieldRuleCheckService(ruleset.field, user.timezone).apply_rulesets(
             [ruleset],
-            timezone_name=user.timezone,
             fields_by_api_name=field_map(field),
         )
 
@@ -823,9 +811,11 @@ class TestFieldRuleCheckService:
         )
 
         # act
-        FieldRuleCheckService(show_ruleset.field).apply_rulesets(
+        service = FieldRuleCheckService(
+            show_ruleset.field, user.timezone,
+        )
+        service.apply_rulesets(
             [show_ruleset, validator_ruleset],
-            timezone_name=user.timezone,
             fields_by_api_name=field_map(source_field, target_field),
         )
 
@@ -890,9 +880,8 @@ class TestFieldRuleCheckService:
         )
 
         # act
-        FieldRuleCheckService(ruleset.field).apply_rulesets(
+        FieldRuleCheckService(ruleset.field, user.timezone).apply_rulesets(
             [ruleset],
-            timezone_name=user.timezone,
             fields_by_api_name=field_map(date_field, target_field),
         )
 
@@ -952,9 +941,8 @@ class TestFieldRuleCheckService:
         )
 
         # act
-        FieldRuleCheckService(ruleset.field).apply_rulesets(
+        FieldRuleCheckService(ruleset.field, user.timezone).apply_rulesets(
             [ruleset],
-            timezone_name=user.timezone,
             fields_by_api_name=field_map(date_field, target_field),
         )
 
@@ -979,7 +967,7 @@ class TestFieldRuleCheckService:
             task=task,
             account=account,
         )
-        service = FieldRuleCheckService(field)
+        service = FieldRuleCheckService(field, user.timezone)
 
         # act
         blank = service._get_number_value(
@@ -1017,7 +1005,7 @@ class TestFieldRuleCheckService:
             account=account,
         )
         field.type = 'custom'
-        service = FieldRuleCheckService(field)
+        service = FieldRuleCheckService(field, user.timezone)
 
         # act
         values = service._prepare_values(
@@ -1319,9 +1307,8 @@ class TestFieldRuleActionIntegration:
         )
 
         # act
-        FieldRuleCheckService(ruleset.field).apply_rulesets(
+        FieldRuleCheckService(ruleset.field, user.timezone).apply_rulesets(
             [ruleset],
-            timezone_name=user.timezone,
             fields_by_api_name=field_map(source_field, target_field),
         )
 
@@ -1379,9 +1366,8 @@ class TestFieldRuleActionIntegration:
         )
 
         # act
-        FieldRuleCheckService(ruleset.field).apply_rulesets(
+        FieldRuleCheckService(ruleset.field, user.timezone).apply_rulesets(
             [ruleset],
-            timezone_name=user.timezone,
             fields_by_api_name=field_map(source_field, target_field),
         )
 
@@ -1443,9 +1429,8 @@ class TestFieldRuleActionIntegration:
         )
 
         # act
-        FieldRuleCheckService(ruleset.field).apply_rulesets(
+        FieldRuleCheckService(ruleset.field, user.timezone).apply_rulesets(
             [ruleset],
-            timezone_name=user.timezone,
             fields_by_api_name=field_map(source_field, target_field),
         )
 
@@ -1505,9 +1490,8 @@ class TestFieldRuleActionIntegration:
         )
 
         # act
-        FieldRuleCheckService(ruleset.field).apply_rulesets(
+        FieldRuleCheckService(ruleset.field, user.timezone).apply_rulesets(
             [ruleset],
-            timezone_name=user.timezone,
             fields_by_api_name=field_map(source_field, target_field),
         )
 
@@ -1569,9 +1553,8 @@ class TestFieldRuleActionIntegration:
         )
 
         # act
-        FieldRuleCheckService(ruleset.field).apply_rulesets(
+        FieldRuleCheckService(ruleset.field, user.timezone).apply_rulesets(
             [ruleset],
-            timezone_name=user.timezone,
             fields_by_api_name=field_map(source_field, target_field),
         )
 
@@ -1633,9 +1616,8 @@ class TestFieldRuleActionIntegration:
         )
 
         # act
-        FieldRuleCheckService(ruleset.field).apply_rulesets(
+        FieldRuleCheckService(ruleset.field, user.timezone).apply_rulesets(
             [ruleset],
-            timezone_name=user.timezone,
             fields_by_api_name=field_map(source_field, target_field),
         )
 

@@ -140,8 +140,9 @@ class FieldRuleCheckService:
         FieldRuleOperator.NOT_EQUAL,
     }
 
-    def __init__(self, field: TaskField):
+    def __init__(self, field: TaskField, timezone_name: str):
         self.field = field
+        self.timezone_name = timezone_name
 
     def _get_source(
         self,
@@ -193,11 +194,11 @@ class FieldRuleCheckService:
         return (
             calendar_date_from_tsp(
                 raw_value=source.value,
-                timezone_name=self._timezone_name,
+                timezone_name=self.timezone_name,
             ),
             calendar_date_from_tsp(
                 raw_value=raw_value,
-                timezone_name=self._timezone_name,
+                timezone_name=self.timezone_name,
             ),
         )
 
@@ -428,7 +429,6 @@ class FieldRuleCheckService:
     def apply_rulesets(
         self,
         rulesets: Iterable[FieldRuleSet],
-        timezone_name: str,
         fields_by_api_name: Dict[str, TaskField],
     ):
 
@@ -437,7 +437,6 @@ class FieldRuleCheckService:
             fields. """
 
         rulesets = list(rulesets)
-        self._timezone_name = timezone_name
         has_show_rules = False
         is_hidden = True
         for ruleset in rulesets:
