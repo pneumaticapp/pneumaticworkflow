@@ -35,14 +35,23 @@ class FieldRuleOperations:
 
     @classmethod
     def equal(cls, field_value: Any, rule_value: Any) -> bool:
+
+        """ Return True if values are strictly equal. """
+
         return field_value == rule_value
 
     @classmethod
     def not_equal(cls, field_value: Any, rule_value: Any) -> bool:
+
+        """ Return True if values are not equal. """
+
         return not cls.equal(field_value, rule_value)
 
     @classmethod
     def greater_than(cls, field_value: Any, rule_value: Any) -> bool:
+
+        """ Return True if field_value > rule_value. """
+
         if field_value is None or rule_value is None:
             return False
         try:
@@ -52,6 +61,9 @@ class FieldRuleOperations:
 
     @classmethod
     def less_than(cls, field_value: Any, rule_value: Any) -> bool:
+
+        """ Return True if field_value < rule_value. """
+
         if field_value is None or rule_value is None:
             return False
         try:
@@ -61,6 +73,9 @@ class FieldRuleOperations:
 
     @classmethod
     def exists(cls, field_value: Any) -> bool:
+
+        """ Return True if the field has a non-empty value. """
+
         if field_value is None:
             return False
         if field_value == 0:
@@ -69,10 +84,16 @@ class FieldRuleOperations:
 
     @classmethod
     def not_exists(cls, field_value: Any) -> bool:
+
+        """ Return True if the field has no value. """
+
         return not cls.exists(field_value)
 
     @classmethod
     def contains(cls, container: Optional[Any], item: Any) -> bool:
+
+        """ Return True if container includes the item. """
+
         if container is None or item is None:
             return False
         if isinstance(item, str) and not item:
@@ -84,6 +105,9 @@ class FieldRuleOperations:
 
     @classmethod
     def not_contains(cls, container: Optional[Any], item: Any) -> bool:
+
+        """ Return True if container does not include the item. """
+
         if container is None or item is None:
             return False
         if isinstance(item, str) and not item:
@@ -124,11 +148,17 @@ class FieldRuleCheckService:
         group_and: FieldRuleGroupAnd,
         fields_by_api_name: Dict[str, TaskField],
     ) -> Optional[TaskField]:
+
+        """ Resolve the source field for a predicate. """
+
         if group_and.field:
             return fields_by_api_name.get(group_and.field)
         return self.field
 
     def _decimal_or_none(self, raw: Optional[str]) -> Optional[Decimal]:
+
+        """ Parse raw string as Decimal or return None. """
+
         try:
             if raw is None or raw == '':
                 return None
@@ -143,6 +173,9 @@ class FieldRuleCheckService:
         operator: str,
         raw_value: Optional[str],
     ) -> Tuple[Optional[Decimal], Optional[Decimal]]:
+
+        """ Cast field and rule values to Decimal. """
+
         return (
             self._decimal_or_none(source.value),
             self._decimal_or_none(raw_value),
@@ -154,6 +187,9 @@ class FieldRuleCheckService:
         operator: str,
         raw_value: Optional[str],
     ) -> Tuple[Optional[date], Optional[date]]:
+
+        """ Cast field and rule values to date. """
+
         return (
             calendar_date_from_tsp(
                 raw_value=source.value,
@@ -171,6 +207,9 @@ class FieldRuleCheckService:
         operator: str,
         raw_value: Optional[str],
     ) -> Tuple[Set[str], Optional[Any]]:
+
+        """ Cast field and rule values for checkbox comparison. """
+
         if source.value:
             field_val = {
                 item.strip()
@@ -202,14 +241,23 @@ class FieldRuleCheckService:
         operator: str,
         raw_value: Optional[str],
     ) -> Tuple[Optional[str], Optional[str]]:
+
+        """ Cast field and rule values for string comparison. """
+
         if operator in self.UNARY_OPERATORS:
             return (source.value or None), None
         return (source.value or ''), (raw_value or '')
 
     def _get_user_field_value(self, source: TaskField) -> Optional[int]:
+
+        """ Return user_id of the source field or None. """
+
         return source.user_id or None
 
     def _get_group_field_value(self, source: TaskField) -> Optional[int]:
+
+        """ Return group_id of the source field or None. """
+
         return source.group_id or None
 
     def _get_user_value(
@@ -219,6 +267,9 @@ class FieldRuleCheckService:
         raw_value: Optional[str],
         value_type: Optional[str] = None,
     ) -> Tuple[Optional[int], Optional[int]]:
+
+        """ Cast user-type field and rule values to int. """
+
         if value_type == FieldRuleValueType.GROUP:
             field_val = self._get_group_field_value(source)
         elif value_type == FieldRuleValueType.USER:
@@ -244,6 +295,9 @@ class FieldRuleCheckService:
         operator: str,
         raw_value: Optional[str],
     ) -> Tuple[Optional[bool], None]:
+
+        """ Check whether the field has file attachments. """
+
         has_files = bool(source.storage_attachments.all())
         field_val = True if has_files else None
         return field_val, None
@@ -254,6 +308,9 @@ class FieldRuleCheckService:
         operator: str,
         raw_value: Optional[str],
     ) -> Tuple[Optional[str], Optional[str]]:
+
+        """ Return raw field and rule values for selection. """
+
         return source.value or None, raw_value
 
     VALUE_GETTERS = {
@@ -275,6 +332,9 @@ class FieldRuleCheckService:
         raw_value: Optional[str],
         value_type: Optional[str] = None,
     ) -> Tuple[Any, Any]:
+
+        """ Cast source and rule values to comparable types. """
+
         if source.type == FieldType.USER:
             return self._get_user_value(
                 source,
@@ -293,6 +353,9 @@ class FieldRuleCheckService:
         predicate: FieldRuleGroupAnd,
         fields_by_api_name: Dict[str, TaskField],
     ) -> bool:
+
+        """ Evaluate a single AND-predicate against field values. """
+
         source = self._get_source(predicate, fields_by_api_name)
         if source is None:
             return False
@@ -316,6 +379,9 @@ class FieldRuleCheckService:
         group_or: FieldRuleGroupOr,
         fields_by_api_name: Dict[str, TaskField],
     ) -> bool:
+
+        """ Return True if all AND-predicates in the group pass. """
+
         groups_and = list(group_or.groups_and.all())
         return all(
             self._check_group_and(
@@ -330,6 +396,9 @@ class FieldRuleCheckService:
         ruleset: FieldRuleSet,
         fields_by_api_name: Dict[str, TaskField],
     ) -> bool:
+
+        """ Return True if any OR-group of the ruleset is satisfied. """
+
         groups_or = list(ruleset.groups_or.all())
         if not groups_or:
             return True
@@ -343,6 +412,9 @@ class FieldRuleCheckService:
         ruleset: FieldRuleSet,
         fields_by_api_name: Dict[str, TaskField],
     ):
+
+        """ Raise FieldRuleCheckServiceException if validation fails. """
+
         is_satisfied = self._check_ruleset_condition(
             ruleset,
             fields_by_api_name,
@@ -366,18 +438,19 @@ class FieldRuleCheckService:
 
         rulesets = list(rulesets)
         self._timezone_name = timezone_name
-        has_show = False
-        is_shown = False
+        has_show_rules = False
+        is_hidden = True
         for ruleset in rulesets:
             if not ruleset.type_show:
                 continue
-            has_show = True
-            is_shown = is_shown or self._check_ruleset_condition(
+            has_show_rules = True
+            if self._check_ruleset_condition(
                 ruleset,
                 fields_by_api_name,
-            )
-        if has_show and self.field.is_hidden == is_shown:
-            self.field.is_hidden = not is_shown
+            ):
+                is_hidden = False
+        if has_show_rules:
+            self.field.is_hidden = is_hidden
         if self.field.is_hidden:
             return
         for ruleset in rulesets:
