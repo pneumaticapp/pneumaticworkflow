@@ -7,7 +7,7 @@ import { Avatar } from '../../../../UI/Avatar';
 import { Header } from '../../../../UI/Typeography/Header';
 import { UserData } from '../../../../UserData';
 import { IWorkflowLogItem } from '../../../../../types/workflow';
-import { TWorkflowLogTheme } from '../../WorkflowLog';
+import type { TWorkflowLogTheme } from '../../types';
 
 import styles from './WorkflowLogTaskSkipped.css';
 

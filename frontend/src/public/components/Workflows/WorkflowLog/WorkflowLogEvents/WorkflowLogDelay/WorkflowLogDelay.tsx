@@ -5,7 +5,7 @@ import classnames from 'classnames';
 import { IWorkflowLogItem, IWorkflowLogTask, EWorkflowLogEvent } from '../../../../../types/workflow';
 import { getSnoozedUntilDate } from '../../../../../utils/dateTime';
 import { Header } from '../../../../UI/Typeography/Header';
-import { TWorkflowLogTheme } from '../../WorkflowLog';
+import type { TWorkflowLogTheme } from '../../types';
 
 import styles from './WorkflowLogDelay.css';
 

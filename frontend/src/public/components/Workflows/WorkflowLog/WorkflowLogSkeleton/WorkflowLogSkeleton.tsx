@@ -2,7 +2,7 @@ import React from 'react';
 import classnames from 'classnames';
 
 import { Skeleton } from '../../../UI/Skeleton';
-import { TWorkflowLogTheme } from '../WorkflowLog';
+import type { TWorkflowLogTheme } from '../types';
 
 import styles from './WorkflowLogSkeleton.css';
 

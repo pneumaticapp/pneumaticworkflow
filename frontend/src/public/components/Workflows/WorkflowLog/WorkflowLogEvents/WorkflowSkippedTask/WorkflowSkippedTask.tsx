@@ -7,7 +7,7 @@ import { useIntl } from 'react-intl';
 import { Header } from '../../../../UI/Typeography/Header';
 import { ERoutes } from '../../../../../constants/routes';
 import { IWorkflowLogItem } from '../../../../../types/workflow';
-import { TWorkflowLogTheme } from '../../WorkflowLog';
+import type { TWorkflowLogTheme } from '../../types';
 
 import styles from './WorkflowSkippedTask.css';
 

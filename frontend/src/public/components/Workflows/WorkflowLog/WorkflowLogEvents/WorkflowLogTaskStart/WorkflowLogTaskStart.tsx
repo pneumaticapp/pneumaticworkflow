@@ -14,7 +14,7 @@ import { getLastTaskLogEventId } from './utils/getLastTaskLogEventId';
 import { ClockIcon } from '../../../../icons';
 import { getDueInData } from '../../../../DueIn/utils/getDueInData';
 import { EWorkflowsLogSorting, IWorkflowLogItem } from '../../../../../types/workflow';
-import { TWorkflowLogTheme } from '../../WorkflowLog';
+import type { TWorkflowLogTheme } from '../../types';
 
 import styles from './WorkflowLogTaskStart.css';
 import UserDataWithGroup from '../../../../UserDataWithGroup';
