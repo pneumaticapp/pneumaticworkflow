@@ -9,7 +9,7 @@ from src.authentication.enums import AuthTokenType
 from src.generics.exceptions import BaseServiceException
 from src.processes.enums import (
     FieldSetLayout,
-    FieldSetRuleType,
+    FieldSetRuleOperator,
     LabelPosition,
 )
 from src.processes.services.fieldsets.fieldset import (
@@ -38,12 +38,12 @@ def test_clone__ok(api_client, mocker):
         description='Original description',
         label_position=LabelPosition.LEFT,
         layout=FieldSetLayout.HORIZONTAL,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='10',
     )
     field = fieldset.fields.get()
-    rule = fieldset.rules.get()
-    rule.fields.add(field)
+    ruleset = fieldset.rulesets.get()
+    ruleset.fields.add(field)
     clone = create_test_shared_fieldset(
         account=account,
         name=fieldset.name,
@@ -51,13 +51,14 @@ def test_clone__ok(api_client, mocker):
         description=fieldset.description,
         label_position=fieldset.label_position,
         layout=fieldset.layout,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='10',
         api_name='cloned-fs',
     )
     clone_field = clone.fields.get()
-    clone_rule = clone.rules.get()
-    clone_rule.fields.add(clone_field)
+    clone_ruleset = clone.rulesets.get()
+    clone_ruleset.fields.add(clone_field)
+    clone_group_and = clone_ruleset.groups_or.first().groups_and.first()
 
     field_set_template_service_init_mock = mocker.patch.object(
         FieldSetTemplateService,
@@ -89,9 +90,16 @@ def test_clone__ok(api_client, mocker):
     assert response.data['fields'][0]['name'] == clone_field.name
     assert response.data['fields'][0]['api_name'] == clone_field.api_name
 
-    assert len(response.data['rules']) == 1
-    assert response.data['rules'][0]['type'] == clone_rule.type
-    assert response.data['rules'][0]['api_name'] == clone_rule.api_name
+    assert len(response.data['rulesets']) == 1
+    rule_resp = response.data['rulesets'][0]
+    assert rule_resp['api_name'] == clone_ruleset.api_name
+    assert rule_resp['fields'] == [clone_field.api_name]
+    assert rule_resp['groups_or'][0]['groups_and'][0]['operator'] == (
+        FieldSetRuleOperator.SUM_EQUAL
+    )
+    assert rule_resp['groups_or'][0]['groups_and'][0]['value'] == (
+        clone_group_and.value
+    )
 
     field_set_template_service_init_mock.assert_called_once_with(
         user=user,

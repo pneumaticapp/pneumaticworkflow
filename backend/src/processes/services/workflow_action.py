@@ -48,9 +48,10 @@ from src.processes.services.condition_check.service import (
 from src.processes.services.events import (
     WorkflowEventService,
 )
-from src.processes.services.tasks.field import (
+from src.processes.services.tasks.fields.field import (
     TaskFieldService,
 )
+from src.processes.services.workflows.workflow import WorkflowService
 from src.processes.services.tasks.task import TaskService
 from src.processes.services.workflows.fieldsets.fieldset import FieldSetService
 from src.processes.tasks.webhooks import (
@@ -1278,6 +1279,20 @@ class WorkflowActionService:
                         auth_type=self.auth_type,
                     )
                     service.validate_rules()
+
+            rulesets = (
+                self.workflow.field_rulesets
+                .for_task(task.id)
+                .with_groups()
+            )
+            service = WorkflowService(
+                user=self.user,
+                auth_type=self.auth_type,
+                is_superuser=self.is_superuser,
+                instance=self.workflow,
+            )
+            service.apply_field_rulesets(rulesets=rulesets)
+
             AnalyticService.task_completed(
                 user=self.user,
                 is_superuser=self.is_superuser,
