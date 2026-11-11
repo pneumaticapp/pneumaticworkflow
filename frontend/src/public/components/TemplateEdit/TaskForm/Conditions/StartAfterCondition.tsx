@@ -14,7 +14,9 @@ import { getSubscriptionPlan } from '../../../../redux/selectors/user';
 import { EConditionAction } from '../../../../types/templateTaskConditions';
 import type { ICondition, TConditionRule } from '../../../../types/templateTaskConditions';
 import { ESubscriptionPlan } from '../../../../types/account';
-import { IConditionsProps, IDropdownVariable, Predicate, RichLabel } from '.';
+import { Predicate } from './Predicate';
+import { RichLabel } from './RichLabel';
+import type { IConditionsProps, IDropdownVariable } from './types';
 
 import styles from './Conditions.css';
 import stylesTaskForm from '../TaskForm.css';

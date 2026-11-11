@@ -9,7 +9,7 @@ import { Field } from '../../../../Field';
 import { EUserStatus, TUserListItem } from '../../../../../types/user';
 import { getUserFullName } from '../../../../../utils/users';
 import type { EConditionOperators, TConditionRule } from '../../../../../types/templateTaskConditions';
-import { OPERATORS_WITHOUT_VALUE } from '..';
+import { OPERATORS_WITHOUT_VALUE } from '../utils/shared';
 import { DatePickerCustom } from '../../../../UI/form/DatePicker';
 import { parseUnixSeconds, toTspDate } from '../../../../../utils/dateTime';
 import { getFormattedDropdownOption } from '../utils/getFormattedDropdownOption';

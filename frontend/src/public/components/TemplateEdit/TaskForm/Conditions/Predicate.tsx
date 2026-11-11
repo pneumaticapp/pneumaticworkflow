@@ -11,7 +11,7 @@ import { TrashIcon } from '../../../icons';
 import { EConditionLogicOperations, EConditionOperators } from '../../../../types/templateTaskConditions';
 import type { TConditionRule } from '../../../../types/templateTaskConditions';
 import { TUserListItem } from '../../../../types/user';
-import { IDropdownVariable } from './CheckIfConditions';
+import type { IDropdownVariable } from './types';
 
 import styles from './Conditions.css';
 import stylesTaskForm from '../TaskForm.css';
