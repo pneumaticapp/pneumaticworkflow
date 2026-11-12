@@ -2,24 +2,13 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 import { createPortal } from 'react-dom';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 
-import { CustomTooltip } from '../../../UI';
+import { CustomTooltip } from '../../../UI/CustomTooltip';
+import type { IHoveredVariable } from './types';
 
 // Constants
 const VARIABLE_CHIP_SELECTOR = '.lexical-rich-editor-variable';
 const VARIABLE_TITLE_ATTRIBUTE = 'data-tooltip-title';
 const VARIABLE_SUBTITLE_ATTRIBUTE = 'data-tooltip-subtitle';
-
-/**
- * Represents a hovered variable element with its data.
- */
-interface IHoveredVariable {
-  /** The DOM element of the hovered variable */
-  element: HTMLElement;
-  /** The title text of the variable */
-  title: string;
-  /** The subtitle text of the variable */
-  subtitle: string;
-}
 
 /**
  * Extracts variable element from mouse event target.

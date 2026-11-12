@@ -5,25 +5,14 @@ import { useIntl } from 'react-intl';
 import OutsideClickHandler from '../../../../UI/OutsideClickHandler';
 
 import urlUtils from '../../../utils/urlUtils';
-import { InputField } from '../../../../UI';
+import { InputField } from '../../../../UI/Fields/InputField';
 import { SquaredCheckButtonIcon, SquaredCrossButtonIcon } from '../../../../icons';
 import { useFloatingFormPosition } from '../../../hooks';
-import type { TLinkFormMode } from '../types';
+import type { ILinkUrlFormProps } from '../types';
 
 import styles from './LinkUrlForm.css';
 
 const FORM_OFFSET_PX = 8;
-
-export interface ILinkUrlFormProps {
-  anchorElement?: HTMLElement | null;
-  anchorRect?: DOMRect | null;
-  editorContainerRef?: React.RefObject<HTMLDivElement | null>;
-  getAnchorRect?: (() => DOMRect | null) | null;
-  formMode: TLinkFormMode;
-  isVisible: boolean;
-  onClose: () => void;
-  onSubmit: (url: string, linkText?: string) => void;
-}
 
 export function LinkUrlForm({
   anchorElement,
