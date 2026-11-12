@@ -1,12 +1,11 @@
-import * as React from 'react';
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import classnames from 'classnames';
 import { Link } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 
 import { Header } from '../../../../UI/Typeography/Header';
 import { ERoutes } from '../../../../../constants/routes';
-import { IWorkflowLogItem } from '../../../../../types/workflow';
+import type { IWorkflowLogItem } from '../../../../../types/workflow';
 import type { TWorkflowLogTheme } from '../../types';
 
 import styles from './WorkflowSkippedTask.css';

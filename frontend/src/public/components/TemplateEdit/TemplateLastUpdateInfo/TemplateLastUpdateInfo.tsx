@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 
 import { IntlMessages } from '../../IntlMessages';
 import { UserData } from '../../UserData';

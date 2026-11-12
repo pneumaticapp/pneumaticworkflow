@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 
 interface IFilledHelpIconProps extends Pick<React.SVGProps<SVGSVGElement>, 'className' | 'fill'> {
   size?: number;

@@ -1,8 +1,8 @@
-import * as React from 'react';
+import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { UserData } from '../UserData/container';
-import { IUserDataWithGroupProps } from './types';
+import type { IUserDataWithGroupProps } from './types';
 import type { RootState } from '../../redux/store';
 import { ETemplateOwnerType } from '../../types/template';
 

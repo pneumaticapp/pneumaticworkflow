@@ -1,6 +1,6 @@
 /* eslint-disable */
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 import type { AnyAction, Dispatch } from 'redux';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';

@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 import type { TLogoTheme } from '../Logo/Logo';
 
 export interface ILogoCircleProps {

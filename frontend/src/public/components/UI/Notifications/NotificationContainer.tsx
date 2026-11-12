@@ -1,7 +1,7 @@
-import * as React from 'react';
+import React from 'react';
 import { NotificationManager } from './NotificationManager';
 import { NotificationsIntl } from './Notifications';
-import { INotification } from '../../../types';
+import type { INotification } from '../../../types';
 
 export interface INotificationContainerProps {
   enterTimeout: number;

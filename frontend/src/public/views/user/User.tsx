@@ -1,5 +1,6 @@
-import * as React from 'react';
-import { Route, Switch, Redirect, RouteComponentProps } from 'react-router-dom';
+import React from 'react';
+import type { RouteComponentProps } from 'react-router-dom';
+import { Route, Switch, Redirect } from 'react-router-dom';
 
 import { ERoutes } from '../../constants/routes';
 import { ExpiredInvite } from './ExpiredInvite/ExpiredInvite';

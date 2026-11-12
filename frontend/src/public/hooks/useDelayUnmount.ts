@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 
 export function useDelayUnmount(isMounted: boolean, delayTime: number) {
   const [shouldRender, setShouldRender] = React.useState(false);

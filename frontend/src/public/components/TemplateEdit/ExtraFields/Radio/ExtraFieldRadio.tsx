@@ -1,6 +1,6 @@
 /* eslint-disable */
 /* prettier-ignore */
-import * as React from 'react';
+import React, { useState } from 'react';
 import classnames from 'classnames';
 
 import { getEmptySelection } from '../../KickoffRedux/utils/getEmptySelection';
@@ -19,7 +19,6 @@ import type { IWorkflowExtraFieldProps } from '../types';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
 import fieldStyles from './ExtraFieldRadio.css';
-import { useState } from 'react';
 
 const DEFAULT_OPTION_INPUT_WIDTH = 120;
 

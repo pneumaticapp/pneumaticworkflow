@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { Skeleton } from '../../UI/Skeleton';
 
 import rowStyles from '../DatasetRow/DatasetRow.css';

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { LargeLogo } from '../icons/LargeLogo';
 import { LogoCircle } from '../icons/LogoCircle';
 

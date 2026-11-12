@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { ChangeEvent, ReactNode, SVGAttributes, useState } from 'react';
+import type { ChangeEvent, ReactNode, SVGAttributes} from 'react';
+import React, { useState } from 'react';
 import classnames from 'classnames';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import { DropdownItem, DropdownMenu, DropdownToggle, Dropdown } from 'reactstrap';

@@ -1,10 +1,9 @@
-import * as React from 'react';
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 
 import { Tabs } from '../../../../UI';
-import { EGraphViewMode } from '../../../../../types/template';
+import type { EGraphViewMode } from '../../../../../types/template';
 import { GRAPH_VIEW_TOGGLE_OPTIONS } from '../../types';
 import { setViewMode } from '../../../../../redux/templateGraphView/slice';
 import { selectTemplateViewMode } from '../../../../../redux/selectors/templateGraphView';

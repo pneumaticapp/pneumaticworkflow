@@ -1,8 +1,9 @@
-import * as React from 'react';
+import React from 'react';
 
-import { TTaskCheckableItemOwnProps, TaskCheckableItemContainer } from './TaskCheckableItem';
+import type { TTaskCheckableItemOwnProps} from './TaskCheckableItem';
+import { TaskCheckableItemContainer } from './TaskCheckableItem';
 
-import { ITask } from '../../../types/tasks';
+import type { ITask } from '../../../types/tasks';
 import { EWorkflowStatus } from '../../../types/workflow';
 
 export function createChecklistExtension(task: ITask) {

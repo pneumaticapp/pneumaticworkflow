@@ -1,10 +1,10 @@
-import * as React from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
 
 import { createCheckPlaceholderId } from '../createCheckPlaceholderId';
 
 import { Checkbox } from '../../../UI';
-import { TMarkChecklistItemPayload, TUnmarkChecklistItemPayload } from '../../../../redux/actions';
+import type { TMarkChecklistItemPayload, TUnmarkChecklistItemPayload } from '../../../../redux/actions';
 
 import styles from '../../../RichText/RichText.css';
 

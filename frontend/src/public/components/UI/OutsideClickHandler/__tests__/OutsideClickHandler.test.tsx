@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import OutsideClickHandler from '../OutsideClickHandler';
 import { IOutsideClickHandlerProperties } from '../types';

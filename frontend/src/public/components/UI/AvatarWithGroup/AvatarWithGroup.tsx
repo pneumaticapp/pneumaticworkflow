@@ -1,6 +1,7 @@
-import * as React from 'react';
+import React from 'react';
 
-import { Avatar, IAvatarProps, TAvatarUser } from '../Avatar/Avatar';
+import type { IAvatarProps, TAvatarUser } from '../Avatar/Avatar';
+import { Avatar } from '../Avatar/Avatar';
 import { ETemplateOwnerType } from '../../../types/template';
 
 export interface IAvatarWithGroupProps extends IAvatarProps {

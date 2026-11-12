@@ -1,5 +1,5 @@
 // <reference types="jest" />
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 
 import { FileOutput } from '../FileOutput';

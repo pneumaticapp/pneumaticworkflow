@@ -1,7 +1,7 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 
-import { TPlaceholderMood, IPlaceholderIconProps } from './types';
+import type { TPlaceholderMood, IPlaceholderIconProps } from './types';
 
 import { Header } from '../Typeography/Header';
 

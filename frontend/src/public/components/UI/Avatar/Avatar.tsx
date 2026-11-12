@@ -1,7 +1,8 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 
-import { EUserStatus, IUnsavedUser, TUserType } from '../../../types/user';
+import type { IUnsavedUser, TUserType } from '../../../types/user';
+import { EUserStatus } from '../../../types/user';
 import { getUserFullName } from '../../../utils/users';
 import { CustomTooltip } from '../CustomTooltip';
 import { ExternalUserAvatarIcon, GroupIcon, GuestUserAvatarIcon, PneumaticAvatarIcon } from '../../icons';

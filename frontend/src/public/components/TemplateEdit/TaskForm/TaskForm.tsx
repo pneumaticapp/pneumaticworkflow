@@ -1,21 +1,22 @@
-import * as React from 'react';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 import classnames from 'classnames';
 
 import { TaskDescriptionEditor } from './TaskDescriptionEditor';
 import { scrollToElement } from '../../../utils/helpers';
-import { TUserListItem } from '../../../types/user';
-import { ITemplateKickoffClient, ITemplateTaskClient, TTaskVariable, EStartingType } from '../../../types/template';
-import { TTaskFormPart, ETaskFormParts } from '../types';
+import type { TUserListItem } from '../../../types/user';
+import type { ITemplateKickoffClient, ITemplateTaskClient, TTaskVariable} from '../../../types/template';
+import { EStartingType } from '../../../types/template';
+import type { TTaskFormPart} from '../types';
+import { ETaskFormParts } from '../types';
 import { OutputFormIntl } from '../OutputForm/OutputForm';
 import { ShowMore } from '../../UI/ShowMore';
 import { TaskPerformers } from './TaskPerformers';
 import { CheckIfConditions, removeDeletedTasks, StartAfterCondition } from './Conditions';
 import type { ICondition } from '../../../types/templateTaskConditions';
 import { InputWithVariables } from '../InputWithVariables';
-import { TPatchTaskPayload } from '../../../redux/actions';
+import type { TPatchTaskPayload } from '../../../redux/actions';
 
 import { ReturnTo } from './ReturnTo';
 import { DueDate } from './DueDate';

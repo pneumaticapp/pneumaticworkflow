@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 
 import { captureException } from '../../utils/sentryCapture';
 import { getWithExpiry } from './utils/getWithExpiry';

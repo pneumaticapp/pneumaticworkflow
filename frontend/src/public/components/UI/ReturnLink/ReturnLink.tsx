@@ -1,6 +1,6 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
-import * as H from 'history';
+import type * as H from 'history';
 
 import { ReturnIcon } from '../../icons';
 import { NavLink } from '../../NavLink';

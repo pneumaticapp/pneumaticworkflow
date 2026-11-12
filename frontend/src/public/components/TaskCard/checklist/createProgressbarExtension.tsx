@@ -1,8 +1,9 @@
-import * as React from 'react';
+import React from 'react';
 
-import { ChecklistProgressbarContainer, TChecklistProgressbarOwnProps } from './ChecklistProgressbar';
+import type { TChecklistProgressbarOwnProps } from './ChecklistProgressbar';
+import { ChecklistProgressbarContainer } from './ChecklistProgressbar';
 
-import { ITask } from '../../../types/tasks';
+import type { ITask } from '../../../types/tasks';
 
 export function createProgressbarExtension(task: ITask) {
   const checklists: TChecklistProgressbarOwnProps[] = [];

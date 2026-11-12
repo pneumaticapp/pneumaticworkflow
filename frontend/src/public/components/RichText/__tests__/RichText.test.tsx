@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { render } from '@testing-library/react';
 import { RichText } from '../RichText';
 import type { IRichTextProps } from '../types';

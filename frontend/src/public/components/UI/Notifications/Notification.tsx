@@ -1,12 +1,12 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import * as React from 'react';
+import React from 'react';
 import classNames from 'classnames';
-import { IntlShape } from 'react-intl';
+import type { IntlShape } from 'react-intl';
 
 import { ETimeouts } from '../../../constants/defaultValues';
 import { noop } from '../../../utils/noop';
-import { TNotificationType } from '../../../types';
+import type { TNotificationType } from '../../../types';
 import { ClearIcon } from '../../icons';
 
 import styles from './Notifications.css';

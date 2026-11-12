@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -28,7 +27,7 @@ import { getSortedAndFilteredDatasetItems } from '../../../utils/dataset';
 
 import { getCurrentDataset, isCurrentDatasetLoading } from '../../../redux/selectors/datasets';
 
-import { TDatasetDetailsProps } from './types';
+import type { TDatasetDetailsProps } from './types';
 import styles from './DatasetDetails.css';
 
 const getSavedSorting = (datasetId: string): EDatasetsSorting => {

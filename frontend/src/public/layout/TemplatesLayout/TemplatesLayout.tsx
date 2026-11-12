@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector, useDispatch } from 'react-redux';
 
@@ -11,9 +11,10 @@ import { setDatasetsListSorting } from '../../redux/datasets/slice';
 import { setFieldsetsListSorting } from '../../redux/fieldsets/slice';
 import { getDatasetsSorting } from '../../redux/selectors/datasets';
 import { getFieldsetsSorting } from '../../redux/selectors/fieldsets';
-import { EDatasetsSorting } from '../../types/dataset';
-import { EFieldsetsSorting } from '../../types/fieldset';
-import { ETemplatesTab, ITemplatesLayoutProps } from '../../types/template';
+import type { EDatasetsSorting } from '../../types/dataset';
+import type { EFieldsetsSorting } from '../../types/fieldset';
+import type { ITemplatesLayoutProps } from '../../types/template';
+import { ETemplatesTab } from '../../types/template';
 import { history } from '../../utils/history';
 
 import styles from './TemplatesLayout.css';

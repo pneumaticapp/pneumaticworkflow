@@ -1,8 +1,8 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import { TForegroundColor } from '../common/types';
+import type { TForegroundColor } from '../common/types';
 import { getForegroundClass } from '../common/utils/getForegroundClass';
 import { FolderIcon } from '../../../icons';
 import { uploadFiles } from '../../../../utils/uploadFiles';

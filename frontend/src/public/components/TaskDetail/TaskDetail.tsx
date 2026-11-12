@@ -1,10 +1,11 @@
-import * as React from 'react';
-import { RouteComponentProps } from 'react-router-dom';
+import React from 'react';
+import type { RouteComponentProps } from 'react-router-dom';
 
 import { TaskCardContainer } from '../TaskCard';
-import { TLoadCurrentTaskPayload } from '../../redux/actions';
+import type { TLoadCurrentTaskPayload } from '../../redux/actions';
 import { PNEUMATIC_SUFFIX, TITLES } from '../../constants/titles';
-import { ETaskCardViewMode, ITask } from '../../types/tasks';
+import type { ITask } from '../../types/tasks';
+import { ETaskCardViewMode } from '../../types/tasks';
 
 import styles from './TaskDetail.css';
 

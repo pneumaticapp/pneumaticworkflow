@@ -1,10 +1,10 @@
 import classnames from 'classnames';
-import * as React from 'react';
-import { ChangeEvent, useCallback, useMemo, useRef, useState } from 'react';
+import type { ChangeEvent} from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 
 import { validateKickoffFieldName } from '../../../../utils/validators';
-import { EInputNameBackgroundColor } from '../../../../types/workflow';
+import type { EInputNameBackgroundColor } from '../../../../types/workflow';
 import { getInputNameBackground } from './getInputNameBackground';
 import { EExtraFieldMode } from '../../../../types/template';
 import { EFieldLabelPosition } from '../../../../types/fieldset';

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { EExtraFieldMode } from '../../../../types/template';

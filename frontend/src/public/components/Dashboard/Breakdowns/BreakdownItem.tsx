@@ -1,7 +1,7 @@
 /* eslint-disable */
 /* prettier-ignore */
 // tslint:disable: max-file-line-count
-import * as React from 'react';
+import React from 'react';
 import { history } from '../../../utils/history';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';

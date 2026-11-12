@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 
 import { useCloseOnOutsideClick } from '../../../../../hooks/useCloseOnOutsideClick';

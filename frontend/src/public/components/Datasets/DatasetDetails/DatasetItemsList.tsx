@@ -1,15 +1,15 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 
 import { Placeholder, SelectMenu, InputField } from '../../UI';
 import { SearchMediumIcon } from '../../icons';
 import { TasksPlaceholderIcon } from '../../Tasks/TasksPlaceholderIcon';
 import { DatasetRow } from '../DatasetRow/DatasetRow';
-import { EDatasetsSorting } from '../../../types/dataset';
+import type { EDatasetsSorting } from '../../../types/dataset';
 import { datasetsSortingValues } from '../../../constants/sortings';
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
 
-import { IDatasetItemsListProps } from './types';
+import type { IDatasetItemsListProps } from './types';
 import styles from './DatasetDetails.css';
 
 export const DatasetItemsList = ({

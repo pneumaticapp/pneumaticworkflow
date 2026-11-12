@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 
 import { Avatar } from '../../../../UI/Avatar';
@@ -8,7 +8,7 @@ import { getUserFullName } from '../../../../../utils/users';
 import { EKickoffOutputsViewModes, KickoffOutputs } from '../../../../KickoffOutputs';
 import { isArrayWithItems } from '../../../../../utils/helpers';
 import { UserData } from '../../../../UserData';
-import { IWorkflowLogItem, IWorkflowLogTask } from '../../../../../types/workflow';
+import type { IWorkflowLogItem, IWorkflowLogTask } from '../../../../../types/workflow';
 
 import styles from './WorkflowLogTaskComplete.css';
 

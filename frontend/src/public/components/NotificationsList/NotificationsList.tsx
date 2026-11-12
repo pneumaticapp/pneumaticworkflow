@@ -1,11 +1,11 @@
-import * as React from 'react';
+import React from 'react';
 import { createPortal } from 'react-dom';
 import classnames from 'classnames';
 import OutsideClickHandler from '../UI/OutsideClickHandler';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useIntl } from 'react-intl';
 
-import { TNotificationsListItem } from '../../types';
+import type { TNotificationsListItem } from '../../types';
 import { ClearIcon } from '../icons';
 import { Loader } from '../UI/Loader';
 import { Placeholder, SectionTitle } from '../UI';
@@ -13,7 +13,7 @@ import { isArrayWithItems } from '../../utils/helpers';
 import { NotificationsListItem } from './NotificationsListItem';
 import { NotificationsListPlaceholderIcon } from './NotificationsListPlaceholderIcon';
 import { getNotificationListItemProps } from './getNotificationListItemProps';
-import { INotificationsListProps } from './types';
+import type { INotificationsListProps } from './types';
 
 import styles from './NotificationsList.css';
 

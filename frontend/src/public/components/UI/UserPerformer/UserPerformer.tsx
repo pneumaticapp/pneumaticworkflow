@@ -1,9 +1,10 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 
 import { Avatar } from '..';
 import { DeleteRoundIcon } from '../../icons';
-import { TUserListItem, isUserAbsent } from '../../../types/user';
+import type { TUserListItem} from '../../../types/user';
+import { isUserAbsent } from '../../../types/user';
 import { getUserById } from '../../UserData/utils/getUserById';
 import { ETaskPerformerType } from '../../../types/template';
 

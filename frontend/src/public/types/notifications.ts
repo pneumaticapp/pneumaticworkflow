@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { IWorkflow } from './workflow';
+import type React from 'react';
+import type { IWorkflow } from './workflow';
 
 export type TNotificationType = 'info' | 'success' | 'warning' | 'error';
 

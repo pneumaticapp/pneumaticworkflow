@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import type { IntlShape } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 

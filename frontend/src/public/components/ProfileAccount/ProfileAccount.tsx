@@ -1,8 +1,8 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 
 import { TITLES } from '../../constants/titles';
-import { IUpdateAccountRequest } from '../../api/editAccount';
+import type { IUpdateAccountRequest } from '../../api/editAccount';
 import { validateCompanyName } from '../../utils/validators';
 import { InputField } from '../UI/Fields/InputField';
 import { Button } from '../UI/Buttons/Button';
@@ -10,8 +10,8 @@ import { Header } from '../UI/Typeography/Header';
 import { ESettingsTabs } from '../../types/profile';
 import { AttachmentField, SectionTitle } from '../UI';
 import type { TUploadedFile } from '../../types/attachments';
-import { TAccountLeaseLevel } from '../../types/user';
-import { ESubscriptionPlan } from '../../types/account';
+import type { TAccountLeaseLevel } from '../../types/user';
+import type { ESubscriptionPlan } from '../../types/account';
 
 import styles from './ProfileAccount.css';
 

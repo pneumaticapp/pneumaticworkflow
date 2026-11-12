@@ -1,13 +1,12 @@
-import * as React from 'react';
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
-import { ITemplateClient } from '../../../types/template';
-import { TUserListItem } from '../../../types/user';
-import { ITemplateEditorController } from '../types';
+import type { ITemplateClient } from '../../../types/template';
+import type { TUserListItem } from '../../../types/user';
+import type { ITemplateEditorController } from '../types';
 import { KickoffReduxContainer } from '../KickoffRedux';
 import { WorkflowTaskFormContainer } from '../TaskForm';
 import { GraphTaskEditorPanel, TemplateGraphEditor } from '../TemplateGraphEditor';
-import { TGraphAddTaskIntent } from '../TemplateGraphEditor/types';
+import type { TGraphAddTaskIntent } from '../TemplateGraphEditor/types';
 import { KICKOFF_NODE_ID } from '../TemplateGraphEditor/utils/templateToGraph';
 
 export interface ITemplateGraphEditorViewProps {

@@ -1,10 +1,10 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 
 import { Avatar } from '../../../../UI/Avatar';
 import { AlarmCrossedIcon } from '../../../../icons';
 import { DateFormat } from '../../../../UI/DateFormat';
-import { IWorkflowLogItem } from '../../../../../types/workflow';
+import type { IWorkflowLogItem } from '../../../../../types/workflow';
 
 import styles from './WorkflowLogWorkflowResumed.css';
 

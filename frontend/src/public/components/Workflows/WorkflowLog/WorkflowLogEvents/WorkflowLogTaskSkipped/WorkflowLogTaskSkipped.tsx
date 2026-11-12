@@ -1,12 +1,11 @@
-import * as React from 'react';
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { Avatar } from '../../../../UI/Avatar';
 import { Header } from '../../../../UI/Typeography/Header';
 import { UserData } from '../../../../UserData';
-import { IWorkflowLogItem } from '../../../../../types/workflow';
+import type { IWorkflowLogItem } from '../../../../../types/workflow';
 import type { TWorkflowLogTheme } from '../../types';
 
 import styles from './WorkflowLogTaskSkipped.css';

@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import type { MouseEventHandler } from 'react';
 import OutsideClickHandler from '../../UI/OutsideClickHandler';
 import PerfectScrollbar from 'react-perfect-scrollbar';

@@ -1,7 +1,7 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 
-import { TIconSize } from '../../../types/common';
+import type { TIconSize } from '../../../types/common';
 
 export interface ICommentIconProps extends React.SVGAttributes<SVGElement> {
   size?: TIconSize;

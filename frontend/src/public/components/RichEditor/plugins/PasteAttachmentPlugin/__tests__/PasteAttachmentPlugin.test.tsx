@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { render, waitFor } from '@testing-library/react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { PASTE_COMMAND } from 'lexical';

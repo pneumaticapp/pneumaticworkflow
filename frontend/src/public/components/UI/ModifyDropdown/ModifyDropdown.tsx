@@ -1,12 +1,14 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 import classNames from 'classnames';
 
 import { TrashIcon, PencilIcon, UnionIcon, SettingsIcon, MoreIcon } from '../../icons';
 
-import { Dropdown, TDropdownOption } from '../Dropdown';
+import type { TDropdownOption } from '../Dropdown';
+import { Dropdown } from '../Dropdown';
 
-import { IModifyDropdownProps, EModifyDropdownToggle } from './types';
+import type { IModifyDropdownProps} from './types';
+import { EModifyDropdownToggle } from './types';
 
 import buttonStyles from '../Buttons/Button/Button.css';
 import styles from './ModifyDropdown.css';

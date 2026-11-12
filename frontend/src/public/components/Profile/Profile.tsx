@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { Formik, Form } from 'formik';
 import type { FormikConfig } from 'formik';

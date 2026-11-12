@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { EIntegrations } from '../../types/integrations';
+import React from 'react';
+import type { EIntegrations } from '../../types/integrations';
 import { useTemplateIntegrationsList } from './utils/useTemplateIntegrationsList';
 
 export interface ITemplateIntegrationsStatsProps {

@@ -1,5 +1,5 @@
 // <reference types="jest" />
-import * as React from 'react';
+import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import { ExtraFieldFile } from '../ExtraFieldFile';

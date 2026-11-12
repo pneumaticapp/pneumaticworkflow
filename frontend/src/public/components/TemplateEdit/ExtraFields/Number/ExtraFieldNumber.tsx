@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { useCallback, ChangeEvent, ReactNode } from 'react';
+import type { ChangeEvent, ReactNode } from 'react';
+import React, { useCallback } from 'react';
 
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { EExtraFieldMode } from '../../../../types/template';

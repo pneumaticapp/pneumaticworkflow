@@ -1,14 +1,14 @@
-import * as React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 
 import { Button } from '../UI/Buttons/Button';
 import { Header } from '../UI/Typeography/Header';
 import { DropdownList } from '../UI/DropdownList';
 import { DateField } from '../UI/Fields/DateField';
-import { UsersDropdown, TUsersDropdownOption } from '../UI/form/UsersDropdown';
+import type { TUsersDropdownOption } from '../UI/form/UsersDropdown';
+import { UsersDropdown } from '../UI/form/UsersDropdown';
 import { UserPerformer, EBgColorTypes } from '../UI/UserPerformer';
-import { TUserListItem } from '../../types/user';
+import type { TUserListItem } from '../../types/user';
 import { ETaskPerformerType } from '../../types/template';
 import { formatDateLocal } from '../../utils/formatDateLocal';
 import { useSubstituteUsers } from '../../utils/useSubstituteUsers';

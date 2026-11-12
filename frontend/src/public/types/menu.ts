@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import * as React from 'react';
+import type React from 'react';
 
 export type TMenuCounterType = 'alert' | 'info';
 

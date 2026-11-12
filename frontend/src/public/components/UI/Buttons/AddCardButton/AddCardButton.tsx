@@ -1,8 +1,7 @@
-import * as React from 'react';
-import { memo } from 'react';
+import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Header } from '../../Typeography/Header';
-import { IAddCardButtonProps } from './types';
+import type { IAddCardButtonProps } from './types';
 
 import styles from './AddCardButton.css';
 
