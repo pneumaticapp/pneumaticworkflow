@@ -7,7 +7,7 @@ import OutsideClickHandler from '../../../../UI/OutsideClickHandler';
 import urlUtils from '../../../utils/urlUtils';
 import { InputField } from '../../../../UI/Fields/InputField';
 import { SquaredCheckButtonIcon, SquaredCrossButtonIcon } from '../../../../icons';
-import { useFloatingFormPosition } from '../../../hooks';
+import { useFloatingFormPosition } from '../../../hooks/useFloatingFormPosition';
 import type { ILinkUrlFormProps } from '../types';
 
 import styles from './LinkUrlForm.css';

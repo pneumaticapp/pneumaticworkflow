@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { ILinkFormState, TLinkFormMode, IScrollSnapshot } from '../plugins/LinkPlugin/types';
 import { findScrollableElements } from '../utils/findScrollableElements';
+import type { ISelectionAnchorResult } from './types';
 
 function captureScrollSnapshots(from: Element): IScrollSnapshot[] {
   return findScrollableElements(from).map((el) => ({
@@ -32,12 +33,6 @@ function buildScrollAdjustedRect(
 
 function rectFromRect(r: DOMRect): DOMRect {
   return new DOMRect(r.left, r.top, r.width, r.height);
-}
-
-interface ISelectionAnchorResult {
-  frozenRect: DOMRect | null;
-  scrollSnapshots: IScrollSnapshot[];
-  anchorElement: HTMLElement | null;
 }
 
 function captureSelectionAnchor(fallbackRect: DOMRect | null): ISelectionAnchorResult {

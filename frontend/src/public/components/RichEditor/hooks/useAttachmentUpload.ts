@@ -4,7 +4,7 @@ import type { LexicalEditor } from 'lexical';
 import { uploadFiles } from '../../../utils/uploadFiles';
 import { getAttachmentTypeByUrl, getAttachmentTypeByFilename } from '../../Attachments/utils/getAttachmentType';
 import { NotificationManager } from '../../UI/Notifications';
-import { INSERT_ATTACHMENT_COMMAND } from '../plugins';
+import { INSERT_ATTACHMENT_COMMAND } from '../plugins/InsertAttachmentPlugin';
 
 const UPLOAD_ERROR_MESSAGE_KEY = 'workflows.tasks-failed-to-upload-files';
 

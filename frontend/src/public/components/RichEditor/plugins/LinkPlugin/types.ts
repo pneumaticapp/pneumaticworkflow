@@ -34,3 +34,8 @@ export interface ILinkUrlFormProps {
   onClose: () => void;
   onSubmit: (url: string, linkText?: string) => void;
 }
+
+export interface ILinkPluginProviderProps {
+  children: React.ReactNode;
+  editorContainerRef?: React.RefObject<HTMLDivElement | null>;
+}
