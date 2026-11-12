@@ -1,18 +1,11 @@
 import * as React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
-import {
-  type LexicalNode,
-  type NodeKey,
-  type DOMConversionMap,
-  type DOMConversionOutput,
-  type DOMExportOutput,
-  DecoratorNode,
-  $applyNodeReplacement,
-} from 'lexical';
+import { DecoratorNode, $applyNodeReplacement } from 'lexical';
+import type { LexicalNode, NodeKey, DOMConversionMap, DOMConversionOutput, DOMExportOutput } from 'lexical';
 
-import type { SerializedVariableNode, TVariableNodePayload } from './types';
-import { getLocalizedSystemVariable } from '../../../TemplateEdit/TaskForm/utils/getTaskVariables';
+import type { IVariableComponentProps, SerializedVariableNode, TVariableNodePayload } from './types';
+import { getLocalizedSystemVariable } from '../../../TemplateEdit/TaskForm/utils/getLocalizedSystemVariable';
 
 import styles from './VariableNode.css';
 
@@ -25,13 +18,7 @@ const VARIABLE_TITLE_ATTRIBUTE = 'data-lexical-variable-title';
 const VARIABLE_SUBTITLE_ATTRIBUTE = 'data-lexical-variable-subtitle';
 const LEXICAL_DECORATOR_ATTRIBUTE = 'data-lexical-decorator';
 
-interface VariableComponentProps {
-  apiName: string;
-  title: string;
-  subtitle?: string;
-}
-
-function VariableComponent({ apiName, title, subtitle }: VariableComponentProps): React.ReactElement {
+function VariableComponent({ apiName, title, subtitle }: IVariableComponentProps): React.ReactElement {
   const { formatMessage } = useIntl();
   const { title: localizedTitle, subtitle: localizedSubtitle } = getLocalizedSystemVariable({
     apiName,

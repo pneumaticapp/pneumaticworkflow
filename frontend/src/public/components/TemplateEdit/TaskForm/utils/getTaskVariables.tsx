@@ -2,57 +2,26 @@ import * as React from 'react';
 import { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 
-import {
+import { EExtraFieldType, EStartingType } from '../../../../types/template';
+import type {
   ITemplateKickoffClient,
   IRuntimeKickoffClient,
   IExtraField,
   ITemplateTaskClient,
   IFieldsetBindingClient,
-  EExtraFieldType,
   TTemplateFieldFieldset,
   TTaskVariable,
-  EStartingType,
 } from '../../../../types/template';
-import { IFieldsetField, IFieldsetRuntime } from '../../../../types/fieldset';
+import type { IFieldsetField, IFieldsetRuntime } from '../../../../types/fieldset';
 import { normalizeSelections } from '../../utils/normalizeSelections';
-import { IGetLocalizedSystemVariableParams, IGetLocalizedSystemVariableReturn } from './types';
 import { StepName } from '../../../StepName';
 import { getPreviousTasks } from './getPreviousTasks';
-
-export const WORKFLOW_STARTER_VARIABLE_API_NAME = 'workflow-starter';
-export const WORKFLOW_STARTER_VARIABLE_TITLE = 'Workflow starter';
-export const SYSTEM_VARIABLE_SUBTITLE = 'System variable';
-
-const SYSTEM_VARIABLE_API_NAMES = [WORKFLOW_STARTER_VARIABLE_API_NAME];
-export const isSystemVariable = (apiName: string) => SYSTEM_VARIABLE_API_NAMES.includes(apiName);
-
-export function getLocalizedSystemVariable({
-  apiName,
-  title,
-  subtitle,
-  formatMessage,
-}: IGetLocalizedSystemVariableParams): IGetLocalizedSystemVariableReturn {
-  if (!isSystemVariable(apiName)) {
-    return {
-      title,
-      ...(subtitle !== undefined && { subtitle }),
-    };
-  }
-
-  return {
-    title: formatMessage({ id: `kickoff.system-varibale-${apiName}` }),
-    ...(subtitle !== undefined && { subtitle: formatMessage({ id: 'kickoff.system-varibale' }) }),
-  };
-}
-
-type TGetVariablesParam = {
-  kickoff: Pick<ITemplateKickoffClient, 'fields'> & { fieldsets?: (IFieldsetBindingClient | TTemplateFieldFieldset)[] };
-  tasks: (Pick<ITemplateTaskClient, 'fields' | 'apiName'> & {
-    name?: ITemplateTaskClient['name'];
-    fieldsets?: (IFieldsetBindingClient | TTemplateFieldFieldset)[];
-  })[];
-  templateId?: number;
-};
+import {
+  WORKFLOW_STARTER_VARIABLE_API_NAME,
+  WORKFLOW_STARTER_VARIABLE_TITLE,
+  SYSTEM_VARIABLE_SUBTITLE,
+} from './getLocalizedSystemVariable';
+import type { TGetVariablesParam } from './types';
 
 function getVariablesFromSelectedFieldsets(
   fieldsets: (IFieldsetBindingClient | TTemplateFieldFieldset)[] | undefined,

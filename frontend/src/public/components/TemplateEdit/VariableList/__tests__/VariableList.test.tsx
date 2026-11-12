@@ -3,13 +3,15 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
-import { VariableList, IVariableListProps } from '../VariableList';
-import { EExtraFieldType, TTaskVariable } from '../../../../types/template';
+import { VariableList } from '../VariableList';
+import type { IVariableListProps } from '../types';
+import { EExtraFieldType } from '../../../../types/template';
+import type { TTaskVariable } from '../../../../types/template';
 import {
   WORKFLOW_STARTER_VARIABLE_API_NAME,
   WORKFLOW_STARTER_VARIABLE_TITLE,
   SYSTEM_VARIABLE_SUBTITLE,
-} from '../../TaskForm/utils/getTaskVariables';
+} from '../../TaskForm/utils/getLocalizedSystemVariable';
 
 jest.mock('reactstrap', () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

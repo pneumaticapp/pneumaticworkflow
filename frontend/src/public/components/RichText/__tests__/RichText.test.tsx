@@ -19,11 +19,12 @@ jest.mock('react-dom/server', () => ({
   },
 }));
 import { intlMock } from '../../../__stubs__/intlMock';
-import { EExtraFieldType, TTaskVariable } from '../../../types/template';
+import { EExtraFieldType } from '../../../types/template';
+import type { TTaskVariable } from '../../../types/template';
 import {
   WORKFLOW_STARTER_VARIABLE_API_NAME,
   WORKFLOW_STARTER_VARIABLE_TITLE,
-} from '../../TemplateEdit/TaskForm/utils/getTaskVariables';
+} from '../../TemplateEdit/TaskForm/utils/getLocalizedSystemVariable';
 
 describe('RichText', () => {
   const LOCALIZED_WF_STARTER_TITLE = intlMock.formatMessage({ id: 'kickoff.system-varibale-workflow-starter' });

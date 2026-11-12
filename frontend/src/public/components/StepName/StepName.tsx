@@ -2,17 +2,8 @@
 /* prettier-ignore */
 import * as React from 'react';
 
-import { TLoadTemplateVariablesPayload } from '../../redux/actions';
 import { RichText } from '../RichText';
-
-import { TTaskVariable } from '../../types/template';
-
-export interface IStepNameProps {
-  initialStepName: string;
-  templateId: number;
-  variables?: TTaskVariable[];
-  loadTemplateVariables(payload: TLoadTemplateVariablesPayload): void;
-}
+import type { IStepNameProps } from './types';
 
 export function StepNameComponent({ initialStepName, templateId, variables, loadTemplateVariables }: IStepNameProps) {
   React.useEffect(() => {

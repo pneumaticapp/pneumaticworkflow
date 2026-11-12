@@ -1,4 +1,4 @@
-import { TTaskVariable } from '../../types/template';
+import type { TTaskVariable } from '../../types/template';
 
 export interface IRichTextProps {
   text: string | null;

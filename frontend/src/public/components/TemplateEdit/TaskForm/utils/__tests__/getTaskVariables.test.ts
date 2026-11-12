@@ -1,13 +1,9 @@
 import { createElement } from 'react';
 import { render, screen } from '@testing-library/react';
 
-import {
-  EExtraFieldType,
-  ITemplateKickoffClient,
-  ITemplateTaskClient,
-  TTaskVariable,
-} from '../../../../../types/template';
-import { IFieldsetRuntime } from '../../../../../types/fieldset';
+import { EExtraFieldType } from '../../../../../types/template';
+import type { ITemplateKickoffClient, ITemplateTaskClient, TTaskVariable } from '../../../../../types/template';
+import type { IFieldsetRuntime } from '../../../../../types/fieldset';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 import {
   makeFieldsetRuntime,
@@ -22,12 +18,14 @@ import {
   getSystemVariables,
   getVariables,
   getSingleLineVariables,
-  isSystemVariable,
   useWorkflowNameVariables,
+} from '../getTaskVariables';
+import {
+  isSystemVariable,
   WORKFLOW_STARTER_VARIABLE_API_NAME,
   WORKFLOW_STARTER_VARIABLE_TITLE,
   SYSTEM_VARIABLE_SUBTITLE,
-} from '../getTaskVariables';
+} from '../getLocalizedSystemVariable';
 
 const mockKikoff: ITemplateKickoffClient = {
   description: 'Kickoff description',
