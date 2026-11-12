@@ -1,10 +1,9 @@
 import * as sentry from '@sentry/react';
 import { diff } from 'deep-object-diff';
 
-import { IAccount, TAuthUserResult } from '../../types/user';
+import type { IAccount, TAuthUserResult } from '../../types/user';
 import { parseCookies } from '../cookie';
 import { TITLES } from '../../constants/titles';
-import { store } from '../../redux/store';
 import { loadAnalytics } from './segmentSnippet';
 import { isObjectEmpty } from '../helpers';
 import { isEnvAnalytics } from '../../constants/enviroment';
@@ -39,6 +38,12 @@ export type TAnalyticsMethods = {
   identify(...args: any[]): void;
   group(...args: any[]): void;
   reset(...args: any[]): void;
+};
+
+let isSupermodeState = false;
+
+export const setAnalyticsSupermode = (isSupermode: boolean): void => {
+  isSupermodeState = isSupermode;
 };
 
 export class Analytics {
@@ -117,8 +122,7 @@ let analyticsInstance: Analytics | null = null;
 
 function getAnalyticsInstance(): Analytics {
   if (!analyticsInstance) {
-    const isSupermode = store?.getState?.().authUser?.isSupermode ?? false;
-    analyticsInstance = new Analytics(isSupermode);
+    analyticsInstance = new Analytics(isSupermodeState);
   }
   return analyticsInstance;
 }

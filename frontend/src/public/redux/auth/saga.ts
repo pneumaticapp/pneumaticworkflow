@@ -63,7 +63,7 @@ import { editAccount } from '../../api/editAccount';
 import type { IUpdateAccountResponse } from '../../api/editAccount';
 import { changePassword } from '../../api/changePassword';
 import type { IChangePasswordResponse } from '../../api/changePassword';
-import { analytics } from '../../utils/analytics';
+import { analytics, setAnalyticsSupermode } from '../../utils/analytics';
 import { sendSignOut } from '../../api/sendSignOut';
 import { REDIRECT_URL_STORAGE_KEY } from '../../constants/storageKeys';
 import { getUTMParams } from '../../views/user/utils/utmParams';
@@ -774,8 +774,24 @@ export function* watchVacationDeactivate() {
   yield takeEvery(EAuthActions.VacationDeactivate, handleVacationDeactivate);
 }
 
+export function* syncAnalyticsSupermode() {
+  const { authUser }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
+  setAnalyticsSupermode(Boolean(authUser.isSupermode));
+}
+
+export function resetAnalyticsSupermode() {
+  setAnalyticsSupermode(false);
+}
+
+export function* watchAnalyticsSupermode() {
+  yield call(syncAnalyticsSupermode);
+  yield takeEvery([EAuthActions.AuthUserSuccess, EAuthActions.RegisterUserSuccess], syncAnalyticsSupermode);
+  yield takeEvery([EAuthActions.LogoutUserSuccess, EAuthActions.AuthUserFail], resetAnalyticsSupermode);
+}
+
 export function* rootSaga() {
   yield all([
+    fork(watchAnalyticsSupermode),
     fork(watchLoginUser),
     fork(watchLoginSuperuser),
     fork(watchLoginPartnerSuperuser),

@@ -1,4 +1,4 @@
-import { put } from 'redux-saga/effects';
+import { call, put, select, takeEvery } from 'redux-saga/effects';
 
 import { configMock } from '../../../__stubs__/configMock';
 import { ApiError } from '../../../api/ApiError';
@@ -12,8 +12,13 @@ import {
   registerWithEmailAsync,
   registerWithEmailPassword,
   registerWithInvite,
+  resetAnalyticsSupermode,
+  syncAnalyticsSupermode,
+  watchAnalyticsSupermode,
 } from '../saga';
 import { registerUser, registerUserInvited, sendForgotPassword, sendForgotPasswordFail } from '../actions';
+import { getAuthUser } from '../../selectors/user';
+import { setAnalyticsSupermode } from '../../../utils/analytics';
 import { setJwtCookie } from '../../../utils/authCookie';
 import { setOAuthRegistrationCompleted } from '../../../api/setOAuthRegistrationCompleted';
 import { getOAuthId, getOAuthType } from '../../../utils/auth';
@@ -26,6 +31,10 @@ const auth = {
   createUserWithInvite: jest.fn(),
 };
 jest.mock('../../../utils/auth');
+jest.mock('../../../utils/analytics', () => ({
+  ...jest.requireActual('../../../utils/analytics'),
+  setAnalyticsSupermode: jest.fn(),
+}));
 jest.mock('../../../api/setOAuthRegistrationCompleted');
 jest.mock('../../../utils/authCookie');
 jest.mock('../../../api/auth', () => ({
@@ -463,6 +472,35 @@ describe('saga', () => {
 
       expect(mockNotifyApiError).toHaveBeenCalledWith(error, { message: 'error' });
       expect(value).toEqual(put(sendForgotPasswordFail()));
+    });
+  });
+
+  describe('analytics supermode sync', () => {
+    it('syncAnalyticsSupermode reads authUser via getAuthUser and sets supermode flag', () => {
+      const gen = syncAnalyticsSupermode();
+
+      expect(gen.next().value).toEqual(select(getAuthUser));
+      expect(gen.next({ authUser: { isSupermode: true } } as ReturnType<typeof getAuthUser>).done).toBe(true);
+      expect(setAnalyticsSupermode).toHaveBeenCalledWith(true);
+    });
+
+    it('resetAnalyticsSupermode resets supermode flag to false', () => {
+      resetAnalyticsSupermode();
+
+      expect(setAnalyticsSupermode).toHaveBeenCalledWith(false);
+    });
+
+    it('watchAnalyticsSupermode syncs on startup and subscribes to auth actions', () => {
+      const gen = watchAnalyticsSupermode();
+
+      expect(gen.next().value).toEqual(call(syncAnalyticsSupermode));
+      expect(gen.next().value).toEqual(
+        takeEvery([EAuthActions.AuthUserSuccess, EAuthActions.RegisterUserSuccess], syncAnalyticsSupermode),
+      );
+      expect(gen.next().value).toEqual(
+        takeEvery([EAuthActions.LogoutUserSuccess, EAuthActions.AuthUserFail], resetAnalyticsSupermode),
+      );
+      expect(gen.next().done).toBe(true);
     });
   });
 });
