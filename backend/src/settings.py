@@ -749,7 +749,12 @@ class Development(Common):
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
             'CONFIG': {
-                'hosts': [env.get('CHANNELS_REDIS_URL', '')],
+                'hosts': [
+                    {
+                        'address': env.get('CHANNELS_REDIS_URL', ''),
+                        'socket_timeout': None,
+                    },
+                ],
             },
         },
     }
