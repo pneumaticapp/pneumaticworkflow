@@ -1,5 +1,5 @@
 from django.utils.text import format_lazy
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 MSG_FS_0001 = _(
     'Cannot delete a fieldset template that is used in templates.',

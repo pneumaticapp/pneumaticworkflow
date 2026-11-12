@@ -3,7 +3,7 @@ from datetime import datetime
 from hashlib import sha1
 from typing import Optional, Tuple
 
-import pytz
+from zoneinfo import ZoneInfo
 import stripe
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -194,7 +194,7 @@ class StripeMixin:
     ) -> Optional[datetime]:
         if not value:
             return None
-        tz = pytz.timezone(settings.TIME_ZONE)
+        tz = ZoneInfo(settings.TIME_ZONE)
         return datetime.fromtimestamp(value, tz=tz)
 
     def _create_price(self, data: stripe.Price) -> Price:

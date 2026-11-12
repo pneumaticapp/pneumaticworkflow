@@ -132,8 +132,8 @@ def test_create__request_user_is_not_authenticated__permission_denied(
 
     # assert
     assert response.status_code == 401
-    service_init_mock.asert_not_called()
-    get_template_data_mock.asert_not_called()
+    service_init_mock.assert_not_called()
+    get_template_data_mock.assert_not_called()
 
 
 def test_create__user_not_admin__permission_denied(
@@ -169,8 +169,8 @@ def test_create__user_not_admin__permission_denied(
 
     # assert
     assert response.status_code == 403
-    service_init_mock.asert_not_called()
-    get_template_data_mock.asert_not_called()
+    service_init_mock.assert_not_called()
+    get_template_data_mock.assert_not_called()
 
 
 def test_create__description_over_limit__validation_error(

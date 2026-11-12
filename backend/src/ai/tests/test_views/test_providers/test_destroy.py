@@ -229,7 +229,6 @@ def test_destroy__not_found__not_found(api_client):
     user = create_test_owner(account=account)
     non_existent_id = 999999
     path = f'/ai/providers/{non_existent_id}'
-    message = 'Not found.'
     api_client.token_authenticate(user=user)
 
     # act
@@ -239,7 +238,7 @@ def test_destroy__not_found__not_found(api_client):
 
     # assert
     assert response.status_code == 404
-    assert response.data['detail'] == message
+    assert response.data['detail'].code == 'not_found'
 
 
 def test_destroy__another_account__not_found(api_client):
@@ -258,7 +257,6 @@ def test_destroy__another_account__not_found(api_client):
     provider.api_key = 'sk-or-v1-example'
     provider.save()
     path = f'/ai/providers/{provider.id}'
-    message = 'Not found.'
     api_client.token_authenticate(user=user)
 
     # act
@@ -268,7 +266,7 @@ def test_destroy__another_account__not_found(api_client):
 
     # assert
     assert response.status_code == 404
-    assert response.data['detail'] == message
+    assert response.data['detail'].code == 'not_found'
 
 
 def test_destroy__soft_deleted__not_found(api_client):
@@ -287,7 +285,6 @@ def test_destroy__soft_deleted__not_found(api_client):
     provider.save()
     provider.delete()
     path = f'/ai/providers/{provider.id}'
-    message = 'Not found.'
     api_client.token_authenticate(user=user)
 
     # act
@@ -297,7 +294,7 @@ def test_destroy__soft_deleted__not_found(api_client):
 
     # assert
     assert response.status_code == 404
-    assert response.data['detail'] == message
+    assert response.data['detail'].code == 'not_found'
 
 
 def test_destroy__service_exception__validation_error(api_client, mocker):

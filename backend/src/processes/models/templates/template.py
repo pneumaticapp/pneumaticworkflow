@@ -3,7 +3,7 @@ from typing import Dict, Optional
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.fields import JSONField
+from django.db.models import JSONField
 from django.core.exceptions import (
     ObjectDoesNotExist,
 )

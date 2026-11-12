@@ -2,7 +2,7 @@
 from datetime import timedelta
 
 import pytest
-import pytz
+from zoneinfo import ZoneInfo
 from django.utils import timezone
 from django.test import override_settings
 
@@ -635,7 +635,7 @@ def test_run_empty_name__ok(mocker, api_client):
         day=28,
         hour=10,
         minute=41,
-        tzinfo=pytz.timezone('UTC'),
+        tzinfo=ZoneInfo('UTC'),
     )
     mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -3552,7 +3552,7 @@ def test_run__wf_name_template_with_system_vars__only__ok(
         day=28,
         hour=10,
         minute=41,
-        tzinfo=pytz.timezone('UTC'),
+        tzinfo=ZoneInfo('UTC'),
     )
     mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -3614,7 +3614,7 @@ def test_run__wf_name_template_with_system_and_kickoff_vars__ok(
         day=28,
         hour=10,
         minute=41,
-        tzinfo=pytz.timezone('UTC'),
+        tzinfo=ZoneInfo('UTC'),
     )
     mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -5019,7 +5019,7 @@ def test_run__wf_name_template_with_workflow_id_and_other_vars__ok(
         day=28,
         hour=10,
         minute=41,
-        tzinfo=pytz.timezone('UTC'),
+        tzinfo=ZoneInfo('UTC'),
     )
     mocker.patch('django.utils.timezone.now', return_value=date)
 

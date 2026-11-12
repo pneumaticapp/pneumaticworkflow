@@ -26,6 +26,13 @@ UserModel = get_user_model()
 class BaseToken(Token):
 
     @classmethod
+    def for_user(cls, user: UserModel) -> 'BaseToken':
+        token = super().for_user(user)
+        # Keep numeric IDs in existing invite and verification contracts.
+        token[api_settings.USER_ID_CLAIM] = user.pk
+        return token
+
+    @classmethod
     def for_user_id(cls, user_id: int):
         token = cls()
         token[api_settings.USER_ID_CLAIM] = user_id

@@ -648,7 +648,7 @@ def test_log_change__admin_without_mixin__no_event(
     # act
     entry = system_message_admin.log_change(
         request=request,
-        object=system_message,
+        obj=system_message,
         message=[{'changed': {'fields': ['title']}}],
     )
 
