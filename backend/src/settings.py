@@ -753,6 +753,7 @@ class Development(Common):
                     {
                         'address': env.get('CHANNELS_REDIS_URL', ''),
                         'socket_timeout': None,
+                        'protocol': 2,
                     },
                 ],
             },
