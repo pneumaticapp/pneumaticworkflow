@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
-import { ITableViewFields } from '../types/template';
+import type { ITableViewFields } from '../types/template';
 import { fetchAllWorkflowsForExport } from '../api/workflows/fetchAllWorkflowsForExport';
 import {
   getWorkflowTemplatesIdsFilter,

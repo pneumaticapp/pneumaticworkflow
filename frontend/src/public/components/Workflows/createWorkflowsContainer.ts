@@ -1,8 +1,9 @@
-import { ComponentType, createElement } from 'react';
+import type { ComponentType } from 'react';
+import { createElement } from 'react';
 import { connect } from 'react-redux';
 
 import type { RootState } from '../../redux/store';
-import { IWorkflowsProps } from './types';
+import type { IWorkflowsProps } from './types';
 import { openSelectTemplateModal, openRunWorkflowModal } from '../../redux/actions';
 import {
   openWorkflowLogPopup,

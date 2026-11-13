@@ -1,4 +1,4 @@
-import { IWorkflowTaskClient } from '../../../types/workflow';
+import type { IWorkflowTaskClient } from '../../../types/workflow';
 import { getPercent } from '../../../utils/helpers';
 
 export interface IGetgWorkflowProgressConfig {

@@ -1,5 +1,5 @@
 import { commonRequest } from './commonRequest';
-import { TChangePassword } from '../redux/auth/actions';
+import type { TChangePassword } from '../redux/auth/actions';
 import { mapRequestBody } from '../utils/mappers';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 

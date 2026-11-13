@@ -1,4 +1,5 @@
-import React, { FormEvent, useState } from 'react';
+import type { FormEvent } from 'react';
+import React, { useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 

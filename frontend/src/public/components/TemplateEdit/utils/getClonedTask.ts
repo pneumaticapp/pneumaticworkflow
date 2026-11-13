@@ -1,4 +1,4 @@
-import {
+import type {
   IDueDate,
   IExtraField,
   IExtraFieldSelection,
@@ -7,7 +7,7 @@ import {
   TOutputChecklist,
   TOutputChecklistItem,
 } from '../../../types/template';
-import { IFieldsetBindingClient } from '../../../types/fieldset';
+import type { IFieldsetBindingClient } from '../../../types/fieldset';
 import {
   createTaskApiName,
   createFieldApiName,

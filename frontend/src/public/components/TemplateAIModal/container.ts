@@ -9,7 +9,8 @@ import {
   setAITemplateGenerationStatus,
 } from '../../redux/actions';
 
-import { ITemplateAIModalProps, TemplateAIModal } from './TemplateAIModal';
+import type { ITemplateAIModalProps } from './TemplateAIModal';
+import { TemplateAIModal } from './TemplateAIModal';
 
 export type TStoreProps = Pick<ITemplateAIModalProps, 'isOpen' | 'generationStatus' | 'generatedTemplate'>;
 

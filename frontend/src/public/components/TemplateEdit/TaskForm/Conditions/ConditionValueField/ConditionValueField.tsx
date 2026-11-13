@@ -1,12 +1,15 @@
-import React, { ReactNode, ChangeEvent } from 'react';
+import type { ReactNode, ChangeEvent } from 'react';
+import React from 'react';
 import { useSelector } from 'react-redux';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { DropdownList } from '../../../../UI/DropdownList';
-import { EExtraFieldType, TTaskVariable, EStartingType } from '../../../../../types/template';
+import type { TTaskVariable } from '../../../../../types/template';
+import { EExtraFieldType, EStartingType } from '../../../../../types/template';
 import { Field } from '../../../../Field';
-import { EUserStatus, TUserListItem } from '../../../../../types/user';
+import type { TUserListItem } from '../../../../../types/user';
+import { EUserStatus } from '../../../../../types/user';
 import { getUserFullName } from '../../../../../utils/users';
 import type { EConditionOperators, TConditionRule } from '../../../../../types/templateTaskConditions';
 import { OPERATORS_WITHOUT_VALUE } from '../utils/shared';

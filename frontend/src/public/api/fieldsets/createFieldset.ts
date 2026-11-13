@@ -1,5 +1,5 @@
 import { commonRequest } from '../commonRequest';
-import { IFieldsetCatalogItem, ICreateFieldsetParams } from '../../types/fieldset';
+import type { IFieldsetCatalogItem, ICreateFieldsetParams } from '../../types/fieldset';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { mapRequestBody } from '../../utils/mappers';
 

@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 
 import { Button, Header, InputField, Modal } from '../UI';
-import { TGenerateAITemplatePayload } from '../../redux/actions';
-import { ITemplateClient, ITemplateTaskClient, TAITemplateGenerationStatus } from '../../types/template';
+import type { TGenerateAITemplatePayload } from '../../redux/actions';
+import type { ITemplateClient, ITemplateTaskClient, TAITemplateGenerationStatus } from '../../types/template';
 import { useDidUpdateEffect } from '../../hooks/useDidUpdateEffect';
 import { InfiniteLoader } from '../InfiniteLoader';
 

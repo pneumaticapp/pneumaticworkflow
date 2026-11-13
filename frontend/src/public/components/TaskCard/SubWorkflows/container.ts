@@ -1,6 +1,7 @@
 import { connect } from 'react-redux';
 
-import { SubWorkflows, TSubWorkflowsProps } from './SubWorkflows';
+import type { TSubWorkflowsProps } from './SubWorkflows';
+import { SubWorkflows } from './SubWorkflows';
 import { loadCurrentTask } from '../../../redux/actions';
 import { openWorkflowLogPopup } from '../../../redux/workflows/slice';
 

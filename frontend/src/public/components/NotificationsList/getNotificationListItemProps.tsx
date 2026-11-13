@@ -1,10 +1,10 @@
 import React from 'react';
-import { IntlShape } from 'react-intl';
+import type { IntlShape } from 'react-intl';
 
 import { getTaskDetailRoute, getWorkflowDetailedRoute } from '../../utils/routes';
 import { Avatar } from '../UI/Avatar';
 import { getUserFullName } from '../../utils/users';
-import { TNotificationsListItem } from '../../types';
+import type { TNotificationsListItem } from '../../types';
 import {
   AlarmCrossedIcon,
   AlarmIcon,
@@ -15,11 +15,11 @@ import {
   UrgentColorIcon,
 } from '../icons';
 import { RichText } from '../RichText';
-import { TUserListItem } from '../../types/user';
+import type { TUserListItem } from '../../types/user';
 import { getUserById } from '../UserData/utils/getUserById';
 import { DateFormat } from '../UI/DateFormat/container';
 import { reactElementToText } from '../../utils/reactElementToText';
-import { INotificationsListItemProps } from './NotificationsListItem';
+import type { INotificationsListItemProps } from './NotificationsListItem';
 
 import styles from './NotificationsList.css';
 

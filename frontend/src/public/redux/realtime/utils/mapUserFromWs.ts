@@ -1,4 +1,5 @@
-import { EUserStatus, TUserListItem } from '../../../types/user';
+import type { TUserListItem } from '../../../types/user';
+import { EUserStatus } from '../../../types/user';
 import type { IWsUserData } from '../types';
 
 export function mapWsUserToListItem(user: IWsUserData): TUserListItem {

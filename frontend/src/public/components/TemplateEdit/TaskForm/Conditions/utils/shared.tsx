@@ -1,5 +1,6 @@
 import React from 'react';
-import { EExtraFieldType, TTaskVariable, EStartingType } from '../../../../../types/template';
+import type { EExtraFieldType, TTaskVariable } from '../../../../../types/template';
+import { EStartingType } from '../../../../../types/template';
 import { isArrayWithItems } from '../../../../../utils/helpers';
 import { RichLabel } from '../RichLabel';
 import { EConditionAction, EConditionOperators } from '../../../../../types/templateTaskConditions';

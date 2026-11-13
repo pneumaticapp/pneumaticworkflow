@@ -1,6 +1,7 @@
 import { connect } from 'react-redux';
 
-import { SuperuserLogin, ISuperuserLoginProps } from './SuperuserLogin';
+import type { ISuperuserLoginProps } from './SuperuserLogin';
+import { SuperuserLogin } from './SuperuserLogin';
 import type { RootState } from '../../../redux/store';
 import { loginSuperuser } from '../../../redux/auth/actions';
 

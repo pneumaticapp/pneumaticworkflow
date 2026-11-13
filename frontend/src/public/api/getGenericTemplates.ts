@@ -1,5 +1,5 @@
 import { commonRequest } from './commonRequest';
-import { IAccountGenericTemplate } from '../types/genericTemplates';
+import type { IAccountGenericTemplate } from '../types/genericTemplates';
 
 export type TGetGenericTemplatesResponse = IAccountGenericTemplate[];
 

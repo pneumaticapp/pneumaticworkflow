@@ -1,5 +1,5 @@
 import { getSuperuserToken } from '../redux/auth/utils/superuserToken';
-import { EOAuthType } from '../types/auth';
+import type { EOAuthType } from '../types/auth';
 import { parseCookies } from './cookie';
 import { history } from './history';
 import { identifyAppPartOnClient } from './identifyAppPart/identifyAppPartOnClient';

@@ -1,4 +1,5 @@
-import { EGraphNodeType, IGraphState, TGraphEdge, TGraphNode, TJunctionKind } from '../types';
+import type { IGraphState, TGraphEdge, TGraphNode, TJunctionKind } from '../types';
+import { EGraphNodeType } from '../types';
 import { getGraphEdgeVisual } from './edgeStyles';
 import { GRAPH_HANDLE, GRAPH_JUNCTION_SIZE, GRAPH_JUNCTION_Z_INDEX } from './graphGeometry';
 

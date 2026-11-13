@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { TTemplatePreset } from '../types/template';
+import type { TTemplatePreset } from '../types/template';
 
 export type TGetTemplatePresetsResponse = TTemplatePreset[];
 

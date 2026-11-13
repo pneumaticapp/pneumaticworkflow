@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 
 import { Login } from './Login';
-import { ILoginProps } from './types';
+import type { ILoginProps } from './types';
 import type { RootState } from '../../../redux/store';
 import { loginUser, setRedirectUrl } from '../../../redux/auth/actions';
 

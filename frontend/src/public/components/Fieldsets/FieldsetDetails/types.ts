@@ -1,7 +1,7 @@
-import { RouteComponentProps } from 'react-router-dom';
+import type { RouteComponentProps } from 'react-router-dom';
 
-import { IExtraField } from '../../../types/template';
-import { EFieldLabelPosition, IFieldsetTemplateRule } from '../../../types/fieldset';
+import type { IExtraField } from '../../../types/template';
+import type { EFieldLabelPosition, IFieldsetTemplateRule } from '../../../types/fieldset';
 
 export interface IFieldsetDetailsRouteParams {
   id: string;

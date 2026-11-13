@@ -1,5 +1,6 @@
 /* prettier-ignore */
-import { EWorkflowsLogSorting, EWorkflowLogEvent, IWorkflowLogItem } from '../../../../../../types/workflow';
+import type { IWorkflowLogItem } from '../../../../../../types/workflow';
+import { EWorkflowsLogSorting, EWorkflowLogEvent } from '../../../../../../types/workflow';
 import { isArrayWithItems } from '../../../../../../utils/helpers';
 
 export const getLastTaskLogEventId = (items: IWorkflowLogItem[], sorting: EWorkflowsLogSorting) => {

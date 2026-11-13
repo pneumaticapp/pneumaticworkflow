@@ -2,7 +2,8 @@ import { connect } from 'react-redux';
 
 import type { RootState } from '../../../../redux/store';
 import { closeDeleteUserModal, declineInvite, deleteUser } from '../../../../redux/accounts/slice';
-import { IDeleteTeamUserPopupProps, DeleteTeamUserPopup } from './DeleteTeamUserPopup';
+import type { IDeleteTeamUserPopupProps } from './DeleteTeamUserPopup';
+import { DeleteTeamUserPopup } from './DeleteTeamUserPopup';
 import { EUserStatus } from '../../../../types/user';
 
 type TStoreProps = Pick<

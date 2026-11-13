@@ -4,7 +4,7 @@ import classNames from 'classnames';
 
 import { formatDuration, formatDurationMonths, getZeroDuration } from '../../../utils/dateTime';
 import { ClockIcon } from '../../icons';
-import { ITemplateTaskClient } from '../../../types/template';
+import type { ITemplateTaskClient } from '../../../types/template';
 
 import styles from '../TemplateEdit.css';
 

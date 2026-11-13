@@ -1,5 +1,5 @@
 import type { RootState } from '../store';
-import { ITemplateClient, ITemplateTaskClient, ITemplateKickoffClient, IExtraField } from '../../types/template';
+import type { ITemplateClient, ITemplateTaskClient, ITemplateKickoffClient, IExtraField } from '../../types/template';
 
 export const getTemplateData = (state: RootState): ITemplateClient => {
   return state.template.data;

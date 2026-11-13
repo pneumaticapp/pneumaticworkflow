@@ -1,6 +1,6 @@
 import { startOfToday, endOfToday, isValid } from 'date-fns';
 import { connect } from 'react-redux';
-import { AnyAction } from 'redux';
+import type { AnyAction } from 'redux';
 
 import type { RootState } from '../../redux/store';
 import { openWorkflowLogPopup } from '../../redux/workflows/slice';
@@ -12,7 +12,8 @@ import {
   setHighlightsFiltersManuallyChanged,
 } from '../../redux/highlights/actions';
 
-import { HighlightsFeed, IHighlightsFeedProps } from './HighlightsFeed';
+import type { IHighlightsFeedProps } from './HighlightsFeed';
+import { HighlightsFeed } from './HighlightsFeed';
 import { withSyncedQueryString } from '../../HOCs/withSyncedQueryString';
 import { EHighlightsDateFilter } from '../../types/highlights';
 import { getActiveUsers } from '../../utils/users';

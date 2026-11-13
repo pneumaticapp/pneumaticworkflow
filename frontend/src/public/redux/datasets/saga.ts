@@ -1,5 +1,5 @@
 import { all, call, fork, put, takeEvery, takeLatest, takeLeading, select } from 'redux-saga/effects';
-import { PayloadAction } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 
 import uniqBy from 'lodash.uniqby';
 import { NotificationManager } from '../../components/UI/Notifications';
@@ -9,14 +9,9 @@ import { history } from '../../utils/history';
 import { ERoutes } from '../../constants/routes';
 import { isRequestCanceled } from '../../utils/isRequestCanceled';
 
-import {
-  IDataset,
-  IGetDatasetsResponse,
-  ICreateDatasetParams,
-  IUpdateDatasetParams,
-  EDatasetsSorting,
-} from '../../types/dataset';
-import { TDeleteDatasetPayload } from './types';
+import type { IDataset, IGetDatasetsResponse, ICreateDatasetParams, IUpdateDatasetParams } from '../../types/dataset';
+import { EDatasetsSorting } from '../../types/dataset';
+import type { TDeleteDatasetPayload } from './types';
 import { generateCloneName } from './utils';
 import { LIMIT_LOAD_DATASETS } from '../../constants/defaultValues';
 import { getDatasetsStore } from '../selectors/datasets';

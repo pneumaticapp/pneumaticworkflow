@@ -1,5 +1,5 @@
-import { ITemplateKickoffClient, ITemplateTaskClient } from '../../types/template';
-import { EMoveDirections } from '../../types/workflow';
+import type { ITemplateKickoffClient, ITemplateTaskClient } from '../../types/template';
+import type { EMoveDirections } from '../../types/workflow';
 import type { TDropdownOptionBase } from '../UI/DropdownList/types';
 import type { TGraphAddTaskIntent } from './TemplateGraphEditor/types';
 

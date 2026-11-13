@@ -1,4 +1,5 @@
-import { EGraphNodeType, TGraphNode, TJunctionKind, TJunctionNode } from '../types';
+import type { TGraphNode, TJunctionKind, TJunctionNode } from '../types';
+import { EGraphNodeType } from '../types';
 
 export const GRAPH_NODE_WIDTH = 304;
 export const GRAPH_NODE_HEIGHT = 112;

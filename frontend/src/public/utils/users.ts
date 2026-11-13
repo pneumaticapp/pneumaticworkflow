@@ -1,4 +1,5 @@
-import { EUserStatus, TUserListItem } from '../types/user';
+import type { TUserListItem } from '../types/user';
+import { EUserStatus } from '../types/user';
 import { capitalize } from './strings';
 
 export const EXTERNAL_USER_ID = -1;

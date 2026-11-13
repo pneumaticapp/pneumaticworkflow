@@ -1,6 +1,7 @@
 import { connect } from 'react-redux';
 
-import { UserDataComponent, IUserdataProps } from './UserData';
+import type { IUserdataProps } from './UserData';
+import { UserDataComponent } from './UserData';
 import type { RootState } from '../../redux/store';
 import { getUserById } from './utils/getUserById';
 

@@ -1,6 +1,7 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { EWorkflowsLogSorting, IWorkflowLogItem } from '../types/workflow';
+import type { IWorkflowLogItem } from '../types/workflow';
+import { EWorkflowsLogSorting } from '../types/workflow';
 
 export interface IGetTaskWorkflowLogConfig {
   taskId: number;

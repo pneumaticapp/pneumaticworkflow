@@ -1,7 +1,8 @@
 import { connect } from 'react-redux';
-import { SelectMenu, ISelectMenuProps } from '../../components/UI';
+import type { ISelectMenuProps } from '../../components/UI';
+import { SelectMenu } from '../../components/UI';
 import type { RootState } from '../../redux/store';
-import { EGroupsListSorting } from '../../types/user';
+import type { EGroupsListSorting } from '../../types/user';
 import { groupListSortingValues } from '../../constants/sortings';
 import { changeGroupsListSorting } from '../../redux/actions';
 

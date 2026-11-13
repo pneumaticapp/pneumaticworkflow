@@ -1,6 +1,7 @@
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
-import { ITaskDetailProps, TaskDetail } from './TaskDetail';
+import type { ITaskDetailProps } from './TaskDetail';
+import { TaskDetail } from './TaskDetail';
 import { loadCurrentTask } from '../../redux/actions';
 import type { RootState } from '../../redux/store';
 

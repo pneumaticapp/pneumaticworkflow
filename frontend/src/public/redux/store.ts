@@ -10,7 +10,8 @@ import type { ITasksSettings } from '../types/tasks';
 import { createDeclineForbiddenActionsMiddleware } from './utils/createDeclineForbiddenActionsMiddleware';
 import { mergePersistedState } from './utils/mergePersistedState';
 import { EHighlightsActions } from './highlights/actions';
-import { reducers, rootReducer } from './reducers';
+import type { reducers } from './reducers';
+import { rootReducer } from './reducers';
 import { rootSaga as sagas } from './sagas';
 
 const sagaMiddleware = createSagaMiddleware();

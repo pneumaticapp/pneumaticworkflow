@@ -1,6 +1,7 @@
 /* prettier-ignore */
 import { connect } from 'react-redux';
-import { INotificationsListProps, NotificationsList } from './NotificationsList';
+import type { INotificationsListProps } from './NotificationsList';
+import { NotificationsList } from './NotificationsList';
 import type { RootState } from '../../redux/store';
 import {
   setNotificationsListIsOpen,

@@ -1,5 +1,5 @@
 import { ERoutes } from '../../constants/routes';
-import { ETemplateParts } from '../../types/template';
+import type { ETemplateParts } from '../../types/template';
 
 type TGetLinkToTemplateProps = {
   templateId: number;

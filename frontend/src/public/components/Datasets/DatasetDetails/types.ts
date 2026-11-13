@@ -1,6 +1,6 @@
-import { RouteComponentProps } from 'react-router-dom';
+import type { RouteComponentProps } from 'react-router-dom';
 
-import { EDatasetsSorting, IDatasetItem } from '../../../types/dataset';
+import type { EDatasetsSorting, IDatasetItem } from '../../../types/dataset';
 
 export interface IDatasetDetailsRouteParams {
   id: string;

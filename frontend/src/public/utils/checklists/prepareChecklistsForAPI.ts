@@ -1,5 +1,5 @@
-import { TChecklistItemData } from '../../components/RichEditor/utils/checklistsPlugin/types';
-import { TOutputChecklist } from '../../types/template';
+import type { TChecklistItemData } from '../../components/RichEditor/utils/checklistsPlugin/types';
+import type { TOutputChecklist } from '../../types/template';
 
 export type TInputTChecklistItemData = {
   value: string;

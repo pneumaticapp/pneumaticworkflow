@@ -1,7 +1,7 @@
 import type { IWorkflow, IWorkflowClient, WorkflowWithTsp } from './workflow';
-import { IExtraField, ITemplateStep, ITemplateTitleBaseWithCount, RawPerformer } from './template';
-import { IFieldsetRuntime, IFieldsetTaskAPI } from './fieldset';
-import { TaskWithTsp } from './taskDate';
+import type { IExtraField, ITemplateStep, ITemplateTitleBaseWithCount, RawPerformer } from './template';
+import type { IFieldsetRuntime, IFieldsetTaskAPI } from './fieldset';
+import type { TaskWithTsp } from './taskDate';
 
 export type TTaskWorkflow = Pick<IWorkflow, 'id' | 'name' | 'status' | 'dateCompleted'> & {
   templateName: string;

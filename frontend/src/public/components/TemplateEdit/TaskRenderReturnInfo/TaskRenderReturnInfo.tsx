@@ -1,6 +1,6 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
-import { ITemplateTaskClient } from '../../../types/template';
+import type { ITemplateTaskClient } from '../../../types/template';
 import styles from '../TemplateEdit.css';
 
 interface ITaskRenderReturnInfoProps {

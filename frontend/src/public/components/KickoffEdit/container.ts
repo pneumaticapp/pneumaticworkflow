@@ -2,7 +2,8 @@
 import { connect } from 'react-redux';
 import type { RootState } from '../../redux/store';
 
-import { EditKickoff, IEditKickoffProps } from './KickoffEdit';
+import type { IEditKickoffProps } from './KickoffEdit';
+import { EditKickoff } from './KickoffEdit';
 
 type TStoreProps = Pick<IEditKickoffProps, 'accountId'>;
 

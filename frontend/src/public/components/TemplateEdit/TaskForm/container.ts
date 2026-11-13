@@ -1,6 +1,7 @@
 import { connect } from 'react-redux';
 
-import { TaskForm, ITaskFormProps } from './TaskForm';
+import type { ITaskFormProps } from './TaskForm';
+import { TaskForm } from './TaskForm';
 import type { RootState } from '../../../redux/store';
 import { patchTask } from '../../../redux/actions';
 import { getIsUserSubsribed } from '../../../redux/selectors/user';

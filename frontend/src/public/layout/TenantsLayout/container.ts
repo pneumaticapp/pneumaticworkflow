@@ -1,7 +1,8 @@
 import { connect } from 'react-redux';
 
 import type { RootState } from '../../redux/store';
-import { ITenantsLayoutProps, TenantsLayout } from './TenantsLayout';
+import type { ITenantsLayoutProps } from './TenantsLayout';
+import { TenantsLayout } from './TenantsLayout';
 import { changeTenantsSorting } from '../../redux/actions';
 
 type TStoreProps = Pick<ITenantsLayoutProps, 'sorting'>;

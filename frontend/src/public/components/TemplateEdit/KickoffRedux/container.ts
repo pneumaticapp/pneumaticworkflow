@@ -3,7 +3,8 @@ import { injectIntl } from 'react-intl';
 
 import type { RootState } from '../../../redux/store';
 
-import { IKickoffReduxProps, KickoffRedux } from './KickoffRedux';
+import type { IKickoffReduxProps } from './KickoffRedux';
+import { KickoffRedux } from './KickoffRedux';
 
 type TStoreProps = Pick<IKickoffReduxProps, 'template' | 'accountId' | 'templateStatus'>;
 

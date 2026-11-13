@@ -2,7 +2,8 @@ import { connect } from 'react-redux';
 
 import type { RootState } from '../../../redux/store';
 import { registerUserInvited } from '../../../redux/auth/actions';
-import { IRegisterInviteProps, RegisterInvite } from './RegisterInvite';
+import type { IRegisterInviteProps } from './RegisterInvite';
+import { RegisterInvite } from './RegisterInvite';
 
 type TRegisterInviteProps = Pick<IRegisterInviteProps, 'id' | 'loading'>;
 type TRegisterInviteDispatchProps = Pick<IRegisterInviteProps, 'registerUserInvited'>;

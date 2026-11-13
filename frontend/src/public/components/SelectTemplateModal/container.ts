@@ -7,7 +7,8 @@ import {
 } from '../../redux/selectTemplateModal/actions';
 import { closeSelectTemplateModal, openRunWorkflowModalSideMenu } from '../../redux/actions';
 
-import { ISelectTemplateModalProps, SelectTemplateModal } from './SelectTemplateModal';
+import type { ISelectTemplateModalProps } from './SelectTemplateModal';
+import { SelectTemplateModal } from './SelectTemplateModal';
 
 export type TMainLayoutComponentStoreProps = Pick<
   ISelectTemplateModalProps,

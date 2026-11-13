@@ -14,7 +14,8 @@ import {
 import type { RootState } from '../../../redux/store';
 import { EPermissionObjectType } from '../../../types/permissions';
 
-import { WorkflowModal, IWorkflowModalProps } from './WorkflowModal';
+import type { IWorkflowModalProps } from './WorkflowModal';
+import { WorkflowModal } from './WorkflowModal';
 
 export type TStoreProps = Pick<
   IWorkflowModalProps,

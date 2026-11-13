@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import type { RootState } from '../../redux/store';
 import { TeamInvitesPopup } from './TeamInvitesPopup';
-import { ITeamInvitesPopupProps } from './types';
+import type { ITeamInvitesPopupProps } from './types';
 
 import { closeTeamInvitesPopup } from '../../redux/team/slice';
 

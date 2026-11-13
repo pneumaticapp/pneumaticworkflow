@@ -12,7 +12,8 @@ import {
 } from '../../redux/tasks/slice';
 import { closeWorkflowLogPopup } from '../../redux/workflows/slice';
 
-import { ITasksLayoutDispatchProps, ITasksLayoutStoreProps, TasksLayoutComponent } from './TasksLayout';
+import type { ITasksLayoutDispatchProps, ITasksLayoutStoreProps } from './TasksLayout';
+import { TasksLayoutComponent } from './TasksLayout';
 
 const mapStateToProps = ({
   tasks: {

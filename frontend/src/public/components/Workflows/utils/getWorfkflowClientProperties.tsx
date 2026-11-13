@@ -1,13 +1,11 @@
-import {
-  EProgressbarColor,
-  EWorkflowStatus,
-  EWorkflowTaskStatus,
+import type {
   IWorkflow,
   IWorkflowClient,
   IWorkflowDetailsClient,
   IWorkflowTaskClient,
   IWorkflowTaskDelay,
 } from '../../../types/workflow';
+import { EProgressbarColor, EWorkflowStatus, EWorkflowTaskStatus } from '../../../types/workflow';
 
 const checkOverdueTask = (task: IWorkflowTaskClient) => {
   const defaultResult = { isOverdue: false, count: 0, dueDateTimestamp: null };

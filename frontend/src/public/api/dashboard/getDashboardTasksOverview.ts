@@ -1,6 +1,6 @@
 import { commonRequest } from '../commonRequest';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
-import { TDashboardTimeRangeDates } from '../../types/dashboard';
+import type { TDashboardTimeRangeDates } from '../../types/dashboard';
 import { toTspDate } from '../../utils/dateTime';
 
 export interface IGetDashboardOverviewResponse {

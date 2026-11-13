@@ -1,8 +1,8 @@
 /* prettier-ignore */
-import { ITemplateClient, ITemplateTaskClient, ITemplateKickoffClient, IExtraField } from '../../../types/template';
-import { IFieldsetRuntime } from '../../../types/fieldset';
+import type { ITemplateClient, ITemplateTaskClient, ITemplateKickoffClient, IExtraField } from '../../../types/template';
+import type { IFieldsetRuntime } from '../../../types/fieldset';
 import { setPerformersCounts } from '../../../utils/template';
-import { IRunWorkflow } from '../../../types/workflow';
+import type { IRunWorkflow } from '../../../types/workflow';
 import { normalizeSelections } from './normalizeSelections';
 
 export type TTemplateToRunWorkflow = Pick<

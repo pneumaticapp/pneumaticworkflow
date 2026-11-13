@@ -11,7 +11,8 @@ import {
 } from '../../../RichEditor/utils/getAttachmentEntityType';
 import { ECustomEditorEntities } from '../../../RichEditor/utils/types';
 import { renderAttachmentHtml } from '../renderAttachmentHtml';
-import { IRenderEmbedVideoHtmlOptions, renderLinkHtml } from '../renderEmbedVideoHtml';
+import type { IRenderEmbedVideoHtmlOptions } from '../renderEmbedVideoHtml';
+import { renderLinkHtml } from '../renderEmbedVideoHtml';
 
 interface ICustomLinkPluginOptions extends IRenderEmbedVideoHtmlOptions {
   embedVideos: boolean;

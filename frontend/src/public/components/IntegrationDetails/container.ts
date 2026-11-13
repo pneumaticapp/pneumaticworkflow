@@ -3,7 +3,8 @@ import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { loadIntegrationDetails } from '../../redux/actions';
 import type { RootState } from '../../redux/store';
-import { IIntegrationDetailsProps, IntegrationDetails } from './IntegrationDetails';
+import type { IIntegrationDetailsProps } from './IntegrationDetails';
+import { IntegrationDetails } from './IntegrationDetails';
 
 type TIntegrationDetailsStoreProps = Pick<IIntegrationDetailsProps, 'isLoading' | 'integration'>;
 type TIntegrationDetailsDispatchProps = Pick<IIntegrationDetailsProps, 'loadIntegrationDetails'>;

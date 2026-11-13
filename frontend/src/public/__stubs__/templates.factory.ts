@@ -1,4 +1,4 @@
-import { ITemplateKickoffClient, ITemplateResponse, ITemplateTask, ITemplateTaskClient } from '../types/template';
+import type { ITemplateKickoffClient, ITemplateResponse, ITemplateTask, ITemplateTaskClient } from '../types/template';
 import { createEmptyTaskDueDate } from '../utils/dueDate/createEmptyTaskDueDate';
 
 export const makeTemplateTaskClient = (overrides: Partial<ITemplateTaskClient> = {}): ITemplateTaskClient => ({

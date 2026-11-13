@@ -1,4 +1,5 @@
-import React, { ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import styles from '../Conditions.css';
 import { Tooltip } from '../../../../UI';

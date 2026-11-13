@@ -1,4 +1,4 @@
-import { IExtraField } from '../../../../types/template';
+import type { IExtraField } from '../../../../types/template';
 
 export interface IDatasetOption {
   label: string;

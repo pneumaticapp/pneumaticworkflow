@@ -1,4 +1,4 @@
-import { IRuntimeKickoffClient } from '../../../types/template';
+import type { IRuntimeKickoffClient } from '../../../types/template';
 
 export type IPublicFormKickoff = IRuntimeKickoffClient;
 

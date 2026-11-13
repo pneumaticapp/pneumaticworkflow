@@ -1,10 +1,5 @@
-import {
-  EExtraFieldType,
-  IExtraField,
-  ITemplateClient,
-  ITemplateTaskClient,
-  EStartingType,
-} from '../../../../types/template';
+import type { IExtraField, ITemplateClient, ITemplateTaskClient } from '../../../../types/template';
+import { EExtraFieldType, EStartingType } from '../../../../types/template';
 import { createEmptyTaskDueDate } from '../../../../utils/dueDate/createEmptyTaskDueDate';
 import {
   EConditionAction,

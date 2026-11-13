@@ -1,9 +1,11 @@
-import { TGraphEdge, TGraphEdgePathKind, TGraphNode } from '../types';
+import type { TGraphEdge, TGraphEdgePathKind, TGraphNode } from '../types';
 import { isConditionalGraphEdge, isLaneRoutedGraphEdge } from './edgeStyles';
 import { isCheckIfJunctionId, isCheckIfStemEdge } from './graphConstants';
 import { markCheckIfLanes, markDetourEdges, pickDetourSide } from './applyEdgeDetours';
 import { assignEdgeHandles } from './assignEdgeHandles';
-import { CARD_HIT_INSET, IGutterDetour, planCheckIfCardWraps, planObstacleDetours } from './graphPathCollision';
+import type { IGutterDetour } from './graphPathCollision';
+import { CARD_HIT_INSET, planCheckIfCardWraps, planObstacleDetours } from './graphPathCollision';
+import type { TGraphLaneSide } from './graphGeometry';
 import {
   GRAPH_CHECK_IF_LANE_GAP,
   GRAPH_EDGE_SIDEWAYS_THRESHOLD,
@@ -12,7 +14,6 @@ import {
   GRAPH_NODE_WIDTH,
   GRAPH_SKIP_LANE_GAP,
   GRAPH_SKIP_LANE_STEP,
-  TGraphLaneSide,
   faceFromHandle,
   getGraphNodeBox,
   getHandleAnchor,

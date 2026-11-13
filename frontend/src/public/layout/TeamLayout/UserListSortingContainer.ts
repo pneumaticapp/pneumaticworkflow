@@ -1,7 +1,8 @@
 import { connect } from 'react-redux';
-import { SelectMenu, ISelectMenuProps } from '../../components/UI';
+import type { ISelectMenuProps } from '../../components/UI';
+import { SelectMenu } from '../../components/UI';
 import type { RootState } from '../../redux/store';
-import { EUserListSorting } from '../../types/user';
+import type { EUserListSorting } from '../../types/user';
 import { userListSortingChanged as changeUserListSorting } from '../../redux/accounts/slice';
 import { userListSortingValues } from '../../constants/sortings';
 

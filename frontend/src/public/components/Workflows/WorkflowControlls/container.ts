@@ -1,5 +1,6 @@
 import { connect } from 'react-redux';
-import { IWorkflowControllsProps, WorkflowControllsComponents } from './WorkflowControlls';
+import type { IWorkflowControllsProps } from './WorkflowControlls';
+import { WorkflowControllsComponents } from './WorkflowControlls';
 import type { RootState } from '../../../redux/store';
 
 type TStoreProps = Pick<IWorkflowControllsProps, 'timezone'>;

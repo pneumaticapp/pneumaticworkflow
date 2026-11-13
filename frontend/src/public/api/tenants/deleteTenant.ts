@@ -1,5 +1,5 @@
 import { commonRequest } from '../commonRequest';
-import { ITenant } from '../../types/tenants';
+import type { ITenant } from '../../types/tenants';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 
 export interface IDeleteTenantConfig {

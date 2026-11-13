@@ -2,7 +2,8 @@ import { connect } from 'react-redux';
 
 import type { RootState } from '../../../../redux/store';
 
-import { IPopupCommentFieldProps, PopupCommentField } from './PopupCommentField';
+import type { IPopupCommentFieldProps } from './PopupCommentField';
+import { PopupCommentField } from './PopupCommentField';
 
 export type TPopupCommentFieldStoreProps = Pick<IPopupCommentFieldProps, 'user'>;
 

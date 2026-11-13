@@ -1,4 +1,4 @@
-import { Middleware } from 'redux';
+import type { Middleware } from 'redux';
 import type { RootState } from '../store';
 import { EPlanActions, getPlanPendingActions } from '../../utils/getPlanPendingActions';
 import { ENotificationsActions, ETemplatesActions } from '../actions';

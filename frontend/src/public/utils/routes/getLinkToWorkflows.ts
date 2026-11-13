@@ -1,5 +1,5 @@
 import { ERoutes } from '../../constants/routes';
-import { EWorkflowsSorting, EWorkflowsStatus } from '../../types/workflow';
+import type { EWorkflowsSorting, EWorkflowsStatus } from '../../types/workflow';
 import { isArrayWithItems } from '../helpers';
 
 type TGetLinkToWorkflows = {

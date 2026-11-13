@@ -1,12 +1,11 @@
 import { connect } from 'react-redux';
 import { compose } from 'redux';
 
-import { IWorkflowsLayoutComponentProps, WorkflowsLayoutComponent } from './WorkflowsLayout';
+import type { IWorkflowsLayoutComponentProps } from './WorkflowsLayout';
+import { WorkflowsLayoutComponent } from './WorkflowsLayout';
 import type { RootState } from '../../redux/store';
-import {
-  TWorkflowsFiltersStoreProps,
-  createWorkflowsFiltersContainer,
-} from '../../components/Workflows/createWorkflowsFiltersContainer';
+import type { TWorkflowsFiltersStoreProps } from '../../components/Workflows/createWorkflowsFiltersContainer';
+import { createWorkflowsFiltersContainer } from '../../components/Workflows/createWorkflowsFiltersContainer';
 
 import {
   closeWorkflowLogPopup,

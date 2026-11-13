@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { IExtraField } from '../../../../types/template';
+import type { IExtraField } from '../../../../types/template';
 import {
   getAllDatasetsList,
   getIsAllDatasetsLoading,

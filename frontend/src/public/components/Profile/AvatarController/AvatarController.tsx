@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef, ComponentProps } from 'react';
+import type { ComponentProps } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import classnames from 'classnames';
 import { useDispatch } from 'react-redux';
 // tslint:disable-next-line: match-default-export-name

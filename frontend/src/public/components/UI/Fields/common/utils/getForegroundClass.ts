@@ -1,4 +1,4 @@
-import { TForegroundColor } from '../types';
+import type { TForegroundColor } from '../types';
 
 import commonStyles from '../styles.css';
 

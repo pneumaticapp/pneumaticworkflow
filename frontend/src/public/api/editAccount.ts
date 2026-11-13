@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { mapRequestBody } from '../utils/mappers';
-import { TAccountLeaseLevel } from '../types/user';
+import type { TAccountLeaseLevel } from '../types/user';
 
 export interface IUpdateAccountRequest {
   name: string;

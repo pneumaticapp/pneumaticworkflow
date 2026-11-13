@@ -3,7 +3,8 @@ import { connect } from 'react-redux';
 import { changeGroupsListSorting } from '../../../redux/actions';
 import { withSyncedQueryString } from '../../../HOCs/withSyncedQueryString';
 import { EGroupsListSorting } from '../../../types/user';
-import { Groups, IGroupsProps } from './Groups';
+import type { IGroupsProps } from './Groups';
+import { Groups } from './Groups';
 import type { RootState } from '../../../redux/store';
 
 export type TTeamProps = Pick<IGroupsProps, 'groupsListSorting'>;

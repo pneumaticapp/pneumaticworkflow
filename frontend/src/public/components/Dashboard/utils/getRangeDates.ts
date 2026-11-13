@@ -11,7 +11,8 @@ import {
   subWeeks,
   subMonths,
 } from 'date-fns';
-import { EDashboardTimeRange, TDashboardTimeRangeDates } from '../../../types/dashboard';
+import type { TDashboardTimeRangeDates } from '../../../types/dashboard';
+import { EDashboardTimeRange } from '../../../types/dashboard';
 
 export const DatesMap: { [key in EDashboardTimeRange]: TDashboardTimeRangeDates } = {
   [EDashboardTimeRange.Now]: {

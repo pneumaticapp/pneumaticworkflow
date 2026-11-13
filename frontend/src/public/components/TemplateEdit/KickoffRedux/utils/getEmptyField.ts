@@ -1,5 +1,6 @@
-import { IntlShape } from 'react-intl';
-import { EExtraFieldType, IExtraField } from '../../../../types/template';
+import type { IntlShape } from 'react-intl';
+import type { IExtraField } from '../../../../types/template';
+import { EExtraFieldType } from '../../../../types/template';
 import { createFieldApiName } from '../../../../utils/createId';
 import { getEmptySelection } from './getEmptySelection';
 

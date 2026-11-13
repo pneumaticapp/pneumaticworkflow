@@ -10,7 +10,8 @@ import {
 } from '../../redux/actions';
 import { usersFetchStarted, loadActiveUsersCount, loadPlan } from '../../redux/accounts/slice';
 import { loadTasksCount } from '../../redux/tasks/slice';
-import { IMainLayoutComponentStoreProps, MainLayout } from './MainLayout';
+import type { IMainLayoutComponentStoreProps } from './MainLayout';
+import { MainLayout } from './MainLayout';
 import { getUserPendingActions } from '../../redux/selectors/user';
 
 export type TMainLayoutComponentStoreProps = Pick<

@@ -1,7 +1,7 @@
-import { TUserId } from './user';
+import type { TUserId } from './user';
 import type { TUploadedFile } from './attachments';
 import type { ITask } from './tasks';
-import { TaskWithTsp } from './taskDate';
+import type { TaskWithTsp } from './taskDate';
 import type {
   IRuntimeKickoffClient,
   IExtraField,
@@ -15,7 +15,7 @@ import type {
   ITemplateStep,
   TTemplateFieldFieldset,
 } from './template';
-import { IFieldsetRuntime } from './fieldset';
+import type { IFieldsetRuntime } from './fieldset';
 
 export type WorkflowWithDateFields = {
   dueDate: string | null;

@@ -15,9 +15,14 @@ import {
 } from 'date-fns';
 import { useIntl } from 'react-intl';
 
-import { IWorkflowDelay, IWorkflowTaskDelay, WorkflowWithDateFields, WorkflowWithTspFields } from '../types/workflow';
+import type {
+  IWorkflowDelay,
+  IWorkflowTaskDelay,
+  WorkflowWithDateFields,
+  WorkflowWithTspFields,
+} from '../types/workflow';
 import { EHighlightsDateFilter } from '../types/highlights';
-import { TaskWithDateFields, TaskWithTspFields } from '../types/taskDate';
+import type { TaskWithDateFields, TaskWithTspFields } from '../types/taskDate';
 import { getDate } from './strings';
 
 export const SEC_IN_DAY = 24 * 60 * 60;

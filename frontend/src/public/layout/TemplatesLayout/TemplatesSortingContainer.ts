@@ -1,7 +1,8 @@
 /* prettier-ignore */
 import { connect } from 'react-redux';
-import { SelectMenu, ISelectMenuProps } from '../../components/UI';
-import { ETemplatesSorting } from '../../types/workflow';
+import type { ISelectMenuProps } from '../../components/UI';
+import { SelectMenu } from '../../components/UI';
+import type { ETemplatesSorting } from '../../types/workflow';
 import type { RootState } from '../../redux/store';
 import { changeTemplatesSorting } from '../../redux/actions';
 import { workflowsSortingValues } from '../../constants/sortings';

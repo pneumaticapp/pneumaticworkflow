@@ -6,7 +6,8 @@ import { WorkflowEndedIcon } from '../../../../icons';
 import { DateFormat } from '../../../../UI/DateFormat';
 import { getUserFullName } from '../../../../../utils/users';
 import { UserData } from '../../../../UserData';
-import { EWorkflowLogEvent, IWorkflowLogItem } from '../../../../../types/workflow';
+import type { IWorkflowLogItem } from '../../../../../types/workflow';
+import { EWorkflowLogEvent } from '../../../../../types/workflow';
 
 import styles from './WorkflowLogWorkflowFinished.css';
 

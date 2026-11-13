@@ -1,4 +1,5 @@
-import React, { ReactNode, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
@@ -8,7 +9,7 @@ import { TrashIcon } from '../../../icons';
 import { getFormattedDropdownOption } from '../Conditions/utils/getFormattedDropdownOption';
 import { useCheckDevice } from '../../../../hooks/useCheckDevice';
 
-import { ITemplateTaskClient, TTaskVariable } from '../../../../types/template';
+import type { ITemplateTaskClient, TTaskVariable } from '../../../../types/template';
 
 import styles from './ReturnTo.css';
 import stylesTaskForm from '../TaskForm.css';

@@ -1,4 +1,4 @@
-import { TAnalyticsMethods } from '../public/utils/analytics';
+import type { TAnalyticsMethods } from '../public/utils/analytics';
 
 declare global {
   interface Window {

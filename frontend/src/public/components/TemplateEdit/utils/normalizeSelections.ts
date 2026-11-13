@@ -1,4 +1,4 @@
-import { IExtraFieldSelection } from '../../../types/template';
+import type { IExtraFieldSelection } from '../../../types/template';
 
 export function normalizeSelections(selections?: IExtraFieldSelection[] | string[]): string[] {
   if (!selections?.length) return [];

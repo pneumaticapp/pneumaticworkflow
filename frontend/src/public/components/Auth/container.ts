@@ -1,7 +1,8 @@
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 
-import { Auth, IAuthUserProps } from './Auth';
+import type { IAuthUserProps } from './Auth';
+import { Auth } from './Auth';
 import type { RootState } from '../../redux/store';
 import { logoutUser } from '../../redux/auth/actions';
 

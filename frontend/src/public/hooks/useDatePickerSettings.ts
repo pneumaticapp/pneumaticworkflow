@@ -1,4 +1,4 @@
-import { Locale } from 'date-fns';
+import type { Locale } from 'date-fns';
 import { enUS, ru } from 'date-fns/locale';
 import { useSelector } from 'react-redux';
 

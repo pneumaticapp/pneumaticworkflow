@@ -3,14 +3,14 @@ import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { DropdownList, SelectMenu } from '../../../UI';
-import { IDropdownOperator } from './utils/getDropdownOperators';
+import type { IDropdownOperator } from './utils/getDropdownOperators';
 import { CONDITION_DISABLED_OPERATOR, OPERATORS_WITHOUT_VALUE } from './utils/shared';
 import { getFormattedDropdownOption } from './utils/getFormattedDropdownOption';
 import { ConditionValueField } from './ConditionValueField';
 import { TrashIcon } from '../../../icons';
 import { EConditionLogicOperations, EConditionOperators } from '../../../../types/templateTaskConditions';
 import type { TConditionRule } from '../../../../types/templateTaskConditions';
-import { TUserListItem } from '../../../../types/user';
+import type { TUserListItem } from '../../../../types/user';
 import type { IDropdownVariable } from './types';
 
 import styles from './Conditions.css';

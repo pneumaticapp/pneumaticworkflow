@@ -1,4 +1,4 @@
-import { ELocale } from '../../types/locale';
+import type { ELocale } from '../../types/locale';
 import type { ITypedReduxAction } from '../types';
 import { actionGenerator } from '../../utils/redux';
 

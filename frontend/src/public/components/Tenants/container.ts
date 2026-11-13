@@ -1,6 +1,7 @@
 import { connect } from 'react-redux';
 import type { RootState } from '../../redux/store';
-import { ITenantsProps, Tenants } from './Tenants';
+import type { ITenantsProps } from './Tenants';
+import { Tenants } from './Tenants';
 import {
   loadTenants,
   changeTenantsSorting,

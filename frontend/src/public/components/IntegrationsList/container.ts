@@ -1,7 +1,8 @@
 import { connect } from 'react-redux';
 import { loadIntegrationsList } from '../../redux/actions';
 import type { RootState } from '../../redux/store';
-import { IIntegrationsListProps, IntegrationsList } from './IntegrationsList';
+import type { IIntegrationsListProps } from './IntegrationsList';
+import { IntegrationsList } from './IntegrationsList';
 
 type TIntegrationsListStoreProps = Pick<IIntegrationsListProps, 'isLoading' | 'integrations'>;
 type TIntegrationsListDispatchProps = Pick<IIntegrationsListProps, 'loadIntegrationsList'>;

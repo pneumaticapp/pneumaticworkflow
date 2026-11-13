@@ -1,4 +1,5 @@
-import React, { Component, ComponentType } from 'react';
+import type { ComponentType } from 'react';
+import React, { Component } from 'react';
 
 const getDisplayName = (WrappedComponent: ComponentType) =>
   WrappedComponent.displayName || WrappedComponent.name || 'Component';

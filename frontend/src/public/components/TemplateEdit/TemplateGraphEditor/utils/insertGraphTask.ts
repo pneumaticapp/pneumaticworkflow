@@ -1,10 +1,11 @@
-import { ITemplateTaskClient, EStartingType } from '../../../../types/template';
+import type { ITemplateTaskClient } from '../../../../types/template';
+import { EStartingType } from '../../../../types/template';
 import { EConditionAction } from '../../../../types/templateTaskConditions';
 import type { ICondition, TConditionRule } from '../../../../types/templateTaskConditions';
 import { getKickoffConditions } from '../../TaskForm/Conditions/utils/getKickoffConditions';
 import { getStartTaskConditions } from '../../TaskForm/Conditions/utils/getStartTaskConditions';
 import { getBaseStartRule } from '../../TaskForm/Conditions/utils/getStartTaskRule';
-import { IGraphNewTaskDraft, TGraphAddTaskIntent } from '../types';
+import type { IGraphNewTaskDraft, TGraphAddTaskIntent } from '../types';
 import { KICKOFF_NODE_ID } from './graphConstants';
 
 export interface IInsertGraphTaskResult {

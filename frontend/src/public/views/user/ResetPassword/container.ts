@@ -1,6 +1,7 @@
 import { connect } from 'react-redux';
 
-import { ResetPassword, IResetPasswordProps } from './ResetPassword';
+import type { IResetPasswordProps } from './ResetPassword';
+import { ResetPassword } from './ResetPassword';
 import type { RootState } from '../../../redux/store';
 import { sendResetPassword } from '../../../redux/auth/actions';
 

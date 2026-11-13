@@ -39,7 +39,8 @@ export default defineConfig(
     extends: [js.configs.recommended, tseslint.configs.recommended],
     rules: {
       'import-x/no-duplicates': 'error',
-      'import-x/no-cycle': ['warn', { ignoreExternal: true, maxDepth: 3 }],
+      'import-x/no-cycle': ['error', { ignoreExternal: true, maxDepth: 3 }],
+      '@typescript-eslint/consistent-type-imports': ['error', { fixStyle: 'separate-type-imports' }],
       'no-undef': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { args: 'none', ignoreRestSiblings: true, caughtErrors: 'none' }],
       'no-console': 'warn',

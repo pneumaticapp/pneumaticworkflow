@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 
 import { ERoutes } from '../../public/constants/routes';
 import { parseCookies } from '../../public/utils/cookie';
@@ -6,7 +6,7 @@ import { setAuthCookie, setGuestCookie } from '../utils/cookie';
 import { identifyAppPartOnServer } from '../../public/utils/identifyAppPart/identifyAppPartOnServer';
 import { EAppPart } from '../../public/utils/identifyAppPart/types';
 import { getUser } from './utils/getUser';
-import { IAuthenticatedUser } from '../utils/types';
+import type { IAuthenticatedUser } from '../utils/types';
 
 const UNSIGNED_USER_ROUTES = [
   ERoutes.Login,

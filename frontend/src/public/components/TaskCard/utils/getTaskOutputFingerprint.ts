@@ -1,4 +1,5 @@
-import { EExtraFieldType, IExtraField, TExtraFieldValue } from '../../../types/template';
+import type { IExtraField, TExtraFieldValue } from '../../../types/template';
+import { EExtraFieldType } from '../../../types/template';
 import { parseMarkdownLinks } from '../../../utils/parseMarkdownFiles';
 
 function normalizeEmptyValue(value: TExtraFieldValue | undefined): TExtraFieldValue {

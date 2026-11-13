@@ -1,4 +1,4 @@
-import { ComponentType } from 'react';
+import type { ComponentType } from 'react';
 import { connect } from 'react-redux';
 
 import type { RootState } from '../../redux/store';
@@ -20,7 +20,7 @@ import {
 } from '../../redux/workflows/slice';
 import { getActiveUsers } from '../../utils/users';
 import { getIsUserSubsribed } from '../../redux/selectors/user';
-import { IWorkflowsFiltersProps } from './types';
+import type { IWorkflowsFiltersProps } from './types';
 import { getRegularGroupsList } from '../../redux/selectors/groups';
 
 export type TWorkflowsFiltersStoreProps = Pick<

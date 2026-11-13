@@ -1,17 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  useNodesState,
-  useEdgesState,
-  applyNodeChanges,
-  NodeChange,
-  EdgeChange,
-  Node,
-  Edge,
-  NodeDragHandler,
-} from 'reactflow';
-import { ITemplateClient } from '../types/template';
-import {
-  EGraphNodeType,
+import type { NodeChange, EdgeChange, Node, Edge, NodeDragHandler } from 'reactflow';
+import { useNodesState, useEdgesState, applyNodeChanges } from 'reactflow';
+import type { ITemplateClient } from '../types/template';
+import type {
   TGraphNode,
   TGraphEdge,
   ITaskNodeData,
@@ -20,6 +11,7 @@ import {
   IConditionEdgeData,
   TGraphNodePositions,
 } from '../components/TemplateEdit/TemplateGraphEditor/types';
+import { EGraphNodeType } from '../components/TemplateEdit/TemplateGraphEditor/types';
 import { buildTemplateGraph } from '../components/TemplateEdit/TemplateGraphEditor/utils/buildTemplateGraph';
 import { applyMovedCard } from '../components/TemplateEdit/TemplateGraphEditor/utils/routeGraph';
 import {

@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { mapRequestBody } from '../utils/mappers';
-import { IAccountGenericTemplate } from '../types/genericTemplates';
+import type { IAccountGenericTemplate } from '../types/genericTemplates';
 
 export type TSaveAccountGenericTemplatesResponse = { genericTemplates: IAccountGenericTemplate[] };
 

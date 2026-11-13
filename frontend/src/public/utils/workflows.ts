@@ -1,5 +1,6 @@
-import { EDashboardActivityAction, EWorkflowLogEvent, ECommentType, IWorkflowDetailsKickoff } from '../types/workflow';
-import { ITemplateTaskClient, IRuntimeKickoffClient, IExtraField } from '../types/template';
+import type { IWorkflowDetailsKickoff } from '../types/workflow';
+import { EDashboardActivityAction, EWorkflowLogEvent, ECommentType } from '../types/workflow';
+import type { ITemplateTaskClient, IRuntimeKickoffClient, IExtraField } from '../types/template';
 
 import { isArrayWithItems, deepCopy } from './helpers';
 import { ExtraFieldsHelper } from '../components/TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';

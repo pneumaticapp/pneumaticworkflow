@@ -6,7 +6,7 @@ import classNames from 'classnames';
 import { getSubscriptionPlan, getIsUserSubsribed } from '../../../redux/selectors/user';
 import { getConditionsCount } from '../TaskItem/utlils/getConditionsCount';
 import { ESubscriptionPlan } from '../../../types/account';
-import { ITemplateTaskClient } from '../../../types/template';
+import type { ITemplateTaskClient } from '../../../types/template';
 import { EConditionAction } from '../../../types/templateTaskConditions';
 
 import styles from '../TemplateEdit.css';

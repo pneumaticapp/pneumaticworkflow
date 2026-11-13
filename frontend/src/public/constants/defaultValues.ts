@@ -1,9 +1,10 @@
 /* eslint-disable no-useless-escape */
 
-import { Config } from 'react-player';
+import type { Config } from 'react-player';
 
-import { TMenuType } from '../types/common';
-import { ELocale, ELocaleDirection, ILocaleOption } from '../types/locale';
+import type { TMenuType } from '../types/common';
+import type { ILocaleOption } from '../types/locale';
+import { ELocale, ELocaleDirection } from '../types/locale';
 import { EPayPeriod } from '../types/pricing';
 import { envSentry } from './enviroment';
 

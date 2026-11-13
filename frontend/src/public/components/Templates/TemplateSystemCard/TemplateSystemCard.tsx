@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import classNames from 'classnames';
 
-import { ISystemTemplate } from '../../../types/template';
+import type { ISystemTemplate } from '../../../types/template';
 import { sanitizeText } from '../../../utils/strings';
 import { ERoutes } from '../../../constants/routes';
 import { RichText } from '../../RichText';

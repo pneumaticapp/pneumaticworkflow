@@ -1,4 +1,4 @@
-import { IExtraField } from '../../../types/template';
+import type { IExtraField } from '../../../types/template';
 
 /**
  * Normalize a field object coming from the API into a proper IExtraField.

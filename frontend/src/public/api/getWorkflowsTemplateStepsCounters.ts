@@ -1,5 +1,6 @@
 import { commonRequest } from './commonRequest';
-import { EWorkflowsStatus, TTemplateStepCounter } from '../types/workflow';
+import type { TTemplateStepCounter } from '../types/workflow';
+import { EWorkflowsStatus } from '../types/workflow';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { EXTERNAL_USER_ID } from '../utils/users';
 

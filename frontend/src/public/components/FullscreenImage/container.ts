@@ -1,6 +1,7 @@
 /* prettier-ignore */
 import { connect } from 'react-redux';
-import { FullscreenImage, IFullscreenImageProps } from './FullscreenImage';
+import type { IFullscreenImageProps } from './FullscreenImage';
+import { FullscreenImage } from './FullscreenImage';
 import type { RootState } from '../../redux/store';
 import { closeFullscreenImage } from '../../redux/general/actions';
 

@@ -1,4 +1,5 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosHeaders } from 'axios';
+import type { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosHeaders } from 'axios';
 import { logger } from '../utils/logger';
 import { ETimeouts } from '../constants/defaultValues';
 import { getAuthHeader } from '../../server/utils/getAuthHeader';

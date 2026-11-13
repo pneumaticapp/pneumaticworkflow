@@ -1,8 +1,10 @@
-import React, { ReactElement, ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
+import React from 'react';
 
 import { Tooltip } from '../UI';
 import { ProgressBarGrid } from './ProgressBarGrid';
-import { EProgressbarColor, IWorkflowTaskClient } from '../../types/workflow';
+import type { IWorkflowTaskClient } from '../../types/workflow';
+import { EProgressbarColor } from '../../types/workflow';
 
 import styles from './ProgressBar.css';
 

@@ -1,9 +1,11 @@
-import React, { FC } from 'react';
+import type { FC } from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 
-import { Avatar, TAvatarUser } from '../../../UI';
+import type { TAvatarUser } from '../../../UI';
+import { Avatar } from '../../../UI';
 import { DeleteIcon } from '../../../icons';
-import { TUserListItem } from '../../../../types/user';
+import type { TUserListItem } from '../../../../types/user';
 import { ETemplateOwnerType } from '../../../../types/template';
 
 import styles from './ViewerItem.css';

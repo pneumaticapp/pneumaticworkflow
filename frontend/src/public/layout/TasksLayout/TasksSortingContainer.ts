@@ -1,9 +1,11 @@
 import { connect } from 'react-redux';
-import { SelectMenu, ISelectMenuProps } from '../../components/UI';
+import type { ISelectMenuProps } from '../../components/UI';
+import { SelectMenu } from '../../components/UI';
 import type { RootState } from '../../redux/store';
 import { changeTaskListSorting } from '../../redux/tasks/slice';
 import { processesTasksCompleteSortingValues, processesTasksSortingValues } from '../../constants/sortings';
-import { ETaskListCompleteSorting, ETaskListCompletionStatus, ETaskListSorting } from '../../types/tasks';
+import type { ETaskListCompleteSorting, ETaskListSorting } from '../../types/tasks';
+import { ETaskListCompletionStatus } from '../../types/tasks';
 
 type TMapStateToProps = Pick<ISelectMenuProps<ETaskListSorting | ETaskListCompleteSorting>, 'activeValue' | 'values'>;
 type TMapDispatchToProps = Pick<ISelectMenuProps<ETaskListSorting | ETaskListCompleteSorting>, 'onChange'>;

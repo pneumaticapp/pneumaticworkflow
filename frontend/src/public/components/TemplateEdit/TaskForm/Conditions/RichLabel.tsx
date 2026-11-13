@@ -2,7 +2,7 @@ import React from 'react';
 import classnames from 'classnames';
 import { TooltipRichContent } from '../../TooltipRichContent';
 import { Tooltip } from '../../../UI';
-import { TTaskVariable } from '../../../../types/template';
+import type { TTaskVariable } from '../../../../types/template';
 import styles from './Conditions.css';
 
 interface IRichLabelProps {

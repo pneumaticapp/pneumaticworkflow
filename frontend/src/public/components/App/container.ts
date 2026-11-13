@@ -2,7 +2,8 @@ import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { compose } from 'redux';
 
-import { App, IAppProps } from './App';
+import type { IAppProps } from './App';
+import { App } from './App';
 import type { RootState } from '../../redux/store';
 import { logoutUser } from '../../redux/actions';
 

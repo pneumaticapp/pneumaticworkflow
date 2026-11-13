@@ -1,6 +1,7 @@
 import { connect } from 'react-redux';
 import type { RootState } from '../../redux/store';
-import { ITasksProps, Tasks } from './Tasks';
+import type { ITasksProps } from './Tasks';
+import { Tasks } from './Tasks';
 import { loadCurrentTask, openSelectTemplateModal } from '../../redux/actions';
 import {
   changeTaskListSorting,

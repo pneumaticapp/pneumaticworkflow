@@ -1,4 +1,5 @@
-import axios, { AxiosRequestConfig } from 'axios';
+import type { AxiosRequestConfig } from 'axios';
+import axios from 'axios';
 import * as dotenv from 'dotenv';
 import { mergePaths } from '../../public/utils/urls';
 import { getConfig } from '../../public/utils/getConfig';

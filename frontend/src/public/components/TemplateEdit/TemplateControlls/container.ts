@@ -2,7 +2,8 @@ import { connect } from 'react-redux';
 
 import type { RootState } from '../../../redux/store';
 
-import { ITemplateControllsProps, TemplateControlls } from './TemplateControlls';
+import type { ITemplateControllsProps } from './TemplateControlls';
+import { TemplateControlls } from './TemplateControlls';
 import { patchTemplate, cloneTemplate, deleteTemplate, openRunWorkflowModal } from '../../../redux/actions';
 import { getIsUserSubsribed } from '../../../redux/selectors/user';
 

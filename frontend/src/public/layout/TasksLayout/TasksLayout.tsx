@@ -1,4 +1,5 @@
-import React, { ReactNode, useEffect, useMemo } from 'react';
+import type { ReactNode } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { matchPath } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
@@ -11,14 +12,14 @@ import { FilterIcon } from '../../components/icons';
 import { FilterSelect, Tabs, ReturnLink } from '../../components/UI';
 import { checkSomeRouteIsActive, history } from '../../utils/history';
 import { reactElementToText } from '../../utils/reactElementToText';
-import { ITopNavOwnProps } from '../../components/TopNav/TopNav';
+import type { ITopNavOwnProps } from '../../components/TopNav/TopNav';
 import { ETaskListCompleteSorting, ETaskListCompletionStatus, ETaskListSorting } from '../../types/tasks';
-import { ITemplateStep, ITemplateTitleBaseWithCount } from '../../types/template';
+import type { ITemplateStep, ITemplateTitleBaseWithCount } from '../../types/template';
 import { StepName } from '../../components/StepName';
 import { WorkflowModalContainer } from '../../components/Workflows/WorkflowModal';
 
 import styles from './TasksLayout.css';
-import { TLoadFilterStepsPayload } from '../../redux/tasks/types';
+import type { TLoadFilterStepsPayload } from '../../redux/tasks/types';
 
 export interface ITasksLayoutStoreProps {
   children?: ReactNode;

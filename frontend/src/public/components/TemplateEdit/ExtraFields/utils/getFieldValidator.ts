@@ -1,5 +1,7 @@
-import { EMPTY_RULE, IRule, isEmpty, isInvalidUrl, validateFieldCreator } from '../../../../utils/validators';
-import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../../types/template';
+import type { IRule } from '../../../../utils/validators';
+import { EMPTY_RULE, isEmpty, isInvalidUrl, validateFieldCreator } from '../../../../utils/validators';
+import type { IExtraField } from '../../../../types/template';
+import { EExtraFieldMode, EExtraFieldType } from '../../../../types/template';
 import { isArrayWithItems } from '../../../../utils/helpers';
 import { numberRegex } from '../../../../constants/defaultValues';
 

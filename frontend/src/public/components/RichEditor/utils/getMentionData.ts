@@ -1,5 +1,6 @@
 import type { TMentionData } from '../types';
-import { EUserStatus, TUserListItem } from '../../../types/user';
+import type { TUserListItem } from '../../../types/user';
+import { EUserStatus } from '../../../types/user';
 import { getUserFullName } from '../../../utils/users';
 
 export function getMentionData(users: TUserListItem[]): TMentionData[] {

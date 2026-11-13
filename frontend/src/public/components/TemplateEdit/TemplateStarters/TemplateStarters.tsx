@@ -7,21 +7,11 @@ import { ESubscriptionPlan } from '../../../types/account';
 import { createStarterApiName } from '../../../utils/createId';
 import { trackInviteTeamInPage } from '../../../utils/analytics';
 import { getNotDeletedUsers, getUserFullName } from '../../../utils/users';
-import {
-  EOptionTypes,
-  TUsersDropdownOption,
-  UsersDropdown,
-  getUsersDropdownOptionValue,
-} from '../../UI/form/UsersDropdown';
+import type { TUsersDropdownOption } from '../../UI/form/UsersDropdown';
+import { EOptionTypes, UsersDropdown, getUsersDropdownOptionValue } from '../../UI/form/UsersDropdown';
 import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../../../redux/selectors/user';
-import {
-  ETaskPerformerType,
-  ETemplateOwnerRole,
-  ETemplateOwnerType,
-  TemplateStarterType,
-  TTemplateStarterType,
-  ITemplateOwner,
-} from '../../../types/template';
+import type { ETemplateOwnerType, TTemplateStarterType, ITemplateOwner } from '../../../types/template';
+import { ETaskPerformerType, ETemplateOwnerRole, TemplateStarterType } from '../../../types/template';
 import { StarterItem } from './components';
 
 import styles from './TemplateStarters.css';

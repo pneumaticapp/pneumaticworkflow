@@ -1,5 +1,6 @@
 import { connect } from 'react-redux';
-import { SettingsLayoutComponent, ISettingsLayoutComponentProps } from './SettingsLayout';
+import type { ISettingsLayoutComponentProps } from './SettingsLayout';
+import { SettingsLayoutComponent } from './SettingsLayout';
 import type { RootState } from '../../redux/store';
 import { setProfileSettingsActiveTab } from '../../redux/profile/actions';
 

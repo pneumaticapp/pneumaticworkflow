@@ -1,6 +1,6 @@
 import type { IExtraField, TTemplateFieldFieldset } from '../../../types/template';
 import type { TRuntimeMergedOutputPart } from '../../../types/workflow';
-import { IFieldsetRuntime, IFieldsetCatalogItem, IFieldsetBindingClient } from '../../../types/fieldset';
+import type { IFieldsetRuntime, IFieldsetCatalogItem, IFieldsetBindingClient } from '../../../types/fieldset';
 import { createFieldsetBindingApiName } from '../../../utils/createId';
 
 export type TMergedTaskOutputRow =

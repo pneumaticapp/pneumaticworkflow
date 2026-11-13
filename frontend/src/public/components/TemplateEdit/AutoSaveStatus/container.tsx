@@ -1,6 +1,7 @@
 import { connect } from 'react-redux';
 
-import { IAutoSaveStatusProps, AutoSaveStatus } from './AutoSaveStatus';
+import type { IAutoSaveStatusProps } from './AutoSaveStatus';
+import { AutoSaveStatus } from './AutoSaveStatus';
 
 import type { RootState } from '../../../redux/store';
 import { getPaywallType } from '../../TopNav/utils/getPaywallType';

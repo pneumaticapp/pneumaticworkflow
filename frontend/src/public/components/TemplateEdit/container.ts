@@ -14,7 +14,8 @@ import {
 import { getNotDeletedUsers } from '../../utils/users';
 import { getIsUserSubsribed } from '../../redux/selectors/user';
 
-import { ITemplateEditProps, TemplateEdit } from './TemplateEdit';
+import type { ITemplateEditProps } from './TemplateEdit';
+import { TemplateEdit } from './TemplateEdit';
 
 type TWorkflowStoreProps = Pick<
   ITemplateEditProps,

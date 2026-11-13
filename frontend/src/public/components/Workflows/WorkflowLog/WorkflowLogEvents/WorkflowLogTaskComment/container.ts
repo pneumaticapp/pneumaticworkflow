@@ -6,7 +6,8 @@ import {
   editComment,
   deleteComment,
 } from '../../../../../redux/workflows/slice';
-import { TWorkflowLogTaskCommentProps, WorkflowLogTaskComment } from './WorkflowLogTaskComment';
+import type { TWorkflowLogTaskCommentProps } from './WorkflowLogTaskComment';
+import { WorkflowLogTaskComment } from './WorkflowLogTaskComment';
 
 import type { RootState } from '../../../../../redux/store';
 
