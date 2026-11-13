@@ -1,326 +1,294 @@
-# Pneumatic connector for Claude
+# Pneumatic MCP server
 
-An [MCP](https://modelcontextprotocol.io) server that connects Claude to [Pneumatic Workflow](https://github.com/pneumaticapp/pneumaticworkflow): run workflows from templates, work through the task inbox, comment, reassign performers, snooze or return workflows, and pull dashboard numbers — all in plain language.
+## About
 
-It runs in two modes:
+Connects compatible MCP clients to a Pneumatic installation using Streamable HTTP or stdio. Tools read and update tasks, workflows, templates, files, reports, users, groups and datasets through the Pneumatic API, with the permissions of the API key owner.
 
-| Mode                     | Used by                                                                | Auth                                                                                        |
-| ------------------------ | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `http` (Streamable HTTP) | Claude.ai / Claude Desktop custom connector, Claude Code, Messages API | OAuth 2.1 (the user pastes their Pneumatic API key once) or a raw API key as `Bearer` token |
-| `stdio`                  | Claude Desktop / Claude Code as a local process                        | `PNEUMATIC_API_KEY` env var                                                                 |
+| Transport | Client connection                     | Authentication                                                                                                                  |
+| --------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| HTTP      | Streamable HTTP at `<PUBLIC_URL>/mcp` | OAuth with PKCE: each user enters their API key on the consent page. A raw API key in `Authorization: Bearer <key>` also works. |
+| stdio     | Client starts a local Node.js process | `PNEUMATIC_API_KEY` in the process environment.                                                                                 |
 
-The connector acts with the permissions of the API key owner. Create a key in Pneumatic: **Integrations → Your API Keys → Create** (the Integrations page is visible to admins; the full key is shown only once, right after creation).
+Create a key in your installation under **Integrations → Your API Keys → Create** (account owner or admin). The full key is shown once. To revoke access, delete the key there; HTTP key validation is cached for up to five minutes.
 
-**Where to start**
+## Configuration
 
-- Use the hosted connector at `https://mcp.pneumatic.app/mcp`: [docs/USER_GUIDE.md](docs/USER_GUIDE.md). How it handles data: [docs/PRIVACY.md](docs/PRIVACY.md).
-- Host it for a team (Claude.ai, Claude Desktop, remote Claude Code): [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
-- Try it on your machine: [Claude Code](#claude-code) or [Claude Desktop](#claude-desktop-local-process) as a local process.
-- Every setting: [Configuration](#configuration). How the parts fit together: [How it works](#how-it-works).
+### Pneumatic Docker Compose
 
-## Tools
+Edit the **repository-root `.env`** when using [docker-compose.yml](../docker-compose.yml), [docker-compose.src.yml](../docker-compose.src.yml) or `start.sh`. These files map installation settings to the connector's environment; `mcp/.env` is not read by the root Compose files.
 
-| Area      | Tools                                                                                                                                                                                                                                                                                          |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Account   | `get_current_user`, `list_users`, `list_groups`, `list_notifications`, `mark_notifications_read`, `set_vacation`                                                                                                                                                                               |
-| Templates | `list_templates`, `get_template`, `get_template_kickoff`, `run_workflow`                                                                                                                                                                                                                       |
-| Design    | `create_template`, `generate_template_steps`, `update_template`, `add_template_step`, `update_template_step`, `remove_template_step` ⚠, `update_template_kickoff`, `remove_template_fields` ⚠, `clone_template`, `delete_template` ⚠, `list_library_templates`, `create_template_from_library` |
-| Workflows | `list_workflows`, `get_workflow`, `list_workflow_events`, `comment_on_workflow`, `update_workflow`, `snooze_workflow`, `resume_workflow`, `return_workflow_to_task` ⚠, `finish_workflow` ⚠, `terminate_workflow` ⚠                                                                             |
-| Tasks     | `list_tasks`, `get_task`, `complete_task`, `revert_task` ⚠, `comment_on_task`, `set_task_due_date`, `add_task_performer`, `remove_task_performer` ⚠, `set_checklist_item`                                                                                                                      |
-| Files     | `list_attachments`, `download_file`, `upload_file`, `create_upload_link`†, `get_upload_status`†                                                                                                                                                                                                |
-| Comments  | `edit_comment`, `delete_comment` ⚠, `react_to_comment`, `list_task_events`                                                                                                                                                                                                                     |
-| Reports   | `get_dashboard`, `list_highlights`, `get_template_step_stats`, `count_workflows`, `get_workflow_field_values`                                                                                                                                                                                  |
-| Datasets  | `list_datasets`, `get_dataset`, `create_dataset`, `update_dataset` ⚠, `delete_dataset` ⚠                                                                                                                                                                                                       |
-| Admin     | `create_user`, `update_user`, `get_assignment_count`, `deactivate_user` ⚠, `reassign_user` ⚠, `create_group`, `update_group` ⚠, `delete_group` ⚠                                                                                                                                               |
+| Root `.env` variable               | Default                                                                                   | Meaning                                                                                                                                                                                                                                               |
+| ---------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MCP_ENABLED`                      | `false`                                                                                   | `start.sh` switch: `true` adds the `mcp` profile; `false` or empty removes an existing connector container. Other values fail startup. Docker Compose itself does not read this switch.                                                               |
+| `COMPOSE_PROFILES`                 | Unset                                                                                     | For direct Compose commands, include `mcp` or use `--profile mcp`. Combine profiles on one comma-separated line, e.g. `logs-otlp,mcp`. With `start.sh`, use `MCP_ENABLED=true`; leaving `mcp` in this list while disabling `MCP_ENABLED` is an error. |
+| `MCP_PUBLIC_URL`                   | `FRONTEND_URL`, falling back to `http://localhost`                                        | Overrides `PUBLIC_URL` when the MCP server has its own public HTTPS origin. Configure DNS/TLS and proxy routing for that origin separately.                                                                                                           |
+| `MCP_OAUTH_ALLOWED_REDIRECT_HOSTS` | Empty: process defaults below                                                             | Overrides `OAUTH_ALLOWED_REDIRECT_HOSTS` with the full comma-separated callback hostname list for your clients.                                                                                                                                       |
+| `MCP_TOKEN_SECRET`                 | `DJANGO_SECRET_KEY`; if both are empty/unset, `django_secret_django_secret_django_secret` | Maps to `TOKEN_SECRET`. Set a separate random value of at least 32 characters, generated once with `openssl rand -hex 32`. Changing it invalidates OAuth tokens and client registrations.                                                             |
+| `MCP_RATE_LIMIT_PER_MINUTE`        | `120`                                                                                     | Maps to `RATE_LIMIT_PER_MINUTE`: non-negative integer, MCP requests per API key per minute; `0` disables the limit.                                                                                                                                   |
+| `MCP_TOOLSETS`                     | Empty: all tools                                                                          | Maps to `TOOLSETS`: comma-separated groups from the table below, or `all`.                                                                                                                                                                            |
+| `MCP_READ_ONLY`                    | `false`                                                                                   | Maps to `READ_ONLY`: `true` hides tools that change data. Also accepts `yes`/`1` and `no`/`0`.                                                                                                                                                        |
+| `MCP_LOG_LEVEL`                    | `info`                                                                                    | Maps to `LOG_LEVEL`: `debug`, `info`, `warn`, `error`, `off`. Logs are JSON lines on stderr.                                                                                                                                                          |
 
-⚠ marked with `destructiveHint`. When the client supports MCP elicitation (forms) and the connector can reach it — protocol 2026-07-28, or stdio — the client shows a confirmation with the call's arguments before the connector runs these tools, and nothing changes when the user declines (`cancelled`). Over Streamable HTTP with earlier protocol versions, and with clients without forms, the server instructions tell Claude to confirm with the user first. Read-only tools carry `readOnlyHint`, so clients can auto-approve them.
+The connector reuses these existing installation settings:
 
-The server also offers MCP prompts — ready-made scenarios that clients list as commands: `triage_inbox`, `weekly_report` (`days`), `start_process` (`request`), `find_bottlenecks` (`template`), `offboard_user` (`user`, `successor`) and `design_process` (`description`). They only guide Claude through the tools above and ask for confirmation before changes.
+| Root `.env` variable  | Default used by the MCP service | Connector variable and purpose                                                                                         |
+| --------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `FRONTEND_URL`        | `http://localhost`              | Sets `PNEUMATIC_APP_URL` for web app links and supplies the fallback for `PUBLIC_URL` when `MCP_PUBLIC_URL` is unset.  |
+| `BACKEND_PRIVATE_URL` | `http://pneumatic-nginx`        | Sets `PNEUMATIC_API_URL`: backend address reachable from the connector container.                                      |
+| `FILE_SERVICE_URL`    | `http://localhost/files`        | Sets `PNEUMATIC_FILES_URL`: public file URL prefix; must match the backend's setting.                                  |
+| `FILE_PORT`           | `8000`                          | Sets `PNEUMATIC_FILES_INTERNAL_URL` to `http://pneumatic-file-service:<FILE_PORT>` for storage requests inside Docker. |
 
-Dates are ISO 8601 everywhere: inputs such as `2026-10-15T09:00:00Z` (also in date fields of `complete_task`, `run_workflow` and `update_workflow`) are converted to the Unix timestamps the Pneumatic API expects, and results show dates as ISO 8601 in UTC (`dueDate`, `dateStarted`, ...). Results also include `webUrl` links into the Pneumatic web app (`PNEUMATIC_APP_URL`) and the names of performers, authors and workflow starters next to their IDs (the account's users and groups are cached for 5 minutes per key).
+The image sets `MCP_TRANSPORT=http`, `HOST=0.0.0.0` and `PORT=3000`. Compose sets `OAUTH_REPLAY_FILE=/state/replay.json` and `OAUTH_REPLAY_CREATE_ON_EMPTY_VOLUME=true`, and mounts `mcp-state` at `/state`. Other HTTP settings below keep their process defaults. To override a setting absent from the service's `environment`, add it with a Compose override file; putting it only in the root `.env` does not pass it into the container.
 
-Before `complete_task`, `run_workflow` and `update_workflow` write field values, the connector reads the form and rejects unknown keys (pointing to the right `api_name` when a label was used), options that are not in the field's selections, malformed file links, `string` values over 140 characters and empty required fields, so the model gets a precise message instead of a generic Pneumatic validation error. This costs one extra read per write.
+### Standalone process
 
-Tool results are compact: `structuredContent` (and the JSON text) is `{data, truncated}` with camelCase keys. It contains only the fields a model needs and is bounded to 64 KiB; `truncated: true` marks shortened text or lists. Lists return `data.items` and `data.page` (`limit`, `offset`, `returned`, `total`, `nextOffset`). Errors return `isError` with `{error: {code, message, retryable, status?, detail?}}`. `detail` carries Pneumatic's own validation message, and failed writes warn that the outcome may be unknown. Arguments that violate the input schema, including unknown keys, are rejected by the MCP SDK with a plain-text error.
+Use [`.env.example`](.env.example) for a process running on the host. The following settings are read by the connector itself. Load a file explicitly with `node --env-file=.env`; `npm start` and `npm run dev` do not load it automatically. Variables already exported in the shell take precedence over the env file.
 
-Design and admin tools need the API key owner to be an admin (`get_workflow_field_values` needs the account owner). `create_template` takes steps with performers, output fields, checklists and due dates and chains them with start conditions, so steps run one after another unless `sequential: false`. The connected user becomes the template owner. Templates are edited in place: `update_template` (settings, activation, public and embedded forms), `add_template_step`, `update_template_step`, `remove_template_step`, `update_template_kickoff` (adds kickoff fields) and `remove_template_fields` read the template, change only the requested part and send the whole template back, because Pneumatic replaces templates as a whole. Existing api names are kept, and steps chained with "start after the previous step" are re-chained when a step is inserted or removed. Removals are destructive (running workflows lose removed fields and their values) and are refused while anything else in the template still refers to the removed step or field, because Pneumatic does not validate draft templates. `create_user` creates an active user immediately without an invitation email.
+Set the addresses explicitly for your installation. The standalone configuration retains legacy hosted-service fallbacks (`DEFAULT_API_URL` and `DEFAULT_FILES_URL` in [src/config.ts](src/config.ts)); none of the examples below depend on them.
 
-`get_template_kickoff` reads the kickoff form through the template list, so template starters and viewers can prepare `run_workflow` without template edit rights.
+| Variable                       | Default when omitted                                                       | Meaning / value to supply                                                                                                                                                                         |
+| ------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PNEUMATIC_API_URL`            | `DEFAULT_API_URL` in [src/config.ts](src/config.ts)                        | Backend HTTP(S) base URL, e.g. `http://localhost:8001` on the host or `https://api.example.com` remotely. Do not append an API resource path.                                                     |
+| `PNEUMATIC_FILES_URL`          | Unset for a custom API URL; `DEFAULT_FILES_URL` for the legacy default API | Set to the backend's `FILE_SERVICE_URL`, e.g. `https://app.example.com/files`. Used for returned links and download URL validation; required for uploads and downloads.                           |
+| `PNEUMATIC_FILES_INTERNAL_URL` | Unset: requests use `PNEUMATIC_FILES_URL`                                  | Optional storage address reachable by the process, e.g. `http://pneumatic-file-service:8000` inside the Compose network. Requires `PNEUMATIC_FILES_URL`; returned links still use the public URL. |
+| `PNEUMATIC_APP_URL`            | `PNEUMATIC_FILES_URL` with a final `/files` removed; otherwise unset       | Web app base URL for task, workflow and template links. Set explicitly if the file URL has another path; unset means no web app links in results.                                                 |
+| `MCP_TRANSPORT`                | `stdio`                                                                    | `stdio` or `http`. Command-line `--http` / `--stdio` overrides it. The Docker image defaults to `http`.                                                                                           |
+| `PNEUMATIC_API_KEY`            | Unset                                                                      | Required for stdio and the smoke scripts. HTTP requests supply a key per user, so leave it unset on a shared HTTP server.                                                                         |
+| `TOOLSETS`                     | All groups                                                                 | Comma-separated names below, or `all`; empty also selects all. Unknown names fail startup.                                                                                                        |
+| `READ_ONLY`                    | `false`                                                                    | `true`/`yes`/`1` exposes only read tools; `false`/`no`/`0` or empty permits writes.                                                                                                               |
+| `LOG_LEVEL`                    | `info`                                                                     | `debug`, `info`, `warn`, `error`, `off`; invalid values fail startup.                                                                                                                             |
 
-Files go through the Pneumatic file storage (`PNEUMATIC_FILES_URL`) with the same API key:
+Backend, file and app URLs accept HTTP(S) without credentials, query strings or fragments; trailing slashes are removed. `localhost` inside a container refers to that container, not to the host.
 
-- `upload_file` accepts text or base64 (up to 5 MiB) or a public HTTPS URL (up to 25 MiB) and returns `fieldValue`, a `[name](url)` link. Put it into a file field of `complete_task`, `run_workflow` or `update_workflow`, or into a comment.
-- File fields in `get_task` / `get_workflow` expose `fileLinks`. Sending a file field replaces its files, so pass the existing links to keep them.
-- `download_file` returns images inline, text up to 256 KiB as text and other files up to 3 MiB as base64 resources. Larger files return only metadata and the link.
-- † `http` mode only: `create_upload_link` returns a one-time page on the connector (`/upload/<token>`, valid for 1 hour) where the user picks a file from their device (up to 25 MiB). The connector stores it with the same API key; `get_upload_status` then returns `fieldValue`. Links are kept in memory (one process) and only the key that created a link can read its status.
+| `TOOLSETS` group | Contents                                                                                                |
+| ---------------- | ------------------------------------------------------------------------------------------------------- |
+| `core`           | Tasks, workflows, template lookup/launch, comments, notifications, vacation, user/group/dataset lookup. |
+| `files`          | Attachments, uploads and downloads; browser upload links require HTTP mode.                             |
+| `design`         | Template creation, editing and the template library.                                                    |
+| `analytics`      | Dashboard, highlights, workflow counts, step statistics and field-value reports.                        |
+| `admin`          | User, group and dataset management; reassignment.                                                       |
 
-## Production deployment (remote HTTP)
+### HTTP settings
 
-**Self-hosted Pneumatic:** the connector ships with Pneumatic. Set `MCP_ENABLED=true` in the Pneumatic `.env` (or enable the `mcp` compose profile) and it runs at `FRONTEND_URL/mcp`; see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#with-pneumatic-docker-compose).
+These variables are ignored in stdio mode. `TOKEN_SECRET` and `OAUTH_REPLAY_FILE` are required for HTTP startup.
 
-Otherwise the shared server runs in `http` mode behind a TLS reverse proxy, as **one** Docker container with a persistent volume for the replay ledger. Each user connects with their own Pneumatic API key through OAuth; do not set `PNEUMATIC_API_KEY` on the shared server. [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) covers requirements, which Pneumatic URLs to set (Cloud and self-hosted), Docker Compose and `docker run` examples, the reverse proxy, upgrades, backups and troubleshooting.
+| Variable                       | Process default                                                 | Meaning / allowed values                                                                                                                                                                                                       |
+| ------------------------------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `HOST`                         | `127.0.0.1`                                                     | Listen address; the Docker image uses `0.0.0.0`.                                                                                                                                                                               |
+| `PORT`                         | `3000`                                                          | Integer from `1` to `65535`.                                                                                                                                                                                                   |
+| `PUBLIC_URL`                   | `http://localhost:<PORT>`                                       | Connector origin used in OAuth metadata, consent and upload links, e.g. `https://mcp.example.com`. No path, query, fragment or credentials; HTTPS required except for `localhost`, `127.0.0.1`, `[::1]`. Do not append `/mcp`. |
+| `TOKEN_SECRET`                 | Unset                                                           | At least 32 characters. Generate once with `openssl rand -hex 32` and keep across restarts.                                                                                                                                    |
+| `OAUTH_REPLAY_FILE`            | Unset                                                           | Path to an existing, writable persistent file containing spent OAuth token identifiers. Compose uses `/state/replay.json`; local development uses `./.state/replay.json`.                                                      |
+| `OAUTH_ALLOWED_REDIRECT_HOSTS` | `claude.ai,claude.com,www.cursor.com,localhost,127.0.0.1,[::1]` | Comma-separated callback hostnames, without schemes, paths or ports. Set the full list when adding another client. `*` permits any host.                                                                                       |
+| `RATE_LIMIT_PER_MINUTE`        | `120`                                                           | Non-negative integer, MCP requests per API key per minute; `0` disables this limit. Consent failures have a separate fixed limit of 10 per client IP per minute.                                                               |
+| `TRUST_PROXY`                  | `loopback,uniquelocal`                                          | Trusted reverse proxy addresses/subnets, hop count, or `true`/`false`. Determines which `X-Forwarded-For` values are trusted for client IP limits. Match your proxy network.                                                   |
+| `METRICS_TOKEN`                | Unset: `/metrics` disabled                                      | At least 16 characters; enables Prometheus metrics with `Authorization: Bearer <METRICS_TOKEN>`.                                                                                                                               |
 
-## Claude.ai custom connector (remote)
+`OAUTH_REPLAY_CREATE_ON_EMPTY_VOLUME` is a **Docker entrypoint** setting, not a Node.js setting. Unset disables creation; exactly `true` creates the file named by `OAUTH_REPLAY_FILE` only if its directory exists and is empty. Compose enables it for a new `mcp-state` volume.
 
-After deploying, in Claude open **Settings → Connectors → Add custom connector** and enter `https://mcp.example.com/mcp`. Claude opens the Pneumatic consent page; each user pastes their own API key and presses **Allow access**. The connector acts with that key's permissions.
+`PUBLIC_URL` and `PNEUMATIC_APP_URL` can differ: for example, `https://mcp.example.com` hosts the connector while `https://app.example.com` hosts the web app. Compose uses `FRONTEND_URL` for the app and, unless overridden by `MCP_PUBLIC_URL`, for the connector.
 
-Under the hood Claude discovers OAuth via `/.well-known/oauth-protected-resource/mcp`, registers itself dynamically (`/register`), and runs the authorization code flow with PKCE (`/authorize`, `/token`).
+## Installation / Get started
 
-## Claude Code
+### With the Pneumatic stack
 
-Remote server with OAuth (a browser window opens on first use):
+Requires a configured Pneumatic installation and Docker Compose. Run commands from the repository root. For remote clients, configure HTTPS for the installation (`SSL=yes` with the bundled nginx) and set `FRONTEND_URL` and `FILE_SERVICE_URL` to your public addresses. HTTP is accepted only on loopback.
+
+1. Generate a secret with `openssl rand -hex 32`. In the root `.env`, set `MCP_ENABLED=true` and `MCP_TOKEN_SECRET=<generated value>`. Paste the generated value, not the command.
+2. Run `./start.sh`; select **From sources** to build this checkout. Alternatively, start directly with Compose:
+
+   ```bash
+   docker compose --profile mcp up -d --build
+   ```
+
+3. Check the connector:
+
+   ```bash
+   docker compose --profile mcp ps mcp
+   docker compose --profile mcp logs --tail=50 mcp
+   docker compose --profile mcp exec mcp wget -qO- http://127.0.0.1:3000/healthz
+   curl -i -X POST https://mcp.example.com/mcp -H 'Content-Type: application/json' --data '{}'
+   curl -fsS https://mcp.example.com/.well-known/oauth-authorization-server
+   ```
+
+   Replace `https://mcp.example.com` with `MCP_PUBLIC_URL` if set, otherwise `FRONTEND_URL`. Health returns `{"status":"ok"}`; unauthenticated `/mcp` returns **401** with `WWW-Authenticate`; OAuth metadata contains your public origin. These checks do not verify backend access: connect a client and call `get_current_user` next.
+
+The bundled nginx forwards `/mcp`, `/authorize`, `/token`, `/register`, `/upload/` and `/.well-known/oauth-*` on the web app origin. `/healthz` and `/metrics` are accessible inside the connector container, not through these nginx routes. With the connector stopped, its nginx routes return 502.
+
+To disable it through `start.sh`, set `MCP_ENABLED=false` and remove `mcp` from `COMPOSE_PROFILES`. With direct Compose commands, remove `mcp` from the enabled profiles and run `docker compose --profile mcp rm -sf mcp`. Disabling a profile alone does not stop an already running container.
+
+### Standalone Docker
+
+Run from `mcp/`. Copy `.env.example` to `.env`, then set `PNEUMATIC_API_URL`, `PNEUMATIC_FILES_URL` and `PNEUMATIC_APP_URL` to your installation's addresses. For Docker, set `HOST=0.0.0.0`, `PUBLIC_URL=https://mcp.example.com`, `TOKEN_SECRET` to a generated secret, and `OAUTH_REPLAY_FILE=/state/replay.json`. The API and storage addresses must be reachable from the container; use `PNEUMATIC_FILES_INTERNAL_URL` if the public storage address is not reachable there.
 
 ```bash
-claude mcp add --transport http pneumatic https://mcp.example.com/mcp
+docker build -t pneumatic-mcp:local .
+docker volume create pneumatic-mcp-state
+docker run -d --name pneumatic-mcp --restart unless-stopped \
+  --env-file .env \
+  -e OAUTH_REPLAY_CREATE_ON_EMPTY_VOLUME=true \
+  -v pneumatic-mcp-state:/state \
+  -p 127.0.0.1:3000:3000 \
+  pneumatic-mcp:local
 ```
 
-Remote server with a static key:
+Put a TLS reverse proxy in front of `127.0.0.1:3000`. Forward `/mcp`, `/authorize`, `/token`, `/register`, `/upload/` and `/.well-known/oauth-*` without rewriting their paths; preserve `Host`, set trusted forwarding headers, disable response buffering and allow request bodies of at least 26 MiB. The bundled [MCP locations](../nginx/includes/location_mcp.conf) and [proxy settings](../nginx/includes/proxy_to_mcp.conf) show these requirements. Keep upload-token paths out of access logs. `PUBLIC_URL` must match the externally reachable origin.
+
+### Connect a client
+
+For any client supporting **Streamable HTTP**, configure:
+
+| Setting                    | Value                                                                                                                                  |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Server URL                 | `<PUBLIC_URL>/mcp`, e.g. `https://mcp.example.com/mcp`.                                                                                |
+| Authentication             | OAuth authorization code with PKCE S256 and dynamic client registration. Each user enters their own API key on the consent page.       |
+| Alternative authentication | `Authorization: Bearer <Pneumatic API key>` for clients supporting custom headers. Keep the key in the client's private configuration. |
+
+For clients using the `mcpServers` JSON format, the remote configuration is:
+
+```json
+{
+  "mcpServers": {
+    "pneumatic": {
+      "url": "https://mcp.example.com/mcp"
+    }
+  }
+}
+```
+
+Configuration file names and fields depend on the client. OAuth discovery is at `/.well-known/oauth-protected-resource/mcp` and `/.well-known/oauth-authorization-server`; no pre-registered client secret is required. Add the client's callback hostname to `OAUTH_ALLOWED_REDIRECT_HOSTS` if absent. Desktop clients can use loopback HTTP callbacks. For local processes, use the [stdio configuration](#local-stdio-client) below.
+
+Examples for specific clients:
+
+| Client                                                        | Setup                                                                                                                                                                                                                                                                                 |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Cursor](https://cursor.com/docs/mcp)                         | Put the JSON above in `.cursor/mcp.json` for a project or `~/.cursor/mcp.json` for your user, then authenticate. The documented web callback is `https://www.cursor.com/agents/mcp/oauth/callback`; desktop uses `http://localhost:8787/callback`. Both hosts are allowed by default. |
+| [Claude](https://claude.com/docs/connectors/building/testing) | **Settings → Connectors → Add custom connector**; supply the server URL and complete consent.                                                                                                                                                                                         |
+| [Claude Code](https://code.claude.com/docs/en/mcp)            | Run `claude mcp add --transport http pneumatic https://mcp.example.com/mcp`, then authenticate through `/mcp`.                                                                                                                                                                        |
+
+Try “Show my overdue tasks” or “Start the onboarding workflow.” Writes use the key owner's permissions; `READ_ONLY=true` hides write tools. Destructive tools are annotated and request confirmation when the client supports forms; other clients are instructed to confirm before calling them. Compatibility must be verified in each client version you intend to support.
+
+### Data handling and privacy
+
+- The server processes API keys, tool arguments, results and files to execute requests. It sends account credentials only to the configured API and storage; downloads from public HTTPS URLs do not carry those credentials. Results are returned to the connected client, whose provider processes them under its own terms.
+- OAuth tokens contain the encrypted API key: authorization codes last five minutes, access tokens one hour, refresh tokens 90 days and rotate on use. The replay ledger stores identifiers and expirations, not keys; expired entries are removed during compaction. User/group directories and successful key checks are cached in memory for five minutes, rejected keys for one minute. Rate limits also use in-memory key hashes and client IPs.
+- Files persist in Pneumatic storage. Upload links expire after one hour; their in-memory status records become eligible for cleanup 24 hours after expiry and are lost on restart. Application logs contain request metadata, status and timing, not credentials or tool contents. Hosting operators control log retention and proxy logging.
+- Disconnect in the client and delete the API key in Pneumatic to revoke access; the key-check cache can delay rejection by five minutes. For the maintained hosted service, the publisher's privacy policy and support contact are recorded in [listing.json](distribution/listing.json). For another deployment, contact its operator for its privacy policy, retention settings and deletion requests.
+
+### State and restarts
+
+Run **one HTTP process**. The replay ledger is file-based; upload links, caches and rate limits are in memory. Multiple replicas require shared stores.
+
+- `mcp-state` is a Docker named volume containing `/state/replay.json`: spent authorization codes, refresh-token identifiers and session revocations with expiry times. It contains no API keys or uploaded files. [Named volumes](https://docs.docker.com/engine/storage/volumes/) persist across container replacement and host restarts; a host-directory bind mount is not required.
+- Keep the volume and `TOKEN_SECRET` on upgrades. `docker compose down -v` deletes the named volume. If the ledger is lost or restored from an older copy, rotate the secret before creating a new ledger; users must reconnect. Reusing the old secret with missing records allows spent tokens to be accepted again.
+
+### Troubleshooting
+
+| Symptom                               | Check                                                                                                                           |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Startup reports `Configuration error` | The named variable in the log, secret length, replay file existence and write permissions.                                      |
+| 403 through the proxy                 | Original `Host` is preserved and matches `PUBLIC_URL`; the origin is allowed.                                                   |
+| OAuth fails before consent            | All OAuth paths are forwarded and the callback hostname is in `OAUTH_ALLOWED_REDIRECT_HOSTS`.                                   |
+| Consent cannot validate the key       | `PNEUMATIC_API_URL` is reachable and the key belongs to that installation.                                                      |
+| File tools fail or reject a URL       | `PNEUMATIC_FILES_URL` matches the backend's `FILE_SERVICE_URL`; the internal storage address is reachable.                      |
+| 429 responses                         | Per-key limit, backend/storage limits, or consent IP limits; check `TRUST_PROXY` if different users share the same apparent IP. |
+
+## For Developers
+
+Use Node.js **22.12+** (Node 24 is used by the Docker image) and npm. Run from the repository root:
 
 ```bash
-claude mcp add --transport http pneumatic https://mcp.example.com/mcp \
-  --header "Authorization: Bearer pn-..."
+cd mcp
+npm ci
+cp .env.example .env
+openssl rand -hex 32
+mkdir -p .state
+touch .state/replay.json
 ```
 
-Local process:
+For this first local setup, paste the generated secret into `.env` as `TOKEN_SECRET`. The example targets a local Pneumatic stack: API at `http://localhost:8001`, web app at `http://localhost`, files at `http://localhost/files`, connector at `http://localhost:3000`. Change these addresses for another installation. Keep the existing replay file on subsequent starts.
+
+Start with file watching and explicit env loading:
 
 ```bash
-npm ci && npm run build
-claude mcp add pneumatic --env PNEUMATIC_API_KEY=pn-... -- node /path/to/pneumaticworkflow/mcp/dist/index.js
+node --env-file=.env --import tsx --watch src/index.ts --http
 ```
 
-## Claude Desktop (local process)
+Or build and start:
 
-`claude_desktop_config.json`:
+```bash
+npm run build
+node --env-file=.env dist/index.js --http
+```
+
+### Local stdio client
+
+Set `PNEUMATIC_API_KEY` in `mcp/.env` and build the server. Configure the client to launch `node` with the absolute env-file and entrypoint paths. In clients using the `mcpServers` format:
 
 ```json
 {
   "mcpServers": {
     "pneumatic": {
       "command": "node",
-      "args": ["/path/to/pneumaticworkflow/mcp/dist/index.js"],
-      "env": {
-        "PNEUMATIC_API_URL": "https://api.pneumatic.app",
-        "PNEUMATIC_API_KEY": "pn-..."
-      }
+      "args": [
+        "--env-file=/absolute/path/to/pneumaticworkflow/mcp/.env",
+        "/absolute/path/to/pneumaticworkflow/mcp/dist/index.js",
+        "--stdio"
+      ]
     }
   }
 }
 ```
 
-## Configuration
+`--stdio` overrides the example's `MCP_TRANSPORT=http`; no HTTP secret or ledger is needed. Use your client's equivalent command/arguments settings if its configuration format differs. Protocol messages go to stdout; logs go to stderr.
 
-| Variable                       | Default                                                                               | Description                                                                                                                                                                                                                                                                 |
-| ------------------------------ | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MCP_TRANSPORT`                | `stdio`                                                                               | `stdio` or `http` (`--http` / `--stdio` flags override it)                                                                                                                                                                                                                  |
-| `PNEUMATIC_API_URL`            | `https://api.pneumatic.app`                                                           | Pneumatic backend URL                                                                                                                                                                                                                                                       |
-| `PNEUMATIC_API_KEY`            | —                                                                                     | Required in `stdio` mode                                                                                                                                                                                                                                                    |
-| `PNEUMATIC_FILES_URL`          | `https://my.pneumatic.app/files` for the Cloud API, otherwise unset                   | Public Pneumatic file storage URL (`FILE_SERVICE_URL` of the backend, e.g. `https://pneumatic.example.com/files`); without it file tools return `not_configured`                                                                                                            |
-| `PNEUMATIC_FILES_INTERNAL_URL` | —                                                                                     | Address the connector itself uses for file storage requests when `PNEUMATIC_FILES_URL` is not reachable from it (in the Pneumatic `docker-compose.yml`: `http://pneumatic-file-service:8000`); links still use `PNEUMATIC_FILES_URL`                                        |
-| `PNEUMATIC_APP_URL`            | `PNEUMATIC_FILES_URL` without `/files` (`https://my.pneumatic.app` for the Cloud API) | Pneumatic web app URL used for `webUrl` links in results; without it results carry no links                                                                                                                                                                                 |
-| `HOST`                         | `127.0.0.1`                                                                           | Bind address in `http` mode (`0.0.0.0` in Docker)                                                                                                                                                                                                                           |
-| `PORT`                         | `3000`                                                                                | Port in `http` mode                                                                                                                                                                                                                                                         |
-| `PUBLIC_URL`                   | `http://localhost:$PORT`                                                              | Public origin (no path, query or credentials); HTTPS required except on loopback                                                                                                                                                                                            |
-| `TOKEN_SECRET`                 | —                                                                                     | Required in `http` mode, at least 32 characters                                                                                                                                                                                                                             |
-| `OAUTH_REPLAY_FILE`            | —                                                                                     | Required in `http` mode; path to a persistent writable replay ledger                                                                                                                                                                                                        |
-| `OAUTH_ALLOWED_REDIRECT_HOSTS` | `claude.ai,claude.com,localhost,127.0.0.1,[::1]`                                      | Hosts allowed as OAuth redirect targets; `*` allows any                                                                                                                                                                                                                     |
-| `RATE_LIMIT_PER_MINUTE`        | `120`                                                                                 | MCP requests per minute per API key in `http` mode; `0` disables the limit                                                                                                                                                                                                  |
-| `TRUST_PROXY`                  | `loopback,uniquelocal`                                                                | Express `trust proxy`: `true`, `false`, a hop count or subnets; must match your reverse proxy so client IPs are correct                                                                                                                                                     |
-| `TOOLSETS`                     | all                                                                                   | Comma-separated tool groups to offer: `core` (account, templates, workflows, tasks, comments, notifications, vacations, listing users, groups and datasets), `files`, `design` (template editing), `analytics`, `admin` (managing users, groups and datasets, reassignment) |
-| `READ_ONLY`                    | `false`                                                                               | `true` offers only read-only tools; the instructions tell Claude to describe changes instead of making them                                                                                                                                                                 |
-| `LOG_LEVEL`                    | `info`                                                                                | `debug`, `info`, `warn`, `error` or `off`; JSON lines on stderr; other values are a configuration error                                                                                                                                                                     |
-| `METRICS_TOKEN`                | —                                                                                     | In `http` mode enables `GET /metrics` (Prometheus) for `Authorization: Bearer <token>`; at least 16 characters                                                                                                                                                              |
+### Verification
 
-Use `node --env-file=.env dist/index.js` to load variables from a file (see `.env.example`).
-
-## Security model
-
-- The server keeps no credential database. Client registrations, authorization codes, access tokens (1 hour) and refresh tokens (90 days) are AES-256-GCM sealed with a key derived from `TOKEN_SECRET`; the Pneumatic API key travels only inside them. An append-only local ledger stores spent-token identifiers and expirations, never API keys; it is compacted on startup and once at least 10,000 records were written and most of them have expired. A torn last line from a crash is ignored on startup, and after a failed write the next token request rewrites the ledger from memory, so `/healthz` recovers without a restart.
-- Rotating `TOKEN_SECRET` invalidates every issued token and client registration.
-- Every MCP request re-validates the key against Pneumatic (cached for 5 minutes; rejected keys for 1 minute), so revoking the key in Pneumatic cuts access off. Checks of not-yet-cached keys are capped at 300 per minute per process, so guessing keys through the connector cannot flood Pneumatic; cached keys keep working. The consent form accepts 10 rejected keys per client IP per minute (`TRUST_PROXY` decides which proxy's `X-Forwarded-For` is trusted).
-- Authorization codes expire in 5 minutes, and refresh tokens are rotated on use. Replaying an already rotated refresh token more than 30 seconds later revokes the whole session (all its access and refresh tokens); a quick retry of a lost response is only rejected. Both the revocation and the 30-second grace window are recorded in the replay ledger. The durable replay ledger rejects reuse after restarts. It supports **one HTTP process only**; multiple replicas require a shared atomic store. Codes and refresh tokens issued before versioned replay protection are rejected on upgrade, so users must authorize again; existing access tokens remain valid until expiry. PKCE S256 with a 43–128 character verifier is mandatory.
-- Confidential OAuth clients registered before authentication-method enforcement must register again. Public clients continue to work.
-- Redirect URIs must be HTTPS (HTTP only on loopback) and belong to `OAUTH_ALLOWED_REDIRECT_HOSTS`.
-- The API key is sent only to `PNEUMATIC_API_URL` and the file storage (`PNEUMATIC_FILES_INTERNAL_URL` when set, otherwise `PNEUMATIC_FILES_URL`). `download_file` accepts only links under `PNEUMATIC_FILES_URL`.
-- `upload_file` with `sourceUrl` fetches only public HTTPS URLs on port 443 without credentials. Every resolved address, including after each of at most 3 redirects, must be public: loopback, private, link-local, metadata and reserved ranges are refused at connect time. Downloads are capped at 25 MiB and 30 seconds and never carry the API key.
-- In `http` mode each API key gets `RATE_LIMIT_PER_MINUTE` MCP requests per minute (in-memory, per process); excess requests receive HTTP 429 with `Retry-After`. The file storage has its own per-IP limits (by default 10 uploads and 100 downloads per minute), and on a shared server all users share the connector's IP.
-
-## Operations
-
-- **Toolsets.** A catalog of 68 tools (66 in `stdio` mode, which has no upload links) costs context and makes tool choice harder, so deployments can offer only what their users need: for example `TOOLSETS=core,files` for everyday work and the full set for admins. `READ_ONLY=true` hides every tool that changes data (Pneumatic API keys have no read-only scope of their own).
-- **Logs.** Every HTTP request is logged as one JSON line on stderr with a request ID (`X-Request-Id` is accepted and echoed), the route, the status and the duration; every tool call that passes input-schema validation with the tool name, the outcome or error code and the duration (calls rejected by the schema are answered by the SDK and only appear as `http_request` lines). Request errors such as malformed JSON are logged as `http_error` with the route, status and error type. Logs never contain API keys, tokens, upload links, request bodies, tool arguments or results. Health checks and metric scrapes are logged at `debug`. Prompts are offered only when every tool they use is offered, and the instructions mention only offered tools.
-- **Metrics.** With `METRICS_TOKEN`, `GET /metrics` exposes `mcp_tool_calls_total{tool,outcome}`, `mcp_tool_call_seconds_total{tool}` (divide by the call count for the mean duration), `http_requests_total{route,status}` and `pneumatic_requests_total{target,method,status}` (status classes of calls to the Pneumatic API and file storage). Counters are per process. `/metrics` skips the `Host` check, so Prometheus can scrape it by container or service name.
-- **CI.** `.github/workflows/mcp-ci.yml` in the Pneumatic repository runs lint, format check, typecheck, tests and build on Node 22 and 24, starts the built server on Node 20.19, 22 and 24 and checks `/healthz` and the 401 on `/mcp`, and builds the Docker image. Images are published to Docker Hub as `pneumaticworkflow/pneumatic-mcp`: `latest` on every push to `master` that touches `mcp/` (`mcp-latest-push.yml`), and the release tag plus `stable` with the other Pneumatic images (`new-tag-push.yml`).
-- **Release checks.** [docs/manual-checklist.md](docs/manual-checklist.md) lists what to verify with real clients and a real Pneumatic account before a release.
-
-## How it works
-
-### Components
-
-```mermaid
-flowchart LR
-    subgraph Clients
-        claudeAi[Claude.ai / Desktop]
-        claudeCode[Claude Code]
-        browser[User's browser]
-    end
-
-    subgraph Connector
-        http["HTTP layer<br/>/mcp · OAuth · /upload · /healthz · /metrics"]
-        stdio[stdio transport]
-        mcp["MCP server<br/>tool registry, confirmations,<br/>instructions, prompts"]
-        tools["Tools<br/>field checks, template editing"]
-        presenters["Presenters<br/>compact camelCase JSON ≤ 64 KiB"]
-        client[Pneumatic client]
-        stores[("State stores<br/>replay ledger · upload links ·<br/>rate limits")]
-    end
-
-    subgraph Pneumatic
-        api[Backend REST API]
-        storage[File storage]
-    end
-
-    claudeAi -- "Streamable HTTP + OAuth" --> http
-    claudeCode -- "Streamable HTTP" --> http
-    claudeCode -- "stdio (local process)" --> stdio
-    browser -- "consent page, upload page" --> http
-    http --> stores
-    http --> mcp
-    stdio --> mcp
-    mcp --> tools
-    tools --> presenters
-    tools --> client
-    client -- "Bearer API key" --> api
-    client -- "Bearer API key" --> storage
-```
-
-The connector holds no Pneumatic data. Every request carries the user's API key (sealed inside the OAuth token or passed directly), and Pneumatic enforces permissions. The stores keep only spent-token IDs, pending upload links and rate-limit counters.
-
-### Connecting (OAuth, `http` mode)
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User
-    participant Claude
-    participant Connector
-    participant Pneumatic as Pneumatic API
-
-    Claude->>Connector: POST /mcp (no token)
-    Connector-->>Claude: 401 + WWW-Authenticate (resource metadata URL)
-    Claude->>Connector: GET /.well-known/oauth-protected-resource/mcp, /.well-known/oauth-authorization-server
-    Claude->>Connector: POST /register (dynamic client registration)
-    Connector-->>Claude: client_id (sealed, nothing stored)
-    Claude->>User: open /authorize in the browser
-    User->>Connector: paste API key, Allow access
-    Connector->>Pneumatic: GET /accounts/user (validate key)
-    Pneumatic-->>Connector: user
-    Connector-->>Claude: redirect with authorization code (sealed, 5 min)
-    Claude->>Connector: POST /token (code + PKCE verifier)
-    Connector->>Connector: mark code as spent in the replay ledger
-    Connector-->>Claude: access token (1 h) + refresh token (90 days), both sealed with the API key inside
-```
-
-With a static key (`Authorization: Bearer pn-...`) or in `stdio` mode this step is skipped.
-
-### Tool call
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Claude
-    participant HTTP as Connector HTTP
-    participant Tool as MCP server / tool
-    participant Pneumatic as Pneumatic API
-
-    Claude->>HTTP: POST /mcp tools/call (Bearer token)
-    HTTP->>HTTP: unseal token, check revoked session
-    HTTP->>Pneumatic: GET /accounts/user (key check, cached 5 min)
-    HTTP->>HTTP: rate limit per key
-    HTTP->>Tool: new stateless MCP server for this request
-    Tool->>Tool: validate arguments (zod schema)
-    opt destructive tool and the client supports forms
-        Tool-->>Claude: confirmation form (elicitation)
-        Claude-->>Tool: accept / decline
-    end
-    opt writes with field values
-        Tool->>Pneumatic: read the form (template kickoff or task)
-        Tool->>Tool: check keys, options, dates, required fields
-    end
-    Tool->>Pneumatic: REST call(s)
-    Pneumatic-->>Tool: JSON
-    Tool->>Tool: present: pick fields, camelCase, ISO dates, names, webUrl, cut to 64 KiB
-    Tool-->>Claude: {data, truncated} or {error: {code, message, retryable, detail}}
-```
-
-### File from the user's device (`http` mode)
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User
-    participant Claude
-    participant Connector
-    participant Storage as Pneumatic file storage
-
-    Claude->>Connector: create_upload_link
-    Connector-->>Claude: uploadUrl (/upload/TOKEN, sealed, 1 h), uploadId
-    Claude->>User: "open this link and pick the file"
-    User->>Connector: POST /upload/TOKEN (multipart, up to 25 MiB)
-    Connector->>Connector: claim the link (lease, one upload only)
-    Connector->>Storage: POST /upload with the link owner's API key
-    Storage-->>Connector: file_id, url
-    Claude->>Connector: get_upload_status(uploadId)
-    Connector-->>Claude: ready, fieldValue "[name](url)"
-    Claude->>Connector: complete_task(output: {file_field: ["[name](url)"]})
-```
-
-`upload_file` (text, base64 or a public HTTPS URL) skips the browser step and returns the same `fieldValue`.
-
-## Architecture
-
-The connector translates between MCP and the Pneumatic REST API; Pneumatic owns the business rules. Dependencies point inward only:
-
-| Layer             | Directory                                   | Responsibility                                                                                                                                                                                                                                                                                              | May import                       |
-| ----------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| Core              | `src/core`                                  | Errors (`ConnectorError`), ports (`RemoteFetcher`, `UploadLinks`, `ReplayStore`, `UploadStore`, `RateLimiter`), upload records and TTLs, the people directory type, JSON guards (`isRecord`, `records`), file and field limits, file links and header parsing, key hashing, time, logging, metrics, version | nothing                          |
-| Pneumatic adapter | `src/pneumatic`                             | REST and storage client (`createPneumaticClient(endpoints, apiKey, fetchFn)` with `PneumaticEndpoints` `{ apiUrl, filesUrl, filesInternalUrl, appUrl }`, which both configs carry as `pneumatic`; `createClientFactory`), file IDs, SSRF-guarded URL fetch                                                  | core                             |
-| Stores            | `src/stores`                                | Implementations of the state ports: file replay ledger, in-memory upload links and rate limits                                                                                                                                                                                                              | core                             |
-| Presenters        | `src/presenters`                            | Bounded JSON projection, pagination, 64 KiB envelope, Pneumatic object presenters (`PneumaticPresenter`)                                                                                                                                                                                                    | core                             |
-| MCP adapter       | `src/mcp`                                   | `ToolDef` and `tool()`, registration with error mapping, result envelope, server instructions                                                                                                                                                                                                               | core, pneumatic, presenters      |
-| Tools             | `src/tools`                                 | Declarative tool definitions per area (`xTools: ToolDef[]`), collected with their toolset in `src/tools/index.ts`; shared `annotations.ts`, `schemas.ts`, `dates.ts`, `output.ts` and `details.ts`                                                                                                          | core, pneumatic, presenters, mcp |
-| Transports        | `src/http`, `src/index.ts`, `src/server.ts` | stdio, Streamable HTTP, OAuth (`oauth.ts` for registration and consent, `tokenEndpoint.ts`, `oauthTokens.ts` for token formats and verification), upload page; `buildServer` registers the available tools                                                                                                  | everything above                 |
-
-Tools are data: `buildServer` filters the catalog by the transport's capabilities (`requires: 'uploads'` tools exist only in `http` mode), registers them and generates the instructions, including the list of destructive tools that need user confirmation.
-
-State shared by all requests sits behind asynchronous ports in `src/core/ports.ts`: `ReplayStore` (spent codes and refresh tokens, revoked sessions, the refresh-retry grace window), `UploadStore` (upload links; `claim` atomically leases a pending link, and the lease lapses on its own if a process dies) and `RateLimiter` (sliding one-minute window per scope and key; `acquire` takes a slot, `isExhausted` only checks). `createHttpApp(config, fetch, stores)` uses the file ledger and in-memory stores by default, which is why one process is required today. Running several replicas means passing implementations backed by one shared store, for example Redis: `SET key NX EXAT` for replay entries, a Lua script (or `WATCH`/`MULTI`) that checks the link and sets `SET lease NX EX` for claims, and a sorted set per key for the sliding window. `test/stores.contract.test.ts` is the suite every implementation must pass; it also runs each store behind a wrapper that delays every call, so callers that check and then act without an atomic operation fail.
-
-## Development
+Run checks from `mcp/`:
 
 ```bash
-npm install
-npm test          # vitest: tools, OAuth flow and MCP endpoint against a fake Pneumatic API
-npm run typecheck
 npm run lint
 npm run format:check
-npm run dev -- --http   # needs TOKEN_SECRET and OAUTH_REPLAY_FILE
+npm run typecheck
+npm test
+npm run build
 ```
 
-To add a tool, append a `tool(name, { title, description, inputSchema, annotations }, async (args, { client }) => ...)` entry to the area's array in `src/tools/` and return its result with `present(client, (presenter) => presenter.workflow(raw))` from `src/tools/output.ts` (`{ shouldLoadPeople: true }` adds people's names; `successOutput()` answers calls without a body). The array's place in `src/tools/index.ts` decides its toolset, so a tool that belongs to another group goes into that group's array. Use `z.strictObject` and the fragments from `src/tools/schemas.ts` (`id`, `idList`, `limit`, `offset`, `dateTime`, `fieldValues`, `commentText`, `period`, plus `requireExactlyOne` for alternative arguments), the date helpers from `src/tools/dates.ts` (`toTimestamp`, `optionalTimestamp`, `periodQuery`), the result helpers from `src/tools/details.ts` (`workflowDetail`, `taskDetail`, `templateDetail`, `userDetail`, `groupDetail`, `datasetDetail`) and `fetchTemplate` from `src/tools/templates.ts`, and pick the annotation from `src/tools/annotations.ts` that matches the effect (`readOnly`, `additive`, `idempotentUpdate`, `destructive`). Destructive tools are added to the confirmation rule automatically; `test/catalog.test.ts` checks names, metadata and pagination for every tool. Update the Tools table above.
+Tests use the fake API in `test/fakePneumatic.ts` and MCP client helpers in `test/harness.ts`. Add tools in `src/tools/`, assign their group in `src/tools/index.ts`, supply a title and annotations, and cover the behavior through the harness. `test/catalog.test.ts` validates catalog metadata; `test/http.test.ts` covers HTTP and OAuth.
 
-Tool tests run the real server against the fake Pneumatic API in `test/fakePneumatic.ts` through `test/harness.ts`: `connectServer(fake, options)` connects an MCP client (options set `appUrl`, `filesInternalUrl`, `fetchFn`, `storage: false`, client `capabilities` and server options), `callTool(client, name, args)` returns `isError`, `data`, `error` and the raw content, and `lastBody(fake, path, method)` returns the last request body sent to Pneumatic.
-
-Use `npm run format` to format the repository with Oxfmt. Oxlint checks JavaScript and TypeScript (including imports); `npm run typecheck` also catches unused TypeScript declarations and parameters. The server runs on Node.js 20.19+ or 22.12+; development and tests need Node.js 22.12+ (Vitest 5).
-
-To check read-only routes against a real Pneumatic instance, use an API key from a test account (never commit `.env`):
+For checks against a real installation, set `PNEUMATIC_API_KEY` in the local `.env`:
 
 ```bash
 node --env-file=.env --import tsx scripts/smoke.ts
-```
-
-The smoke test calls ten read-only endpoints, prints only pass/fail, and stops on the first HTTP error. Write operations are covered by a separate script that runs the tools end to end through the MCP layer — it creates a template and a workflow, completes a task with a file, comments, snoozes and resumes, then deletes everything. Run it only with an admin key of a **disposable** account:
-
-```bash
 SMOKE_WRITES=yes node --env-file=.env --import tsx scripts/smoke-write.ts
 ```
 
-A step whose result lacks what the next steps need fails instead of skipping them, so a green run means every step ran. Inspect the MCP server interactively with `npx @modelcontextprotocol/inspector node dist/index.js`.
+The first script reads ten API endpoints. The second creates and changes data and attempts cleanup; use an admin key from a disposable account and check that the test workflow and template were removed. Before release, verify client consent, a read and write call, file upload/download, reconnect after restart, and rejection of a revoked key after five minutes.
+
+### Directory publication
+
+The maintained hosted endpoint and listing fields are in [distribution/listing.json](distribution/listing.json). These files describe that deployment; custom installations use their own addresses and policies. Keep the listing, [remote client configuration](distribution/mcp.json), [registry manifest](distribution/server.json) and deployed server version synchronized. A committed [PNG icon](distribution/icon.png) is included.
+
+| Destination                                                                           | Prepared material                                                                                                                                                                   | Submission after deployment                                                                                                                                                                                       |
+| ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Claude Connectors Directory](https://claude.com/docs/connectors/building/submission) | `listing.json`: descriptions, use cases, authentication, documentation/privacy/support links and reviewer setup.                                                                    | Open [the developer portal](https://claude.ai/directory/manage), choose **MCP connector**, and fill the fields from the listing. Supply the responsible contact and reviewer credentials privately in the portal. |
+| [Cursor Marketplace](https://cursor.com/docs/reference/plugins#submitting-a-plugin)   | [Repository marketplace manifest](../.cursor-plugin/marketplace.json) selects `mcp/`; [plugin manifest](.cursor-plugin/plugin.json) includes the remote MCP configuration and icon. | Submit the public repository at [Cursor Marketplace](https://cursor.com/marketplace/publish) after testing the plugin locally.                                                                                    |
+| [MCP Registry](https://modelcontextprotocol.io/registry/quickstart)                   | `distribution/server.json`, namespace `io.github.pneumaticapp/pneumatic`, remote Streamable HTTP endpoint.                                                                          | Authenticate as a publisher authorized for the `pneumaticapp` GitHub namespace, validate, then publish the manifest. A remote-only server needs no npm package.                                                   |
+| Other MCP directories                                                                 | Reuse `listing.json`, the README and icon.                                                                                                                                          | Complete each directory's form; update existing submissions rather than creating duplicates.                                                                                                                      |
+
+From `mcp/`, using the official [MCP publisher](https://github.com/modelcontextprotocol/registry/tree/main/docs/reference/cli):
+
+```bash
+mcp-publisher validate distribution/server.json
+mcp-publisher login github
+mcp-publisher publish distribution/server.json
+```
+
+Before submitting:
+
+1. Deploy the selected version at the endpoint in `listing.json`. Set `PUBLIC_URL` (or root `MCP_PUBLIC_URL`) to its origin; keep `PNEUMATIC_APP_URL` / `FRONTEND_URL` pointing at the web app. The bundled nginx templates serve the configured app hostname; a separate MCP hostname needs its own DNS, TLS and proxy routing.
+2. Merge the documentation, icon and manifests into the public default branch. Open every listing URL without signing in; these GitHub URLs only work after merge. Confirm the hosted privacy policy and support contact apply to this deployment.
+3. Verify unauthenticated MCP 401 and OAuth metadata on the public origin, then connect from the target clients. Exercise every exposed tool with a populated disposable account; test file transfers, denied permissions and revoked keys. Local automated tests do not replace this client/deployment check.
+4. Prepare the reviewer account described in `listing.json`; enter its credentials only in the portal. Confirm the publishing account has the required directory and registry permissions, and accept the applicable terms when submitting.
+
+The files are submission materials, not evidence of approval or an already published listing.

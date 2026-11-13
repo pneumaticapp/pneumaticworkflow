@@ -1,7 +1,7 @@
 {
   "name": "pneumatic-connector",
   "version": "0.1.0",
-  "description": "Claude connector (MCP server) for Pneumatic Workflow",
+  "description": "MCP server for Pneumatic Workflow",
   "license": "Apache-2.0",
   "type": "module",
   "bin": {

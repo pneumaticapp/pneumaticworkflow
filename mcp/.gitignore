@@ -1,6 +1,7 @@
 node_modules
 dist
 .env
+.state/
 .cursor/mcp.json
 .omc/
 *.log

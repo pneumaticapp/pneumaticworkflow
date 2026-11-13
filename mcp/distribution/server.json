@@ -1,0 +1,34 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.pneumaticapp/pneumatic",
+  "title": "Pneumatic",
+  "description": "Manage Pneumatic workflows, tasks, templates and files from your AI assistant.",
+  "version": "0.1.0",
+  "repository": {
+    "url": "https://github.com/pneumaticapp/pneumaticworkflow",
+    "source": "github",
+    "subfolder": "mcp"
+  },
+  "websiteUrl": "https://github.com/pneumaticapp/pneumaticworkflow/blob/master/mcp/README.md",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/pneumaticapp/pneumaticworkflow/master/mcp/distribution/icon.png",
+      "mimeType": "image/png",
+      "sizes": ["70x70"]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.pneumatic.app/mcp"
+    }
+  ],
+  "_meta": {
+    "io.modelcontextprotocol.registry/publisher-provided": {
+      "documentationUrl": "https://github.com/pneumaticapp/pneumaticworkflow/blob/master/mcp/README.md",
+      "privacyPolicyUrl": "https://www.pneumatic.app/legal/privacy/",
+      "dataHandlingUrl": "https://github.com/pneumaticapp/pneumaticworkflow/blob/master/mcp/README.md#data-handling-and-privacy",
+      "supportEmail": "support@pneumatic.app"
+    }
+  }
+}

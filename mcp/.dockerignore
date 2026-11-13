@@ -3,3 +3,4 @@ dist
 test
 .git
 .env
+.state
