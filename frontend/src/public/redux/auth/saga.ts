@@ -782,11 +782,9 @@ export function resetAnalyticsSupermode() {
 }
 
 export function* watchAnalyticsSupermode() {
-  yield takeEvery([EAuthActions.LogoutUserSuccess, EAuthActions.AuthUserFail], resetAnalyticsSupermode);
+  yield takeEvery(EAuthActions.LogoutUserSuccess, resetAnalyticsSupermode);
   const { authUser }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
-  setAnalyticsSupermode(
-    Boolean(authUser.isSupermode && authUser.loggedState === ELoggedState.LoggedIn && !authUser.error),
-  );
+  setAnalyticsSupermode(Boolean(authUser.isSupermode));
 }
 
 export function* rootSaga() {

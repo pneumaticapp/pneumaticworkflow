@@ -26,7 +26,6 @@ import {
   sendForgotPasswordFail,
 } from '../actions';
 import { INIT_STATE } from '../reducer';
-import { ELoggedState } from '../types';
 import { getAuthUser } from '../../selectors/user';
 import { setAnalyticsSupermode } from '../../../utils/analytics';
 import { setJwtCookie } from '../../../utils/authCookie';
@@ -509,16 +508,12 @@ describe('saga', () => {
       expect(setAnalyticsSupermode).toHaveBeenCalledWith(false);
     });
 
-    it('watchAnalyticsSupermode subscribes to logout/fail and syncs initial logged-in state', () => {
+    it('watchAnalyticsSupermode subscribes to logout and syncs initial state', () => {
       const gen = watchAnalyticsSupermode();
 
-      expect(gen.next().value).toEqual(
-        takeEvery([EAuthActions.LogoutUserSuccess, EAuthActions.AuthUserFail], resetAnalyticsSupermode),
-      );
+      expect(gen.next().value).toEqual(takeEvery(EAuthActions.LogoutUserSuccess, resetAnalyticsSupermode));
       expect(gen.next().value).toEqual(select(getAuthUser));
-      expect(
-        gen.next({ authUser: { ...INIT_STATE, isSupermode: true, loggedState: ELoggedState.LoggedIn } }).done,
-      ).toBe(true);
+      expect(gen.next({ authUser: { ...INIT_STATE, isSupermode: true } }).done).toBe(true);
       expect(setAnalyticsSupermode).toHaveBeenCalledWith(true);
     });
   });
