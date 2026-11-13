@@ -157,20 +157,26 @@ ACCESS_CHECKLIST = access_description(
 )
 
 # Comment edit/delete
+_COMMENT_LOOKUP_NOTE = (
+    '\n\nMissing or inaccessible comments return 403 during permission '
+    'checks. If a comment is deleted after permission checks pass but '
+    'before object lookup, the operation returns 404.'
+)
+
 ACCESS_COMMENT_EDIT = access_description(
     'IsAuthenticated',
     'BillingPlanPermission',
     'ExpiredSubscriptionPermission',
     'UsersOverlimitedPermission',
     'CommentEditPermission',
-)
+) + _COMMENT_LOOKUP_NOTE
 ACCESS_COMMENT_REACTION = access_description(
     'IsAuthenticated',
     'BillingPlanPermission',
     'ExpiredSubscriptionPermission',
     'UsersOverlimitedPermission',
     'CommentReactionPermission',
-)
+) + _COMMENT_LOOKUP_NOTE
 
 # Notifications
 ACCESS_NOTIFICATIONS_LIST = access_description(

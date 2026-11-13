@@ -27,6 +27,7 @@ from src.application.use_cases import (
 from src.domain.entities.file_record import FileRecord
 from src.infra.http_client import HttpClient
 from src.presentation.dto import FileUploadResponse
+from src.presentation.openapi import DOWNLOAD_RESPONSES, UPLOAD_RESPONSES
 from src.shared_kernel.auth.dependencies import (
     AuthenticatedUser,
     get_current_user,
@@ -78,26 +79,34 @@ def secure_filename(filename: str | None) -> str:
     return filename
 
 
-@router.post('/upload', dependencies=[Depends(is_authenticated)])
+@router.post(
+    '/upload',
+    dependencies=[Depends(is_authenticated)],
+    summary='Upload a file',
+    responses=UPLOAD_RESPONSES,
+)
 async def upload_file(
-    file: Annotated[UploadFile, File(...)],
+    file: Annotated[
+        UploadFile,
+        File(description='Required multipart file, including its filename.'),
+    ],
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     use_case: Annotated[UploadFileUseCase, Depends(get_upload_use_case)],
     settings: Annotated[BaseAppSettings, Depends(get_settings_dep)],
     events: RequestEventsDep,
 ) -> FileUploadResponse:
-    """Upload file to storage.
+    """Upload one file as multipart/form-data with the field `file`.
 
-    Args:
-        file: Uploaded file.
-        current_user: Current authenticated user.
-        use_case: Upload use case dependency.
-        settings: Application settings.
-        events: Records of this request for the audit journal.
+    The filename is sanitized and the content type is normalized. User and
+    account ownership are derived from authentication, not form fields.
+    Public/embed and guest credentials can also upload within their account.
+    The file must fit the deployment's MAX_FILE_SIZE (bytes).
 
-    Returns:
-        FileUploadResponse: Upload result with file ID and public URL.
-
+    The response contains `file_id` and the authenticated download URL in
+    `public_url`; the name does not mean the file permits anonymous access.
+    Use the identifier/URL in the appropriate Core API workflow or task field
+    to reference the uploaded attachment. No resumable-upload protocol or
+    workflow/task metadata form fields are implemented by this endpoint.
     """
     # Compute size efficiently without reading into memory
     file.file.seek(0, 2)
@@ -139,31 +148,56 @@ async def upload_file(
     )
 
 
-@router.get('/{file_id}', dependencies=[Depends(is_authenticated)])
+@router.get(
+    '/{file_id}',
+    dependencies=[Depends(is_authenticated)],
+    summary='Download a file or byte range',
+    responses=DOWNLOAD_RESPONSES,
+)
 async def download_file(  # noqa: PLR0913
     file_id: Annotated[str, Path(min_length=1, max_length=512)],
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     use_case: Annotated[DownloadFileUseCase, Depends(get_download_use_case)],
     http_client: Annotated[HttpClient, Depends(get_http_client)],
     events: RequestEventsDep,
-    range_header: Annotated[str | None, Header(alias='Range')] = None,
+    range_header: Annotated[
+        str | None,
+        Header(
+            alias='Range',
+            description=(
+                'Forwarded unchanged to storage before local response '
+                'planning. Use bytes=<start>-<end> or bytes=<start>-. '
+                'Storage rejection, including InvalidRange, returns 503 '
+                'with code STORAGE_003 for API requests. If storage '
+                'accepts the stream, the local planner supports one '
+                'range with an inclusive end clamped to metadata size; '
+                'an unsatisfiable range then returns 416. A malformed '
+                'header is not guaranteed to fall back to a full download.'
+            ),
+            examples=['bytes=0-1023', 'bytes=1024-'],
+        ),
+    ] = None,
 ) -> StreamingResponse:
-    """Download file from storage.
+    """Return file bytes using the stored Content-Type, never a JSON body.
 
-    Args:
-        file_id: File identifier.
-        current_user: Current authenticated user.
-        use_case: Download use case dependency.
-        http_client: HTTP client for permission checks.
-        events: Records of this request for the audit journal.
-        range_header: Optional HTTP Range header.
+    Authentication is required even when the upload response calls this a
+    `public_url`. Owners can read their files. Other callers must pass the
+    Core backend's file permission check. A guest JWT with a user_id owns
+    uploads under that user ID. Public/embed credentials have no user ID;
+    for credentials without a user ID, ownership requires an ownerless file
+    in the same account.
 
-    Returns:
-        StreamingResponse: File stream with appropriate headers.
+    Range is sent to storage before local status and header planning.
+    A storage rejection, including InvalidRange, becomes a 503 error with
+    code STORAGE_003 and no Content-Range header for API requests. This also
+    applies to malformed headers rejected by storage; they are not reliably
+    ignored. If storage accepts the stream, the local planner returns 200
+    without a matching range, 206 for a satisfiable range, or an empty 416
+    with Content-Range when the range exceeds the file metadata size.
 
-    Raises:
-        FileAccessDeniedError: If access is denied.
-
+    The download is an attachment with a UTF-8 filename. Send
+    Accept: application/json for API error responses. Browser navigation
+    with Accept: text/html may redirect to sign-in or the frontend error page.
     """
     query = DownloadFileQuery(
         file_id=file_id,

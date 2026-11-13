@@ -14,9 +14,11 @@ from src.generics.permissions import (
     DenyAll,
     IsAuthenticated,
 )
-from src.openapi import (
+from src.openapi.permission_docs import (
     ACCESS_COMMENT_EDIT,
     ACCESS_COMMENT_REACTION,
+)
+from src.openapi.responses import (
     EMPTY,
     FORBIDDEN,
     NOT_FOUND,
@@ -145,6 +147,7 @@ class CommentViewSet(
         description=ACCESS_COMMENT_EDIT,
         responses={
             200: WorkflowEventSerializer,
+            400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
@@ -170,8 +173,10 @@ class CommentViewSet(
         tags=['Workflows'],
         summary='Mark comment as watched',
         description=ACCESS_COMMENT_REACTION,
+        request=None,
         responses={
-            200: EMPTY,
+            204: EMPTY,
+            400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
@@ -198,7 +203,7 @@ class CommentViewSet(
         description=ACCESS_COMMENT_REACTION,
         request=CommentReactionSerializer,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -228,7 +233,7 @@ class CommentViewSet(
         description=ACCESS_COMMENT_REACTION,
         request=CommentReactionSerializer,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,

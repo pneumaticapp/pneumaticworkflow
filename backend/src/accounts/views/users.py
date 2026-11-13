@@ -1,7 +1,13 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import Http404
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+    extend_schema_view,
+)
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.pagination import LimitOffsetPagination
@@ -60,18 +66,21 @@ from src.generics.permissions import (
     UserIsAuthenticated,
 )
 from src.logs.events import AuditEventService
-from src.openapi import (
+from src.openapi.permission_docs import (
     ACCESS_ACCOUNT_OWNER,
     ACCESS_ADMIN_BASE,
     ACCESS_AUTH_LITE,
-    CountResponseSerializer,
+)
+from src.openapi.serializers import CountResponseSerializer
+from src.openapi.responses import (
     EMPTY,
+    FILTER_VALIDATION_ERROR,
     FORBIDDEN,
     NOT_FOUND,
     UNAUTHORIZED,
-    USERS_LIST_PARAMS,
     VALIDATION_ERROR,
 )
+from src.openapi.parameters import USERS_LIST_PARAMS
 from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
@@ -85,6 +94,7 @@ UserModel = get_user_model()
         parameters=USERS_LIST_PARAMS,
         responses={
             200: UserSerializer,
+            400: FILTER_VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
         },
@@ -299,7 +309,7 @@ class UsersViewSet(
         summary='Deactivate user',
         description=ACCESS_ADMIN_BASE,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -327,7 +337,7 @@ class UsersViewSet(
         description=ACCESS_ACCOUNT_OWNER,
         parameters=USERS_LIST_PARAMS,
         responses={
-            200: UserPrivilegesSerializer,
+            200: UserPrivilegesSerializer(many=True),
             401: UNAUTHORIZED,
             403: FORBIDDEN,
         },
@@ -342,7 +352,7 @@ class UsersViewSet(
         summary='Toggle user admin status',
         description=ACCESS_ADMIN_BASE,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
@@ -369,7 +379,7 @@ class UsersViewSet(
         description=ACCESS_ADMIN_BASE,
         request=ReassignSerializer,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -433,7 +443,39 @@ class UsersViewSet(
     #         return self.response_ok({'token': token})
 
     # TODO remove in https://my.pneumatic.app/workflows/15691/
-    @extend_schema(exclude=True)
+    @extend_schema(
+        tags=['Accounts'],
+        summary='Accept a legacy account transfer',
+        description=(
+            'Legacy email-link callback. No bearer authentication is '
+            'required; the transfer token authorizes the operation. '
+            'On success returns an HTML confirmation that redirects the '
+            'browser after three seconds. Invalid or expired tokens '
+            'redirect to the expired-invite page; an already accepted '
+            'transfer redirects to the application.'
+        ),
+        auth=[],
+        parameters=[
+            OpenApiParameter(
+                name='token',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description='Token from the account transfer email link.',
+            ),
+            OpenApiParameter(
+                name='Location',
+                type=OpenApiTypes.URI,
+                location=OpenApiParameter.HEADER,
+                response=[302],
+                description='Application or expired-invite page URL.',
+            ),
+        ],
+        responses={
+            (200, 'text/html'): OpenApiTypes.STR,
+            302: OpenApiResponse(description='Redirect after token check.'),
+        },
+    )
     @action(detail=True, methods=('get',))
     def transfer(self, request, pk=None):
         slz = AcceptTransferSerializer(
@@ -512,6 +554,7 @@ class UsersViewSet(
         tags=['Accounts'],
         summary='Deactivate vacation for user',
         description=ACCESS_ADMIN_BASE,
+        request=None,
         responses={
             200: UserSerializer,
             400: VALIDATION_ERROR,
@@ -606,7 +649,7 @@ class UsersViewSet(
         description=ACCESS_ADMIN_BASE,
         deprecated=True,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,

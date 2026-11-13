@@ -1,18 +1,23 @@
 """Reusable OpenAPI query parameters (docs only)."""
 
-from typing import Optional
+from typing import List, Optional
 
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter
-
 from src.permissions.enums import PermissionObjectType
+from src.processes.enums import (
+    TaskOrdering,
+    WorkflowApiStatus,
+    WorkflowOrdering,
+)
 
 
 def query_param(
     name: str,
-    type_=OpenApiTypes.STR,
+    type_: OpenApiTypes = OpenApiTypes.STR,
     required: bool = False,
     description: Optional[str] = None,
+    enum: Optional[List[str]] = None,
 ) -> OpenApiParameter:
     return OpenApiParameter(
         name=name,
@@ -20,6 +25,7 @@ def query_param(
         location=OpenApiParameter.QUERY,
         required=required,
         description=description,
+        enum=enum,
     )
 
 
@@ -57,8 +63,9 @@ WORKFLOW_LIST_PARAMS = [
         'status',
         description=(
             'Filter by workflow status '
-            '(running, delayed, completed, done).'
+            '(running, done, snoozed).'
         ),
+        enum=[value for value, _label in WorkflowApiStatus.CHOICES],
     ),
     query_param(
         'template_id',
@@ -96,8 +103,9 @@ WORKFLOW_LIST_PARAMS = [
         'ordering',
         description=(
             'Sort field. Prefix with "-" for descending '
-            '(e.g. "-date_created").'
+            '(e.g. "-date").'
         ),
+        enum=[value for value, _label in WorkflowOrdering.CHOICES],
     ),
     query_param(
         'search',
@@ -170,12 +178,16 @@ TASK_LIST_PARAMS = [
         'ordering',
         description=(
             'Sort field. Prefix with "-" for descending '
-            '(e.g. "-date_first_started").'
+            '(e.g. "-date").'
         ),
+        enum=[value for value, _label in TaskOrdering.CHOICES],
     ),
     query_param(
         'assigned_to', OpenApiTypes.INT,
-        description='Filter by assigned performer user ID.',
+        description=(
+            'Filter by assigned performer user ID. Only account '
+            'administrators may use this parameter.'
+        ),
     ),
     query_param(
         'search',

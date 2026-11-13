@@ -1,11 +1,15 @@
 """Tests for API endpoints."""
 
 from datetime import UTC, datetime
-from unittest.mock import ANY, MagicMock
+from unittest.mock import ANY, AsyncMock, MagicMock
 
 import pytest
 
+from src.application.use_cases import DownloadFileUseCase
 from src.domain.entities.file_record import FileRecord
+from src.infra.repositories import FileRecordRepository
+from src.main import app
+from src.shared_kernel.di import get_download_use_case
 from src.shared_kernel.exceptions import (
     DomainFileNotFoundError,
 )
@@ -275,7 +279,62 @@ def test_download__invalid_range_header__return_416(
 
     # assert
     assert response.status_code == 416
+    assert response.content == b''
     assert response.headers['content-range'] == 'bytes */1000'
+
+
+@pytest.mark.parametrize(
+    ('range_header', 'error_code'),
+    [
+        ('bytes=9999-', 'InvalidRange'),
+        ('not-a-range', 'InvalidArgument'),
+    ],
+)
+def test_download__storage_rejects_range__return_503(
+    e2e_client,
+    mock_auth_middleware,
+    auth_headers: dict[str, str],
+    storage_service_with_mock_s3,
+    make_client_error,
+    sample_file_record: FileRecord,
+    mocker,
+    range_header: str,
+    error_code: str,
+):
+    # arrange
+    storage_service, s3 = storage_service_with_mock_s3
+    s3.get_object.side_effect = make_client_error(code=error_code)
+    repository = AsyncMock(spec=FileRecordRepository)
+    repository.get_by_id.return_value = sample_file_record
+    use_case = DownloadFileUseCase(
+        file_repository=repository,
+        storage_service=storage_service,
+    )
+    mocker.patch.dict(
+        app.dependency_overrides,
+        {get_download_use_case: lambda: use_case},
+    )
+    file_id = sample_file_record.file_id
+    headers = {
+        **auth_headers,
+        'Accept': 'application/json',
+        'Range': range_header,
+    }
+
+    # act
+    response = e2e_client.get(url=f'/{file_id}', headers=headers)
+
+    # assert
+    assert response.status_code == 503
+    assert response.json()['code'] == 'STORAGE_003'
+    assert 'Content-Range' not in response.headers
+    repository.get_by_id.assert_awaited_once_with(file_id)
+    s3.get_object.assert_awaited_once_with(
+        Bucket='test-1',
+        Key=file_id,
+        Range=range_header,
+    )
+    mock_auth_middleware.assert_awaited_once_with('valid-token')
 
 
 def test_download__no_auth__return_401(e2e_client):
@@ -495,7 +554,8 @@ def test_upload__no_file_with_auth__error_body_format(
     # assert
     assert response.status_code == 422
     data = response.json()
-    assert 'code' in data
+    assert data['code'] == 'VAL_002'
+    assert data['details']['reason']
     assert 'message' in data
     assert 'error_type' not in data
     assert 'timestamp' not in data

@@ -11,12 +11,19 @@ from src.faq.serializers import (
 )
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import UserIsAuthenticated
-from src.openapi import ACCESS_AUTH_BASIC, FORBIDDEN, UNAUTHORIZED
+from src.openapi.permission_docs import ACCESS_AUTH_BASIC
+from src.openapi.responses import FORBIDDEN, UNAUTHORIZED
+from src.openapi.helpers import LIMIT_OFFSET_LEGACY_NOTE, with_access_text
 
 
 @extend_schema(
     tags=['FAQ'],
-    description=ACCESS_AUTH_BASIC,
+    summary='List active frequently asked questions',
+    description=with_access_text(
+        'Returns active FAQ items with question, answer and display order. '
+        + LIMIT_OFFSET_LEGACY_NOTE,
+        ACCESS_AUTH_BASIC,
+    ),
     responses={
         200: FaqIemSerializer(many=True),
         401: UNAUTHORIZED,
