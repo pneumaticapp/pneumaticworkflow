@@ -90,11 +90,13 @@ export class Analytics {
     let argumentsChanged = true;
 
     return (...args: any[]) => {
-      if (isSupermodeState) {
-        return;
-      }
+      if (methodName !== 'reset') {
+        if (isSupermodeState) {
+          return;
+        }
 
-      this.init(isSupermodeState);
+        this.init(isSupermodeState);
+      }
       this.increaseEventsCounter();
       argumentsChanged = !isObjectEmpty(diff(prevArgs, args));
       prevArgs = args;

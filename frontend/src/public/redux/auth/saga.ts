@@ -129,6 +129,7 @@ export function* authenticateUser(redirectUrl?: string, isRegister: boolean = fa
     if (redirectUrl) history.replace(redirectUrl);
   } catch (err) {
     logger.error(err);
+    setAnalyticsSupermode(false);
     yield put(redirectToLogin());
     yield put(authUserFail());
   }
@@ -283,6 +284,7 @@ function* handleLogoutUnsubscribing({ shouldExpireToken }: { shouldExpireToken: 
   yield put(clearAppFilters());
   yield call(resetFirebaseDeviceToken);
   resetSuperuserToken();
+  setAnalyticsSupermode(false);
   analytics.reset();
 
   if (shouldExpireToken) {
@@ -780,9 +782,11 @@ export function resetAnalyticsSupermode() {
 }
 
 export function* watchAnalyticsSupermode() {
-  yield takeEvery(EAuthActions.LogoutUserSuccess, resetAnalyticsSupermode);
+  yield takeEvery([EAuthActions.LogoutUserSuccess, EAuthActions.AuthUserFail], resetAnalyticsSupermode);
   const { authUser }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
-  setAnalyticsSupermode(Boolean(authUser.isSupermode));
+  setAnalyticsSupermode(
+    Boolean(authUser.isSupermode && authUser.loggedState === ELoggedState.LoggedIn && !authUser.error),
+  );
 }
 
 export function* rootSaga() {

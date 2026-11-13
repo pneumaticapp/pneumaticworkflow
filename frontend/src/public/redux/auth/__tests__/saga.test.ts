@@ -18,19 +18,21 @@ import {
 } from '../saga';
 import {
   authUserSuccess,
+  EAuthActions,
+  redirectToLogin,
   registerUser,
   registerUserInvited,
   sendForgotPassword,
   sendForgotPasswordFail,
 } from '../actions';
 import { INIT_STATE } from '../reducer';
+import { ELoggedState } from '../types';
 import { getAuthUser } from '../../selectors/user';
 import { setAnalyticsSupermode } from '../../../utils/analytics';
 import { setJwtCookie } from '../../../utils/authCookie';
 import { setOAuthRegistrationCompleted } from '../../../api/setOAuthRegistrationCompleted';
 import { getOAuthId, getOAuthType } from '../../../utils/auth';
 import { EOAuthType } from '../../../types/auth';
-import { EAuthActions } from '../actions';
 
 const auth = {
   getUser: jest.fn(),
@@ -493,18 +495,30 @@ describe('saga', () => {
       expect(setAnalyticsSupermode).toHaveBeenCalledWith(true);
     });
 
+    it('authenticateUser resets supermode flag on failure before redirectToLogin', () => {
+      const gen = authenticateUser();
+
+      gen.next();
+      expect(gen.throw(new Error('auth failed')).value).toEqual(put(redirectToLogin()));
+      expect(setAnalyticsSupermode).toHaveBeenCalledWith(false);
+    });
+
     it('resetAnalyticsSupermode resets supermode flag to false', () => {
       resetAnalyticsSupermode();
 
       expect(setAnalyticsSupermode).toHaveBeenCalledWith(false);
     });
 
-    it('watchAnalyticsSupermode subscribes to logout and syncs initial state', () => {
+    it('watchAnalyticsSupermode subscribes to logout/fail and syncs initial logged-in state', () => {
       const gen = watchAnalyticsSupermode();
 
-      expect(gen.next().value).toEqual(takeEvery(EAuthActions.LogoutUserSuccess, resetAnalyticsSupermode));
+      expect(gen.next().value).toEqual(
+        takeEvery([EAuthActions.LogoutUserSuccess, EAuthActions.AuthUserFail], resetAnalyticsSupermode),
+      );
       expect(gen.next().value).toEqual(select(getAuthUser));
-      expect(gen.next({ authUser: { ...INIT_STATE, isSupermode: true } }).done).toBe(true);
+      expect(
+        gen.next({ authUser: { ...INIT_STATE, isSupermode: true, loggedState: ELoggedState.LoggedIn } }).done,
+      ).toBe(true);
       expect(setAnalyticsSupermode).toHaveBeenCalledWith(true);
     });
   });
