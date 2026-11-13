@@ -120,6 +120,8 @@ class Common(Configuration):
     if EXTRA_ALLOWED_HOSTS:
         ALLOWED_HOSTS.extend(EXTRA_ALLOWED_HOSTS.split(' '))
 
+    CSRF_TRUSTED_ORIGINS = [BACKEND_URL]
+
     # CORS
     # Sets header:
     # Access-Control-Allow-Origin
