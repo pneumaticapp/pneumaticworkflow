@@ -35,15 +35,13 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
-from src.openapi import (
+from src.openapi.permission_docs import (
     ACCESS_NOTIFICATIONS_DESTROY,
     ACCESS_NOTIFICATIONS_LIST,
-    CountResponseSerializer,
-    EMPTY,
-    FORBIDDEN,
-    NOT_FOUND,
-    UNAUTHORIZED,
 )
+from src.openapi.serializers import CountResponseSerializer
+from src.openapi.responses import EMPTY, FORBIDDEN, NOT_FOUND, UNAUTHORIZED
+from src.openapi.internal_serializers import NotificationsReadRequestSerializer
 
 UserModel = get_user_model()
 
@@ -143,6 +141,17 @@ class NotificationsReadView(
     def get_queryset(self):
         return self.request.user.notifications.exclude_read()
 
+    @extend_schema(
+        tags=['Notifications'],
+        summary='Mark current user notifications read',
+        description=(
+            'Requires a non-guest user, a billing plan and an unexpired '
+            'subscription. Marks only unread notifications belonging to '
+            'the current user. Omitted/empty notifications makes no change.'
+        ),
+        request=NotificationsReadRequestSerializer,
+        responses={204: EMPTY, 401: UNAUTHORIZED, 403: FORBIDDEN},
+    )
     def post(self, request, *args, **kwargs):
         notifications_ids = request.data.get('notifications')
         if notifications_ids:

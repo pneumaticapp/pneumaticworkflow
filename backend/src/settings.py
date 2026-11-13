@@ -16,6 +16,7 @@ from urllib.parse import urlparse
 from configurations import Configuration, values
 from corsheaders.defaults import default_headers
 
+from src.openapi.reference import API_DESCRIPTION, HEADER_SECURITY_SCHEMES
 from src.notifications.enums import EmailProvider
 
 
@@ -169,6 +170,7 @@ class Common(Configuration):
         'rest_framework',
         'rest_framework_simplejwt',
         'drf_spectacular',
+        'src.openapi.apps.OpenApiConfig',
 
         'corsheaders',
 
@@ -264,7 +266,7 @@ class Common(Configuration):
         'DEFAULT_RENDERER_CLASSES': [
             'rest_framework.renderers.JSONRenderer',
         ],
-        'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+        'DEFAULT_SCHEMA_CLASS': 'src.openapi.schema.PneumaticAutoSchema',
         'DEFAULT_PERMISSION_CLASSES': (
             'rest_framework.permissions.IsAuthenticated',
         ),
@@ -312,31 +314,7 @@ class Common(Configuration):
 
     SPECTACULAR_SETTINGS = {
         'TITLE': 'Pneumatic Workflow API',
-        'DESCRIPTION': (
-            'The Pneumatic API gives you programmatic access to everything '
-            'you can do in the product — running workflows, managing tasks, '
-            'assigning performers, and integrating with internal systems.\n\n'
-
-            '### Authentication\n'
-            'Every request requires a `Bearer` token. You can find your '
-            'personal API key inside the app:\n'
-            '1. Go to **Integrations** in the left menu.\n'
-            '2. Copy your key from the **Your API Key** section.\n\n'
-            'Pass the key in the `Authorization` header:\n'
-            '```http\n'
-            'Authorization: Bearer <your_api_key>\n'
-            '```\n\n'
-
-            '### Why Use the API?\n'
-            '- **Custom Dashboards:** Pull live task counts and workflow '
-            'progress into your BI tools.\n'
-            '- **Automated Triggers:** Start new workflows automatically '
-            'when events happen in your CRM or ERP.\n'
-            '- **Task Sync:** Sync Pneumatic tasks to your internal task '
-            'trackers.\n'
-            '- **Webhook Integrations:** Subscribe to workflow events and '
-            'push data to Slack, email, or custom endpoints.'
-        ),
+        'DESCRIPTION': API_DESCRIPTION,
         'VERSION': '1.0.0',
         'SERVE_INCLUDE_SCHEMA': False,
         'SERVE_PERMISSIONS': [
@@ -344,17 +322,34 @@ class Common(Configuration):
         ],
         'SERVE_AUTHENTICATION': [],
         'PREPROCESSING_HOOKS': [
-            'src.openapi.preprocessing.exclude_private_endpoints',
+            'src.openapi.preprocessing.include_legacy_http_methods',
         ],
+        'COMPONENT_SPLIT_REQUEST': True,
+        'APPEND_COMPONENTS': {
+            'securitySchemes': HEADER_SECURITY_SCHEMES,
+        },
         'SCHEMA_PATH_PREFIX': r'/',
         # Schema is at /api/schema/; without SERVERS OpenAPI clients use
         # /api as base and breaks real paths (/auth, /templates, …).
         'ENUM_NAME_OVERRIDES': {
+            'AIVendorSlugEnum': 'src.ai.enums.AIVendor.CHOICES',
+            'InvitedFromEnum': 'src.accounts.enums.SourceType.CHOICES',
+            'MenuSlugEnum': 'src.navigation.enums.MenuType.CHOICES',
+            'PageSlugEnum': 'src.pages.enums.PageType.CHOICES',
+            'TaskStatusEnum': 'src.processes.enums.TaskStatus.CHOICES',
+            'TemplatePerformerTypeEnum': (
+                'src.processes.enums.PerformerType.choices'
+            ),
+            'UserLanguageEnum': 'src.accounts.enums.Language.EURO_CHOICES',
             'UserStatusEnum': 'src.accounts.enums.UserStatus.CHOICES',
+            'UserGroupTypeEnum': 'src.accounts.enums.UserGroupType.CHOICES',
             'WorkflowStatusEnum': 'src.processes.enums.WorkflowStatus.CHOICES',
             'FieldTypeEnum': 'src.processes.enums.FieldType.CHOICES',
+            'PredicateFieldTypeEnum': (
+                'src.processes.enums.PredicateType.CHOICES'
+            ),
             'WorkflowEventTypeEnum': (
-                'src.processes.enums.WorkflowEventType.CHOICES'
+                'src.openapi.workflow_enums.WORKFLOW_EVENT_TYPE_CHOICES'
             ),
             'PerformerTypeEnum': (
                 'src.processes.enums.PerformerType.filter_choices'

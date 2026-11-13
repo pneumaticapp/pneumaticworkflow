@@ -1,125 +1,52 @@
-"""Ensure every public endpoint has @extend_schema."""
+"""Compare the Django REST API routes with the generated OpenAPI paths."""
 
-import pytest
-from drf_spectacular.generators import EndpointEnumerator
-from drf_spectacular.openapi import AutoSchema
-
-pytestmark = pytest.mark.django_db
-
-_DOCS_PREFIXES = (
-    '/api/schema',
-    '/api/docs',
-)
-
-_THIRD_PARTY_VIEWS = (
-    'TokenRefreshView',
-)
+from django.urls import reverse
+from drf_spectacular.generators import EndpointEnumerator, SchemaGenerator
 
 
-def _is_docs_path(path: str) -> bool:
-    normalized = path.rstrip('/')
-    for prefix in _DOCS_PREFIXES:
-        if (
-            normalized == prefix
-            or normalized.startswith(f'{prefix}/')
-        ):
-            return True
-    return False
-
-
-def _has_class_level_schema(view_cls) -> bool:
-    """Class decorated with @extend_schema or @extend_schema(exclude)."""
-    schema = view_cls.__dict__.get('schema')
-    if schema is None:
-        return False
-    schema_cls = schema if isinstance(schema, type) else type(schema)
-    return schema_cls is not AutoSchema
-
-
-_GENERIC_METHOD_MAP = {
-    'get': ('list', 'retrieve'),
-    'post': ('create',),
-    'put': ('update',),
-    'patch': ('partial_update',),
-    'delete': ('destroy',),
-}
-
-
-def _has_method_level_schema(
-    view_cls,
-    method: str,
-    callback,
-) -> bool:
-    actions = getattr(callback, 'actions', None)
-    if actions:
-        candidates = [actions.get(method.lower())]
-    else:
-        candidates = [
-            method.lower(),
-            *_GENERIC_METHOD_MAP.get(method.lower(), ()),
-        ]
-    for name in candidates:
-        if not name:
-            continue
-        view_method = getattr(view_cls, name, None)
-        if view_method is None:
-            continue
-        if 'schema' in getattr(view_method, 'kwargs', {}):
-            return True
-    return False
-
-
-def _has_extend_schema(callback, method: str) -> bool:
-    view_cls = getattr(callback, 'cls', None)
-    if view_cls is None:
-        return False
-    if view_cls.__name__ in _THIRD_PARTY_VIEWS:
-        return True
-    if _has_class_level_schema(view_cls):
-        return True
-    return _has_method_level_schema(
-        view_cls, method, callback,
-    )
-
-
-def test_public_endpoints__all_decorated__ok():
-    """Fail when a public endpoint lacks @extend_schema.
-
-    EndpointEnumerator already applies preprocessing hooks
-    (exclude_private_endpoints), so we only check what
-    remains — the public surface.
-    """
+def test_api_routes__generated_openapi__matches_registered_methods():
 
     # arrange
+    generator = SchemaGenerator()
     enumerator = EndpointEnumerator()
-    endpoints = enumerator.get_api_endpoints()
+    endpoints = enumerator._get_api_endpoints(patterns=None, prefix='')
+    docs_paths = {reverse('schema'), reverse('scalar-ui')}
+    methods = {'get', 'post', 'put', 'patch', 'delete'}
+    # These methods are implemented directly on their legacy views.
+    legacy_methods = {
+        '/accounts/user': 'put',
+        '/tenants/{pk}': 'patch',
+    }
+    registered = set()
+
+    for path, _regex, method, callback in endpoints:
+        if path in docs_paths:
+            continue
+
+        view = generator.create_view(callback=callback, method=method)
+        api_path = generator.coerce_path(path=path, method=method, view=view)
+        registered.add((method, api_path))
+
+        legacy_method = legacy_methods.get(path)
+        if (
+            legacy_method in view.http_method_names
+            and callable(getattr(view, legacy_method, None))
+        ):
+            registered.add((legacy_method.upper(), api_path))
 
     # act
-    missing = []
-    for path, _regex, method, callback in endpoints:
-        if _is_docs_path(path):
-            continue
-        if not _has_extend_schema(callback, method):
-            view_cls = getattr(callback, 'cls', None)
-            cls_name = (
-                view_cls.__name__ if view_cls else '?'
-            )
-            actions = getattr(
-                callback, 'actions', None,
-            )
-            action = ''
-            if actions:
-                action = actions.get(
-                    method.lower(), '',
-                )
-            label = (
-                f'{method} {path}'
-                f' ({cls_name}.{action})'
-            )
-            missing.append(label)
+    schema = generator.get_schema(request=None, public=True)
 
     # assert
-    assert missing == [], (
-        'Public endpoints without @extend_schema:\n'
-        + '\n'.join(f'  - {m}' for m in missing)
+    documented = {
+        (method.upper(), path)
+        for path, operations in schema['paths'].items()
+        for method in operations
+        if method in methods
+    }
+    missing = sorted(registered - documented)
+    extra = sorted(documented - registered)
+    assert not (missing or extra), (
+        f'Undocumented operations: {missing}\n'
+        f'Documented operations without a route: {extra}'
     )

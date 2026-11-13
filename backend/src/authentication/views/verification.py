@@ -1,5 +1,10 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    extend_schema,
+    extend_schema_view,
+)
 from rest_framework.generics import (
     CreateAPIView,
     ListAPIView,
@@ -26,11 +31,44 @@ from src.generics.permissions import (
 )
 from src.logs.events import AuditEventService
 from src.notifications.tasks import send_verification_notification
+from src.openapi.responses import (
+    EMPTY,
+    FORBIDDEN,
+    NOT_FOUND,
+    UNAUTHORIZED,
+    VALIDATION_ERROR,
+)
+from src.openapi.internal_serializers import EmailAddressSerializer
 from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
 
 
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Auth'],
+        summary='Verify the account email address',
+        description=(
+            'Consumes the verification token from the email and marks the '
+            'account verified. No user session is required; private API '
+            'source-IP restrictions apply. Reusing a valid token for an '
+            'already verified account succeeds without further changes.'
+        ),
+        auth=[],
+        parameters=[
+            TokenSerializer,
+            OpenApiParameter('limit', exclude=True),
+            OpenApiParameter('offset', exclude=True),
+        ],
+        responses={
+            204: EMPTY,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    ),
+)
 class VerificationTokenView(
     ListAPIView,
     BaseResponseMixin,
@@ -62,6 +100,24 @@ class VerificationTokenView(
         return self.response_ok()
 
 
+@extend_schema_view(
+    post=extend_schema(
+        tags=['Auth'],
+        summary='Resend the account verification email',
+        description=(
+            'Requires a non-guest account admin/owner and private API '
+            'source-IP restrictions. Returns the account owner email; '
+            'sends a new message only while verification is enabled and '
+            'the account remains unverified.'
+        ),
+        request=None,
+        responses={
+            200: EmailAddressSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    ),
+)
 class VerificationTokenResendView(
     CreateAPIView,
     BaseResponseMixin,

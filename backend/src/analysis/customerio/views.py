@@ -1,4 +1,9 @@
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    extend_schema,
+)
 from rest_framework.serializers import ValidationError
 from rest_framework.views import APIView
 
@@ -15,10 +20,11 @@ from src.analysis.customerio.serializers import (
 )
 from src.analysis.customerio.services import WebHookService
 from src.generics.mixins.views import BaseResponseMixin
+from src.openapi.responses import EMPTY, FORBIDDEN, UNAUTHORIZED
+from src.openapi.internal_serializers import EMPTY_OBJECT_SCHEMA
 from src.utils import logging
 
 
-@extend_schema(exclude=True)
 class WebhooksView(
     APIView,
     BaseResponseMixin,
@@ -26,6 +32,43 @@ class WebhooksView(
 
     permission_classes = (WebhookAPIPermission,)
 
+    @extend_schema(
+        tags=['Applications'],
+        summary='Receive Customer.io subscription events',
+        description=(
+            'Provider callback authenticated by X-CIO-Signature and '
+            'X-CIO-Timestamp, not a Pneumatic token. Signature is the hex '
+            'HMAC-SHA256 of <configured-api-version>:<timestamp>: followed '
+            'by the exact raw request bytes, using the configured webhook '
+            'API key. subscribed/unsubscribed metrics change newsletter '
+            'preferences for data.identifiers.id. Unsupported metrics or '
+            'unknown users are acknowledged with {}. Invalid structure or '
+            'service failures return 400 with an empty body.'
+        ),
+        auth=[{'customerIOSignature': []}],
+        parameters=[OpenApiParameter(
+            name='X-CIO-Timestamp',
+            location=OpenApiParameter.HEADER,
+            type=OpenApiTypes.STR,
+            required=True,
+            description='Timestamp string used verbatim in the HMAC input.',
+        )],
+        request=WebHookSerializer,
+        responses={
+            200: EMPTY_OBJECT_SCHEMA,
+            400: EMPTY,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+        examples=[OpenApiExample(
+            'Newsletter unsubscribe',
+            value={
+                'metric': 'unsubscribed',
+                'data': {'identifiers': {'id': '123'}},
+            },
+            request_only=True,
+        )],
+    )
     def post(self, request, *args, **kwargs):
         slz = WebHookSerializer(data=request.data)
         try:

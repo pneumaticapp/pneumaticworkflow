@@ -9,15 +9,14 @@ from src.accounts.permissions import (
 from src.executor import RawSqlExecutor
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import UserIsAuthenticated
-from src.openapi import (
-    ACCESS_AUTH,
+from src.openapi.helpers import unpaginated_schema
+from src.openapi.permission_docs import ACCESS_AUTH
+from src.openapi.parameters import (
     COUNTS_BY_PERFORMER_PARAMS,
     COUNTS_BY_STARTER_PARAMS,
     COUNTS_BY_TEMPLATE_TASK_PARAMS,
-    FORBIDDEN,
-    UNAUTHORIZED,
-    VALIDATION_ERROR,
 )
+from src.openapi.responses import FORBIDDEN, UNAUTHORIZED, VALIDATION_ERROR
 from src.processes.queries import (
     WorkflowCountsByCPerformerQuery,
     WorkflowCountsByTemplateTaskQuery,
@@ -47,6 +46,7 @@ class WorkflowCountsViewSet(
             return WorkflowCountsByTemplateTaskResponseSerializer
         return WorkflowCountsResponseSerializer
 
+    @unpaginated_schema
     @extend_schema(
         tags=['Workflows'],
         summary='Workflow counts by starter',
@@ -74,6 +74,7 @@ class WorkflowCountsViewSet(
         response_slz = self.get_serializer(instance=sql_rows, many=True)
         return self.response_ok(response_slz.data)
 
+    @unpaginated_schema
     @extend_schema(
         tags=['Workflows'],
         summary='Workflow counts by current performer',
@@ -101,6 +102,7 @@ class WorkflowCountsViewSet(
         response_slz = self.get_serializer(instance=sql_rows, many=True)
         return self.response_ok(response_slz.data)
 
+    @unpaginated_schema
     @extend_schema(
         tags=['Workflows'],
         summary='Workflow counts by template task',
