@@ -7,7 +7,7 @@ import type { IGroup } from '../../../../../types/team';
 import { makeUser } from '../../../../../__stubs__/users.factory';
 import { makeGroup } from '../../../../../__stubs__/team.factory';
 import { getPerformersForDropdown } from '../getPerformersForDropdown';
-import { EOptionTypes } from '../../../../UI/form/UsersDropdown';
+import { EOptionTypes } from '../../../../UI/form/UsersDropdown/types';
 
 jest.mock('../../../../../utils/users', () => ({
   getUserFullName: jest.fn((u: { firstName?: string; lastName?: string }) => `${u.firstName} ${u.lastName}`),

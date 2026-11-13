@@ -6,61 +6,17 @@ import type { ActionMeta, FormatOptionLabelMeta } from 'react-select';
 import { DropdownList } from '../../DropdownList';
 import { Checkbox } from '../../Fields/Checkbox';
 import { Avatar } from '../../Avatar';
-import type { TAvatarUser } from '../../Avatar';
-import type { TDropdownOptionBase, IDropdownListProps } from '../../DropdownList/types';
+import type { TAvatarUser } from '../../Avatar/types';
 import { EUserStatus, isUserAbsent } from '../../../../types/user';
 import type { TUserListItem } from '../../../../types/user';
-import type { IGroup } from '../../../../types/team';
 import { BoldPlusIcon } from '../../../icons';
-import { ETaskPerformerType } from '../../../../types/template';
 import { getUserById } from '../../../UserData/utils/getUserById';
 
+import { EOptionTypes } from './types';
+import type { IUsersDropdownProps, TUsersDropdownOption } from './types';
 import { isUsersDropdownOptionSelected } from './usersDropdownOptionValue';
 
 import styles from './UsersDropdown.css';
-
-export enum EOptionTypes {
-  Group = ETaskPerformerType.UserGroup,
-  User = ETaskPerformerType.User,
-  Starter = ETaskPerformerType.WorkflowStarter,
-  Field = ETaskPerformerType.OutputUser,
-  Manager = ETaskPerformerType.Manager,
-  InviteUsers = 'invite-users',
-  AllUsers = 'all-users',
-}
-
-export interface IGroupDropdownOption extends Omit<IGroup, 'type'> {
-  optionType: EOptionTypes.Group;
-  label: string;
-  value: string;
-  type: ETaskPerformerType.UserGroup;
-}
-
-export type TUsersDropdownOption = TDropdownOptionBase & {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  status?: EUserStatus;
-  id: number;
-  optionType: EOptionTypes;
-};
-
-export interface IUsersDropdownProps<TOption extends TUsersDropdownOption> extends IDropdownListProps<TOption> {
-  inviteLabel: string;
-  users: TUserListItem[];
-  isTeamInvitesModalOpen: boolean;
-  recentInvitedUsers: TUserListItem[];
-  isAdmin: boolean;
-  value?: any;
-  onChange: (value: any) => void;
-  onChangeSelected?: (value: any) => void;
-  openTeamInvitesPopup(): void;
-  onUsersInvited?(invitedUsers: any): void;
-  onClickInvite(): void;
-  onClickAllUsers?(value: boolean): void;
-  errorMessage?: string;
-  isRequired?: boolean;
-}
 
 export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
   options,

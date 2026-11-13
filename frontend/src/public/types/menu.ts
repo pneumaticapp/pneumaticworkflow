@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import type React from 'react';
+import type { ReactElement, SVGAttributes } from 'react';
 
 export type TMenuCounterType = 'alert' | 'info';
 
@@ -29,7 +29,7 @@ export interface IMenuItemSub {
   newWindow?: boolean;
   icon?: string;
   isHidden?: boolean;
-  iconComponent?: (props: React.SVGAttributes<SVGElement>) => React.ReactElement;
+  iconComponent?: (props: SVGAttributes<SVGElement>) => ReactElement;
 }
 
 export type TMenuCounter = {

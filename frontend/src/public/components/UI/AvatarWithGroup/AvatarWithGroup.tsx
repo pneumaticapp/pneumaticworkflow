@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { IAvatarProps, TAvatarUser } from '../Avatar/Avatar';
+import type { IAvatarProps, TAvatarUser } from '../Avatar/types';
 import { Avatar } from '../Avatar/Avatar';
 import { ETemplateOwnerType } from '../../../types/template';
 

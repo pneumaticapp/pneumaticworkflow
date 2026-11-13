@@ -2,7 +2,7 @@ import type { FC } from 'react';
 import React from 'react';
 import { useIntl } from 'react-intl';
 
-import type { TAvatarUser } from '../../../UI';
+import type { TAvatarUser } from '../../../UI/Avatar/types';
 import { Avatar } from '../../../UI';
 import { DeleteIcon } from '../../../icons';
 import type { TUserListItem } from '../../../../types/user';

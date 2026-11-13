@@ -46,7 +46,6 @@ jest.mock('../../UI/form/UsersDropdown', () => ({
     mockUsersDropdown(props);
     return null;
   },
-  EOptionTypes: { User: 'user', Group: 'group' },
   getUsersDropdownOptionValue: (optionType: string, id: number | string) => `${optionType}-${id}`,
 }));
 

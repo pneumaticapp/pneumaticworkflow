@@ -28,7 +28,6 @@ jest.mock('../../UI', () => ({
 
 jest.mock('../../UI/form/UsersDropdown/UsersDropdown', () => ({
   UsersDropdownComponent: jest.fn(() => <div data-testid="users-dropdown" />),
-  EOptionTypes: { User: 'User' },
 }));
 
 const makeUser = (overrides: any = {}) => ({

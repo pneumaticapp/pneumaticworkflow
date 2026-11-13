@@ -7,11 +7,10 @@ import type {
   IRuntimeKickoffClient,
   IExtraField,
   ITemplateTaskClient,
-  IFieldsetBindingClient,
   TTemplateFieldFieldset,
   TTaskVariable,
 } from '../../../../types/template';
-import type { IFieldsetField, IFieldsetRuntime } from '../../../../types/fieldset';
+import type { IFieldsetBindingClient, IFieldsetField, IFieldsetRuntime } from '../../../../types/fieldset';
 import { normalizeSelections } from '../../utils/normalizeSelections';
 import { StepName } from '../../../StepName';
 import { getPreviousTasks } from './getPreviousTasks';

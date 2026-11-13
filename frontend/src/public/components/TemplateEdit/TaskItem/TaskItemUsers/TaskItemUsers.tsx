@@ -2,7 +2,8 @@
 /* prettier-ignore */
 import React from 'react';
 
-import { Avatar, TAvatarUser } from '../../../UI/Avatar';
+import { Avatar } from '../../../UI/Avatar';
+import type { TAvatarUser } from '../../../UI/Avatar/types';
 import { isArrayWithItems } from '../../../../utils/helpers';
 import { ETaskPerformerType, ITemplateTaskClient, ITemplateTaskPerformer } from '../../../../types/template';
 import { UserData } from '../../../UserData';

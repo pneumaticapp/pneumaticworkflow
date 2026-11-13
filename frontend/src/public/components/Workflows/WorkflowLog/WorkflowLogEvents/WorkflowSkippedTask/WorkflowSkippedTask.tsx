@@ -5,16 +5,9 @@ import { useIntl } from 'react-intl';
 
 import { Header } from '../../../../UI/Typeography/Header';
 import { ERoutes } from '../../../../../constants/routes';
-import type { IWorkflowLogItem } from '../../../../../types/workflow';
-import type { TWorkflowLogTheme } from '../../types';
+import type { IWorkflowSkippedTaskProps, TWorkflowLogTheme } from '../../types';
 
 import styles from './WorkflowSkippedTask.css';
-
-export interface IWorkflowSkippedTaskProps extends Pick<IWorkflowLogItem, 'task'> {
-  areTasksClickable?: boolean;
-  theme: TWorkflowLogTheme;
-  onClickTask?(): void;
-}
 
 export function WorkflowSkippedTask({ task, areTasksClickable, theme, onClickTask }: IWorkflowSkippedTaskProps) {
   const { formatMessage } = useIntl();

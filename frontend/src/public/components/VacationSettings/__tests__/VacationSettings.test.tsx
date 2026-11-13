@@ -27,7 +27,6 @@ jest.mock('../../UI/Fields/DateField', () => ({
 }));
 
 jest.mock('../../UI/form/UsersDropdown', () => ({
-  EOptionTypes: { User: 'user' },
   UsersDropdown: ({ options, onChange }: any) => (
     <div data-testid="users-dropdown">
       {options.map((opt: any) => (

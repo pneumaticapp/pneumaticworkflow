@@ -379,15 +379,6 @@ export enum EWorkflowsLoadingStatus {
   EmptyList = 'list-empty',
 }
 
-export interface IDropdownMenuProps {
-  renderedOptions: React.ReactNode;
-  isWide: boolean;
-  level: number;
-  direction?: 'right' | 'left';
-  className?: string;
-  renderMenuContent?(renderedOptions: React.ReactNode): React.ReactNode;
-}
-
 export interface IRunWorkflow extends Omit<
   Pick<ITemplateClient, 'wfNameTemplate' | 'name' | 'kickoff' | 'description'>,
   'kickoff'

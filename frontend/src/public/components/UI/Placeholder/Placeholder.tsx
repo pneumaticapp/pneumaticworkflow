@@ -1,20 +1,11 @@
 import React from 'react';
 import classnames from 'classnames';
 
-import type { TPlaceholderMood, IPlaceholderIconProps } from './types';
+import type { IPlaceholderProps } from './types';
 
 import { Header } from '../Typeography/Header';
 
 import styles from './Placeholder.css';
-
-export interface IPlaceholderProps {
-  mood?: TPlaceholderMood;
-  Icon(props: IPlaceholderIconProps): JSX.Element;
-  title: string;
-  description?: string;
-  footer?: React.ReactNode;
-  containerClassName?: string;
-}
 
 export function Placeholder({
   mood = 'neutral',

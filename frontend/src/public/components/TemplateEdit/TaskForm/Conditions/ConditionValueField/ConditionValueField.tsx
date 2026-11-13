@@ -5,13 +5,10 @@ import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { DropdownList } from '../../../../UI/DropdownList';
-import type { TTaskVariable } from '../../../../../types/template';
 import { EExtraFieldType, EStartingType } from '../../../../../types/template';
 import { Field } from '../../../../Field';
-import type { TUserListItem } from '../../../../../types/user';
 import { EUserStatus } from '../../../../../types/user';
 import { getUserFullName } from '../../../../../utils/users';
-import type { EConditionOperators, TConditionRule } from '../../../../../types/templateTaskConditions';
 import { OPERATORS_WITHOUT_VALUE } from '../utils/shared';
 import { DatePickerCustom } from '../../../../UI/form/DatePicker';
 import { parseUnixSeconds, toTspDate } from '../../../../../utils/dateTime';
@@ -19,15 +16,7 @@ import { getFormattedDropdownOption } from '../utils/getFormattedDropdownOption'
 import styles from '../Conditions.css';
 import { getRegularGroupsList } from '../../../../../redux/selectors/groups';
 import { useLazyDataset } from '../utils/useLazyDataset';
-
-interface IConditionValueFieldProps {
-  variable: TTaskVariable | null;
-  rule: TConditionRule;
-  users: TUserListItem[];
-  operator?: EConditionOperators | null;
-  isDisabled: boolean;
-  changeRuleValue(value: TConditionRule[keyof TConditionRule], kind?: 'user' | 'group'): void;
-}
+import type { IConditionValueFieldProps, IDropdownSelection, IDropdownUser } from '../types';
 
 export function ConditionValueField({
   variable,
@@ -81,11 +70,6 @@ export function ConditionValueField({
   }
 
   function renderDropdownField() {
-    interface IDropdownSelection {
-      value: string;
-      label: string;
-    }
-
     let dropdownSelections: IDropdownSelection[] = [];
 
     if (variable?.datasetId) {
@@ -132,12 +116,6 @@ export function ConditionValueField({
   }
 
   function renderUserField() {
-    interface IDropdownUser extends TUserListItem {
-      label: string;
-      entityType: 'user' | 'group';
-      value: string;
-    }
-
     const activeUsers = users.filter((user) => user.status === EUserStatus.Active);
     const labelUsers = activeUsers.map((user) => ({
       ...user,

@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { TUserListItem } from '../types/user';
 import { getUserFullName } from './users';
-import type { TUsersDropdownOption } from '../components/UI/form/UsersDropdown';
-import { EOptionTypes } from '../components/UI/form/UsersDropdown';
+import type { TUsersDropdownOption } from '../components/UI/form/UsersDropdown/types';
+import { EOptionTypes } from '../components/UI/form/UsersDropdown/types';
 
 export interface ISubstituteUsersResult {
   selectedUserIds: number[];

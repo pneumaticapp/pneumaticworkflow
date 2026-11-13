@@ -1,9 +1,9 @@
-import type React from 'react';
+import type { RefObject } from 'react';
 import { createContext, useContext } from 'react';
 import type { ITableViewContainerRef } from './types';
 
 interface WorkflowsTableContextValue {
-  ref: React.RefObject<ITableViewContainerRef> | null;
+  ref: RefObject<ITableViewContainerRef> | null;
   isTableWiderThanScreen: boolean;
 }
 

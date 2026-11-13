@@ -1,30 +1,13 @@
 import React from 'react';
 import classnames from 'classnames';
 
-import type { IUnsavedUser, TUserType } from '../../../types/user';
 import { EUserStatus } from '../../../types/user';
 import { getUserFullName } from '../../../utils/users';
 import { CustomTooltip } from '../CustomTooltip';
 import { ExternalUserAvatarIcon, GroupIcon, GuestUserAvatarIcon, PneumaticAvatarIcon } from '../../icons';
+import type { IAvatarProps, TAvatarSize } from './types';
 
 import styles from './Avatar.css';
-
-export type TAvatarUser = Partial<Pick<IUnsavedUser, 'firstName' | 'lastName' | 'email' | 'status' | 'photo'>> & {
-  type?: TUserType;
-};
-type TAvatarSize = 'xxl' | 'xl' | 'lg' | 'md' | 'sm';
-
-export interface IAvatarProps {
-  isSystemAvatar?: boolean;
-  user?: TAvatarUser;
-  size?: TAvatarSize;
-  isEmpty?: boolean;
-  sizeMobile?: TAvatarSize;
-  containerClassName?: string;
-  className?: string;
-  showInitials?: boolean;
-  withTooltip?: boolean;
-}
 
 export const getBackgroundColor = (fullName: string) => {
   const name = [...fullName];

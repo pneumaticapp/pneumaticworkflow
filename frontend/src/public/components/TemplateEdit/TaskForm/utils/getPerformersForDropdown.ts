@@ -3,8 +3,9 @@ import { EExtraFieldType, ETaskPerformerType } from '../../../../types/template'
 import type { ITemplateTaskClient, ITemplateTaskPerformer, TTaskVariable } from '../../../../types/template';
 import type { TUserListItem } from '../../../../types/user';
 import { getUserFullName } from '../../../../utils/users';
-import { EOptionTypes, getUsersDropdownOptionValue } from '../../../UI/form/UsersDropdown';
-import type { TUsersDropdownOption } from '../../../UI/form/UsersDropdown';
+import { getUsersDropdownOptionValue } from '../../../UI/form/UsersDropdown';
+import { EOptionTypes } from '../../../UI/form/UsersDropdown/types';
+import type { TUsersDropdownOption } from '../../../UI/form/UsersDropdown/types';
 import type { IGroup } from '../../../../types/team';
 
 export function getPerformersForDropdown(

@@ -8,7 +8,7 @@ import { EExtraFieldType, ETaskPerformerType } from '../../../../../../../types/
 import type { ITableViewFields } from '../../../../../../../types/template';
 import { getUserById } from '../../../../../../UserData/utils/getUserById';
 import { Avatar } from '../../../../../../UI';
-import type { TAvatarUser } from '../../../../../../UI/Avatar';
+import type { TAvatarUser } from '../../../../../../UI/Avatar/types';
 import { getAttachmentTypeByFilename } from '../../../../../../Attachments/utils/getAttachmentType';
 import { DocumentInfoIcon, ImageFileIcon } from '../../../../../../icons';
 import { urlWithProtocolRegex } from '../../../../../../../constants/defaultValues';

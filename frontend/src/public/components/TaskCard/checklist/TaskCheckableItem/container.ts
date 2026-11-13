@@ -3,7 +3,7 @@ import { markChecklistItem, unmarkChecklistItem } from '../../../../redux/action
 import { getCurrentTask } from '../../../../redux/selectors/task';
 import type { RootState } from '../../../../redux/store';
 import { getTaskChecklistItem } from '../../../../utils/tasks';
-import type { TTaskCheckableItemReduxProps, TTaskCheckableItemOwnProps } from './TaskCheckableItem';
+import type { TTaskCheckableItemReduxProps, TTaskCheckableItemOwnProps } from './types';
 import { TaskCheckableItem } from './TaskCheckableItem';
 
 type TStoreProps = Pick<TTaskCheckableItemReduxProps, 'isChecked'>;

@@ -4,20 +4,9 @@ import { Prompt } from 'react-router-dom';
 
 import { Header } from '../Typeography/Header';
 import { Modal } from '../Modal';
+import type { IRouteLeavingGuardProps, TGuardState } from './types';
 
 import styles from './RouteLeavingGuard.css';
-
-interface Props {
-  when?: boolean;
-  title: string;
-  message: string;
-  onConfirm: (path: string) => void;
-  onReject: (path: string) => void;
-  shouldBlockNavigation: (location: Location) => boolean;
-  renderControlls(confirm: () => void, reject: () => void): React.ReactNode;
-}
-
-type TGaurdState = 'confirmed' | 'rejected' | 'none';
 
 export function RouteLeavingGuard({
   when,
@@ -27,10 +16,10 @@ export function RouteLeavingGuard({
   onReject,
   shouldBlockNavigation,
   renderControlls,
-}: Props) {
+}: IRouteLeavingGuardProps) {
   const [modalVisible, setModalVisible] = useState(false);
   const [lastLocation, setLastLocation] = useState<Location | null>(null);
-  const [confirmedNavigation, setConfirmedNavigation] = useState<TGaurdState>('none');
+  const [confirmedNavigation, setConfirmedNavigation] = useState<TGuardState>('none');
 
   const closeModal = () => {
     setModalVisible(false);

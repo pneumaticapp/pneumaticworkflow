@@ -1,10 +1,8 @@
-import type React from 'react';
+import type { ReactNode } from 'react';
 import type { EIntegrations } from './integrations';
 import type { ICondition, IConditionAPI } from './templateTaskConditions';
 import type { TUploadedFile } from './attachments';
 import type { IFieldsetBinding, IFieldsetBindingClient, IFieldsetBindingMeta, IFieldsetRuntime } from './fieldset';
-
-export type { IFieldsetBindingClient } from './fieldset';
 
 export interface ITemplate {
   id?: number;
@@ -400,7 +398,7 @@ export type TTaskVariable = {
   apiName: string;
   type: EExtraFieldType | EStartingType;
   subtitle?: string;
-  richSubtitle?: React.ReactNode;
+  richSubtitle?: ReactNode;
   selections?: string[];
   datasetId?: number | null;
 };

@@ -2,7 +2,7 @@
 import { connect } from 'react-redux';
 import type { RootState } from '../../redux/store';
 
-import type { ILogoProps } from './Logo';
+import type { ILogoProps } from './types';
 import { Logo } from './Logo';
 
 type TStoreProps = Pick<ILogoProps, 'partnerLogoLg' | 'partnerLogoSm'>;

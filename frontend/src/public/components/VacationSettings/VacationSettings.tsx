@@ -5,7 +5,7 @@ import { Button } from '../UI/Buttons/Button';
 import { Header } from '../UI/Typeography/Header';
 import { DropdownList } from '../UI/DropdownList';
 import { DateField } from '../UI/Fields/DateField';
-import type { TUsersDropdownOption } from '../UI/form/UsersDropdown';
+import type { TUsersDropdownOption } from '../UI/form/UsersDropdown/types';
 import { UsersDropdown } from '../UI/form/UsersDropdown';
 import { UserPerformer, EBgColorTypes } from '../UI/UserPerformer';
 import type { TUserListItem } from '../../types/user';

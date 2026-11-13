@@ -1,12 +1,6 @@
 /* prettier-ignore */
 import React from 'react';
-import type { TLogoTheme } from '../Logo/Logo';
-
-export interface ILogoCircleProps {
-  size?: number;
-  theme?: TLogoTheme;
-  className?: string;
-}
+import type { ILogoCircleProps } from '../Logo/types';
 
 const DEFAULT_SIZE = 48;
 

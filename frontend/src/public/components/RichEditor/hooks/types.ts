@@ -1,4 +1,4 @@
-import type React from 'react';
+import type { RefObject } from 'react';
 import type { IScrollSnapshot } from '../plugins/LinkPlugin/types';
 
 export interface ISelectionAnchorResult {
@@ -9,7 +9,7 @@ export interface ISelectionAnchorResult {
 
 export interface IUseFloatingFormPositionOptions {
   anchorElement?: HTMLElement | null;
-  containerRef?: React.RefObject<HTMLElement | null>;
+  containerRef?: RefObject<HTMLElement | null>;
   getAnchorRect?: (() => DOMRect | null) | null;
   isVisible: boolean;
   offsetPx?: number;

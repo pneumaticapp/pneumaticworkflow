@@ -6,21 +6,16 @@ import { ELearnMoreLinks } from '../../../constants/defaultValues';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { Tooltip } from '../../UI';
 import { TemplateIntegrationsStats } from '../TemplateIntegrationsStats';
-import type { ITemplateIntegrationsStatsProps } from '../TemplateIntegrationsStats';
+import type { ITemplateIntegrationsIndicatorProps } from '../types';
 
 import styles from './TemplateIntegrationsIndicator.css';
-
-interface TemplateIntegrationsIndicatorProps extends Pick<ITemplateIntegrationsStatsProps, 'templateId' | 'exlcude'> {
-  integratedIndicator: JSX.Element;
-  disconnectedIndicator: JSX.Element;
-}
 
 export function TemplateIntegrationsIndicator({
   integratedIndicator,
   disconnectedIndicator,
   templateId,
   exlcude,
-}: TemplateIntegrationsIndicatorProps) {
+}: ITemplateIntegrationsIndicatorProps) {
   const { formatMessage } = useIntl();
   const integrationsSettings = getIntegrationsSettings(templateId);
 

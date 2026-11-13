@@ -1,9 +1,5 @@
-import type {
-  IFieldsetBindingClient,
-  ITemplateKickoffClient,
-  ITemplateTaskClient,
-  TTemplateFieldFieldset,
-} from '../../../../types/template';
+import type { IFieldsetBindingClient } from '../../../../types/fieldset';
+import type { ITemplateKickoffClient, ITemplateTaskClient, TTemplateFieldFieldset } from '../../../../types/template';
 
 export interface IGetLocalizedSystemVariableParams {
   apiName: string;

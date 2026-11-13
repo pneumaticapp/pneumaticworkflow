@@ -1,17 +1,8 @@
-import type { ReactNode } from 'react';
 import React from 'react';
 import classnames from 'classnames';
 import styles from '../Conditions.css';
 import { Tooltip } from '../../../../UI';
-
-interface IGetOptionState {
-  label: string | ReactNode;
-  isSelected?: boolean;
-}
-
-interface IGetFormattedDropdownOptionParams extends IGetOptionState {
-  isTooltip?: boolean;
-}
+import type { IGetFormattedDropdownOptionParams, IGetOptionState } from './types';
 
 const STYLES = {
   selected: classnames(

@@ -2,7 +2,7 @@ import React from 'react';
 import { useIntl } from 'react-intl';
 import classNames from 'classnames';
 
-import type { IFieldsetBindingClient } from '../../../types/template';
+import type { IFieldsetBindingClient } from '../../../types/fieldset';
 import { isArrayWithItems } from '../../../utils/helpers';
 
 import styles from './FieldsetOutputsPreview.css';

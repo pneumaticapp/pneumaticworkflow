@@ -1,10 +1,6 @@
 import { EConditionOperators } from '../../../../../types/templateTaskConditions';
 import { EExtraFieldType, EStartingType } from '../../../../../types/template';
-
-export interface IDropdownOperator {
-  operator: EConditionOperators;
-  label: string;
-}
+import type { IDropdownOperator } from './types';
 
 export const conditionsByFieldTypeMap: { [key in EExtraFieldType]: EConditionOperators[] } & {
   [key in EStartingType]: EConditionOperators[];

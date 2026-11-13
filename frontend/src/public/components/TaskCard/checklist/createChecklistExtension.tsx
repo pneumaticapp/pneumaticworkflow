@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { TTaskCheckableItemOwnProps} from './TaskCheckableItem';
+import type { TTaskCheckableItemOwnProps } from './TaskCheckableItem/types';
 import { TaskCheckableItemContainer } from './TaskCheckableItem';
 
 import type { ITask } from '../../../types/tasks';

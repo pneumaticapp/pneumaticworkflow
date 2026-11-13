@@ -1,13 +1,6 @@
 import React from 'react';
-import type { EIntegrations } from '../../types/integrations';
+import type { ITemplateIntegrationsStatsProps } from './types';
 import { useTemplateIntegrationsList } from './utils/useTemplateIntegrationsList';
-
-export interface ITemplateIntegrationsStatsProps {
-  templateId?: number;
-  exlcude?: EIntegrations[];
-
-  children(integrations: EIntegrations[]): React.ReactNode;
-}
 
 export const TemplateIntegrationsStats = ({ templateId, exlcude, children }: ITemplateIntegrationsStatsProps) => {
   if (!templateId) {

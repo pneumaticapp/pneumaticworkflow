@@ -1,4 +1,4 @@
-import type React from 'react';
+import type { ReactNode } from 'react';
 import type { IWorkflow } from './workflow';
 
 export type TNotificationType = 'info' | 'success' | 'warning' | 'error';
@@ -6,8 +6,8 @@ export type TNotificationType = 'info' | 'success' | 'warning' | 'error';
 export interface INotification {
   id: string;
   type: TNotificationType;
-  title: React.ReactNode | null;
-  message: React.ReactNode | null;
+  title: ReactNode | null;
+  message: ReactNode | null;
   timeOut: number;
   customClassName: string;
   onCancelClick?: Function;

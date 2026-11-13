@@ -5,14 +5,9 @@ import { useIntl } from 'react-intl';
 import { Avatar } from '../../../../UI/Avatar';
 import { Header } from '../../../../UI/Typeography/Header';
 import { UserData } from '../../../../UserData';
-import type { IWorkflowLogItem } from '../../../../../types/workflow';
-import type { TWorkflowLogTheme } from '../../types';
+import type { IWorkflowLogTaskSkippedProps, TWorkflowLogTheme } from '../../types';
 
 import styles from './WorkflowLogTaskSkipped.css';
-
-export interface IWorkflowLogTaskSkippedProps extends Pick<IWorkflowLogItem, 'task'> {
-  theme: TWorkflowLogTheme;
-}
 
 const MAX_SHOW_USERS = 5;
 

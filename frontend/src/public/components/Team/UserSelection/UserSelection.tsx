@@ -3,7 +3,8 @@ import { useSelector } from 'react-redux';
 
 import { trackInviteTeamInPage } from '../../../utils/analytics';
 import { getNotDeletedUsers, getUserFullName } from '../../../utils/users';
-import { EOptionTypes, UsersDropdown } from '../../UI/form/UsersDropdown';
+import { UsersDropdown } from '../../UI/form/UsersDropdown';
+import { EOptionTypes } from '../../UI/form/UsersDropdown/types';
 import { getUsers } from '../../../redux/selectors/user';
 
 export interface IUserSelection {

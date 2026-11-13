@@ -1,10 +1,6 @@
 import { EConditionOperators } from '../../../../../../types/templateTaskConditions';
-import {
-  conditionsByFieldTypeMap,
-  getDropdownOperators,
-  IDropdownOperator,
-  labelByOperatorMap,
-} from '../getDropdownOperators';
+import { conditionsByFieldTypeMap, getDropdownOperators, labelByOperatorMap } from '../getDropdownOperators';
+import type { IDropdownOperator } from '../types';
 import { EStartingType } from '../../../../../../types/template';
 import { CONDITION_DISABLED_OPERATOR, OPERATORS_WITHOUT_VALUE } from '../shared';
 

@@ -3,8 +3,9 @@ import { useIntl } from 'react-intl';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { Modal, Button } from '../../UI';
-import type { TUsersDropdownOption } from '../../UI/form/UsersDropdown/UsersDropdown';
-import { UsersDropdownComponent, EOptionTypes } from '../../UI/form/UsersDropdown/UsersDropdown';
+import type { TUsersDropdownOption } from '../../UI/form/UsersDropdown/types';
+import { EOptionTypes } from '../../UI/form/UsersDropdown/types';
+import { UsersDropdownComponent } from '../../UI/form/UsersDropdown/UsersDropdown';
 import { getUsers } from '../../../redux/selectors/user';
 import { getAccountsTeamList } from '../../../redux/selectors/accounts';
 import { getNotDeletedUsers, getUserFullName } from '../../../utils/users';

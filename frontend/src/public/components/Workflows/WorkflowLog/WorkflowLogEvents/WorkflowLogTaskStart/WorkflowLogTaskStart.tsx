@@ -13,21 +13,12 @@ import { ERoutes } from '../../../../../constants/routes';
 import { getLastTaskLogEventId } from './utils/getLastTaskLogEventId';
 import { ClockIcon } from '../../../../icons';
 import { getDueInData } from '../../../../DueIn/utils/getDueInData';
-import type { EWorkflowsLogSorting, IWorkflowLogItem } from '../../../../../types/workflow';
-import type { TWorkflowLogTheme } from '../../types';
+import type { IWorkflowLogTaskStartProps, TWorkflowLogTheme } from '../../types';
 
 import styles from './WorkflowLogTaskStart.css';
 import UserDataWithGroup from '../../../../UserDataWithGroup';
 
 const MAX_SHOW_USERS = 5;
-
-export interface IWorkflowLogTaskStartProps extends Pick<IWorkflowLogItem, 'task' | 'created' | 'id'> {
-  logItems: IWorkflowLogItem[];
-  sorting: EWorkflowsLogSorting;
-  areTasksClickable?: boolean;
-  theme: TWorkflowLogTheme;
-  onClickTask?(): void;
-}
 
 export function WorkflowLogTaskStart({
   id,
