@@ -111,6 +111,7 @@ export function* authenticateUser(redirectUrl?: string, isRegister: boolean = fa
     const {
       account: { isSubscribed, billingPlan, billingSync },
     } = user;
+    setAnalyticsSupermode(Boolean(user.isSupermode));
     yield put(authUserSuccess(user));
 
     setSentryUser({ id: user.id, email: user.email });
@@ -774,19 +775,14 @@ export function* watchVacationDeactivate() {
   yield takeEvery(EAuthActions.VacationDeactivate, handleVacationDeactivate);
 }
 
-export function* syncAnalyticsSupermode() {
-  const { authUser }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
-  setAnalyticsSupermode(Boolean(authUser.isSupermode));
-}
-
 export function resetAnalyticsSupermode() {
   setAnalyticsSupermode(false);
 }
 
 export function* watchAnalyticsSupermode() {
-  yield call(syncAnalyticsSupermode);
-  yield takeEvery([EAuthActions.AuthUserSuccess, EAuthActions.RegisterUserSuccess], syncAnalyticsSupermode);
-  yield takeEvery([EAuthActions.LogoutUserSuccess, EAuthActions.AuthUserFail], resetAnalyticsSupermode);
+  yield takeEvery(EAuthActions.LogoutUserSuccess, resetAnalyticsSupermode);
+  const { authUser }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
+  setAnalyticsSupermode(Boolean(authUser.isSupermode));
 }
 
 export function* rootSaga() {

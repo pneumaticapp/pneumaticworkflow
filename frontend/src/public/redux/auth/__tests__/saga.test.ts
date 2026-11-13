@@ -1,4 +1,4 @@
-import { call, put, select, takeEvery } from 'redux-saga/effects';
+import { put, select, takeEvery } from 'redux-saga/effects';
 
 import { configMock } from '../../../__stubs__/configMock';
 import { ApiError } from '../../../api/ApiError';
@@ -7,16 +7,23 @@ jest.mock('../../../utils/getConfig', () => ({
   getBrowserConfig: jest.fn().mockReturnValue(configMock),
 }));
 import {
+  authenticateUser,
   loginWithEmailPasswordAsync,
   registerInviteAsync,
   registerWithEmailAsync,
   registerWithEmailPassword,
   registerWithInvite,
   resetAnalyticsSupermode,
-  syncAnalyticsSupermode,
   watchAnalyticsSupermode,
 } from '../saga';
-import { registerUser, registerUserInvited, sendForgotPassword, sendForgotPasswordFail } from '../actions';
+import {
+  authUserSuccess,
+  registerUser,
+  registerUserInvited,
+  sendForgotPassword,
+  sendForgotPasswordFail,
+} from '../actions';
+import { INIT_STATE } from '../reducer';
 import { getAuthUser } from '../../selectors/user';
 import { setAnalyticsSupermode } from '../../../utils/analytics';
 import { setJwtCookie } from '../../../utils/authCookie';
@@ -26,6 +33,7 @@ import { EOAuthType } from '../../../types/auth';
 import { EAuthActions } from '../actions';
 
 const auth = {
+  getUser: jest.fn(),
   createUserWithEmail: jest.fn(),
   signInWithEmailAndPassword: jest.fn(),
   createUserWithInvite: jest.fn(),
@@ -476,11 +484,12 @@ describe('saga', () => {
   });
 
   describe('analytics supermode sync', () => {
-    it('syncAnalyticsSupermode reads authUser via getAuthUser and sets supermode flag', () => {
-      const gen = syncAnalyticsSupermode();
+    it('authenticateUser sets supermode flag before dispatching authUserSuccess', () => {
+      const user = { ...INIT_STATE, isSupermode: true };
+      const gen = authenticateUser();
 
-      expect(gen.next().value).toEqual(select(getAuthUser));
-      expect(gen.next({ authUser: { isSupermode: true } } as ReturnType<typeof getAuthUser>).done).toBe(true);
+      gen.next();
+      expect(gen.next(user).value).toEqual(put(authUserSuccess(user)));
       expect(setAnalyticsSupermode).toHaveBeenCalledWith(true);
     });
 
@@ -490,17 +499,13 @@ describe('saga', () => {
       expect(setAnalyticsSupermode).toHaveBeenCalledWith(false);
     });
 
-    it('watchAnalyticsSupermode syncs on startup and subscribes to auth actions', () => {
+    it('watchAnalyticsSupermode subscribes to logout and syncs initial state', () => {
       const gen = watchAnalyticsSupermode();
 
-      expect(gen.next().value).toEqual(call(syncAnalyticsSupermode));
-      expect(gen.next().value).toEqual(
-        takeEvery([EAuthActions.AuthUserSuccess, EAuthActions.RegisterUserSuccess], syncAnalyticsSupermode),
-      );
-      expect(gen.next().value).toEqual(
-        takeEvery([EAuthActions.LogoutUserSuccess, EAuthActions.AuthUserFail], resetAnalyticsSupermode),
-      );
-      expect(gen.next().done).toBe(true);
+      expect(gen.next().value).toEqual(takeEvery(EAuthActions.LogoutUserSuccess, resetAnalyticsSupermode));
+      expect(gen.next().value).toEqual(select(getAuthUser));
+      expect(gen.next({ authUser: { ...INIT_STATE, isSupermode: true } }).done).toBe(true);
+      expect(setAnalyticsSupermode).toHaveBeenCalledWith(true);
     });
   });
 });
