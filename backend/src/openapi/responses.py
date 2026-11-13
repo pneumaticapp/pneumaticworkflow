@@ -1,4 +1,8 @@
-from drf_spectacular.utils import OpenApiResponse
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiResponse,
+    PolymorphicProxySerializer,
+)
 from rest_framework import serializers
 
 from src.openapi.examples import (
@@ -19,7 +23,7 @@ class ValidationErrorDetailsSerializer(serializers.Serializer):
     api_name = serializers.CharField(required=False)
     task = serializers.CharField(required=False)
     field = serializers.CharField(required=False)
-    reason = serializers.CharField()
+    reason = serializers.CharField(required=False)
 
 
 class ValidationErrorSerializer(serializers.Serializer):
@@ -31,7 +35,7 @@ class ValidationErrorSerializer(serializers.Serializer):
 
 
 class DetailErrorSerializer(serializers.Serializer):
-    """DRF default error body for 401/403/404/429."""
+    """DRF default error body, including JSON parse errors."""
 
     detail = serializers.CharField()
 
@@ -41,6 +45,111 @@ VALIDATION_ERROR = error_response(
     serializer=ValidationErrorSerializer,
     description='Validation error',
     example=VALIDATION_ERROR_EXAMPLE,
+)
+FIELD_VALIDATION_ERROR = OpenApiResponse(
+    response={
+        'type': 'object',
+        'additionalProperties': {
+            'type': 'array',
+            'items': {'type': 'string'},
+        },
+    },
+    description='DRF field validation errors keyed by field name.',
+    examples=[OpenApiExample(
+        'Invalid API key name',
+        value={'name': ['Ensure this field has no more than 200 characters.']},
+        response_only=True,
+    )],
+)
+FILTER_VALIDATION_ERROR = OpenApiResponse(
+    response={
+        'oneOf': [
+            {'type': 'array', 'items': {'type': 'string'}},
+            {
+                'type': 'object',
+                'additionalProperties': {
+                    'type': 'array', 'items': {'type': 'string'},
+                },
+            },
+        ],
+    },
+    description='Filter errors: a list of messages or field-keyed messages.',
+    examples=[OpenApiExample(
+        'Invalid filter', value=['Invalid filter value.'], response_only=True,
+    )],
+)
+
+_ENRICHED_FIELD_ERROR = {
+    'type': 'object',
+    'properties': {
+        name: {'type': 'string'}
+        for name in ('message__', 'name__', 'api_name__', 'enriched__')
+    },
+    'required': ['message__', 'name__', 'api_name__', 'enriched__'],
+}
+_BULK_FIELD_ERRORS = {
+    'type': 'object',
+    'additionalProperties': {
+        'type': 'array',
+        'items': {'oneOf': [{'type': 'string'}, _ENRICHED_FIELD_ERROR]},
+    },
+}
+BULK_VALIDATION_ERROR = OpenApiResponse(
+    response={
+        'oneOf': [
+            {
+                'type': 'object', 'required': ['code', 'message'],
+                'properties': {
+                    'code': {'type': 'string'},
+                    'message': {'type': 'string'},
+                    'details': {'type': 'object'},
+                },
+            },
+            _BULK_FIELD_ERRORS,
+            {'type': 'array', 'items': _BULK_FIELD_ERRORS},
+        ],
+    },
+    description=(
+        'Bulk item errors keep their list indexes and field names. Field '
+        'messages may contain the original enriched validation metadata. '
+        'Service errors use the usual code/message object.'
+    ),
+)
+SSO_VALIDATION_ERROR = OpenApiResponse(
+    response=PolymorphicProxySerializer(
+        component_name='SSOValidationError',
+        serializers=[
+            ValidationErrorSerializer,
+            serializers.ListSerializer(child=serializers.CharField()),
+            DetailErrorSerializer,
+        ],
+        resource_type_field_name=None,
+        many=False,
+    ),
+    description=(
+        'Field/business validation errors use code, message and details. '
+        'An SSO-only account restriction returns an array of messages. '
+        'Malformed JSON returns the DRF detail error object.'
+    ),
+    examples=[
+        OpenApiExample(
+            'SSO account restriction',
+            value=[
+                'This account uses SSO authentication. Please sign in '
+                "through your organization's SSO portal.",
+            ],
+            response_only=True,
+        ),
+        VALIDATION_ERROR_EXAMPLE,
+        OpenApiExample(
+            'Malformed JSON',
+            value={
+                'detail': 'JSON parse error - Expecting value: '
+                'line 1 column 1 (char 0)',
+            },
+            response_only=True,
+        ),
+    ],
 )
 UNAUTHORIZED = error_response(
     serializer=DetailErrorSerializer,

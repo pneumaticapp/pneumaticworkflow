@@ -6,11 +6,8 @@ from rest_framework.viewsets import GenericViewSet
 
 from src.generics.mixins.views import CustomViewSetMixin
 from src.datasets.models import Dataset
-from src.openapi import (
-    ACCESS_PUBLIC_TEMPLATE,
-    FORBIDDEN,
-    NOT_FOUND,
-)
+from src.openapi.permission_docs import ACCESS_PUBLIC_TEMPLATE
+from src.openapi.responses import FORBIDDEN, NOT_FOUND
 from src.processes.permissions import PublicTemplatePermission
 from src.datasets.serializers import (
     DatasetSerializer,

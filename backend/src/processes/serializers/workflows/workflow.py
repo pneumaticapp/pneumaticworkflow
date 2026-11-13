@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
@@ -7,6 +7,11 @@ from django.core.validators import MinValueValidator
 from django.db import transaction
 from django.db.models import Q, Prefetch
 from django.utils import timezone
+from drf_spectacular.utils import (
+    OpenApiExample,
+    extend_schema_field,
+    extend_schema_serializer,
+)
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError
 
@@ -77,7 +82,7 @@ class WorkflowOwnersMixin:
     per-instance query.
     """
 
-    def get_owners(self, instance: Workflow):
+    def get_owners(self, instance: Workflow) -> List[int]:
         owners_map = self.context.get('owners_map')
         if owners_map is not None:
             return sorted(owners_map.get(instance.id, []))
@@ -126,10 +131,12 @@ class WorkflowListSerializer(WorkflowOwnersMixin, serializers.ModelSerializer):
         source='workflow_starter_id',
     )
 
+    @extend_schema_field(WorkflowCurrentTaskSerializer(many=True))
     def get_tasks(self, instance: Workflow):
         tasks = instance.active_tasks
         return WorkflowCurrentTaskSerializer(instance=tasks, many=True).data
 
+    @extend_schema_field(TaskFieldListSerializer(many=True))
     def get_filtered_fields(self, instance: Workflow):
         if hasattr(instance, 'filtered_fields'):
             return TaskFieldListSerializer(
@@ -139,6 +146,27 @@ class WorkflowListSerializer(WorkflowOwnersMixin, serializers.ModelSerializer):
         return []
 
 
+@extend_schema_serializer(examples=[
+    OpenApiExample(
+        'Run with typed kickoff fields',
+        description=(
+            'For a template that defines these kickoff api_name values. '
+            'Replace keys and selections using the template metadata.'
+        ),
+        value={
+            'name': 'Approve purchase',
+            'kickoff': {
+                'request-title': 'New equipment',
+                'amount': 1250.5,
+                'department': 'Engineering',
+                'approvals': ['Legal', 'Finance'],
+                'request-date': 1767225600,
+                'requester': 'requester@example.com',
+            },
+        },
+        request_only=True,
+    ),
+])
 class WorkflowCreateSerializer(
     CustomValidationErrorMixin,
     WorkflowSerializerMixin,
@@ -168,6 +196,17 @@ class WorkflowCreateSerializer(
         required=False,
         allow_empty=True,
         allow_null=True,
+        help_text=(
+            'Values keyed by kickoff field api_name. Read the template '
+            'kickoff fields for types, required flags and selections. '
+            'string: text up to 140 characters; text/url: string; '
+            'number: number or numeric string; date: Unix seconds number; '
+            'radio/dropdown: selection string; checkbox: selection strings '
+            'array; file: array of Markdown file-service links; user: '
+            'account user email or group name. Null, an empty string or '
+            'an empty array clears an '
+            'optional field. Required fields cannot be empty.'
+        ),
     )
     due_date_tsp = TimeStampField(required=False, allow_null=True)
     ancestor_task_id = AccountPrimaryKeyRelatedField(
@@ -233,6 +272,14 @@ class WorkflowUpdateSerializer(
     kickoff = serializers.DictField(
         required=False,
         allow_empty=True,
+        help_text=(
+            'Updated kickoff values keyed by field api_name. Omitted keys '
+            'retain their values. Use the template kickoff field types '
+            'and selections; dates are numeric Unix seconds, checkbox '
+            'values are arrays of selection strings and files are arrays '
+            'of Markdown file-service links. Null, an empty string or an '
+            'empty array clears an optional field.'
+        ),
     )
     is_urgent = serializers.BooleanField(required=False)
     due_date_tsp = TimeStampField(required=False, allow_null=True)
@@ -392,6 +439,7 @@ class WorkflowDetailsSerializer(
     owners = serializers.SerializerMethodField()
     is_read_only_viewer = serializers.SerializerMethodField()
 
+    @extend_schema_field(KickoffValueInfoSerializer)
     def get_kickoff(self, instance: Workflow):
         field_prefetches = [
             Prefetch(
@@ -427,11 +475,12 @@ class WorkflowDetailsSerializer(
             return KickoffValueInfoSerializer(kickoff).data
         return None
 
+    @extend_schema_field(WorkflowCurrentTaskSerializer(many=True))
     def get_tasks(self, instance: Workflow):
         tasks = instance.tasks.exclude(status=TaskStatus.SKIPPED)
         return WorkflowCurrentTaskSerializer(instance=tasks, many=True).data
 
-    def get_is_read_only_viewer(self, instance: Workflow):
+    def get_is_read_only_viewer(self, instance: Workflow) -> bool:
         """
         Determine if user has only read-only access.
         Read-only access applies to:
@@ -675,5 +724,5 @@ class WorkflowShortInfoSerializer(serializers.ModelSerializer):
     date_completed_tsp = TimeStampField(source='date_completed')
     date_created_tsp = TimeStampField(source='date_created')
 
-    def get_template_name(self, instance: Workflow):
+    def get_template_name(self, instance: Workflow) -> Optional[str]:
         return instance.get_template_name()

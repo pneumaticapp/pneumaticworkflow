@@ -13,8 +13,8 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
-from src.openapi import (
-    ACCESS_ADMIN_BASE,
+from src.openapi.permission_docs import ACCESS_ADMIN_BASE
+from src.openapi.responses import (
     EMPTY,
     FORBIDDEN,
     UNAUTHORIZED,
@@ -48,7 +48,7 @@ class WebHookViewSet(
         request=WebHookSubscribeSerializer,
         examples=[WEBHOOK_SUBSCRIBE_EXAMPLE],
         responses={
-            200: EMPTY,
+            204: EMPTY,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -70,8 +70,9 @@ class WebHookViewSet(
         tags=['Webhooks'],
         summary='Unsubscribe from all webhook events',
         description=ACCESS_ADMIN_BASE,
+        request=None,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
         },
