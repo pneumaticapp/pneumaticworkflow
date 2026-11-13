@@ -9,7 +9,7 @@ import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/cli
 import type { ErrorRequestHandler } from 'express';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import type { HttpConfig } from '../src/config.js';
+import { loadConfig, type HttpConfig } from '../src/config.js';
 import { createHttpApp } from '../src/http/app.js';
 import { s256 } from '../src/http/oauthTokens.js';
 import { createSealer } from '../src/http/sealer.js';
@@ -32,18 +32,20 @@ beforeAll(async () => {
   const { port } = server.address() as AddressInfo;
   baseUrl = `http://127.0.0.1:${port}`;
   writeFileSync(join(replayDirectory, 'used.json'), '');
-  const config: HttpConfig = {
-    transport: 'http',
-    pneumatic: { apiUrl: fake.apiUrl, filesUrl: fake.filesUrl },
-    host: '127.0.0.1',
-    port,
-    publicUrl: new URL(baseUrl),
-    tokenSecret,
-    replayFile: join(replayDirectory, 'used.json'),
-    allowedRedirectHosts: ['claude.ai', 'localhost'],
-    rateLimitPerMinute: 0,
-    trustProxy: false,
-  };
+  const config = loadConfig(['--http'], {
+    PNEUMATIC_API_URL: fake.apiUrl,
+    PNEUMATIC_FILES_URL: fake.filesUrl,
+    HOST: '127.0.0.1',
+    PORT: String(port),
+    PUBLIC_URL: baseUrl,
+    TOKEN_SECRET: tokenSecret,
+    OAUTH_REPLAY_FILE: join(replayDirectory, 'used.json'),
+    RATE_LIMIT_PER_MINUTE: '0',
+    TRUST_PROXY: 'false',
+  });
+  if (config.transport !== 'http') {
+    throw new Error('HTTP configuration expected');
+  }
   server.on('request', createHttpApp(config, fake.fetchFn));
 });
 
@@ -171,6 +173,47 @@ describe('client registration', () => {
 });
 
 describe('authorization flow', () => {
+  it.each(['https://www.cursor.com/agents/mcp/oauth/callback', 'http://localhost:8787/callback'])(
+    'connects Cursor through OAuth using its callback %s',
+    async (redirectUri) => {
+      const { status, body: registration } = await register({ client_name: 'Cursor', redirect_uris: [redirectUri] });
+      expect(status).toBe(201);
+      const verifier = randomBytes(32).toString('base64url');
+      const authorization = await fetch(`${baseUrl}/authorize`, {
+        ...form({
+          response_type: 'code',
+          client_id: registration.client_id!,
+          redirect_uri: redirectUri,
+          code_challenge: s256(verifier),
+          code_challenge_method: 'S256',
+          api_key: VALID_API_KEY,
+        }),
+        redirect: 'manual',
+      });
+      expect(authorization.status).toBe(302);
+      const callback = new URL(authorization.headers.get('location')!);
+      expect(`${callback.origin}${callback.pathname}`).toBe(redirectUri);
+      const exchange = await fetch(
+        `${baseUrl}/token`,
+        form({
+          grant_type: 'authorization_code',
+          client_id: registration.client_id!,
+          redirect_uri: redirectUri,
+          code: callback.searchParams.get('code')!,
+          code_verifier: verifier,
+        }),
+      );
+      expect(exchange.status).toBe(200);
+      const tokens = (await exchange.json()) as { access_token: string };
+      const client = await connect(tokens.access_token);
+      try {
+        expect((await client.listTools()).tools.map(({ name }) => name)).toContain('get_current_user');
+      } finally {
+        await client.close();
+      }
+    },
+  );
+
   it('renders the consent page with the client name and escapes input', async () => {
     const { body: client } = await register({ client_name: '<script>x</script>' });
     const query = new URLSearchParams({

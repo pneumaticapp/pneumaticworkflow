@@ -34,7 +34,7 @@ const DEFAULT_FILES_URL = 'https://my.pneumatic.app/files';
 
 const DEFAULT_RATE_LIMIT_PER_MINUTE = 120;
 
-const DEFAULT_REDIRECT_HOSTS = ['claude.ai', 'claude.com', ...LOOPBACK_HOSTS];
+const DEFAULT_REDIRECT_HOSTS = ['claude.ai', 'claude.com', 'www.cursor.com', ...LOOPBACK_HOSTS];
 
 export class ConfigError extends Error {}
 
