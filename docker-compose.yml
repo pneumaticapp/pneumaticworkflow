@@ -659,7 +659,8 @@ services:
       PNEUMATIC_FILES_URL: ${FILE_SERVICE_URL:-http://localhost/files}
       PNEUMATIC_FILES_INTERNAL_URL: http://pneumatic-file-service:${FILE_PORT:-8000}
       PNEUMATIC_APP_URL: ${FRONTEND_URL:-http://localhost}
-      PUBLIC_URL: ${FRONTEND_URL:-http://localhost}
+      PUBLIC_URL: ${MCP_PUBLIC_URL:-${FRONTEND_URL:-http://localhost}}
+      OAUTH_ALLOWED_REDIRECT_HOSTS: ${MCP_OAUTH_ALLOWED_REDIRECT_HOSTS:-}
       TOKEN_SECRET: ${MCP_TOKEN_SECRET:-${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}}
       OAUTH_REPLAY_FILE: /state/replay.json
       OAUTH_REPLAY_CREATE_ON_EMPTY_VOLUME: "true"

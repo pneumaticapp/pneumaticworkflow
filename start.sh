@@ -388,30 +388,33 @@ case "$LOGS_BACKEND_VALUE" in
     ;;
 esac
 
-# 3.1.2 The Claude connector (MCP server) follows MCP_ENABLED of .env
+# 3.1.2 The MCP server follows MCP_ENABLED of .env
 # --------------------------------------------------------------------
 MCP_ENABLED_VALUE=$(read_env_value MCP_ENABLED | tr '[:upper:]' '[:lower:]')
 case "$MCP_ENABLED_VALUE" in
   ""|false)
     if [[ ",$(read_env_value COMPOSE_PROFILES)," == *",mcp,"* ]]; then
-        print_error "MCP_ENABLED is off, but COMPOSE_PROFILES in .env still starts the Claude connector: remove mcp from COMPOSE_PROFILES or set MCP_ENABLED=true"
+        print_error "MCP_ENABLED is off, but COMPOSE_PROFILES in .env still starts the MCP server: remove mcp from COMPOSE_PROFILES or set MCP_ENABLED=true"
         exit 1
     fi
     # `up` without the profile leaves a connector started earlier running, and nginx keeps serving it
     if docker container inspect pneumatic-mcp &>/dev/null; then
         docker rm -f pneumatic-mcp >/dev/null
-        print_info "MCP_ENABLED is off: the Claude connector was removed"
+        print_info "MCP_ENABLED is off: the MCP server was removed"
     fi
     ;;
   true)
     COMPOSE_ARGS+=('--profile' 'mcp')
-    print_info "MCP_ENABLED=true: the Claude connector runs at /mcp"
-    MCP_FRONTEND_URL=$(read_env_value FRONTEND_URL)
-    case "$MCP_FRONTEND_URL" in
+    print_info "MCP_ENABLED=true: the MCP server runs at /mcp"
+    MCP_PUBLIC_ORIGIN=$(read_env_value MCP_PUBLIC_URL)
+    if [ -z "$MCP_PUBLIC_ORIGIN" ]; then
+        MCP_PUBLIC_ORIGIN=$(read_env_value FRONTEND_URL)
+    fi
+    case "$MCP_PUBLIC_ORIGIN" in
       https://*|http://localhost|http://localhost:*|http://127.0.0.1|http://127.0.0.1:*|"")
         ;;
       *)
-        print_warning "The Claude connector needs HTTPS outside localhost (FRONTEND_URL=$MCP_FRONTEND_URL): it will not start until FRONTEND_URL is an https:// address"
+        print_warning "The MCP server needs HTTPS outside localhost (PUBLIC_URL=$MCP_PUBLIC_ORIGIN): set MCP_PUBLIC_URL or FRONTEND_URL to an https:// origin"
         ;;
     esac
     ;;
