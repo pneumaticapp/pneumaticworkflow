@@ -1,26 +1,12 @@
-import * as React from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
 
-import { createCheckPlaceholderId } from '..';
+import { createCheckPlaceholderId } from '../createCheckPlaceholderId';
 
 import { Checkbox } from '../../../UI';
-import { TMarkChecklistItemPayload, TUnmarkChecklistItemPayload } from '../../../../redux/actions';
+import type { TTaskCheckableItemProps } from './types';
 
 import styles from '../../../RichText/RichText.css';
-
-export type TTaskCheckableItemOwnProps = {
-  listApiName: string;
-  itemApiName: string;
-  disabled?: boolean;
-};
-
-export type TTaskCheckableItemReduxProps = {
-  isChecked: boolean;
-  markChecklistItem(payload: TMarkChecklistItemPayload): void;
-  unmarkChecklistItem(payload: TUnmarkChecklistItemPayload): void;
-};
-
-type ITaskCheckableItemProps = TTaskCheckableItemOwnProps & TTaskCheckableItemReduxProps;
 
 export function TaskCheckableItem({
   listApiName,
@@ -29,7 +15,7 @@ export function TaskCheckableItem({
   disabled,
   markChecklistItem,
   unmarkChecklistItem,
-}: ITaskCheckableItemProps) {
+}: TTaskCheckableItemProps) {
   const element = document.getElementById(createCheckPlaceholderId(listApiName, itemApiName));
   if (!element) {
     return null;

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useDispatch, useSelector } from 'react-redux';
@@ -7,9 +7,9 @@ import { TemplateEditorContainer } from '../TemplateEditorContainer';
 import { useTemplateEditorController } from '../../../../hooks/useTemplateEditorController';
 import { selectIsGraphCanvas, selectTemplateSelectedTaskApiName } from '../../../../redux/selectors/templateGraphView';
 import { setSelectedTask } from '../../../../redux/templateGraphView/slice';
-import { ITemplateClient } from '../../../../types/template';
-import { ITemplateEditorController } from '../../types';
-import { IAuthUser } from '../../../../types/redux';
+import type { ITemplateClient } from '../../../../types/template';
+import type { ITemplateEditorController } from '../../types';
+import type { TAuthUserResult } from '../../../../types/user';
 
 jest.mock('../../../../hooks/useTemplateEditorController');
 jest.mock('../../AutoSaveStatus', () => ({ AutoSaveStatusContainer: () => null }));
@@ -59,7 +59,7 @@ const renderContainer = (accessConditions = true) =>
   render(
     <TemplateEditorContainer
       template={template}
-      authUser={{ id: 1 } as IAuthUser}
+      authUser={{ id: 1 } as TAuthUserResult}
       users={[]}
       isSubscribed
       accessConditions={accessConditions}

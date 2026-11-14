@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { ITemplateResponse } from '../types/template';
+import type { ITemplateResponse } from '../types/template';
 import { mapRequestBody } from '../utils/mappers';
 import { ETimeouts } from '../constants/defaultValues';
 

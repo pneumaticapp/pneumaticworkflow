@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 
-import { IApplicationState } from '../../types/redux';
+import type { RootState } from '../../redux/store';
 import {
   loadTemplate,
   loadTemplateFromSystem,
@@ -14,7 +14,8 @@ import {
 import { getNotDeletedUsers } from '../../utils/users';
 import { getIsUserSubsribed } from '../../redux/selectors/user';
 
-import { ITemplateEditProps, TemplateEdit } from './TemplateEdit';
+import type { ITemplateEditProps } from './TemplateEdit';
+import { TemplateEdit } from './TemplateEdit';
 
 type TWorkflowStoreProps = Pick<
   ITemplateEditProps,
@@ -32,7 +33,7 @@ type TWorkflowDispatchProps = Pick<
   | 'loadTemplateVariablesSuccess'
 >;
 
-export function mapStateToProps(state: IApplicationState): TWorkflowStoreProps {
+export function mapStateToProps(state: RootState): TWorkflowStoreProps {
   const {
     accounts: { users },
     authUser,

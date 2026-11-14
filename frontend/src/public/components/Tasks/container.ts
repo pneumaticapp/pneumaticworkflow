@@ -1,6 +1,7 @@
 import { connect } from 'react-redux';
-import { IApplicationState } from '../../types/redux';
-import { ITasksProps, Tasks } from './Tasks';
+import type { RootState } from '../../redux/store';
+import type { ITasksProps } from './Tasks';
+import { Tasks } from './Tasks';
 import { loadCurrentTask, openSelectTemplateModal } from '../../redux/actions';
 import {
   changeTaskListSorting,
@@ -65,7 +66,7 @@ export function mapStateToProps({
     isAdmin,
     isSupermode,
   },
-}: IApplicationState): TTasksStoreProps {
+}: RootState): TTasksStoreProps {
   const withPaywall = checkHasTopBar(Boolean(isBlocked), billingPlan, Boolean(isSupermode));
 
   return {

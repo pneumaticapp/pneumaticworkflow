@@ -1,7 +1,8 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 
-import ReactPlayer, { Config, SourceProps } from 'react-player';
+import type { Config, SourceProps } from 'react-player';
+import ReactPlayer from 'react-player';
 
 export interface IVideoPlayerProps {
   url: string | string[] | SourceProps[] | MediaStream;

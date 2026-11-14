@@ -1,15 +1,6 @@
-import { EConditionOperators } from '../types';
-import { EExtraFieldType } from '../../../../../types/template';
-
-export enum EStartingType {
-  Task = 'task',
-  Kickoff = 'kickoff',
-}
-
-export interface IDropdownOperator {
-  operator: EConditionOperators;
-  label: string;
-}
+import { EConditionOperators } from '../../../../../types/templateTaskConditions';
+import { EExtraFieldType, EStartingType } from '../../../../../types/template';
+import type { IDropdownOperator } from './types';
 
 export const conditionsByFieldTypeMap: { [key in EExtraFieldType]: EConditionOperators[] } & {
   [key in EStartingType]: EConditionOperators[];

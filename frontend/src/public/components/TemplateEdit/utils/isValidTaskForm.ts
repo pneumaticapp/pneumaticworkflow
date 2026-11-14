@@ -1,4 +1,4 @@
-import { ITemplateTaskClient } from '../../../types/template';
+import type { ITemplateTaskClient } from '../../../types/template';
 import { areExtraFieldsValid } from './areExtraFieldsValid';
 import { areFieldsetsValid } from './areFieldsetsValid';
 

@@ -1,12 +1,13 @@
 import { all, fork, takeEvery, put, select, takeLatest } from 'redux-saga/effects';
-import { PayloadAction } from '@reduxjs/toolkit';
-import { InviteResponse, sendInvites } from '../../api/sendInvites';
+import type { PayloadAction } from '@reduxjs/toolkit';
+import { sendInvites } from '../../api/sendInvites';
+import type { InviteResponse } from '../../api/sendInvites';
 import { NotificationManager } from '../../components/UI/Notifications';
-import { TUserListItem } from '../../types/user';
+import type { IUserInvite } from '../../types/team';
+import type { TUserListItem } from '../../types/user';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { history } from '../../utils/history';
 import { logger } from '../../utils/logger';
-import { showInvitesNotification } from '../../utils/users';
 import { fetchUsers } from '../accounts/saga';
 import { loadActiveUsersCount, teamFetchStarted } from '../accounts/slice';
 
@@ -14,7 +15,9 @@ import { setGeneralLoaderVisibility } from '../general/actions';
 import { getUsers } from '../selectors/user';
 import { getInvites } from '../../api/team/getInvites';
 import { ERoutes } from '../../constants/routes';
-import { TeamPages, TInviteUsersPayload, UserInvite } from './types';
+import { ETeamPages } from './types';
+import type { TInviteUsersPayload } from './types';
+import { showInvitesNotification } from './utils/showInvitesNotification';
 import {
   changeTeamActiveTab,
   inviteUsers,
@@ -67,7 +70,7 @@ function* inviteUsersSaga({
 
 function* loadInvitesUsersSaga() {
   try {
-    const invites: UserInvite[] = yield getInvites();
+    const invites: IUserInvite[] = yield getInvites();
 
     yield put(loadInvitesUsersSuccess(invites));
   } catch (error) {
@@ -76,18 +79,18 @@ function* loadInvitesUsersSaga() {
   }
 }
 
-function* setTeamActiveTab({ payload: processesType }: PayloadAction<TeamPages>) {
+function* setTeamActiveTab({ payload: processesType }: PayloadAction<ETeamPages>) {
   yield put(changeTeamActiveTab(processesType));
 
-  if (processesType === TeamPages.Groups) {
+  if (processesType === ETeamPages.Groups) {
     history.push(ERoutes.Groups);
   }
 
-  if (processesType === TeamPages.Users) {
+  if (processesType === ETeamPages.Users) {
     history.push(ERoutes.Team);
   }
 
-  if (processesType === TeamPages.AIAgents) {
+  if (processesType === ETeamPages.AIAgents) {
     history.push(ERoutes.AIAgents);
   }
 }

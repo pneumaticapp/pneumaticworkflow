@@ -1,14 +1,15 @@
 import { connect } from 'react-redux';
-import { SelectMenu, ISelectMenuProps } from '../../components/UI';
-import { IApplicationState } from '../../types/redux';
-import { EGroupsListSorting } from '../../types/user';
+import type { ISelectMenuProps } from '../../components/UI';
+import { SelectMenu } from '../../components/UI';
+import type { RootState } from '../../redux/store';
+import type { EGroupsListSorting } from '../../types/user';
 import { groupListSortingValues } from '../../constants/sortings';
 import { changeGroupsListSorting } from '../../redux/actions';
 
 type TMapStateToProps = Pick<ISelectMenuProps<EGroupsListSorting>, 'activeValue' | 'values'>;
 type TMapDispatchToProps = Pick<ISelectMenuProps<EGroupsListSorting>, 'onChange'>;
 
-const mapStateToProps = ({ groups: { groupsListSorting } }: IApplicationState): TMapStateToProps => {
+const mapStateToProps = ({ groups: { groupsListSorting } }: RootState): TMapStateToProps => {
   return {
     activeValue: groupsListSorting,
     values: groupListSortingValues,

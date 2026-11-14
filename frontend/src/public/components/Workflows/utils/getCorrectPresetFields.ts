@@ -1,5 +1,5 @@
-import { TGetTemplatePresetsResponse } from '../../../api/getTemplatePresets';
-import { TTemplatePreset } from '../../../types/template';
+import type { TGetTemplatePresetsResponse } from '../../../api/getTemplatePresets';
+import type { TTemplatePreset } from '../../../types/template';
 import { SYSTEM_FIELD_NAMES } from '../WorkflowsTablePage/WorkflowsTable/constants';
 
 export function getCorrectPresetFields(presets: TGetTemplatePresetsResponse) {

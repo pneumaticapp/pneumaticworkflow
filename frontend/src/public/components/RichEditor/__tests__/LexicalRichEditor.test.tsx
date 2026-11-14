@@ -4,7 +4,7 @@
  * export and types. Render and ref are covered in RichEditor.test.tsx (mocked lexical)
  * and in E2E.
  */
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import type { IRichEditorHandle, IRichEditorProps } from '../types';
 

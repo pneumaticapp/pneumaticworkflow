@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 
 import { getCurrentUser } from '../../../../../../redux/selectors/authUser';
 import { getLastLoadedTemplateIdForTable, getSavedFields } from '../../../../../../redux/selectors/workflows';
-import { IWorkflowsList } from '../../../../../../types/redux';
+import type { IWorkflowsList } from '../../../../../../redux/workflows/types';
 import { EExtraFieldType } from '../../../../../../types/template';
 import { EWorkflowsLoadingStatus } from '../../../../../../types/workflow';
 import { useWorkflowsTableData } from '../useWorkflowsTableData';

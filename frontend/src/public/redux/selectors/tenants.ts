@@ -1,4 +1,4 @@
-import { IApplicationState } from '../../types/redux';
+import type { RootState } from '../store';
 
-export const getTenantsSorting = (state: IApplicationState) => state.tenants.sorting;
-export const getTenantsCountStore = (state: IApplicationState) => state.tenants.count;
+export const getTenantsSorting = (state: RootState) => state.tenants.sorting;
+export const getTenantsCountStore = (state: RootState) => state.tenants.count;

@@ -2,7 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 
-import { CustomTooltip } from '../../../UI';
+import { CustomTooltip } from '../../../UI/CustomTooltip';
 import { truncateString } from '../../../../utils/truncateString';
 import type { IHoveredLink } from './types';
 

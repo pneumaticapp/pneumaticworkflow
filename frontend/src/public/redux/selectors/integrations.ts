@@ -1,7 +1,7 @@
-import type { IApplicationState } from '../../types/redux';
+import type { RootState } from '../store';
 
-export const getApiKeys = (state: IApplicationState) => state.integrations.apiKeys.data;
+export const getApiKeys = (state: RootState) => state.integrations.apiKeys.data;
 
-export const getApiKeysIsLoading = (state: IApplicationState) => state.integrations.apiKeys.isLoading;
+export const getApiKeysIsLoading = (state: RootState) => state.integrations.apiKeys.isLoading;
 
-export const getApiKeysNewlyCreatedKey = (state: IApplicationState) => state.integrations.apiKeys.newlyCreatedKey;
+export const getApiKeysNewlyCreatedKey = (state: RootState) => state.integrations.apiKeys.newlyCreatedKey;

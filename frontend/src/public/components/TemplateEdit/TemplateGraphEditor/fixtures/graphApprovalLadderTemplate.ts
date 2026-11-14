@@ -1,18 +1,17 @@
-import {
-  EExtraFieldType,
-  ETaskPerformerType,
+import type {
   IExtraField,
   ITemplateClient,
   ITemplateTaskClient,
   ITemplateTaskPerformer,
 } from '../../../../types/template';
+import { EExtraFieldType, ETaskPerformerType } from '../../../../types/template';
 import { createEmptyTaskDueDate } from '../../../../utils/dueDate/createEmptyTaskDueDate';
 import {
   EConditionAction,
   EConditionLogicOperations,
   EConditionOperators,
-  ICondition,
-} from '../../TaskForm/Conditions';
+} from '../../../../types/templateTaskConditions';
+import type { ICondition } from '../../../../types/templateTaskConditions';
 
 const EMPTY_TEMPLATE_BASE: ITemplateClient = {
   name: 'Graph approval ladder',

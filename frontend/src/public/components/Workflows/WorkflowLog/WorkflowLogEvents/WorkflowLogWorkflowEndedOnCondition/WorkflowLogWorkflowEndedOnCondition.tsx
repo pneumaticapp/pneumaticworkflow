@@ -1,9 +1,9 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 
 import { WorkflowEndedIcon } from '../../../../icons';
 import { DateFormat } from '../../../../UI/DateFormat';
-import { IWorkflowLogItem } from '../../../../../types/workflow';
+import type { IWorkflowLogItem } from '../../../../../types/workflow';
 import { Avatar } from '../../../../UI';
 
 import styles from './WorkflowLogWorkflowEndedOnCondition.css';

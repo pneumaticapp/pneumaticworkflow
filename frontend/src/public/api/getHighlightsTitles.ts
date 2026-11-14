@@ -1,7 +1,7 @@
 import { toTspDate } from '../utils/dateTime';
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { ITemplateTitleBaseWithCount } from '../types/template';
+import type { ITemplateTitleBaseWithCount } from '../types/template';
 
 export type TGetHighlightsTitlesResponse = ITemplateTitleBaseWithCount[];
 

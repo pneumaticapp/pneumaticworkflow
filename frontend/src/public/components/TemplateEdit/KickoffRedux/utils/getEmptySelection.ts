@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import { IExtraFieldSelection } from '../../../../types/template';
+import type { IExtraFieldSelection } from '../../../../types/template';
 import { createFieldSelectionApiName } from '../../../../utils/createId';
 
 const NEW_OPTION_BASE = 'New option';

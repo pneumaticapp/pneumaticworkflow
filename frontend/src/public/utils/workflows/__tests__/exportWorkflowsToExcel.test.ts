@@ -13,10 +13,10 @@ import {
   buildWorkflowsExportRows,
   buildWorkflowsXlsxBuffer,
   downloadWorkflowsExcel,
-  IExportWorkflowsToExcelConfig,
   WORKFLOWS_XLSX_DEFAULT_FILENAME,
   WORKFLOWS_XLSX_MIME,
 } from '../exportWorkflowsToExcel';
+import type { IExportWorkflowsToExcelConfig } from '../exportWorkflowsToExcel/types';
 import { IWorkflowClient } from '../../../types/workflow';
 import { ITableViewFields } from '../../../types/template';
 import { ETemplateOwnerType } from '../../../types/template';

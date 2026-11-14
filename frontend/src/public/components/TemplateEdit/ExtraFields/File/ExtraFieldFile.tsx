@@ -1,16 +1,18 @@
-import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
+import type { ChangeEvent } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { EExtraFieldMode } from '../../../../types/template';
-import { TUploadedFile, uploadFiles } from '../../../../utils/uploadFiles';
+import type { TUploadedFile } from '../../../../types/attachments';
+import { uploadFiles } from '../../../../utils/uploadFiles';
 import { parseMarkdownToFiles } from '../../../../utils/parseMarkdownFiles';
 import { logger } from '../../../../utils/logger';
 import { Button } from '../../../UI/Buttons/Button';
 import { FieldLabel } from '../utils/FieldLabel';
 import { NotificationManager } from '../../../UI/Notifications';
-import { IWorkflowExtraFieldProps } from '../types';
+import type { IWorkflowExtraFieldProps } from '../types';
 import { ExtraFieldFilesGrid } from './ExtraFieldFilesGrid';
 import { ExtraFieldFileTemplate } from './ExtraFieldFileTemplate';
 import kickoffStyles from '../../KickoffRedux/KickoffRedux.css';

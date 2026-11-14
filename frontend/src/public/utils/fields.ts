@@ -1,4 +1,4 @@
-import { TExtraFieldValue } from '../types/template';
+import type { TExtraFieldValue } from '../types/template';
 
 export function normalizeCheckboxValue(value?: TExtraFieldValue): string[] {
   if (Array.isArray(value)) {

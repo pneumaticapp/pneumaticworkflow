@@ -1,8 +1,10 @@
-import React, { SyntheticEvent } from 'react';
+import type { SyntheticEvent } from 'react';
+import React from 'react';
 import classnames from 'classnames';
-import { IntlShape } from 'react-intl';
+import type { IntlShape } from 'react-intl';
 
-import { EWorkflowStatus, IWorkflowClient } from '../../../../types/workflow';
+import type { IWorkflowClient } from '../../../../types/workflow';
+import { EWorkflowStatus } from '../../../../types/workflow';
 import { getSnoozedUntilDate } from '../../../../utils/dateTime';
 import { isArrayWithItems } from '../../../../utils/helpers';
 import { WorkflowCardUsers } from '../../../WorkflowCardUsers';

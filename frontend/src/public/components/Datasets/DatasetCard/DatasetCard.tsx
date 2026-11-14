@@ -1,10 +1,10 @@
-import * as React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
-import { Dropdown, TDropdownOption } from '../../UI';
+import type { TDropdownOption } from '../../UI';
+import { Dropdown } from '../../UI';
 import { MoreIcon, PencilIcon, TrashIcon, UnionIcon } from '../../icons';
 import { WarningPopup } from '../../UI/WarningPopup';
 import {
@@ -17,7 +17,7 @@ import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
 import { sanitizeText } from '../../../utils/strings';
 import { formatDateTimeAmPm } from '../../../utils/dateTime';
-import { IDatasetCardProps } from './types';
+import type { IDatasetCardProps } from './types';
 
 import styles from './DatasetCard.css';
 

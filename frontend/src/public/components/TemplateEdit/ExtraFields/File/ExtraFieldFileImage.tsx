@@ -1,11 +1,11 @@
 /* eslint-disable */
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import { useDispatch } from 'react-redux';
 
 import { DeleteBoldIcon } from '../../../icons';
-import { TUploadedFile } from '../../../../utils/uploadFiles';
+import type { TUploadedFile } from '../../../../types/attachments';
 import { openFullscreenImage } from '../../../../redux/actions';
 
 import styles from './ExtraFieldFile.css';

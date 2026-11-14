@@ -1,8 +1,9 @@
-import * as React from 'react';
+import React from 'react';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { getLanguage } from '../../../../redux/selectors/user';
-import { EWorkflowStatus, IWorkflowClient } from '../../../../types/workflow';
+import type { IWorkflowClient } from '../../../../types/workflow';
+import { EWorkflowStatus } from '../../../../types/workflow';
 import { getSnoozedUntilDate } from '../../../../utils/dateTime';
 import { DateFormat } from '../../../UI/DateFormat';
 import { getDueInData } from '../../../DueIn/utils/getDueInData';

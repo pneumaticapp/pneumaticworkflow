@@ -1,5 +1,6 @@
 import { createConditionApiName } from '../../../../../utils/createId';
-import { EConditionAction, ICondition } from '../types';
+import { EConditionAction } from '../../../../../types/templateTaskConditions';
+import type { ICondition } from '../../../../../types/templateTaskConditions';
 import { getKickoffRule } from './getKickoffRule';
 
 export function getKickoffConditions(): ICondition[] {

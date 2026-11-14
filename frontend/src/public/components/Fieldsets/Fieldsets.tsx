@@ -1,12 +1,11 @@
-import * as React from 'react';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
 import InfiniteScroll from 'react-infinite-scroll-component';
 
-import { IFieldsetCatalogItem } from '../../types/fieldset';
+import type { IFieldsetCatalogItem } from '../../types/fieldset';
 
 import { PageTitle } from '../PageTitle';
 import { EPageTitle } from '../../constants/defaultValues';

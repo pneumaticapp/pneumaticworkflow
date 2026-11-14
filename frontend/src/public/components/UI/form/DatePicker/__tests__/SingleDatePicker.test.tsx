@@ -5,7 +5,7 @@ import { IntlProvider } from 'react-intl';
 
 import { SingleDatePicker } from '../components/SingleDatePicker/SingleDatePicker';
 import { enMessages } from '../../../../../lang/locales/en_US';
-import { ELocale } from '../../../../../types/redux';
+import { ELocale } from '../../../../../types/locale';
 
 jest.mock('react-redux', () => ({
   useSelector: (selector: (state: unknown) => unknown) =>

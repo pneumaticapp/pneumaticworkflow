@@ -15,20 +15,14 @@ import {
 } from '../../../redux/actions';
 import { teamFetchStarted } from '../../../redux/accounts/slice';
 
-import { IGroup } from '../../../redux/team/types';
-import { EUserListSorting, TUserListItem } from '../../../types/user';
+import type { IGroup } from '../../../types/team';
+import { EUserListSorting } from '../../../types/user';
+import type { TUserListItem } from '../../../types/user';
 
 import { IntegrateIcon, SearchLargeIcon, AddUserIcon } from '../../icons';
-import {
-  TDropdownOption,
-  InputField,
-  DropdownList,
-  Dropdown,
-  Button,
-  TDropdownOptionBase,
-  Placeholder,
-  ModifyDropdown,
-} from '../../UI';
+import { InputField, DropdownList, Dropdown, Button, Placeholder, ModifyDropdown } from '../../UI';
+import type { TDropdownOption } from '../../UI/Dropdown';
+import type { TDropdownOptionBase } from '../../UI/DropdownList/types';
 import { EModifyDropdownToggle } from '../../UI/ModifyDropdown/types';
 import { UserSelection } from '../UserSelection';
 import { GroupUser } from './GroupUser';

@@ -1,4 +1,4 @@
-import type { LexicalEditor } from 'lexical';
+import type { BaseSelection, LexicalEditor, LexicalNode } from 'lexical';
 import { $getNodeByKey, $getSelection, $isRangeSelection } from 'lexical';
 import { $isListNode } from '@lexical/list';
 import {
@@ -148,7 +148,7 @@ export function createDeleteHandler(editor: LexicalEditor) {
 
 /** On paste: assign new ids to checklists/items and remove trailing empty paragraph. */
 export function createPasteClipboardNodesHandler() {
-  return (payload: { nodes: import('lexical').LexicalNode[]; selection: import('lexical').BaseSelection }): boolean => {
+  return (payload: { nodes: LexicalNode[]; selection: BaseSelection }): boolean => {
     const hasChecklist = nodesContainChecklist(payload.nodes);
     if (hasChecklist) assignNewChecklistIds(payload.nodes);
     const filtered = removeDuplicateClipboardParagraphs(payload.nodes);

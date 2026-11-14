@@ -1,14 +1,15 @@
 /* eslint-disable */
 /* prettier-ignore */
-import * as React from 'react';
-import { AnyAction, Dispatch } from 'redux';
+import React from 'react';
+import type { AnyAction, Dispatch } from 'redux';
 import { connect } from 'react-redux';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
+import { withRouter } from 'react-router-dom';
+import type { RouteComponentProps } from 'react-router-dom';
 
 import { getQueryStringByParams, getQueryStringParams, history } from '../../utils/history';
 import { getWrappedDisplayName } from '../../utils/hoc';
 import { isArrayWithItems } from '../../utils/helpers';
-import { IAuthUser } from '../../types/redux';
+import type { IAuthUser } from '../../redux/auth/types';
 
 const HOC_WRAPPER_NAME = 'withSyncedQueryString';
 

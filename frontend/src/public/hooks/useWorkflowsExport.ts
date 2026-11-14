@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
-import { ITableViewFields } from '../types/template';
+import type { ITableViewFields } from '../types/template';
 import { fetchAllWorkflowsForExport } from '../api/workflows/fetchAllWorkflowsForExport';
 import {
   getWorkflowTemplatesIdsFilter,
@@ -21,8 +21,8 @@ import {
   buildWorkflowsExportRows,
   buildWorkflowsXlsxBuffer,
   downloadWorkflowsExcel,
-  TWorkflowExportFormat,
 } from '../utils/workflows/exportWorkflowsToExcel';
+import type { TWorkflowExportFormat } from '../utils/workflows/exportWorkflowsToExcel/types';
 import { downloadWorkflowsCsv } from '../utils/workflows/exportWorkflowsToCsv';
 import { NotificationManager } from '../components/UI/Notifications';
 import { ALL_SYSTEM_FIELD_NAMES } from '../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';

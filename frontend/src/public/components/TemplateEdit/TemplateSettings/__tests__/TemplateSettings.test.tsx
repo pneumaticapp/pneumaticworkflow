@@ -1,11 +1,10 @@
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { useDispatch, useSelector } from 'react-redux';
 import { configure } from '@testing-library/react';
 
 import { TemplateSettings } from '../TemplateSettings';
-import { EGraphViewMode } from '../../TemplateGraphEditor';
-import { ITemplateClient } from '../../../../types/template';
+import { EGraphViewMode, ITemplateClient } from '../../../../types/template';
 
 configure({ testIdAttribute: 'data-test-id' });
 

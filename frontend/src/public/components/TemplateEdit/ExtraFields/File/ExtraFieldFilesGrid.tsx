@@ -1,9 +1,9 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 
 import { isArrayWithItems } from '../../../../utils/helpers';
-import { TUploadedFile } from '../../../../utils/uploadFiles';
+import type { TUploadedFile } from '../../../../types/attachments';
 import { Loader } from '../../../UI/Loader';
 
 import { ExtraFieldFileDocument } from './ExtraFieldFileDocument';

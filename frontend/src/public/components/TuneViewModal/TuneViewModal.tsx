@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector, useDispatch } from 'react-redux';
 
@@ -10,14 +9,14 @@ import {
   saveWorkflowsPreset,
 } from '../../redux/workflows/slice';
 
-import { IExtraField, TOrderedFields, TTransformedTask } from '../../types/template';
+import type { IExtraField, TOrderedFields } from '../../types/template';
+import type { TSystemField, TTransformedTask } from '../../types/workflow';
 import { Button, Checkbox, SideModal, Tooltip } from '../UI';
 import { ShortArrowIcon } from '../icons';
 import { StepName } from '../StepName';
 
 import styles from './TuneViewModal.css';
 import { TooltipRichContent } from '../TemplateEdit/TooltipRichContent';
-import { TSystemField } from '../Workflows/WorkflowsTablePage/WorkflowsTable/types';
 import { getIsTuneViewModalOpen, getSavedFields, getWorkflowTemplatesIdsFilter } from '../../redux/selectors/workflows';
 import { getTemplatesTasks, getTemplatesVariables } from '../../redux/selectors/templates';
 

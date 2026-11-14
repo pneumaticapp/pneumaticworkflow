@@ -9,7 +9,7 @@ import { Avatar, Button, InputField, Placeholder } from '../../../UI';
 import { inviteUsers } from '../../../../redux/team/slice';
 import { isMatchingSearchQuery } from '../../../../utils/strings';
 import { TeamPlaceholderNoUsersIcon } from '../../../icons';
-import { IOAuthInvitesTabProps } from './types';
+import type { IOAuthInvitesTabProps } from './types';
 
 import styles from './OAuthInvitesTab.css';
 import popupStyles from '../../TeamInvitesPopup.css';

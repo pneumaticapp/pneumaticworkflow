@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { matchPath } from 'react-router-dom';
 
 import { DashboardWidgets } from '../../components/Dashboard/DashboardWidgets';

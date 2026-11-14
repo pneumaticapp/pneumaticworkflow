@@ -1,4 +1,4 @@
-import { IExtraField } from '../../../../types/template';
+import type { IExtraField } from '../../../../types/template';
 
 export const getEditedFields = (
   initialFields: IExtraField[],

@@ -1,10 +1,11 @@
-import * as React from 'react';
+import React from 'react';
 import { TransitionGroup, CSSTransition } from 'react-transition-group';
-import { injectIntl, IntlShape } from 'react-intl';
+import type { IntlShape } from 'react-intl';
+import { injectIntl } from 'react-intl';
 import classNames from 'classnames';
 
 import { Notification } from './Notification';
-import { INotification } from '../../../types';
+import type { INotification } from '../../../types';
 import { noop } from '../../../utils/noop';
 import { isArrayWithItems } from '../../../utils/helpers';
 

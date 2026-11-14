@@ -1,6 +1,6 @@
 import React, { forwardRef, useCallback, useRef } from 'react';
 import classnames from 'classnames';
-import { CustomTooltip } from '../../../UI';
+import { CustomTooltip } from '../../../UI/CustomTooltip';
 import type { IToolbarButtonProps } from './types';
 
 import styles from './EditorToolbar.css';

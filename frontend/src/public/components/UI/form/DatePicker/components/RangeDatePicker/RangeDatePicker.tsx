@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 
 import { useDatePickerSettings } from '../../../../../../hooks/useDatePickerSettings';
 import { CustomInput } from '../CustomInput/CustomInput';
-import { IRangeDatePickerProps } from '../../types';
+import type { IRangeDatePickerProps } from '../../types';
 import {
   formatDatePickerRangeDisplayValue,
   normalizeDatePickerDate,

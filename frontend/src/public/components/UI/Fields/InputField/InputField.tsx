@@ -1,9 +1,10 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
-import { FieldHookConfig, useField } from 'formik';
+import type { FieldHookConfig} from 'formik';
+import { useField } from 'formik';
 
-import { TForegroundColor } from '../common/types';
+import type { TForegroundColor } from '../common/types';
 import { getForegroundClass } from '../common/utils/getForegroundClass';
 import { EyeIcon, RoundClearIconLg, RoundClearIconMd, RoundClearIconSm } from '../../../icons';
 import { EColors } from '../../../../constants/defaultValues';

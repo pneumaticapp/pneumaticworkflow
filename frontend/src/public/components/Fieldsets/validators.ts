@@ -1,5 +1,5 @@
 import { numberRegex } from '../../constants/defaultValues';
-import { IFieldsetField, IFieldsetTemplateRule } from '../../types/fieldset';
+import type { IFieldsetField, IFieldsetTemplateRule } from '../../types/fieldset';
 import { EExtraFieldType } from '../../types/template';
 import {
   FIELDSET_RULES_MSG_FIELDS_NUMBER,

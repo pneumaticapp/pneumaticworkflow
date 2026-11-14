@@ -1,4 +1,4 @@
-import { EWorkflowLogEvent, IWorkflowLogItem } from '../types/workflow';
+import type { EWorkflowLogEvent, IWorkflowLogItem } from '../types/workflow';
 
 let nextEventId = 1;
 

@@ -1,9 +1,9 @@
 /* prettier-ignore */
 import classNames from 'classnames';
-import { IMenu, ITypedReduxAction } from '../../types/redux';
+import type { IMenu } from './types';
+import type { ITypedReduxAction } from '../types';
 import { actionGenerator } from '../../utils/redux';
-import { IMenuItem } from '../../types/menu';
-import { TMenuCounter } from '../../constants/menu';
+import type { IMenuItem, TMenuCounter } from '../../types/menu';
 
 export const enum EMenuActions {
   GenerateMenu = 'GENERATE_MENU',

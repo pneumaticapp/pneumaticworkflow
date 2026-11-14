@@ -10,8 +10,8 @@ import { TuneViewIcon, DownloadIcon } from '../../../icons';
 import { PageTitle } from '../../../PageTitle';
 import { getWorkflowTemplatesIdsFilter } from '../../../../redux/selectors/workflows';
 import { useWorkflowsExport } from '../../../../hooks/useWorkflowsExport';
-import { TWorkflowExportFormat } from '../../../../utils/workflows/exportWorkflowsToExcel';
-import { WorkflowsTableActionsProps } from './types';
+import type { TWorkflowExportFormat } from '../../../../utils/workflows/exportWorkflowsToExcel/types';
+import type { IWorkflowsTableActionsProps } from './types';
 
 import styles from './WorkflowsTable.css';
 
@@ -19,7 +19,7 @@ export function WorkflowsTableActions({
   workflowsLoadingStatus,
   isWideTable = false,
   isMobile,
-}: WorkflowsTableActionsProps) {
+}: IWorkflowsTableActionsProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const { handleExportClick, isExporting } = useWorkflowsExport();

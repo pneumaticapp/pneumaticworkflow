@@ -1,5 +1,5 @@
 import { commonRequest } from '../commonRequest';
-import { IGetDatasetsResponse, IGetDatasetsParams } from '../../types/dataset';
+import type { IGetDatasetsResponse, IGetDatasetsParams } from '../../types/dataset';
 import { datasetsOrderingMap } from '../../constants/sortings';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 

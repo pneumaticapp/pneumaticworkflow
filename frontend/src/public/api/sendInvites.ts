@@ -2,7 +2,7 @@ import { commonRequest } from './commonRequest';
 import { mapRequestBody } from '../utils/mappers';
 import { ETimeouts } from '../constants/defaultValues';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { UserInvitePayload } from '../redux/team/types';
+import type { IUserInvitePayload } from '../types/team';
 
 interface InviteFailed {
   email: string;
@@ -14,7 +14,7 @@ export interface InviteResponse {
 
 export type TSendInvitesRequestBody = { [key: string]: string }[];
 
-export function sendInvites(users: UserInvitePayload[], currentUrl: string) {
+export function sendInvites(users: IUserInvitePayload[], currentUrl: string) {
   const {
     api: { urls },
   } = getBrowserConfigEnv();

@@ -12,7 +12,7 @@ import { UserListSortingContainer } from './UserListSortingContainer';
 import { AIAgentsSortingSelect } from './AIAgentsSortingSelect';
 import { ReturnLink, Tabs } from '../../components/UI';
 import { resetUsers } from '../../redux/accounts/slice';
-import { TeamPages } from '../../redux/team/types';
+import { ETeamPages } from '../../redux/team/types';
 import { updateTeamActiveTab, setTeamActivePage } from '../../redux/team/slice';
 import { getTeamPage } from '../../redux/selectors/team';
 
@@ -35,10 +35,10 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
     };
   }, [history.location.pathname]);
 
-  const sortingSelectByPage: Record<TeamPages, React.ReactNode> = {
-    [TeamPages.Users]: <UserListSortingContainer />,
-    [TeamPages.Groups]: <GroupListSortingContainer />,
-    [TeamPages.AIAgents]: <AIAgentsSortingSelect />,
+  const sortingSelectByPage: Record<ETeamPages, React.ReactNode> = {
+    [ETeamPages.Users]: <UserListSortingContainer />,
+    [ETeamPages.Groups]: <GroupListSortingContainer />,
+    [ETeamPages.AIAgents]: <AIAgentsSortingSelect />,
   };
 
   const renderTeamLeftContent = () => {
@@ -47,9 +47,9 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
         <div className={styles['top-nav__item']}>
           <Tabs
             values={[
-              { id: TeamPages.Users, label: formatMessage({ id: 'team.users' }) },
-              { id: TeamPages.Groups, label: formatMessage({ id: 'team.groups' }) },
-              { id: TeamPages.AIAgents, label: formatMessage({ id: 'team.ai-agents' }) },
+              { id: ETeamPages.Users, label: formatMessage({ id: 'team.users' }) },
+              { id: ETeamPages.Groups, label: formatMessage({ id: 'team.groups' }) },
+              { id: ETeamPages.AIAgents, label: formatMessage({ id: 'team.ai-agents' }) },
             ]}
             activeValueId={page}
             onChange={(activeTab) => dispatch(setTeamActivePage(activeTab))}

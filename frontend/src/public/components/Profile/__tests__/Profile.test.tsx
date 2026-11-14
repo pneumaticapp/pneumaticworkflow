@@ -5,7 +5,7 @@ import { IntlProvider } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
 import { enMessages } from '../../../lang/locales/en_US';
-import { IAuthUser } from '../../../types/redux';
+import type { IAuthUser } from '../../../redux/auth/types';
 import { Profile } from '../Profile';
 
 jest.mock('react-redux', () => ({

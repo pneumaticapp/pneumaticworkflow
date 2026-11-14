@@ -1,10 +1,10 @@
 import { checkSomeRouteIsActive } from '../history';
 import { ERoutes } from '../../constants/routes';
-import { TeamPages } from '../../redux/team/types';
+import { ETeamPages } from '../../redux/team/types';
 
 export const getTeamPageByRoute = () => {
-  if (checkSomeRouteIsActive(ERoutes.Groups, ERoutes.GroupDetails)) return TeamPages.Groups;
-  if (checkSomeRouteIsActive(ERoutes.AIAgents)) return TeamPages.AIAgents;
+  if (checkSomeRouteIsActive(ERoutes.Groups, ERoutes.GroupDetails)) return ETeamPages.Groups;
+  if (checkSomeRouteIsActive(ERoutes.AIAgents)) return ETeamPages.AIAgents;
 
-  return TeamPages.Users;
+  return ETeamPages.Users;
 };

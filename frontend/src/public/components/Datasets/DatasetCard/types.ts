@@ -1,3 +1,3 @@
-import { IDatasetListItem } from '../../../types/dataset';
+import type { IDatasetListItem } from '../../../types/dataset';
 
 export interface IDatasetCardProps extends IDatasetListItem {}

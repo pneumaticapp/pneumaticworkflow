@@ -1,13 +1,14 @@
 /* eslint-disable jsx-a11y/mouse-events-have-key-events */
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { history } from '../../utils/history';
 
-import { IDashboardCounterProps } from './Counters';
-import { IDashboardCounters, EDashboardModes, TDashboardBreakdownItem } from '../../types/redux';
-import { EDashboardTimeRange } from '../../types/dashboard';
+import type { IDashboardCounterProps } from './Counters';
+import { EDashboardModes } from '../../redux/dashboard/types';
+import type { IDashboardCounters } from '../../redux/dashboard/types';
+import type { EDashboardTimeRange, TDashboardBreakdownItem } from '../../types/dashboard';
 import { DashboardCounters } from './Counters/DashboardCounters';
 import { IntlMessages } from '../IntlMessages';
 import { Header } from '../UI/Typeography/Header';
@@ -15,7 +16,7 @@ import { FilledInfoIcon } from '../icons';
 import { CustomTooltip, ETooltipPlacement } from '../UI/CustomTooltip';
 import { Breakdowns } from './Breakdowns';
 import { Loader } from '../UI';
-import { ILoadBreakdownTasksPayload, IOpenRunWorkflowPayload } from '../../redux/actions';
+import type { ILoadBreakdownTasksPayload, IOpenRunWorkflowPayload } from '../../redux/dashboard/actions';
 import { EDashboardCounterType } from './Counters/types';
 import { getLinkToTasks } from '../../utils/routes/getLinkToTasks';
 import { getLinkToWorkflows } from '../../utils/routes/getLinkToWorkflows';

@@ -1,32 +1,22 @@
-import React, { ReactNode, ChangeEvent } from 'react';
+import type { ReactNode, ChangeEvent } from 'react';
+import React from 'react';
 import { useSelector } from 'react-redux';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { DropdownList } from '../../../../UI/DropdownList';
-import { EExtraFieldType } from '../../../../../types/template';
+import { EExtraFieldType, EStartingType } from '../../../../../types/template';
 import { Field } from '../../../../Field';
-import { EUserStatus, TUserListItem } from '../../../../../types/user';
-import { TTaskVariable } from '../../../types';
+import { EUserStatus } from '../../../../../types/user';
 import { getUserFullName } from '../../../../../utils/users';
-import { EConditionOperators, TConditionRule } from '../types';
-import { OPERATORS_WITHOUT_VALUE } from '..';
+import { OPERATORS_WITHOUT_VALUE } from '../utils/shared';
 import { DatePickerCustom } from '../../../../UI/form/DatePicker';
 import { parseUnixSeconds, toTspDate } from '../../../../../utils/dateTime';
 import { getFormattedDropdownOption } from '../utils/getFormattedDropdownOption';
 import styles from '../Conditions.css';
-import { EStartingType } from '../utils/getDropdownOperators';
 import { getRegularGroupsList } from '../../../../../redux/selectors/groups';
 import { useLazyDataset } from '../utils/useLazyDataset';
-
-interface IConditionValueFieldProps {
-  variable: TTaskVariable | null;
-  rule: TConditionRule;
-  users: TUserListItem[];
-  operator?: EConditionOperators | null;
-  isDisabled: boolean;
-  changeRuleValue(value: TConditionRule[keyof TConditionRule], kind?: 'user' | 'group'): void;
-}
+import type { IConditionValueFieldProps, IDropdownSelection, IDropdownUser } from '../types';
 
 export function ConditionValueField({
   variable,
@@ -80,11 +70,6 @@ export function ConditionValueField({
   }
 
   function renderDropdownField() {
-    interface IDropdownSelection {
-      value: string;
-      label: string;
-    }
-
     let dropdownSelections: IDropdownSelection[] = [];
 
     if (variable?.datasetId) {
@@ -131,12 +116,6 @@ export function ConditionValueField({
   }
 
   function renderUserField() {
-    interface IDropdownUser extends TUserListItem {
-      label: string;
-      entityType: 'user' | 'group';
-      value: string;
-    }
-
     const activeUsers = users.filter((user) => user.status === EUserStatus.Active);
     const labelUsers = activeUsers.map((user) => ({
       ...user,

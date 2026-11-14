@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 
 import { createUUID } from '../../../utils/createId';
-import { INotification, TAnyFunction } from '../../../types';
+import type { INotification, TAnyFunction } from '../../../types';
 
 const Constants: { [key: string]: INotification['type'] } = {
   INFO: 'info',

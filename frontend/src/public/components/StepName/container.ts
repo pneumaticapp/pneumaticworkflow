@@ -1,16 +1,17 @@
 /* prettier-ignore */
 import { connect } from 'react-redux';
 
-import { IStepNameProps, StepNameComponent } from './StepName';
-import { IApplicationState } from '../../types/redux';
-import { loadTemplateVariables } from '../../redux/actions';
+import { StepNameComponent } from './StepName';
+import type { IStepNameProps } from './types';
+import type { RootState } from '../../redux/store';
+import { loadTemplateVariables } from '../../redux/templates/actions';
 
 type TStoreProps = Pick<IStepNameProps, 'variables'>;
 type TDispatchProps = Pick<IStepNameProps, 'loadTemplateVariables'>;
 type TOwnProps = Pick<IStepNameProps, 'templateId'>;
 
 const mapStateToProps = (
-  { templates: { templatesVariablesMap } }: IApplicationState,
+  { templates: { templatesVariablesMap } }: RootState,
   { templateId }: TOwnProps,
 ): TStoreProps => {
   const variables = templatesVariablesMap[templateId];

@@ -1,4 +1,4 @@
-import { logger } from '../../public/utils/logger';
+import type { logger } from '../../public/utils/logger';
 
 export interface IAuthenticatedUser {
   id: string;

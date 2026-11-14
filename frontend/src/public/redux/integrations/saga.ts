@@ -4,7 +4,7 @@ import { getIntegrationDetails } from '../../api/getIntegrationDetails';
 import { getIntegrations } from '../../api/getIntegrations';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { ERoutes } from '../../constants/routes';
-import {
+import type {
   IApiKeyItem,
   IIntegrationDetailed,
   IIntegrationListItem,
@@ -12,19 +12,17 @@ import {
 } from '../../types/integrations';
 import { history } from '../../utils/history';
 import { logger } from '../../utils/logger';
+import type { TLoadIntegrationDetails, TCreateApiKey, TDeleteApiKey } from './actions';
 import {
   EIntegrationsActions,
   loadIntegrationsListSuccess,
   loadIntegrationDetailsFailed,
   loadIntegrationsListFailed,
   loadIntegrationDetailsSuccess,
-  TLoadIntegrationDetails,
   loadApiKeysSuccess,
   loadApiKeysFailed,
-  TCreateApiKey,
   createApiKeySuccess,
   createApiKeyFailed,
-  TDeleteApiKey,
   deleteApiKeySuccess,
   deleteApiKeyFailed,
 } from './actions';

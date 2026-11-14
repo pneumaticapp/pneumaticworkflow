@@ -1,7 +1,8 @@
 /* eslint-disable */
 /* prettier-ignore */
-import { ENotificationsActions, TNotificationsActions } from './actions';
-import { IStoreNotification } from '../../types/redux';
+import { ENotificationsActions } from './actions';
+import type { TNotificationsActions } from './actions';
+import type { IStoreNotification } from './types';
 
 const INIT_STATE: IStoreNotification = {
   items: [],

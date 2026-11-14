@@ -1,17 +1,18 @@
-import React, { PropsWithChildren } from 'react';
+import React from 'react';
+import type { PropsWithChildren } from 'react';
 import { useDispatch } from 'react-redux';
 import { useIntl } from 'react-intl';
 import classNames from 'classnames';
-import { CellProps } from 'react-table';
+import type { CellProps } from 'react-table';
 
 import { setFilterTemplateTasks, setFilterTemplate } from '../../../../../../../redux/workflows/slice';
 import { TaskNamesTooltipContent } from '../../../../../utils/TaskNamesTooltipContent';
 import { Tooltip } from '../../../../../../UI';
-import { TableColumns } from '../../../types';
+import type { TTableColumns } from '../../../types';
 
 import styles from './TaskColumn.css';
 
-type TProps = PropsWithChildren<CellProps<TableColumns, TableColumns['system-column-step']>>;
+type TProps = PropsWithChildren<CellProps<TTableColumns, TTableColumns['system-column-step']>>;
 
 export function TaskColumn({
   value: { oneActiveTaskName, areMultipleTasks, multipleTasksNamesByApiNames, template },

@@ -1,4 +1,5 @@
-import { EGraphNodeType, IGraphInsertTaskIntent, TGraphEdge, TGraphNode } from '../types';
+import type { IGraphInsertTaskIntent, TGraphEdge, TGraphNode } from '../types';
+import { EGraphNodeType } from '../types';
 import { isStemGraphEdge } from './edgeStyles';
 import { isCardNode } from './graphGeometry';
 import { KICKOFF_NODE_ID } from './graphConstants';

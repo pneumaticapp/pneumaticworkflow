@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { WebhookItem } from './WebhooksItem';
-import { EWebhooksTypeEvent } from '../../../../types/webhooks';
+import type { EWebhooksTypeEvent } from '../../../../types/webhooks';
 import { getWebhooks } from '../../../../redux/selectors/webhooks';
 
 export function Webhooks() {

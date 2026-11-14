@@ -1,7 +1,7 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
 
-import { IUnsavedUser } from '../../../types/user';
+import type { IUnsavedUser } from '../../../types/user';
 
 import { Modal } from '..';
 import { getUserFullName } from '../../../utils/users';

@@ -1,5 +1,6 @@
-import { IStoreRunWorkflowModal } from '../../types/redux';
-import { ERunWorkflowModalActions, TRunWorkflowModalActions } from './actions';
+import type { IStoreRunWorkflowModal } from './types';
+import { ERunWorkflowModalActions } from './actions';
+import type { TRunWorkflowModalActions } from './actions';
 
 export const INIT_STATE: IStoreRunWorkflowModal = {
   workflow: null,

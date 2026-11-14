@@ -1,7 +1,7 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { mapRequestBody } from '../utils/mappers';
-import { IUserResponse } from '../types/user';
+import type { IUserResponse } from '../types/user';
 
 export interface IVacationActivateRequest {
   substituteUserIds: number[];

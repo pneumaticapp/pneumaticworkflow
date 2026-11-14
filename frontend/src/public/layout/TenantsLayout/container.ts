@@ -1,13 +1,14 @@
 import { connect } from 'react-redux';
 
-import { IApplicationState } from '../../types/redux';
-import { ITenantsLayoutProps, TenantsLayout } from './TenantsLayout';
+import type { RootState } from '../../redux/store';
+import type { ITenantsLayoutProps } from './TenantsLayout';
+import { TenantsLayout } from './TenantsLayout';
 import { changeTenantsSorting } from '../../redux/actions';
 
 type TStoreProps = Pick<ITenantsLayoutProps, 'sorting'>;
 type TDispatchProps = Pick<ITenantsLayoutProps, 'changeSorting'>;
 
-const mapStateToProps = ({ tenants: { sorting } }: IApplicationState): TStoreProps => {
+const mapStateToProps = ({ tenants: { sorting } }: RootState): TStoreProps => {
   return {
     sorting,
   };

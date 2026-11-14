@@ -1,7 +1,7 @@
-import * as React from 'react';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useIntl } from 'react-intl';
-import { ITemplateTaskClient, IFieldsetBindingClient } from '../../../types/template';
+import type { IFieldsetBindingClient } from '../../../types/fieldset';
+import type { ITemplateTaskClient } from '../../../types/template';
 import styles from '../ExtraFields/utils/ExtraFieldsLabels/ExtraFieldsLabels.css';
 import { getTriplePlural } from '../../../utils/helpers';
 

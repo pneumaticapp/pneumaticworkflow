@@ -1,8 +1,8 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import { usePopper } from 'react-popper';
-import { Placement } from 'popper.js';
+import type { Placement } from 'popper.js';
 import OutsideClickHandler from '../OutsideClickHandler';
 
 import { useDidUpdateEffect } from '../../../hooks/useDidUpdateEffect';

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { EExtraFieldMode } from '../../../../types/template';
@@ -6,7 +6,7 @@ import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { EFieldTagName } from '../../../Field';
 import { FieldWithName } from '../utils/FieldWithName';
 
-import { IWorkflowExtraFieldProps } from '..';
+import type { IWorkflowExtraFieldProps } from '../types';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
 

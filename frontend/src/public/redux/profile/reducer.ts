@@ -1,5 +1,6 @@
-import { IStoreProfile } from '../../types/redux';
-import { EProfileSettingsActions, TProfileSettingsActions } from './actions';
+import type { IStoreProfile } from './types';
+import { EProfileSettingsActions } from './actions';
+import type { TProfileSettingsActions } from './actions';
 import { ESettingsTabs } from '../../types/profile';
 import { checkSomeRouteIsActive } from '../../utils/history';
 import { ERoutes } from '../../constants/routes';

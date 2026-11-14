@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import { IDashboardTask, TDashboardBreakdownItem, TDashboardBreakdownItemResponse } from '../types/redux';
+import type { IDashboardTask, TDashboardBreakdownItem, TDashboardBreakdownItemResponse } from '../types/dashboard';
 
 export function normalizeBreakdownItems(items: TDashboardBreakdownItemResponse[]): TDashboardBreakdownItem[] {
   return items

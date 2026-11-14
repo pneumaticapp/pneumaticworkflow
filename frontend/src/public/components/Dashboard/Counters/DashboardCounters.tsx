@@ -1,6 +1,7 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
-import { DashboardCounter, IDashboardCounterProps } from './DashboardCounter';
+import type { IDashboardCounterProps } from './DashboardCounter';
+import { DashboardCounter } from './DashboardCounter';
 
 import styles from './DashboardCounters.css';
 

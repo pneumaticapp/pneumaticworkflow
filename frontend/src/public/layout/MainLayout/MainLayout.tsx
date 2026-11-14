@@ -1,6 +1,6 @@
 import React from 'react';
 import classnames from 'classnames';
-import { UnregisterCallback } from 'history';
+import type { UnregisterCallback } from 'history';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { SelectTemplateModalContainer } from '../../components/SelectTemplateModal';
@@ -8,12 +8,11 @@ import { NotificationsListContainer } from '../../components/NotificationsList/c
 import { WorkflowEditPopupContainer } from '../../components/WorkflowEditPopup';
 import { GeneralLoader } from '../../components/GeneralLoader';
 import { Sidebar } from '../../components/Sidebar';
-import { ILoadNotificationsPayload } from '../../redux/notifications/actions';
+import type { ILoadNotificationsPayload } from '../../redux/notifications/actions';
 import { useDelayUnmount } from '../../hooks/useDelayUnmount';
 import { TeamInvitesPopupContainer } from '../../components/TeamInvitesPopup';
 import { checkSomeRouteIsActive, history } from '../../utils/history';
 import { initFirebaseMessaging } from '../../firebase';
-import { IAuthUser } from '../../types/redux';
 import { identifyUser } from '../../utils/analytics';
 import { setIntercomUser } from '../../utils/setIntercomUser';
 import { TemplateAIModalContainer } from '../../components/TemplateAIModal';
@@ -24,13 +23,13 @@ import { ERoutes } from '../../constants/routes';
 import { EPlanActions } from '../../utils/getPlanPendingActions';
 import { Paywall } from '../../components/UI/Paywall';
 import { isEnvAnalytics, isEnvPush } from '../../constants/enviroment';
-import { IUnsavedUser, TUserListItem } from '../../types/user';
+import type { IUnsavedUser, TAuthUserResult, TUserListItem } from '../../types/user';
 import { checkIsTemplateOwner, loadGroups } from '../../redux/actions';
 import { getIsAdmin } from '../../redux/selectors/user';
 import styles from './MainLayout.css';
 
 export interface IMainLayoutComponentStoreProps {
-  user: IAuthUser;
+  user: TAuthUserResult;
   isNotificationsListOpen: boolean;
   isRunWorkflowModalOpen: boolean;
   isGeneralLoaderVisible: boolean;

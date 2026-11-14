@@ -2,15 +2,8 @@ import React from 'react';
 import classnames from 'classnames';
 import { TooltipRichContent } from '../../TooltipRichContent';
 import { Tooltip } from '../../../UI';
-import { TTaskVariable } from '../../types';
+import type { IRichLabelProps } from './types';
 import styles from './Conditions.css';
-
-interface IRichLabelProps {
-  variables: TTaskVariable[];
-  variable: TTaskVariable;
-  isSelected?: boolean;
-  isFromStartingOrder?: boolean;
-}
 
 export function RichLabel({
   variable: { title, subtitle, richSubtitle },

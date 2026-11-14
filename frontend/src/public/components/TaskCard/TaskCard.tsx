@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import { ETaskStatus } from '../../redux/actions';
+import { ETaskCardState } from '../../redux/task/types';
 import { autoFocusFirstField } from '../../utils/autoFocusFirstField';
 import { isEmptyArray } from '../../utils/helpers';
 import { RichText } from '../RichText';
@@ -18,11 +18,11 @@ import { TaskOutputFields } from './TaskOutputFields';
 import { TaskPerformers } from './TaskPerformers';
 import { TaskWorkflowLog } from './TaskWorkflowLog';
 import { useTaskOutput } from './hooks/useTaskOutput';
-import { ETaskCardViewMode, ITaskCardProps, ITaskCardWrapperProps } from './types';
+import { ETaskCardViewMode } from '../../types/tasks';
+import type { ITaskCardProps, ITaskCardWrapperProps } from './types';
 
 import styles from './TaskCard.css';
 
-export { ETaskCardViewMode } from './types';
 export type { ITaskCardProps, ITaskCardWrapperProps } from './types';
 
 export function TaskCard({
@@ -57,7 +57,7 @@ export function TaskCard({
   const [uploadCounts, setUploadCounts] = useState<Map<string, number>>(() => new Map());
   const { outputValues, fieldsetOutputValues, editField, editFieldsetField, flushOutputs } = useTaskOutput(task);
   const helpTextLocal = helpText ?? workflow?.description ?? null;
-  const isSubmitting = status === ETaskStatus.Completing || status === ETaskStatus.Returning;
+  const isSubmitting = status === ETaskCardState.Completing || status === ETaskCardState.Returning;
   const handleUploadStateChange = useCallback((apiName: string, isUploading: boolean) => {
     setUploadCounts((currentCounts) => {
       const nextCounts = new Map(currentCounts);
@@ -198,7 +198,7 @@ export function TaskCard({
 }
 
 export function TaskCardWrapper({ task, status, ...restProps }: ITaskCardWrapperProps) {
-  if (status === ETaskStatus.Loading) return <TaskCarkSkeleton />;
+  if (status === ETaskCardState.Loading) return <TaskCarkSkeleton />;
   if (!task) return null;
 
   return <TaskCard task={task} status={status} {...restProps} />;

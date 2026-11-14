@@ -1,10 +1,11 @@
 /* prettier-ignore */
-import { IntlShape } from 'react-intl';
+import type { IntlShape } from 'react-intl';
 
-import { ITemplateClient } from '../../../types/template';
+import type { ITemplateClient } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { validateWorkflowName } from '../../../utils/validators';
-import { UnassignedTasksWarning, PremiumFeaturesWarning, IInfoWarningProps } from '../InfoWarningsModal/warnings';
+import type { IInfoWarningProps } from '../InfoWarningsModal/warnings';
+import { UnassignedTasksWarning, PremiumFeaturesWarning } from '../InfoWarningsModal/warnings';
 import { areConditionsValid, isNumberConditionsValid } from '../TaskForm/Conditions/utils/conditionsValidators';
 import { areExtraFieldsValid } from './areExtraFieldsValid';
 import { areFieldsetsValid } from './areFieldsetsValid';

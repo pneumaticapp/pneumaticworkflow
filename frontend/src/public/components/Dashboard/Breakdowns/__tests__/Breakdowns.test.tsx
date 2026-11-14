@@ -1,8 +1,9 @@
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 
-import { Breakdowns, IBreakdownsProps } from '../Breakdowns';
-import { EDashboardModes } from '../../../../types/redux';
+import { Breakdowns } from '../Breakdowns';
+import type { IBreakdownsProps } from '../Breakdowns';
+import { EDashboardModes } from '../../../../redux/dashboard/types';
 
 const getProps = (): IBreakdownsProps => ({
   mode: EDashboardModes.Workflows,

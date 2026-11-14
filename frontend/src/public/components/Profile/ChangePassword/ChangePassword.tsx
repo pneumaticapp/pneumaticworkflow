@@ -1,6 +1,7 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
-import { Formik, Form, FormikConfig } from 'formik';
+import type { FormikConfig } from 'formik';
+import { Formik, Form } from 'formik';
 
 import { Button, FormikInputField, Modal } from '../../UI';
 import { validateNewPassword, validateOldPassword } from '../validators';

@@ -1,4 +1,5 @@
-import React, { MouseEvent, useRef } from 'react';
+import type { MouseEvent } from 'react';
+import React, { useRef } from 'react';
 import { useIntl } from 'react-intl';
 import { Link } from 'react-router-dom';
 
@@ -8,7 +9,8 @@ import { history } from '../../utils/history';
 import { Header } from '../UI/Typeography/Header';
 import { Tooltip } from '../UI';
 import { DateFormat } from '../UI/DateFormat';
-import { ETaskCardViewMode, TTaskCardHeaderProps } from './types';
+import { ETaskCardViewMode } from '../../types/tasks';
+import type { TTaskCardHeaderProps } from './types';
 
 import styles from './TaskCard.css';
 

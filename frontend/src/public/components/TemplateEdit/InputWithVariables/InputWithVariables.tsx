@@ -1,10 +1,11 @@
-import * as React from 'react';
+import React from 'react';
 
 import classnames from 'classnames';
-import { TTaskVariable } from '../types';
+import type { TTaskVariable } from '../../../types/template';
 import { removeUnknownVariableTokens } from '../../RichEditor/converters/variableMarkdown';
 import { VariableList } from '../VariableList';
-import { RichEditor, type IRichEditorHandle, type IRichEditorProps } from '../../RichEditor';
+import { RichEditor } from '../../RichEditor';
+import type { IRichEditorHandle, IRichEditorProps } from '../../RichEditor/types';
 
 import styles from './InputWithVariables.css';
 

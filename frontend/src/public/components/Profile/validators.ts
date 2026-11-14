@@ -1,4 +1,5 @@
-import { hasWhitespaces, IRule, isEmpty, validateFieldCreator, validatePhone } from '../../utils/validators';
+import type { IRule } from '../../utils/validators';
+import { hasWhitespaces, isEmpty, validateFieldCreator, validatePhone } from '../../utils/validators';
 
 export const OLD_PASSWORD_RULES: IRule[] = [
   {

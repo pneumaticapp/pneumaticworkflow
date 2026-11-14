@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import classNames from 'classnames';
 import { useIntl } from 'react-intl';
-import { Tooltip, TooltipProps } from 'reactstrap';
+import type { TooltipProps } from 'reactstrap';
+import { Tooltip } from 'reactstrap';
 
-import { ELearnMoreLinks } from '../../../constants/defaultValues';
+import type { ELearnMoreLinks } from '../../../constants/defaultValues';
 
 import styles from './CustomTooltip.css';
 

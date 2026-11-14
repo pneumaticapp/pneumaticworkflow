@@ -5,22 +5,21 @@ import { useDispatch, useSelector } from 'react-redux';
 import { debounce } from 'throttle-debounce';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
-import { ITemplatesSystemCategories } from '../../../types/redux';
+import type { ISystemTemplate, ITemplatesSystemCategories } from '../../../types/template';
 import { TemplateSystemCard } from '../TemplateSystemCard/TemplateSystemCard';
 import { TemplateSystemCategoryItem } from '../TemplateSystemCategoryItem';
 import { InputField, Placeholder } from '../../UI';
 import { SearchLargeIcon } from '../../icons';
 import { PageTitle } from '../../PageTitle/PageTitle';
 import { EPageTitle } from '../../../constants/defaultValues';
-import { ISystemTemplate } from '../../../types/template';
 import { TasksPlaceholderIcon } from '../../Tasks/TasksPlaceholderIcon';
 import { TemplateSystemSkeleton } from '../TemplateSystemSkeleton';
 import {
   changeTemplatesSystemPaginationNext,
   changeTemplatesSystemSelectionCategory,
   changeTemplatesSystemSelectionSearch,
-  ETemplatesSystemStatus,
 } from '../../../redux/actions';
+import { ETemplatesSystemStatus } from '../../../redux/templates/types';
 import { getTemplatesSystem } from '../../../redux/selectors/templates';
 
 import styles from '../Templates.css';

@@ -1,8 +1,9 @@
 import { connect } from 'react-redux';
 
-import { IApplicationState } from '../../../../types/redux';
+import type { RootState } from '../../../../redux/store';
 import { closeDeleteUserModal, declineInvite, deleteUser } from '../../../../redux/accounts/slice';
-import { IDeleteTeamUserPopupProps, DeleteTeamUserPopup } from './DeleteTeamUserPopup';
+import type { IDeleteTeamUserPopupProps } from './DeleteTeamUserPopup';
+import { DeleteTeamUserPopup } from './DeleteTeamUserPopup';
 import { EUserStatus } from '../../../../types/user';
 
 type TStoreProps = Pick<
@@ -16,7 +17,7 @@ export function mapStateToProps({
     users,
     deleteUserModal: { user, state: modalState, userWorkflowsCount },
   },
-}: IApplicationState): TStoreProps {
+}: RootState): TStoreProps {
   return {
     user,
     usersList: users.filter((currentUser) => currentUser.status && currentUser.status === EUserStatus.Active),

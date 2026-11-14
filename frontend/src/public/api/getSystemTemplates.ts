@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { ISystemTemplate } from '../types/template';
+import type { ISystemTemplate } from '../types/template';
 
 export type TGetSystemTemplatesResponse = {
   count: number;

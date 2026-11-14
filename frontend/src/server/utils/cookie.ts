@@ -1,4 +1,4 @@
-import { CookieOptions, Request, Response } from 'express';
+import type { CookieOptions, Request, Response } from 'express';
 import { getConfig } from '../../public/utils/getConfig';
 
 export const COOKIE_MAX_AGE = 14 * 24 * 60 * 60 * 1000;

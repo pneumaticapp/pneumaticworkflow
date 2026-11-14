@@ -1,8 +1,9 @@
 import { connect } from 'react-redux';
 
-import { IApplicationState } from '../../../types/redux';
+import type { RootState } from '../../../redux/store';
 
-import { ITemplateControllsProps, TemplateControlls } from './TemplateControlls';
+import type { ITemplateControllsProps } from './TemplateControlls';
+import { TemplateControlls } from './TemplateControlls';
 import { patchTemplate, cloneTemplate, deleteTemplate, openRunWorkflowModal } from '../../../redux/actions';
 import { getIsUserSubsribed } from '../../../redux/selectors/user';
 
@@ -12,7 +13,7 @@ type TDispatchProps = Pick<
   'patchTemplate' | 'cloneTemplate' | 'deleteTemplate' | 'openRunWorkflowModal'
 >;
 
-export function mapStateToProps(state: IApplicationState): TStoreProps {
+export function mapStateToProps(state: RootState): TStoreProps {
   const {
     template: { data: template, status },
   } = state;

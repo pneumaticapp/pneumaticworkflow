@@ -2,8 +2,9 @@ import React, { useMemo, createContext, useContext } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 
 import { LinkUrlForm } from './LinkUrlForm';
-import { useLinkFormState, useLinkActions } from '../../hooks';
-import type { ILinkPluginContextValue } from './types';
+import { useLinkFormState } from '../../hooks/useLinkFormState';
+import { useLinkActions } from '../../hooks/useLinkActions';
+import type { ILinkPluginContextValue, ILinkPluginProviderProps } from './types';
 
 export const LinkPluginContext = createContext<ILinkPluginContextValue | null>(null);
 
@@ -15,11 +16,6 @@ export function useLinkPlugin(): ILinkPluginContextValue {
   }
 
   return context;
-}
-
-interface ILinkPluginProviderProps {
-  children: React.ReactNode;
-  editorContainerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 export function LinkPluginProvider({ children, editorContainerRef }: ILinkPluginProviderProps): React.ReactElement {

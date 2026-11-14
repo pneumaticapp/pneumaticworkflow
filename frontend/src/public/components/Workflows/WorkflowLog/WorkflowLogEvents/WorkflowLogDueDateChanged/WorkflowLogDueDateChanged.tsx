@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { getLanguage } from '../../../../../redux/selectors/user';
@@ -6,7 +6,7 @@ import { getLanguage } from '../../../../../redux/selectors/user';
 import { Avatar } from '../../../../UI/Avatar';
 import { ClockIcon } from '../../../../icons';
 import { DateFormat } from '../../../../UI/DateFormat';
-import { IWorkflowLogItem } from '../../../../../types/workflow';
+import type { IWorkflowLogItem } from '../../../../../types/workflow';
 import { getDueInData } from '../../../../DueIn/utils/getDueInData';
 
 import styles from './WorkflowLogDueDateChanged.css';

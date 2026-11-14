@@ -11,7 +11,7 @@ import { getDate, getTime } from '../../utils/strings';
 import { Button, InputField, Tooltip } from '../UI';
 import { DatePickerCustom } from '../UI/form/DatePicker';
 import { setTimeForDate } from './utils/setTimeForDate';
-import { IDueInProps } from './types';
+import type { IDueInProps } from './types';
 
 import styles from './DueIn.css';
 

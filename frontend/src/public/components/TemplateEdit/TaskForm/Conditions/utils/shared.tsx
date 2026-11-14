@@ -1,38 +1,19 @@
 import React from 'react';
-import { EExtraFieldType } from '../../../../../types/template';
+import type { EExtraFieldType, TTaskVariable } from '../../../../../types/template';
+import { EStartingType } from '../../../../../types/template';
 import { isArrayWithItems } from '../../../../../utils/helpers';
-import { TTaskVariable } from '../../../types';
 import { RichLabel } from '../RichLabel';
-import { EConditionAction, EConditionOperators, ICondition, TConditionRule } from '../types';
-import { EStartingType } from './getDropdownOperators';
+import { EConditionAction, EConditionOperators } from '../../../../../types/templateTaskConditions';
+import type { ICondition } from '../../../../../types/templateTaskConditions';
 import { getEmptyConditions, getOneEmptyCondition } from './getEmptyConditions';
 import { getEmptyRule } from './getEmptyRule';
 import { setRulesApiNamesAndIds } from './setRulesApiNames';
-
-interface IHandleAddNewConditionProps {
-  order?: number;
-  conditions: ICondition[];
-  accessConditions: boolean;
-  onEdit: (conditions: ICondition[]) => void;
-  startTask?: boolean;
-}
-interface IHandleAddNewRuleProps {
-  conditionApiName: string;
-  conditions: ICondition[];
-  accessConditions: boolean;
-  onEdit: (conditions: ICondition[]) => void;
-}
-interface IGetDeletedFieldsProps {
-  variables: TTaskVariable[];
-  prevVariables?: TTaskVariable[];
-  conditions: ICondition[];
-  onEdit: (conditions: ICondition[]) => void;
-}
-interface IGetDropdownStepsProps {
-  startingOrder: TTaskVariable[];
-  variables: TTaskVariable[];
-  rule: TConditionRule;
-}
+import type {
+  IGetDeletedFieldsProps,
+  IGetDropdownStepsProps,
+  IHandleAddNewConditionProps,
+  IHandleAddNewRuleProps,
+} from './types';
 
 export const CONDITION_DISABLED_OPERATOR: (EStartingType | EExtraFieldType)[] = [EStartingType.Kickoff];
 export const OPERATORS_WITHOUT_VALUE = [

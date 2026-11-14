@@ -1,30 +1,30 @@
 import { createSelector } from 'reselect';
 
-import type { IApplicationState } from '../../types/redux';
+import type { RootState } from '../store';
 import { aiAgentsComparators } from '../ai/utils/aiAgentsComparators';
 
-export const getAIProvidersList = (state: IApplicationState) => state.ai.providers.list;
+export const getAIProvidersList = (state: RootState) => state.ai.providers.list;
 
-export const getAIProvidersIsLoading = (state: IApplicationState) => state.ai.providers.isLoading;
+export const getAIProvidersIsLoading = (state: RootState) => state.ai.providers.isLoading;
 
-export const getAICreateProviderModalIsOpen = (state: IApplicationState) => state.ai.createProviderModal.isOpen;
+export const getAICreateProviderModalIsOpen = (state: RootState) => state.ai.createProviderModal.isOpen;
 
-export const getAICreateProviderModalIsLoading = (state: IApplicationState) => state.ai.createProviderModal.isLoading;
+export const getAICreateProviderModalIsLoading = (state: RootState) => state.ai.createProviderModal.isLoading;
 
-const getAIAgentsList = (state: IApplicationState) => state.ai.agents.list;
+const getAIAgentsList = (state: RootState) => state.ai.agents.list;
 
-export const getAIAgentsIsLoading = (state: IApplicationState) => state.ai.agents.isLoading;
+export const getAIAgentsIsLoading = (state: RootState) => state.ai.agents.isLoading;
 
-export const getAIAgentsSorting = (state: IApplicationState) => state.ai.agentsSorting;
+export const getAIAgentsSorting = (state: RootState) => state.ai.agentsSorting;
 
 export const getAIAgentsSorted = createSelector(getAIAgentsList, getAIAgentsSorting, (list, sorting) =>
   list.slice().sort(aiAgentsComparators[sorting]),
 );
 
-export const getAIVendorsList = (state: IApplicationState) => state.ai.vendors.list;
+export const getAIVendorsList = (state: RootState) => state.ai.vendors.list;
 
-export const getAIProviderModelsList = (state: IApplicationState) => state.ai.models.list;
+export const getAIProviderModelsList = (state: RootState) => state.ai.models.list;
 
-export const getAIProviderModelsIsLoading = (state: IApplicationState) => state.ai.models.isLoading;
+export const getAIProviderModelsIsLoading = (state: RootState) => state.ai.models.isLoading;
 
-export const getAIProviderModelsProviderId = (state: IApplicationState) => state.ai.models.providerId;
+export const getAIProviderModelsProviderId = (state: RootState) => state.ai.models.providerId;

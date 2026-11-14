@@ -12,6 +12,7 @@ import {
   $isTextNode,
   $setSelection,
 } from 'lexical';
+import type { ListItemNode, ListNode } from '@lexical/list';
 import {
   $createListItemNode as $createLexicalListItemNode,
   $createListNode as $createLexicalListNode,
@@ -19,14 +20,8 @@ import {
   $isListNode as $isLexicalListNode,
 } from '@lexical/list';
 
-import {
-  ChecklistNode,
-  ChecklistItemNode,
-  $createChecklistNode,
-  $createChecklistItemNode,
-  $isChecklistNode,
-  $isChecklistItemNode,
-} from '../../nodes';
+import type { ChecklistNode, ChecklistItemNode } from '../../nodes';
+import { $createChecklistNode, $createChecklistItemNode, $isChecklistNode, $isChecklistItemNode } from '../../nodes';
 import { createChecklistApiName, createChecklistSelectionApiName } from '../../../../utils/createId';
 import type { InsertParagraphFromEmptyChecklistPayload, BackspaceOnEmptyChecklistPayload } from './types';
 
@@ -320,14 +315,12 @@ export function convertBlockToChecklist(block: ElementNode): ChecklistItemNode |
  */
 export function convertListToChecklist(listNode: LexicalNode): ChecklistItemNode | null {
   if (!$isLexicalListNode(listNode)) return null;
-  const list = listNode as import('@lexical/list').ListNode;
+  const list = listNode as ListNode;
   const listType = list.getListType();
   if (listType === 'check') return null;
   const listApiName = createChecklistApiName();
   const checklistRoot = $createChecklistNode({ listApiName });
-  const listItems = list
-    .getChildren()
-    .filter((n): n is import('@lexical/list').ListItemNode => $isLexicalListItemNode(n));
+  const listItems = list.getChildren().filter((n): n is ListItemNode => $isLexicalListItemNode(n));
   listItems.forEach((listItem) => {
     const checklistItem = $createChecklistItemNode({
       listApiName,
@@ -353,10 +346,7 @@ export function convertListToChecklist(listNode: LexicalNode): ChecklistItemNode
 /**
  * Converts a ChecklistNode into a Lexical ListNode (bullet or number). Each ChecklistItemNode becomes a ListItemNode.
  */
-export function convertChecklistToList(
-  checklistNode: LexicalNode,
-  listType: 'number' | 'bullet',
-): import('@lexical/list').ListNode | null {
+export function convertChecklistToList(checklistNode: LexicalNode, listType: 'number' | 'bullet'): ListNode | null {
   if (!$isChecklistNode(checklistNode)) return null;
   const checklist = checklistNode as ChecklistNode;
   const lexicalList = $createLexicalListNode(listType);

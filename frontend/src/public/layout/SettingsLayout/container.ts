@@ -1,12 +1,13 @@
 import { connect } from 'react-redux';
-import { SettingsLayoutComponent, ISettingsLayoutComponentProps } from './SettingsLayout';
-import { IApplicationState } from '../../types/redux';
+import type { ISettingsLayoutComponentProps } from './SettingsLayout';
+import { SettingsLayoutComponent } from './SettingsLayout';
+import type { RootState } from '../../redux/store';
 import { setProfileSettingsActiveTab } from '../../redux/profile/actions';
 
 export type TMapStateToProps = Pick<ISettingsLayoutComponentProps, 'activeTab'>;
 export type TMapDispatchToProps = Pick<ISettingsLayoutComponentProps, 'onChangeTab'>;
 
-export const mapStateToProps = ({ profile: { settingsTab } }: IApplicationState): TMapStateToProps => {
+export const mapStateToProps = ({ profile: { settingsTab } }: RootState): TMapStateToProps => {
   return {
     activeTab: settingsTab,
   };

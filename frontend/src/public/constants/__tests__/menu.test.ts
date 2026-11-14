@@ -1,9 +1,9 @@
 import { getUserMenuItems } from '../menu';
-import { IAuthUser, ELoggedState } from '../../types/redux';
 import { EUserStatus } from '../../types/user';
+import type { TAuthUserResult } from '../../types/user';
 import { ESubscriptionPlan } from '../../types/account';
 
-const createMockUser = (overrides: Partial<IAuthUser> = {}): IAuthUser => ({
+const createMockUser = (overrides: Partial<TAuthUserResult> = {}): TAuthUserResult => ({
   id: 1,
   email: 'test@test.com',
   firstName: 'Test',
@@ -17,7 +17,6 @@ const createMockUser = (overrides: Partial<IAuthUser> = {}): IAuthUser => ({
   isSuperuser: false,
   isSupermode: false,
   status: EUserStatus.Active,
-  loading: false,
   invitedUser: { id: '' },
   isDigestSubscriber: false,
   isTasksDigestSubscriber: false,
@@ -25,7 +24,6 @@ const createMockUser = (overrides: Partial<IAuthUser> = {}): IAuthUser => ({
   isNewTasksSubscriber: false,
   isNewslettersSubscriber: false,
   isSpecialOffersSubscriber: false,
-  loggedState: ELoggedState.LoggedIn,
   managerId: null,
   reportIds: [],
   language: 'en',

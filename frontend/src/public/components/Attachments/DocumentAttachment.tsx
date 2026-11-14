@@ -1,9 +1,9 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 
 import { DeleteBoldIcon, DocumentInfoIcon, VideoInfoIcon } from '../icons';
-import { TUploadedFile } from '../../utils/uploadFiles';
+import type { TUploadedFile } from '../../types/attachments';
 import { getAttachmentTypeByFilename } from './utils/getAttachmentType';
 
 import styles from './Attachments.css';

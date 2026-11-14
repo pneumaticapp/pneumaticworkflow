@@ -2,8 +2,9 @@ import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { compose } from 'redux';
 
-import { App, IAppProps } from './App';
-import { IApplicationState } from '../../types/redux';
+import type { IAppProps } from './App';
+import { App } from './App';
+import type { RootState } from '../../redux/store';
 import { logoutUser } from '../../redux/actions';
 
 type TAppStoreProps = Pick<
@@ -21,7 +22,7 @@ const mapStateToProps = ({
   settings: { locale },
   authUser,
   menu: { containerClassnames },
-}: IApplicationState): TAppStoreProps => {
+}: RootState): TAppStoreProps => {
   return {
     locale,
     user: authUser,

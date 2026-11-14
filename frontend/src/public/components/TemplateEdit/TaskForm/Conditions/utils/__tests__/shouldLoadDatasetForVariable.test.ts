@@ -1,6 +1,5 @@
 import { shouldLoadDatasetForVariable } from '../shouldLoadDatasetForVariable';
-import { EExtraFieldType } from '../../../../../../types/template';
-import { TTaskVariable } from '../../../../types';
+import { EExtraFieldType, TTaskVariable } from '../../../../../../types/template';
 
 describe('shouldLoadDatasetForVariable', () => {
   const makeVariable = (overrides: Partial<TTaskVariable> = {}): TTaskVariable => ({

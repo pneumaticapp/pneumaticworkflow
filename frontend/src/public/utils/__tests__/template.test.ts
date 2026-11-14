@@ -16,12 +16,8 @@ import {
   cleanTemplateReferences,
   collectFieldApiNames,
 } from '../template';
-import {
-  EConditionAction,
-  EConditionOperators,
-  EConditionLogicOperations,
-  TConditionRule,
-} from '../../components/TemplateEdit/TaskForm/Conditions/types';
+import { EConditionAction, EConditionOperators, EConditionLogicOperations } from '../../types/templateTaskConditions';
+import type { TConditionRule } from '../../types/templateTaskConditions';
 import { makeExtraField } from '../../__stubs__/fields.factory';
 import { makeFieldsetBinding, makeFieldsetBindingClient, makeFieldsetField } from '../../__stubs__/fieldsets.factory';
 

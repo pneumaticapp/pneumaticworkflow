@@ -1,6 +1,5 @@
-import * as React from 'react';
-import { ReactElement, ReactNode } from 'react';
-import { IExtraField } from '../../../../../types/template';
+import type { ReactElement, ReactNode } from 'react';
+import type { IExtraField } from '../../../../../types/template';
 
 export interface IOutputFieldContentProps {
   field: IExtraField;
@@ -8,7 +7,7 @@ export interface IOutputFieldContentProps {
   isDisabled?: boolean;
   datasetName?: string;
   className?: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
 }
 
 export interface ITruncatedTooltipProps {

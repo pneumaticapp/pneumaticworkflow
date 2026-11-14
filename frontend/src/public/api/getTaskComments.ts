@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { ITaskCommentItem } from '../types/workflow';
+import type { ITaskCommentItem } from '../types/workflow';
 import { DEFAULT_TASK_COMMENTS_LIMIT } from '../constants/defaultValues';
 
 export interface IGetTaskCommentsResponse {

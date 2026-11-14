@@ -1,4 +1,4 @@
-import { TUploadedFile } from './uploadFiles';
+import type { TUploadedFile } from '../types/attachments';
 import { getBrowserConfigEnv } from './getConfig';
 import { getAttachmentTypeByFilename, getAttachmentTypeByUrl } from '../components/Attachments/utils/getAttachmentType';
 

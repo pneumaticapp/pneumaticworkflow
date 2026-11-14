@@ -1,19 +1,20 @@
-import React, { FormEvent, useState } from 'react';
+import type { FormEvent } from 'react';
+import React, { useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { validateTenantName } from '../../../../utils/validators';
 import { Button, Header, InputField, Modal } from '../../../UI';
-import { IApplicationState } from '../../../../types/redux';
+import type { RootState } from '../../../../redux/store';
 import { createGroup, createModalClose } from '../../../../redux/actions';
-import { EUserGroupType } from '../../../../redux/team/types';
+import { EUserGroupType } from '../../../../types/team';
 
 import styles from './CreateGroupModal.css';
 
 export function CreateGroupModal() {
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
-  const { createModal: isOpen } = useSelector((state: IApplicationState) => state.groups);
+  const { createModal: isOpen } = useSelector((state: RootState) => state.groups);
 
   const [inputName, setInputName] = useState(formatMessage({ id: 'team.groups.create-modal.new-group' }));
   const [error, setError] = useState('');

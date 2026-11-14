@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 
-import { IApplicationState } from '../../types/redux';
+import type { RootState } from '../../redux/store';
 import {
   generateAITemplate,
   stopAITemplateGeneration,
@@ -9,7 +9,8 @@ import {
   setAITemplateGenerationStatus,
 } from '../../redux/actions';
 
-import { ITemplateAIModalProps, TemplateAIModal } from './TemplateAIModal';
+import type { ITemplateAIModalProps } from './TemplateAIModal';
+import { TemplateAIModal } from './TemplateAIModal';
 
 export type TStoreProps = Pick<ITemplateAIModalProps, 'isOpen' | 'generationStatus' | 'generatedTemplate'>;
 
@@ -18,7 +19,7 @@ export type TDispatchProps = Pick<
   'setIsModalOpened' | 'generateTemplate' | 'stopTemplateGeneration' | 'applyTemplate' | 'setTemplateGenerationStatus'
 >;
 
-const mapStateToProps = ({ template }: IApplicationState): TStoreProps => {
+const mapStateToProps = ({ template }: RootState): TStoreProps => {
   return {
     isOpen: template.AITemplate.isModalOpened,
     generationStatus: template.AITemplate.generationStatus,

@@ -1,12 +1,13 @@
 import { connect } from 'react-redux';
 
-import { IApplicationState } from '../../../../types/redux';
+import type { RootState } from '../../../../redux/store';
 
-import { IPopupCommentFieldProps, PopupCommentField } from './PopupCommentField';
+import type { IPopupCommentFieldProps } from './PopupCommentField';
+import { PopupCommentField } from './PopupCommentField';
 
 export type TPopupCommentFieldStoreProps = Pick<IPopupCommentFieldProps, 'user'>;
 
-export function mapStateToProps({ authUser }: IApplicationState): TPopupCommentFieldStoreProps {
+export function mapStateToProps({ authUser }: RootState): TPopupCommentFieldStoreProps {
   return { user: authUser };
 }
 

@@ -1,6 +1,6 @@
 import { actionGenerator } from '../../utils/redux';
-import { ITypedReduxAction } from '../../types/redux';
-import { ITemplateListItem } from '../../types/template';
+import type { ITypedReduxAction } from '../types';
+import type { ITemplateListItem } from '../../types/template';
 
 export enum ESelectTemplateModalActions {
   OpenModal = 'OPEN_SELECT_TEMPLATE_MODAL',

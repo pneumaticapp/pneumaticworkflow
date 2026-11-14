@@ -1,13 +1,14 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
-import { CellProps } from 'react-table';
+import type { CellProps } from 'react-table';
 import { Link } from 'react-router-dom';
 
 import { isArrayWithItems } from '../../../../../../../utils/helpers';
 import { MoreIcon, UrgentColorIcon } from '../../../../../../icons';
 import { Dropdown, Tooltip } from '../../../../../../UI';
-import { IWorkflowControllsProps, WorkflowControlls } from '../../../../../WorkflowControlls';
-import { TableColumns } from '../../../types';
+import { WorkflowControlls } from '../../../../../WorkflowControlls';
+import type { IWorkflowControllsProps } from '../../../../../WorkflowControlls';
+import type { TTableColumns } from '../../../types';
 import { getWorkflowDetailedRoute } from '../../../../../../../utils/routes';
 
 import styles from './WorkflowColumn.css';
@@ -16,7 +17,7 @@ type TProps = Pick<
   IWorkflowControllsProps,
   'onWorkflowDeleted' | 'onWorkflowEnded' | 'onWorkflowResumed' | 'onWorkflowSnoozed'
 > &
-  React.PropsWithChildren<CellProps<TableColumns, TableColumns['system-column-workflow']>> & {
+  React.PropsWithChildren<CellProps<TTableColumns, TTableColumns['system-column-workflow']>> & {
     handleOpenModal(): void;
   };
 

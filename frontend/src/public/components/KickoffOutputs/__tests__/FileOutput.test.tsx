@@ -1,10 +1,10 @@
 // <reference types="jest" />
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 
 import { FileOutput } from '../FileOutput';
 import { EExtraFieldType } from '../../../types/template';
-import { TUploadedFile } from '../../../utils/uploadFiles';
+import type { TUploadedFile } from '../../../types/attachments';
 import { intlMock } from '../../../__stubs__/intlMock';
 
 jest.mock('../../Attachments', () => {

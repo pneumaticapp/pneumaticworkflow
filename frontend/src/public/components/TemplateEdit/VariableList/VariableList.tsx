@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { MouseEventHandler, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
+import type { MouseEventHandler } from 'react';
 import OutsideClickHandler from '../../UI/OutsideClickHandler';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import { Tooltip as ReactstrapTooltip } from 'reactstrap';
@@ -10,19 +10,11 @@ import { Tooltip, CustomTooltip } from '../../UI';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { ExpandIcon } from '../../icons';
 import { ELearnMoreLinks } from '../../../constants/defaultValues';
-import { TTaskVariable } from '../types';
-import { getLocalizedSystemVariable } from '../TaskForm/utils/getTaskVariables';
+import { getLocalizedSystemVariable } from '../TaskForm/utils/getLocalizedSystemVariable';
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
 import { TooltipRichContent } from '../TooltipRichContent';
+import type { IVariableListProps } from './types';
 import styles from './VariableList.css';
-
-export interface IVariableListProps {
-  variables: TTaskVariable[];
-  className?: string;
-  tooltipText: string;
-  onVariableClick(apiName: string): (e: React.MouseEvent) => void;
-  focusEditor(): void;
-}
 
 const ScrollBar = PerfectScrollbar as unknown as Function;
 

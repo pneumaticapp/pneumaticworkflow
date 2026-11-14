@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { Formik, FormikConfig } from 'formik';
+import type { FormikConfig } from 'formik';
+import { Formik } from 'formik';
 import { useIntl } from 'react-intl';
 import moment from 'moment-timezone';
 
@@ -9,7 +10,7 @@ import { history } from '../../../utils/history';
 import { IntlMessages } from '../../../components/IntlMessages';
 import { NavLink } from '../../../components/NavLink';
 import { NotificationManager } from '../../../components/UI/Notifications';
-import { TUserInvited } from '../../../types/user';
+import type { TUserInvited } from '../../../types/user';
 import { validateName, validateRegistrationPassword } from '../../../utils/validators';
 import { Button, Header, InputField } from '../../../components/UI';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';

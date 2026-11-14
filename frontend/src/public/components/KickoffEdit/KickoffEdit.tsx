@@ -1,9 +1,8 @@
-import * as React from 'react';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
-import { IExtraField, IRuntimeKickoffClient } from '../../types/template';
-import { IFieldsetRuntime } from '../../types/fieldset';
+import type { IExtraField, IRuntimeKickoffClient } from '../../types/template';
+import type { IFieldsetRuntime } from '../../types/fieldset';
 import { EInputNameBackgroundColor } from '../../types/workflow';
 import { isArrayWithItems } from '../../utils/helpers';
 import { IntlMessages } from '../IntlMessages';

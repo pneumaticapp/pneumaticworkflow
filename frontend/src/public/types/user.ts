@@ -1,4 +1,4 @@
-import { ESubscriptionPlan } from './account';
+import type { ESubscriptionPlan } from './account';
 
 export type TUserType = 'user' | 'guest' | 'group';
 export interface IUnsavedUser {
@@ -180,4 +180,52 @@ export interface IUserResponse {
   reportIds: number[];
   subordinatesIds: number[];
   vacation?: IUserVacation | null;
+}
+
+export interface IInvitedUser {
+  id: string;
+}
+
+export interface IUserRegister {
+  email: string;
+  firstName: string;
+  lastName: string;
+  photo: string;
+  fromEmail: boolean;
+  timezone: string;
+  password?: string;
+  phone?: string;
+  companyName?: string;
+}
+
+export interface TAuthUserResult extends IUnsavedUser {
+  isSuperuser?: boolean;
+  isSupermode?: boolean;
+  id: number;
+  status: EUserStatus;
+  isResetPasswordCaptchaRequired?: boolean;
+  invitedUser: IInvitedUser;
+  isAccountOwner: boolean;
+  isDigestSubscriber: boolean;
+  isTasksDigestSubscriber: boolean;
+  isCommentsMentionsSubscriber: boolean;
+  isNewTasksSubscriber: boolean;
+  isNewslettersSubscriber: boolean;
+  isSpecialOffersSubscriber: boolean;
+  language: string;
+  timezone: string;
+  dateFmt: string;
+  dateFdw: string;
+  managerId: number | null;
+  reportIds: number[];
+  vacation?: IUserVacation | null;
+}
+
+export interface IUserUtm {
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_term?: string;
+  utm_content?: string;
+  gclid?: string;
 }

@@ -1,8 +1,8 @@
-import { UserInvite, InvitesType } from '../../../../redux/team/types';
-import { TUserListItem } from '../../../../types/user';
+import type { EInvitesType, IUserInvite } from '../../../../types/team';
+import type { TUserListItem } from '../../../../types/user';
 
 export interface IOAuthInvitesTabProps {
-  users: UserInvite[];
+  users: IUserInvite[];
   teamUsers: TUserListItem[];
-  type: InvitesType;
+  type: EInvitesType;
 }

@@ -1,4 +1,4 @@
-import {
+import type {
   ITemplate,
   ITemplateClient,
   ITemplateTaskClient,
@@ -8,12 +8,11 @@ import {
   ITemplateResponse,
   ITemplateTaskResponse,
   ITemplateTaskPerformer,
-  ETemplateOwnerType,
-  ETemplateOwnerRole,
   ITemplateOwner,
   IExtraField,
 } from '../types/template';
-import { IFieldsetBindingClient, IFieldsetBindingMeta } from '../types/fieldset';
+import { ETemplateOwnerType, ETemplateOwnerRole } from '../types/template';
+import type { IFieldsetBindingClient, IFieldsetBindingMeta } from '../types/fieldset';
 import { mapFieldsetBindingsToClient } from './mapFieldsetsAPIToClient';
 import { getUrlParams } from './getUrlParams';
 import { DEFAULT_TEMPLATE_NAME } from '../components/TemplateEdit/constants';
@@ -24,7 +23,7 @@ import { getEmptyConditions } from '../components/TemplateEdit/TaskForm/Conditio
 import { normalizeConditiosForFrontend } from './conditions/normalizeConditiosForFrontend';
 import { normalizeConditionForBackend } from './conditions/normalizeConditionForBackend';
 import { isEmptyDuration } from './dateTime';
-import { TUserListItem } from '../types/user';
+import type { TUserListItem } from '../types/user';
 import { getNotDeletedUsers } from './users';
 import { normalizeDueDateForFrontend } from './dueDate/normalizeDueDateForFrontend';
 import { normalizeDueDateForBackend } from './dueDate/normalizeDueDateForBackend';

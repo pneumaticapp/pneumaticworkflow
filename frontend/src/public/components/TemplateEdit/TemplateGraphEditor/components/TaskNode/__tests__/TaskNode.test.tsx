@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactFlowProvider } from 'reactflow';
@@ -6,7 +6,11 @@ import { configure } from '@testing-library/react';
 
 import { EExtraFieldType, ETaskPerformerType, ITemplateTaskClient } from '../../../../../../types/template';
 import { createEmptyTaskDueDate } from '../../../../../../utils/dueDate/createEmptyTaskDueDate';
-import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../../../TaskForm/Conditions';
+import {
+  EConditionAction,
+  EConditionLogicOperations,
+  EConditionOperators,
+} from '../../../../../../types/templateTaskConditions';
 import { TaskNode } from '../TaskNode';
 import { EMPTY_CONNECTED_HANDLES } from '../../../utils/applyConnectedHandles';
 

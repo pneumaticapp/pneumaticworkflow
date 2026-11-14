@@ -1,6 +1,8 @@
 import { connect } from 'react-redux';
-import { Dashboard, IDashboardProps } from './Dashboard';
-import { EDashboardModes, IApplicationState } from '../../types/redux';
+import { Dashboard } from './Dashboard';
+import type { IDashboardProps } from './Dashboard';
+import { EDashboardModes } from '../../redux/dashboard/types';
+import type { RootState } from '../../redux/store';
 import {
   loadDashboardData,
   setDashboardTimeRange,
@@ -35,7 +37,7 @@ type TDashboardDispatchProps = Pick<
   | 'openRunWorkflowModalOnDashboard'
 >;
 
-export function mapStateToProps(state: IApplicationState): TDashboardStoreProps {
+export function mapStateToProps(state: RootState): TDashboardStoreProps {
   const { authUser, dashboard } = state;
   const isSubscribed = getIsUserSubsribed(state);
   const canAccessWorkflows = getCanAccessWorkflows(state);

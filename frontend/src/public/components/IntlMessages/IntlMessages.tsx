@@ -1,6 +1,7 @@
 /* prettier-ignore */
-import * as React from 'react';
-import { FormattedMessage, injectIntl, IntlShape } from 'react-intl';
+import React from 'react';
+import type { IntlShape } from 'react-intl';
+import { FormattedMessage, injectIntl } from 'react-intl';
 
 interface IInjectedOptions {
   id: string;

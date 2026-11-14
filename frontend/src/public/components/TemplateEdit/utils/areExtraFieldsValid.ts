@@ -1,4 +1,5 @@
-import { EExtraFieldType, IExtraField, IExtraFieldSelection } from '../../../types/template';
+import type { IExtraField, IExtraFieldSelection } from '../../../types/template';
+import { EExtraFieldType } from '../../../types/template';
 import {
   validateCheckboxAndRadioField,
   getSelectionDuplicateError,

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 import OutsideClickHandler from '../UI/OutsideClickHandler';
@@ -6,7 +6,7 @@ import OutsideClickHandler from '../UI/OutsideClickHandler';
 import { IntegrateIcon } from '../icons';
 import { Tooltip, Button } from '../UI';
 import { TemplateIntegrationsStats, getIntegrationsSettings } from '../TemplateIntegrationsStats';
-import { EIntegrations } from '../../types/integrations';
+import type { EIntegrations } from '../../types/integrations';
 import { useCheckDevice } from '../../hooks/useCheckDevice';
 
 import styles from './IntegrateButton.css';

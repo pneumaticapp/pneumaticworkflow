@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import type { FieldHookConfig } from 'formik';

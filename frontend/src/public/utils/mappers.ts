@@ -1,6 +1,5 @@
-import { IExtraField, IRuntimeKickoffClient } from '../types/template';
+import type { IExtraField, IRuntimeKickoffClient } from '../types/template';
 import { isArrayWithItems } from './helpers';
-import { IRunWorkflow } from '../components/WorkflowEditPopup/types';
 import { ExtraFieldsHelper } from '../components/TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
 import { normalizeCheckboxValue } from './fields';
 import {
@@ -11,17 +10,19 @@ import {
   formatDateToISOInWorkflow,
   formatDateToISOInTask,
 } from './dateTime';
-import {
+import type {
   IWorkflow,
   IWorkflowDetailsKickoff,
   IWorkflowLogItem,
   WorkflowWithDateFields,
   WorkflowWithTspFields,
+  IRunWorkflow,
 } from '../types/workflow';
-import { IHighlightsItem } from '../types/highlights';
-import { TaskWithDateFields, TaskWithTspFields, TFormatTaskDates } from '../types/tasks';
+import type { IHighlightsItem } from '../types/highlights';
+import type { TaskWithDateFields, TaskWithTspFields } from '../types/taskDate';
+import type { TFormatTaskDates } from '../types/tasks';
 import { getWorkflowAddComputedPropsToRedux } from '../components/Workflows/utils/getWorfkflowClientProperties';
-import { IStartWorkflowPayload, TEditWorkflowPayload } from '../redux/workflows/types';
+import type { IStartWorkflowPayload, TEditWorkflowPayload } from '../redux/workflows/types';
 
 interface OptionsMapRequestBody {
   ignorePropertyMapToSnakeCase?: string[];

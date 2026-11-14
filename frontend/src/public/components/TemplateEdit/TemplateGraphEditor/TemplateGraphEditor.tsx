@@ -1,10 +1,11 @@
-import * as React from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import ReactFlow, { Node as ReactFlowNode } from 'reactflow';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import type { Node as ReactFlowNode } from 'reactflow';
+import ReactFlow from 'reactflow';
 import 'reactflow/dist/style.css';
 
-import { ITemplateClient } from '../../../types/template';
-import { EGraphNodeType, TGraphAddTaskIntent, TGraphEdge, TGraphNode } from './types';
+import type { ITemplateClient } from '../../../types/template';
+import type { TGraphAddTaskIntent, TGraphEdge, TGraphNode } from './types';
+import { EGraphNodeType } from './types';
 import { useTemplateGraph } from '../../../hooks/useTemplateGraph';
 import { TaskNode } from './components/TaskNode/TaskNode';
 import { KickoffNode } from './components/KickoffNode/KickoffNode';

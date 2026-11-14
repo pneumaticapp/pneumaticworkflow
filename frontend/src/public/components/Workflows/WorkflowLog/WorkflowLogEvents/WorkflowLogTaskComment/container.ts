@@ -6,9 +6,10 @@ import {
   editComment,
   deleteComment,
 } from '../../../../../redux/workflows/slice';
-import { TWorkflowLogTaskCommentProps, WorkflowLogTaskComment } from './WorkflowLogTaskComment';
+import type { TWorkflowLogTaskCommentProps } from './WorkflowLogTaskComment';
+import { WorkflowLogTaskComment } from './WorkflowLogTaskComment';
 
-import { IApplicationState } from '../../../../../types/redux';
+import type { RootState } from '../../../../../redux/store';
 
 type TStoreProps = Pick<TWorkflowLogTaskCommentProps, 'currentUserId' | 'workflowModal'>;
 type TDispatchProps = Pick<
@@ -21,7 +22,7 @@ export function mapStateToProps({
   workflows: {
     workflowLog: { isOpen },
   },
-}: IApplicationState): TStoreProps {
+}: RootState): TStoreProps {
   return {
     currentUserId,
     workflowModal: isOpen,

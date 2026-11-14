@@ -1,12 +1,13 @@
 /* prettier-ignore */
 import { connect } from 'react-redux';
-import { IApplicationState } from '../../types/redux';
+import type { RootState } from '../../redux/store';
 
-import { EditKickoff, IEditKickoffProps } from './KickoffEdit';
+import type { IEditKickoffProps } from './KickoffEdit';
+import { EditKickoff } from './KickoffEdit';
 
 type TStoreProps = Pick<IEditKickoffProps, 'accountId'>;
 
-const mapStateToProps = ({ authUser: { account } }: IApplicationState): TStoreProps => {
+const mapStateToProps = ({ authUser: { account } }: RootState): TStoreProps => {
   return { accountId: account.id || -1 };
 };
 

@@ -5,14 +5,18 @@ import classnames from 'classnames';
 import { useSelector } from 'react-redux';
 
 import { isArrayWithItems } from '../../../../utils/helpers';
-import { EStartingType, getDropdownOperators } from './utils/getDropdownOperators';
+import { getDropdownOperators } from './utils/getDropdownOperators';
+import { EStartingType } from '../../../../types/template';
 import { setRulesApiNamesAndIds } from './utils/setRulesApiNames';
 import { handleAddNewRule, handleAddNewCondition, CONDITION_DISABLED_OPERATOR, getDropdownSteps } from './utils/shared';
 
 import { getSubscriptionPlan } from '../../../../redux/selectors/user';
-import { EConditionAction, TConditionRule } from './types';
+import { EConditionAction } from '../../../../types/templateTaskConditions';
+import type { ICondition, TConditionRule } from '../../../../types/templateTaskConditions';
 import { ESubscriptionPlan } from '../../../../types/account';
-import { ICondition, IConditionsProps, IDropdownVariable, Predicate, RichLabel } from '.';
+import { Predicate } from './Predicate';
+import { RichLabel } from './RichLabel';
+import type { IConditionsProps, IDropdownVariable } from './types';
 
 import styles from './Conditions.css';
 import stylesTaskForm from '../TaskForm.css';

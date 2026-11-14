@@ -1,4 +1,5 @@
-import { EGraphNodeType, TGraphNode, TGraphEdge } from '../types';
+import type { TGraphNode, TGraphEdge } from '../types';
+import { EGraphNodeType } from '../types';
 import { assignSpineLanes } from './assignSpineLanes';
 import { isStemGraphEdge } from './edgeStyles';
 import {

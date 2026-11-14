@@ -1,5 +1,5 @@
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { ITemplateRequest, ITemplateResponse } from '../types/template';
+import type { ITemplateRequest, ITemplateResponse } from '../types/template';
 import { mapRequestBody } from '../utils/mappers';
 
 import { commonRequest } from './commonRequest';

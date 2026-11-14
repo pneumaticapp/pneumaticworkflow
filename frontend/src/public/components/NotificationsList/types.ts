@@ -1,6 +1,6 @@
-import { IChangeNotificationsListPayload, ILoadNotificationsPayload } from '../../redux/notifications/actions';
-import { TNotificationsListItem } from '../../types';
-import { TUserListItem } from '../../types/user';
+import type { IChangeNotificationsListPayload, ILoadNotificationsPayload } from '../../redux/notifications/actions';
+import type { TNotificationsListItem } from '../../types';
+import type { TUserListItem } from '../../types/user';
 
 export interface INotificationsListProps {
   users: TUserListItem[];

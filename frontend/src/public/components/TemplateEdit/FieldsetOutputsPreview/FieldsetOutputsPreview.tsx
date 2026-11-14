@@ -1,8 +1,8 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 import classNames from 'classnames';
 
-import { IFieldsetBindingClient } from '../../../types/template';
+import type { IFieldsetBindingClient } from '../../../types/fieldset';
 import { isArrayWithItems } from '../../../utils/helpers';
 
 import styles from './FieldsetOutputsPreview.css';

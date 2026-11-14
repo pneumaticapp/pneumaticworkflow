@@ -1,4 +1,4 @@
-import { ITaskListItem, ITasksSettings } from '../../../types/tasks';
+import type { ITaskListItem, ITasksSettings } from '../../../types/tasks';
 
 export function checkShouldInsertNewTask(
   newTask: ITaskListItem,

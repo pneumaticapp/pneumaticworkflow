@@ -1,10 +1,10 @@
-import * as React from 'react';
+import React from 'react';
 
 import { ProgressBar } from '../../ProgressBar';
 import { ProgressbarTooltipContents } from '../utils/ProgressbarTooltipContents';
 import { getWorkflowProgress } from '../utils/getWorkflowProgress';
 import { getWorkflowProgressColor } from '../utils/getWorkflowProgressColor';
-import { IWorkflowClient } from '../../../types/workflow';
+import type { IWorkflowClient } from '../../../types/workflow';
 
 interface IWorkflowsProgressProps {
   workflow: IWorkflowClient;

@@ -1,4 +1,4 @@
-import { IntlShape } from 'react-intl';
+import type { IntlShape } from 'react-intl';
 import moment from 'moment-timezone';
 import { useSelector } from 'react-redux';
 import { getLanguage } from '../../../redux/selectors/user';

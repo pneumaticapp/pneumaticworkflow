@@ -1,5 +1,5 @@
 import { all, fork, put, select, takeEvery } from 'redux-saga/effects';
-import { PayloadAction } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 import { EMenuActions, mergeMenuItems, setMenuItemCounter } from './actions';
 import {
   activeUsersCountFetchFinished,
@@ -11,10 +11,9 @@ import {
 } from '../accounts/slice';
 import { getAuthUser } from '../selectors/user';
 import { generateMenuItems, createMenuCounter } from '../../utils/menu';
-import { IMenuItem } from '../../types/menu';
+import type { IMenuItem, TMenuCounter } from '../../types/menu';
 import { getTotalTasksCount } from '../selectors/tasks';
 import { getAccountPlan } from '../selectors/accounts';
-import { TMenuCounter } from '../../constants/menu';
 import { changeTasksCount } from '../tasks/slice';
 
 import { getTenantsCountStore } from '../selectors/tenants';

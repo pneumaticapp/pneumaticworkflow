@@ -1,12 +1,5 @@
-import {
-  EGraphNodeType,
-  IConnectedHandles,
-  IGraphState,
-  TGraphEdge,
-  TGraphNode,
-  TKickoffNode,
-  TTaskNode,
-} from '../types';
+import type { IConnectedHandles, IGraphState, TGraphEdge, TGraphNode, TKickoffNode, TTaskNode } from '../types';
+import { EGraphNodeType } from '../types';
 
 export const EMPTY_CONNECTED_HANDLES: IConnectedHandles = {
   hasTargetTop: false,

@@ -1,15 +1,16 @@
-import React, { PropsWithChildren, useCallback } from 'react';
+import React, { useCallback } from 'react';
+import type { PropsWithChildren } from 'react';
 
 import { useDispatch } from 'react-redux';
-import { CellProps } from 'react-table';
+import type { CellProps } from 'react-table';
 
 import { WorkflowCardUsers } from '../../../../../../WorkflowCardUsers';
 import { setFilterPerformers, setFilterPerformersGroup } from '../../../../../../../redux/workflows/slice';
-import { TableColumns } from '../../../types';
+import type { TTableColumns } from '../../../types';
 
 import styles from './PerformerColumns.css';
 
-type TProps = PropsWithChildren<CellProps<TableColumns, TableColumns['system-column-performer']>>;
+type TProps = PropsWithChildren<CellProps<TTableColumns, TTableColumns['system-column-performer']>>;
 
 export function PerformerColumn({ value: { selectedUsers } }: TProps) {
   const dispatch = useDispatch();

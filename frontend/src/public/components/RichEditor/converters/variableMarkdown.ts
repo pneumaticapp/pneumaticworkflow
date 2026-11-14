@@ -5,7 +5,7 @@ import { $createTextNode } from 'lexical';
 import { mentionsRegex, variableRegex } from '../../../constants/defaultValues';
 import { $createMentionNode } from '../nodes/MentionNode';
 import { VariableNode, $createVariableNode, $isVariableNode } from '../nodes/VariableNode';
-import type { TTaskVariable } from '../../TemplateEdit/types';
+import type { TTaskVariable } from '../../../types/template';
 
 type InlineMatch =
   | { type: 'variable'; index: number; end: number; match: RegExpMatchArray }

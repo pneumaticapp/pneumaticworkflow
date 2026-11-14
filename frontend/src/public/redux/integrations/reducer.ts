@@ -1,7 +1,8 @@
 import { produce } from 'immer';
 
-import { EIntegrationsActions, TIntegrationsActions } from './actions';
-import { IIntegrationsStore } from '../../types/redux';
+import { EIntegrationsActions } from './actions';
+import type { TIntegrationsActions } from './actions';
+import type { IIntegrationsStore } from './types';
 
 const INIT_STATE: IIntegrationsStore = {
   apiKeys: {

@@ -1,12 +1,13 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import Switch from 'rc-switch';
 import { useIntl } from 'react-intl';
 
 import { IntlMessages } from '../../../IntlMessages';
 import { ArrowDownIcon, ArrowRightIcon, ArrowUpIcon, BurgerIcon, DropdownCrossIcon, TrashIcon } from '../../../icons';
-import { Dropdown, TDropdownOption } from '../../../UI';
-import { IKickoffDropdownProps } from './types';
+import type { TDropdownOption } from '../../../UI';
+import { Dropdown } from '../../../UI';
+import type { IKickoffDropdownProps } from './types';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
 

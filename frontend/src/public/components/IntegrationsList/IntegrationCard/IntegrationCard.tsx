@@ -1,8 +1,8 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 
-import { IIntegrationListItem } from '../../../types/integrations';
+import type { IIntegrationListItem } from '../../../types/integrations';
 
 import { getTruncatedText } from '../../../utils/helpers';
 import { ERoutes } from '../../../constants/routes';

@@ -1,10 +1,14 @@
-import { ITypedReduxAction, IWorkflowLog } from '../../types/redux';
+import type {
+  IChangeWorkflowLogViewSettingsPayload,
+  ISendWorkflowLogComment,
+  ITypedReduxAction,
+  IWorkflowLog,
+} from '../types';
 import { actionGenerator } from '../../utils/redux';
-import { IExtraField, RawPerformer } from '../../types/template';
-import { ITask } from '../../types/tasks';
-import { ETaskCardViewMode } from '../../components/TaskCard';
-import { EWorkflowsLogSorting, IWorkflowDetailsClient, IWorkflowLogItem } from '../../types/workflow';
-import { ISendWorkflowLogComment } from '../workflows/types';
+import type { IExtraField, RawPerformer } from '../../types/template';
+import type { ETaskCardViewMode, ITask } from '../../types/tasks';
+import type { IWorkflowDetailsClient, IWorkflowLogItem } from '../../types/workflow';
+import type { ETaskCardState } from './types';
 
 export const enum ETaskActions {
   LoadCurrentTask = 'LOAD_CURRENT_TASK',
@@ -65,12 +69,8 @@ export const setTaskWorkflowIsLoading: (payload: boolean) => TSetTaskWorkflowIsL
   ETaskActions.SetTaskWorkflowIsLoading,
   boolean
 >(ETaskActions.SetTaskWorkflowIsLoading);
-export interface IChangeTaskWorkflowLogViewSettingsPayload {
+export interface IChangeTaskWorkflowLogViewSettingsPayload extends IChangeWorkflowLogViewSettingsPayload {
   taskId: number;
-  id: number;
-  sorting: EWorkflowsLogSorting;
-  comments: boolean;
-  isOnlyAttachmentsShown: boolean;
 }
 export type TChangeTaskWorkflowLogViewSettings = ITypedReduxAction<
   ETaskActions.ChangeTaskWorkflowLogViewSettings,
@@ -129,17 +129,10 @@ export const setTaskReverted: (payload: TSetTaskRevertedPayload) => TSetTaskReve
   TSetTaskRevertedPayload
 >(ETaskActions.SetTaskReverted);
 
-export enum ETaskStatus {
-  WaitingForAction = 'waiting-for-action',
-  Loading = 'loading',
-  Returning = 'returning',
-  Completing = 'completing',
-  Completed = 'completed',
-}
-export type TSetCurrentTaskStatus = ITypedReduxAction<ETaskActions.SetCurrentTaskStatus, ETaskStatus>;
-export const setCurrentTaskStatus: (payload: ETaskStatus) => TSetCurrentTaskStatus = actionGenerator<
+export type TSetCurrentTaskStatus = ITypedReduxAction<ETaskActions.SetCurrentTaskStatus, ETaskCardState>;
+export const setCurrentTaskStatus: (payload: ETaskCardState) => TSetCurrentTaskStatus = actionGenerator<
   ETaskActions.SetCurrentTaskStatus,
-  ETaskStatus
+  ETaskCardState
 >(ETaskActions.SetCurrentTaskStatus);
 
 export type TAddTaskPerformerPayload = { taskId: number; userId: RawPerformer };

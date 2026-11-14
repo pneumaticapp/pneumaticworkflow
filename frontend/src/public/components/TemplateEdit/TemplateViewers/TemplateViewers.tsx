@@ -7,21 +7,12 @@ import { ESubscriptionPlan } from '../../../types/account';
 import { createViewerApiName } from '../../../utils/createId';
 import { trackInviteTeamInPage } from '../../../utils/analytics';
 import { getNotDeletedUsers, getUserFullName } from '../../../utils/users';
-import {
-  EOptionTypes,
-  TUsersDropdownOption,
-  UsersDropdown,
-  getUsersDropdownOptionValue,
-} from '../../UI/form/UsersDropdown';
+import type { TUsersDropdownOption } from '../../UI/form/UsersDropdown/types';
+import { EOptionTypes } from '../../UI/form/UsersDropdown/types';
+import { UsersDropdown, getUsersDropdownOptionValue } from '../../UI/form/UsersDropdown';
 import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../../../redux/selectors/user';
-import {
-  ETaskPerformerType,
-  ETemplateOwnerRole,
-  ETemplateOwnerType,
-  TemplateViewerType,
-  TTemplateViewerType,
-  ITemplateOwner,
-} from '../../../types/template';
+import type { ETemplateOwnerType, TTemplateViewerType, ITemplateOwner } from '../../../types/template';
+import { ETaskPerformerType, ETemplateOwnerRole, TemplateViewerType } from '../../../types/template';
 import { ViewerItem } from './components';
 
 import styles from './TemplateViewers.css';

@@ -1,7 +1,7 @@
 /* eslint-disable */
 /// <reference types="jest" />
 
-import * as React from 'react';
+import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 
 type TTestOption = {

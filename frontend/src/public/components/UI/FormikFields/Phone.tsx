@@ -1,7 +1,7 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
-import { FieldProps } from 'formik';
+import type { FieldProps } from 'formik';
 import PhoneInput from 'react-phone-number-input';
 
 import { InfoIcon } from '../../icons';

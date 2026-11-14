@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useDispatch } from 'react-redux';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
@@ -15,7 +15,7 @@ import {
 import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
 import { sanitizeText } from '../../../utils/strings';
-import { IFieldsetCatalogItem } from '../../../types/fieldset';
+import type { IFieldsetCatalogItem } from '../../../types/fieldset';
 
 import styles from './FieldsetCard.css';
 

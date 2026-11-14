@@ -1,15 +1,15 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import { TForegroundColor } from '../common/types';
+import type { TForegroundColor } from '../common/types';
 import { getForegroundClass } from '../common/utils/getForegroundClass';
 import { FolderIcon } from '../../../icons';
-import { TUploadedFile, uploadFiles } from '../../../../utils/uploadFiles';
+import { uploadFiles } from '../../../../utils/uploadFiles';
 import { NotificationManager } from '../../Notifications';
 import { logger } from '../../../../utils/logger';
 import { ExtraFieldFilesGrid } from '../../../TemplateEdit/ExtraFields/File/ExtraFieldFilesGrid';
-import { TAttachmentType } from '../../../../types/attachments';
+import type { TAttachmentType, TUploadedFile } from '../../../../types/attachments';
 import { isArrayWithItems } from '../../../../utils/helpers';
 
 import { getImageDimensions } from './utils/getImageDimensions';

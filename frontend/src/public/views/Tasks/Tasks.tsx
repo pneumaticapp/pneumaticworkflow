@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import loadable from '@loadable/component';
 
 import { Route, Switch, Redirect } from 'react-router-dom';

@@ -1,7 +1,7 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { mapRequestBody } from '../utils/mappers';
-import { TTemplatePreset } from '../types/template';
+import type { TTemplatePreset } from '../types/template';
 
 export function updateTemplatePresets(preset: TTemplatePreset) {
   const {

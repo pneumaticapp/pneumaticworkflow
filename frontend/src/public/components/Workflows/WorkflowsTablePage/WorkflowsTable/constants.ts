@@ -1,5 +1,4 @@
-import { TSystemField } from './types';
-import { TRuntimeMergedOutputPart } from '../../../../types/template';
+import type { TRuntimeMergedOutputPart, TSystemField } from '../../../../types/workflow';
 
 export const SYSTEM_FIELD_NAMES = [
   'system-column-workflow',

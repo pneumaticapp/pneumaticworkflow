@@ -1,18 +1,20 @@
 import { all, fork, put, select, takeEvery } from 'redux-saga/effects';
 import { getNormalizeOutputUsersToEmails, mapWorkflowToRunProcess } from '../../utils/mappers';
-import { runProcess, TRunProcessResponse } from '../../api/runProcess';
+import type { TRunProcessResponse } from '../../api/runProcess';
+import { runProcess } from '../../api/runProcess';
 import { getAuthUser, getIsAdmin, getUsers } from '../selectors/user';
 import { ERoutes } from '../../constants/routes';
 import { closeSelectTemplateModal, loadCurrentTask } from '../actions';
-import { ERunWorkflowModalActions, runWorkflowFailed, runWorkflowSuccess, TRunWorkflow } from './actions';
+import type { TRunWorkflow } from './actions';
+import { ERunWorkflowModalActions, runWorkflowFailed, runWorkflowSuccess } from './actions';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { history } from '../../utils/history';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { logger } from '../../utils/logger';
 
 import { EWorkflowTaskStatus } from '../../types/workflow';
-import { RawPerformer } from '../../types/template';
-import { TUserListItem } from '../../types/user';
+import type { RawPerformer } from '../../types/template';
+import type { TUserListItem } from '../../types/user';
 
 function* runWorkflow({ payload: workflow }: TRunWorkflow) {
   try {

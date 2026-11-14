@@ -1,4 +1,4 @@
-import { ITemplateResponse } from '../types/template';
+import type { ITemplateResponse } from '../types/template';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { mapRequestBody } from '../utils/mappers';
 

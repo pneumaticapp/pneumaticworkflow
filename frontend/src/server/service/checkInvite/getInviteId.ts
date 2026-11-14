@@ -1,10 +1,12 @@
-import { Response } from 'express';
+import type { Response } from 'express';
 import { parse as parseQs } from 'querystring';
-import { serverApi, IHttpRequestOptions } from '../../utils';
+import type { IHttpRequestOptions } from '../../utils';
+import { serverApi } from '../../utils';
 import { getConfig } from '../../../public/utils/getConfig';
 import { ERoutes } from '../../../public/constants/routes';
 import { isObject } from '../../../public/utils/mappers';
-import { UserInviteResponse, ErrorCode } from './types';
+import type { UserInviteResponse } from './types';
+import { ErrorCode } from './types';
 
 const {
   api: { urls },

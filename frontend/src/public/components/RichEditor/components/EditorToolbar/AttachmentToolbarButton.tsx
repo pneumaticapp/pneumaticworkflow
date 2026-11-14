@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useRef } from 'react';
-import { CustomTooltip } from '../../../UI';
+import { CustomTooltip } from '../../../UI/CustomTooltip';
 import type { IAttachmentToolbarButtonProps } from './types';
 
 import styles from './EditorToolbar.css';

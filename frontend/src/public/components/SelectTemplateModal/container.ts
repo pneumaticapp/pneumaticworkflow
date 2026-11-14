@@ -1,13 +1,14 @@
 import { connect } from 'react-redux';
 
-import { IApplicationState } from '../../types/redux';
+import type { RootState } from '../../redux/store';
 import {
   setSelectTemplateModalTemplates,
   loadSelectTemplateModalTemplates,
 } from '../../redux/selectTemplateModal/actions';
 import { closeSelectTemplateModal, openRunWorkflowModalSideMenu } from '../../redux/actions';
 
-import { ISelectTemplateModalProps, SelectTemplateModal } from './SelectTemplateModal';
+import type { ISelectTemplateModalProps } from './SelectTemplateModal';
+import { SelectTemplateModal } from './SelectTemplateModal';
 
 export type TMainLayoutComponentStoreProps = Pick<
   ISelectTemplateModalProps,
@@ -25,7 +26,7 @@ export type TMainLayoutComponentDispatchProps = Pick<
 const mapStateToProps = ({
   selectTemplateModal: { items, isLoading, isOpen, ancestorTaskId },
   authUser: { isAdmin },
-}: IApplicationState): TMainLayoutComponentStoreProps => {
+}: RootState): TMainLayoutComponentStoreProps => {
   return {
     isModalOpened: isOpen,
     isLoading,

@@ -1,12 +1,13 @@
 import { getUserFullName } from '../../../utils/users';
 import { createPerformerApiName, createTaskApiName, createUUID } from '../../../utils/createId';
 import { createEmptyTaskDueDate } from '../../../utils/dueDate/createEmptyTaskDueDate';
-import { ITemplateTaskClient, ETaskPerformerType } from '../../../types/template';
-import { IAuthUser } from '../../../types/redux';
+import { ETaskPerformerType } from '../../../types/template';
+import type { ITemplateTaskClient } from '../../../types/template';
+import type { TAuthUserResult } from '../../../types/user';
 import { getEmptyConditions } from '../TaskForm/Conditions/utils/getEmptyConditions';
 
 export interface ICreateTemplateTaskOptions {
-  authUser: IAuthUser;
+  authUser: TAuthUserResult;
   accessConditions: boolean;
   overrides?: Partial<ITemplateTaskClient>;
 }

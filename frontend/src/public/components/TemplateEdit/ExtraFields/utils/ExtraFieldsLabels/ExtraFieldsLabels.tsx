@@ -1,7 +1,7 @@
 import React from 'react';
 import classnames from 'classnames';
 
-import { IExtraField } from '../../../../../types/template';
+import type { IExtraField } from '../../../../../types/template';
 import { isArrayWithItems } from '../../../../../utils/helpers';
 import { truncateString } from '../../../../../utils/truncateString';
 

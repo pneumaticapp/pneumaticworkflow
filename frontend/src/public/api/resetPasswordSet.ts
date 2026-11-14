@@ -1,5 +1,5 @@
 import { commonRequest } from './commonRequest';
-import { IConfirmResetPassword } from '../redux/auth/actions';
+import type { IConfirmResetPassword } from '../redux/auth/actions';
 import { mapRequestBody } from '../utils/mappers';
 
 export interface IResetPasswordSetResponse {

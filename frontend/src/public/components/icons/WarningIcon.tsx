@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 
 export function WarningIcon({ fill = 'currentColor', ...rest }: React.SVGAttributes<SVGElement>) {
   return (

@@ -1,9 +1,9 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 
 import { FilledInfoIcon } from '../../../../icons';
 import { Tooltip } from '../../../../UI';
-import { IGraphConditionClause } from '../../types';
+import type { IGraphConditionClause } from '../../types';
 import { labelByOperatorMap } from '../../../TaskForm/Conditions/utils/getDropdownOperators';
 import { KICKOFF_START_AFTER } from '../../utils/graphConstants';
 import styles from './ConditionEdgeInfo.css';

@@ -1,8 +1,8 @@
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { configure } from '@testing-library/react';
 
-import { EConditionLogicOperations, EConditionOperators } from '../../../../TaskForm/Conditions';
+import { EConditionLogicOperations, EConditionOperators } from '../../../../../../types/templateTaskConditions';
 import { ConditionEdgeInfo } from '../ConditionEdgeInfo';
 
 configure({ testIdAttribute: 'data-test-id' });

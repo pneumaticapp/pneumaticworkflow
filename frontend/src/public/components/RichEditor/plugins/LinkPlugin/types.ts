@@ -23,3 +23,19 @@ export interface IScrollSnapshot {
   scrollLeft: number;
   scrollTop: number;
 }
+
+export interface ILinkUrlFormProps {
+  anchorElement?: HTMLElement | null;
+  anchorRect?: DOMRect | null;
+  editorContainerRef?: React.RefObject<HTMLDivElement | null>;
+  getAnchorRect?: (() => DOMRect | null) | null;
+  formMode: TLinkFormMode;
+  isVisible: boolean;
+  onClose: () => void;
+  onSubmit: (url: string, linkText?: string) => void;
+}
+
+export interface ILinkPluginProviderProps {
+  children: React.ReactNode;
+  editorContainerRef?: React.RefObject<HTMLDivElement | null>;
+}

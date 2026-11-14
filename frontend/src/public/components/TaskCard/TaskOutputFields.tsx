@@ -1,11 +1,11 @@
 import React from 'react';
 
-import { ETaskStatus } from '../../redux/actions';
+import { ETaskCardState } from '../../redux/task/types';
 import { EInputNameBackgroundColor } from '../../types/workflow';
 import { isArrayWithItems } from '../../utils/helpers';
 import { IntlMessages } from '../IntlMessages';
 import { MergedOutputList } from '../MergedOutputList';
-import { ITaskOutputFieldsProps } from './types';
+import type { ITaskOutputFieldsProps } from './types';
 
 import styles from './TaskCard.css';
 
@@ -24,7 +24,7 @@ export function TaskOutputFields({
 
   if (
     (!isArrayWithItems(visibleOutputs) && !isArrayWithItems(fieldsetOutputValues)) ||
-    status === ETaskStatus.Completed
+    status === ETaskCardState.Completed
   ) {
     return null;
   }

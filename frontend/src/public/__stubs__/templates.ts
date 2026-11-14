@@ -1,5 +1,5 @@
-import { ITaskCommentItem } from '../types/workflow';
-import { ITemplateClient, ITemplateListItem } from '../types/template';
+import type { ITaskCommentItem } from '../types/workflow';
+import type { ITemplateClient, ITemplateListItem } from '../types/template';
 import { getEmptyKickoff } from '../utils/template';
 
 export const templatesList: ITemplateListItem[] = [

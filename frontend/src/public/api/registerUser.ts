@@ -1,7 +1,6 @@
 import { commonRequest } from './commonRequest';
-import { IUserRegister } from '../redux/auth/actions';
+import type { IUserRegister, IUserUtm } from '../types/user';
 import { mapRequestBody } from '../utils/mappers';
-import { IUserUtm } from '../views/user/utils/utmParams';
 
 export interface IRegisterUserResponse {
   token: string;

@@ -1,36 +1,25 @@
-import {
-  ActionChannelEffect,
-  ActionPattern,
-  actionChannel,
-  all,
-  call,
-  fork,
-  put,
-  select,
-  take,
-  takeEvery,
-} from 'redux-saga/effects';
+import { actionChannel, all, call, fork, put, select, take, takeEvery } from 'redux-saga/effects';
+import type { ActionChannelEffect, ActionPattern } from 'redux-saga/effects';
 import uniqBy from 'lodash.uniqby';
 
-import { getNotifications, TGetNotificationsResponse } from '../../api/getNotifications';
+import { getNotifications } from '../../api/getNotifications';
+import type { TGetNotificationsResponse } from '../../api/getNotifications';
 import { removeNotificationItem } from '../../api/removeNotificationItem';
 import { markNotificationsAsRead } from '../../api/markNotificationsAsRead';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { isArrayWithItems } from '../../utils/helpers';
-import { TRemoveNotificationItem } from '../actions';
 import { getNotificationsStore } from '../selectors/notifications';
-import { TNotificationsListItem } from '../../types';
-import { IStoreNotification } from '../../types/redux';
+import type { TNotificationsListItem } from '../../types/notifications';
+import type { IStoreNotification } from './types';
 
 import {
   ENotificationsActions,
   loadNotificationsListFailed,
   changeNotificationsList,
-  TChangeNotificationsList,
   changeHasNewNotifications,
-  TLoadNotifications,
   changeUnreadNotificationsCount,
 } from './actions';
+import type { TChangeNotificationsList, TLoadNotifications, TRemoveNotificationItem } from './actions';
 import { getUnreadNotificationsCount } from '../../api/getUnreadNotificationsCount';
 import { NotificationManager } from '../../components/UI/Notifications';
 

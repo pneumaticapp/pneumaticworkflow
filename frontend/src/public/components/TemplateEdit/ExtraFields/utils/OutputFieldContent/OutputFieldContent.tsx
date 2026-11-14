@@ -1,10 +1,9 @@
-import * as React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import { IOutputFieldContentProps } from './types';
-import { IExtraFieldSelection } from '../../../../../types/template';
+import type { IOutputFieldContentProps } from './types';
+import type { IExtraFieldSelection } from '../../../../../types/template';
 import { TruncatedTooltip } from './TruncatedTooltip';
 import { useCheckDevice } from '../../../../../hooks/useCheckDevice';
 import { getEmptySelection } from '../../../KickoffRedux/utils/getEmptySelection';

@@ -1,7 +1,6 @@
 import { commonRequest } from '../commonRequest';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
-import { TDashboardTimeRangeDates } from '../../types/dashboard';
-import { TDashboardBreakdownItemResponse } from '../../types/redux';
+import type { TDashboardBreakdownItemResponse, TDashboardTimeRangeDates } from '../../types/dashboard';
 import { toTspDate } from '../../utils/dateTime';
 
 export function getDashboardWorkflowBreakdown(params: TDashboardTimeRangeDates) {

@@ -1,10 +1,11 @@
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
 import { enMessages } from '../../../lang/locales/en_US';
 
-import { TTransformedTask, TRuntimeMergedOutputPart, IExtraField } from '../../../types/template';
+import type { IExtraField } from '../../../types/template';
+import type { TRuntimeMergedOutputPart, TTransformedTask } from '../../../types/workflow';
 import { makeExtraField } from '../../../__stubs__/fields.factory';
 import { EFieldLabelPosition } from '../../../types/fieldset';
 

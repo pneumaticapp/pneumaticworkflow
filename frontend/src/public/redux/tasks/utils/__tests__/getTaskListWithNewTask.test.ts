@@ -1,7 +1,8 @@
 /* eslint-disable */
 /* prettier-ignore */
-import { ITaskList } from '../../../../types/redux';
-import { ETaskListSorting, ITaskListItem } from '../../../../types/tasks';
+import type { ITaskList } from '../../types';
+import { ETaskListSorting } from '../../../../types/tasks';
+import type { ITaskListItem } from '../../../../types/tasks';
 import { getTaskListWithNewTask } from '../getTaskListWithNewTask';
 
 const createMockTask = (task: Partial<ITaskListItem>): ITaskListItem => {

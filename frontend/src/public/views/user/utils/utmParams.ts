@@ -1,15 +1,7 @@
 /* prettier-ignore */
 import { getQueryStringParams, history } from '../../../utils/history';
+import type { IUserUtm } from '../../../types/user';
 export const UTM_LOCKALSTORAGE_KEY = 'utm';
-
-export interface IUserUtm {
-  utm_source?: string;
-  utm_medium?: string;
-  utm_campaign?: string;
-  utm_term?: string;
-  utm_content?: string;
-  gclid?: string;
-}
 
 const UTM_PARAMS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid'];
 

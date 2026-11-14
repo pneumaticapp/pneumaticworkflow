@@ -8,9 +8,10 @@ import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
 
 import { useClickOutside } from '../../../../../hooks/useClickOutside';
-import { IDeleteComment } from '../../../../../api/workflows/deleteComment';
+import type { IDeleteComment } from '../../../../../api/workflows/deleteComment';
 import { Avatar } from '../../../../UI/Avatar';
-import { EWorkflowStatus, IWorkflowLogItem } from '../../../../../types/workflow';
+import type { IWorkflowLogItem } from '../../../../../types/workflow';
+import { EWorkflowStatus } from '../../../../../types/workflow';
 import { getUserFullName } from '../../../../../utils/users';
 import { RichText } from '../../../../RichText';
 import { Attachments } from '../../../../Attachments';
@@ -28,13 +29,13 @@ import {
 } from '../../../../icons';
 import { RichEditor } from '../../../../RichEditor';
 import { type TMentionData } from '../../../../RichEditor/types';
-import { TUserListItem } from '../../../../../types/user';
+import type { TUserListItem } from '../../../../../types/user';
 import { useStatePromise } from '../../../../../hooks/useStatePromise';
-import { IEditComment } from '../../../../../api/workflows/editComment';
-import { IWatchedComment } from '../../../../../api/workflows/watchedComment';
+import type { IEditComment } from '../../../../../api/workflows/editComment';
+import type { IWatchedComment } from '../../../../../api/workflows/watchedComment';
 import { Tooltip } from '../../../../UI';
-import { ICreateReaction } from '../../../../../api/workflows/createReactionComment';
-import { IDeleteReaction } from '../../../../../api/workflows/deleteReactionComment';
+import type { ICreateReaction } from '../../../../../api/workflows/createReactionComment';
+import type { IDeleteReaction } from '../../../../../api/workflows/deleteReactionComment';
 
 import styles from './WorkflowLogTaskComment.css';
 import { DateFormat } from '../../../../UI/DateFormat';

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { Modal as BootstrapModal } from 'reactstrap';
 import classnames from 'classnames';
 

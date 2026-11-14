@@ -1,7 +1,8 @@
 import { connect } from 'react-redux';
 
-import { TaskForm, ITaskFormProps } from './TaskForm';
-import { IApplicationState } from '../../../types/redux';
+import type { ITaskFormProps } from './TaskForm';
+import { TaskForm } from './TaskForm';
+import type { RootState } from '../../../redux/store';
 import { patchTask } from '../../../redux/actions';
 import { getIsUserSubsribed } from '../../../redux/selectors/user';
 
@@ -11,7 +12,7 @@ type TStoreProps = Pick<
 > & { templateId: number | undefined };
 type TDispatchProps = Pick<ITaskFormProps, 'patchTask'>;
 
-const mapStateToProps = (state: IApplicationState): TStoreProps => {
+const mapStateToProps = (state: RootState): TStoreProps => {
   const {
     template: {
       data: { kickoff, tasks, id },

@@ -1,6 +1,6 @@
 /* eslint-disable */
 import classnames from 'classnames';
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 
 import { scrollToElement } from '../../../utils/helpers';

@@ -1,5 +1,5 @@
 import { commonRequest } from './commonRequest';
-import { ITemplateStep } from '../types/tasks';
+import type { ITemplateStep } from '../types/template';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 
 export interface IGetTemplateStepsRequest {

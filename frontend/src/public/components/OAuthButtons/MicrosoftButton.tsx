@@ -3,7 +3,8 @@ import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
 import { MicrosoftIcon } from '../icons';
-import { Button, TButtonProps } from '../UI';
+import type { TButtonProps } from '../UI';
+import { Button } from '../UI';
 
 import styles from './styles.css';
 

@@ -1,4 +1,4 @@
-import { ITemplateKickoffClient, IRuntimeKickoffClient } from '../../../types/template';
+import type { ITemplateKickoffClient, IRuntimeKickoffClient } from '../../../types/template';
 import { ExtraFieldsHelper } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
 
 export function getInitialKickoff<T extends ITemplateKickoffClient | IRuntimeKickoffClient>(kickoff: T): T {

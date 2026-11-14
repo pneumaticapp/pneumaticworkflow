@@ -1,12 +1,13 @@
-import { createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAction, createSlice } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 
-import { IPermissionsStore } from '../../types/redux';
 import { EPermissionObjectType } from '../../types/permissions';
-import { EAuthActions, TAuthUserResult } from '../auth/actions';
+import { EAuthActions } from '../auth/actions';
+import type { TAuthUserResult } from '../../types/user';
 
-import { ILoadObjectPermissionsPayload, ISetObjectPermissionsPayload } from './types';
+import type { ILoadObjectPermissionsPayload, ISetObjectPermissionsPayload, TPermissionsStore } from './types';
 
-const initialState: IPermissionsStore = {
+const initialState: TPermissionsStore = {
   userId: null,
   [EPermissionObjectType.Workflow]: {},
 };

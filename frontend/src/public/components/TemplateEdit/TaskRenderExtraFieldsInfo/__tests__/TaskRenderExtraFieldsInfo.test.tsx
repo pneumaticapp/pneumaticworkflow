@@ -1,9 +1,10 @@
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
 import { makeFieldsetBindingClient, makeFieldsetField } from '../../../../__stubs__/fieldsets.factory';
-import { IExtraField, IFieldsetBindingClient } from '../../../../types/template';
+import type { IFieldsetBindingClient } from '../../../../types/fieldset';
+import type { IExtraField } from '../../../../types/template';
 import { TaskRenderExtraFieldsInfo } from '../TaskRenderExtraFieldsInfo';
 
 const makeField = (apiName: string) =>

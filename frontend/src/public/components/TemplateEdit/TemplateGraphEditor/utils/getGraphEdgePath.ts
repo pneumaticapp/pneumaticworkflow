@@ -1,8 +1,8 @@
 import { Position } from 'reactflow';
-import { TGraphEdgePathKind } from '../types';
+import type { TGraphEdgePathKind } from '../types';
+import type { TGraphFace } from './graphGeometry';
 import {
   GRAPH_EDGE_SIDEWAYS_THRESHOLD,
-  TGraphFace,
   faceFromHandle,
   offsetAlongFace,
   snapOutOfStandoffStrip,

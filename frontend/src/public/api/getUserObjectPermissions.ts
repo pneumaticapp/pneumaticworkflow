@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { EPermissionObjectType, IObjectPermissionResponseItem } from '../types/permissions';
+import type { EPermissionObjectType, IObjectPermissionResponseItem } from '../types/permissions';
 
 export interface IGetUserObjectPermissionsConfig {
   objType: EPermissionObjectType;

@@ -1,12 +1,13 @@
 import { connect } from 'react-redux';
 import { loadIntegrationsList } from '../../redux/actions';
-import { IApplicationState } from '../../types/redux';
-import { IIntegrationsListProps, IntegrationsList } from './IntegrationsList';
+import type { RootState } from '../../redux/store';
+import type { IIntegrationsListProps } from './IntegrationsList';
+import { IntegrationsList } from './IntegrationsList';
 
 type TIntegrationsListStoreProps = Pick<IIntegrationsListProps, 'isLoading' | 'integrations'>;
 type TIntegrationsListDispatchProps = Pick<IIntegrationsListProps, 'loadIntegrationsList'>;
 
-function mapStateToProps({ integrations: { list } }: IApplicationState): TIntegrationsListStoreProps {
+function mapStateToProps({ integrations: { list } }: RootState): TIntegrationsListStoreProps {
   return {
     isLoading: list.isLoading,
     integrations: list.data,

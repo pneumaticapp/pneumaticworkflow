@@ -1,12 +1,13 @@
 import moment from 'moment';
-import * as React from 'react';
+import React from 'react';
 import { IntlProvider } from 'react-intl';
 import classnames from 'classnames';
-import { RouteComponentProps } from 'react-router-dom';
+import type { RouteComponentProps } from 'react-router-dom';
 
 import { useShouldHideIntercom } from '../../hooks/useShouldHideIntercom';
 import { AppLocale } from '../../lang';
-import { ELocale, IAuthUser } from '../../types/redux';
+import type { IAuthUser } from '../../redux/auth/types';
+import type { ELocale } from '../../types/locale';
 import { NotificationContainer } from '../UI/Notifications';
 import { FullscreenImageContainer } from '../FullscreenImage';
 import { initiatePagesTracking } from '../../utils/analytics/trackPages';

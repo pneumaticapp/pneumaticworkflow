@@ -1,11 +1,7 @@
-import { EConditionOperators } from '../../types';
-import {
-  conditionsByFieldTypeMap,
-  EStartingType,
-  getDropdownOperators,
-  IDropdownOperator,
-  labelByOperatorMap,
-} from '../getDropdownOperators';
+import { EConditionOperators } from '../../../../../../types/templateTaskConditions';
+import { conditionsByFieldTypeMap, getDropdownOperators, labelByOperatorMap } from '../getDropdownOperators';
+import type { IDropdownOperator } from '../types';
+import { EStartingType } from '../../../../../../types/template';
 import { CONDITION_DISABLED_OPERATOR, OPERATORS_WITHOUT_VALUE } from '../shared';
 
 describe('getDropdownOperators', () => {

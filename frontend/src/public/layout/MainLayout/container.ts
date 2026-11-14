@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 
-import { IApplicationState } from '../../types/redux';
+import type { RootState } from '../../redux/store';
 import {
   loadNotificationsList,
   authenticateUser,
@@ -10,7 +10,8 @@ import {
 } from '../../redux/actions';
 import { usersFetchStarted, loadActiveUsersCount, loadPlan } from '../../redux/accounts/slice';
 import { loadTasksCount } from '../../redux/tasks/slice';
-import { IMainLayoutComponentStoreProps, MainLayout } from './MainLayout';
+import type { IMainLayoutComponentStoreProps } from './MainLayout';
+import { MainLayout } from './MainLayout';
 import { getUserPendingActions } from '../../redux/selectors/user';
 
 export type TMainLayoutComponentStoreProps = Pick<
@@ -31,7 +32,7 @@ export type TMainLayoutComponentDispatchProps = Pick<
   | 'loadPlan'
 >;
 
-const mapStateToProps = (state: IApplicationState): TMainLayoutComponentStoreProps => {
+const mapStateToProps = (state: RootState): TMainLayoutComponentStoreProps => {
   const {
     runWorkflowModal,
     notifications,

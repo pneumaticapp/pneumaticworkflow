@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { Formik, FormikConfig } from 'formik';
+import type { FormikConfig } from 'formik';
+import { Formik } from 'formik';
 import { useIntl } from 'react-intl';
 
 import { TITLES } from '../../../constants/titles';
@@ -11,7 +12,7 @@ import { Header, Button, InputField } from '../../../components/UI';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
 
 import styles from '../User.css';
-import { TLoginSuperuserPayload } from '../../../redux/actions';
+import type { TLoginSuperuserPayload } from '../../../redux/actions';
 
 const INITIAL_VALUES_FORMIK: TSuperuserLoginValues = {
   email: '',

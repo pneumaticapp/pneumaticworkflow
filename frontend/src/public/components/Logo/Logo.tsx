@@ -1,20 +1,9 @@
-import * as React from 'react';
-import { LargeLogo, LogoCircle } from '../icons';
+import React from 'react';
+import { LargeLogo } from '../icons/LargeLogo';
+import { LogoCircle } from '../icons/LogoCircle';
+import type { ILogoProps, TMinimizedLogoSize } from './types';
 
 import styles from './Logo.css';
-
-export type TLogoTheme = 'dark' | 'light';
-export type TLogoSize = 'sm' | 'md' | 'lg';
-export type TMinimizedLogoSize = 'sm' | 'md';
-export type TExtendedLogoSize = 'lg';
-
-export interface ILogoProps {
-  size: TLogoSize;
-  theme: TLogoTheme;
-  partnerLogoSm: string | null;
-  partnerLogoLg: string | null;
-  className?: string;
-}
 
 export function Logo({ size, theme, partnerLogoSm, partnerLogoLg, className }: ILogoProps) {
   const renderLogoMap = [

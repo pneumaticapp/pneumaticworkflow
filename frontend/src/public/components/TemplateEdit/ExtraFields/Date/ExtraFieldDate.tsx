@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 
 import { getFieldValidator } from '../utils/getFieldValidator';
@@ -9,7 +9,7 @@ import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { DateIcon, RoundClearIconLg } from '../../../icons';
 import { FieldWithName } from '../utils/FieldWithName';
 import { FieldLabel } from '../utils/FieldLabel';
-import { IWorkflowExtraFieldProps } from '..';
+import type { IWorkflowExtraFieldProps } from '../types';
 import { DatePickerCustom } from '../../../UI/form/DatePicker';
 import { toDate, toTspDate } from '../../../../utils/dateTime';
 

@@ -1,19 +1,13 @@
-import * as React from 'react';
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { Avatar } from '../../../../UI/Avatar';
 import { Header } from '../../../../UI/Typeography/Header';
 import { UserData } from '../../../../UserData';
-import { IWorkflowLogItem } from '../../../../../types/workflow';
-import { TWorkflowLogTheme } from '../../WorkflowLog';
+import type { IWorkflowLogTaskSkippedProps, TWorkflowLogTheme } from '../../types';
 
 import styles from './WorkflowLogTaskSkipped.css';
-
-export interface IWorkflowLogTaskSkippedProps extends Pick<IWorkflowLogItem, 'task'> {
-  theme: TWorkflowLogTheme;
-}
 
 const MAX_SHOW_USERS = 5;
 

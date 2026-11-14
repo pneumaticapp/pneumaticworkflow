@@ -1,7 +1,7 @@
-import { MouseEvent } from 'react';
-import { IntlShape } from 'react-intl';
+import type { MouseEvent } from 'react';
+import type { IntlShape } from 'react-intl';
 
-import { EOAuthType } from '../../../types/auth';
+import type { EOAuthType } from '../../../types/auth';
 import { getOAuthUrl } from '../../../api/getGoogleAuthUrl';
 import { NotificationManager } from '../../../components/UI/Notifications';
 import { isValidUri } from '../../../utils/urls';

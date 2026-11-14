@@ -1,7 +1,7 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { ETaskListCompletionStatus } from '../types/tasks';
-import { ITemplateTitleBaseWithCount } from '../types/template';
+import type { ITemplateTitleBaseWithCount } from '../types/template';
 
 export type TGetTemplatesTitlesByTasksResponse = ITemplateTitleBaseWithCount[];
 

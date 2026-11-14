@@ -1,4 +1,4 @@
-import { IFieldsetBinding, IFieldsetBindingClient, IFieldsetTaskAPI, IFieldsetRuntime } from '../types/fieldset';
+import type { IFieldsetBinding, IFieldsetBindingClient, IFieldsetTaskAPI, IFieldsetRuntime } from '../types/fieldset';
 
 export function mapFieldsetBindingsToClient(fieldsets: IFieldsetBinding[] = []): IFieldsetBindingClient[] {
   return (fieldsets || []).map(({ apiName, fields, ...rest }) => ({

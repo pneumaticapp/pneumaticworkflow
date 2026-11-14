@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 import { EColors } from '../../constants/defaultValues';
 
 export interface ICheckProps {

@@ -1,11 +1,12 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import { ITemplateTaskClient } from '../../../types/template';
+import type { ITemplateTaskClient } from '../../../types/template';
 import { ArrowDownIcon, ArrowUpIcon, ClockIcon, EditIcon, MoreIcon, TrashIcon, UnionIcon } from '../../icons';
-import { Dropdown, TDropdownOption } from '../../UI';
-import { TTaskFormPart } from '../types';
+import type { TDropdownOption } from '../../UI';
+import { Dropdown } from '../../UI';
+import type { TTaskFormPart } from '../types';
 
 import styles from './TaskMenu.css';
 

@@ -1,10 +1,6 @@
-import {
-  EExtraFieldType,
-  ITemplateKickoffClient,
-  ITemplateTaskClient,
-  TDueDateRuleTarget,
-} from '../../../../../types/template';
-import { TDropdownOptionBase } from '../../../../UI';
+import type { ITemplateKickoffClient, ITemplateTaskClient, TDueDateRuleTarget } from '../../../../../types/template';
+import { EExtraFieldType } from '../../../../../types/template';
+import type { TDropdownOptionBase } from '../../../../UI/DropdownList/types';
 import { getPreviousTasks } from '../../utils/getPreviousTasks';
 import { getTaskVariables } from '../../utils/getTaskVariables';
 
