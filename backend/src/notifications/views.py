@@ -1,4 +1,11 @@
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+    extend_schema_view,
+)
 from rest_framework.decorators import action
 from rest_framework.generics import (
     CreateAPIView,
@@ -11,13 +18,17 @@ from src.generics.permissions import UserIsAuthenticated
 from src.notifications.models import Device
 from src.notifications.permissions import PushPermission
 from src.notifications.serializers import DeviceSerializer
-from src.openapi import (
-    ACCESS_PUSH,
+from src.openapi.permission_docs import ACCESS_PUSH
+from src.openapi.responses import (
     EMPTY,
+    FIELD_VALIDATION_ERROR,
     FORBIDDEN,
     NOT_FOUND,
     UNAUTHORIZED,
-    VALIDATION_ERROR,
+)
+from src.openapi.helpers import with_access_text
+from src.openapi.internal_serializers import (
+    DeviceRegistrationRequestSerializer,
 )
 
 
@@ -26,6 +37,13 @@ from src.openapi import (
         tags=['Notifications'],
         summary='Unregister push device',
         description=ACCESS_PUSH,
+        parameters=[OpenApiParameter(
+            name='token',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.PATH,
+            required=True,
+            description='Firebase device token registered by this user.',
+        )],
         responses={
             204: EMPTY,
             401: UNAUTHORIZED,
@@ -54,11 +72,25 @@ class DeviceViewSet(
     @extend_schema(
         tags=['Notifications'],
         summary='Register push device',
-        description=ACCESS_PUSH,
-        request=DeviceSerializer,
+        description=with_access_text(
+            'Registers or updates the Firebase token. user defaults to the '
+            'current user; description and is_app default from User-Agent '
+            '(Dart prefix identifies an app). Explicit body values override '
+            'these defaults. The token is used in the unregister path.',
+            ACCESS_PUSH,
+        ),
+        request=DeviceRegistrationRequestSerializer,
         responses={
             200: DeviceSerializer,
-            400: VALIDATION_ERROR,
+            400: OpenApiResponse(
+                response=FIELD_VALIDATION_ERROR.response,
+                description='Device field validation errors.',
+                examples=[OpenApiExample(
+                    'Missing device token',
+                    value={'token': ['This field is required.']},
+                    response_only=True,
+                )],
+            ),
             401: UNAUTHORIZED,
             403: FORBIDDEN,
         },
@@ -97,7 +129,7 @@ class IosViewSet(
         description=ACCESS_PUSH,
         request=None,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
         },
