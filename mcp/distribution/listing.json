@@ -1,0 +1,48 @@
+{
+  "name": "Pneumatic",
+  "slug": "pneumatic",
+  "oneLiner": "Manage Pneumatic workflows, tasks, templates and files from your AI assistant.",
+  "description": "Connect your AI assistant to Pneumatic to find and complete tasks, start workflows from templates, add comments and files, and follow running processes. Ask for overdue work, update due dates and performers, or snooze and resume workflows. With the required account permissions, create and edit templates, read reports, manage users and groups, and reassign work. Sign in with a Pneumatic API key through OAuth; the server acts with the key owner's permissions. Read-only and destructive tools are annotated. Delete the key in Pneumatic to revoke access; cached key validation can take up to five minutes to expire.",
+  "serverUrl": "https://mcp.pneumatic.app/mcp",
+  "transport": "streamable-http",
+  "repositoryUrl": "https://github.com/pneumaticapp/pneumaticworkflow",
+  "documentationUrl": "https://github.com/pneumaticapp/pneumaticworkflow/blob/master/mcp/README.md",
+  "privacyPolicyUrl": "https://www.pneumatic.app/legal/privacy/",
+  "dataHandlingUrl": "https://github.com/pneumaticapp/pneumaticworkflow/blob/master/mcp/README.md#data-handling-and-privacy",
+  "supportEmail": "support@pneumatic.app",
+  "iconUrl": "https://raw.githubusercontent.com/pneumaticapp/pneumaticworkflow/master/mcp/distribution/icon.png",
+  "iconFile": "icon.png",
+  "company": {
+    "name": "Pneumatic Software Inc.",
+    "website": "https://www.pneumatic.app"
+  },
+  "suggestedCategories": ["Productivity", "Project management"],
+  "authentication": {
+    "required": true,
+    "method": "OAuth 2.0 authorization code with PKCE S256",
+    "clientRegistration": "Dynamic client registration at /register; token_endpoint_auth_method=none is supported.",
+    "consent": "Each user enters their own Pneumatic API key on the server consent page.",
+    "authorizationServerMetadata": "https://mcp.pneumatic.app/.well-known/oauth-authorization-server",
+    "protectedResourceMetadata": "https://mcp.pneumatic.app/.well-known/oauth-protected-resource/mcp"
+  },
+  "prerequisites": [
+    "An active account on the Pneumatic installation served by this endpoint.",
+    "An API key created under Integrations → Your API Keys by the account owner or an admin."
+  ],
+  "dataAccess": "Reads and writes through the first-party Pneumatic API; permissions follow the API key owner.",
+  "useCases": [
+    "Find overdue tasks and complete their required fields.",
+    "Start a workflow from a template with kickoff data and attachments.",
+    "Track workflow progress, add comments, and manage due dates and performers.",
+    "Design and update process templates.",
+    "Review reports and reassign work during offboarding."
+  ],
+  "reviewerSetup": [
+    "Create a disposable account and an API key for its account owner so every tool can be exercised; provide credentials only through the submission portal.",
+    "Populate it with two additional users, a group, a dataset and active templates containing text, dropdown, date, file and checklist fields.",
+    "Include active and completed workflows, overdue tasks, comments and attachments.",
+    "Add the server URL as a remote HTTP connector, follow OAuth consent and enter the reviewer API key.",
+    "Try: Show my overdue tasks; Start the sample onboarding workflow; Complete its first task; Attach a file; Create a test approval template.",
+    "Call every exposed tool against this account and record results before confirming the portal testing requirements."
+  ]
+}

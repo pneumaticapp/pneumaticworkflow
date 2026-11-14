@@ -648,6 +648,34 @@ services:
     networks:
       - pneumatic
 
+  mcp:
+    build:
+      context: ./mcp
+    image: pneumaticworkflow/pneumatic-mcp:${TAG:-src}
+    container_name: pneumatic-mcp
+    profiles: ["mcp"]
+    environment:
+      PNEUMATIC_API_URL: ${BACKEND_PRIVATE_URL:-http://pneumatic-nginx}
+      PNEUMATIC_FILES_URL: ${FILE_SERVICE_URL:-http://localhost/files}
+      PNEUMATIC_FILES_INTERNAL_URL: http://pneumatic-file-service:${FILE_PORT:-8000}
+      PNEUMATIC_APP_URL: ${FRONTEND_URL:-http://localhost}
+      PUBLIC_URL: ${MCP_PUBLIC_URL:-${FRONTEND_URL:-http://localhost}}
+      OAUTH_ALLOWED_REDIRECT_HOSTS: ${MCP_OAUTH_ALLOWED_REDIRECT_HOSTS:-}
+      TOKEN_SECRET: ${MCP_TOKEN_SECRET:-${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}}
+      OAUTH_REPLAY_FILE: /state/replay.json
+      OAUTH_REPLAY_CREATE_ON_EMPTY_VOLUME: "true"
+      RATE_LIMIT_PER_MINUTE: ${MCP_RATE_LIMIT_PER_MINUTE:-120}
+      TOOLSETS: ${MCP_TOOLSETS:-}
+      READ_ONLY: ${MCP_READ_ONLY:-false}
+      LOG_LEVEL: ${MCP_LOG_LEVEL:-info}
+    volumes:
+      - mcp-state:/state
+    expose:
+      - 3000
+    networks:
+      - pneumatic
+    restart: always
+
   # The collector of the audit journal. Off by default: it starts only
   # with the profile named after LOGS_BACKEND, which start.sh passes on
   # its own (by hand: COMPOSE_PROFILES, see default.env). The store it
@@ -688,3 +716,4 @@ volumes:
   backend-staticfiles:
   backend-socket:
   otel-queue:
+  mcp-state:
