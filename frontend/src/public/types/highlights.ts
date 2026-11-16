@@ -1,4 +1,10 @@
-import { EWorkflowLogEvent, EWorkflowStatus, IWorkflowDelay, IWorkflowDetailsKickoff } from './workflow';
+import {
+  EWorkflowLogEvent,
+  EWorkflowStatus,
+  IWorkflowDelay,
+  IWorkflowDetailsKickoff,
+  TWorkflowDetailsKickoffResponse,
+} from './workflow';
 import { TUserId } from './user';
 import { IExtraField, ITemplateTitle } from './template';
 import { IFieldsetRuntime } from './fieldset';
@@ -37,6 +43,12 @@ export interface IHighlightsItem {
   targetGroupId: number | null;
   delay: IHighlightsDelay | null;
 }
+
+export type THighlightsItemResponse = Omit<IHighlightsItem, 'workflow'> & {
+  workflow: Omit<IHighlightsItem['workflow'], 'kickoff'> & {
+    kickoff: TWorkflowDetailsKickoffResponse | null;
+  };
+};
 
 export interface IHighlightsDelay {
   duration: string;

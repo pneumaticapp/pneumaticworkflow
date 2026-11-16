@@ -87,7 +87,11 @@ class KickoffValueSerializer(
         fieldset_templates = (
             FieldsetTemplate.objects
             .filter(kickoff=kickoff)
-            .prefetch_related('rules', 'fields')
+            .prefetch_related(
+                'rulesets__groups_or__groups_and',
+                'rulesets__fields',
+                'fields__rulesets__groups_or__groups_and',
+            )
             .order_by('order')
         )
         try:

@@ -38,7 +38,7 @@ from src.processes.services.events import (
 from src.processes.services.tasks.checklist import (
     ChecklistService,
 )
-from src.processes.services.tasks.field import (
+from src.processes.services.tasks.fields.field import (
     TaskFieldService,
 )
 from src.processes.services.tasks.mixins import (
@@ -239,7 +239,11 @@ class TaskService(
         fieldsets = (
             FieldsetTemplate.objects
             .filter(task=instance_template)
-            .prefetch_related('rules', 'fields')
+            .prefetch_related(
+                'rulesets__groups_or__groups_and',
+                'rulesets__fields',
+                'fields__rulesets__groups_or__groups_and',
+            )
             .order_by('order')
         )
         for fieldset in fieldsets:

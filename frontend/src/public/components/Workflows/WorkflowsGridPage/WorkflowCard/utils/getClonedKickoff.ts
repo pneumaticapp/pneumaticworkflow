@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import {
   EExtraFieldType,
   IExtraField,
@@ -38,10 +36,7 @@ export function getClonedKickoff(
 
   const finalFieldsets: IFieldsetRuntime[] = (kickoff.fieldsets || [])
     .map((fieldset) => {
-      // TODO (Technical Debt): Backend workflow fieldsets contain raw properties (id, apiName),
-      // while client-side template fieldsets expect apiNameBinding.
-      // We fall back to fieldset.apiName to safely match template fieldsets.
-      const fieldsetApiName = fieldset.apiNameBinding || (fieldset as any).apiName;
+      const fieldsetApiName = fieldset.apiNameBinding;
 
       const templateFieldset = (templateKickoff.fieldsets || []).find(
         (fieldsetFromTemplate) => fieldsetFromTemplate.apiNameBinding === fieldsetApiName,

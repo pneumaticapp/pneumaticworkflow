@@ -27,6 +27,7 @@ from src.processes.serializers.workflows.external.workflow import (
     SecuredExternalWorkflowCreateSerializer,
 )
 from src.processes.services.exceptions import (
+    FieldRuleCheckServiceException,
     WorkflowServiceException,
 )
 from src.processes.services.workflow_action import (
@@ -134,6 +135,11 @@ class PublicTemplateViewSet(
             )
         except WorkflowServiceException as ex:
             raise_validation_error(ex.message)
+        except FieldRuleCheckServiceException as ex:
+            raise_validation_error(
+                message=ex.message,
+                api_name=ex.field_api_name,
+            )
 
         workflow_action_service = WorkflowActionService(
             workflow=workflow,

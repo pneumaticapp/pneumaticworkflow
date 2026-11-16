@@ -4,14 +4,25 @@ from rest_framework import status
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
+    FieldRuleOperator,
+    FieldRuleType,
+    FieldType,
     OwnerRole,
     OwnerType,
     PerformerType,
-    TaskStatus, FieldType,
+    TaskStatus,
 )
-from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.fields import (
+    FieldRuleGroupAnd,
+    FieldRuleGroupOr,
+    FieldRuleSet,
+    TaskField,
+)
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.models.templates.owner import TemplateOwner
+from src.processes.services.exceptions import (
+    FieldRuleCheckServiceException,
+)
 from src.processes.services.workflow_action import (
     WorkflowActionService,
 )
@@ -868,3 +879,101 @@ def test_task_complete__template_starter_own_workflow__forbidden(api_client):
     # assert
     # Starter is not a performer, should be forbidden
     assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+def test_complete__field_rule_check_service_exception__validation_error(
+    api_client,
+    mocker,
+):
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+
+    mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService.'
+        'complete_task_for_user',
+        side_effect=FieldRuleCheckServiceException(
+            field_api_name='score-field',
+            message='Score must be greater than 10',
+        ),
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/v2/tasks/{task.id}/complete',
+        data={'output': {'score-field': '5'}},
+    )
+
+    # assert
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == 'Score must be greater than 10'
+    assert response.data['details']['api_name'] == 'score-field'
+
+
+def test_complete__field_rule_show_rule__updates_is_hidden(api_client):
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+
+    source_field = TaskField.objects.create(
+        name='Choice',
+        api_name='choice-field',
+        type=FieldType.STRING,
+        value='',
+        workflow=workflow,
+        task=task,
+        account=account,
+    )
+    target_field = TaskField.objects.create(
+        name='Dependent Field',
+        api_name='dep-field',
+        type=FieldType.STRING,
+        workflow=workflow,
+        task=task,
+        account=account,
+        is_hidden=True,
+    )
+    ruleset = FieldRuleSet.objects.create(
+        account=account,
+        workflow=workflow,
+        field=target_field,
+        name='Show dep when Choice is yes',
+        type=FieldRuleType.SHOW,
+        order=1,
+        api_name='ruleset-show-dep',
+    )
+    group_or = FieldRuleGroupOr.objects.create(
+        account=account,
+        workflow=workflow,
+        ruleset=ruleset,
+        api_name='group-or-dep',
+    )
+    FieldRuleGroupAnd.objects.create(
+        account=account,
+        workflow=workflow,
+        group_or=group_or,
+        field=source_field.api_name,
+        operator=FieldRuleOperator.EQUAL,
+        value='yes',
+        api_name='group-and-dep',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/v2/tasks/{task.id}/complete',
+        data={'output': {source_field.api_name: 'yes'}},
+    )
+
+    # assert
+    assert response.status_code == status.HTTP_200_OK
+    target_field.refresh_from_db()
+    assert target_field.is_hidden is False
+    source_field.refresh_from_db()
+    assert source_field.value == 'yes'

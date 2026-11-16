@@ -1,6 +1,7 @@
 import { actionGenerator } from '../../utils/redux';
 import { ITypedReduxAction, IHighlightsFilters } from '../../types/redux';
 import { IGetHighlightsConfig, IGetHighlightsResponse } from '../../api/getHighlights';
+import { IHighlightsItem } from '../../types/highlights';
 import { IGetHighlightsTitlesRequestConfig, TGetHighlightsTitlesResponse } from '../../api/getHighlightsTitles';
 
 export enum EHighlightsActions {
@@ -28,11 +29,15 @@ export const loadHighlights: (payload: ILoadHighlightsConfig) => TLoadHighlights
   ILoadHighlightsConfig
 >(EHighlightsActions.LoadHighlights);
 
-export type TSetHighlights = ITypedReduxAction<EHighlightsActions.SetHighlights, IGetHighlightsResponse>;
+export type ISetHighlightsPayload = Omit<IGetHighlightsResponse, 'results'> & {
+  results: IHighlightsItem[];
+};
 
-export const setHighlights: (payload: IGetHighlightsResponse) => TSetHighlights = actionGenerator<
+export type TSetHighlights = ITypedReduxAction<EHighlightsActions.SetHighlights, ISetHighlightsPayload>;
+
+export const setHighlights: (payload: ISetHighlightsPayload) => TSetHighlights = actionGenerator<
   EHighlightsActions.SetHighlights,
-  IGetHighlightsResponse
+  ISetHighlightsPayload
 >(EHighlightsActions.SetHighlights);
 
 export type TLoadHighlightsTemplatesTitles = ITypedReduxAction<
