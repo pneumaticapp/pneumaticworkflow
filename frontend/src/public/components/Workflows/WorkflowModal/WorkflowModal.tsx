@@ -1,6 +1,6 @@
 import * as React from 'react';
 import classnames from 'classnames';
-import OutsideClickHandler from 'react-outside-click-handler';
+import OutsideClickHandler from '../../UI/OutsideClickHandler';
 import TextareaAutosize from 'react-textarea-autosize';
 import { Modal, ModalBody } from 'reactstrap';
 

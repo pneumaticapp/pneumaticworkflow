@@ -440,7 +440,9 @@ class AuditEventService:
             payload['groups'] = SimpleLazyObject(
                 lambda: {
                     group.id: group.name
-                    for group in target.user_groups.filter(id__in=group_ids)
+                    for group in target.user_groups.filter(
+                        id__in=list(group_ids),
+                    )
                 },
             )
         if subordinates is not None:

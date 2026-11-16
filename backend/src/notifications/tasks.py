@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
 
-import pytz
+from zoneinfo import ZoneInfo
 from celery import shared_task
 from celery import Task as TaskCelery
 from django.conf import settings
@@ -172,7 +172,7 @@ def _send_new_task_notification(
     due_in = None
     overdue = None
     if due_date_timestamp:
-        tz = pytz.timezone(settings.TIME_ZONE)
+        tz = ZoneInfo(settings.TIME_ZONE)
         aware_due_date = datetime.fromtimestamp(due_date_timestamp, tz=tz)
         due_date_duration = aware_due_date - timezone.now()
         formatted_date = get_duration_format(duration=due_date_duration)

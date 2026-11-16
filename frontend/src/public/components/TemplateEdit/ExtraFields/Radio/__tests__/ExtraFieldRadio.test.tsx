@@ -24,13 +24,6 @@ jest.mock('../../../../UI/Fields/RadioButton', () => ({
   ),
 }));
 
-jest.mock('react-input-autosize', () => ({
-  __esModule: true,
-  default: jest.fn(({ value, onChange, placeholder }: { value: string; onChange: () => void; placeholder: string }) =>
-    React.createElement('input', { value: value || '', onChange, placeholder }),
-  ),
-}));
-
 jest.mock('../../../../icons', () => ({
   PencilSmallIcon: () => null,
   RemoveIcon: () => null,
@@ -268,10 +261,7 @@ describe('ExtraFieldRadio', () => {
 
       const badgeMock = FieldsetRulesetsBadge as jest.Mock;
       expect(badgeMock).toHaveBeenCalledTimes(1);
-      expect(badgeMock).toHaveBeenCalledWith(
-        expect.objectContaining({ rulesets }),
-        {},
-      );
+      expect(badgeMock).toHaveBeenCalledWith(expect.objectContaining({ rulesets }), {});
     });
 
     it('labelPosition=Top: passes rulesets to FieldsetRulesetsBadge', () => {
@@ -285,10 +275,7 @@ describe('ExtraFieldRadio', () => {
 
       const badgeMock = FieldsetRulesetsBadge as jest.Mock;
       expect(badgeMock).toHaveBeenCalledTimes(1);
-      expect(badgeMock).toHaveBeenCalledWith(
-        expect.objectContaining({ rulesets }),
-        {},
-      );
+      expect(badgeMock).toHaveBeenCalledWith(expect.objectContaining({ rulesets }), {});
     });
   });
 });

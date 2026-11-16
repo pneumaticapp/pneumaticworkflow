@@ -65,6 +65,7 @@ class UserSerializer(
 
     class Meta:
         model = UserModel
+        extra_kwargs = {'email': {'validators': []}}
         fields = (
             'id',
             'type',

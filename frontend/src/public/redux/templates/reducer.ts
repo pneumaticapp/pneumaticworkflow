@@ -1,4 +1,4 @@
-import produce from 'immer';
+import { produce } from 'immer';
 import { ITemplatesList, ITemplatesStore, ITemplatesSystem, ITemplatesSystemList } from '../../types/redux';
 import { ETemplatesActions, ETemplatesSystemStatus, TTemplatesActions } from './actions';
 import { ETemplatesSorting } from '../../types/workflow';

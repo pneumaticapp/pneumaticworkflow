@@ -24,13 +24,6 @@ jest.mock('../../../../UI/Fields/Checkbox', () => ({
   ),
 }));
 
-jest.mock('react-input-autosize', () => ({
-  __esModule: true,
-  default: jest.fn(({ value, onChange, placeholder }: { value: string; onChange: () => void; placeholder: string }) =>
-    React.createElement('input', { value: value || '', onChange, placeholder }),
-  ),
-}));
-
 jest.mock('../../../../icons', () => ({
   PencilSmallIcon: () => null,
   RemoveIcon: () => null,
@@ -208,16 +201,18 @@ describe('ExtraFieldCheckbox', () => {
         <ExtraFieldCheckbox
           {...baseKickoffProps}
           labelPosition={EFieldLabelPosition.Left}
-          field={makeExtraField({ name: 'Test', type: EExtraFieldType.Checkbox, selections: kickoffSelections, rulesets })}
+          field={makeExtraField({
+            name: 'Test',
+            type: EExtraFieldType.Checkbox,
+            selections: kickoffSelections,
+            rulesets,
+          })}
         />,
       );
 
       const badgeMock = FieldsetRulesetsBadge as jest.Mock;
       expect(badgeMock).toHaveBeenCalledTimes(1);
-      expect(badgeMock).toHaveBeenCalledWith(
-        expect.objectContaining({ rulesets }),
-        {},
-      );
+      expect(badgeMock).toHaveBeenCalledWith(expect.objectContaining({ rulesets }), {});
     });
 
     it('labelPosition=Top: passes rulesets to FieldsetRulesetsBadge', () => {
@@ -225,16 +220,18 @@ describe('ExtraFieldCheckbox', () => {
         <ExtraFieldCheckbox
           {...baseKickoffProps}
           labelPosition={EFieldLabelPosition.Top}
-          field={makeExtraField({ name: 'Test', type: EExtraFieldType.Checkbox, selections: kickoffSelections, rulesets })}
+          field={makeExtraField({
+            name: 'Test',
+            type: EExtraFieldType.Checkbox,
+            selections: kickoffSelections,
+            rulesets,
+          })}
         />,
       );
 
       const badgeMock = FieldsetRulesetsBadge as jest.Mock;
       expect(badgeMock).toHaveBeenCalledTimes(1);
-      expect(badgeMock).toHaveBeenCalledWith(
-        expect.objectContaining({ rulesets }),
-        {},
-      );
+      expect(badgeMock).toHaveBeenCalledWith(expect.objectContaining({ rulesets }), {});
     });
   });
 });

@@ -11,7 +11,13 @@ from django.utils.functional import SimpleLazyObject
 
 from src.logs.events.services import AuditEventService
 
-PASSWORD_FIELDS = ('password', 'password1', 'password2')
+PASSWORD_FIELDS = (
+    'password',
+    'password1',
+    'password2',
+    'usable_password',
+    'set_usable_password',
+)
 NEW_PASSWORD_FIELD = 'password1'
 FORM_ATTR = '_journal_form'
 ADMIN_ACCOUNT_MODEL = 'accounts.account'
@@ -76,7 +82,7 @@ class JournaledAdminMixin:
     ) -> LogEntry:
         entry = super().log_addition(
             request=request,
-            object=instance,
+            obj=instance,
             message=message,
         )
         form, formsets = getattr(request, FORM_ATTR, None) or (None, None)
@@ -99,7 +105,7 @@ class JournaledAdminMixin:
     ) -> LogEntry:
         entry = super().log_change(
             request=request,
-            object=instance,
+            obj=instance,
             message=message,
         )
         form, formsets = getattr(request, FORM_ATTR, None) or (None, None)
@@ -126,7 +132,7 @@ class JournaledAdminMixin:
     ) -> LogEntry:
         entry = super().log_deletion(
             request=request,
-            object=instance,
+            obj=instance,
             object_repr=object_repr,
         )
         AuditEventService.admin_deleted(

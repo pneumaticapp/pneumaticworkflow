@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import produce from 'immer';
+import { produce } from 'immer';
 import { IGeneralStore } from '../../types/redux';
 import { EGeneralActions, TGeneralActions } from './actions';
 

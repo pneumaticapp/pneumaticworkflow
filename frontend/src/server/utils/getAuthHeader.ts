@@ -1,11 +1,11 @@
 import { EAppPart } from '../../public/utils/identifyAppPart/types';
 
-export interface IAuthHeader {
+export type IAuthHeader = {
   Authorization?: string;
   'User-Agent'?: string;
   'X-Guest-Authorization'?: string;
   'X-Public-Authorization'?: string;
-}
+};
 
 interface IGetAuthHeaderParams {
   token?: string;

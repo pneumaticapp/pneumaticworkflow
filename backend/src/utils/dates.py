@@ -5,7 +5,7 @@ from typing import Optional
 
 from django.contrib.auth import get_user_model
 from django.utils import translation
-from pytz import timezone
+from zoneinfo import ZoneInfo
 
 from src.generics import messages
 
@@ -36,7 +36,7 @@ def date_to_tz(
     date: datetime,
     tz: str,
 ) -> datetime:
-    return date.astimezone(timezone(tz))
+    return date.astimezone(ZoneInfo(tz))
 
 
 def date_tsp_to_tz(

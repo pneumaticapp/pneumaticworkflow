@@ -2708,8 +2708,8 @@ def test_create__api_request__ok(
     )
     get_user_agent_mock.assert_called_once()
     assert service_init_mock.call_count == 2
-    service_init_mock.has_calls([
-        mocker.call(account=user.account, is_superuser=False, user=user),
+    service_init_mock.assert_has_calls([
+        mocker.call(account=user.account, user=user),
         mocker.call(account=user.account, is_superuser=False, user=user),
     ])
     api_request_mock.assert_called_once_with(

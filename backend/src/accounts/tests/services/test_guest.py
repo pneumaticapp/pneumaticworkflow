@@ -1,5 +1,5 @@
 import pytest
-import pytz
+from zoneinfo import ZoneInfo
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
@@ -29,7 +29,7 @@ class TestGuestsService:
         # arrange
         account = create_test_account()
         language = Language.de
-        timezone = pytz.timezone('America/Anchorage')
+        timezone = ZoneInfo('America/Anchorage')
         date_fmt = UserDateFormat.PY_EUROPE_24
         date_fdw = UserFirstDayWeek.THURSDAY
         account_owner = create_test_user(

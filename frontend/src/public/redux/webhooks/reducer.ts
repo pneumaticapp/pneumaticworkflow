@@ -1,4 +1,4 @@
-import produce from 'immer';
+import { produce } from 'immer';
 import { TWebhooksActions, EWebhooksActions } from './actions';
 import { EWebhooksSubscriberStatus, EWebhooksTypeEvent } from '../../types/webhooks';
 import { IWebhookStore } from '../../types/redux';

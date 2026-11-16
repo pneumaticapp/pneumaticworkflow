@@ -1,8 +1,6 @@
 import { Response } from 'express';
-import * as request from 'request';
 import { parse as parseQs } from 'querystring';
-
-import { serverApi } from '../../utils';
+import { serverApi, IHttpRequestOptions } from '../../utils';
 import { getConfig } from '../../../public/utils/getConfig';
 import { ERoutes } from '../../../public/constants/routes';
 import { isObject } from '../../../public/utils/mappers';
@@ -12,7 +10,7 @@ const {
   api: { urls },
 } = getConfig();
 
-export const getInviteId = async (url: string, res: Response, options: request.CoreOptions) => {
+export const getInviteId = async (url: string, res: Response, options?: IHttpRequestOptions) => {
   try {
     const id = url.split('/').slice(-1)[0];
     const { token } = parseQs(id.slice(1));

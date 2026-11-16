@@ -20,6 +20,10 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v5
 
+      - name: Audit dependencies (high/critical)
+        run: npm audit --audit-level=high
+        working-directory: frontend
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:

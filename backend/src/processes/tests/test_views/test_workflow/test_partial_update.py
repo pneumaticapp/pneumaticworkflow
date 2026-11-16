@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 
 import pytest
-import pytz
+from zoneinfo import ZoneInfo
 from django.utils import timezone
 from django.test import override_settings
 
@@ -1727,7 +1727,7 @@ class TestPartialUpdateWorkflow:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC'),
+            tzinfo=ZoneInfo('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -1787,7 +1787,7 @@ class TestPartialUpdateWorkflow:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC'),
+            tzinfo=ZoneInfo('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
 

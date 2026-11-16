@@ -13,7 +13,7 @@ jest.mock('react-dom', () => {
   };
 });
 
-jest.mock('react-outside-click-handler', () => {
+jest.mock('../../UI/OutsideClickHandler', () => {
   return {
     __esModule: true,
     default: ({ children }: { children: React.ReactNode }) => children,

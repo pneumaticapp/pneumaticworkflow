@@ -1,7 +1,7 @@
 import React, { useState, ReactNode } from 'react';
 import classnames from 'classnames';
 import { UncontrolledDropdown, DropdownToggle, DropdownMenu } from 'reactstrap';
-import OutsideClickHandler from 'react-outside-click-handler';
+import OutsideClickHandler from '../OutsideClickHandler';
 
 import { ConfirmableDropdownItem, TDropdownItemState } from './ConfirmableDropdownItem';
 import { isArrayWithItems } from '../../../utils/helpers';

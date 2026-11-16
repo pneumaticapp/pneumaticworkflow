@@ -136,7 +136,7 @@ def test_create_instance__only_required_fields__set_defaults(mocker):
     email = 'test@test.test'
     random_password = '12123'
     random_password_mock = mocker.patch(
-        'src.accounts.services.user.UserModel.objects.make_random_password',
+        'src.accounts.services.user.get_random_string',
         return_value=random_password,
     )
     safe_password = 'some safe password'
@@ -168,7 +168,12 @@ def test_create_instance__only_required_fields__set_defaults(mocker):
     assert user.timezone == tz
     assert user.date_fmt == UserDateFormat.PY_EUROPE_24
     assert user.date_fdw == UserFirstDayWeek.SATURDAY
-    random_password_mock.assert_called_once()
+    random_password_mock.assert_called_once_with(
+        length=10,
+        allowed_chars=(
+            'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+        ),
+    )
     make_password_mock.assert_called_once_with(random_password)
 
 
@@ -178,7 +183,7 @@ def test_create_instance__first_account_owner__is_superuser(mocker):
     email = 'test@test.com'
     random_password = '12123'
     random_password_mock = mocker.patch(
-        'src.accounts.services.user.UserModel.objects.make_random_password',
+        'src.accounts.services.user.get_random_string',
         return_value=random_password,
     )
     safe_password = 'some safe password'
@@ -200,7 +205,12 @@ def test_create_instance__first_account_owner__is_superuser(mocker):
     assert user.email == email
     assert user.is_superuser is True
     assert user.is_staff is True
-    random_password_mock.assert_called_once()
+    random_password_mock.assert_called_once_with(
+        length=10,
+        allowed_chars=(
+            'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+        ),
+    )
     make_password_mock.assert_called_once_with(random_password)
 
 
@@ -211,7 +221,7 @@ def test_create_instance__not_first_account_owner__is_not_superuser(mocker):
     email = 'test@test.com'
     random_password = '12123'
     random_password_mock = mocker.patch(
-        'src.accounts.services.user.UserModel.objects.make_random_password',
+        'src.accounts.services.user.get_random_string',
         return_value=random_password,
     )
     safe_password = 'some safe password'
@@ -232,7 +242,12 @@ def test_create_instance__not_first_account_owner__is_not_superuser(mocker):
     assert user.email == email
     assert user.is_superuser is False
     assert user.is_staff is False
-    random_password_mock.assert_called_once()
+    random_password_mock.assert_called_once_with(
+        length=10,
+        allowed_chars=(
+            'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+        ),
+    )
     make_password_mock.assert_called_once_with(random_password)
 
 
@@ -243,7 +258,7 @@ def test_create_instance__not_first_db_user__is_not_superuser(mocker):
     email = 'test@test.com'
     random_password = '12123'
     random_password_mock = mocker.patch(
-        'src.accounts.services.user.UserModel.objects.make_random_password',
+        'src.accounts.services.user.get_random_string',
         return_value=random_password,
     )
     safe_password = 'some safe password'
@@ -265,7 +280,12 @@ def test_create_instance__not_first_db_user__is_not_superuser(mocker):
     assert user.email == email
     assert user.is_superuser is False
     assert user.is_staff is False
-    random_password_mock.assert_called_once()
+    random_password_mock.assert_called_once_with(
+        length=10,
+        allowed_chars=(
+            'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+        ),
+    )
     make_password_mock.assert_called_once_with(random_password)
 
 
@@ -340,7 +360,7 @@ def test_create_instance__password_provided__ok(mocker):
     email = 'test@test.test'
     password = '12112323'
     random_password_mock = mocker.patch(
-        'src.accounts.services.user.UserModel.objects.make_random_password',
+        'src.accounts.services.user.get_random_string',
     )
     make_password_mock = mocker.patch(
         'src.accounts.services.user.make_password',
@@ -367,7 +387,7 @@ def test_create_instance__email_already_exists__raise_exception(mocker):
     email = 'test@test.test'
     password = '12112323'
     random_password_mock = mocker.patch(
-        'src.accounts.services.user.UserModel.objects.make_random_password',
+        'src.accounts.services.user.get_random_string',
     )
     make_password_mock = mocker.patch(
         'src.accounts.services.user.make_password',
@@ -399,7 +419,7 @@ def test_create_instance__invited_email_exists__ok(mocker):
     email = 'test@test.test'
     password = '12112323'
     random_password_mock = mocker.patch(
-        'src.accounts.services.user.UserModel.objects.make_random_password',
+        'src.accounts.services.user.get_random_string',
     )
     make_password_mock = mocker.patch(
         'src.accounts.services.user.make_password',
@@ -430,7 +450,7 @@ def test_create_instance__inactive_email_exists__ok(mocker):
     email = 'test@test.test'
     password = '12112323'
     random_password_mock = mocker.patch(
-        'src.accounts.services.user.UserModel.objects.make_random_password',
+        'src.accounts.services.user.get_random_string',
     )
     make_password_mock = mocker.patch(
         'src.accounts.services.user.make_password',
@@ -461,7 +481,7 @@ def test_create_instance__deleted_email_exists__ok(mocker):
     email = 'test@test.test'
     password = '12112323'
     random_password_mock = mocker.patch(
-        'src.accounts.services.user.UserModel.objects.make_random_password',
+        'src.accounts.services.user.get_random_string',
     )
     make_password_mock = mocker.patch(
         'src.accounts.services.user.make_password',
@@ -494,7 +514,7 @@ def test_create_instance__guest_email_exists__ok(mocker):
     email = 'test@test.test'
     password = '12112323'
     random_password_mock = mocker.patch(
-        'src.accounts.services.user.UserModel.objects.make_random_password',
+        'src.accounts.services.user.get_random_string',
     )
     make_password_mock = mocker.patch(
         'src.accounts.services.user.make_password',

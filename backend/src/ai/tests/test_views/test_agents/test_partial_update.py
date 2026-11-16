@@ -239,7 +239,6 @@ def test_partial_update__not_found__not_found(api_client):
     data = {
         'name': 'Updated name',
     }
-    message = 'Not found.'
     api_client.token_authenticate(user=user)
 
     # act
@@ -250,7 +249,7 @@ def test_partial_update__not_found__not_found(api_client):
 
     # assert
     assert response.status_code == 404
-    assert response.data['detail'] == message
+    assert response.data['detail'].code == 'not_found'
 
 
 def test_partial_update__guest__permission_denied(api_client):

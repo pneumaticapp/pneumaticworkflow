@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import * as DEFAULT_ICON_PATH from '../../assets/favicon.png';
-import * as ALERT_ICON_PATH from '../../assets/favicon-alert.png';
+import DEFAULT_ICON_PATH from '../../assets/favicon.png';
+import ALERT_ICON_PATH from '../../assets/favicon-alert.png';
 
 const HAS_UPDATES_STORAGE_KEY = 'hasUpdates';
 

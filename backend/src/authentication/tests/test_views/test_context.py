@@ -1,5 +1,5 @@
 import pytest
-import pytz
+from zoneinfo import ZoneInfo
 
 from src.accounts.enums import (
     BillingPlanType,
@@ -30,7 +30,7 @@ pytestmark = pytest.mark.django_db
 def test_context__ok(api_client):
 
     # arrange
-    timezone = pytz.timezone('America/Anchorage')
+    timezone = ZoneInfo('America/Anchorage')
     logo_lg = 'https://some-site/lg.jpg'
     plan = BillingPlanType.UNLIMITED
     period = BillingPeriod.WEEKLY
@@ -122,7 +122,7 @@ def test_context__ok(api_client):
 def test_context__guest__ok(api_client):
 
     # arrange
-    owner_timezone = pytz.timezone('America/Anchorage')
+    owner_timezone = ZoneInfo('America/Anchorage')
     account = create_test_account()
     owner = create_test_user(
         account=account,
