@@ -5,7 +5,11 @@ import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
+import {
+  Client,
+  discoverAuthorizationServerMetadata,
+  StreamableHTTPClientTransport,
+} from '@modelcontextprotocol/client';
 import type { ErrorRequestHandler } from 'express';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -64,7 +68,7 @@ function form(values: Record<string, string>) {
 }
 
 async function register(body: Record<string, unknown> = {}, url = baseUrl) {
-  const response = await fetch(`${url}/register`, {
+  const response = await fetch(`${url}/mcp/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ client_name: 'Claude', redirect_uris: [REDIRECT_URI], ...body }),
@@ -81,7 +85,7 @@ async function authorize(clientId: string, verifier: string, apiKey = VALID_API_
     code_challenge_method: 'S256',
     state: 'xyz',
   };
-  return fetch(`${url}/authorize`, { ...form({ ...params, api_key: apiKey }), redirect: 'manual' });
+  return fetch(`${url}/mcp/authorize`, { ...form({ ...params, api_key: apiKey }), redirect: 'manual' });
 }
 
 async function obtainTokens() {
@@ -89,7 +93,7 @@ async function obtainTokens() {
   const verifier = randomBytes(32).toString('base64url');
   const redirect = new URL((await authorize(client.client_id!, verifier)).headers.get('location')!);
   const response = await fetch(
-    `${baseUrl}/token`,
+    `${baseUrl}/mcp/token`,
     form({
       grant_type: 'authorization_code',
       code: redirect.searchParams.get('code')!,
@@ -131,9 +135,9 @@ describe('discovery', () => {
     const metadata = await (await fetch(`${baseUrl}/.well-known/oauth-authorization-server`)).json();
     expect(metadata).toMatchObject({
       issuer: baseUrl,
-      authorization_endpoint: `${baseUrl}/authorize`,
-      token_endpoint: `${baseUrl}/token`,
-      registration_endpoint: `${baseUrl}/register`,
+      authorization_endpoint: `${baseUrl}/mcp/authorize`,
+      token_endpoint: `${baseUrl}/mcp/token`,
+      registration_endpoint: `${baseUrl}/mcp/register`,
       code_challenge_methods_supported: ['S256'],
       authorization_response_iss_parameter_supported: true,
     });
@@ -156,7 +160,7 @@ describe('client registration', () => {
   });
 
   it('answers malformed registration JSON with an OAuth error', async () => {
-    const response = await fetch(`${baseUrl}/register`, {
+    const response = await fetch(`${baseUrl}/mcp/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: '{"redirect_uris":',
@@ -180,7 +184,7 @@ describe('authorization flow', () => {
       const { status, body: registration } = await register({ client_name: 'Cursor', redirect_uris: [redirectUri] });
       expect(status).toBe(201);
       const verifier = randomBytes(32).toString('base64url');
-      const authorization = await fetch(`${baseUrl}/authorize`, {
+      const authorization = await fetch(`${baseUrl}/mcp/authorize`, {
         ...form({
           response_type: 'code',
           client_id: registration.client_id!,
@@ -195,7 +199,7 @@ describe('authorization flow', () => {
       const callback = new URL(authorization.headers.get('location')!);
       expect(`${callback.origin}${callback.pathname}`).toBe(redirectUri);
       const exchange = await fetch(
-        `${baseUrl}/token`,
+        `${baseUrl}/mcp/token`,
         form({
           grant_type: 'authorization_code',
           client_id: registration.client_id!,
@@ -224,7 +228,7 @@ describe('authorization flow', () => {
       code_challenge: s256('v'.repeat(43)),
       code_challenge_method: 'S256',
     });
-    const response = await fetch(`${baseUrl}/authorize?${query}`);
+    const response = await fetch(`${baseUrl}/mcp/authorize?${query}`);
     const html = await response.text();
     expect(response.status).toBe(200);
     expect(response.headers.get('x-frame-options')).toBe('DENY');
@@ -241,7 +245,7 @@ describe('authorization flow', () => {
       code_challenge: s256('verifier'),
       code_challenge_method: 'S256',
     });
-    const response = await fetch(`${baseUrl}/authorize?${query}`, { redirect: 'manual' });
+    const response = await fetch(`${baseUrl}/mcp/authorize?${query}`, { redirect: 'manual' });
     expect(response.status).toBe(400);
   });
 
@@ -252,7 +256,7 @@ describe('authorization flow', () => {
       client_id: client.client_id!,
       redirect_uri: REDIRECT_URI,
     });
-    const response = await fetch(`${baseUrl}/authorize?${query}`, { redirect: 'manual' });
+    const response = await fetch(`${baseUrl}/mcp/authorize?${query}`, { redirect: 'manual' });
     expect(response.status).toBe(302);
     expect(new URL(response.headers.get('location')!).searchParams.get('error')).toBe('invalid_request');
   });
@@ -266,14 +270,14 @@ describe('authorization flow', () => {
       code_challenge: 'short',
       code_challenge_method: 'S256',
     });
-    const response = await fetch(`${baseUrl}/authorize?${query}`, { redirect: 'manual' });
+    const response = await fetch(`${baseUrl}/mcp/authorize?${query}`, { redirect: 'manual' });
     expect(new URL(response.headers.get('location')!).searchParams.get('error')).toBe('invalid_request');
   });
 
   it('rejects unsupported scopes instead of issuing the full scope', async () => {
     const { body: client } = await register();
     const requestsBefore = fake.requests.length;
-    const response = await fetch(`${baseUrl}/authorize`, {
+    const response = await fetch(`${baseUrl}/mcp/authorize`, {
       ...form({
         response_type: 'code',
         client_id: client.client_id!,
@@ -295,7 +299,7 @@ describe('authorization flow', () => {
     const verifier = 'short-verifier';
     const redirect = new URL((await authorize(client.client_id!, verifier)).headers.get('location')!);
     const response = await fetch(
-      `${baseUrl}/token`,
+      `${baseUrl}/mcp/token`,
       form({
         grant_type: 'authorization_code',
         code: redirect.searchParams.get('code')!,
@@ -327,7 +331,7 @@ describe('authorization flow', () => {
 
     const exchange = (codeVerifier: string) =>
       fetch(
-        `${baseUrl}/token`,
+        `${baseUrl}/mcp/token`,
         form({
           grant_type: 'authorization_code',
           code,
@@ -355,8 +359,8 @@ describe('authorization flow', () => {
       code_verifier: verifier,
       client_id: client.client_id!,
     };
-    expect((await fetch(`${baseUrl}/token`, form(values))).status).toBe(400);
-    expect((await fetch(`${baseUrl}/token`, form({ ...values, redirect_uri: REDIRECT_URI }))).status).toBe(200);
+    expect((await fetch(`${baseUrl}/mcp/token`, form(values))).status).toBe(400);
+    expect((await fetch(`${baseUrl}/mcp/token`, form({ ...values, redirect_uri: REDIRECT_URI }))).status).toBe(200);
   });
 
   it('permits omitting the redirect URI at exchange when it was inferred at authorization', async () => {
@@ -368,18 +372,18 @@ describe('authorization flow', () => {
       code_challenge: s256(verifier),
       code_challenge_method: 'S256',
     });
-    const page = await fetch(`${baseUrl}/authorize?${query}`);
+    const page = await fetch(`${baseUrl}/mcp/authorize?${query}`);
     expect(await page.text()).not.toContain('name="redirect_uri"');
     const redirect = new URL(
       (
-        await fetch(`${baseUrl}/authorize`, {
+        await fetch(`${baseUrl}/mcp/authorize`, {
           ...form({ ...Object.fromEntries(query), api_key: VALID_API_KEY }),
           redirect: 'manual',
         })
       ).headers.get('location')!,
     );
     const response = await fetch(
-      `${baseUrl}/token`,
+      `${baseUrl}/mcp/token`,
       form({
         grant_type: 'authorization_code',
         code: redirect.searchParams.get('code')!,
@@ -404,7 +408,7 @@ describe('authorization flow', () => {
         3600,
       );
     const refreshResponse = await fetch(
-      `${baseUrl}/token`,
+      `${baseUrl}/mcp/token`,
       form({
         grant_type: 'refresh_token',
         refresh_token: oldRefresh,
@@ -428,7 +432,7 @@ describe('authorization flow', () => {
         300,
       );
     const codeResponse = await fetch(
-      `${baseUrl}/token`,
+      `${baseUrl}/mcp/token`,
       form({
         grant_type: 'authorization_code',
         code: oldCode,
@@ -442,7 +446,7 @@ describe('authorization flow', () => {
   it('rotates refresh tokens and rejects reuse', async () => {
     const { clientId, tokens } = await obtainTokens();
     const refresh = (token: string) =>
-      fetch(`${baseUrl}/token`, form({ grant_type: 'refresh_token', refresh_token: token, client_id: clientId }));
+      fetch(`${baseUrl}/mcp/token`, form({ grant_type: 'refresh_token', refresh_token: token, client_id: clientId }));
 
     const response = await refresh(tokens.refresh_token!);
     expect(response.status).toBe(200);
@@ -458,7 +462,7 @@ describe('authorization flow', () => {
     const { clientId, tokens } = await obtainTokens();
     const refresh = () =>
       fetch(
-        `${baseUrl}/token`,
+        `${baseUrl}/mcp/token`,
         form({
           grant_type: 'refresh_token',
           refresh_token: tokens.refresh_token!,
@@ -470,7 +474,7 @@ describe('authorization flow', () => {
     const winner = responses.find((response) => response.status === 200)!;
     const { refresh_token: rotated } = (await winner.json()) as Record<string, string>;
     const next = await fetch(
-      `${baseUrl}/token`,
+      `${baseUrl}/mcp/token`,
       form({ grant_type: 'refresh_token', refresh_token: rotated!, client_id: clientId }),
     );
     expect(next.status).toBe(200);
@@ -479,7 +483,7 @@ describe('authorization flow', () => {
   it('accepts the consent form posted by a browser with its real Origin', async () => {
     const { body: client } = await register();
     const page = await fetch(
-      `${baseUrl}/authorize?${new URLSearchParams({
+      `${baseUrl}/mcp/authorize?${new URLSearchParams({
         response_type: 'code',
         client_id: client.client_id!,
         redirect_uri: REDIRECT_URI,
@@ -491,7 +495,7 @@ describe('authorization flow', () => {
     expect(page.headers.get('referrer-policy')).toBe('same-origin');
 
     const submit = (origin: string) =>
-      fetch(`${baseUrl}/authorize`, {
+      fetch(`${baseUrl}/mcp/authorize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded', Origin: origin },
         body: new URLSearchParams({
@@ -510,7 +514,7 @@ describe('authorization flow', () => {
 
   it('accepts offline_access next to the connector scope', async () => {
     const { body: client } = await register();
-    const response = await fetch(`${baseUrl}/authorize`, {
+    const response = await fetch(`${baseUrl}/mcp/authorize`, {
       ...form({
         response_type: 'code',
         client_id: client.client_id!,
@@ -528,7 +532,7 @@ describe('authorization flow', () => {
   it('revokes the whole session when an old refresh token is replayed later', async () => {
     const { clientId, tokens } = await obtainTokens();
     const refresh = (token: string) =>
-      fetch(`${baseUrl}/token`, form({ grant_type: 'refresh_token', refresh_token: token, client_id: clientId }));
+      fetch(`${baseUrl}/mcp/token`, form({ grant_type: 'refresh_token', refresh_token: token, client_id: clientId }));
     const rotated = (await (await refresh(tokens.refresh_token!)).json()) as Record<string, string>;
 
     const realNow = Date.now;
@@ -580,7 +584,7 @@ describe('authorization flow', () => {
         (await authorize(client.client_id!, verifier, VALID_API_KEY, url)).headers.get('location')!,
       ).searchParams.get('code')!;
       const tokenRequest = (values: Record<string, string>) =>
-        fetch(`${url}/token`, form({ client_id: client.client_id!, ...values }));
+        fetch(`${url}/mcp/token`, form({ client_id: client.client_id!, ...values }));
       const tokens = (await (
         await tokenRequest({
           grant_type: 'authorization_code',
@@ -631,8 +635,8 @@ describe('authorization flow', () => {
       };
       const wrong = method === 'client_secret_basic' ? postAuth : basicAuth;
       const correct = method === 'client_secret_basic' ? basicAuth : postAuth;
-      expect((await fetch(`${baseUrl}/token`, wrong)).status).toBe(401);
-      expect((await fetch(`${baseUrl}/token`, correct)).status).toBe(200);
+      expect((await fetch(`${baseUrl}/mcp/token`, wrong)).status).toBe(401);
+      expect((await fetch(`${baseUrl}/mcp/token`, correct)).status).toBe(200);
     }
   });
 
@@ -646,7 +650,7 @@ describe('authorization flow', () => {
         confidential: true,
       });
     const response = await fetch(
-      `${baseUrl}/token`,
+      `${baseUrl}/mcp/token`,
       form({
         grant_type: 'refresh_token',
         refresh_token: 'pmcp_rt_x',
@@ -662,7 +666,7 @@ describe('authorization flow', () => {
     const { body: client } = await register({ token_endpoint_auth_method: 'client_secret_post' });
     expect(client.client_secret).toBeTruthy();
     const response = await fetch(
-      `${baseUrl}/token`,
+      `${baseUrl}/mcp/token`,
       form({ grant_type: 'refresh_token', refresh_token: 'pmcp_rt_x', client_id: client.client_id! }),
     );
     expect(response.status).toBe(401);
@@ -670,7 +674,7 @@ describe('authorization flow', () => {
 
   it('rejects malformed Basic authentication even when the form contains a valid secret', async () => {
     const { body: client } = await register({ token_endpoint_auth_method: 'client_secret_post' });
-    const response = await fetch(`${baseUrl}/token`, {
+    const response = await fetch(`${baseUrl}/mcp/token`, {
       ...form({ grant_type: 'refresh_token', client_id: client.client_id!, client_secret: client.client_secret! }),
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -718,7 +722,7 @@ describe('health', () => {
       renameSync(path, `${path}.saved`);
       mkdirSync(path);
       const response = await fetch(
-        `${url}/token`,
+        `${url}/mcp/token`,
         form({
           grant_type: 'authorization_code',
           client_id: client.client_id!,
@@ -739,6 +743,33 @@ describe('health', () => {
 });
 
 describe('MCP endpoint', () => {
+  it('keeps application routes under the MCP namespace', async () => {
+    const registration = await fetch(`${baseUrl}/mcp/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ redirect_uris: [REDIRECT_URI] }),
+    });
+    expect(registration.status).toBe(201);
+    expect((await fetch(`${baseUrl}/mcp/`)).status).toBe(401);
+    for (const path of ['/register', '/authorize', '/token', '/upload/invalid', '/mcpx']) {
+      expect((await fetch(`${baseUrl}${path}`, { method: 'POST' })).status).toBe(404);
+    }
+  });
+
+  it('discovers prefixed OAuth endpoints through the standard metadata URLs', async () => {
+    const challenge = await fetch(`${baseUrl}/mcp`);
+    const metadataUrl = /resource_metadata="([^"]+)"/.exec(challenge.headers.get('www-authenticate')!)![1]!;
+    const resource = (await (await fetch(metadataUrl)).json()) as { authorization_servers: string[] };
+    expect(resource).toMatchObject({ resource: `${baseUrl}/mcp`, authorization_servers: [baseUrl] });
+    const metadata = await discoverAuthorizationServerMetadata(resource.authorization_servers[0]!);
+    expect(metadata).toMatchObject({
+      issuer: baseUrl,
+      authorization_endpoint: `${baseUrl}/mcp/authorize`,
+      token_endpoint: `${baseUrl}/mcp/token`,
+      registration_endpoint: `${baseUrl}/mcp/register`,
+    });
+  });
+
   it('serves tools with an OAuth access token using the stored API key', async () => {
     const { tokens } = await obtainTokens();
     const client = await connect(tokens.access_token!);
@@ -821,7 +852,7 @@ describe('MCP endpoint', () => {
     expect((result.structuredContent as { data: { size: number } }).data.size).toBe(300 * 1024);
     await client.close();
 
-    const unauthenticated = await fetch(`${baseUrl}/register`, {
+    const unauthenticated = await fetch(`${baseUrl}/mcp/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ padding: 'a'.repeat(300 * 1024) }),
@@ -856,7 +887,7 @@ describe('browser uploads', () => {
 
   it('stores a file picked on the upload page and reports it to the model once', async () => {
     const { client, link } = await createLink();
-    expect(link.uploadUrl.startsWith(`${baseUrl}/upload/`)).toBe(true);
+    expect(link.uploadUrl.startsWith(`${baseUrl}/mcp/upload/`)).toBe(true);
 
     const page = await fetch(link.uploadUrl);
     expect(page.status).toBe(200);
@@ -896,7 +927,7 @@ describe('browser uploads', () => {
 
   it('rejects forged links, foreign origins and unknown upload IDs', async () => {
     const { client, link } = await createLink();
-    expect((await fetch(`${baseUrl}/upload/forged-token`)).status).toBe(404);
+    expect((await fetch(`${baseUrl}/mcp/upload/forged-token`)).status).toBe(404);
     expect((await postFile(link.uploadUrl, 'x', 'https://evil.example')).status).toBe(403);
     const unknown = await client.callTool({
       name: 'get_upload_status',

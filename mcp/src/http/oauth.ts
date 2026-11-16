@@ -36,7 +36,7 @@ export interface OAuthOptions {
 }
 
 export function buildOAuthMetadata(issuer: URL): OAuthMetadata {
-  const endpoint = (path: string) => new URL(path, issuer).href;
+  const endpoint = (path: string) => new URL(`/mcp${path}`, issuer).href;
   return {
     authorization_response_iss_parameter_supported: true,
     issuer: issuer.origin,

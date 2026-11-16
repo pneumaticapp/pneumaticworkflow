@@ -93,7 +93,9 @@ describe('HTTP telemetry', () => {
   });
 
   it('logs requests with a request ID and never logs upload tokens', async () => {
-    const response = await fetch(`${baseUrl}/upload/very-secret-capability`, { headers: { 'X-Request-Id': 'req-42' } });
+    const response = await fetch(`${baseUrl}/mcp/upload/very-secret-capability`, {
+      headers: { 'X-Request-Id': 'req-42' },
+    });
     expect(response.headers.get('x-request-id')).toBe('req-42');
     const entry = lines.find((line) => line.event === 'http_request' && line.requestId === 'req-42');
     expect(entry).toMatchObject({ route: 'upload', status: 404, method: 'GET' });

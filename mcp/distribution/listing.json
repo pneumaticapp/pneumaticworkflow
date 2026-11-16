@@ -20,7 +20,7 @@
   "authentication": {
     "required": true,
     "method": "OAuth 2.0 authorization code with PKCE S256",
-    "clientRegistration": "Dynamic client registration at /register; token_endpoint_auth_method=none is supported.",
+    "clientRegistration": "Dynamic client registration at /mcp/register; token_endpoint_auth_method=none is supported.",
     "consent": "Each user enters their own Pneumatic API key on the server consent page.",
     "authorizationServerMetadata": "https://mcp.pneumatic.app/.well-known/oauth-authorization-server",
     "protectedResourceMetadata": "https://mcp.pneumatic.app/.well-known/oauth-protected-resource/mcp"

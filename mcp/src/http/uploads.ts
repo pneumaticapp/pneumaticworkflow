@@ -1,6 +1,6 @@
 import { Readable, Transform } from 'node:stream';
 
-import type { Express, Request as ExpressRequest, Response } from 'express';
+import type { Request as ExpressRequest, Response, Router } from 'express';
 
 import { formatMiB, isSafeFilename, isValidContentType, MAX_UPLOAD_BYTES } from '../core/files.js';
 import { hashApiKey } from '../core/keys.js';
@@ -32,7 +32,7 @@ export function uploadLinksFor(store: UploadStore, sealer: Sealer, publicUrl: UR
     async create(filename) {
       const { uploadId, expiresAt } = await store.create(keyHash, filename ?? null, UPLOAD_TTL_SECONDS);
       const token = sealer.seal<UploadToken>('upload', { uploadId, apiKey }, UPLOAD_TTL_SECONDS);
-      return { uploadId, uploadUrl: new URL(`/upload/${token}`, publicUrl).href, expiresAt };
+      return { uploadId, uploadUrl: new URL(`/mcp/upload/${token}`, publicUrl).href, expiresAt };
     },
     async get(uploadId) {
       const entry = await store.get(uploadId);
@@ -87,7 +87,7 @@ async function readFile(req: ExpressRequest): Promise<File | null> {
 }
 
 export function mountUploadRoutes(
-  app: Express,
+  app: Router,
   { store, sealer, clientFor }: { store: UploadStore; sealer: Sealer; clientFor: ClientFactory },
 ) {
   const uploadLimit = formatMiB(MAX_UPLOAD_BYTES);

@@ -35,7 +35,10 @@ const CONSENT_FAILURES_PER_MINUTE = 10;
 const OAUTH_PATHS = new Set(['/register', '/token', '/authorize']);
 
 function normalizePath(path: string): string {
-  return path.toLowerCase().replace(/\/+$/, '');
+  return path
+    .toLowerCase()
+    .replace(/\/+$/, '')
+    .replace(/^\/mcp\//, '/');
 }
 
 function isMcpPath(path: string): boolean {
@@ -152,7 +155,7 @@ const handleErrors: ErrorRequestHandler = (error, req, res, _next) => {
     res.destroy();
     return;
   }
-  if (isMcpPath(req.path)) {
+  if (isMcpPath(req.originalUrl.split('?')[0]!)) {
     const [code, message] =
       type === 'entity.too.large'
         ? [-32600, 'Request body is too large.']
@@ -220,16 +223,18 @@ export function createHttpApp(
     res.status(isHealthy ? 200 : 503).json({ status: isHealthy ? 'ok' : 'unhealthy' });
   });
 
-  app.use(
-    mcpAuthMetadataRouter({
-      oauthMetadata: buildOAuthMetadata(config.publicUrl),
-      resourceServerUrl: mcpUrl,
-      resourceName: 'Pneumatic Workflow',
-      scopesSupported: [...SUPPORTED_SCOPES],
-    }),
-  );
-  app.post('/authorize', consentThrottle(rateLimiter('consent-ip', CONSENT_FAILURES_PER_MINUTE)));
-  app.use(
+  const metadataRouter = mcpAuthMetadataRouter({
+    oauthMetadata: buildOAuthMetadata(config.publicUrl),
+    resourceServerUrl: mcpUrl,
+    resourceName: 'Pneumatic Workflow',
+    scopesSupported: [...SUPPORTED_SCOPES],
+  });
+  app.use(metadataRouter);
+
+  const router = express.Router();
+  router.use(metadataRouter);
+  router.post('/authorize', consentThrottle(rateLimiter('consent-ip', CONSENT_FAILURES_PER_MINUTE)));
+  router.use(
     createOAuthRouter({
       issuer: config.publicUrl,
       sealer,
@@ -241,7 +246,7 @@ export function createHttpApp(
 
   const uploads = config.pneumatic.filesUrl ? (stores.uploads ?? createMemoryUploadStore()) : undefined;
   if (uploads) {
-    mountUploadRoutes(app, { store: uploads, sealer, clientFor });
+    mountUploadRoutes(router, { store: uploads, sealer, clientFor });
   }
 
   const mcpHandler = toNodeHandler(
@@ -258,8 +263,8 @@ export function createHttpApp(
     }),
   );
 
-  app.all(
-    '/mcp',
+  router.all(
+    '/',
     requireBearerAuth({
       verifier: createTokenVerifier(sealer, validator, replayStore),
       resourceMetadataUrl: getOAuthProtectedResourceMetadataUrl(mcpUrl),
@@ -269,6 +274,8 @@ export function createHttpApp(
     (req, res) => void mcpHandler(req, res, req.body),
   );
 
+  router.use(handleErrors);
+  app.use('/mcp', router);
   app.use(handleErrors);
 
   return app;
