@@ -298,10 +298,7 @@ export function KickoffRedux({
       {isOpen ? renderKickoffForm() : renderKickoffLabels()}
 
       {fieldRuleModalProps.fieldType && (
-        <FieldRuleModal
-          {...fieldRuleModalProps}
-          fieldType={fieldRuleModalProps.fieldType}
-        />
+        <FieldRuleModal {...fieldRuleModalProps} fieldType={fieldRuleModalProps.fieldType} />
       )}
     </div>
   );
