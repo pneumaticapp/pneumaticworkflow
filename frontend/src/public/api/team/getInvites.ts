@@ -7,5 +7,5 @@ export function getInvites() {
     api: { urls },
   } = getBrowserConfigEnv();
 
-  return commonRequest<UserInvite[]>(urls.getInvites);
+  return commonRequest<UserInvite[]>(urls.getInvites, {}, { shouldThrow: true });
 }
