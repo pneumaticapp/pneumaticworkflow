@@ -679,6 +679,26 @@ class WorkflowEventType:
         TASK_DELAY,
     ]
 
+    HIGHLIGHT_TYPES = (
+        COMMENT,
+        TASK_COMPLETE,
+        RUN,
+        COMPLETE,
+        ENDED,
+        TASK_REVERT,
+        REVERT,
+        URGENT,
+        NOT_URGENT,
+        TASK_PERFORMER_CREATED,
+        TASK_PERFORMER_DELETED,
+        TASK_PERFORMER_GROUP_CREATED,
+        TASK_PERFORMER_GROUP_DELETED,
+        FORCE_DELAY,
+        FORCE_RESUME,
+        DUE_DATE_CHANGED,
+        SUB_WORKFLOW_RUN,
+    )
+
 
 class WorkflowEventActionType:
 
@@ -779,15 +799,13 @@ class FieldSetRuleType:
 
     # TODO Deprecated
 
-    VALIDATOR = 'validator'
     SUM_EQUAL = 'sum_equal'
 
     CHOICES = (
         (SUM_EQUAL, 'Sum equal'),
-        (VALIDATOR, 'Validator'),
     )
 
-    LITERALS = Literal[SUM_EQUAL, VALIDATOR]
+    LITERALS = Literal[SUM_EQUAL]
 
 
 class FieldRuleType:
@@ -803,16 +821,33 @@ class FieldRuleType:
     LITERALS = Literal[SHOW, VALIDATOR]
 
 
+class FieldRuleValueType:
+
+    USER = PredicateType.USER
+    GROUP = PredicateType.GROUP
+
+    CHOICES = (
+        (USER, 'User'),
+        (GROUP, 'Group'),
+    )
+
+    LITERALS = Literal[USER, GROUP]
+
+
 class FieldRuleOperator:
 
-    EQUAL = 'equal'
-    NOT_EQUAL = 'not_equals'
-    EXIST = 'exists'
-    NOT_EXIST = 'not_exists'
-    GREATER_THAN = 'greater_than'
-    LESS_THAN = 'less_than'
-    CONTAIN = 'contains'
-    NOT_CONTAIN = 'not_contains'
+    EQUAL = PredicateOperator.EQUAL
+    NOT_EQUAL = PredicateOperator.NOT_EQUAL
+    EXIST = PredicateOperator.EXIST
+    NOT_EXIST = PredicateOperator.NOT_EXIST
+    GREATER_THAN = PredicateOperator.MORE_THAN
+    LESS_THAN = PredicateOperator.LESS_THAN
+    CONTAIN = PredicateOperator.CONTAIN
+    NOT_CONTAIN = PredicateOperator.NOT_CONTAIN
+
+    # Aliases for consistency with PredicateOperator (ZEN-7)
+    EQUALS = EQUAL
+    MORE_THAN = GREATER_THAN
 
     CHOICES = (
         (EQUAL, 'Equal'),
@@ -836,58 +871,34 @@ class FieldRuleOperator:
         NOT_CONTAIN,
     ]
 
+    _TEXT_OPERATORS = {
+        EQUAL,
+        NOT_EQUAL,
+        CONTAIN,
+        NOT_CONTAIN,
+        EXIST,
+        NOT_EXIST,
+    }
+    _SELECTION_OPERATORS = {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST}
+    _RANGE_OPERATORS = {
+        EQUAL,
+        NOT_EQUAL,
+        GREATER_THAN,
+        LESS_THAN,
+        EXIST,
+        NOT_EXIST,
+    }
+
     ALLOWED_OPERATORS = {
-        FieldType.STRING: {
-            EQUAL,
-            NOT_EQUAL,
-            CONTAIN,
-            NOT_CONTAIN,
-            EXIST,
-            NOT_EXIST,
-        },
-        FieldType.TEXT: {
-            EQUAL,
-            NOT_EQUAL,
-            CONTAIN,
-            NOT_CONTAIN,
-            EXIST,
-            NOT_EXIST,
-        },
-        FieldType.URL: {
-            EQUAL,
-            NOT_EQUAL,
-            CONTAIN,
-            NOT_CONTAIN,
-            EXIST,
-            NOT_EXIST,
-        },
-        FieldType.CHECKBOX: {
-            EQUAL,
-            NOT_EQUAL,
-            CONTAIN,
-            NOT_CONTAIN,
-            EXIST,
-            NOT_EXIST,
-        },
-        FieldType.RADIO: {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST},
-        FieldType.DROPDOWN: {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST},
-        FieldType.USER: {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST},
-        FieldType.DATE: {
-            EQUAL,
-            NOT_EQUAL,
-            GREATER_THAN,
-            LESS_THAN,
-            EXIST,
-            NOT_EXIST,
-        },
-        FieldType.NUMBER: {
-            EQUAL,
-            NOT_EQUAL,
-            GREATER_THAN,
-            LESS_THAN,
-            EXIST,
-            NOT_EXIST,
-        },
+        FieldType.STRING: _TEXT_OPERATORS,
+        FieldType.TEXT: _TEXT_OPERATORS,
+        FieldType.URL: _TEXT_OPERATORS,
+        FieldType.CHECKBOX: _TEXT_OPERATORS,
+        FieldType.RADIO: _SELECTION_OPERATORS,
+        FieldType.DROPDOWN: _SELECTION_OPERATORS,
+        FieldType.USER: _SELECTION_OPERATORS,
+        FieldType.DATE: _RANGE_OPERATORS,
+        FieldType.NUMBER: _RANGE_OPERATORS,
         FieldType.FILE: {EXIST, NOT_EXIST},
     }
 

@@ -1,4 +1,5 @@
 import { AxiosError, AxiosResponse } from 'axios';
+import type { AxiosRequestConfig } from 'axios';
 
 const mockLoggerError = jest.fn();
 const mockLoggerInfo = jest.fn();
@@ -48,13 +49,13 @@ const responseErrorHandler = mockInstance.interceptors.response.use.mock.calls[0
   error: AxiosError,
 ) => Promise<never>;
 
-function makeAxiosError(data: Record<string, string>, status: number): AxiosError {
+function makeAxiosError(data: Record<string, string>, status: number, config?: AxiosRequestConfig): AxiosError {
   return {
     response: {
       data,
       status,
     } as AxiosResponse,
-    config: {},
+    config: (config ?? {}) as AxiosError['config'],
     isAxiosError: true,
     name: 'AxiosError',
     message: `Request failed with status code ${status}`,
@@ -110,5 +111,44 @@ describe('commonRequest catch block: deduplication', () => {
 
     expect(mockLoggerError).toHaveBeenCalledTimes(1);
     expect(mockLoggerError).toHaveBeenCalledWith(genericError);
+  });
+});
+
+describe('response interceptor: expectedErrorStatuses handling', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('logs with logger.info when error status matches expectedErrorStatuses', async () => {
+    const errorData = { detail: 'Not found.' };
+    const error = makeAxiosError(errorData, 404, { expectedErrorStatuses: [404] });
+
+    await expect(responseErrorHandler(error)).rejects.toBeInstanceOf(InterceptorError);
+
+    expect(mockLoggerInfo).toHaveBeenCalledTimes(1);
+    expect(mockLoggerInfo).toHaveBeenCalledWith('Response Error:', 404, errorData);
+    expect(mockLoggerError).toHaveBeenCalledTimes(0);
+  });
+
+  it('logs with logger.error when error status does not match expectedErrorStatuses', async () => {
+    const errorData = { detail: 'Internal Server Error' };
+    const error = makeAxiosError(errorData, 500, { expectedErrorStatuses: [404] });
+
+    await expect(responseErrorHandler(error)).rejects.toBeInstanceOf(InterceptorError);
+
+    expect(mockLoggerError).toHaveBeenCalledTimes(1);
+    expect(mockLoggerError).toHaveBeenCalledWith('Response Error:', 500, errorData);
+    expect(mockLoggerInfo).toHaveBeenCalledTimes(0);
+  });
+
+  it('logs with logger.error for 404 when expectedErrorStatuses is not specified', async () => {
+    const errorData = { detail: 'Not found.' };
+    const error = makeAxiosError(errorData, 404, {});
+
+    await expect(responseErrorHandler(error)).rejects.toBeInstanceOf(InterceptorError);
+
+    expect(mockLoggerError).toHaveBeenCalledTimes(1);
+    expect(mockLoggerError).toHaveBeenCalledWith('Response Error:', 404, errorData);
+    expect(mockLoggerInfo).toHaveBeenCalledTimes(0);
   });
 });

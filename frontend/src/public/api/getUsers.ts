@@ -1,16 +1,9 @@
-import { EUserStatus, TUserListItem } from '../types/user';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { isArrayWithItems } from '../utils/helpers';
+import { buildQueryString } from '../utils/buildQueryString';
 import { identifyAppPartOnClient } from '../utils/identifyAppPart/identifyAppPartOnClient';
 import { EAppPart } from '../utils/identifyAppPart/types';
 import { commonRequest } from './commonRequest';
-
-export type TResponseUser = TUserListItem[];
-
-export interface IGetUsersConfig {
-  type?: TUserListItem['type'];
-  status?: (EUserStatus.Active | EUserStatus.Inactive | EUserStatus.Invited)[];
-}
+import type { IGetUsersConfig, TResponseUser } from './types';
 
 const getUrl = () => {
   const {
@@ -33,11 +26,7 @@ export function getUsersQueryString(config?: IGetUsersConfig) {
     return '';
   }
 
-  const { type, status } = config;
+  const { type, status, isAi } = config;
 
-  const queryString = [type && `type=${type}`, isArrayWithItems(status) && `status=${status.join(',')}`]
-    .filter(Boolean)
-    .join('&');
-
-  return queryString ? `?${queryString}` : '';
+  return buildQueryString({ type, status, is_ai: isAi });
 }

@@ -1,35 +1,28 @@
-import {
-  IChangeUserAdminProps,
-  ITeamFetchStartedProps,
-  TOpenDeleteUserModalPayload,
-} from '../../../redux/accounts/types';
-import { EUserListSorting, TUserListItem } from '../../../types/user';
+import type { EUserListSorting, TUserListItem } from '../../../types/user';
 
 export interface IUsersProps {
-  currentUserId: number;
-  isLoading?: boolean;
-  sorting?: EUserListSorting;
-  users: TUserListItem[];
-  isTeamInvitesOpened?: boolean;
-  isSubscribed?: boolean;
-  trialEnded: boolean | null;
   userListSorting: EUserListSorting;
-  fetchUsers(payload: ITeamFetchStartedProps): void;
-  loadChangeUserAdmin(payload: IChangeUserAdminProps): void;
-  openModal(params: TOpenDeleteUserModalPayload): void;
-  openTeamInvitesPopup(): void;
-  loadInvitesUsers(): void;
-  setGeneralLoaderVisibility(isVisible: boolean): void;
-  loadChangeUserManager(payload: {
-    id: number;
-    managerId: number | null;
-    onSuccess?: () => void;
-    onError?: () => void;
-  }): void;
-  loadChangeUserReports(payload: {
-    id: number;
-    reportIds: number[];
-    onSuccess?: () => void;
-    onError?: () => void;
-  }): void;
+}
+
+export interface ITeamUserCardProps {
+  user: TUserListItem;
+  currentUserId: number;
+  isSubscribed: boolean;
+  onOpenVacationModal(user: TUserListItem): void;
+}
+
+type TUserRelationCallbacks = { onSuccess?: () => void; onError?: () => void };
+
+export type TChangeUserManager = (userId: number, managerId: number | null, callbacks?: TUserRelationCallbacks) => void;
+
+export type TChangeUserReports = (userId: number, reportIds: number[], callbacks?: TUserRelationCallbacks) => void;
+
+export interface ITeamUserRelationsModalsProps {
+  user: TUserListItem;
+  isManagerModalOpen: boolean;
+  isReportsModalOpen: boolean;
+  onCloseManagerModal(): void;
+  onCloseReportsModal(): void;
+  handleChangeUserManager: TChangeUserManager;
+  handleChangeUserReports: TChangeUserReports;
 }

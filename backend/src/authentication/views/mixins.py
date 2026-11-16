@@ -20,6 +20,7 @@ from src.authentication.enums import AuthTokenType
 from src.authentication.messages import MSG_AU_0016
 from src.authentication.services.user_auth import AuthService
 from src.authentication.tokens import PneumaticToken
+from src.logs.events import AuditEventService
 from src.logs.service import AccountLogService
 from src.payment.stripe.exceptions import StripeServiceException
 from src.payment.stripe.service import StripeService
@@ -39,6 +40,10 @@ class SignUpMixin:
 
     source = None
 
+    # The provider the journal names. A view leaves source alone:
+    # source switches the account log on, and no view had it.
+    audit_source = None
+
     def after_signup(self, user: UserModel):
         """Create signup log and send notification if enabled"""
         if user.account.log_api_requests and self.source:
@@ -49,6 +54,10 @@ class SignUpMixin:
                 send_new_signup_notification,
             )
             send_new_signup_notification.delay(user.account_id)
+        AuditEventService.user_signed_up(
+            user=user,
+            source=self.audit_source or self.source,
+        )
 
     def join_existing_account(
         self,

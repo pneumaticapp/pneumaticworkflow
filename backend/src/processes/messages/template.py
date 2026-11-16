@@ -286,19 +286,19 @@ MSG_PT_0070 = _(
     'Permission denied. You are not a template owner or viewer.',
 )
 MSG_PT_0071 = _(
-    'You should set the source step for performer '
-    'with the type "manager".',
+    'You must specify a source step '
+    'for a performer of type "manager".',
 )
 MSG_PT_0072 = lambda name: format_lazy(
     _(
-        'Task "{name}": Manager performer '
+        'Task "{name}": A manager performer '
         'cannot reference its own step.',
     ),
     name=name,
 )
 MSG_PT_0073 = lambda name, step_name: format_lazy(
     _(
-        'Task "{name}": Manager performer references '
+        'Task "{name}": The manager performer references '
         'a non-existent step "{step_name}".',
     ),
     name=name,
@@ -307,7 +307,7 @@ MSG_PT_0073 = lambda name, step_name: format_lazy(
 MSG_PT_0074 = lambda name, step_name: format_lazy(
     _(
         'Task "{name}": Disable "Required completion by all" '
-        'on step "{step_name}" to use Manager performer.',
+        'on step "{step_name}" to use a manager performer.',
     ),
     name=name,
     step_name=step_name,
@@ -316,17 +316,8 @@ MSG_PT_0074 = lambda name, step_name: format_lazy(
 MSG_PT_0075 = lambda task_name, field_name, api_name: format_lazy(
     _(
         'Task "{task_name}": The output field "{field_name}" '
-        'rule contains a duplicate api_name "{api_name}".'
+        'rule contains a duplicate api_name "{api_name}". '
         'Recreate the rule or change its api_name.',
-    ),
-    task_name=task_name,
-    field_name=field_name,
-    api_name=api_name,
-)
-MSG_PT_0076 = lambda task_name, field_name, api_name: format_lazy(
-    _(
-        'Task "{task_name}": The output field "{field_name}" '
-        'rule points to a non-existent field "{api_name}". ',
     ),
     task_name=task_name,
     field_name=field_name,
@@ -335,7 +326,7 @@ MSG_PT_0076 = lambda task_name, field_name, api_name: format_lazy(
 
 MSG_PT_0078 = lambda field, operator, field_type: format_lazy(
     _(
-        'Field "{field}": rule operator "{operator}" can\'t be use '
+        'Field "{field}": rule operator "{operator}" can\'t be used '
         'with type of field "{field_type}".',
     ),
     field=field,

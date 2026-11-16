@@ -1,6 +1,8 @@
 from typing import Dict, List, Optional
 
-from src.processes.models.workflows.fieldset import FieldSet
+from src.processes.models.workflows.fieldset import (
+    FieldSet,
+)
 from src.processes.models.workflows.fields import (
     FieldSelection,
     TaskField,
@@ -8,7 +10,9 @@ from src.processes.models.workflows.fields import (
 from src.processes.services.base import (
     BaseUpdateVersionService,
 )
-from src.processes.services.tasks.mixins import RuleSetVersionMixin
+from src.processes.services.tasks.mixins import (
+    RuleSetVersionMixin,
+)
 
 
 class KickoffUpdateVersionService(
@@ -85,7 +89,7 @@ class KickoffUpdateVersionService(
     def _update_fields(
         self,
         data: List[Dict],
-        version: int = 0,
+        version: int,
     ):
 
         # TODO Move to TaskFieldService
@@ -95,7 +99,11 @@ class KickoffUpdateVersionService(
             field, _ = self._update_field(field_data, fieldset=None)
             field_ids.append(field.id)
             self._update_field_selections(field, field_data)
-            self._update_field_rulesets(field, field_data, version)
+            self._update_field_rulesets(
+                field=field,
+                rulesets_data=field_data.get('rulesets'),
+                version=version,
+            )
         self.instance.output.filter(
             fieldset__isnull=True,
         ).exclude(id__in=field_ids).delete()
@@ -113,7 +121,11 @@ class KickoffUpdateVersionService(
             field, _ = self._update_field(field_data, fieldset=fieldset)
             field_ids.append(field.id)
             self._update_field_selections(field, field_data)
-            self._update_field_rulesets(field, field_data, version)
+            self._update_field_rulesets(
+                field=field,
+                rulesets_data=field_data.get('rulesets'),
+                version=version,
+            )
         TaskField.objects.filter(
             fieldset=fieldset,
         ).exclude(id__in=field_ids).delete()

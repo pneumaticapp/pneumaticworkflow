@@ -79,6 +79,7 @@ class FieldSetRuleSet(
     class Meta:
         ordering = ['order', 'id']
 
+    api_name_prefix = 'fieldset-ruleset'
     workflow = models.ForeignKey(
         Workflow,
         on_delete=models.CASCADE,
@@ -92,7 +93,7 @@ class FieldSetRuleSet(
     message = models.TextField(
         null=True,
         blank=True,
-        help_text='custom error message for a type="validator"',
+        help_text='Custom error message when the sum check fails.',
     )
     order = models.PositiveIntegerField(default=0)
     fields = models.ManyToManyField(
@@ -121,7 +122,7 @@ class FieldSetRuleGroupOr(
         on_delete=models.CASCADE,
         related_name='fieldset_ruleset_groups_or',
     )
-    fieldset_rule = models.ForeignKey(
+    ruleset = models.ForeignKey(
         FieldSetRuleSet,
         on_delete=models.CASCADE,
         related_name='groups_or',
@@ -141,6 +142,7 @@ class FieldSetRuleGroupAnd(
     class Meta:
         ordering = ['id']
 
+    api_name_prefix = 'fieldset-rule-group-and'
     workflow = models.ForeignKey(
         Workflow,
         on_delete=models.CASCADE,

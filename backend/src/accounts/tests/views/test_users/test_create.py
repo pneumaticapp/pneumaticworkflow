@@ -5,6 +5,7 @@ from datetime import timedelta
 import pytest
 from django.utils import timezone
 
+from src.accounts import messages
 from src.accounts.enums import (
     BillingPlanType,
     Language,
@@ -719,6 +720,33 @@ def test_create__photo_exceeds_max__validation_error(api_client, mocker):
     # assert
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    create_mock.assert_not_called()
+
+
+def test_create__groups_another_account__validation_error(
+    api_client,
+    mocker,
+):
+
+    # arrange
+    owner = create_test_owner()
+    another_account = create_test_account()
+    another_group = create_test_group(account=another_account)
+    create_mock = mocker.patch('src.accounts.views.users.UserService.create')
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        path='/accounts/users',
+        data={'groups': [another_group.id]},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_A_0040
+    assert response.data['details']['name'] == 'groups'
+    assert response.data['details']['reason'] == messages.MSG_A_0040
     create_mock.assert_not_called()
 
 

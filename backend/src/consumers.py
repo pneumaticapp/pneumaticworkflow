@@ -1,9 +1,11 @@
 import contextlib
 import json
+from typing import Any, Dict, Optional
 
 from channels.exceptions import DenyConnection
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth import get_user_model
+from uvicorn.protocols.utils import ClientDisconnected
 from websockets.exceptions import ConnectionClosedError
 
 UserModel = get_user_model()
@@ -40,16 +42,31 @@ class PneumaticBaseConsumer(AsyncWebsocketConsumer):
                 self.channel_name,
             )
 
-    async def notification(self, event):
-        await self.send(
+    async def notification(self, event: Dict[str, Any]):
+        await self._send_ignoring_disconnect(
             text_data=json.dumps(
                 event['notification'],
             ),
         )
 
-    async def receive(self, text_data=None, bytes_data=None):
+    async def receive(
+        self,
+        text_data: Optional[str] = None,
+        bytes_data: Optional[bytes] = None,
+    ):
         if text_data == self.HEARTBEAT_PING_MESSAGE:
-            with contextlib.suppress(ConnectionClosedError):
-                await self.send(text_data=self.HEARTBEAT_PONG_MESSAGE)
+            await self._send_ignoring_disconnect(
+                text_data=self.HEARTBEAT_PONG_MESSAGE,
+            )
         else:
-            await super().receive(text_data=text_data, bytes_data=bytes_data)
+            await super().receive(
+                text_data=text_data,
+                bytes_data=bytes_data,
+            )
+
+    async def _send_ignoring_disconnect(
+        self,
+        text_data: Optional[str] = None,
+    ):
+        with contextlib.suppress(ClientDisconnected, ConnectionClosedError):
+            await self.send(text_data=text_data)

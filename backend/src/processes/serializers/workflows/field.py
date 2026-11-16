@@ -9,6 +9,7 @@ from src.generics.fields import (
 from src.processes.enums import (
     FieldRuleOperator,
     FieldRuleType,
+    FieldRuleValueType,
     FieldType,
 )
 from src.processes.models.workflows.fields import (
@@ -29,6 +30,7 @@ class FieldRuleGroupAndSerializer(serializers.ModelSerializer):
             'field',
             'operator',
             'value',
+            'value_type',
         )
 
     api_name = DocCharField(
@@ -54,6 +56,18 @@ class FieldRuleGroupAndSerializer(serializers.ModelSerializer):
         read_only=True,
         example='yes',
         help_text='Value the source field is compared against.',
+    )
+    value_type = DocChoiceField(
+        read_only=True,
+        choices=FieldRuleValueType.CHOICES,
+        allow_null=True,
+        example=FieldRuleValueType.USER,
+        help_text=(
+            'For a user field: `user` reads user_id, '
+            '`group` reads group_id. '
+            'Empty reads user_id. exists and not_exists '
+            'still treat either id as filled.'
+        ),
     )
 
 

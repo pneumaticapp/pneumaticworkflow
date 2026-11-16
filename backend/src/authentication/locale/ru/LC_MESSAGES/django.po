@@ -86,3 +86,6 @@ msgstr "Этот аккаунт не использует аутентифика
 
 msgid "Format field is required"
 msgstr ""
+
+msgid "This user has been deactivated. Please contact your account administrator."
+msgstr "Этот пользователь был деактивирован. Пожалуйста, свяжитесь с администратором вашей учётной записи."

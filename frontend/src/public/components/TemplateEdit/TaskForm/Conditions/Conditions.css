@@ -43,9 +43,13 @@
 .condition-rule__settings-inner {
   position: relative;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   padding-right: 4rem;
   margin: -0.4rem;
+
+  @media (width <= 1150px) {
+    flex-wrap: wrap;
+  }
 
   &.condition-rule__settings_disabled::before {
     position: absolute;

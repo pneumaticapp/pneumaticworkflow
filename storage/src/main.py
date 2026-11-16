@@ -14,14 +14,18 @@ from src.infra.http_client import close_shared_client, get_shared_client
 from src.presentation.api import files_router
 from src.shared_kernel.auth import close_redis_client
 from src.shared_kernel.config import get_settings
+from src.shared_kernel.events import close_event_emitter
 from src.shared_kernel.exceptions import register_exception_handlers
 from src.shared_kernel.middleware import AuthenticationMiddleware
 from src.shared_kernel.middleware.rate_limit import RateLimitMiddleware
+from src.shared_kernel.middleware.request_id import RequestIdMiddleware
 from src.shared_kernel.middleware.security_headers import (
     SecurityHeadersMiddleware,
 )
+from src.shared_kernel.sentry import init_sentry
 
 settings = get_settings()
+init_sentry()
 
 
 # ── Constants ────────────────────────────────────────────────
@@ -40,9 +44,6 @@ Pass the key in the `Authorization` header:
 ```http
 Authorization: Bearer <your_api_key>
 ```
-
-Or click the **Authorize** button above and paste your key \
-to test endpoints directly.
 
 ### Key Capabilities
 - **Direct Uploads:** Upload attachments for workflows, tasks, \
@@ -67,6 +68,8 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         await StorageServiceHolder.close()
     with contextlib.suppress(Exception):
         await close_redis_client()
+    with contextlib.suppress(Exception):
+        await close_event_emitter()
     with contextlib.suppress(Exception):
         await close_shared_client()
 
@@ -140,7 +143,7 @@ app = FastAPI(
     ],
     openapi_tags=[
         {
-            'name': 'files',
+            'name': 'Files',
             'description': ('Upload, download, and manage file attachments'),
         },
     ],
@@ -185,6 +188,8 @@ app.add_middleware(
     SecurityHeadersMiddleware,
     include_hsts=settings.HSTS_ENABLED,
 )
+
+app.add_middleware(RequestIdMiddleware)
 
 
 # ── Exception handlers & routers ────────────────────────────

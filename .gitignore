@@ -9,6 +9,9 @@ nginx/logs
 nginx/keys
 nginx/config/nginx.conf
 firebase-push.json
+plan.md
+GEMINI.md
+celerybeat.pid
 
 # Playwright / E2E
 frontend/e2e
@@ -22,3 +25,6 @@ frontend/test-results
 .agents/
 .agent/
 .antigravity/
+.claude/
+GEMINI.md
+.plans/

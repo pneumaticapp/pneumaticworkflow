@@ -98,3 +98,17 @@ describe('Tabs — active tab and click behavior', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 });
+
+describe('Tabs — variant', () => {
+  it('renders the default track without the pill modifier', () => {
+    render(React.createElement(Tabs, makeProps()));
+
+    expect(getTabButtons()[0].parentElement?.className).not.toContain('container_pill');
+  });
+
+  it('adds the pill modifier to the track for the pill variant', () => {
+    render(React.createElement(Tabs, makeProps({ variant: 'pill' })));
+
+    expect(getTabButtons()[0].parentElement?.className).toContain('container_pill');
+  });
+});

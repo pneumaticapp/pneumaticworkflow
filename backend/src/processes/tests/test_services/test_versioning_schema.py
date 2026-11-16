@@ -150,7 +150,7 @@ def test_field_schema__rulesets__replaces_deprecated_rules():
         name='Target',
         order=0,
     )
-    ruleset, _, group_and = create_test_field_show_ruleset(
+    ruleset, _, _ = create_test_field_show_ruleset(
         account=user.account,
         template=template,
         field=field,
@@ -172,6 +172,7 @@ def test_field_schema__rulesets__replaces_deprecated_rules():
     assert group_and_data['field'] == 'source-field-1'
     assert group_and_data['operator'] == FieldRuleOperator.EQUAL
     assert group_and_data['value'] == 'yes'
+    assert group_and_data['value_type'] is None
 
 
 def test_field_schema__no_rulesets__empty_list():

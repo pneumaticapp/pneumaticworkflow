@@ -3,6 +3,7 @@ import { ETaskListCompleteSorting, ETaskListSorting } from '../types/tasks';
 import { EGroupsListSorting, EUserListSorting } from '../types/user';
 import { EDatasetsSorting } from '../types/dataset';
 import { EFieldsetsSorting } from '../types/fieldset';
+import { EAIAgentsSorting } from '../redux/ai/types';
 
 export const processesTasksSortingValues = Object.values(ETaskListSorting);
 export const processesTasksCompleteSortingValues = Object.values(ETaskListCompleteSorting);
@@ -11,6 +12,7 @@ export const workflowLogSortingValues = Object.values(EWorkflowsLogSorting);
 export const workflowLogAttachmentsModes = Object.values(EWorkflowLogAttachmentsModes);
 export const userListSortingValues = Object.values(EUserListSorting);
 export const groupListSortingValues = Object.values(EGroupsListSorting);
+export const aiAgentsSortingValues = Object.values(EAIAgentsSorting);
 export const datasetsSortingValues = Object.values(EDatasetsSorting);
 export const fieldsetsSortingValues = Object.values(EFieldsetsSorting);
 

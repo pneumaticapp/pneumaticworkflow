@@ -10,10 +10,12 @@ from src.processes.enums import (
     DueDateRule,
     FieldRuleOperator,
     FieldRuleType,
+    FieldRuleValueType,
+    FieldSetRuleOperator,
     FieldType,
     PerformerType,
     PredicateOperator,
-    WorkflowStatus, FieldSetRuleOperator,
+    WorkflowStatus,
 )
 from src.processes.models.workflows.fieldset import FieldSet, FieldSetRuleSet
 from src.processes.models.workflows.fields import (
@@ -82,6 +84,7 @@ class TestTaskUpdateVersionService:
         template_task = template.tasks.get(number=1)
         template_task.api_name = api_name
         template_task.name = name
+        template_task.skip_on_return = True
         template_task.revert_task = revert_task
         template_task.name_template = name
         template_task.description = description
@@ -111,6 +114,7 @@ class TestTaskUpdateVersionService:
         assert task.account == user.account
         assert task.workflow == workflow
         assert task.name == name
+        assert task.skip_on_return is True
         assert task.revert_task == revert_task
         assert task.name_template == name
         assert task.description == description
@@ -233,7 +237,10 @@ class TestTaskUpdateVersionService:
             workflow=workflow,
             fields_values=fields_values,
         )
-        update_fields_mock.assert_called_once_with(data=None)
+        update_fields_mock.assert_called_once_with(
+            data=None,
+            version=version,
+        )
         update_conditions_mock.assert_called_once_with(data=None)
         update_checklists_mock.assert_called_once_with(
             data=None,
@@ -383,6 +390,7 @@ class TestTaskUpdateVersionService:
         )
         update_fields_mock.assert_called_once_with(
             data=data['fields'],
+            version=version,
         )
         update_conditions_mock.assert_called_once_with(
             data=data['conditions'],
@@ -1946,7 +1954,7 @@ def test__update_field__fieldset_existing_runtime_field__preserves_values():
 
     """
     Runtime fieldset fields have task=None. Lookup by fieldset+api_name
-    updates metadata, keeps task empty, and preserves field values.
+    updates metadata, sets task, and preserves field values.
     """
 
     # arrange
@@ -2205,7 +2213,7 @@ def test__update_fields__preserves_fieldset_fields(mocker):
     )
 
     # act
-    service._update_fields(data=[field_data])
+    service._update_fields(data=[field_data], version=0)
 
     # assert
     update_field_mock.assert_called_once_with(field_data, fieldset=None)
@@ -2340,12 +2348,9 @@ def test__update_field__fieldset_polluted_task_fk__cleared():
     assert field.value == 'keep me'
 
 
-def test__update_fieldset_rulesets__data_none__keep():
+def test__update_fieldset_rulesets__data_none__clear():
 
-    """
-    A snapshot taken before rulesets existed carries no such key.
-    Absent means "nothing is known" — existing rulesets survive.
-    """
+    """ None clears the fieldset rulesets, same as an empty list """
 
     # arrange
     user = create_test_owner()
@@ -2373,7 +2378,9 @@ def test__update_fieldset_rulesets__data_none__keep():
     )
 
     # assert
-    assert FieldSetRuleSet.objects.filter(id=existing_ruleset.id).exists()
+    assert not FieldSetRuleSet.objects.filter(
+        id=existing_ruleset.id,
+    ).exists()
 
 
 def test__update_fieldset_rulesets__data_empty__clear():
@@ -2671,9 +2678,9 @@ def test__update_fieldset_fields__fields_data_provided__ok(mocker):
         fields_data[0],
     )
     _update_field_rulesets_mock.assert_called_once_with(
-        new_field,
-        fields_data[0],
-        1,
+        field=new_field,
+        rulesets_data=fields_data[0].get('rulesets'),
+        version=1,
     )
 
 
@@ -2876,6 +2883,7 @@ def test__update_field_rulesets__data_provided__ok():
                                 'field': 'fs-1-field-1',
                                 'operator': FieldRuleOperator.EQUAL,
                                 'value': 'done',
+                                'value_type': FieldRuleValueType.USER,
                             },
                         ],
                     },
@@ -2885,7 +2893,11 @@ def test__update_field_rulesets__data_provided__ok():
     }
 
     # act
-    service._update_field_rulesets(field, field_data, 1)
+    service._update_field_rulesets(
+        field=field,
+        rulesets_data=field_data.get('rulesets'),
+        version=1,
+    )
 
     # assert
     ruleset = field.rulesets.get(api_name='ruleset-1')
@@ -2896,6 +2908,7 @@ def test__update_field_rulesets__data_provided__ok():
     assert group_and.field == 'fs-1-field-1'
     assert group_and.operator == FieldRuleOperator.EQUAL
     assert group_and.value == 'done'
+    assert group_and.value_type == FieldRuleValueType.USER
 
 
 def test__update_field_rulesets__data_empty__clear():
@@ -2930,18 +2943,15 @@ def test__update_field_rulesets__data_empty__clear():
     )
 
     # act
-    service._update_field_rulesets(field, {'rulesets': []}, 1)
+    service._update_field_rulesets(field=field, rulesets_data=[], version=1)
 
     # assert
     assert not FieldRuleSet.objects.filter(id=existing_ruleset.id).exists()
 
 
-def test__update_field_rulesets__key_missing__keep():
+def test__update_field_rulesets__data_none__clear():
 
-    """
-    A snapshot taken before rulesets existed carries no such key.
-    Absent means "nothing is known" — existing rulesets survive.
-    """
+    """ None clears the field rulesets, same as an empty list """
 
     # arrange
     user = create_test_owner()
@@ -2969,10 +2979,10 @@ def test__update_field_rulesets__key_missing__keep():
     )
 
     # act
-    service._update_field_rulesets(field, {}, 1)
+    service._update_field_rulesets(field=field, rulesets_data=None, version=1)
 
     # assert
-    assert FieldRuleSet.objects.filter(id=existing_ruleset.id).exists()
+    assert not FieldRuleSet.objects.filter(id=existing_ruleset.id).exists()
 
 
 def test__update_field_rulesets__multiple__ok():
@@ -3017,7 +3027,11 @@ def test__update_field_rulesets__multiple__ok():
     }
 
     # act
-    service._update_field_rulesets(field, field_data, 1)
+    service._update_field_rulesets(
+        field=field,
+        rulesets_data=field_data.get('rulesets'),
+        version=1,
+    )
 
     # assert
     assert field.rulesets.count() == 2
@@ -3068,7 +3082,11 @@ def test__update_field_rulesets__replaces_existing__ok():
     }
 
     # act
-    service._update_field_rulesets(field, field_data, 1)
+    service._update_field_rulesets(
+        field=field,
+        rulesets_data=field_data.get('rulesets'),
+        version=1,
+    )
 
     # assert
     assert not FieldRuleSet.objects.filter(id=stale_ruleset.id).exists()
@@ -3129,7 +3147,11 @@ def test__update_field_rulesets__groups_pruned__ok():
     }
 
     # act
-    service._update_field_rulesets(field, field_data, 1)
+    service._update_field_rulesets(
+        field=field,
+        rulesets_data=field_data.get('rulesets'),
+        version=1,
+    )
 
     # assert
     assert not FieldRuleGroupOr.objects.filter(

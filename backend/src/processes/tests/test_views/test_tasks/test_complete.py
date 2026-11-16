@@ -4,22 +4,30 @@ from rest_framework import status
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
+    FieldRuleOperator,
+    FieldRuleType,
+    FieldType,
     OwnerRole,
     OwnerType,
     PerformerType,
-    TaskStatus, FieldType,
-    WorkflowEventType,
+    TaskStatus,
 )
-from src.processes.models.templates.fields import FieldTemplate
-from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.fields import (
+    FieldRuleGroupAnd,
+    FieldRuleGroupOr,
+    FieldRuleSet,
+    TaskField,
+)
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.models.templates.owner import TemplateOwner
+from src.processes.services.exceptions import (
+    FieldRuleCheckServiceException,
+)
 from src.processes.services.workflow_action import (
     WorkflowActionService,
 )
 from src.processes.tests.fixtures import (
     create_test_account,
-    create_test_field_show_ruleset,
     create_test_admin,
     create_test_group,
     create_test_guest,
@@ -873,125 +881,99 @@ def test_task_complete__template_starter_own_workflow__forbidden(api_client):
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
-def test_complete__show_rule_hides_field__is_hidden_in_event(api_client):
-
-    """ The flag is recalculated before the event snapshot, so the
-        event of the completed task already carries the new value. """
-
+def test_complete__field_rule_check_service_exception__validation_error(
+    api_client,
+    mocker,
+):
     # arrange
     account = create_test_account()
-    user = create_test_owner(account=account)
-    api_client.token_authenticate(user)
-    template = create_test_template(user=user, is_active=True, tasks_count=1)
-    task_template = template.tasks.first()
-    FieldTemplate.objects.create(
-        account=account,
-        template=template,
-        task=task_template,
-        name='Source',
-        type=FieldType.STRING,
-        order=0,
-        api_name='source-field-1',
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+
+    mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService.'
+        'complete_task_for_user',
+        side_effect=FieldRuleCheckServiceException(
+            field_api_name='score-field',
+            message='Score must be greater than 10',
+        ),
     )
-    target_template = FieldTemplate.objects.create(
-        account=account,
-        template=template,
-        task=task_template,
-        name='Target',
-        type=FieldType.STRING,
-        order=1,
-        api_name='target-field-1',
-    )
-    create_test_field_show_ruleset(
-        account=account,
-        template=template,
-        field=target_template,
-        source_field_api_name='source-field-1',
-        value='yes',
-    )
-    run_response = api_client.post(f'/templates/{template.id}/run')
-    workflow_id = run_response.data['id']
-    task_id = run_response.data['tasks'][0]['id']
+    api_client.token_authenticate(owner)
 
     # act
     response = api_client.post(
-        f'/v2/tasks/{task_id}/complete',
-        data={'output': {'source-field-1': 'no'}},
+        f'/v2/tasks/{task.id}/complete',
+        data={'output': {'score-field': '5'}},
     )
 
     # assert
-    assert response.status_code == 200
-    target_field = TaskField.objects.get(
-        workflow_id=workflow_id,
-        api_name='target-field-1',
-    )
-    assert target_field.is_hidden is True
-
-    events_response = api_client.get(f'/v2/tasks/{task_id}/events')
-    assert events_response.status_code == 200
-    complete_events = [
-        event for event in events_response.data
-        if event['type'] == WorkflowEventType.TASK_COMPLETE
-    ]
-    output = complete_events[0]['task']['output']
-    target_data = next(
-        item for item in output if item['api_name'] == 'target-field-1'
-    )
-    assert target_data['is_hidden'] is True
-    assert 'rulesets' not in target_data
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == 'Score must be greater than 10'
+    assert response.data['details']['api_name'] == 'score-field'
 
 
-def test_complete__show_rule_passes__field_visible(api_client):
-
-    """ A matching condition reveals the field even though the client
-        never sent a value for it. """
-
+def test_complete__field_rule_show_rule__updates_is_hidden(api_client):
     # arrange
     account = create_test_account()
-    user = create_test_owner(account=account)
-    api_client.token_authenticate(user)
-    template = create_test_template(user=user, is_active=True, tasks_count=1)
-    task_template = template.tasks.first()
-    FieldTemplate.objects.create(
-        account=account,
-        template=template,
-        task=task_template,
-        name='Source',
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+
+    source_field = TaskField.objects.create(
+        name='Choice',
+        api_name='choice-field',
         type=FieldType.STRING,
-        order=0,
-        api_name='source-field-1',
+        value='',
+        workflow=workflow,
+        task=task,
+        account=account,
     )
-    target_template = FieldTemplate.objects.create(
-        account=account,
-        template=template,
-        task=task_template,
-        name='Target',
+    target_field = TaskField.objects.create(
+        name='Dependent Field',
+        api_name='dep-field',
         type=FieldType.STRING,
-        order=1,
-        api_name='target-field-1',
+        workflow=workflow,
+        task=task,
+        account=account,
         is_hidden=True,
     )
-    create_test_field_show_ruleset(
+    ruleset = FieldRuleSet.objects.create(
         account=account,
-        template=template,
-        field=target_template,
-        source_field_api_name='source-field-1',
-        value='yes',
+        workflow=workflow,
+        field=target_field,
+        name='Show dep when Choice is yes',
+        type=FieldRuleType.SHOW,
+        order=1,
+        api_name='ruleset-show-dep',
     )
-    run_response = api_client.post(f'/templates/{template.id}/run')
-    workflow_id = run_response.data['id']
-    task_id = run_response.data['tasks'][0]['id']
+    group_or = FieldRuleGroupOr.objects.create(
+        account=account,
+        workflow=workflow,
+        ruleset=ruleset,
+        api_name='group-or-dep',
+    )
+    FieldRuleGroupAnd.objects.create(
+        account=account,
+        workflow=workflow,
+        group_or=group_or,
+        field=source_field.api_name,
+        operator=FieldRuleOperator.EQUAL,
+        value='yes',
+        api_name='group-and-dep',
+    )
+    api_client.token_authenticate(owner)
 
     # act
     response = api_client.post(
-        f'/v2/tasks/{task_id}/complete',
-        data={'output': {'source-field-1': 'yes'}},
+        f'/v2/tasks/{task.id}/complete',
+        data={'output': {source_field.api_name: 'yes'}},
     )
 
     # assert
-    assert response.status_code == 200
-    target_field = TaskField.objects.get(
-        workflow_id=workflow_id,
-        api_name='target-field-1',
-    )
+    assert response.status_code == status.HTTP_200_OK
+    target_field.refresh_from_db()
     assert target_field.is_hidden is False
+    source_field.refresh_from_db()
+    assert source_field.value == 'yes'

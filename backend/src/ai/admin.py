@@ -7,6 +7,7 @@ from django.forms import ModelForm, ValidationError
 from django.forms.models import BaseInlineFormSet
 
 from src.ai.models import (
+    AIAgentAction,
     OpenAiMessage,
     OpenAiPrompt,
 )
@@ -86,3 +87,57 @@ class OpenAiPromptAdmin(ModelAdmin):
             OpenAiPrompt.objects.active().by_target(obj.target).exclude(
                 id=obj.id,
             ).update(is_active=False)
+
+
+@admin.register(AIAgentAction)
+class AIAgentActionAdmin(ModelAdmin):
+
+    model = AIAgentAction
+    list_display = (
+        'account',
+        'agent',
+        'action',
+        'task',
+        'notification',
+        'date_created',
+    )
+    list_filter = (
+        'account',
+        'action',
+    )
+    search_fields = (
+        'task__name',
+        'notification__text',
+        'agent__name',
+        'text',
+    )
+    readonly_fields = (
+        'account',
+        'agent',
+        'action',
+        'task',
+        'notification',
+        'text',
+        'date_created',
+    )
+    fields = (
+        'account',
+        'agent',
+        'action',
+        'task',
+        'notification',
+        'text',
+        'date_created',
+    )
+    date_hierarchy = 'date_created'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'account',
+            'agent',
+            'task',
+            'notification',
+        )
+
+    def has_add_permission(self, request):
+        return False

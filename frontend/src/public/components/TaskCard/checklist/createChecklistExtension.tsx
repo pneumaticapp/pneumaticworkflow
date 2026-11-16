@@ -18,5 +18,7 @@ export function createChecklistExtension(task: ITask) {
     });
   });
 
-  return checks.map((check) => <TaskCheckableItemContainer {...check} />);
+  return checks.map((check) => (
+    <TaskCheckableItemContainer key={`${check.listApiName}_${check.itemApiName}`} {...check} />
+  ));
 }

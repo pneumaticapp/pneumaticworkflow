@@ -17,7 +17,9 @@ from src.processes.models.workflows.conditions import (
     Predicate,
     Rule,
 )
-from src.processes.models.workflows.fieldset import FieldSet
+from src.processes.models.workflows.fieldset import (
+    FieldSet,
+)
 from src.processes.models.workflows.fields import (
     FieldSelection,
     TaskField,
@@ -82,7 +84,8 @@ class TaskUpdateVersionService(
     def _update_fields(
         self,
         data: Optional[List[Dict]] = None,
-        version: int = 0,
+        *,
+        version: int,
     ):
 
         # TODO Move to TaskFieldService
@@ -93,7 +96,11 @@ class TaskUpdateVersionService(
                 field, _ = self._update_field(field_data, fieldset=None)
                 field_ids.append(field.id)
                 self._update_field_selections(field, field_data)
-                self._update_field_rulesets(field, field_data, version)
+                self._update_field_rulesets(
+                    field=field,
+                    rulesets_data=field_data.get('rulesets'),
+                    version=version,
+                )
         self.instance.output.filter(
             fieldset__isnull=True,
         ).exclude(id__in=field_ids).delete()
@@ -228,7 +235,11 @@ class TaskUpdateVersionService(
             field, _ = self._update_field(field_data, fieldset=fieldset)
             field_ids.append(field.id)
             self._update_field_selections(field, field_data)
-            self._update_field_rulesets(field, field_data, version)
+            self._update_field_rulesets(
+                field=field,
+                rulesets_data=field_data.get('rulesets'),
+                version=version,
+            )
         fieldset.fields.exclude(id__in=field_ids).delete()
 
     def _update_fieldsets(self, data: Optional[List], version: int) -> None:
@@ -335,6 +346,7 @@ class TaskUpdateVersionService(
                 'require_completion_by_all'
             ],
             'skip_for_starter': data['skip_for_starter'],
+            'skip_on_return': data['skip_on_return'],
             'name_template': data['name'],
             'name': insert_fields_values_to_text(
                 text=data['name'],

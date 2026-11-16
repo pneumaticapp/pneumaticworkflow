@@ -15,6 +15,7 @@ from urllib.parse import urlparse
 
 from configurations import Configuration, values
 from corsheaders.defaults import default_headers
+
 from src.notifications.enums import EmailProvider
 
 
@@ -172,7 +173,6 @@ class Common(Configuration):
         'corsheaders',
 
         'django_extensions',
-        'djcelery_email',
         'django_json_widget',
         'django_filters',
         'django_celery_beat',
@@ -213,6 +213,7 @@ class Common(Configuration):
         'django.middleware.csrf.CsrfViewMiddleware',
         'src.authentication.middleware.UserAgentMiddleware',
         'src.authentication.middleware.AuthMiddleware',
+        'src.logs.events.middleware.EventContextMiddleware',
         'src.authentication.middleware.UserLocaleMiddleware',
         'src.storage.middleware.FileServiceAuthMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
@@ -318,8 +319,6 @@ class Common(Configuration):
             '```http\n'
             'Authorization: Bearer <your_api_key>\n'
             '```\n\n'
-            'Or click the **Authorize** button above and paste your key '
-            'to test endpoints directly.\n\n'
 
             '### Why Use the API?\n'
             '- **Custom Dashboards:** Pull live task counts and workflow '
@@ -362,39 +361,6 @@ class Common(Configuration):
         'SERVERS': [{'url': '/', 'description': 'Pneumatic Core API Server'}],
         'TAGS': [
             {
-                'name': 'Auth',
-                'description': (
-                    'Sign in, token obtain/refresh, password '
-                    'management, and user context'
-                ),
-            },
-            {
-                'name': 'Templates',
-                'description': (
-                    'Create, configure, and manage workflow templates'
-                ),
-            },
-            {
-                'name': 'Templates Public',
-                'description': (
-                    'Public and embedded templates for external forms'
-                ),
-            },
-            {
-                'name': 'Workflows',
-                'description': (
-                    'Running workflow instances — complete, return, '
-                    'snooze, comment, and track progress'
-                ),
-            },
-            {
-                'name': 'Tasks',
-                'description': (
-                    'Task operations — complete, revert, manage '
-                    'performers, due dates, and events'
-                ),
-            },
-            {
                 'name': 'Accounts',
                 'description': (
                     'Account settings, users, invites, groups, '
@@ -402,14 +368,21 @@ class Common(Configuration):
                 ),
             },
             {
+                'name': 'AI',
+                'description': (
+                    'AI providers and agents for account-level '
+                    'model configuration'
+                ),
+            },
+            {
                 'name': 'Attachments',
                 'description': 'File attachments linked to workflows',
             },
             {
-                'name': 'Webhooks',
+                'name': 'Auth',
                 'description': (
-                    'Subscribe to workflow events and manage '
-                    'webhook endpoints'
+                    'Sign in, token obtain/refresh, password '
+                    'management, and user context'
                 ),
             },
             {
@@ -426,13 +399,46 @@ class Common(Configuration):
                 ),
             },
             {
+                'name': 'Reports',
+                'description': (
+                    'Dashboard highlights and workflow analytics'
+                ),
+            },
+            {
+                'name': 'Tasks',
+                'description': (
+                    'Task operations — complete, revert, manage '
+                    'performers, due dates, and events'
+                ),
+            },
+            {
+                'name': 'Templates',
+                'description': (
+                    'Create, configure, and manage workflow templates'
+                ),
+            },
+            {
+                'name': 'Templates Public',
+                'description': (
+                    'Public and embedded templates for external forms'
+                ),
+            },
+            {
                 'name': 'Tenants',
                 'description': 'Multi-tenant workspace management',
             },
             {
-                'name': 'Reports',
+                'name': 'Webhooks',
                 'description': (
-                    'Dashboard highlights and workflow analytics'
+                    'Subscribe to workflow events and manage '
+                    'webhook endpoints'
+                ),
+            },
+            {
+                'name': 'Workflows',
+                'description': (
+                    'Running workflow instances — complete, return, '
+                    'snooze, comment, and track progress'
                 ),
             },
         ],
@@ -521,14 +527,34 @@ class Common(Configuration):
     CELERY_BROKER_URL = env.get('CELERY_BROKER_URL')
     CELERY_IMPORTS = [
         'src.accounts.tasks',
+        'src.analysis.tasks',
         'src.authentication.tasks',
+        'src.logs.events.tasks',
+        'src.notifications.tasks',
+        'src.payment.tasks',
         'src.processes.tasks.delay',
         'src.processes.tasks.tasks',
         'src.processes.tasks.update_workflow',
         'src.processes.tasks.webhooks',
         'src.reports.tasks',
         'src.analysis.tasks',
+        'src.ai.tasks',
+        'src.storage.tasks',
     ]
+
+    # An unset backend disables the journal. An enabled backend requires
+    # valid URLs and positive stream/batch sizes (LogsConfig.ready).
+    LOGS_SERVICE_NAME = 'pneumatic-backend'
+    LOGS_DEFAULT_CONSUMER_IDLE_MS = 60000
+    LOGS_CONSUMER_INTERVAL_SECONDS = 5
+
+    LOGS_BACKEND = env.get('LOGS_BACKEND')
+    LOGS_REDIS_URL = env.get('LOGS_REDIS_URL')
+    LOGS_OTLP_ENDPOINT = env.get('LOGS_OTLP_ENDPOINT')
+    LOGS_STREAM_MAXLEN = int(env.get('LOGS_STREAM_MAXLEN') or 0)
+    LOGS_CONSUMER_BATCH_SIZE = int(env.get('LOGS_CONSUMER_BATCH_SIZE') or 0)
+
+    LOGS_SERVICE_VERSION = env.get('RELEASE')
 
     # reCaptcha
     DRF_RECAPTCHA_SITE_KEY = env.get('RECAPTCHA_SITE_KEY') or 'key'
@@ -543,6 +569,8 @@ class Common(Configuration):
     # OpenAI
     OPENAI_API_KEY = env.get('OPENAI_API_KEY')
     OPENAI_API_ORG = env.get('OPENAI_API_ORG')
+    AI_HTTP_PROXY = env.get('AI_HTTP_PROXY') or None
+    AI_HTTPS_PROXY = env.get('AI_HTTPS_PROXY') or None
 
     # Microsoft auth
     MS_CLIENT_ID = env.get('MS_CLIENT_ID')
@@ -627,7 +655,9 @@ class Common(Configuration):
 
 class Testing(Common):
 
-    TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
+    # No event reaches Redis unless a test asks for it
+    # (fixture events_enabled of src/logs/events/tests).
+    LOGS_BACKEND = None
 
     # CELERY_ALWAYS_EAGER mean that Celery will not schedule tasks
     # to run as it would regularly do, via sending a message to the broker.

@@ -10,10 +10,11 @@ import { getQueryStringParams, history } from '../../../utils/history';
 import { IConfirmResetPassword } from '../../../redux/actions';
 import { IntlMessages } from '../../../components/IntlMessages';
 import { NotificationManager } from '../../../components/UI/Notifications';
-import { UNKNOWN_ERROR } from '../../../utils/getErrorMessage';
+import { getErrorMessage, UNKNOWN_ERROR } from '../../../utils/getErrorMessage';
 import { validatePassword } from '../../../utils/validators';
 import { Header, InputField, Button } from '../../../components/UI';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
+import { logger } from '../../../utils/logger';
 
 import styles from '../User.css';
 import { isEnvSignup } from '../../../constants/enviroment';
@@ -40,18 +41,24 @@ export function ResetPassword({ loading, sendResetPassword }: IResetPasswordProp
 
   useEffect(() => {
     const getToken = async () => {
-      const { token } = getQueryStringParams(history.location.search);
-      const statusResponse = token && (await confirmResetPassword(token));
+      try {
+        const { token } = getQueryStringParams(history.location.search);
+        const statusResponse = token && (await confirmResetPassword(token));
 
-      if (!statusResponse || statusResponse.status !== EResetPasswordStatus.Valid) {
+        if (!statusResponse || statusResponse.status !== EResetPasswordStatus.Valid) {
+          history.replace(ERoutes.ForgotPassword);
+          const message = (statusResponse && MAP_STATUS_ERRORS[statusResponse.status]) || UNKNOWN_ERROR;
+          NotificationManager.warning({ message });
+
+          return;
+        }
+
+        setTokenLocal(token);
+      } catch (error) {
+        logger.error(error);
+        NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
         history.replace(ERoutes.ForgotPassword);
-        const message = (statusResponse && MAP_STATUS_ERRORS[statusResponse.status]) || UNKNOWN_ERROR;
-        NotificationManager.warning({ message });
-
-        return;
       }
-
-      setTokenLocal(token);
     };
 
     getToken();

@@ -3,9 +3,13 @@ from django.db import models
 
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
-from src.generics.querysets import AccountBaseQuerySet
 from src.generics.models import SoftDeleteModel
-from src.processes.enums import FieldRuleType, FieldRuleOperator
+from src.generics.querysets import AccountBaseQuerySet
+from src.processes.enums import (
+    FieldRuleOperator,
+    FieldRuleType,
+    FieldRuleValueType,
+)
 from src.processes.models.base import BaseApiNameModel
 from src.processes.models.mixins import (
     ApiNameMixin,
@@ -16,6 +20,7 @@ from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.fieldset import FieldSet
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.querysets import (
+    FieldRuleSetQuerySet,
     FieldSelectionQuerySet,
     TaskFieldQuerySet,
 )
@@ -115,6 +120,7 @@ class FieldRuleSet(
     class Meta:
         ordering = ['order', 'id']
 
+    api_name_prefix = 'field-ruleset'
     workflow = models.ForeignKey(
         Workflow,
         on_delete=models.CASCADE,
@@ -137,7 +143,15 @@ class FieldRuleSet(
     )
     order = models.PositiveIntegerField(default=0)
 
-    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
+    objects = BaseSoftDeleteManager.from_queryset(FieldRuleSetQuerySet)()
+
+    @property
+    def type_show(self) -> bool:
+        return self.type == FieldRuleType.SHOW
+
+    @property
+    def type_validator(self) -> bool:
+        return self.type == FieldRuleType.VALIDATOR
 
     def __str__(self):
         return self.api_name
@@ -151,6 +165,7 @@ class FieldRuleGroupOr(
     class Meta:
         ordering = ['id']
 
+    api_name_prefix = 'field-rule-group-or'
     workflow = models.ForeignKey(
         Workflow,
         on_delete=models.CASCADE,
@@ -192,6 +207,12 @@ class FieldRuleGroupAnd(
         choices=FieldRuleOperator.CHOICES,
     )
     value = models.CharField(max_length=200, null=True, blank=True)
+    value_type = models.CharField(
+        max_length=20,
+        choices=FieldRuleValueType.CHOICES,
+        null=True,
+        blank=True,
+    )
     field = models.CharField(
         max_length=200,
         null=True,

@@ -1,5 +1,6 @@
 import { captureException as sentryCaptureException } from './sentryCapture';
 import { isExpectedClientError } from './expectedClientErrors';
+import { InterceptorError } from '../api/InterceptorError';
 
 function findError(args: unknown[]): Error | undefined {
   return args.find((arg): arg is Error => arg instanceof Error);
@@ -20,12 +21,26 @@ function logError(...args: unknown[]): void {
   console.error(...args);
   const err = findError(args);
   if (err) {
+    if (err instanceof InterceptorError) {
+      return;
+    }
     sentryCaptureException(err);
   } else if (args.length > 0) {
     const message =
       args.length === 1 && typeof args[0] === 'string'
         ? args[0]
-        : args.map((a) => (typeof a === 'object' && a !== null ? JSON.stringify(a) : String(a))).join(' ');
+        : args
+            .map((a) => {
+              if (typeof a === 'object' && a !== null) {
+                try {
+                  return JSON.stringify(a);
+                } catch {
+                  return '[non-serializable object]';
+                }
+              }
+              return String(a);
+            })
+            .join(' ');
     sentryCaptureException(new Error(message));
   }
 }

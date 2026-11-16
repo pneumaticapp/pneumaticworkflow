@@ -51,7 +51,7 @@ export class HttpRequest {
 
         return requestMethod(url, options, (error: object | void, response: request.Response, body: object) => {
           if (error || !isInRange(response.statusCode, 200, 299)) {
-            reject(body);
+            reject(body || error || new Error(`Request failed with status ${response.statusCode}`));
           } else {
             resolve(body as unknown as T);
           }

@@ -1,0 +1,65 @@
+.key-modal {
+  &__title {
+    margin-bottom: 1.6rem;
+  }
+
+  &__description {
+    margin-bottom: 1.6rem;
+    font-size: 1.5rem;
+    line-height: 2rem;
+    color: var(--pneumatic-color-black72);
+  }
+
+  &__warning {
+    padding: 0.8rem 1.2rem;
+    margin: 0 0 1.6rem;
+    font-size: 1.4rem;
+    color: var(--pneumatic-color-warning);
+    background-color: var(--pneumatic-color-notification1-light);
+    border-left: 0.3rem solid var(--pneumatic-color-warning);
+    border-radius: 0.4rem;
+  }
+
+  &__key {
+    display: flex;
+    gap: 1.6rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 1.6rem;
+    margin: 1.6rem 0;
+    background-color: var(--pneumatic-color-black4);
+    border: 0.1rem solid var(--pneumatic-color-black16);
+    border-radius: 0.6rem;
+  }
+
+  &__key-value {
+    font-family: monospace;
+    font-size: 1.4rem;
+    color: var(--pneumatic-color-black100);
+    word-break: break-all;
+  }
+
+  &__copy-btn {
+    padding: 0;
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: var(--pneumatic-color-link);
+    white-space: nowrap;
+    cursor: pointer;
+    background: none;
+    border: none;
+
+    &:hover {
+      color: var(--pneumatic-color-link-hover);
+    }
+  }
+
+  &__footer {
+    display: flex;
+    margin-top: 3.2rem;
+
+    > * + * {
+      margin-left: 1.6rem;
+    }
+  }
+}

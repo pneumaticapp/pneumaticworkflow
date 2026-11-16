@@ -3,8 +3,11 @@ from django.db.models import Q, UniqueConstraint
 
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
-from src.generics.querysets import AccountBaseQuerySet
-from src.processes.enums import FieldRuleType, FieldRuleOperator
+from src.processes.enums import (
+    FieldRuleOperator,
+    FieldRuleType,
+    FieldRuleValueType,
+)
 from src.processes.models.base import BaseApiNameModel
 from src.processes.models.mixins import (
     FieldMixin,
@@ -14,6 +17,9 @@ from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
 from src.processes.querysets import (
     FieldTemplateQuerySet,
+    FieldTemplateRuleGroupAndQuerySet,
+    FieldTemplateRuleGroupOrQuerySet,
+    FieldTemplateRuleSetQuerySet,
     FieldTemplateValuesQuerySet,
 )
 
@@ -26,13 +32,9 @@ class FieldTemplate(
 
     class Meta:
         ordering = ['-order']
-        constraints = [
-            UniqueConstraint(
-                fields=['template', 'api_name', 'account'],
-                condition=Q(is_deleted=False),
-                name='processes_fieldtemplate_template_api_name_unique',
-            ),
-        ]
+        # Partial unique indexes are raw SQL in 0260.
+        # NOT is_deleted AND template_id IS NOT NULL,
+        # or NOT is_deleted AND template_id IS NULL.
 
     api_name_prefix = 'field'
 
@@ -80,15 +82,10 @@ class FieldTemplateSelection(
 
     class Meta:
         ordering = ['pk']
+        # Partial unique indexes are raw SQL in 0260.
+        # NOT is_deleted AND template_id IS NOT NULL,
+        # or NOT is_deleted AND template_id IS NULL.
         constraints = [
-            UniqueConstraint(
-                fields=['template', 'api_name'],
-                condition=Q(is_deleted=False),
-                name=(
-                    'processes_fieldtemplateselection'
-                    '_template_api_name_unique'
-                ),
-            ),
             UniqueConstraint(
                 fields=['field_template', 'value'],
                 condition=Q(is_deleted=False),
@@ -127,20 +124,9 @@ class FieldTemplateRuleSet(
 
     class Meta:
         ordering = ['order', 'id']
-        constraints = [
-            UniqueConstraint(
-                fields=['template', 'api_name', 'account'],
-                condition=Q(is_deleted=False),
-                name='fieldtemplateruleset_field_api_name_unique',
-            ),
-            # Fields of shared fieldsets have template_id IS NULL, and in
-            # Postgres NULL != NULL, so the constraint above never fires.
-            UniqueConstraint(
-                fields=['field', 'api_name', 'account'],
-                condition=Q(is_deleted=False, template__isnull=True),
-                name='fieldtemplateruleset_shared_api_name_unique',
-            ),
-        ]
+        # Partial unique indexes are raw SQL in 0260.
+        # NOT is_deleted AND template_id IS NOT NULL,
+        # or NOT is_deleted AND template_id IS NULL.
 
     api_name_prefix = 'field-ruleset'
     template = models.ForeignKey(
@@ -167,7 +153,9 @@ class FieldTemplateRuleSet(
     )
     order = models.PositiveIntegerField(default=0)
 
-    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
+    objects = BaseSoftDeleteManager.from_queryset(
+        FieldTemplateRuleSetQuerySet,
+    )()
 
     def __str__(self):
         return self.api_name
@@ -180,18 +168,9 @@ class FieldTemplateRuleGroupOr(
 
     class Meta:
         ordering = ['id']
-        constraints = [
-            UniqueConstraint(
-                fields=['api_name', 'template', 'account'],
-                condition=Q(is_deleted=False),
-                name='rulegroupor_field_rule_api_name_unique',
-            ),
-            UniqueConstraint(
-                fields=['ruleset', 'api_name', 'account'],
-                condition=Q(is_deleted=False, template__isnull=True),
-                name='rulegroupor_shared_api_name_unique',
-            ),
-        ]
+        # Partial unique indexes are raw SQL in 0260.
+        # NOT is_deleted AND template_id IS NOT NULL,
+        # or NOT is_deleted AND template_id IS NULL.
 
     api_name_prefix = 'field-rule-group-or'
     template = models.ForeignKey(
@@ -207,7 +186,9 @@ class FieldTemplateRuleGroupOr(
         related_name='groups_or',
     )
 
-    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
+    objects = BaseSoftDeleteManager.from_queryset(
+        FieldTemplateRuleGroupOrQuerySet,
+    )()
 
     def __str__(self):
         return self.api_name
@@ -220,18 +201,9 @@ class FieldTemplateRuleGroupAnd(
 
     class Meta:
         ordering = ['id']
-        constraints = [
-            UniqueConstraint(
-                fields=['template', 'api_name', 'account'],
-                condition=Q(is_deleted=False),
-                name='rulegroupand_group_or_api_name_unique',
-            ),
-            UniqueConstraint(
-                fields=['group_or', 'api_name', 'account'],
-                condition=Q(is_deleted=False, template__isnull=True),
-                name='rulegroupand_shared_api_name_unique',
-            ),
-        ]
+        # Partial unique indexes are raw SQL in 0260.
+        # NOT is_deleted AND template_id IS NOT NULL,
+        # or NOT is_deleted AND template_id IS NULL.
 
     api_name_prefix = 'field-rule-group-and'
     group_or = models.ForeignKey(
@@ -251,12 +223,20 @@ class FieldTemplateRuleGroupAnd(
         choices=FieldRuleOperator.CHOICES,
     )
     value = models.CharField(max_length=200, null=True, blank=True)
+    value_type = models.CharField(
+        max_length=20,
+        choices=FieldRuleValueType.CHOICES,
+        null=True,
+        blank=True,
+    )
     field = models.CharField(
         max_length=200,
         null=True,
     )
 
-    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
+    objects = BaseSoftDeleteManager.from_queryset(
+        FieldTemplateRuleGroupAndQuerySet,
+    )()
 
     def __str__(self):
         return self.api_name

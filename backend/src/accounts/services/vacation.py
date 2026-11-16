@@ -7,25 +7,22 @@ from django.db import transaction
 from src.accounts.enums import AbsenceStatus, UserGroupType
 from src.accounts.models import UserGroup, UserVacation
 from src.accounts.serializers.user import UserWebsocketSerializer
+from src.authentication.enums import AuthTokenType
+from src.logs.events import AuditEventService
 from src.notifications.tasks import (
     send_user_updated_notification,
     send_vacation_delegation_notification,
 )
-from src.processes.enums import (
-    PerformerType,
-    TaskStatus,
-    WorkflowStatus,
-)
+from src.permissions.enums import PermissionSource
+from src.processes.enums import PerformerType, TaskStatus, WorkflowStatus
 from src.processes.models.workflows.task import Task, TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
-from src.permissions.enums import PermissionSource
 from src.processes.services.events import WorkflowEventService
+from src.processes.services.workflow_action import WorkflowActionService
 from src.processes.services.workflow_permissions import (
     WorkflowPermissionService,
 )
-from src.storage.tasks import (
-    schedule_sync_workflow_attachment_permissions,
-)
+from src.storage.tasks import schedule_sync_workflow_attachment_permissions
 
 UserModel = get_user_model()
 
@@ -34,16 +31,36 @@ SUBSTITUTE_GROUP_PREFIX = 'Substitutes'
 
 class VacationDelegationService:
 
-    def __init__(self, user: 'UserModel') -> None:
+    """Manage delegation for self.user, the absent employee.
+
+    Task substitutes are the users in that employee's substitute group.
+    request_user turns the vacation on or off: the employee, an admin,
+    or nobody when a scheduled task or cleanup does it.
+    """
+
+    def __init__(
+        self,
+        user: 'UserModel',
+        request_user: Optional['UserModel'] = None,
+        auth_type: AuthTokenType.LITERALS = AuthTokenType.USER,
+    ) -> None:
         self.user = user
+        self.request_user = request_user
+        self.auth_type = auth_type
 
     @classmethod
     def clear_substitute_groups(
-        cls, user: 'UserModel',
+        cls,
+        user: 'UserModel',
+        request_user: Optional['UserModel'] = None,
+        auth_type: AuthTokenType.LITERALS = AuthTokenType.USER,
     ) -> None:
         """Remove user from all personal (vacation substitute)
         groups. If the group becomes empty after removal,
         auto-deactivate vacation for the group owner.
+
+        request_user is whoever caused it: the vacation of the owner
+        goes off in their request, and the journal names them.
         """
         with transaction.atomic():
             personal_groups = (
@@ -62,7 +79,11 @@ class VacationDelegationService:
                         [v.user for v in group.vacation_owners.all()],
                     )
             for owner in owners_to_deactivate:
-                cls(owner).deactivate()
+                cls(
+                    owner,
+                    request_user=request_user,
+                    auth_type=auth_type,
+                ).deactivate()
 
     def _notify_substitutes(
         self,
@@ -102,7 +123,8 @@ class VacationDelegationService:
                 .first()
             )
 
-            if vacation and vacation.substitute_group_id:
+            is_update = bool(vacation and vacation.substitute_group_id)
+            if is_update:
                 task_ids = self._update_existing(
                     vacation=vacation,
                     substitute_user_ids=substitute_user_ids,
@@ -117,6 +139,20 @@ class VacationDelegationService:
                     vacation_start_date=vacation_start_date,
                     vacation_end_date=vacation_end_date,
                 )
+            AuditEventService.vacation_activated(
+                user=self.request_user,
+                auth_type=self.auth_type,
+                target=self.user,
+                substitute_users=UserModel.objects.filter(
+                    account_id=self.user.account_id,
+                    id__in=substitute_user_ids,
+                ),
+                absence_status=absence_status,
+                start_date=vacation_start_date,
+                end_date=vacation_end_date,
+                delegated_tasks_count=len(task_ids),
+                is_update=is_update,
+            )
 
         # Notify after transaction commits successfully.
         # If the transaction rolls back, the exception propagates
@@ -142,9 +178,12 @@ class VacationDelegationService:
         for user's direct tasks and regular group tasks.
 
         Returns (task_ids, wf_ids) — the full set of
-        delegated task IDs and their workflow IDs.
+        delegated task IDs and their workflow IDs. Tasks finished
+        because the workflow starter became a performer
+        are not included in task_ids.
         """
         task_ids = set(existing_task_ids or ())
+        new_task_ids: Set[int] = set()
         wf_ids: Set[int] = set()
 
         # 1. Create group performers for user's direct tasks
@@ -178,11 +217,17 @@ class VacationDelegationService:
                 ignore_conflicts=True,
             )
             task_ids |= new_direct_task_ids
+            new_task_ids |= new_direct_task_ids
             wf_ids |= {p.task.workflow_id for p in user_performers}
             for p in user_performers:
                 WorkflowEventService.task_delegation_event(
                     task=p.task,
                     user=self.user,
+                    substitute_group=group,
+                )
+                AuditEventService.task_delegation(
+                    task=p.task,
+                    target=self.user,
                     substitute_group=group,
                 )
 
@@ -226,6 +271,7 @@ class VacationDelegationService:
                     ignore_conflicts=True,
                 )
                 task_ids |= new_group_task_ids
+                new_task_ids |= new_group_task_ids
                 new_group_tasks = list(
                     Task.objects.filter(
                         id__in=new_group_task_ids,
@@ -240,8 +286,68 @@ class VacationDelegationService:
                         user=self.user,
                         substitute_group=group,
                     )
+                    AuditEventService.task_delegation(
+                        task=task,
+                        target=self.user,
+                        substitute_group=group,
+                    )
 
+        task_ids -= self._skip_tasks_for_starter(
+            group=group,
+            task_ids=new_task_ids,
+        )
         return task_ids, wf_ids
+
+    def _skip_tasks_for_starter(
+        self,
+        group: 'UserGroup',
+        task_ids: Set[int],
+    ) -> Set[int]:
+        """Apply the "skip for starter" rule to delegated tasks
+        whose workflow starter is a member of the substitute group.
+        The delegation adds performers after the task start,
+        so the check in WorkflowActionService.start_task
+        does not see them.
+
+        task_ids must contain only active or delayed tasks,
+        as the callers select them.
+
+        Returns IDs of skipped or completed tasks.
+        """
+        if not task_ids:
+            return set()
+        tasks = (
+            Task.objects
+            .filter(
+                id__in=task_ids,
+                skip_for_starter=True,
+                workflow__workflow_starter__in=group.users.all(),
+            )
+            .order_by('id')
+        )
+        finished_task_ids: Set[int] = set()
+        account_owner = self.user.account.get_owner()
+        for task in tasks:
+            if task.is_completed:
+                finished_task_ids.add(task.id)
+                continue
+            # The workflow is loaded here, not by select_related:
+            # the skip of the previous task of the same workflow
+            # may delay the workflow or complete it by a condition
+            if task.workflow.is_completed:
+                continue
+            service = WorkflowActionService(
+                user=account_owner,
+                workflow=task.workflow,
+            )
+            is_skipped = service.skip_delegated_task_for_starter(
+                task=task,
+                absent_user=self.user,
+            )
+            # Delegation may complete an RCBA task without skipping it.
+            if is_skipped or task.is_completed:
+                finished_task_ids.add(task.id)
+        return finished_task_ids
 
     def _update_existing(
         self,
@@ -277,6 +383,12 @@ class VacationDelegationService:
             existing_task_ids.add(task_id)
             existing_wf_ids.add(wf_id)
 
+        # Substitutes may have changed: the workflow starter
+        # can be a new substitute for already delegated tasks
+        existing_task_ids = existing_task_ids - self._skip_tasks_for_starter(
+            group=group,
+            task_ids=existing_task_ids,
+        )
         task_ids, new_wf_ids = self.delegate_tasks(
             group=group,
             existing_task_ids=existing_task_ids,
@@ -409,6 +521,11 @@ class VacationDelegationService:
                     schedule_sync_workflow_attachment_permissions(wf.id)
 
             vacation.delete()
+            AuditEventService.vacation_deactivated(
+                user=self.request_user,
+                auth_type=self.auth_type,
+                target=self.user,
+            )
 
         send_user_updated_notification.delay(
             logging=self.user.account.log_api_requests,

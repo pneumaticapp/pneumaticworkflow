@@ -13,5 +13,5 @@ export function createProgressbarExtension(task: ITask) {
     });
   });
 
-  return checklists.map((checklist) => <ChecklistProgressbarContainer {...checklist} />);
+  return checklists.map((checklist) => <ChecklistProgressbarContainer key={checklist.listApiName} {...checklist} />);
 }

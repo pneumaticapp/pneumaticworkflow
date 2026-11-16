@@ -6,6 +6,7 @@ from src.accounts.services.guests import GuestService
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
+from src.logs.events import AuditEventService
 from src.notifications.tasks import send_guest_new_task
 from src.processes.enums import PerformerType
 from src.processes.messages.workflow import (
@@ -70,10 +71,17 @@ class GuestPerformersService(BasePerformersService):
         task: Task,
         user: UserModel,
         request_user: UserModel,
+        auth_type: AuthTokenType,
         **kwargs,
     ):
         WorkflowEventService.performer_deleted_event(
             user=request_user,
+            task=task,
+            performer=user,
+        )
+        AuditEventService.task_performer_deleted(
+            user=request_user,
+            auth_type=auth_type,
             task=task,
             performer=user,
         )
@@ -135,10 +143,17 @@ class GuestPerformersService(BasePerformersService):
         request_user: UserModel,
         current_url: str,
         is_superuser: bool,
+        auth_type: AuthTokenType,
         **kwargs,
     ):
         WorkflowEventService.performer_created_event(
             user=request_user,
+            task=task,
+            performer=user,
+        )
+        AuditEventService.task_performer_created(
+            user=request_user,
+            auth_type=auth_type,
             task=task,
             performer=user,
         )

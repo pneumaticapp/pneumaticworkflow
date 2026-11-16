@@ -276,9 +276,9 @@ def test__update_field_selections__empty__skip():
     ).exists() is True
 
 
-def test__update_fieldset_rulesets__no_key__keep():
+def test__update_fieldset_rulesets__no_key__clear():
 
-    """ A snapshot taken before rulesets carries no such key """
+    """ A missing rulesets key clears the fieldset rulesets """
 
     # arrange
     account = create_test_account()
@@ -306,7 +306,7 @@ def test__update_fieldset_rulesets__no_key__keep():
     service._update_fieldset_rulesets(fieldset=fieldset, version=1)
 
     # assert
-    assert fieldset.rulesets.get().id == existing_ruleset.id
+    assert not fieldset.rulesets.filter(id=existing_ruleset.id).exists()
 
 
 def test__update_fieldset_rulesets__empty_list__delete_all():
@@ -476,7 +476,7 @@ def test__update_field_rulesets__provided__ok():
     # act
     service._update_field_rulesets(
         field=field,
-        field_data=field_data,
+        rulesets_data=field_data.get('rulesets'),
         version=1,
     )
 
@@ -529,7 +529,7 @@ def test__update_field_rulesets__empty_list__delete_all():
     # act
     service._update_field_rulesets(
         field=field,
-        field_data={'rulesets': []},
+        rulesets_data=[],
         version=1,
     )
 
@@ -605,7 +605,7 @@ def test__update_fields__provided__ok(mocker):
     )
 
     # act
-    service._update_fields(data=data)
+    service._update_fields(data=data, version=0)
 
     # assert
     update_field_mock.assert_called_once_with(
@@ -853,7 +853,9 @@ def test__update_fs_fields__provided__ok(mocker):
         field_1, field_data_1,
     )
     update_field_rulesets_mock.assert_called_once_with(
-        field_1, field_data_1, 1,
+        field=field_1,
+        rulesets_data=field_data_1.get('rulesets'),
+        version=1,
     )
     assert TaskField.objects.filter(
         id=field_1.id,
@@ -1063,6 +1065,7 @@ def test__update_from_version__fields__ok(mocker):
     # assert
     update_fields_mock.assert_called_once_with(
         data=fields_data,
+        version=version,
     )
     update_fieldsets_mock.assert_not_called()
 

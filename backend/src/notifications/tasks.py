@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 
 import pytz
 from celery import shared_task
-from celery.task import Task as TaskCelery
+from celery import Task as TaskCelery
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction

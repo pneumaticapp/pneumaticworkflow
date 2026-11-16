@@ -90,8 +90,11 @@ class DereferencedPerformersMixin:
                 ptp.task_id,
                 (ptp.is_completed IS TRUE) AS is_completed
               FROM processes_taskperformer ptp
+              LEFT JOIN accounts_usergroup ug
+                ON ug.id = ptp.group_id
+                AND ug.is_deleted IS FALSE
               LEFT JOIN accounts_usergroup_users g
-                ON g.usergroup_id = ptp.group_id
+                ON g.usergroup_id = ug.id
               WHERE ptp.is_deleted IS FALSE
                 AND ptp.directly_status != '{DirectlyStatus.DELETED}'
                 AND ptp.type IN (
@@ -140,8 +143,11 @@ class DereferencedPerformersMixin:
                 ptp.task_id,
                 (ptp.is_completed IS TRUE) AS is_completed
               FROM processes_taskperformer ptp
+              LEFT JOIN accounts_usergroup ug
+                ON ug.id = ptp.group_id
+                AND ug.is_deleted IS FALSE
               LEFT JOIN accounts_usergroup_users g
-                ON g.usergroup_id = ptp.group_id
+                ON g.usergroup_id = ug.id
               WHERE ptp.is_deleted IS FALSE
                 AND ptp.directly_status != '{DirectlyStatus.DELETED}'
                 AND ptp.type IN (

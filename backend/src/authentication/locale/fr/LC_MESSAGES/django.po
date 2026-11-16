@@ -86,3 +86,6 @@ msgstr "Ce compte n'utilise pas l'authentification SSO. Veuillez contacter le su
 
 msgid "Format field is required"
 msgstr ""
+
+msgid "This user has been deactivated. Please contact your account administrator."
+msgstr "Cet utilisateur a été désactivé. Veuillez contacter l'administrateur de votre compte."

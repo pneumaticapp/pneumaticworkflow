@@ -16,6 +16,7 @@ export function resetFirebaseDeviceToken(token: string) {
     {
       shouldThrow: false,
       responseType: 'empty',
+      expectedErrorStatuses: [404],
     },
   );
 }

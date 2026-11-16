@@ -1,13 +1,21 @@
 from decimal import Decimal, DecimalException
-from typing import Dict, List, Optional
+from operator import eq, gt, lt
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 from django.contrib.auth import get_user_model
-from django.db import transaction
 
 from src.generics.base.service import BaseModelService
 from src.processes.enums import FieldSetRuleOperator
-from src.processes.messages.fieldset import MSG_FS_0002, MSG_FS_0012
-from src.processes.models.templates.fieldset import FieldSetTemplateRuleSet
+from src.processes.messages.fieldset import (
+    MSG_FS_0002,
+    MSG_FS_0003,
+    MSG_FS_0012,
+)
+from src.processes.models.templates.fieldset import (
+    FieldSetTemplateRuleGroupAnd,
+    FieldSetTemplateRuleGroupOr,
+    FieldSetTemplateRuleSet,
+)
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.fieldset import (
     FieldSet,
@@ -17,165 +25,225 @@ from src.processes.models.workflows.fieldset import (
 )
 from src.processes.services.base import BaseUpdateVersionService
 from src.processes.services.exceptions import FieldsetServiceException
+from src.processes.utils.common import create_api_name
 
 UserModel = get_user_model()
 
 
 class FieldSetRuleSetService(BaseModelService):
 
-    """ Runtime counterpart of FieldsetTemplateRuleSetService.
-
-        Copies a template ruleset into a workflow and evaluates it
-        against the values the user has entered. """
-
     NULL_VALUES = (None, '', [])
+    SUM_OPERATOR_MAP = {
+        FieldSetRuleOperator.SUM_EQUAL: eq,
+        FieldSetRuleOperator.SUM_GREATER_THAN: gt,
+        FieldSetRuleOperator.SUM_LESS_THAN: lt,
+    }
 
     def _create_instance(
         self,
-        instance_template: FieldSetTemplateRuleSet,
-        fieldset: FieldSet,
+        instance_template: Optional[FieldSetTemplateRuleSet] = None,
+        fieldset: Optional[FieldSet] = None,
         **kwargs,
     ) -> FieldSetRuleSet:
-
-        self.instance = FieldSetRuleSet.objects.create(
-            account=self.account,
-            workflow_id=fieldset.workflow_id,
-            fieldset=fieldset,
-            api_name=instance_template.api_name,
-            message=instance_template.message,
-            order=instance_template.order,
+        fieldset_id = fieldset.id
+        workflow = kwargs.get('workflow')
+        workflow_id = (
+            kwargs.get('workflow_id')
+            or getattr(workflow, 'id', None)
         )
+        account = self.account or fieldset.account
+        api_name = kwargs.get('api_name') or getattr(
+            instance_template, 'api_name', None,
+        )
+        create_kwargs = {
+            'account': account,
+            'workflow_id': workflow_id,
+            'fieldset_id': fieldset_id,
+            'message': kwargs.get('message', getattr(
+                instance_template, 'message', None,
+            )),
+            'order': kwargs.get('order', getattr(
+                instance_template, 'order', 0,
+            )),
+        }
+        if api_name:
+            create_kwargs['api_name'] = api_name
+
+        self.instance = FieldSetRuleSet.objects.create(**create_kwargs)
         return self.instance
 
-    def _create_related(
+    def _set_fields(
         self,
-        instance_template: FieldSetTemplateRuleSet,
+        instance_template: Optional[FieldSetTemplateRuleSet] = None,
+        fields_api_names: Optional[Iterable[str]] = None,
         **kwargs,
     ):
-        self._set_fields(instance_template=instance_template)
-        self._create_groups_or(instance_template=instance_template)
+        if fields_api_names is None and instance_template:
+            fields_api_names = list(
+                instance_template.fields.values_list(
+                    'api_name', flat=True,
+                ),
+            )
 
-    def _set_fields(self, instance_template: FieldSetTemplateRuleSet):
-
-        """ Runtime fields keep the api_name of their template """
-
-        api_names = [
-            field_template.api_name
-            for field_template in instance_template.fields.all()
-        ]
-        if not api_names:
-            self.instance.fields.clear()
-            return
-        self.instance.fields.set(
-            TaskField.objects.filter(
+        if fields_api_names:
+            task_fields = TaskField.objects.filter(
                 fieldset_id=self.instance.fieldset_id,
-                api_name__in=api_names,
+                api_name__in=fields_api_names,
+            )
+            self.instance.fields.set(task_fields)
+        else:
+            self.instance.fields.clear()
+
+    def _create_group_and(
+        self,
+        group_or: FieldSetRuleGroupOr,
+        data: Union[FieldSetTemplateRuleGroupAnd, Dict],
+    ) -> FieldSetRuleGroupAnd:
+        if isinstance(data, dict):
+            api_name = data.get('api_name')
+            operator = data['operator']
+            value = data.get('value')
+        else:
+            api_name = data.api_name
+            operator = data.operator
+            value = data.value
+
+        return FieldSetRuleGroupAnd.objects.create(
+            account=self.instance.account,
+            workflow_id=self.instance.workflow_id,
+            group_or=group_or,
+            operator=operator,
+            value=value,
+            api_name=api_name or create_api_name(
+                FieldSetRuleGroupAnd.api_name_prefix,
             ),
         )
 
-    def _create_groups_or(self, instance_template: FieldSetTemplateRuleSet):
-        for group_or_template in instance_template.groups_or.all():
-            group_or = FieldSetRuleGroupOr.objects.create(
-                account=self.account,
-                workflow_id=self.instance.workflow_id,
-                fieldset_rule=self.instance,
-                api_name=group_or_template.api_name,
+    def _create_group_or(
+        self,
+        data: Union[FieldSetTemplateRuleGroupOr, Dict],
+    ) -> FieldSetRuleGroupOr:
+        if isinstance(data, dict):
+            api_name = data.get('api_name')
+            groups_and_data = data.get('groups_and', [])
+        else:
+            api_name = data.api_name
+            groups_and_data = data.groups_and.all()
+
+        create_kwargs = {
+            'account': self.instance.account,
+            'workflow_id': self.instance.workflow_id,
+            'ruleset': self.instance,
+        }
+        if api_name:
+            create_kwargs['api_name'] = api_name
+
+        group_or = FieldSetRuleGroupOr.objects.create(**create_kwargs)
+        for group_and_data in groups_and_data:
+            self._create_group_and(
+                group_or=group_or,
+                data=group_and_data,
             )
-            for group_and_template in group_or_template.groups_and.all():
-                FieldSetRuleGroupAnd.objects.create(
-                    account=self.account,
-                    workflow_id=self.instance.workflow_id,
-                    group_or=group_or,
-                    api_name=group_and_template.api_name,
-                    operator=group_and_template.operator,
-                    value=group_and_template.value,
-                )
+        return group_or
 
-    def _get_total(self) -> Optional[Decimal]:
+    def _create_related(
+        self,
+        instance_template: Optional[FieldSetTemplateRuleSet] = None,
+        groups_or: Optional[List] = None,
+        **kwargs,
+    ):
+        fields_api_names = kwargs.get('fields')
+        self._set_fields(
+            instance_template=instance_template,
+            fields_api_names=fields_api_names,
+            **kwargs,
+        )
 
-        """ None means there is nothing to check yet: every field is
-            blank and none of them is required. """
+        if groups_or is None and instance_template:
+            groups_or = list(instance_template.groups_or.all())
 
+        if groups_or:
+            for group_or_item in groups_or:
+                self._create_group_or(data=group_or_item)
+
+    def _create_actions(self, **kwargs):
+        if kwargs.get('skip_validation') is False:
+            self.validate(**kwargs)
+
+    def _get_fields_sum(self) -> Tuple[Decimal, bool]:
         total = Decimal(0)
-        has_values = False
+        values_exists = False
         for field in self.instance.fields.all():
             if field.value in self.NULL_VALUES:
                 if field.is_required:
-                    has_values = True
-                continue
-            try:
-                total += Decimal(field.value)
-            except (TypeError, ValueError, DecimalException):
-                continue
-            has_values = True
-        return total if has_values else None
+                    values_exists = True
+            else:
+                try:
+                    total += Decimal(field.value)
+                except (ValueError, TypeError, DecimalException):
+                    # Skipping the value lets the sum match on a partial set.
+                    raise FieldsetServiceException(MSG_FS_0003) from None
+                values_exists = True
+        return total, values_exists
 
-    def _check_group_and(
+    def _check_and_predicate(
         self,
         group_and: FieldSetRuleGroupAnd,
         total: Decimal,
     ) -> bool:
-
         try:
-            expected = Decimal(group_and.value)
-        except (TypeError, ValueError, DecimalException):
+            target_value = Decimal(group_and.value)
+        except (ValueError, TypeError, DecimalException):
             return False
-        if group_and.operator == FieldSetRuleOperator.SUM_EQUAL:
-            return total == expected
-        if group_and.operator == FieldSetRuleOperator.SUM_GREATER_THAN:
-            return total > expected
-        if group_and.operator == FieldSetRuleOperator.SUM_LESS_THAN:
-            return total < expected
-        return False
 
-    def _get_error_message(self, expected_values: List[str]) -> str:
+        op_func = self.SUM_OPERATOR_MAP.get(group_and.operator)
+        if op_func is None:
+            return False
+        return op_func(total, target_value)
+
+    def _get_error_message(
+        self,
+        all_ands: List[FieldSetRuleGroupAnd],
+    ) -> str:
         if self.instance.message:
             return self.instance.message
-        if len(expected_values) == 1:
-            return MSG_FS_0002(expected_values[0])
-        return MSG_FS_0012(', '.join(expected_values))
+        if len(all_ands) == 1:
+            return MSG_FS_0002(all_ands[0].value)
+        values_str = ', '.join(str(item.value) for item in all_ands)
+        return MSG_FS_0012(values_str)
 
     def validate(self, **kwargs) -> bool:
-
-        """ Call after the fields are saved.
-
-            Branches in groups_or are combined with OR, conditions
-            inside a branch with AND. """
-
+        """Call after objects save. Checks OR-logic across groups_or,
+        and AND-logic across groups_and within each group_or."""
         groups_or = list(self.instance.groups_or.all())
         if not groups_or:
             return True
-        total = self._get_total()
-        if total is None:
+
+        total, values_exists = self._get_fields_sum()
+        if not values_exists:
             return True
 
-        expected_values = []
         for group_or in groups_or:
             groups_and = list(group_or.groups_and.all())
             if not groups_and:
                 continue
             if all(
-                self._check_group_and(group_and=group_and, total=total)
-                for group_and in groups_and
+                self._check_and_predicate(and_item, total)
+                for and_item in groups_and
             ):
                 return True
-            expected_values.extend(
-                str(group_and.value) for group_and in groups_and
-            )
-        if not expected_values:
-            return True
-        raise FieldsetServiceException(
-            message=self._get_error_message(expected_values),
-        )
 
-    def create(self, **kwargs) -> FieldSetRuleSet:
-        with transaction.atomic():
-            self._create_instance(**kwargs)
-            self._create_related(**kwargs)
-            self._create_actions(**kwargs)
-            if kwargs.get('skip_validation') is False:
-                self.validate(**kwargs)
-        return self.instance
+        all_ands = [
+            and_item
+            for group_or in groups_or
+            for and_item in group_or.groups_and.all()
+        ]
+        if not all_ands:
+            return True
+
+        raise FieldsetServiceException(
+            message=self._get_error_message(all_ands),
+        )
 
 
 class FieldSetRuleSetVersionService(BaseUpdateVersionService):
@@ -188,12 +256,11 @@ class FieldSetRuleSetVersionService(BaseUpdateVersionService):
         if not api_names:
             self.instance.fields.clear()
             return
-        self.instance.fields.set(
-            TaskField.objects.filter(
-                fieldset_id=self.instance.fieldset_id,
-                api_name__in=api_names,
-            ),
+        fields = TaskField.objects.filter(
+            fieldset_id=self.instance.fieldset_id,
+            api_name__in=api_names,
         )
+        self.instance.fields.set(fields)
 
     def _update_groups_and(
         self,
@@ -219,7 +286,7 @@ class FieldSetRuleSetVersionService(BaseUpdateVersionService):
         api_names = set()
         for group_or_data in groups_or_data:
             group_or, _ = FieldSetRuleGroupOr.objects.update_or_create(
-                fieldset_rule=self.instance,
+                ruleset=self.instance,
                 api_name=group_or_data['api_name'],
                 defaults={
                     'account_id': self.instance.account_id,

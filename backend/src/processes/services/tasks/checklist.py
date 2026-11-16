@@ -3,16 +3,13 @@ from typing import Dict
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 
-from src.processes.models.templates.checklist import (
-    ChecklistTemplate,
-)
+from src.logs.events import AuditEventService
+from src.processes.models.templates.checklist import ChecklistTemplate
 from src.processes.models.workflows.checklist import (
     Checklist,
     ChecklistSelection,
 )
-from src.processes.services.base import (
-    BaseWorkflowService,
-)
+from src.processes.services.base import BaseWorkflowService
 from src.processes.services.tasks import exceptions
 from src.processes.services.tasks.checklist_selection import (
     ChecklistSelectionService,
@@ -81,6 +78,11 @@ class ChecklistService(BaseWorkflowService):
             user=self.user,
         )
         selection_service.mark()
+        AuditEventService.checklist_item_marked(
+            user=self.user,
+            auth_type=self.auth_type,
+            selection=selection,
+        )
 
     def unmark(
         self,
@@ -92,3 +94,8 @@ class ChecklistService(BaseWorkflowService):
             user=self.user,
         )
         selection_service.unmark()
+        AuditEventService.checklist_item_unmarked(
+            user=self.user,
+            auth_type=self.auth_type,
+            selection=selection,
+        )

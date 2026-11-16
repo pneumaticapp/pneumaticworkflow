@@ -1,0 +1,14 @@
+{
+  "stream_key": "pneumatic:events",
+  "user_types": [
+    "guest",
+    "user"
+  ],
+  "auth_types": [
+    "API",
+    "Embedded",
+    "Guest",
+    "Shared",
+    "User"
+  ]
+}

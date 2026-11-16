@@ -13,5 +13,5 @@ const OAUTH_MAP_URL: { [key in EOAuthType]: string } = {
 };
 
 export function getOAuthUrl(type: EOAuthType) {
-  return commonRequest<IGoogleRegisterInfoResponse>(OAUTH_MAP_URL[type], {}, { type: 'local' });
+  return commonRequest<IGoogleRegisterInfoResponse>(OAUTH_MAP_URL[type], {}, { type: 'local', shouldThrow: true });
 }

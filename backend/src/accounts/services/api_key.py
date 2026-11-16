@@ -4,6 +4,7 @@ from typing import Optional
 from src.accounts.models import APIKey, User
 from src.authentication.tokens import PneumaticToken
 from src.generics.base.service import BaseModelService
+from src.logs.events import AuditEventService
 
 
 class APIKeyService(BaseModelService):
@@ -48,8 +49,20 @@ class APIKeyService(BaseModelService):
 
         self.raw_key = raw_key
 
+    def _create_actions(self, **kwargs):
+        AuditEventService.api_key_created(
+            user=self.user,
+            auth_type=self.auth_type,
+            api_key=self.instance,
+        )
+
     def revoke(self):
         self.instance.is_active = False
         self.instance.save(update_fields=['is_active'])
         cache_key = PneumaticToken.encrypt(self.instance.token)
         PneumaticToken.cache.delete(cache_key)
+        AuditEventService.api_key_revoked(
+            user=self.user,
+            auth_type=self.auth_type,
+            api_key=self.instance,
+        )

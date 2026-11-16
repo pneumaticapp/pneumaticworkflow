@@ -142,6 +142,14 @@ export function TaskPerformers({ task, tasks, users, variables, setCurrentTask }
       </div>
       <div className="mb-3">
         <Checkbox
+          checkboxId={`skipOnReturn-${task.apiName}`}
+          title={formatMessage({ id: 'templates.task-skip-on-return' })}
+          checked={task.skipOnReturn}
+          onChange={(e) => setCurrentTask({ skipOnReturn: e.currentTarget.checked })}
+        />
+      </div>
+      <div className="mb-3">
+        <Checkbox
           checkboxId={`skipForStarter-${task.apiName}`}
           title={formatMessage({ id: 'templates.task-skip-for-starter' })}
           checked={task.skipForStarter}

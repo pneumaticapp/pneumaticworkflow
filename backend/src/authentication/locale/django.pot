@@ -84,3 +84,6 @@ msgstr ""
 
 msgid "Format field is required"
 msgstr ""
+
+msgid "This user has been deactivated. Please contact your account administrator."
+msgstr ""

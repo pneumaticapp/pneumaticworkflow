@@ -25,10 +25,10 @@ export function InfoWarningsModal({ isOpen, warnings, onClose }: IInfoWarningsMo
       <hr className={styles['line']} />
 
       {warnings.map((Warning) => (
-        <>
+        <React.Fragment key={Warning.name}>
           <Warning onClickActionButton={onClose} />
           <hr className={styles['line']} />
-        </>
+        </React.Fragment>
       ))}
 
       <Button

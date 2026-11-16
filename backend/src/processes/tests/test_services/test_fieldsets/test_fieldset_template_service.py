@@ -1,44 +1,40 @@
 import pytest
+
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
-    FieldRuleOperator,
     FieldSetLayout,
     FieldSetRuleOperator,
     FieldType,
     LabelPosition,
 )
 from src.processes.messages import fieldset as fs_messages
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateSelection,
+)
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
     FieldSetTemplateRuleSet,
     FieldSetTemplateRuleGroupOr,
     FieldSetTemplateRuleGroupAnd,
 )
-from src.processes.models.templates.fields import (
-    FieldTemplate,
-    FieldTemplateSelection,
-    FieldTemplateRuleSet,
-    FieldTemplateRuleGroupOr,
-    FieldTemplateRuleGroupAnd,
-)
 from src.processes.services.exceptions import (
     FieldsetTemplateInUseException,
-    FieldsetTemplateServiceException,
+    FieldsetTemplateInUseException2,
+    FieldsetTemplateRuleSumMaxFieldsNotNumber,
     FieldsetTemplateSharedIdMissing,
     FieldsetTemplateTemplateIdMissing,
 )
+from src.processes.services.fieldsets.fieldset import FieldSetTemplateService
 from src.processes.services.templates.field_template import (
     FieldTemplateService,
 )
-from src.processes.services.fieldsets.fieldset import (
-    FieldSetTemplateService,
-)
 from src.processes.tests.fixtures import (
     create_test_account,
-    create_test_owner,
-    create_test_template,
     create_test_fieldset_template,
+    create_test_owner,
     create_test_shared_fieldset,
+    create_test_template,
 )
 
 pytestmark = pytest.mark.django_db
@@ -540,6 +536,100 @@ def test__create_related__both_provided__ok(mocker):
     create_fields_mock.assert_called_once_with(fields_data=fields)
 
 
+def test__validate_rulesets__invalid_sum_rule__raises():
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+    )
+    field = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        fieldset=fieldset,
+        name='Field',
+        type=FieldType.TEXT,
+        order=1,
+    )
+    ruleset = FieldSetTemplateRuleSet.objects.create(
+        fieldset=fieldset,
+        account=account,
+        template=template,
+    )
+    ruleset.fields.add(field)
+    group_or = FieldSetTemplateRuleGroupOr.objects.create(
+        ruleset=ruleset,
+        account=account,
+        template=template,
+    )
+    FieldSetTemplateRuleGroupAnd.objects.create(
+        group_or=group_or,
+        account=account,
+        template=template,
+        operator=FieldSetRuleOperator.SUM_EQUAL,
+        value='10',
+    )
+    service = FieldSetTemplateService(user=user, instance=fieldset)
+
+    with pytest.raises(FieldsetTemplateRuleSumMaxFieldsNotNumber):
+        service._validate_rulesets()
+
+
+def test_partial_update__field_type_changed_to_text_with_sum_rule__raises():
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+    )
+    field = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        fieldset=fieldset,
+        name='Field',
+        type=FieldType.NUMBER,
+        order=1,
+        api_name='field-1',
+    )
+    ruleset = FieldSetTemplateRuleSet.objects.create(
+        fieldset=fieldset,
+        account=account,
+        template=template,
+        api_name='ruleset-1',
+    )
+    ruleset.fields.add(field)
+    group_or = FieldSetTemplateRuleGroupOr.objects.create(
+        ruleset=ruleset,
+        account=account,
+        template=template,
+        api_name='or-1',
+    )
+    FieldSetTemplateRuleGroupAnd.objects.create(
+        group_or=group_or,
+        account=account,
+        template=template,
+        operator=FieldSetRuleOperator.SUM_EQUAL,
+        value='10',
+        api_name='and-1',
+    )
+    service = FieldSetTemplateService(user=user, instance=fieldset)
+
+    with pytest.raises(FieldsetTemplateRuleSumMaxFieldsNotNumber):
+        service.partial_update(
+            fields=[
+                {
+                    'api_name': 'field-1',
+                    'name': 'Field',
+                    'type': FieldType.TEXT,
+                },
+            ],
+        )
+
+
 def test__update_fields__existing_field_with_rulesets__ok():
 
     """
@@ -811,7 +901,7 @@ def test_update_rules__existing_rule__ok(mocker):
         api_name='ruleset-1',
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         api_name='group-or-1',
     )
@@ -943,7 +1033,7 @@ def test_update_rules__orphan_rules__deleted():
         api_name='ruleset-1',
     )
     group_or_1 = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset_1,
+        ruleset=ruleset_1,
         account=account,
         api_name='group-or-1',
     )
@@ -960,7 +1050,7 @@ def test_update_rules__orphan_rules__deleted():
         api_name='ruleset-2',
     )
     group_or_2 = FieldSetTemplateRuleGroupOr.objects.create(
-        fieldset_rule=ruleset_2,
+        ruleset=ruleset_2,
         account=account,
         api_name='group-or-2',
     )
@@ -1152,9 +1242,17 @@ def test_partial_update_fields_ok(mocker):
         'src.processes.services.fieldsets.fieldset.'
         'FieldSetTemplateService.update_rulesets',
     )
+    mock_validate_rulesets = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'FieldSetTemplateService._validate_rulesets',
+    )
     mock_super_partial_update = mocker.patch(
         'src.generics.base.service.'
         'BaseModelService.partial_update',
+    )
+    fieldset_updated_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'AuditEventService.fieldset_updated',
     )
     data = {
         "fields": [
@@ -1169,6 +1267,15 @@ def test_partial_update_fields_ok(mocker):
     mock_super_partial_update.assert_not_called()
     mock_update_fields.assert_called_once_with(fields_data=data['fields'])
     mock_update_rules.assert_not_called()
+    mock_validate_rulesets.assert_called_once_with()
+    fieldset_updated_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        fieldset=fieldset,
+        update_kwargs={},
+        fields=[{"api_name": "field_1", "value": "val"}],
+        rules=None,
+    )
 
 
 def test_partial_update__rulesets__ok(mocker):
@@ -1195,6 +1302,14 @@ def test_partial_update__rulesets__ok(mocker):
     mock_update_rules = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
         'FieldSetTemplateService.update_rulesets',
+    )
+    mock_validate_rulesets = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'FieldSetTemplateService._validate_rulesets',
+    )
+    fieldset_updated_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'AuditEventService.fieldset_updated',
     )
     service = FieldSetTemplateService(user=owner, instance=fieldset)
     data = {
@@ -1223,6 +1338,15 @@ def test_partial_update__rulesets__ok(mocker):
     mock_super_partial_update.assert_not_called()
     mock_update_fields.assert_not_called()
     mock_update_rules.assert_called_once_with(rulesets_data=data['rulesets'])
+    mock_validate_rulesets.assert_called_once_with()
+    fieldset_updated_mock.assert_called_once_with(
+        user=owner,
+        auth_type=AuthTokenType.USER,
+        fieldset=fieldset,
+        update_kwargs={},
+        fields=None,
+        rules=data['rulesets'],
+    )
 
 
 def test_delete__not_in_use__ok():
@@ -1555,169 +1679,6 @@ def test__replace_api_names__fields_and_rules__ok(mocker):
         ],
         any_order=True,
     )
-
-
-def test__replace_api_names__rule_on_later_field__ok(mocker):
-
-    """
-    Rule references a field declared after it in the list
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    service = FieldSetTemplateService(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-    source_api_name = 'old-source'
-    shared_fieldset_data = {
-        'api_name': 'old-fs',
-        'fields': [
-            {
-                'api_name': 'old-target',
-                'name': 'Target',
-                'rulesets': [
-                    {
-                        'api_name': 'old-field-ruleset',
-                        'groups_or': [
-                            {
-                                'api_name': 'old-field-group-or',
-                                'groups_and': [
-                                    {
-                                        'api_name': 'old-field-group-and',
-                                        'field': source_api_name,
-                                        'operator': FieldRuleOperator.EQUAL,
-                                        'value': 'yes',
-                                    },
-                                ],
-                            },
-                        ],
-                    },
-                ],
-            },
-            {
-                'api_name': source_api_name,
-                'name': 'Source',
-            },
-        ],
-        'rulesets': [],
-    }
-    new_target_api = 'new-target'
-    new_source_api = 'new-source'
-    create_api_name_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.create_api_name',
-        side_effect=[
-            'new-fs',
-            new_target_api,
-            new_source_api,
-            'new-field-ruleset',
-            'new-field-group-or',
-            'new-field-group-and',
-        ],
-    )
-
-    # act
-    result = service._replace_api_names(
-        shared_fieldset_data=shared_fieldset_data,
-    )
-
-    # assert
-    assert result['fields'][0]['api_name'] == new_target_api
-    assert result['fields'][1]['api_name'] == new_source_api
-    ruleset_data = result['fields'][0]['rulesets'][0]
-    group_and_data = ruleset_data['groups_or'][0]['groups_and'][0]
-    assert group_and_data['field'] == new_source_api
-    assert create_api_name_mock.call_count == 6
-    create_api_name_mock.assert_has_calls(
-        [
-            mocker.call(FieldsetTemplate.api_name_prefix),
-            mocker.call(FieldTemplate.api_name_prefix),
-            mocker.call(FieldTemplateRuleSet.api_name_prefix),
-            mocker.call(FieldTemplateRuleGroupOr.api_name_prefix),
-            mocker.call(FieldTemplateRuleGroupAnd.api_name_prefix),
-        ],
-        any_order=True,
-    )
-
-
-def test__replace_api_names__rule_on_outer_field__keep_api_name(mocker):
-
-    """
-    Rule references a field outside the fieldset, api_name is kept
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    service = FieldSetTemplateService(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-    outer_api_name = 'kickoff-field-1'
-    shared_fieldset_data = {
-        'api_name': 'old-fs',
-        'fields': [
-            {
-                'api_name': 'old-target',
-                'name': 'Target',
-                'rulesets': [
-                    {
-                        'api_name': 'old-field-ruleset',
-                        'groups_or': [
-                            {
-                                'api_name': 'old-field-group-or',
-                                'groups_and': [
-                                    {
-                                        'api_name': 'old-field-group-and',
-                                        'field': outer_api_name,
-                                        'operator': FieldRuleOperator.EQUAL,
-                                        'value': 'yes',
-                                    },
-                                ],
-                            },
-                        ],
-                    },
-                ],
-            },
-        ],
-        'rulesets': [
-            {
-                'api_name': 'old-fieldset-ruleset',
-                'fields': ['old-target', outer_api_name],
-                'groups_or': [],
-            },
-        ],
-    }
-    new_target_api = 'new-target'
-    create_api_name_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.create_api_name',
-        side_effect=[
-            'new-fs',
-            new_target_api,
-            'new-field-ruleset',
-            'new-field-group-or',
-            'new-field-group-and',
-            'new-fieldset-ruleset',
-        ],
-    )
-
-    # act
-    result = service._replace_api_names(
-        shared_fieldset_data=shared_fieldset_data,
-    )
-
-    # assert
-    ruleset_data = result['fields'][0]['rulesets'][0]
-    group_and_data = ruleset_data['groups_or'][0]['groups_and'][0]
-    assert group_and_data['field'] == outer_api_name
-    assert result['rulesets'][0]['fields'] == [
-        new_target_api,
-        outer_api_name,
-    ]
-    assert create_api_name_mock.call_count == 6
 
 
 def test__replace_api_names__no_fields_key__ok(mocker):
@@ -2419,7 +2380,7 @@ def test__get_clone__ok(mocker):
 
     """
     Clone shared fieldset via to_json + get_new_fieldset_data +
-    create_shared_fieldset
+    _create_shared_fieldset
     """
 
     # arrange
@@ -2466,7 +2427,7 @@ def test__get_clone__ok(mocker):
     )
     create_shared_fieldset_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
-        'FieldSetTemplateService.create_shared_fieldset',
+        'FieldSetTemplateService._create_shared_fieldset',
         return_value=clone,
     )
 
@@ -2482,223 +2443,196 @@ def test__get_clone__ok(mocker):
     create_shared_fieldset_mock.assert_called_once_with(**result_data)
 
 
-def test_create__duplicate_ruleset_api_name__raise_exception():
-
-    """
-    Duplicate ruleset api_name across kickoff and task fieldsets
-    """
+def test_create_shared_fieldset__valid__emit_fieldset_created(mocker):
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(user=user, tasks_count=1)
-    kickoff = template.kickoff_instance
-    task = template.tasks.first()
-    shared_fieldset = create_test_shared_fieldset(account=account)
     service = FieldSetTemplateService(
         user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
+        auth_type=AuthTokenType.API,
     )
-    ruleset_api_name = 'fs-ruleset'
-    service.create(
-        name=shared_fieldset.name,
-        is_shared=False,
-        shared_fieldset_id=shared_fieldset.id,
-        template_id=template.id,
-        kickoff_id=kickoff.id,
-        api_name='fs-kickoff',
-        fields=[],
-        rulesets=[
-            {
-                'api_name': ruleset_api_name,
-                'fields': [],
-                'groups_or': [
-                    {
-                        'api_name': 'g-or-kickoff',
-                        'groups_and': [
-                            {
-                                'api_name': 'g-and-kickoff',
-                                'operator': FieldSetRuleOperator.SUM_EQUAL,
-                                'value': '100',
-                            },
-                        ],
-                    },
-                ],
-            },
-        ],
+    fieldset_created_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'AuditEventService.fieldset_created',
     )
 
     # act
-    with pytest.raises(FieldsetTemplateServiceException) as ex:
-        service.create(
-            name=shared_fieldset.name,
-            is_shared=False,
-            shared_fieldset_id=shared_fieldset.id,
-            template_id=template.id,
-            task_id=task.id,
-            api_name='fs-task',
-            fields=[],
-            rulesets=[
-                {
-                    'api_name': ruleset_api_name,
-                    'fields': [],
-                    'groups_or': [
-                        {
-                            'api_name': 'g-or-task',
-                            'groups_and': [
-                                {
-                                    'api_name': 'g-and-task',
-                                    'operator': FieldSetRuleOperator.SUM_EQUAL,
-                                    'value': '100',
-                                },
-                            ],
-                        },
-                    ],
-                },
-            ],
-        )
+    result = service.create_shared_fieldset(name='Contacts')
 
     # assert
-    assert ex.value.message == fs_messages.MSG_FS_0014(
-        name=task.name,
-        api_name=ruleset_api_name,
+    fieldset_created_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.API,
+        fieldset=result,
     )
 
 
-def test_create__duplicate_field_api_name__raise_exception():
-
-    """
-    Duplicate field api_name across kickoff and task fieldsets
-    """
+def test_partial_update__not_used__emit_fieldset_updated(mocker):
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(user=user, tasks_count=1)
-    kickoff = template.kickoff_instance
-    task = template.tasks.first()
-    shared_fieldset = create_test_shared_fieldset(account=account)
+    fieldset = create_test_shared_fieldset(
+        account=account,
+        name='Contacts',
+    )
     service = FieldSetTemplateService(
         user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
+        instance=fieldset,
+        auth_type=AuthTokenType.API,
     )
-    field_name = 'Fieldset field'
-    field_api_name = 'field-api-name'
-    service.create(
-        name=shared_fieldset.name,
-        is_shared=False,
-        shared_fieldset_id=shared_fieldset.id,
-        template_id=template.id,
-        kickoff_id=kickoff.id,
-        api_name='fs-kickoff',
-        fields=[
-            {
-                'name': field_name,
-                'type': FieldType.STRING,
-                'order': 1,
-                'api_name': field_api_name,
-            },
-        ],
+    fieldset_updated_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'AuditEventService.fieldset_updated',
     )
 
     # act
-    with pytest.raises(FieldsetTemplateServiceException) as ex:
-        service.create(
-            name=shared_fieldset.name,
-            is_shared=False,
-            shared_fieldset_id=shared_fieldset.id,
-            template_id=template.id,
-            task_id=task.id,
-            api_name='fs-task',
-            fields=[
-                {
-                    'name': field_name,
-                    'type': FieldType.STRING,
-                    'order': 1,
-                    'api_name': field_api_name,
-                },
-            ],
-        )
+    service.partial_update(name='Clients')
 
     # assert
-    assert ex.value.message == fs_messages.MSG_FS_0015(
-        name=task.name,
-        field_name=field_name,
-        api_name=field_api_name,
+    fieldset_updated_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.API,
+        fieldset=fieldset,
+        update_kwargs={'name': 'Clients'},
+        fields=None,
+        rules=None,
     )
+    assert fieldset.name == 'Clients'
 
 
-def test_create__duplicate_selection_api_name__raise_exception():
-
-    """
-    Duplicate selection api_name across kickoff and task fieldsets
-    """
+def test_partial_update__fieldset_in_use__not_emit(mocker):
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(user=user, tasks_count=1)
-    kickoff = template.kickoff_instance
-    task = template.tasks.first()
-    shared_fieldset = create_test_shared_fieldset(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    fieldset = create_test_shared_fieldset(account=account)
+    create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=template.tasks.get(number=1),
+        shared_fieldset=fieldset,
+    )
     service = FieldSetTemplateService(
         user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
+        instance=fieldset,
     )
-    selection_api_name = 'selection-1'
-    service.create(
-        name=shared_fieldset.name,
-        is_shared=False,
-        shared_fieldset_id=shared_fieldset.id,
-        template_id=template.id,
-        kickoff_id=kickoff.id,
-        api_name='fs-kickoff',
-        fields=[
-            {
-                'name': 'Dropdown field',
-                'type': FieldType.DROPDOWN,
-                'order': 1,
-                'api_name': 'field-dropdown-kickoff',
-                'selections': [
-                    {
-                        'value': 'Option B',
-                        'api_name': selection_api_name,
-                    },
-                ],
-            },
-        ],
+    fieldset_updated_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'AuditEventService.fieldset_updated',
     )
 
     # act
-    with pytest.raises(FieldsetTemplateServiceException) as ex:
-        service.create(
-            name=shared_fieldset.name,
-            is_shared=False,
-            shared_fieldset_id=shared_fieldset.id,
-            template_id=template.id,
-            task_id=task.id,
-            api_name='fs-task',
-            fields=[
-                {
-                    'name': 'Dropdown field',
-                    'type': FieldType.DROPDOWN,
-                    'order': 1,
-                    'api_name': 'field-dropdown-task',
-                    'selections': [
-                        {
-                            'value': 'Option B',
-                            'api_name': selection_api_name,
-                        },
-                    ],
-                },
-            ],
-        )
+    with pytest.raises(FieldsetTemplateInUseException2):
+        service.partial_update(name='Clients')
 
     # assert
-    assert ex.value.message == fs_messages.MSG_FS_0016(
-        name=task.name,
-        api_name=selection_api_name,
+    fieldset_updated_mock.assert_not_called()
+
+
+def test_delete__not_used__emit_fieldset_deleted(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        instance=fieldset,
+        auth_type=AuthTokenType.API,
     )
+    fieldset_deleted_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'AuditEventService.fieldset_deleted',
+    )
+
+    # act
+    service.delete()
+
+    # assert
+    fieldset_deleted_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.API,
+        fieldset=fieldset,
+    )
+    assert not FieldsetTemplate.objects.filter(id=fieldset.id).exists()
+
+
+def test_delete__fieldset_in_use__not_emit(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    fieldset = create_test_shared_fieldset(account=account)
+    create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=template.tasks.get(number=1),
+        shared_fieldset=fieldset,
+    )
+    service = FieldSetTemplateService(
+        user=user,
+        instance=fieldset,
+    )
+    fieldset_deleted_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'AuditEventService.fieldset_deleted',
+    )
+
+    # act
+    with pytest.raises(FieldsetTemplateInUseException):
+        service.delete()
+
+    # assert
+    fieldset_deleted_mock.assert_not_called()
+
+
+def test_get_clone__shared__emit_fieldset_cloned_only(mocker):
+
+    """ The clone is created by _create_shared_fieldset, the part
+        without the record, so it is not journaled as a creation
+        too. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(
+        account=account,
+        name='Contacts',
+    )
+    service = FieldSetTemplateService(
+        user=user,
+        instance=fieldset,
+        auth_type=AuthTokenType.API,
+    )
+    fieldset_created_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'AuditEventService.fieldset_created',
+    )
+    fieldset_cloned_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'AuditEventService.fieldset_cloned',
+    )
+
+    # act
+    clone = service.get_clone()
+
+    # assert
+    assert clone.id != fieldset.id
+    assert clone.name == 'Contacts - clone'
+    fieldset_cloned_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.API,
+        clone=clone,
+        source_fieldset=fieldset,
+    )
+    fieldset_created_mock.assert_not_called()

@@ -1,432 +1,397 @@
 import pytest
-from django.db import connection
-from django.test.utils import CaptureQueriesContext
+from django.contrib.auth import get_user_model
 
+from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     FieldRuleOperator,
     FieldRuleType,
+    FieldRuleValueType,
     FieldType,
 )
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateRuleGroupAnd,
+    FieldTemplateRuleGroupOr,
+    FieldTemplateRuleSet,
+)
 from src.processes.models.workflows.fields import (
-    FieldRuleGroupAnd,
-    FieldRuleGroupOr,
-    FieldRuleSet,
     TaskField,
 )
-from src.processes.services.tasks.field_ruleset import FieldRuleSetService
+from src.processes.services.tasks.fields.field import TaskFieldService
+from src.processes.services.tasks.fields.field_ruleset import (
+    FieldRuleSetService,
+)
 from src.processes.tests.fixtures import (
-    create_test_field_show_ruleset,
-    create_test_fieldset,
+    create_test_account,
     create_test_owner,
     create_test_template,
     create_test_workflow,
 )
 
+UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
 
 
-def create_source_field(workflow, task, api_name, value):
-    return TaskField.objects.create(
-        account=workflow.account,
-        workflow=workflow,
-        task=task,
-        type=FieldType.STRING,
-        api_name=api_name,
-        name=api_name,
-        value=value,
-    )
+def test_create__from_template__creates_ruleset_tree():
 
-
-def create_target_field(workflow, task, api_name='target-field-1'):
-    return TaskField.objects.create(
-        account=workflow.account,
-        workflow=workflow,
-        task=task,
-        type=FieldType.STRING,
-        api_name=api_name,
-        name=api_name,
-    )
-
-
-def create_show_ruleset(field, source_api_name, value='yes', **kwargs):
-    ruleset = FieldRuleSet.objects.create(
-        account=field.account,
-        workflow=field.workflow,
-        field=field,
-        api_name=kwargs.get('api_name', 'ruleset-1'),
-        name='Show ruleset',
-        type=kwargs.get('type', FieldRuleType.SHOW),
-    )
-    group_or = FieldRuleGroupOr.objects.create(
-        account=field.account,
-        workflow=field.workflow,
-        ruleset=ruleset,
-        api_name=kwargs.get('group_or_api_name', 'group-or-1'),
-    )
-    FieldRuleGroupAnd.objects.create(
-        account=field.account,
-        workflow=field.workflow,
-        group_or=group_or,
-        api_name=kwargs.get('group_and_api_name', 'group-and-1'),
-        field=source_api_name,
-        operator=kwargs.get('operator', FieldRuleOperator.EQUAL),
-        value=value,
-    )
-    return ruleset
-
-
-def test_create__with_template__ok():
-
-    """ Scalars and the group tree are copied from the template """
+    """ Creates FieldRuleSet and groups from template """
 
     # arrange
-    user = create_test_owner()
+    account = create_test_account()
+    user = create_test_owner(account=account)
     template = create_test_template(user=user, tasks_count=1)
-    workflow = create_test_workflow(user=user, template=template)
-    task = workflow.tasks.get(number=1)
-    field_template = template.tasks.get(number=1).fields.create(
-        account=user.account,
+    task_template = template.tasks.first()
+    field_template = FieldTemplate.objects.create(
+        account=account,
         template=template,
+        task=task_template,
+        name='Field 1',
         type=FieldType.STRING,
-        api_name='target-field-1',
-        name='Target',
-        order=0,
+        api_name='field-1',
     )
-    ruleset_template, _, group_and_template = create_test_field_show_ruleset(
-        account=user.account,
+    ruleset_template = FieldTemplateRuleSet.objects.create(
+        account=account,
         template=template,
         field=field_template,
-        source_field_api_name='source-field-1',
-        value='yes',
+        name='Show rule',
+        type=FieldRuleType.SHOW,
+        message='Custom validation message',
+        order=1,
+        api_name='ruleset-1',
     )
-    field = create_target_field(workflow, task)
+    group_or_template = FieldTemplateRuleGroupOr.objects.create(
+        account=account,
+        template=template,
+        ruleset=ruleset_template,
+        api_name='group-or-1',
+    )
+    FieldTemplateRuleGroupAnd.objects.create(
+        account=account,
+        template=template,
+        group_or=group_or_template,
+        field='source-field-api-name',
+        operator=FieldRuleOperator.EQUAL,
+        value='active',
+        value_type=FieldRuleValueType.GROUP,
+        api_name='group-and-1',
+    )
+    workflow = create_test_workflow(user=user, template=template)
+    task = workflow.tasks.first()
+    task_field = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        task=task,
+        name='Field 1',
+        type=FieldType.STRING,
+        api_name='field-1',
+    )
     service = FieldRuleSetService(user=user)
 
     # act
     ruleset = service.create(
         instance_template=ruleset_template,
-        field=field,
+        field=task_field,
+        workflow=workflow,
     )
 
     # assert
-    assert ruleset.field_id == field.id
-    assert ruleset.workflow_id == workflow.id
-    assert ruleset.api_name == ruleset_template.api_name
-    assert ruleset.name == ruleset_template.name
+    assert ruleset.account == account
+    assert ruleset.workflow == workflow
+    assert ruleset.field == task_field
+    assert ruleset.name == 'Show rule'
     assert ruleset.type == FieldRuleType.SHOW
-    assert ruleset.order == ruleset_template.order
-    group_or = ruleset.groups_or.get()
-    group_and = group_or.groups_and.get()
-    assert group_and.field == group_and_template.field
-    assert group_and.operator == group_and_template.operator
-    assert group_and.value == group_and_template.value
+    assert ruleset.message == 'Custom validation message'
+    assert ruleset.order == 1
+    assert ruleset.api_name == 'ruleset-1'
+
+    groups_or = list(ruleset.groups_or.all())
+    assert len(groups_or) == 1
+    group_or = groups_or[0]
+    assert group_or.api_name == 'group-or-1'
+    assert group_or.account == account
+    assert group_or.workflow == workflow
+
+    groups_and = list(group_or.groups_and.all())
+    assert len(groups_and) == 1
+    group_and = groups_and[0]
+    assert group_and.api_name == 'group-and-1'
+    assert group_and.field == 'source-field-api-name'
+    assert group_and.operator == FieldRuleOperator.EQUAL
+    assert group_and.value == 'active'
+    assert group_and.value_type == FieldRuleValueType.GROUP
+    assert group_and.account == account
+    assert group_and.workflow == workflow
 
 
-def test_apply_show_rulesets__condition_matches__visible():
+def test_create__from_template__validator_groups__ok():
 
-    """ The rule passes — the field stays visible """
-
-    # arrange
-    user = create_test_owner()
-    workflow = create_test_workflow(user=user, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    create_source_field(workflow, task, 'source-field-1', 'yes')
-    field = create_target_field(workflow, task)
-    field.is_hidden = True
-    field.save(update_fields=['is_hidden'])
-    create_show_ruleset(field, 'source-field-1', value='yes')
-
-    # act
-    FieldRuleSetService.apply_show_rulesets(
-        [field],
-        workflow_id=workflow.id,
-    )
-
-    # assert
-    field.refresh_from_db()
-    assert field.is_hidden is False
-
-
-def test_apply_show_rulesets__condition_fails__hidden():
-
-    """ The rule does not pass — the field is hidden """
+    """ Creates a validator ruleset tree from the template """
 
     # arrange
-    user = create_test_owner()
-    workflow = create_test_workflow(user=user, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    create_source_field(workflow, task, 'source-field-1', 'no')
-    field = create_target_field(workflow, task)
-    create_show_ruleset(field, 'source-field-1', value='yes')
-
-    # act
-    FieldRuleSetService.apply_show_rulesets(
-        [field],
-        workflow_id=workflow.id,
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    task_template = template.tasks.first()
+    field_template = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        task=task_template,
+        name='Field 1',
+        type=FieldType.STRING,
+        api_name='field-1',
     )
-
-    # assert
-    field.refresh_from_db()
-    assert field.is_hidden is True
-
-
-def test_apply_show_rulesets__second_group_or_matches__visible():
-
-    """ Branches are combined with OR — one passing branch is enough """
-
-    # arrange
-    user = create_test_owner()
-    workflow = create_test_workflow(user=user, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    create_source_field(workflow, task, 'source-field-1', 'maybe')
-    field = create_target_field(workflow, task)
-    ruleset = create_show_ruleset(field, 'source-field-1', value='yes')
-    group_or_2 = FieldRuleGroupOr.objects.create(
-        account=user.account,
-        workflow=workflow,
-        ruleset=ruleset,
-        api_name='group-or-2',
-    )
-    FieldRuleGroupAnd.objects.create(
-        account=user.account,
-        workflow=workflow,
-        group_or=group_or_2,
-        api_name='group-and-2',
-        field='source-field-1',
-        operator=FieldRuleOperator.EQUAL,
-        value='maybe',
-    )
-
-    # act
-    FieldRuleSetService.apply_show_rulesets(
-        [field],
-        workflow_id=workflow.id,
-    )
-
-    # assert
-    field.refresh_from_db()
-    assert field.is_hidden is False
-
-
-def test_apply_show_rulesets__validator_ruleset__not_applied():
-
-    """ Only show rulesets drive visibility """
-
-    # arrange
-    user = create_test_owner()
-    workflow = create_test_workflow(user=user, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    create_source_field(workflow, task, 'source-field-1', 'no')
-    field = create_target_field(workflow, task)
-    create_show_ruleset(
-        field,
-        'source-field-1',
-        value='yes',
+    ruleset_template = FieldTemplateRuleSet.objects.create(
+        account=account,
+        template=template,
+        field=field_template,
+        name='Validator rule',
         type=FieldRuleType.VALIDATOR,
+        message='Error text',
+        order=2,
+        api_name='custom-ruleset-1',
     )
-
-    # act
-    FieldRuleSetService.apply_show_rulesets(
-        [field],
-        workflow_id=workflow.id,
+    group_or_template = FieldTemplateRuleGroupOr.objects.create(
+        account=account,
+        template=template,
+        ruleset=ruleset_template,
+        api_name='custom-or-1',
     )
-
-    # assert
-    field.refresh_from_db()
-    assert field.is_hidden is False
-
-
-def test_apply_show_rulesets__field_without_rulesets__untouched():
-
-    """ A field with no show rulesets keeps its is_hidden """
-
-    # arrange
-    user = create_test_owner()
-    workflow = create_test_workflow(user=user, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    field = create_target_field(workflow, task)
-    field.is_hidden = True
-    field.save(update_fields=['is_hidden'])
-
-    # act
-    FieldRuleSetService.apply_show_rulesets(
-        [field],
-        workflow_id=workflow.id,
+    FieldTemplateRuleGroupAnd.objects.create(
+        account=account,
+        template=template,
+        group_or=group_or_template,
+        field='field-2',
+        operator=FieldRuleOperator.NOT_EQUAL,
+        value='draft',
+        api_name='custom-and-1',
     )
-
-    # assert
-    field.refresh_from_db()
-    assert field.is_hidden is True
-
-
-def test_apply_show_rulesets__source_field_missing__hidden():
-
-    """ An unresolvable source hides the field: without the value
-        there is no reason to consider the rule satisfied. """
-
-    # arrange
-    user = create_test_owner()
-    workflow = create_test_workflow(user=user, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    field = create_target_field(workflow, task)
-    create_show_ruleset(field, 'nonexistent-field', value='yes')
-
-    # act
-    FieldRuleSetService.apply_show_rulesets(
-        [field],
-        workflow_id=workflow.id,
-    )
-
-    # assert
-    field.refresh_from_db()
-    assert field.is_hidden is True
-
-
-def test_apply_show_rulesets__empty_list__skip():
-
-    """ Nothing to recalculate """
-
-    # act
-    FieldRuleSetService.apply_show_rulesets([])
-
-    # assert
-    assert not FieldRuleSet.objects.exists()
-
-
-def test_apply_show_rulesets_for_task__fieldset_field__recalculated():
-
-    """ Fieldset fields carry no task FK, so a naive task.output query
-        misses them. """
-
-    # arrange
-    user = create_test_owner()
-    workflow = create_test_workflow(user=user, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    create_source_field(workflow, task, 'source-field-1', 'yes')
-    fieldset = create_test_fieldset(workflow=workflow, task=task)
-    field = fieldset.fields.first()
-    field.is_hidden = True
-    field.save(update_fields=['is_hidden'])
-    create_show_ruleset(field, 'source-field-1', value='yes')
-
-    # act
-    FieldRuleSetService.apply_show_rulesets_for_task(task)
-
-    # assert
-    field.refresh_from_db()
-    assert field.is_hidden is False
-
-
-def test_apply_show_rulesets_for_workflow__fieldset_field__recalculated():
-
-    """ PATCH of the kickoff has to reach fieldset fields too """
-
-    # arrange
-    user = create_test_owner()
-    workflow = create_test_workflow(user=user, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    create_source_field(workflow, task, 'source-field-1', 'no')
-    fieldset = create_test_fieldset(workflow=workflow, task=task)
-    field = fieldset.fields.first()
-    create_show_ruleset(field, 'source-field-1', value='yes')
-
-    # act
-    FieldRuleSetService.apply_show_rulesets_for_workflow(workflow)
-
-    # assert
-    field.refresh_from_db()
-    assert field.is_hidden is True
-
-
-def test_apply_show_rulesets_for_workflow__kickoff_field__recalculated():
-
-    """ A show target on the kickoff itself must flip, not only
-        task fields. """
-
-    # arrange
-    user = create_test_owner()
-    workflow = create_test_workflow(user=user, tasks_count=1)
-    kickoff_field = TaskField.objects.create(
-        account=user.account,
+    workflow = create_test_workflow(user=user, template=template)
+    task = workflow.tasks.first()
+    task_field = TaskField.objects.create(
+        account=account,
         workflow=workflow,
-        kickoff=workflow.kickoff_instance,
+        task=task,
+        name='Field 1',
         type=FieldType.STRING,
-        api_name='kickoff-field-1',
-        name='Kickoff',
-        value='no',
-        is_hidden=False,
+        api_name='field-1',
     )
-    create_show_ruleset(kickoff_field, 'kickoff-field-1', value='yes')
+    service = FieldRuleSetService(user=user)
 
     # act
-    FieldRuleSetService.apply_show_rulesets_for_workflow(workflow)
+    ruleset = service.create(
+        instance_template=ruleset_template,
+        field=task_field,
+    )
 
     # assert
-    kickoff_field.refresh_from_db()
-    assert kickoff_field.is_hidden is True
+    assert ruleset.name == 'Validator rule'
+    assert ruleset.type == FieldRuleType.VALIDATOR
+    assert ruleset.message == 'Error text'
+    assert ruleset.order == 2
+    assert ruleset.api_name == 'custom-ruleset-1'
+
+    groups_or = list(ruleset.groups_or.all())
+    assert len(groups_or) == 1
+    assert groups_or[0].api_name == 'custom-or-1'
+
+    groups_and = list(groups_or[0].groups_and.all())
+    assert len(groups_and) == 1
+    assert groups_and[0].api_name == 'custom-and-1'
+    assert groups_and[0].field == 'field-2'
+    assert groups_and[0].operator == FieldRuleOperator.NOT_EQUAL
+    assert groups_and[0].value == 'draft'
 
 
-def test_apply_show_rulesets_for_workflow__kickoff_fieldset_field__recalculated():
+def test_task_field_service__create__calls_field_ruleset_service(mocker):
 
-    """ Fieldset fields on the kickoff have no task FK and
-        fieldset.task is null — the old filter skipped them. """
+    """ TaskFieldService.create triggers FieldRuleSetService.create """
 
     # arrange
-    user = create_test_owner()
-    workflow = create_test_workflow(user=user, tasks_count=1)
-    source = TaskField.objects.create(
-        account=user.account,
-        workflow=workflow,
-        kickoff=workflow.kickoff_instance,
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    task_template = template.tasks.first()
+    field_template = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        task=task_template,
+        name='Field 1',
         type=FieldType.STRING,
-        api_name='fieldset-status',
-        name='Fieldset status',
-        value='no',
+        api_name='field-1',
     )
-    fieldset = create_test_fieldset(
+    ruleset_template = FieldTemplateRuleSet.objects.create(
+        account=account,
+        template=template,
+        field=field_template,
+        name='Rule 1',
+        type=FieldRuleType.SHOW,
+        api_name='rule-1',
+    )
+    workflow = create_test_workflow(user=user, template=template)
+    task = workflow.tasks.first()
+    field_ruleset_service_init_mock = mocker.patch.object(
+        FieldRuleSetService,
+        attribute='__init__',
+        return_value=None,
+    )
+    field_ruleset_service_create_mock = mocker.patch(
+        'src.processes.services.tasks.fields.field_ruleset.'
+        'FieldRuleSetService.create',
+    )
+    service = TaskFieldService(user=user)
+
+    # act
+    task_field = service.create(
+        instance_template=field_template,
+        workflow_id=workflow.id,
+        task_id=task.id,
+        skip_value=True,
+    )
+
+    # assert
+    field_ruleset_service_init_mock.assert_called_once_with(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    field_ruleset_service_create_mock.assert_called_once_with(
+        instance_template=ruleset_template,
+        field=task_field,
+        workflow_id=workflow.id,
+    )
+
+
+def test_create__soft_deleted_groups__ignored():
+
+    """ Soft deleted groups are ignored during create """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    task_template = template.tasks.first()
+    field_template = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        task=task_template,
+        name='Field 1',
+        type=FieldType.STRING,
+        api_name='field-1',
+    )
+    ruleset_template = FieldTemplateRuleSet.objects.create(
+        account=account,
+        template=template,
+        field=field_template,
+        name='Show rule',
+        type=FieldRuleType.SHOW,
+        api_name='ruleset-1',
+    )
+    group_or_active = FieldTemplateRuleGroupOr.objects.create(
+        account=account,
+        template=template,
+        ruleset=ruleset_template,
+        api_name='group-or-active',
+        is_deleted=False,
+    )
+    FieldTemplateRuleGroupOr.objects.create(
+        account=account,
+        template=template,
+        ruleset=ruleset_template,
+        api_name='group-or-deleted',
+        is_deleted=True,
+    )
+    FieldTemplateRuleGroupAnd.objects.create(
+        account=account,
+        template=template,
+        group_or=group_or_active,
+        field='source-field',
+        operator=FieldRuleOperator.EQUAL,
+        value='active',
+        api_name='group-and-active',
+        is_deleted=False,
+    )
+    FieldTemplateRuleGroupAnd.objects.create(
+        account=account,
+        template=template,
+        group_or=group_or_active,
+        field='source-field',
+        operator=FieldRuleOperator.EQUAL,
+        value='deleted',
+        api_name='group-and-deleted',
+        is_deleted=True,
+    )
+    workflow = create_test_workflow(user=user, template=template)
+    task = workflow.tasks.first()
+    task_field = TaskField.objects.create(
+        account=account,
         workflow=workflow,
-        kickoff=workflow.kickoff_instance,
+        task=task,
+        name='Field 1',
+        type=FieldType.STRING,
+        api_name='field-1',
     )
-    note = fieldset.fields.first()
-    create_show_ruleset(note, source.api_name, value='yes')
+    service = FieldRuleSetService(user=user)
 
     # act
-    FieldRuleSetService.apply_show_rulesets_for_workflow(workflow)
+    ruleset = service.create(
+        instance_template=ruleset_template,
+        field=task_field,
+        workflow=workflow,
+    )
 
     # assert
-    note.refresh_from_db()
-    assert note.is_hidden is True
-    assert note.task_id is None
-    assert note.fieldset.task_id is None
+    groups_or = list(ruleset.groups_or.all())
+    assert len(groups_or) == 1
+    assert groups_or[0].api_name == 'group-or-active'
+
+    groups_and = list(groups_or[0].groups_and.all())
+    assert len(groups_and) == 1
+    assert groups_and[0].api_name == 'group-and-active'
 
 
-def test_apply_show_rulesets_for_workflow__no_show_rules__one_query():
+def test_create__without_user__account_from_field_fallback_ok():
 
-    """ Without show rulesets the helper must not load every field. """
+    """ Falls back to field account if user is None """
 
     # arrange
-    user = create_test_owner()
-    workflow = create_test_workflow(user=user, tasks_count=1)
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    task_template = template.tasks.first()
+    field_template = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        task=task_template,
+        name='Field 1',
+        type=FieldType.STRING,
+        api_name='field-1',
+    )
+    ruleset_template = FieldTemplateRuleSet.objects.create(
+        account=account,
+        template=template,
+        field=field_template,
+        name='Validator rule',
+        type=FieldRuleType.VALIDATOR,
+        api_name='custom-ruleset-1',
+    )
+    workflow = create_test_workflow(user=user, template=template)
+    task = workflow.tasks.first()
+    task_field = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        task=task,
+        name='Field 1',
+        type=FieldType.STRING,
+        api_name='field-1',
+    )
+    service = FieldRuleSetService(user=None)
 
     # act
-    with CaptureQueriesContext(connection) as ctx:
-        FieldRuleSetService.apply_show_rulesets_for_workflow(workflow)
+    ruleset = service.create(
+        instance_template=ruleset_template,
+        field=task_field,
+    )
 
     # assert
-    assert len(ctx.captured_queries) == 1
-
-
-def test_apply_show_rulesets__without_workflow_id__type_error():
-
-    """ workflow_id is required so a mixed list cannot pick the
-        wrong process from fields[0]. """
-
-    # arrange
-    user = create_test_owner()
-    workflow = create_test_workflow(user=user, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    field = create_target_field(workflow, task)
-
-    # act / assert
-    with pytest.raises(TypeError):
-        FieldRuleSetService.apply_show_rulesets([field])
+    assert ruleset.account == account
+    assert ruleset.workflow_id == workflow.id

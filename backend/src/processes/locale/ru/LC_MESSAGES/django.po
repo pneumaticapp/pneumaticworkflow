@@ -545,3 +545,18 @@ msgstr "Указанный пользователь или группа для �
 
 msgid "Guest"
 msgstr "Гость"
+
+msgid "You must specify a source step for a performer of type \"manager\"."
+msgstr "Необходимо указать исходный шаг для исполнителя с типом «manager»."
+
+#, python-brace-format
+msgid "Task \"{name}\": A manager performer cannot reference its own step."
+msgstr "Задача «{name}»: исполнитель с типом «manager» не может ссылаться на собственный шаг."
+
+#, python-brace-format
+msgid "Task \"{name}\": The manager performer references a non-existent step \"{step_name}\"."
+msgstr "Задача «{name}»: исполнитель с типом «manager» ссылается на несуществующий шаг «{step_name}»."
+
+#, python-brace-format
+msgid "Task \"{name}\": Disable \"Required completion by all\" on step \"{step_name}\" to use a manager performer."
+msgstr "Задача «{name}»: отключите параметр «Требуется завершение всеми» на шаге «{step_name}», чтобы использовать исполнителя с типом «manager»."

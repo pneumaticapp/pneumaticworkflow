@@ -4,24 +4,18 @@ from typing import List, Optional
 import stripe
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.exceptions import (
-    MultipleObjectsReturned,
-    ObjectDoesNotExist,
-)
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.utils import timezone
-from stripe.error import (
-    CardError,
-    StripeError,
-)
+from django.utils.functional import SimpleLazyObject
+from stripe.error import CardError, StripeError
 
 from src.accounts.enums import BillingPlanType
 from src.accounts.models import Account
 from src.accounts.services.account import AccountService
 from src.authentication.enums import AuthTokenType
+from src.logs.events import AuditEventService
 from src.payment.models import Price
-from src.payment.services.account import (
-    AccountSubscriptionService,
-)
+from src.payment.services.account import AccountSubscriptionService
 from src.payment.stripe import exceptions
 from src.payment.stripe.entities import (
     CardDetails,
@@ -30,10 +24,7 @@ from src.payment.stripe.entities import (
 )
 from src.payment.stripe.mixins import StripeMixin
 from src.payment.stripe.tokens import ConfirmToken
-from src.utils.logging import (
-    SentryLogLevel,
-    capture_sentry_message,
-)
+from src.utils.logging import SentryLogLevel, capture_sentry_message
 
 UserModel = get_user_model()
 
@@ -680,6 +671,19 @@ class StripeService(StripeMixin):
                     cancel_url=cancel_url,
                     products=products,
                 )
+            else:
+                AuditEventService.purchase_made(
+                    user=self.user,
+                    auth_type=self.auth_type,
+                    products=products,
+                    product_names=SimpleLazyObject(
+                        lambda: dict(Price.objects.filter(
+                            code__in=[
+                                product['code'] for product in products
+                            ],
+                        ).values_list('code', 'name')),
+                    ),
+                )
         else:
             return self._get_checkout_link(
                 success_url=success_url,
@@ -748,6 +752,11 @@ class StripeService(StripeMixin):
             auth_type=self.auth_type,
         )
         account_service.partial_update(**data)
+        AuditEventService.payment_confirmed(
+            user=self.user,
+            auth_type=self.auth_type,
+            subscription_data=subscription_data,
+        )
 
     def increase_subscription(self, quantity: int):
 

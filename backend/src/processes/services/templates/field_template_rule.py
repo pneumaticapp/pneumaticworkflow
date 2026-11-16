@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from django.db import transaction
 
@@ -13,9 +13,12 @@ from src.processes.models.templates.fields import (
 )
 from src.processes.services.exceptions import \
     FieldTemplateRuleSetServiceException
+from src.processes.services.templates.ruleset_mixins import (
+    RuleGroupsSyncMixin,
+)
 
 
-class FieldTemplateRuleSetService(BaseModelService):
+class FieldTemplateRuleSetService(RuleGroupsSyncMixin, BaseModelService):
 
     def _create_instance(
         self,
@@ -53,43 +56,47 @@ class FieldTemplateRuleSetService(BaseModelService):
 
     def _get_source_field(
         self,
-        group_and: FieldTemplateRuleGroupAnd,
+        api_name: str,
     ) -> Optional[FieldTemplate]:
-
-        """ The condition compares group_and.field, not the ruleset owner.
-            Validator rules leave it empty and read the owner itself. """
-
-        owner = self.instance.field
-        if not group_and.field or group_and.field == owner.api_name:
-            return owner
-        qst = FieldTemplate.objects.filter(
-            account=self.account,
-            api_name=group_and.field,
-        )
-        if owner.template_id:
-            qst = qst.filter(template_id=owner.template_id)
-        else:
-            qst = qst.filter(fieldset_id=owner.fieldset_id)
-        return qst.first()
+        if self.instance.template_id:
+            return FieldTemplate.objects.filter(
+                template_id=self.instance.template_id,
+                api_name=api_name,
+            ).first()
+        fieldset_id = self.instance.field.fieldset_id
+        if fieldset_id:
+            return FieldTemplate.objects.filter(
+                fieldset_id=fieldset_id,
+                api_name=api_name,
+            ).first()
+        return None
 
     def _validate(
         self,
         group_and: FieldTemplateRuleGroupAnd,
     ):
-        field = self._get_source_field(group_and=group_and)
-        if field is None:
-            # Source field is created later in the same request; the
-            # operator is re-checked when the rule is saved again.
-            return
-        allowed_operators = FieldRuleOperator.ALLOWED_OPERATORS[field.type]
-        if group_and.operator not in allowed_operators:
+        if group_and.field:
+            source_field = self._get_source_field(group_and.field)
+            if source_field is None:
+                return
+        else:
+            source_field = self.instance.field
+        allowed = FieldRuleOperator.ALLOWED_OPERATORS[
+            source_field.type
+        ]
+        if group_and.operator not in allowed:
             raise FieldTemplateRuleSetServiceException(
                 message=MSG_PT_0078(
-                    field=field,
+                    field=source_field.name,
                     operator=group_and.operator,
-                    field_type=field.type,
+                    field_type=source_field.type,
                 ),
             )
+
+    def validate(self):
+        for group_or in self.instance.groups_or.all():
+            for group_and in group_or.groups_and.all():
+                self._validate(group_and=group_and)
 
     def _create_group_and(
         self,
@@ -103,6 +110,7 @@ class FieldTemplateRuleSetService(BaseModelService):
             'field': group_and_data.get('field'),
             'operator': group_and_data['operator'],
             'value': group_and_data.get('value'),
+            'value_type': group_and_data.get('value_type'),
         }
         api_name = group_and_data.get('api_name')
         if api_name:
@@ -128,51 +136,25 @@ class FieldTemplateRuleSetService(BaseModelService):
         if 'value' in group_and_data:
             group_and.value = group_and_data['value']
             update_fields.append('value')
+        if 'value_type' in group_and_data:
+            group_and.value_type = group_and_data['value_type']
+            update_fields.append('value_type')
         if update_fields:
             group_and.save(update_fields=update_fields)
         self._validate(group_and=group_and)
         return group_and
 
-    def _set_groups_and(
-        self,
-        group_or: FieldTemplateRuleGroupOr,
-        groups_and_data: List[Dict],
-    ):
-        existing_groups_and = {
-            group_and.api_name: group_and
-            for group_and in group_or.groups_and.all()
-        }
-        groups_and_api_names = set()
-        for group_and_data in groups_and_data:
-            group_and_data_dict = dict(group_and_data)
-            api_name = group_and_data_dict.get('api_name')
-            if api_name and api_name in existing_groups_and:
-                group_and = self._update_group_and(
-                    group_and=existing_groups_and[api_name],
-                    group_and_data=group_and_data_dict,
-                )
-            else:
-                group_and = self._create_group_and(
-                    group_or=group_or,
-                    group_and_data=group_and_data_dict,
-                )
-            groups_and_api_names.add(group_and.api_name)
-        group_or.groups_and.exclude(
-            api_name__in=groups_and_api_names,
-        ).delete()
-
     def _create_group_or(
         self,
         group_or_data: Dict,
     ) -> FieldTemplateRuleGroupOr:
-        group_or_data_dict = dict(group_or_data)
-        groups_and_data = group_or_data_dict.pop('groups_and', None)
+        groups_and_data = group_or_data.get('groups_and')
+        api_name = group_or_data.get('api_name')
         create_kwargs = {
             'ruleset': self.instance,
             'account': self.account,
             'template_id': self.instance.template_id,
         }
-        api_name = group_or_data_dict.get('api_name')
         if api_name:
             create_kwargs['api_name'] = api_name
         group_or = FieldTemplateRuleGroupOr.objects.create(**create_kwargs)
@@ -196,29 +178,6 @@ class FieldTemplateRuleSetService(BaseModelService):
                 groups_and_data=groups_and_data,
             )
         return group_or
-
-    def _set_groups_or(self, groups_or_data: List[Dict]):
-        existing_groups_or = {
-            group_or.api_name: group_or
-            for group_or in self.instance.groups_or.all()
-        }
-        groups_or_api_names = set()
-        for group_or_data in groups_or_data:
-            group_or_data_dict = dict(group_or_data)
-            api_name = group_or_data_dict.get('api_name')
-            if api_name and api_name in existing_groups_or:
-                group_or = self._update_group_or(
-                    group_or=existing_groups_or[api_name],
-                    group_or_data=group_or_data_dict,
-                )
-            else:
-                group_or = self._create_group_or(
-                    group_or_data=group_or_data_dict,
-                )
-            groups_or_api_names.add(group_or.api_name)
-        self.instance.groups_or.exclude(
-            api_name__in=groups_or_api_names,
-        ).delete()
 
     def partial_update(self, **update_kwargs) -> FieldTemplateRuleSet:
         groups_or = update_kwargs.pop('groups_or', None)

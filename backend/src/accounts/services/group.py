@@ -15,6 +15,7 @@ from src.analysis.events import GroupsAnalyticsEvent
 from src.analysis.tasks import track_group_analytics
 from src.executor import RawSqlExecutor
 from src.generics.base.service import BaseModelService
+from src.logs.events import AuditEventService
 from src.notifications.tasks import (
     send_group_created_notification,
     send_group_deleted_notification,
@@ -121,6 +122,12 @@ class UserGroupService(BaseModelService):
             logging=self.account.log_api_requests,
             account_id=self.user.account_id,
             group_data=GroupWebsocketSerializer(self.instance).data,
+        )
+        AuditEventService.group_created(
+            user=self.user,
+            auth_type=self.auth_type,
+            group=self.instance,
+            users_ids=users,
         )
 
     def _send_users_notification(
@@ -311,6 +318,13 @@ class UserGroupService(BaseModelService):
             account_id=self.user.account_id,
             group_data=GroupWebsocketSerializer(self.instance).data,
         )
+        AuditEventService.group_updated(
+            user=self.user,
+            auth_type=self.auth_type,
+            group=self.instance,
+            update_kwargs=update_kwargs,
+            users_ids=users,
+        )
 
         if added_users_ids:
             self._send_added_users_notifications(added_users_ids)
@@ -363,6 +377,12 @@ class UserGroupService(BaseModelService):
             is_superuser=self.is_superuser,
         )
         self.instance.delete()
+        AuditEventService.group_deleted(
+            user=self.user,
+            auth_type=self.auth_type,
+            group=self.instance,
+            users_ids=users,
+        )
         # Revoke PERFORMER_GROUP view permissions.  After soft-delete
         # the group is no longer active, so sync_performer_group calls
         # revoke_view for each workflow.

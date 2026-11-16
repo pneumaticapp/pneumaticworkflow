@@ -1,12 +1,16 @@
-from typing import List, Optional, Dict
+from itertools import groupby
+from typing import Dict, List, Optional
 from django.contrib.auth import get_user_model
 
 from src.generics.base.service import BaseModelService
-from src.processes.messages.fieldset import MSG_FS_0007
+from src.processes.messages.fieldset import MSG_FS_0007, MSG_FS_0012
 from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.models.workflows.fieldset import FieldSet
 from src.processes.services.exceptions import FieldsetServiceException
-from src.processes.services.tasks.field import TaskFieldService
+from src.processes.services.tasks.fields.field import TaskFieldService
+from src.processes.services.workflows.fieldsets.fieldset_rule import (
+    FieldSetRuleService,
+)
 from src.processes.services.workflows.fieldsets.fieldset_ruleset import (
     FieldSetRuleSetService,
 )
@@ -64,28 +68,66 @@ class FieldSetService(BaseModelService):
                 value=fields_data.get(field_template.api_name, ''),
             )
 
-    def _create_rulesets(self, instance_template, **kwargs):
-        for ruleset_template in instance_template.rulesets.all():
-            service = FieldSetRuleSetService(user=self.user)
+    def _create_rulesets(
+        self,
+        instance_template: FieldsetTemplate,
+        **kwargs,
+    ):
+        ruleset_templates = list(instance_template.rulesets.all())
+        for ruleset_template in ruleset_templates:
+            service = FieldSetRuleSetService(
+                user=self.user,
+                is_superuser=self.is_superuser,
+                auth_type=self.auth_type,
+            )
             service.create(
                 instance_template=ruleset_template,
                 fieldset=self.instance,
-                skip_validation=kwargs.get('skip_value'),
+                workflow=self.instance.workflow,
+                skip_validation=kwargs.get('skip_value', False),
             )
 
-    def _create_related(self, instance_template, **kwargs):
-        # Fields go first: the rulesets m2m points at existing TaskField
+    def _create_related(self, instance_template: FieldsetTemplate, **kwargs):
         self._create_fields(instance_template, **kwargs)
         self._create_rulesets(instance_template, **kwargs)
 
     def validate_rules(self) -> bool:
-
-        """ Alternatives live inside a ruleset now, so every ruleset of
-            the fieldset has to pass on its own. """
-
-        for ruleset in self.instance.rulesets.all():
-            FieldSetRuleSetService(
-                user=self.user,
-                instance=ruleset,
-            ).validate()
+        rulesets = list(self.instance.rulesets.order_by('order', 'id').all())
+        if rulesets:
+            for ruleset in rulesets:
+                service = FieldSetRuleSetService(
+                    user=self.user,
+                    is_superuser=self.is_superuser,
+                    auth_type=self.auth_type,
+                    instance=ruleset,
+                )
+                service.validate()
+        elif self.instance.rules.exists():
+            rules = list(self.instance.rules.order_by('type', 'id').all())
+            for _, group in groupby(rules, key=lambda r: r.type):
+                group_rules = list(group)
+                if len(group_rules) == 1:
+                    service = FieldSetRuleService(
+                        user=self.user,
+                        instance=group_rules[0],
+                    )
+                    service.validate()
+                else:
+                    ex_counter = 0
+                    for rule in group_rules:
+                        try:
+                            service = FieldSetRuleService(
+                                user=self.user,
+                                instance=rule,
+                            )
+                            service.validate()
+                        except FieldsetServiceException:
+                            ex_counter += 1
+                    if len(group_rules) == ex_counter:
+                        values = ', '.join(
+                            str(rule.value) for rule in group_rules
+                        )
+                        raise FieldsetServiceException(
+                            message=MSG_FS_0012(values),
+                        )
         return True

@@ -9,22 +9,28 @@ from src.processes.enums import (
     FieldSetRuleOperator,
     FieldType,
 )
+from src.processes.messages.fieldset import MSG_FS_0005
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.fieldset import (
+    FieldsetTemplate,
     FieldSetTemplateRuleGroupAnd,
     FieldSetTemplateRuleGroupOr,
     FieldSetTemplateRuleSet,
 )
 from src.processes.services.exceptions import (
+    FieldsetTemplateRuleServiceException,
     FieldsetTemplateRuleSumMaxFieldsNotNumber,
     FieldsetTemplateRuleSumMaxInvalidValue,
+)
+from src.processes.services.templates.ruleset_mixins import (
+    RuleGroupsSyncMixin,
 )
 
 
 UserModel = get_user_model()
 
 
-class FieldsetTemplateRuleSetService(BaseModelService):
+class FieldsetTemplateRuleSetService(RuleGroupsSyncMixin, BaseModelService):
 
     def _create_instance(
         self,
@@ -36,6 +42,13 @@ class FieldsetTemplateRuleSetService(BaseModelService):
         **kwargs,
     ):
 
+        if template_id is None and fieldset_id is not None:
+            template_id = (
+                FieldsetTemplate.objects
+                .filter(id=fieldset_id)
+                .values_list('template_id', flat=True)
+                .first()
+            )
         create_kwargs = {
             'account': self.account,
             'message': message,
@@ -84,19 +97,38 @@ class FieldsetTemplateRuleSetService(BaseModelService):
         if group_and.operator in FieldSetRuleOperator.SUM_OPERATORS:
             self._validate_sum(group_and=group_and)
 
+    def validate(self):
+        for group_or in self.instance.groups_or.all():
+            for group_and in group_or.groups_and.all():
+                self._validate(group_and=group_and)
+
     def _get_valid_fields(
         self,
         fields_api_names: List[str],
         **kwargs,
     ) -> List[FieldTemplate]:
 
-        return list(
+        available_fields = list(
             FieldTemplate.objects
             .filter(
                 fieldset_id=self.instance.fieldset_id,
                 api_name__in=fields_api_names,
             ),
         )
+        available_api_names = {
+            f.api_name for f in available_fields
+        }
+        failed_api_names = (
+            set(fields_api_names) - available_api_names
+        )
+        if failed_api_names:
+            raise FieldsetTemplateRuleServiceException(
+                message=MSG_FS_0005(
+                    rule='validator',
+                    field=failed_api_names.pop(),
+                ),
+            )
+        return available_fields
 
     def _set_fields(self, fields_api_names: List[str], **kwargs):
         if fields_api_names:
@@ -146,46 +178,17 @@ class FieldsetTemplateRuleSetService(BaseModelService):
         self._validate(group_and=group_and)
         return group_and
 
-    def _set_groups_and(
-        self,
-        group_or: FieldSetTemplateRuleGroupOr,
-        groups_and_data: List[Dict],
-    ):
-        existing_groups_and = {
-            group_and.api_name: group_and
-            for group_and in group_or.groups_and.all()
-        }
-        groups_and_api_names = set()
-        for group_and_data in groups_and_data:
-            group_and_data_dict = dict(group_and_data)
-            api_name = group_and_data_dict.get('api_name')
-            if api_name and api_name in existing_groups_and:
-                group_and = self._update_group_and(
-                    group_and=existing_groups_and[api_name],
-                    group_and_data=group_and_data_dict,
-                )
-            else:
-                group_and = self._create_group_and(
-                    group_or=group_or,
-                    group_and_data=group_and_data_dict,
-                )
-            groups_and_api_names.add(group_and.api_name)
-        group_or.groups_and.exclude(
-            api_name__in=groups_and_api_names,
-        ).delete()
-
     def _create_group_or(
         self,
         group_or_data: Dict,
     ) -> FieldSetTemplateRuleGroupOr:
-        group_or_data_dict = dict(group_or_data)
-        groups_and_data = group_or_data_dict.pop('groups_and', None)
+        groups_and_data = group_or_data.get('groups_and')
+        api_name = group_or_data.get('api_name')
         create_kwargs = {
-            'fieldset_rule': self.instance,
+            'ruleset': self.instance,
             'account': self.account,
             'template_id': self.instance.template_id,
         }
-        api_name = group_or_data_dict.get('api_name')
         if api_name:
             create_kwargs['api_name'] = api_name
         group_or = FieldSetTemplateRuleGroupOr.objects.create(**create_kwargs)
@@ -209,29 +212,6 @@ class FieldsetTemplateRuleSetService(BaseModelService):
                 groups_and_data=groups_and_data,
             )
         return group_or
-
-    def _set_groups_or(self, groups_or_data: List[Dict]):
-        existing_groups_or = {
-            group_or.api_name: group_or
-            for group_or in self.instance.groups_or.all()
-        }
-        groups_or_api_names = set()
-        for group_or_data in groups_or_data:
-            group_or_data_dict = dict(group_or_data)
-            api_name = group_or_data_dict.get('api_name')
-            if api_name and api_name in existing_groups_or:
-                group_or = self._update_group_or(
-                    group_or=existing_groups_or[api_name],
-                    group_or_data=group_or_data_dict,
-                )
-            else:
-                group_or = self._create_group_or(
-                    group_or_data=group_or_data_dict,
-                )
-            groups_or_api_names.add(group_or.api_name)
-        self.instance.groups_or.exclude(
-            api_name__in=groups_or_api_names,
-        ).delete()
 
     def create(
         self,

@@ -1,0 +1,32 @@
+{
+  "cluster": [
+    "monitor"
+  ],
+  "indices": [
+    {
+      "names": [
+        "__INDEX_PATTERN__"
+      ],
+      "privileges": [
+        "read",
+        "view_index_metadata"
+      ],
+      "allow_restricted_indices": false
+    }
+  ],
+  "applications": [
+    {
+      "application": "kibana-.kibana",
+      "privileges": [
+        "read"
+      ],
+      "resources": [
+        "*"
+      ]
+    }
+  ],
+  "metadata": {
+    "description": "People who read the journal in Kibana. Read only, and only the journal: the built-in viewer role would have opened every index in the cluster. cluster:monitor is for the health panel, it exposes no documents.",
+    "managed_by": "logging/elasticsearch/scripts/bootstrap.sh"
+  }
+}

@@ -68,6 +68,7 @@ const createMockTemplateResponse = (overrides: Partial<ITemplateResponse> = {}):
       description: '',
       requireCompletionByAll: false,
       skipForStarter: false,
+      skipOnReturn: false,
       delay: null,
       rawDueDate: null,
       fields: [],
@@ -132,6 +133,7 @@ const createMockTemplate = (overrides: Partial<ITemplateClient> = {}): ITemplate
       },
       requireCompletionByAll: false,
       skipForStarter: false,
+      skipOnReturn: false,
       rawPerformers: [
         {
           sourceId: '1',
@@ -357,6 +359,19 @@ describe('template utilities', () => {
       const result = getNormalizedTemplate(templateResponse, true, mockUsers, ESubscriptionPlan.Premium);
 
       expect(result.kickoff.fieldsets).toEqual([]);
+    });
+
+    it('defaults task fields to empty array when fields is missing or undefined', () => {
+      const templateResponse = createMockTemplateResponse();
+      const taskWithoutFields = {
+        ...templateResponse.tasks[0],
+        fields: undefined,
+      };
+      Object.assign(templateResponse, { tasks: [taskWithoutFields] });
+
+      const result = getNormalizedTemplate(templateResponse, true, mockUsers, ESubscriptionPlan.Premium);
+
+      expect(result.tasks[0].fields).toEqual([]);
     });
   });
 
@@ -826,6 +841,14 @@ describe('template utilities', () => {
       const fieldsets = [makeFieldsetBindingClient({ apiNameBinding: 'empty-fs' })];
       const validApiNames = new Set<string>();
       collectFieldApiNames([], fieldsets, validApiNames);
+
+      expect(validApiNames.size).toBe(0);
+    });
+
+    it('handles undefined fields and fieldsets without crashing', () => {
+      const validApiNames = new Set<string>();
+
+      collectFieldApiNames(undefined, undefined, validApiNames);
 
       expect(validApiNames.size).toBe(0);
     });

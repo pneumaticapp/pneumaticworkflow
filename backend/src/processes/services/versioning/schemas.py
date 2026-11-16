@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from src.generics.fields import RelatedApiNameListField
 from src.processes.models.templates.checklist import (
     ChecklistTemplate,
     ChecklistTemplateSelection,
@@ -9,7 +10,6 @@ from src.processes.models.templates.conditions import (
     PredicateTemplate,
     RuleTemplate,
 )
-from src.generics.fields import RelatedApiNameListField
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
     FieldSetTemplateRuleGroupAnd,
@@ -90,6 +90,7 @@ class FieldRuleGroupAndSchemaV1(serializers.ModelSerializer):
             'field',
             'operator',
             'value',
+            'value_type',
         )
 
 
@@ -319,6 +320,7 @@ class TaskSchemaV1(serializers.ModelSerializer):
             'number',
             'require_completion_by_all',
             'skip_for_starter',
+            'skip_on_return',
             'fields',
             'fieldsets',
             'delay',

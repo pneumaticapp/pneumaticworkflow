@@ -83,7 +83,7 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
       setFormState(EPublicFormState.WaitingForAction);
     } catch (error) {
       setFormState(EPublicFormState.FormNotFound);
-      logger.error('Failed to fetch public form.');
+      logger.info('Failed to fetch public form:', error);
     }
   };
 

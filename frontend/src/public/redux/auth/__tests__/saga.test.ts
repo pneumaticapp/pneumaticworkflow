@@ -1,4 +1,7 @@
+import { put } from 'redux-saga/effects';
+
 import { configMock } from '../../../__stubs__/configMock';
+import { ApiError } from '../../../api/commonRequest';
 jest.mock('../../../utils/getConfig', () => ({
   getBrowserConfigEnv: jest.fn().mockReturnValue(configMock),
   getBrowserConfig: jest.fn().mockReturnValue(configMock),
@@ -10,11 +13,12 @@ import {
   registerWithEmailPassword,
   registerWithInvite,
 } from '../saga';
-import { registerUser, registerUserInvited } from '../actions';
+import { registerUser, registerUserInvited, sendForgotPassword, sendForgotPasswordFail } from '../actions';
 import { setJwtCookie } from '../../../utils/authCookie';
 import { setOAuthRegistrationCompleted } from '../../../api/setOAuthRegistrationCompleted';
 import { getOAuthId, getOAuthType } from '../../../utils/auth';
 import { EOAuthType } from '../../../types/auth';
+import { EAuthActions } from '../actions';
 
 const auth = {
   createUserWithEmail: jest.fn(),
@@ -29,6 +33,30 @@ jest.mock('../../../api/auth', () => ({
     return auth;
   },
 }));
+jest.mock('../../../api/resetPasswordSet', () => ({
+  resetPasswordSet: jest.fn(),
+}));
+jest.mock('../../../components/UI/Notifications', () => ({
+  NotificationManager: { notifyApiError: jest.fn(), success: jest.fn(), warning: jest.fn() },
+}));
+jest.mock('../../../utils/getErrorMessage', () => ({
+  getErrorMessage: jest.fn(),
+}));
+jest.mock('../../../utils/logger', () => ({
+  logger: { error: jest.fn(), info: jest.fn() },
+}));
+
+interface IDispatchedAction {
+  type: string;
+  payload?: unknown;
+}
+
+const { sendPasswordResetConfirm } = require('../saga');
+const { runSaga } = require('redux-saga');
+const { resetPasswordSet } = require('../../../api/resetPasswordSet');
+const { NotificationManager } = require('../../../components/UI/Notifications');
+const { getErrorMessage } = require('../../../utils/getErrorMessage');
+const { logger } = require('../../../utils/logger');
 
 const mockRegisterData = {
   email: 'example@pneumatic.app',
@@ -292,6 +320,149 @@ describe('saga', () => {
 
       expect(mockGetErrorMessage).toHaveBeenCalledWith(fsError);
       expect(mockNotifyApiError).toHaveBeenCalledWith(fsError, { message: 'file-service.permission-denied' });
+    });
+  });
+
+  describe('sendPasswordResetConfirm', () => {
+    const mockLocationReplace = jest.fn();
+    const originalLocation = window.location;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: { ...originalLocation, replace: mockLocationReplace },
+      });
+    });
+
+    afterEach(() => {
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: originalLocation,
+      });
+    });
+
+    it('on successful API response sets JWT cookie, dispatches success and redirects to main', async () => {
+      const mockToken = 'jwt-token-123';
+      const mockPayload = { newPassword: 'NewPass1!', confirmNewPassword: 'NewPass1!', token: 'reset-token-abc' };
+      resetPasswordSet.mockResolvedValueOnce({ token: mockToken });
+
+      const dispatched: IDispatchedAction[] = [];
+      await runSaga({ dispatch: (action: IDispatchedAction) => dispatched.push(action) }, sendPasswordResetConfirm, {
+        type: EAuthActions.ResetPassword,
+        payload: mockPayload,
+      }).toPromise();
+
+      expect(resetPasswordSet).toHaveBeenCalledWith(mockPayload);
+      expect(resetPasswordSet).toHaveBeenCalledTimes(1);
+      expect(setJwtCookie).toHaveBeenCalledWith(mockToken);
+      expect(setJwtCookie).toHaveBeenCalledTimes(1);
+      expect(dispatched).toEqual([{ type: EAuthActions.ResetPasswordSuccess, payload: { token: mockToken } }]);
+      expect(mockLocationReplace).toHaveBeenCalledWith('/dashboard/');
+      expect(mockLocationReplace).toHaveBeenCalledTimes(1);
+      expect(NotificationManager.notifyApiError).not.toHaveBeenCalled();
+    });
+
+    it('on API error logs, shows notification and dispatches fail', async () => {
+      const mockError = new Error('Token expired');
+      const mockPayload = { newPassword: 'NewPass1!', confirmNewPassword: 'NewPass1!', token: 'expired-token' };
+      resetPasswordSet.mockRejectedValueOnce(mockError);
+      getErrorMessage.mockReturnValue('Token expired');
+
+      const dispatched: IDispatchedAction[] = [];
+      await runSaga({ dispatch: (action: IDispatchedAction) => dispatched.push(action) }, sendPasswordResetConfirm, {
+        type: EAuthActions.ResetPassword,
+        payload: mockPayload,
+      }).toPromise();
+
+      expect(getErrorMessage).toHaveBeenCalledWith(mockError);
+      expect(getErrorMessage).toHaveBeenCalledTimes(1);
+      expect(logger.error).toHaveBeenCalledWith('Token expired', mockError);
+      expect(logger.error).toHaveBeenCalledTimes(1);
+      expect(NotificationManager.notifyApiError).toHaveBeenCalledWith(mockError, { message: 'Token expired' });
+      expect(NotificationManager.notifyApiError).toHaveBeenCalledTimes(1);
+      expect(dispatched).toEqual([{ type: EAuthActions.ResetPasswordFail }]);
+      expect(setJwtCookie).not.toHaveBeenCalled();
+      expect(mockLocationReplace).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('sendPasswordReset', () => {
+    let sendPasswordResetSaga: any;
+
+    const mockNotifyApiError = jest.fn();
+
+    beforeEach(() => {
+      jest.resetModules();
+      jest.clearAllMocks();
+
+      jest.mock('../../../utils/getConfig', () => ({
+        getBrowserConfigEnv: jest.fn().mockReturnValue(configMock),
+        getBrowserConfig: jest.fn().mockReturnValue(configMock),
+      }));
+      jest.mock('../../../components/UI/Notifications', () => ({
+        NotificationManager: { success: jest.fn(), notifyApiError: mockNotifyApiError },
+      }));
+      jest.mock('../../../utils/logger', () => ({
+        logger: { error: jest.fn(), info: jest.fn() },
+      }));
+      jest.mock('../../../utils/getErrorMessage', () => ({
+        getErrorMessage: jest.fn(() => 'error'),
+      }));
+
+      const saga = require('../saga');
+      sendPasswordResetSaga = saga.sendPasswordReset;
+    });
+
+    it('marks captcha as required without a notification when the API returns a captcha error', () => {
+      const captchaError = new ApiError(
+        'This field may not be blank.',
+        {
+          code: 'validation_error',
+          message: 'This field may not be blank.',
+          details: { name: 'captcha', reason: 'This field may not be blank.' },
+        },
+        400,
+      );
+
+      const gen = sendPasswordResetSaga(sendForgotPassword({ email: 'example@pneumatic.app' }));
+      gen.next();
+      const { value } = gen.throw(captchaError);
+
+      expect(value).toEqual(put(sendForgotPasswordFail(true)));
+      expect(gen.next().done).toBe(true);
+      expect(mockNotifyApiError).not.toHaveBeenCalled();
+    });
+
+    it('notifies as usual on a validation error of another field', () => {
+      const emailError = new ApiError(
+        'Enter a valid email address.',
+        {
+          code: 'validation_error',
+          message: 'Enter a valid email address.',
+          details: { name: 'email', reason: 'Enter a valid email address.' },
+        },
+        400,
+      );
+
+      const gen = sendPasswordResetSaga(sendForgotPassword({ email: 'example@pneumatic.app' }));
+      gen.next();
+      const { value } = gen.throw(emailError);
+
+      expect(mockNotifyApiError).toHaveBeenCalledWith(emailError, { message: 'error' });
+      expect(value).toEqual(put(sendForgotPasswordFail()));
+    });
+
+    it('notifies and fails as usual on any other error', () => {
+      const error = new Error('boom');
+
+      const gen = sendPasswordResetSaga(sendForgotPassword({ email: 'example@pneumatic.app' }));
+      gen.next();
+      const { value } = gen.throw(error);
+
+      expect(mockNotifyApiError).toHaveBeenCalledWith(error, { message: 'error' });
+      expect(value).toEqual(put(sendForgotPasswordFail()));
     });
   });
 });

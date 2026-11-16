@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from src.accounts.models import UserGroup
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
+from src.logs.events import AuditEventService
 from src.notifications.tasks import (
     send_new_task_notification,
     send_new_task_websocket,
@@ -86,6 +87,12 @@ class GroupPerformerService(BasePerformerService2):
             task=self.task,
             performer=group,
         )
+        AuditEventService.task_performer_group_deleted(
+            user=self.user,
+            auth_type=self.auth_type,
+            task=self.task,
+            group=group,
+        )
         AnalyticService.task_group_performer_deleted(
             user=self.user,
             performer=group,
@@ -156,6 +163,12 @@ class GroupPerformerService(BasePerformerService2):
             user=self.user,
             task=self.task,
             performer=group,
+        )
+        AuditEventService.task_performer_group_created(
+            user=self.user,
+            auth_type=self.auth_type,
+            task=self.task,
+            group=group,
         )
         AnalyticService.task_group_performer_created(
             user=self.user,

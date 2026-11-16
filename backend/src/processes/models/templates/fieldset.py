@@ -3,7 +3,6 @@ from django.db.models import Q, UniqueConstraint
 
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
-from src.generics.querysets import AccountBaseQuerySet
 from src.processes.enums import FieldSetRuleOperator
 from src.processes.models.base import BaseApiNameModel
 from src.processes.models.mixins import (
@@ -13,8 +12,10 @@ from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.template import Template
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.querysets import (
-    FieldsetTemplateQuerySet,
-    FieldsetTemplateRuleQuerySet,
+    FieldSetTemplateRuleGroupAndQuerySet,
+    FieldSetTemplateRuleGroupOrQuerySet,
+    FieldSetTemplateRuleSetQuerySet,
+    FieldsetTemplateQuerySet, FieldsetTemplateRuleQuerySet,
 )
 
 
@@ -26,13 +27,8 @@ class FieldsetTemplate(
 
     class Meta:
         ordering = ['-id']
-        constraints = [
-            UniqueConstraint(
-                fields=['api_name', 'template', 'is_shared', 'account'],
-                condition=Q(is_deleted=False),
-                name='fieldsettemplate_template_api_name_is_shared_unique',
-            ),
-        ]
+        # Unique index is raw SQL in 0260:
+        # NULLS NOT DISTINCT, WHERE NOT is_deleted.
 
     api_name_prefix = 'fieldset'
 
@@ -118,20 +114,9 @@ class FieldSetTemplateRuleSet(
 
     class Meta:
         ordering = ['order', 'id']
-        constraints = [
-            UniqueConstraint(
-                fields=['template', 'api_name', 'account'],
-                condition=Q(is_deleted=False),
-                name='fieldsetruleset_fieldset_api_name_unique',
-            ),
-            # Shared fieldsets have template_id IS NULL, and in Postgres
-            # NULL != NULL, so the constraint above never fires for them.
-            UniqueConstraint(
-                fields=['fieldset', 'api_name', 'account'],
-                condition=Q(is_deleted=False, template__isnull=True),
-                name='fieldsetruleset_shared_api_name_unique',
-            ),
-        ]
+        # Partial unique indexes are raw SQL in 0260.
+        # NOT is_deleted AND template_id IS NOT NULL,
+        # or NOT is_deleted AND template_id IS NULL.
 
     api_name_prefix = 'fieldset-ruleset'
     template = models.ForeignKey(
@@ -149,7 +134,7 @@ class FieldSetTemplateRuleSet(
     message = models.TextField(
         null=True,
         blank=True,
-        help_text='custom error message for a type="validator"',
+        help_text='Custom error message when the sum check fails.',
     )
     order = models.PositiveIntegerField(default=0)
     fields = models.ManyToManyField(
@@ -158,7 +143,9 @@ class FieldSetTemplateRuleSet(
         related_name='fieldset_rulesets',
     )
 
-    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
+    objects = BaseSoftDeleteManager.from_queryset(
+        FieldSetTemplateRuleSetQuerySet,
+    )()
 
     def __str__(self):
         return self.api_name
@@ -171,18 +158,9 @@ class FieldSetTemplateRuleGroupOr(
 
     class Meta:
         ordering = ['id']
-        constraints = [
-            UniqueConstraint(
-                fields=['api_name', 'template', 'account'],
-                condition=Q(is_deleted=False),
-                name='fieldset_rulegroupor_field_rule_api_name_unique',
-            ),
-            UniqueConstraint(
-                fields=['fieldset_rule', 'api_name', 'account'],
-                condition=Q(is_deleted=False, template__isnull=True),
-                name='fieldset_rulegroupor_shared_api_name_unique',
-            ),
-        ]
+        # Partial unique indexes are raw SQL in 0260.
+        # NOT is_deleted AND template_id IS NOT NULL,
+        # or NOT is_deleted AND template_id IS NULL.
 
     api_name_prefix = 'fieldset-rule-group-or'
     template = models.ForeignKey(
@@ -192,13 +170,15 @@ class FieldSetTemplateRuleGroupOr(
         blank=True,
         related_name='fieldset_ruleset_groups_or',
     )
-    fieldset_rule = models.ForeignKey(
+    ruleset = models.ForeignKey(
         FieldSetTemplateRuleSet,
         on_delete=models.CASCADE,
         related_name='groups_or',
     )
 
-    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
+    objects = BaseSoftDeleteManager.from_queryset(
+        FieldSetTemplateRuleGroupOrQuerySet,
+    )()
 
     def __str__(self):
         return self.api_name
@@ -211,18 +191,9 @@ class FieldSetTemplateRuleGroupAnd(
 
     class Meta:
         ordering = ['id']
-        constraints = [
-            UniqueConstraint(
-                fields=['template', 'api_name', 'account'],
-                condition=Q(is_deleted=False),
-                name='fieldset_rulegroupand_group_or_api_name_unique',
-            ),
-            UniqueConstraint(
-                fields=['group_or', 'api_name', 'account'],
-                condition=Q(is_deleted=False, template__isnull=True),
-                name='fieldset_rulegroupand_shared_api_name_unique',
-            ),
-        ]
+        # Partial unique indexes are raw SQL in 0260.
+        # NOT is_deleted AND template_id IS NOT NULL,
+        # or NOT is_deleted AND template_id IS NULL.
 
     api_name_prefix = 'fieldset-rule-group-and'
     template = models.ForeignKey(
@@ -243,7 +214,9 @@ class FieldSetTemplateRuleGroupAnd(
     )
     value = models.CharField(max_length=200, null=True, blank=True)
 
-    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
+    objects = BaseSoftDeleteManager.from_queryset(
+        FieldSetTemplateRuleGroupAndQuerySet,
+    )()
 
     def __str__(self):
         return f'{self.operator} {self.value}'

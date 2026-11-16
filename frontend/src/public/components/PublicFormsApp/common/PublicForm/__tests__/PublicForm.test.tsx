@@ -18,6 +18,7 @@ import {
 import { IExtraField } from '../../../../../types/template';
 import { IFieldsetRuntime, EFieldRuleOperator, EFieldRuleType } from '../../../../../types/fieldset';
 import { intlMock } from '../../../../../__stubs__/intlMock';
+import { logger } from '../../../../../utils/logger';
 
 jest.mock('../../../../../api/getPublicForm', () => ({
   getPublicForm: jest.fn(),
@@ -434,6 +435,23 @@ describe('PublicForm', () => {
       lastCallProps = mergedMock.mock.calls[mergedMock.mock.calls.length - 1][0];
       expect(lastCallProps.fields).toHaveLength(2);
       expect(lastCallProps.fields.map((f: IExtraField) => f.apiName)).toEqual(['pub-trigger', 'pub-details']);
+    });
+  });
+
+  describe('Fetch public form: error handling', () => {
+    it('sets FormNotFound state and logs error via logger.info on failure', async () => {
+      const apiError = new Error('Not found');
+      (getPublicForm as jest.Mock).mockRejectedValue(apiError);
+
+      render(React.createElement(PublicForm, { type: 'shared' }));
+
+      const errorTitle = await screen.findByText(formatMsg('public-form.error-title'));
+      expect(errorTitle).toBeInTheDocument();
+      expect(screen.getByText(formatMsg('public-form.error-text'))).toBeInTheDocument();
+
+      expect(logger.info).toHaveBeenCalledTimes(1);
+      expect(logger.info).toHaveBeenCalledWith('Failed to fetch public form:', apiError);
+      expect(logger.error).not.toHaveBeenCalled();
     });
   });
 });

@@ -1,0 +1,22 @@
+.create-modal {
+  &__title {
+    margin-bottom: 0.8rem;
+  }
+
+  &__tabs {
+    margin-bottom: 1.6rem;
+  }
+
+  &__fields {
+    display: flex;
+    flex-direction: column;
+    gap: 1.6rem;
+  }
+
+  &__footer {
+    display: flex;
+    gap: 1.6rem;
+    align-items: center;
+    margin-top: 2.4rem;
+  }
+}

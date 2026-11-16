@@ -31,6 +31,17 @@ import { getCurrentDataset, isCurrentDatasetLoading } from '../../../redux/selec
 import { TDatasetDetailsProps } from './types';
 import styles from './DatasetDetails.css';
 
+const getSavedSorting = (datasetId: string): EDatasetsSorting => {
+  try {
+    const savedSorting = localStorage.getItem(`dataset_sorting_${datasetId}`);
+    const validSorting = Object.values(EDatasetsSorting).find((sortingType) => sortingType === savedSorting);
+
+    return validSorting || EDatasetsSorting.DateDesc;
+  } catch {
+    return EDatasetsSorting.DateDesc;
+  }
+};
+
 const DatasetDetails = ({
   match: {
     params: { id: matchParamId },
@@ -44,7 +55,20 @@ const DatasetDetails = ({
   const [isAddingRow, setIsAddingRow] = useState(false);
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [searchText, setSearchText] = useState('');
-  const [sorting, setSorting] = useState<EDatasetsSorting>(EDatasetsSorting.DateDesc);
+  const [sorting, setSorting] = useState<EDatasetsSorting>(() => getSavedSorting(matchParamId));
+
+  useEffect(() => {
+    setSorting(getSavedSorting(matchParamId));
+  }, [matchParamId]);
+
+  const handleSortingChange = (newSorting: EDatasetsSorting) => {
+    setSorting(newSorting);
+    try {
+      localStorage.setItem(`dataset_sorting_${matchParamId}`, newSorting);
+    } catch {
+      // Ignore storage write errors (e.g. quota or disabled storage)
+    }
+  };
 
   const sortedItems = useMemo(() => {
     return getSortedAndFilteredDatasetItems(dataset?.items || [], searchText, sorting);
@@ -166,7 +190,7 @@ const DatasetDetails = ({
         searchText={searchText}
         sorting={sorting}
         onSearchChange={setSearchText}
-        onSortingChange={setSorting}
+        onSortingChange={handleSortingChange}
         onSaveNewRow={handleSaveNewRow}
         onCancelNewRow={handleCancelNewRow}
         onStartEdit={handleStartEdit}

@@ -7,7 +7,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import AuthenticationFailed
 
-from src.accounts.enums import UserStatus
 from src.accounts.models import UserInvite
 from src.accounts.services.account import AccountService
 from src.accounts.services.user_invite import UserInviteService
@@ -21,6 +20,7 @@ from src.authentication.messages import (
     MSG_AU_0015,
     MSG_AU_0017,
     MSG_AU_0019,
+    MSG_AU_0021,
 )
 from src.authentication.models import (
     Account,
@@ -29,6 +29,7 @@ from src.authentication.services.user_auth import AuthService
 from src.authentication.tokens import PneumaticToken
 from src.authentication.views.mixins import SignUpMixin
 from src.generics.mixins.services import CacheMixin, EncryptionMixin
+from src.logs.events import AuditEventService
 
 UserModel = get_user_model()
 
@@ -273,16 +274,20 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
         user_agent: Optional[str],
         user_ip: Optional[str],
     ) -> Tuple[UserModel, PneumaticToken]:
-        existing_user = (
-            UserModel.objects.filter(email=user_data['email']).first()
+        users = UserModel.include_inactive.type_user().filter(
+            email=user_data['email'],
         )
-        if existing_user and existing_user.status != UserStatus.INACTIVE:
-            if existing_user.status == UserStatus.ACTIVE:
-                user = existing_user
+        user = users.active().first()
+        is_returning = bool(user)
+        if not user:
+            invited_user = users.invited().first()
+            is_returning = bool(invited_user)
+            if invited_user:
+                user = self._activate_invited_user(invited_user, user_data)
+            elif users.inactive().exists():
+                raise self.exception_class(MSG_AU_0021)
             else:
-                user = self._activate_invited_user(existing_user, user_data)
-        else:
-            user = self._create_new_user(user_data)
+                user = self._create_new_user(user_data)
         token = AuthService.get_auth_token(
             user=user,
             user_agent=user_agent,
@@ -295,6 +300,11 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
             auth_type=AuthTokenType.USER,
             source=self.source,
         )
+        if is_returning:
+            AuditEventService.user_logged_in(
+                user=user,
+                source=self.source,
+            )
         return user, token
 
     def _activate_invited_user(

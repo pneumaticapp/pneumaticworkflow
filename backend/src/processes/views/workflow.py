@@ -27,6 +27,7 @@ from src.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
 )
+from src.logs.events import AuditEventService
 from src.openapi import (
     ACCESS_ACCOUNT_OWNER,
     ACCESS_AUTH,
@@ -79,11 +80,13 @@ from src.processes.serializers.workflows.workflow import (
 from src.processes.services.events import CommentService
 from src.processes.services.exceptions import (
     CommentServiceException,
+    FieldRuleCheckServiceException,
     WorkflowActionServiceException,
 )
 
 
 from src.processes.services.workflow_action import WorkflowActionService
+from src.processes.services.workflows.workflow import WorkflowService
 from src.processes.queries import (
     WorkflowPermissionQuery,
 )
@@ -166,9 +169,7 @@ class WorkflowViewSet(
                 'kickoff__output__rulesets__groups_or__groups_and',
                 'kickoff__fieldsets__rulesets__groups_or__groups_and',
                 'kickoff__fieldsets__rulesets__fields',
-                'kickoff__fieldsets__fields__selections',
-                'kickoff__fieldsets__fields__rulesets'
-                '__groups_or__groups_and',
+                'kickoff__fieldsets__fields__rulesets__groups_or__groups_and',
             ]
         else:
             extra_fields = None
@@ -358,12 +359,28 @@ class WorkflowViewSet(
         is_urgent_changed = (
             is_urgent is not None and is_urgent != workflow.is_urgent
         )
-        workflow = serializer.save()
+        service = WorkflowService(
+            instance=workflow,
+            user=request.user,
+        )
+        try:
+            workflow = service.update(serializer.validated_data)
+        except FieldRuleCheckServiceException as ex:
+            raise_validation_error(
+                message=ex.message,
+                api_name=ex.field_api_name,
+            )
         AnalyticService.workflows_updated(
             workflow=workflow,
             auth_type=request.token_type,
             is_superuser=request.is_superuser,
             user=request.user,
+        )
+        AuditEventService.workflow_updated(
+            user=request.user,
+            auth_type=request.token_type,
+            workflow=workflow,
+            update_kwargs=serializer.validated_data,
         )
         if is_urgent_changed:
             AnalyticService.workflows_urgent(

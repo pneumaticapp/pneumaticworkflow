@@ -11,8 +11,6 @@ from src.generics.messages import (
     MSG_GE_0020,
 )
 from src.processes.enums import (
-    FieldRuleOperator,
-    FieldRuleType,
     FieldType,
     OwnerType,
     WorkflowEventType,
@@ -20,12 +18,7 @@ from src.processes.enums import (
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.workflows.event import WorkflowEvent
-from src.processes.models.workflows.fields import (
-    FieldRuleGroupAnd,
-    FieldRuleGroupOr,
-    FieldRuleSet,
-    TaskField,
-)
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import Delay
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.models.workflows.fieldset import FieldSet
@@ -1683,6 +1676,7 @@ def test_highlights__task_complete_fieldsets_present__ok(api_client):
     assert fieldset_data['order'] == fieldset.order
     assert fieldset_data['label_position'] == fieldset.label_position
     assert fieldset_data['layout'] == fieldset.layout
+    assert 'rulesets' not in fieldset_data
     fields_data = fieldset_data['fields']
     assert len(fields_data) == 2
     field_2_data = fields_data[0]
@@ -1699,8 +1693,10 @@ def test_highlights__task_complete_fieldsets_present__ok(api_client):
     assert field_2_data['clear_value'] == field_2.clear_value
     assert field_2_data['user_id'] == field_2.user_id
     assert field_2_data['group_id'] == field_2.group_id
+    assert 'rulesets' not in field_2_data
     field_1_data = fields_data[1]
     assert field_1_data['id'] == field_1.id
+    assert 'rulesets' not in field_1_data
 
 
 def test_highlights__task_complete_fieldsets_absent__ok(api_client):
@@ -1808,6 +1804,7 @@ def test_highlights__start_workflow_kickoff_fieldset_present__ok(api_client):
     assert fieldset_data['order'] == fieldset.order
     assert fieldset_data['label_position'] == fieldset.label_position
     assert fieldset_data['layout'] == fieldset.layout
+    assert 'rulesets' not in fieldset_data
     fields_data = fieldset_data['fields']
     assert len(fields_data) == 1
     field_data = fields_data[0]
@@ -1824,6 +1821,7 @@ def test_highlights__start_workflow_kickoff_fieldset_present__ok(api_client):
     assert field_data['clear_value'] == field.clear_value
     assert field_data['user_id'] == field.user_id
     assert field_data['group_id'] == field.group_id
+    assert 'rulesets' not in field_data
 
 
 def test_highlights__start_workflow_kickoff_field_present__ok(api_client):
@@ -1892,75 +1890,3 @@ def test_highlights__start_workflow_fieldset_absent__ok(api_client):
     assert event_data['type'] == WorkflowEventType.RUN
     assert event_data['workflow']['kickoff']['fieldsets'] == []
     assert event_data['workflow']['kickoff']['output'] == []
-
-
-def test_highlights__fieldset_fields__no_rulesets(api_client):
-
-    """
-    GET reports highlights: a highlight is a snapshot, not the editor
-    config, so fieldset fields must not leak rulesets. `selections` is
-    absent too — top level fields in the same payload never had it.
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    workflow = create_test_workflow(user=user, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    fieldset = FieldSet.objects.create(
-        account=account,
-        workflow=workflow,
-        task=task,
-        name='Fieldset 1',
-        order=1,
-    )
-    field = TaskField.objects.create(
-        account=account,
-        workflow=workflow,
-        task=task,
-        fieldset=fieldset,
-        name='Field 1',
-        type=FieldType.STRING,
-        api_name='fieldset-field-1',
-        order=1,
-    )
-    ruleset = FieldRuleSet.objects.create(
-        account=account,
-        workflow=workflow,
-        field=field,
-        api_name='ruleset-1',
-        name='Show rule',
-        type=FieldRuleType.SHOW,
-    )
-    group_or = FieldRuleGroupOr.objects.create(
-        account=account,
-        workflow=workflow,
-        ruleset=ruleset,
-        api_name='group-or-1',
-    )
-    FieldRuleGroupAnd.objects.create(
-        account=account,
-        workflow=workflow,
-        group_or=group_or,
-        api_name='group-and-1',
-        field='fieldset-field-1',
-        operator=FieldRuleOperator.EQUAL,
-        value='yes',
-    )
-    WorkflowEventService.task_complete_event(
-        task=task,
-        user=user,
-        after_create_actions=False,
-    )
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.get(path='/reports/highlights')
-
-    # assert
-    assert response.status_code == 200
-    event_data = response.data[0]
-    field_data = event_data['task']['fieldsets'][0]['fields'][0]
-    assert 'rulesets' not in field_data
-    assert 'selections' not in field_data
-    assert field_data['is_hidden'] == field.is_hidden

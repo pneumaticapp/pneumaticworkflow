@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import * as React from 'react';
+import { useEffect, useState } from 'react';
 import { Field, Formik, FormikConfig } from 'formik';
 import { useIntl } from 'react-intl';
 import ReCAPTCHA from 'react-google-recaptcha';
@@ -10,15 +11,16 @@ import { IntlMessages } from '../../../components/IntlMessages';
 import { ERoutes } from '../../../constants/routes';
 import { TITLES } from '../../../constants/titles';
 import { validateEmail, validateName, validatePhone, validateRegistrationPassword } from '../../../utils/validators';
-import { getOAuthUrl } from '../../../api/getGoogleAuthUrl';
 import { getQueryStringParams, history } from '../../../utils/history';
 import { EOAuthType } from '../../../types/auth';
 import { NavLink } from '../../../components/NavLink';
 import { saveUTMParams } from '../utils/utmParams';
 import { prepareRegisterUser } from '../../../api/prepareRegisterUser';
 import { getBrowserConfigEnv } from '../../../utils/getConfig';
+import { logger } from '../../../utils/logger';
 import { setLandingTemplate } from '../../../utils/landingTemplate';
 import { setTemplateName } from './utils/templateName';
+import { handleOAuthClick } from '../utils/handleOAuthClick';
 import { Button, Header, InputField } from '../../../components/UI';
 import { GoogleButton, MicrosoftButton, SSOButton } from '../../../components/OAuthButtons';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
@@ -72,10 +74,14 @@ export function Register({ registerUser }: IRegisterProps) {
   }, []);
 
   const checkCaptchaNeeded = async () => {
-    const prepareResult = await prepareRegisterUser();
+    try {
+      const prepareResult = await prepareRegisterUser();
 
-    if (prepareResult || (prepareResult as any).showCaptcha) {
-      setShowCaptcha(true);
+      if (prepareResult.showCaptcha) {
+        setShowCaptcha(true);
+      }
+    } catch (error) {
+      logger.error(error);
     }
   };
 
@@ -99,16 +105,6 @@ export function Register({ registerUser }: IRegisterProps) {
     });
   };
 
-  const handleOAuthSignUpClick = (type: EOAuthType) => async (e: React.MouseEvent) => {
-    e.preventDefault();
-
-    const result = await getOAuthUrl(type);
-
-    if (result && 'redirectUri' in result) {
-      window.location.assign(result.redirectUri);
-    }
-  };
-
   return (
     <>
       <Header size="4" tag="h2" className={styles['title']}>
@@ -119,21 +115,21 @@ export function Register({ registerUser }: IRegisterProps) {
         {isEnvGoogleAuth && (
           <GoogleButton
             label={formatMessage({ id: 'user.sign-up-google' })}
-            onClick={handleOAuthSignUpClick(EOAuthType.Google)}
+            onClick={handleOAuthClick(EOAuthType.Google, formatMessage)}
             className={styles['oauth__button']}
           />
         )}
         {isEnvMsAuth && (
           <MicrosoftButton
             label={formatMessage({ id: 'user.sign-up-microsoft' })}
-            onClick={handleOAuthSignUpClick(EOAuthType.Microsoft)}
+            onClick={handleOAuthClick(EOAuthType.Microsoft, formatMessage)}
             className={styles['oauth__button']}
           />
         )}
         {isEnvSSOAuth && (
           <SSOButton
             label={formatMessage({ id: 'user.sign-up-sso' })}
-            onClick={handleOAuthSignUpClick(typeSSOProvider)}
+            onClick={handleOAuthClick(typeSSOProvider, formatMessage)}
             className={styles['oauth__button']}
           />
         )}
