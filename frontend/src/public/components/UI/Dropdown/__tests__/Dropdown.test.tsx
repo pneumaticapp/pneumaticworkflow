@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Dropdown } from '../Dropdown';
 
-jest.mock('react-outside-click-handler', () => ({
+jest.mock('../../OutsideClickHandler', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => children,
 }));
