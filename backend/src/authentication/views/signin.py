@@ -1,6 +1,11 @@
 from django.contrib.auth import authenticate, get_user_model
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import (
+    OpenApiExample,
+    extend_schema,
+    extend_schema_view,
+)
 from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework.exceptions import (
     AuthenticationFailed,
     ValidationError,
@@ -34,6 +39,18 @@ from src.generics.mixins.views import (
 from src.logs.events import AuditEventService
 from src.logs.events.enums import LoginFailedReason
 from src.notifications.tasks import send_verification_notification
+from src.openapi.responses import SSO_VALIDATION_ERROR
+from src.openapi.serializers import AuthTokenResponseSerializer
+from src.openapi.responses import (
+    FIELD_VALIDATION_ERROR,
+    FORBIDDEN,
+    NOT_FOUND,
+    UNAUTHORIZED,
+)
+from src.openapi.internal_serializers import (
+    CredentialsRequestSerializer,
+    EmailAddressSerializer,
+)
 
 UserModel = get_user_model()
 
@@ -47,6 +64,32 @@ class TokenObtainPairCustomView(
     permission_classes = (AllowAny,)
     authentication_classes = []
 
+    @extend_schema(
+        tags=['Auth'],
+        summary='Sign in with email and password',
+        description=(
+            'No user token is required. Send the account email in username '
+            'and its password. Returns a Pneumatic session token for '
+            'Authorization: Bearer. Invalid credentials or expired account '
+            'verification are rejected; SSO-only accounts cannot use '
+            'password sign-in. User-Agent identifies the created session.'
+        ),
+        auth=[],
+        request=CredentialsRequestSerializer,
+        responses={
+            200: AuthTokenResponseSerializer,
+            400: SSO_VALIDATION_ERROR,
+            403: FORBIDDEN,
+        },
+        examples=[OpenApiExample(
+            'Password sign-in',
+            value={
+                'username': 'person@example.com',
+                'password': 'account-password',
+            },
+            request_only=True,
+        )],
+    )
     def post(self, request, *args, **kwargs):
         user = authenticate(**request.data)
 
@@ -109,13 +152,38 @@ class TokenObtainPairCustomView(
         tags=['Auth'],
         summary='Refresh JWT token',
         description='Exchange a valid refresh token for a new access token.',
+        responses={
+            200: TokenRefreshSerializer,
+            400: FIELD_VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+        },
     ),
 )
 class AuthTokenRefreshView(TokenRefreshView):
     pass
 
 
-@extend_schema(exclude=True)
+@extend_schema_view(
+    post=extend_schema(
+        tags=['Auth'],
+        summary='Create an impersonation token',
+        description=(
+            'Internal operation. Requires an authenticated superuser and '
+            'PrivateApiPermission (the configured source-IP restrictions). '
+            'With PRIVATE_API_CHECK_IP enabled, API keys are rejected '
+            'even from allowlisted IPs. '
+            'Looks up an active user by email and returns an impersonation '
+            'token; the action is audited.'
+        ),
+        request=EmailAddressSerializer,
+        responses={
+            200: AuthTokenResponseSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    ),
+)
 class SuperuserEmailTokenView(
     CreateAPIView,
     BaseResponseMixin,

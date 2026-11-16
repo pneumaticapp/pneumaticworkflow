@@ -8,11 +8,14 @@ from src.generics.mixins.views import (
     AnonymousWorkflowMixin,
     CustomViewSetMixin,
 )
-from src.openapi import (
-    ACCESS_PUBLIC_TEMPLATE,
+from src.openapi.permission_docs import ACCESS_PUBLIC_TEMPLATE
+from src.openapi.public_contract_serializers import (
+    PublicTemplateRunRequestSerializer,
+)
+from src.openapi.responses import (
     EMPTY,
     FORBIDDEN,
-    NOT_FOUND,
+    UNAUTHORIZED,
     VALIDATION_ERROR,
 )
 from src.processes.models.templates.template import Template
@@ -62,8 +65,8 @@ class PublicTemplateViewSet(
         auth=[{'publicTemplateAuth': []}],
         responses={
             200: PublicTemplateResponseSerializer,
+            401: UNAUTHORIZED,
             403: FORBIDDEN,
-            404: NOT_FOUND,
         },
     )
     def retrieve(self, request, *args, **kwargs):
@@ -84,15 +87,21 @@ class PublicTemplateViewSet(
     @extend_schema(
         tags=['Templates Public'],
         summary='Run public template',
-        description=ACCESS_PUBLIC_TEMPLATE,
+        description=(
+            f'{ACCESS_PUBLIC_TEMPLATE}\n\n'
+            'Check GET /templates/public for this visitor first. captcha is '
+            'required only when show_captcha=true. Otherwise it is ignored '
+            'and may be omitted, empty or null. Public tokens return 200 '
+            'with redirect_url; embedded tokens return an empty 204.'
+        ),
         auth=[{'publicTemplateAuth': []}],
-        request=SecuredExternalWorkflowCreateSerializer,
+        request=PublicTemplateRunRequestSerializer,
         responses={
             200: PublicTemplateRunResponseSerializer,
             204: EMPTY,
             400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
             403: FORBIDDEN,
-            404: NOT_FOUND,
         },
     )
     @action(methods=['post'], detail=False)

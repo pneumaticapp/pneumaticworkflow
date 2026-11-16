@@ -59,20 +59,94 @@ TOO_MANY_REQUESTS_EXAMPLE = detail_example(
 # -- Request examples (request_only) --------------------------------
 
 TEMPLATE_CREATE_EXAMPLE = OpenApiExample(
-    'Create template (minimal)',
+    'Create active template',
+    description=(
+        'Replace owner and performer source_id with a user ID on your '
+        'account. IDs are strings. Includes an empty kickoff form.'
+    ),
     value={
         'name': 'Employee onboarding',
+        'kickoff': {'fields': []},
+        'owners': [{'type': 'user', 'role': 'owner', 'source_id': '1'}],
         'tasks': [
             {
                 'name': 'Fill out paperwork',
                 'number': 1,
-                'raw_performers': [{'type': 'user', 'source_id': 1}],
+                'raw_performers': [{'type': 'user', 'source_id': '1'}],
             },
         ],
         'is_active': True,
     },
     request_only=True,
 )
+
+TEMPLATE_DRAFT_EXAMPLE = OpenApiExample(
+    'Create draft template',
+    value={
+        'name': 'Employee onboarding',
+        'is_active': False,
+        'description': 'Prepare a new employee for their first day.',
+        'wf_name_template': 'Employee onboarding',
+        'is_public': False,
+        'is_embedded': False,
+        'public_success_url': None,
+        'finalizable': True,
+        'reminder_notification': True,
+        'completion_notification': False,
+    },
+    description=(
+        'Inactive drafts accept incomplete data, including an empty object '
+        'or a null name. An active template additionally requires kickoff '
+        'and non-empty tasks and owners. Most draft settings are stored as '
+        'supplied and validated only when activating the template. '
+        'Public and embed flags are normalized to booleans.'
+    ),
+    request_only=True,
+)
+
+TEMPLATE_PREVIEW_EXAMPLE = OpenApiExample(
+    'Unsaved template preview',
+    description=(
+        'Returned before saving. Generated api_name values vary. '
+        'The owner source_id is a string; the default performer user ID '
+        'is an integer.'
+    ),
+    value={
+        'name': 'Employee onboarding',
+        'wf_name_template': None,
+        'description': '',
+        'is_active': False,
+        'finalizable': True,
+        'is_public': False,
+        'owners': [{'type': 'user', 'source_id': '1', 'role': 'owner'}],
+        'kickoff': {
+            'description': '',
+            'fields': [{
+                'name': 'Employee', 'type': 'text',
+                'api_name': 'field-employee',
+            }],
+            'fieldsets': [{
+                'title': 'Contact details',
+                'api_name': 'contact-details',
+                'fields': [{
+                    'name': 'Phone', 'type': 'text',
+                    'api_name': 'field-phone',
+                }],
+            }],
+        },
+        'tasks': [{
+            'name': 'Fill out paperwork',
+            'number': 1,
+            'api_name': 'task-onboarding',
+            'raw_performers': [{
+                'type': 'user', 'source_id': 1, 'label': 'Jane Doe',
+            }],
+        }],
+    },
+    response_only=True,
+    status_codes=['200'],
+)
+
 
 WORKFLOW_RUN_EXAMPLE = OpenApiExample(
     'Run workflow',

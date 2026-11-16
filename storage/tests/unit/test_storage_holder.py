@@ -489,6 +489,8 @@ async def test_download__with_range__range_in_kwargs(
         Key='k',
         Range='bytes=0-100',
     )
+    assert chunks == [b'chunk']
+    mock_body.close.assert_called_once_with()
 
 
 # --- delete_file ---

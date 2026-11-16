@@ -9,12 +9,9 @@ from rest_framework.viewsets import GenericViewSet
 
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import IsAuthenticated
-from src.openapi import (
-    ACCESS_ATTACHMENT,
-    UNAUTHORIZED,
-    VALIDATION_ERROR,
-    with_access_text,
-)
+from src.openapi.permission_docs import ACCESS_ATTACHMENT
+from src.openapi.responses import EMPTY, UNAUTHORIZED, VALIDATION_ERROR
+from src.openapi.helpers import with_access_text
 from src.storage.models import Attachment
 from src.storage.paginations import AttachmentListPagination
 from src.storage.permissions import (
@@ -55,7 +52,23 @@ class AttachmentViewSet(
             return (IsAuthenticatedOrPublicTemplate(),)
         return (IsAuthenticated(),)
 
-    @extend_schema(exclude=True)
+    @extend_schema(
+        tags=['Attachments'],
+        summary='Check file access for the file service',
+        description=(
+            'Internal authorization callback used by Files API. Accepts '
+            'an authenticated user/guest or a public template token. '
+            'Checks the attachment ownership and its workflow/template '
+            'access; an unknown or inaccessible file returns empty 403.'
+        ),
+        request=AttachmentCheckPermissionSerializer,
+        responses={
+            204: EMPTY,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: EMPTY,
+        },
+    )
     @action(
         methods=['POST'],
         detail=False,

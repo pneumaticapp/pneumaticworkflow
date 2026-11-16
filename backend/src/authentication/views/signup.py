@@ -1,5 +1,10 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from drf_spectacular.utils import (
+    OpenApiExample,
+    extend_schema,
+    extend_schema_view,
+)
 from rest_framework.generics import (
     CreateAPIView,
     RetrieveAPIView,
@@ -25,10 +30,63 @@ from src.generics.mixins.views import (
 )
 from src.logs.events import AuditEventService
 from src.notifications.tasks import send_verification_notification
+from src.openapi.serializers import AuthTokenResponseSerializer
+from src.openapi.responses import FORBIDDEN, UNAUTHORIZED, VALIDATION_ERROR
+from src.openapi.internal_serializers import (
+    SignUpRequestSerializer,
+    SignupCaptchaResponseSerializer,
+)
 
 UserModel = get_user_model()
 
 
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Auth'],
+        summary='Check signup captcha requirement',
+        description=(
+            'Returns whether the next signup from this visitor requires '
+            'captcha. Signup must be enabled. Private API source-IP '
+            'restrictions apply when configured; no user session is needed.'
+        ),
+        auth=[],
+        responses={
+            200: SignupCaptchaResponseSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    ),
+    post=extend_schema(
+        tags=['Auth'],
+        summary='Register an account and its owner',
+        description=(
+            'Creates an account and owner, then returns a Pneumatic session '
+            'token. Requires signup to be enabled and PrivateApiPermission '
+            'source-IP rules to pass. Check GET /auth/signup first; include '
+            'captcha when show_captcha=true. A verification email is sent '
+            'when account verification is enabled.'
+        ),
+        auth=[],
+        request=SignUpRequestSerializer,
+        responses={
+            200: AuthTokenResponseSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+        examples=[OpenApiExample(
+            'Signup without captcha',
+            value={
+                'email': 'person@example.com',
+                'first_name': 'Jane',
+                'last_name': 'Doe',
+                'password': 'account-password',
+                'company_name': 'Example company',
+            },
+            request_only=True,
+        )],
+    ),
+)
 class SignUpView(
     SignUpMixin,
     CreateAPIView,

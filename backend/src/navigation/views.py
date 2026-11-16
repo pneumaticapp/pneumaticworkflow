@@ -15,7 +15,8 @@ from src.navigation.models import Menu, MenuItem
 from src.navigation.serializers import (
     MenuSerializer,
 )
-from src.openapi import ACCESS_AUTH_LITE, FORBIDDEN, NOT_FOUND, UNAUTHORIZED
+from src.openapi.permission_docs import ACCESS_AUTH_LITE
+from src.openapi.responses import FORBIDDEN, NOT_FOUND, UNAUTHORIZED
 
 
 class MenuViewSet(

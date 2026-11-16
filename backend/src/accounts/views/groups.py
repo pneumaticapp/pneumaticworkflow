@@ -32,18 +32,22 @@ from src.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
 )
-from src.openapi import (
+from src.openapi.permission_docs import (
     ACCESS_ADMIN_BASE,
     ACCESS_ADMIN_BASIC,
     ACCESS_AUTH_LITE,
-    CountResponseSerializer,
+)
+from src.openapi.serializers import CountResponseSerializer
+from src.openapi.responses import (
     EMPTY,
     FORBIDDEN,
-    GROUPS_LIST_PARAMS,
     NOT_FOUND,
     UNAUTHORIZED,
     VALIDATION_ERROR,
 )
+from src.openapi.parameters import GROUPS_LIST_PARAMS
+from src.openapi.helpers import unpaginated_schema
+from src.openapi.internal_serializers import GroupCreateResponseSerializer
 from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
@@ -99,6 +103,7 @@ class GroupViewSet(
             ),
         )
 
+    @unpaginated_schema
     @extend_schema(
         tags=['Accounts'],
         summary='List groups',
@@ -106,6 +111,7 @@ class GroupViewSet(
         parameters=GROUPS_LIST_PARAMS,
         responses={
             200: GroupSerializer(many=True),
+            400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
         },
@@ -123,7 +129,7 @@ class GroupViewSet(
         description=ACCESS_ADMIN_BASE,
         request=GroupSerializer,
         responses={
-            200: GroupSerializer,
+            200: GroupCreateResponseSerializer,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -199,7 +205,7 @@ class GroupViewSet(
         summary='Delete group',
         description=ACCESS_ADMIN_BASE,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,

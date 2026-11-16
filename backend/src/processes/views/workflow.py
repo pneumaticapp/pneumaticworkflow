@@ -1,6 +1,10 @@
 from typing import Optional, List
 
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiResponse,
+    extend_schema,
+)
 from rest_framework.decorators import action
 from rest_framework.generics import (
     get_object_or_404,
@@ -28,25 +32,32 @@ from src.generics.permissions import (
     UserIsAuthenticated,
 )
 from src.logs.events import AuditEventService
-from src.openapi import (
+from src.openapi.permission_docs import (
     ACCESS_ACCOUNT_OWNER,
     ACCESS_AUTH,
     ACCESS_WORKFLOW_COMMENT,
     ACCESS_WORKFLOW_EVENTS,
     ACCESS_WORKFLOW_MEMBER,
     ACCESS_WORKFLOW_OWNER,
+)
+from src.openapi.responses import (
     EMPTY,
+    FIELD_VALIDATION_ERROR,
     FORBIDDEN,
     NOT_FOUND,
     UNAUTHORIZED,
     VALIDATION_ERROR,
-    WEBHOOK_EXAMPLE_PARAMS,
+)
+from src.openapi.parameters import (
     WORKFLOW_EVENTS_PARAMS,
     WORKFLOW_FIELDS_PARAMS,
     WORKFLOW_LIST_PARAMS,
-    WorkflowWebhookExampleSerializer,
-    access_description,
 )
+from src.openapi.misc_contract_serializers import (
+    WORKFLOW_WEBHOOK_EXAMPLE_PARAMS,
+)
+from src.openapi.serializers import WorkflowWebhookExampleSerializer
+from src.openapi.helpers import access_description
 from src.processes.enums import (
     WorkflowEventType,
 )
@@ -276,6 +287,7 @@ class WorkflowViewSet(
         parameters=WORKFLOW_LIST_PARAMS,
         responses={
             200: WorkflowListSerializer,
+            400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
         },
@@ -381,7 +393,23 @@ class WorkflowViewSet(
             WorkflowDetailsSerializer(instance=workflow).data,
         )
 
-    @extend_schema(exclude=True)
+    @extend_schema(
+        tags=['Workflows'],
+        summary='Update workflow (PUT alias)',
+        description=(
+            'Legacy alias of PATCH /workflows/{id}; omitted fields retain '
+            'their current values. Requires workflow owner access, an '
+            'active subscription and an account within its user limit.'
+        ),
+        request=WorkflowUpdateSerializer,
+        responses={
+            200: WorkflowDetailsSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     def update(self, request, *args, **kwargs):
         return self.partial_update(request, *args, **kwargs)
 
@@ -395,7 +423,6 @@ class WorkflowViewSet(
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
-            404: NOT_FOUND,
         },
     )
     @action(methods=['post'], detail=True)
@@ -429,7 +456,7 @@ class WorkflowViewSet(
         description=ACCESS_WORKFLOW_OWNER,
         request=WorkflowReturnToTaskSerializer,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -463,8 +490,7 @@ class WorkflowViewSet(
         summary='Terminate workflow',
         description=ACCESS_WORKFLOW_OWNER,
         responses={
-            200: EMPTY,
-            400: VALIDATION_ERROR,
+            204: EMPTY,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
@@ -487,9 +513,9 @@ class WorkflowViewSet(
         tags=['Workflows'],
         summary='Resume snoozed workflow',
         description=ACCESS_WORKFLOW_OWNER,
+        request=None,
         responses={
             200: WorkflowDetailsSerializer,
-            400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
@@ -514,10 +540,15 @@ class WorkflowViewSet(
     @extend_schema(
         tags=['Workflows'],
         summary='Force-complete workflow',
-        description=ACCESS_WORKFLOW_OWNER,
+        description=(
+            'Force-completes a workflow that is not already completed '
+            'and has finalizable=true. Returns 400 otherwise.\n\n'
+            f'{ACCESS_WORKFLOW_OWNER}'
+        ),
         request=WorkflowFinishSerializer,
         responses={
-            200: EMPTY,
+            204: EMPTY,
+            400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
@@ -551,8 +582,10 @@ class WorkflowViewSet(
         summary='List workflow fields',
         description=ACCESS_ACCOUNT_OWNER,
         parameters=WORKFLOW_FIELDS_PARAMS,
+        filters=False,
         responses={
-            200: WorkflowFieldsSerializer,
+            200: WorkflowFieldsSerializer(many=True),
+            400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
         },
@@ -605,8 +638,21 @@ class WorkflowViewSet(
         summary='List workflow events',
         description=ACCESS_WORKFLOW_EVENTS,
         parameters=WORKFLOW_EVENTS_PARAMS,
+        filters=False,
         responses={
-            200: WorkflowEventSerializer,
+            200: WorkflowEventSerializer(many=True),
+            400: OpenApiResponse(
+                response=FIELD_VALIDATION_ERROR.response,
+                description='Workflow event filter validation errors.',
+                examples=[OpenApiExample(
+                    'Invalid ordering',
+                    value={'ordering': [
+                        'Select a valid choice. invalid is not one of the '
+                        'available choices.',
+                    ]},
+                    response_only=True,
+                )],
+            ),
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
@@ -631,12 +677,15 @@ class WorkflowViewSet(
         tags=['Workflows'],
         summary='Webhook payload example',
         description=ACCESS_AUTH,
-        parameters=WEBHOOK_EXAMPLE_PARAMS,
+        parameters=WORKFLOW_WEBHOOK_EXAMPLE_PARAMS,
         responses={
             200: WorkflowWebhookExampleSerializer,
+            400: FIELD_VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
-            404: NOT_FOUND,
+            404: OpenApiResponse(
+                description='Not found; empty response body.',
+            ),
         },
     )
     @action(methods=['get'], url_path='webhook-example', detail=False)

@@ -11,8 +11,8 @@ from src.accounts.permissions import (
 from src.analysis.mixins import BaseIdentifyMixin
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import IsAuthenticated
-from src.openapi import (
-    ACCESS_CHECKLIST,
+from src.openapi.permission_docs import ACCESS_CHECKLIST
+from src.openapi.responses import (
     FORBIDDEN,
     NOT_FOUND,
     UNAUTHORIZED,
