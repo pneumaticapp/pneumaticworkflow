@@ -24,13 +24,13 @@ export enum EFieldsetRulesetNumericOperator {
 }
 
 export enum EFieldRuleOperator {
-  Equal = 'equal',
+  Equal = 'equals',
   NotEqual = 'not_equals',
   Exist = 'exists',
   NotExist = 'not_exists',
   Contain = 'contains',
   NotContain = 'not_contains',
-  GreaterThan = 'greater_than',
+  GreaterThan = 'more_than',
   LessThan = 'less_than',
 }
 

@@ -3,6 +3,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RuleOperatorSelect } from '../RuleOperatorSelect';
 import { EExtraFieldType } from '../../../../../types/template';
+import { EFieldRuleOperator } from '../../../../../types/fieldset';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 
 jest.mock('react-intl', () => {
@@ -26,7 +27,7 @@ describe('RuleOperatorSelect component', () => {
     render(
       <RuleOperatorSelect
         fieldType={EExtraFieldType.Text}
-        operator="equal"
+        operator={EFieldRuleOperator.Equal}
         isReadOnly={false}
         onChange={jest.fn()}
       />,
@@ -34,7 +35,7 @@ describe('RuleOperatorSelect component', () => {
 
     const select = screen.getByRole('combobox', { name: 'operator' });
     expect(select).toBeInTheDocument();
-    expect(select).toHaveValue('equal');
+    expect(select).toHaveValue(EFieldRuleOperator.Equal);
   });
 
   it('triggers onChange when a different operator is selected', () => {
@@ -43,7 +44,7 @@ describe('RuleOperatorSelect component', () => {
     render(
       <RuleOperatorSelect
         fieldType={EExtraFieldType.Text}
-        operator="equal"
+        operator={EFieldRuleOperator.Equal}
         isReadOnly={false}
         onChange={handleChange}
       />,
@@ -52,19 +53,14 @@ describe('RuleOperatorSelect component', () => {
     const select = screen.getByRole('combobox', { name: 'operator' });
     expect(select).toBeInTheDocument();
 
-    userEvent.selectOptions(select, 'not_equals');
+    userEvent.selectOptions(select, EFieldRuleOperator.NotEqual);
 
     expect(handleChange).toHaveBeenCalledTimes(1);
-    expect(handleChange).toHaveBeenCalledWith('not_equals');
+    expect(handleChange).toHaveBeenCalledWith(EFieldRuleOperator.NotEqual);
   });
 
   it('renders empty selection when operator is undefined', () => {
-    render(
-      <RuleOperatorSelect
-        fieldType={EExtraFieldType.Text}
-        onChange={jest.fn()}
-      />,
-    );
+    render(<RuleOperatorSelect fieldType={EExtraFieldType.Text} onChange={jest.fn()} />);
 
     const select = screen.getByRole('combobox', { name: 'operator' });
     expect(select).toBeInTheDocument();
@@ -75,7 +71,7 @@ describe('RuleOperatorSelect component', () => {
     render(
       <RuleOperatorSelect
         fieldType={EExtraFieldType.Text}
-        operator="equal"
+        operator={EFieldRuleOperator.Equal}
         isReadOnly={true}
         onChange={jest.fn()}
       />,
@@ -86,11 +82,7 @@ describe('RuleOperatorSelect component', () => {
 
   it('enables select when isReadOnly is undefined', () => {
     render(
-      <RuleOperatorSelect
-        fieldType={EExtraFieldType.Text}
-        operator="equal"
-        onChange={jest.fn()}
-      />,
+      <RuleOperatorSelect fieldType={EExtraFieldType.Text} operator={EFieldRuleOperator.Equal} onChange={jest.fn()} />,
     );
 
     expect(screen.getByRole('combobox', { name: 'operator' })).not.toBeDisabled();
@@ -102,26 +94,20 @@ describe('RuleOperatorSelect component', () => {
     render(
       <RuleOperatorSelect
         fieldType={EExtraFieldType.Text}
-        operator="equal"
+        operator={EFieldRuleOperator.Equal}
         isReadOnly={false}
         onChange={handleChange}
       />,
     );
 
     const select = screen.getByRole('combobox', { name: 'operator' });
-    userEvent.selectOptions(select, 'equal');
+    userEvent.selectOptions(select, EFieldRuleOperator.Equal);
 
     expect(handleChange).not.toHaveBeenCalled();
   });
 
   it('renders numeric ruleset operators when isFieldsetRuleset is true', () => {
-    render(
-      <RuleOperatorSelect
-        fieldType={EExtraFieldType.Number}
-        isFieldsetRuleset={true}
-        onChange={jest.fn()}
-      />,
-    );
+    render(<RuleOperatorSelect fieldType={EExtraFieldType.Number} isFieldsetRuleset={true} onChange={jest.fn()} />);
 
     const select = screen.getByRole('combobox', { name: 'operator' });
     expect(select).toBeInTheDocument();
@@ -129,13 +115,7 @@ describe('RuleOperatorSelect component', () => {
   });
 
   it('renders standard numeric operators when isFieldsetRuleset is false', () => {
-    render(
-      <RuleOperatorSelect
-        fieldType={EExtraFieldType.Number}
-        isFieldsetRuleset={false}
-        onChange={jest.fn()}
-      />,
-    );
+    render(<RuleOperatorSelect fieldType={EExtraFieldType.Number} isFieldsetRuleset={false} onChange={jest.fn()} />);
 
     const select = screen.getByRole('combobox', { name: 'operator' });
     expect(select).toBeInTheDocument();
@@ -143,11 +123,7 @@ describe('RuleOperatorSelect component', () => {
   });
 
   it('renders only placeholder option when fieldType is undefined', () => {
-    render(
-      <RuleOperatorSelect
-        onChange={jest.fn()}
-      />,
-    );
+    render(<RuleOperatorSelect onChange={jest.fn()} />);
 
     const select = screen.getByRole('combobox', { name: 'operator' });
     expect(select).toBeInTheDocument();
