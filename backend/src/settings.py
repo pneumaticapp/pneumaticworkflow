@@ -325,6 +325,7 @@ class Common(Configuration):
         'SERVE_AUTHENTICATION': [],
         'PREPROCESSING_HOOKS': [
             'src.openapi.preprocessing.include_legacy_http_methods',
+            'src.openapi.preprocessing.exclude_private_endpoints',
         ],
         'COMPONENT_SPLIT_REQUEST': True,
         'APPEND_COMPONENTS': {

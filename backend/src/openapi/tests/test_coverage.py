@@ -1,10 +1,12 @@
-"""Compare the Django REST API routes with the generated OpenAPI paths."""
+"""Compare the public Django REST routes with the generated OpenAPI paths."""
 
 from django.urls import reverse
 from drf_spectacular.generators import EndpointEnumerator, SchemaGenerator
 
+from src.openapi.enums import EXCLUDED_OPERATIONS
 
-def test_api_routes__generated_openapi__matches_registered_methods():
+
+def test_api_routes__generated_openapi__matches_public_methods():
 
     # arrange
     generator = SchemaGenerator()
@@ -34,19 +36,26 @@ def test_api_routes__generated_openapi__matches_registered_methods():
         ):
             registered.add((legacy_method.upper(), api_path))
 
+    expected = registered - EXCLUDED_OPERATIONS
+
     # act
     schema = generator.get_schema(request=None, public=True)
 
-    # assert
     documented = {
         (method.upper(), path)
         for path, operations in schema['paths'].items()
         for method in operations
         if method in methods
     }
-    missing = sorted(registered - documented)
-    extra = sorted(documented - registered)
+    stale_exclusions = sorted(EXCLUDED_OPERATIONS - registered)
+    missing = sorted(expected - documented)
+    extra = sorted(documented - expected)
+
+    # assert
+    assert not stale_exclusions, f'Excluded operations without a route: {
+        stale_exclusions
+    }'
     assert not (missing or extra), (
-        f'Undocumented operations: {missing}\n'
-        f'Documented operations without a route: {extra}'
+        f'Undocumented public operations: {missing}\n'
+        f'Unexpected operations in public OpenAPI: {extra}'
     )
