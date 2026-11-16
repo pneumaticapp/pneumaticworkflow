@@ -5,10 +5,12 @@ on:
     branches: [master]
     paths:
       - 'mcp/**'
+      - 'start.sh'
       - '.github/workflows/mcp-ci.yml'
   pull_request:
     paths:
       - 'mcp/**'
+      - 'start.sh'
       - '.github/workflows/mcp-ci.yml'
 
 permissions:

@@ -3,30 +3,7 @@ import { existsSync } from 'node:fs';
 import { isLoopbackHost, LOOPBACK_HOSTS } from './core/net.js';
 import { TOOLSETS, type Toolset, type ToolSelection } from './mcp/toolDef.js';
 import type { PneumaticEndpoints } from './pneumatic/client.js';
-
-export type Transport = 'stdio' | 'http';
-
-export interface StdioConfig extends ToolSelection {
-  transport: 'stdio';
-  pneumatic: PneumaticEndpoints;
-  apiKey: string;
-}
-
-export interface HttpConfig extends ToolSelection {
-  transport: 'http';
-  pneumatic: PneumaticEndpoints;
-  host: string;
-  port: number;
-  publicUrl: URL;
-  tokenSecret: string;
-  replayFile: string;
-  allowedRedirectHosts: string[];
-  rateLimitPerMinute: number;
-  trustProxy: boolean | number | string;
-  metricsToken?: string;
-}
-
-export type Config = StdioConfig | HttpConfig;
+import type { Config, Transport } from './types.js';
 
 const DEFAULT_API_URL = 'https://api.pneumatic.app';
 
@@ -93,11 +70,11 @@ function readTrustProxy(value: string | undefined): boolean | number | string {
 
 function readAppUrl(env: NodeJS.ProcessEnv, filesUrl: string | undefined): string | undefined {
   const derived = filesUrl?.endsWith('/files') ? filesUrl.slice(0, -'/files'.length) : undefined;
-  const value = env.PNEUMATIC_APP_URL?.trim() || derived;
+  const value = env.FRONTEND_URL?.trim() || derived;
   if (!value) {
     return undefined;
   }
-  return parseBaseUrl('PNEUMATIC_APP_URL', value);
+  return parseBaseUrl('FRONTEND_URL', value);
 }
 
 function readToolOptions(env: NodeJS.ProcessEnv): ToolSelection {
@@ -125,22 +102,20 @@ function readMetricsToken(value: string | undefined): string | undefined {
 }
 
 function readFilesUrl(env: NodeJS.ProcessEnv, apiUrl: string): string | undefined {
-  const value = env.PNEUMATIC_FILES_URL?.trim() || (apiUrl === DEFAULT_API_URL ? DEFAULT_FILES_URL : undefined);
+  const value = env.FILE_SERVICE_URL?.trim() || env.PNEUMATIC_FILES_URL?.trim();
   if (!value) {
-    return undefined;
+    return apiUrl === DEFAULT_API_URL ? DEFAULT_FILES_URL : undefined;
   }
-  return parseBaseUrl('PNEUMATIC_FILES_URL', value);
+  return parseBaseUrl(env.FILE_SERVICE_URL?.trim() ? 'FILE_SERVICE_URL' : 'PNEUMATIC_FILES_URL', value);
 }
 
 function readFilesInternalUrl(env: NodeJS.ProcessEnv, filesUrl: string | undefined): string | undefined {
-  const value = env.PNEUMATIC_FILES_INTERNAL_URL?.trim();
-  if (!value) {
+  const value = env.PNEUMATIC_FILES_URL?.trim();
+  if (!value || !env.FILE_SERVICE_URL?.trim()) {
     return undefined;
   }
-  if (!filesUrl) {
-    throw new ConfigError('PNEUMATIC_FILES_INTERNAL_URL requires PNEUMATIC_FILES_URL');
-  }
-  return parseBaseUrl('PNEUMATIC_FILES_INTERNAL_URL', value);
+  const url = parseBaseUrl('PNEUMATIC_FILES_URL', value);
+  return url === filesUrl ? undefined : url;
 }
 
 function readEndpoints(env: NodeJS.ProcessEnv): PneumaticEndpoints {

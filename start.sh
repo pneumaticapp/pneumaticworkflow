@@ -13,7 +13,7 @@ cd "$SCRIPT_DIR"
 # written into .env via sed. Values must be entered interactively or generated
 # by this script — never inherited from the caller's environment.
 unset SERVER_ADDRESS
-unset DJANGO_SECRET_KEY
+unset DJANGO_SECRET_KEY MCP_SECRET
 unset POSTGRES_PASSWORD REDIS_PASSWORD RABBITMQ_PASSWORD
 unset CERTBOT_ENABLE CERTBOT_EMAIL NGINX_CONF_TEMPLATE
 unset FORM_DOMAIN
@@ -330,6 +330,10 @@ if [ ! -f ".env" ]; then
 
 fi
 
+if [ -z "$(read_env_value MCP_SECRET)" ]; then
+    set_env_var MCP_SECRET "$(openssl rand -hex 32)"
+fi
+
 # =============================================================================
 # 3. Start Docker containers
 # =============================================================================
@@ -388,24 +392,10 @@ case "$LOGS_BACKEND_VALUE" in
     ;;
 esac
 
-# 3.1.2 The MCP server follows MCP_ENABLED of .env
-# --------------------------------------------------------------------
-MCP_ENABLED_VALUE=$(read_env_value MCP_ENABLED | tr '[:upper:]' '[:lower:]')
-case "$MCP_ENABLED_VALUE" in
-  ""|false)
-    if [[ ",$(read_env_value COMPOSE_PROFILES)," == *",mcp,"* ]]; then
-        print_error "MCP_ENABLED is off, but COMPOSE_PROFILES in .env still starts the MCP server: remove mcp from COMPOSE_PROFILES or set MCP_ENABLED=true"
-        exit 1
-    fi
-    # `up` without the profile leaves a connector started earlier running, and nginx keeps serving it
-    if docker container inspect pneumatic-mcp &>/dev/null; then
-        docker rm -f pneumatic-mcp >/dev/null
-        print_info "MCP_ENABLED is off: the MCP server was removed"
-    fi
-    ;;
-  true)
+COMPOSE_PROFILES_VALUE=${COMPOSE_PROFILES-$(read_env_value COMPOSE_PROFILES)}
+if [[ ",$COMPOSE_PROFILES_VALUE," == *",mcp,"* || ",$COMPOSE_PROFILES_VALUE," == *",*,"* ]]; then
     COMPOSE_ARGS+=('--profile' 'mcp')
-    print_info "MCP_ENABLED=true: the MCP server runs at /mcp"
+    print_info "The mcp profile is enabled: the MCP server runs at /mcp"
     MCP_PUBLIC_ORIGIN=$(read_env_value MCP_PUBLIC_URL)
     if [ -z "$MCP_PUBLIC_ORIGIN" ]; then
         MCP_PUBLIC_ORIGIN=$(read_env_value FRONTEND_URL)
@@ -417,12 +407,10 @@ case "$MCP_ENABLED_VALUE" in
         print_warning "The MCP server needs HTTPS outside localhost (PUBLIC_URL=$MCP_PUBLIC_ORIGIN): set MCP_PUBLIC_URL or FRONTEND_URL to an https:// origin"
         ;;
     esac
-    ;;
-  *)
-    print_error "MCP_ENABLED=$MCP_ENABLED_VALUE is not one of: true, false"
-    exit 1
-    ;;
-esac
+elif docker container inspect pneumatic-mcp &>/dev/null; then
+    docker rm -f pneumatic-mcp >/dev/null
+    print_info "The mcp profile is disabled: the MCP server was removed"
+fi
 
 print_info "Selected configuration: $COMPOSE_LABEL"
 echo ""

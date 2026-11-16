@@ -11,7 +11,7 @@ import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 
 import express, { type ErrorRequestHandler, type Express, type RequestHandler, type Response } from 'express';
 
-import type { HttpConfig } from '../config.js';
+import type { HttpConfig } from '../types.js';
 import { hashApiKey } from '../core/keys.js';
 import { log } from '../core/log.js';
 import { count, renderMetrics } from '../core/metrics.js';

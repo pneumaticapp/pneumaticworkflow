@@ -9,7 +9,8 @@ import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/cli
 import type { ErrorRequestHandler } from 'express';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { loadConfig, type HttpConfig } from '../src/config.js';
+import { loadConfig } from '../src/config.js';
+import type { HttpConfig } from '../src/types.js';
 import { createHttpApp } from '../src/http/app.js';
 import { s256 } from '../src/http/oauthTokens.js';
 import { createSealer } from '../src/http/sealer.js';

@@ -35,6 +35,8 @@ describe('HTTP configuration', () => {
     { PNEUMATIC_API_URL: 'not a url' },
     { PNEUMATIC_FILES_URL: 'ftp://files.example.com' },
     { PNEUMATIC_FILES_URL: 'https://files.example.com/files?x=1' },
+    { FILE_SERVICE_URL: 'https://files.example.com/files?x=1' },
+    { FRONTEND_URL: 'ftp://app.example.com' },
   ])('rejects an invalid origin or port: %j', (override) => {
     expect(() => loadConfig([], { ...httpEnv, ...override })).toThrow(ConfigError);
   });
@@ -60,24 +62,25 @@ describe('file storage configuration', () => {
     ).toMatchObject({ pneumatic: { filesUrl: 'https://app.internal/files' } });
   });
 
-  it('reads an internal storage URL only alongside the public one', () => {
+  it('uses the installation file URL for public links and a separate request address', () => {
     expect(
       loadConfig([], {
         ...stdioEnv,
-        PNEUMATIC_FILES_URL: 'http://localhost/files',
-        PNEUMATIC_FILES_INTERNAL_URL: 'http://pneumatic-file-service:8000/',
+        FILE_SERVICE_URL: 'http://localhost/files/',
+        PNEUMATIC_FILES_URL: 'http://pneumatic-file-service:8000/',
       }),
     ).toMatchObject({
       pneumatic: { filesUrl: 'http://localhost/files', filesInternalUrl: 'http://pneumatic-file-service:8000' },
     });
     expect(loadConfig([], stdioEnv).pneumatic.filesInternalUrl).toBeUndefined();
-    expect(() =>
-      loadConfig([], {
-        ...stdioEnv,
-        PNEUMATIC_API_URL: 'https://pneumatic.internal',
-        PNEUMATIC_FILES_INTERNAL_URL: 'http://pneumatic-file-service:8000',
-      }),
-    ).toThrow(ConfigError);
+    expect(loadConfig([], { ...stdioEnv, PNEUMATIC_FILES_URL: 'https://files.example.com/' }).pneumatic).toMatchObject({
+      filesUrl: 'https://files.example.com',
+      filesInternalUrl: undefined,
+    });
+    expect(loadConfig([], { ...stdioEnv, FILE_SERVICE_URL: 'https://files.example.com/' }).pneumatic).toMatchObject({
+      filesUrl: 'https://files.example.com',
+      filesInternalUrl: undefined,
+    });
   });
 });
 
@@ -98,7 +101,7 @@ describe('web app links', () => {
       loadConfig([], {
         PNEUMATIC_API_KEY: 'pn-key',
         PNEUMATIC_API_URL: 'https://api.internal',
-        PNEUMATIC_APP_URL: 'https://app.internal/',
+        FRONTEND_URL: 'https://app.internal/',
       }),
     ).toMatchObject({ pneumatic: { appUrl: 'https://app.internal' } });
     expect(

@@ -11,7 +11,9 @@ WORKDIR /app
 ENV NODE_ENV=production \
     MCP_TRANSPORT=http \
     HOST=0.0.0.0 \
-    PORT=3000
+    PORT=3000 \
+    OAUTH_REPLAY_FILE=/state/replay.json \
+    OAUTH_REPLAY_CREATE_ON_EMPTY_VOLUME=true
 COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
