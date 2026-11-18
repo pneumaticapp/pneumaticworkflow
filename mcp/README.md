@@ -4,6 +4,21 @@
 
 Connects compatible MCP clients to a Pneumatic installation using Streamable HTTP or stdio. Tools read and update tasks, workflows, templates, files, reports, users, groups and datasets through the Pneumatic API, with the permissions of the API key owner.
 
+### What you can do
+
+| Area                      | Capabilities                                                                                                                                                   | Example tools                                                                          |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Tasks                     | Find assigned work, inspect fields and history, complete or return tasks, comment, change due dates and performers, and update checklists.                     | `list_tasks`, `get_task`, `complete_task`, `comment_on_task`                           |
+| Workflows                 | Start workflows from templates, inspect progress and history, update kickoff values, snooze/resume, return to an earlier step, finish or terminate a workflow. | `run_workflow`, `get_workflow`, `update_workflow`, `snooze_workflow`                   |
+| Templates                 | Browse templates, create and edit process steps and forms, clone templates, and use the template library.                                                      | `get_template`, `create_template`, `add_template_step`, `create_template_from_library` |
+| Files                     | List attachments, upload text or binary content, download files, and request a browser upload link with status tracking.                                       | `list_attachments`, `upload_file`, `download_file`, `create_upload_link`               |
+| Reports                   | Read dashboard metrics and highlights, count workflows, inspect field values and step statistics.                                                              | `get_dashboard`, `list_highlights`, `count_workflows`, `get_template_step_stats`       |
+| People and reference data | Look up users, groups and datasets; manage them with the required permissions; set absences, reassign work and read notifications.                             | `list_users`, `create_group`, `list_datasets`, `set_vacation`                          |
+
+The client discovers the enabled tools, their descriptions and argument schemas through MCP `tools/list`. It calls a tool through `tools/call`; the tools do not each have a separate REST endpoint.
+
+The server uses the API key owner's permissions. Some operations require an admin or account owner. `READ_ONLY=true` hides write tools, and `TOOLSETS` restricts the offered areas. Browser upload links require HTTP mode and configured file storage. List results are paginated, and large results can be shortened (`truncated=true`); clients must check these fields before treating a result as complete. Writes can notify people or trigger integrations, and an uncertain write result must be checked before retrying.
+
 | Transport | Client connection                     | Authentication                                                                                                                  |
 | --------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | HTTP      | Streamable HTTP at `<PUBLIC_URL>/mcp` | OAuth with PKCE: each user enters their API key on the consent page. A raw API key in `Authorization: Bearer <key>` also works. |
@@ -286,7 +301,7 @@ mcp-publisher publish distribution/server.json
 
 Before submitting:
 
-1. Deploy the selected version at the endpoint in `listing.json`. Set `PUBLIC_URL` (or root `MCP_PUBLIC_URL`) to its origin; keep `FRONTEND_URL` / `FRONTEND_URL` pointing at the web app. The bundled nginx templates serve the configured app hostname; a separate MCP hostname needs its own DNS, TLS and proxy routing.
+1. Deploy the selected version at the endpoint in `listing.json`. Set `PUBLIC_URL` (or root `MCP_PUBLIC_URL`) to its origin; keep `FRONTEND_URL` pointing at the web app. The bundled nginx templates serve the configured app hostname; a separate MCP hostname needs its own DNS, TLS and proxy routing.
 2. Merge the documentation, icon and manifests into the public default branch. Open every listing URL without signing in; these GitHub URLs only work after merge. Confirm the hosted privacy policy and support contact apply to this deployment.
 3. Verify unauthenticated MCP 401 and OAuth metadata on the public origin, then connect from the target clients. Exercise every exposed tool with a populated disposable account; test file transfers, denied permissions and revoked keys. Local automated tests do not replace this client/deployment check.
 4. Prepare the reviewer account described in `listing.json`; enter its credentials only in the portal. Confirm the publishing account has the required directory and registry permissions, and accept the applicable terms when submitting.
