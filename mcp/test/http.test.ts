@@ -116,6 +116,16 @@ async function connect(token: string) {
 }
 
 describe('discovery', () => {
+  it('keeps standalone discovery compatible with the namespaced router', async () => {
+    for (const path of ['/.well-known/oauth-protected-resource/mcp', '/.well-known/oauth-authorization-server']) {
+      const external = await fetch(`${baseUrl}${path}`);
+      const namespaced = await fetch(`${baseUrl}/mcp${path}`);
+      expect(external.status).toBe(200);
+      expect(namespaced.status).toBe(200);
+      expect(await external.json()).toEqual(await namespaced.json());
+    }
+  });
+
   it('challenges unauthenticated MCP requests with resource metadata', async () => {
     const response = await fetch(`${baseUrl}/mcp`, {
       method: 'POST',

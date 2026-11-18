@@ -105,6 +105,14 @@ const securityHeaders: RequestHandler = (_req, res, next) => {
   next();
 };
 
+// Standalone clients discover OAuth at the issuer root, without nginx rewriting the request.
+const normalizeDiscovery: RequestHandler = (req, _res, next) => {
+  if (req.path.startsWith('/.well-known/oauth-')) {
+    req.url = `/mcp${req.url}`;
+  }
+  next();
+};
+
 // Only rejected keys count, so key guessing through the consent form is throttled without blocking sign-ins.
 function consentThrottle(consentFailures: RateLimiter): RequestHandler {
   return async (req, res, next) => {
@@ -229,7 +237,6 @@ export function createHttpApp(
     resourceName: 'Pneumatic Workflow',
     scopesSupported: [...SUPPORTED_SCOPES],
   });
-  app.use(metadataRouter);
 
   const router = express.Router();
   router.use(metadataRouter);
@@ -275,6 +282,7 @@ export function createHttpApp(
   );
 
   router.use(handleErrors);
+  app.use(normalizeDiscovery);
   app.use('/mcp', router);
   app.use(handleErrors);
 
