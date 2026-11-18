@@ -34,7 +34,7 @@ beforeAll(async () => {
   const replayFile = join(directory, 'replay.json');
   writeFileSync(replayFile, '');
   const config = loadConfig(['--http'], {
-    PNEUMATIC_API_URL: fake.apiUrl,
+    BACKEND_PRIVATE_URL: fake.apiUrl,
     PNEUMATIC_FILES_URL: fake.filesUrl,
     PUBLIC_URL: baseUrl,
     PORT: String(upstreamPort),

@@ -38,7 +38,7 @@ beforeAll(async () => {
   baseUrl = `http://127.0.0.1:${port}`;
   writeFileSync(join(replayDirectory, 'used.json'), '');
   const config = loadConfig(['--http'], {
-    PNEUMATIC_API_URL: fake.apiUrl,
+    BACKEND_PRIVATE_URL: fake.apiUrl,
     PNEUMATIC_FILES_URL: fake.filesUrl,
     HOST: '127.0.0.1',
     PORT: String(port),

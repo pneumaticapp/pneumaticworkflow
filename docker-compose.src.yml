@@ -655,7 +655,7 @@ services:
     container_name: pneumatic-mcp
     profiles: ["mcp"]
     environment:
-      PNEUMATIC_API_URL: ${BACKEND_PRIVATE_URL:-http://pneumatic-nginx}
+      BACKEND_PRIVATE_URL: ${BACKEND_PRIVATE_URL:-http://pneumatic-nginx}
       FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://localhost/files}
       PNEUMATIC_FILES_URL: http://pneumatic-file-service:${FILE_PORT:-8000}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}

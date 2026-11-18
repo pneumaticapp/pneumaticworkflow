@@ -48,7 +48,7 @@ The connector reuses these existing installation settings:
 | Root `.env` variable  | Default used by the MCP service | Connector variable and purpose                                                                                |
 | --------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `FRONTEND_URL`        | `http://localhost`              | Web app links and the fallback for `PUBLIC_URL` when `MCP_PUBLIC_URL` is unset.                               |
-| `BACKEND_PRIVATE_URL` | `http://pneumatic-nginx`        | Sets `PNEUMATIC_API_URL`: backend address reachable from the connector container.                             |
+| `BACKEND_PRIVATE_URL` | `http://pneumatic-nginx`        | Sets `BACKEND_PRIVATE_URL`: backend address reachable from the connector container.                             |
 | `FILE_SERVICE_URL`    | `http://localhost/files`        | Public file URL prefix for links and download URL validation; passed under the existing installation name.    |
 | `FILE_PORT`           | `8000`                          | Sets `PNEUMATIC_FILES_URL` to `http://pneumatic-file-service:<FILE_PORT>` for storage requests inside Docker. |
 
@@ -62,7 +62,7 @@ Set the addresses explicitly for your installation. The standalone configuration
 
 | Variable              | Default when omitted                                                                            | Meaning / value to supply                                                                                                                                                                                                     |
 | --------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PNEUMATIC_API_URL`   | `DEFAULT_API_URL` in [src/config.ts](src/config.ts)                                             | Backend HTTP(S) base URL, e.g. `http://localhost:8001` on the host or `https://api.example.com` remotely. Do not append an API resource path.                                                                                 |
+| `BACKEND_PRIVATE_URL`   | `DEFAULT_API_URL` in [src/config.ts](src/config.ts)                                             | Backend HTTP(S) base URL, e.g. `http://localhost:8001` on the host or `https://api.example.com` remotely. Do not append an API resource path.                                                                                 |
 | `PNEUMATIC_FILES_URL` | `FILE_SERVICE_URL` if set; otherwise the legacy Cloud storage default or unset for a custom API | Storage request address. For a standalone process, set it to the public file URL; in Compose it points at the file-service container. If `FILE_SERVICE_URL` is also set, that value supplies public links and URL validation. |
 | `FILE_SERVICE_URL`    | `PNEUMATIC_FILES_URL`; unset for a custom API without storage settings                          | Public file URL prefix matching the backend, e.g. `https://app.example.com/files`. Set it separately when the storage request address is internal.                                                                            |
 | `FRONTEND_URL`        | Public storage URL with a final `/files` removed; otherwise unset                               | Web app base URL for task, workflow and template links. Set explicitly if the file URL has another path; unset means no web app links in results.                                                                             |
@@ -131,11 +131,11 @@ The bundled nginx has one proxy location, `/mcp/`. It internally normalizes `/mc
 
 To disable it, remove `mcp` from `COMPOSE_PROFILES` and run `./start.sh`; the script removes a previously running connector container. With direct Compose commands, remove `mcp` from the enabled profiles and run `docker compose --profile mcp rm -sf mcp`. Disabling a profile alone does not stop an already running container.
 
-When upgrading an earlier connector configuration, replace `MCP_ENABLED=true` with `COMPOSE_PROFILES=mcp`. If you set `MCP_TOKEN_SECRET`, copy its value to `MCP_SECRET` before startup to preserve existing sessions; otherwise a new independent secret is generated. Standalone installations rename `PNEUMATIC_APP_URL` to `FRONTEND_URL`; the old `PNEUMATIC_FILES_INTERNAL_URL` is replaced by `PNEUMATIC_FILES_URL` for requests and `FILE_SERVICE_URL` for the public URL.
+When upgrading an earlier connector configuration, replace `MCP_ENABLED=true` with `COMPOSE_PROFILES=mcp`. If you set `MCP_TOKEN_SECRET`, copy its value to `MCP_SECRET` before startup to preserve existing sessions; otherwise a new independent secret is generated. Standalone installations use `BACKEND_PRIVATE_URL` for the backend address and rename `PNEUMATIC_APP_URL` to `FRONTEND_URL`; the old `PNEUMATIC_FILES_INTERNAL_URL` is replaced by `PNEUMATIC_FILES_URL` for requests and `FILE_SERVICE_URL` for the public URL.
 
 ### Standalone Docker
 
-Run from `mcp/`. Copy `.env.example` to `.env`, then set `PNEUMATIC_API_URL`, `PNEUMATIC_FILES_URL` and `FRONTEND_URL` to your installation's addresses. For Docker, set `HOST=0.0.0.0`, `PUBLIC_URL=https://mcp.example.com`, `TOKEN_SECRET` to a generated secret, and `OAUTH_REPLAY_FILE=/state/replay.json`. The API and storage request addresses must be reachable from the container. If the public storage URL is not reachable there, put it in `FILE_SERVICE_URL` and use `PNEUMATIC_FILES_URL` for the reachable storage address.
+Run from `mcp/`. Copy `.env.example` to `.env`, then set `BACKEND_PRIVATE_URL`, `PNEUMATIC_FILES_URL` and `FRONTEND_URL` to your installation's addresses. For Docker, set `HOST=0.0.0.0`, `PUBLIC_URL=https://mcp.example.com`, `TOKEN_SECRET` to a generated secret, and `OAUTH_REPLAY_FILE=/state/replay.json`. The API and storage request addresses must be reachable from the container. If the public storage URL is not reachable there, put it in `FILE_SERVICE_URL` and use `PNEUMATIC_FILES_URL` for the reachable storage address.
 
 ```bash
 docker build -t pneumatic-mcp:local .
@@ -204,7 +204,7 @@ Run **one HTTP process**. The replay ledger is file-based; upload links, caches 
 | Startup reports `Configuration error` | The named variable in the log, secret length, replay file existence and write permissions.                                      |
 | 403 through the proxy                 | Original `Host` is preserved and matches `PUBLIC_URL`; the origin is allowed.                                                   |
 | OAuth fails before consent            | All OAuth paths are forwarded and the callback hostname is in `OAUTH_ALLOWED_REDIRECT_HOSTS`.                                   |
-| Consent cannot validate the key       | `PNEUMATIC_API_URL` is reachable and the key belongs to that installation.                                                      |
+| Consent cannot validate the key       | `BACKEND_PRIVATE_URL` is reachable and the key belongs to that installation.                                                      |
 | File tools fail or reject a URL       | `PNEUMATIC_FILES_URL` matches the backend's `FILE_SERVICE_URL`; the internal storage address is reachable.                      |
 | 429 responses                         | Per-key limit, backend/storage limits, or consent IP limits; check `TRUST_PROXY` if different users share the same apparent IP. |
 

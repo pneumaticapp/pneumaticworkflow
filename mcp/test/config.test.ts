@@ -31,8 +31,8 @@ describe('HTTP configuration', () => {
     { PORT: '65536' },
     { RATE_LIMIT_PER_MINUTE: '-1' },
     { OAUTH_REPLAY_FILE: join(tmpdir(), 'missing-pneumatic-replay.json') },
-    { PNEUMATIC_API_URL: 'ftp://pneumatic.example.com' },
-    { PNEUMATIC_API_URL: 'not a url' },
+    { BACKEND_PRIVATE_URL: 'ftp://pneumatic.example.com' },
+    { BACKEND_PRIVATE_URL: 'not a url' },
     { PNEUMATIC_FILES_URL: 'ftp://files.example.com' },
     { PNEUMATIC_FILES_URL: 'https://files.example.com/files?x=1' },
     { FILE_SERVICE_URL: 'https://files.example.com/files?x=1' },
@@ -42,13 +42,26 @@ describe('HTTP configuration', () => {
   });
 });
 
+describe('backend address configuration', () => {
+  it.each(['stdio', 'http'])('uses the installation backend address in %s mode', (transport) => {
+    expect(
+      loadConfig([], {
+        ...httpEnv,
+        MCP_TRANSPORT: transport,
+        PNEUMATIC_API_KEY: 'pn-key',
+        BACKEND_PRIVATE_URL: ' https://api.internal:8443/// ',
+      }).pneumatic,
+    ).toMatchObject({ apiUrl: 'https://api.internal:8443', filesUrl: undefined });
+  });
+});
+
 describe('file storage configuration', () => {
   const stdioEnv = { PNEUMATIC_API_KEY: 'pn-key' };
 
   it('defaults to Pneumatic Cloud storage only for the Cloud API', () => {
     expect(loadConfig([], stdioEnv)).toMatchObject({ pneumatic: { filesUrl: 'https://my.pneumatic.app/files' } });
     expect(
-      loadConfig([], { ...stdioEnv, PNEUMATIC_API_URL: 'https://pneumatic.internal' }).pneumatic.filesUrl,
+      loadConfig([], { ...stdioEnv, BACKEND_PRIVATE_URL: 'https://pneumatic.internal' }).pneumatic.filesUrl,
     ).toBeUndefined();
   });
 
@@ -56,7 +69,7 @@ describe('file storage configuration', () => {
     expect(
       loadConfig([], {
         ...stdioEnv,
-        PNEUMATIC_API_URL: 'https://pneumatic.internal',
+        BACKEND_PRIVATE_URL: 'https://pneumatic.internal',
         PNEUMATIC_FILES_URL: 'https://app.internal/files/',
       }),
     ).toMatchObject({ pneumatic: { filesUrl: 'https://app.internal/files' } });
@@ -100,17 +113,17 @@ describe('web app links', () => {
     expect(
       loadConfig([], {
         PNEUMATIC_API_KEY: 'pn-key',
-        PNEUMATIC_API_URL: 'https://api.internal',
+        BACKEND_PRIVATE_URL: 'https://api.internal',
         FRONTEND_URL: 'https://app.internal/',
       }),
     ).toMatchObject({ pneumatic: { appUrl: 'https://app.internal' } });
     expect(
-      loadConfig([], { PNEUMATIC_API_KEY: 'pn-key', PNEUMATIC_API_URL: 'https://api.internal' }).pneumatic.appUrl,
+      loadConfig([], { PNEUMATIC_API_KEY: 'pn-key', BACKEND_PRIVATE_URL: 'https://api.internal' }).pneumatic.appUrl,
     ).toBeUndefined();
     expect(
       loadConfig([], {
         PNEUMATIC_API_KEY: 'pn-key',
-        PNEUMATIC_API_URL: 'https://api.internal',
+        BACKEND_PRIVATE_URL: 'https://api.internal',
         PNEUMATIC_FILES_URL: 'https://files.internal',
       }).pneumatic.appUrl,
     ).toBeUndefined();

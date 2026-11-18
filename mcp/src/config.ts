@@ -54,8 +54,8 @@ function parseBaseUrl(name: string, value: string): string {
 
 // Returned as given rather than as url.href: the client identity hashes it and the files URL default compares it.
 function readApiUrl(env: NodeJS.ProcessEnv): string {
-  const value = (env.PNEUMATIC_API_URL ?? DEFAULT_API_URL).trim();
-  parseBaseUrl('PNEUMATIC_API_URL', value);
+  const value = (env.BACKEND_PRIVATE_URL ?? DEFAULT_API_URL).trim();
+  parseBaseUrl('BACKEND_PRIVATE_URL', value);
   return value.replace(/\/+$/, '');
 }
 
