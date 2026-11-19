@@ -1,6 +1,6 @@
 import { commonRequest } from '../commonRequest';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
-import { IDashboardTask } from '../../types/redux';
+import type { IDashboardTask } from '../../types/dashboard';
 import { toTspDate } from '../../utils/dateTime';
 
 export type IWorkflowsByTasksRequestConfig = {

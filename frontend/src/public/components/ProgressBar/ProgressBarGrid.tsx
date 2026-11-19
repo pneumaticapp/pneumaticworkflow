@@ -1,6 +1,7 @@
-import React, { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
+import React from 'react';
 import { Tooltip } from '../UI';
-import { IWorkflowTaskClient } from '../../types/workflow';
+import type { IWorkflowTaskClient } from '../../types/workflow';
 import styles from './ProgressBar.css';
 
 export const ProgressBarGrid = ({ tasks }: { tasks: IWorkflowTaskClient[] }) => {

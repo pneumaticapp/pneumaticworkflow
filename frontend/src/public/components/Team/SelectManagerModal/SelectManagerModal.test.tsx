@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useSelector, useDispatch } from 'react-redux';
@@ -28,7 +28,6 @@ jest.mock('../../UI', () => ({
 
 jest.mock('../../UI/form/UsersDropdown/UsersDropdown', () => ({
   UsersDropdownComponent: jest.fn(() => <div data-testid="users-dropdown" />),
-  EOptionTypes: { User: 'User' },
 }));
 
 const makeUser = (overrides: any = {}) => ({

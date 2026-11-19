@@ -1,7 +1,7 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { mapRequestBody } from '../utils/mappers';
-import { TUserInvited } from '../types/user';
+import type { TUserInvited } from '../types/user';
 
 export interface IRegisterUserResponse {
   token: string;

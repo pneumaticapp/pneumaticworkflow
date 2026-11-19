@@ -3,7 +3,7 @@ import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
 import { getUsers } from '../../redux/selectors/user';
-import { IExtraField } from '../../types/template';
+import type { IExtraField } from '../../types/template';
 import { getUserFullName } from '../../utils/users';
 
 import styles from './KickoffOutputs.css';

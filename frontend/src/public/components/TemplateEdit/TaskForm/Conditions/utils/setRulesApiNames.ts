@@ -1,4 +1,5 @@
-import { EConditionLogicOperations, TConditionRule } from '..';
+import { EConditionLogicOperations } from '../../../../../types/templateTaskConditions';
+import type { TConditionRule } from '../../../../../types/templateTaskConditions';
 import { createConditionRuleApiName } from '../../../../../utils/createId';
 
 export const setRulesApiNamesAndIds = (rules: TConditionRule[]) => {

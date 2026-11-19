@@ -1,21 +1,9 @@
 import uniqBy from 'lodash.uniqby';
 
-import {
-  all,
-  fork,
-  put,
-  takeEvery,
-  select,
-  takeLatest,
-  call,
-  take,
-  actionChannel,
-  ActionChannelEffect,
-  ActionPattern,
-  delay,
-} from 'redux-saga/effects';
+import { all, fork, put, takeEvery, select, takeLatest, call, take, actionChannel, delay } from 'redux-saga/effects';
+import type { ActionChannelEffect, ActionPattern } from 'redux-saga/effects';
 
-import { PayloadAction } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 import {
   ETaskListActions,
   setTaskListStatus,
@@ -39,26 +27,28 @@ import {
 
 import { ERoutes } from '../../constants/routes';
 import { getAuthUser } from '../selectors/user';
-import { getTasksCount, IGetTasksCountResponse } from '../../api/getTasksCount';
+import { getTasksCount } from '../../api/getTasksCount';
+import type { IGetTasksCountResponse } from '../../api/getTasksCount';
 import { getUserTasks } from '../../api/getUserTasks';
 import { checkSomeRouteIsActive, history } from '../../utils/history';
-import { IStoreTasks } from '../../types/redux';
 import { logger } from '../../utils/logger';
 import { getTaskList, getTasksSearchText, getTasksSettings, getTasksSorting, getTasksStore } from '../selectors/tasks';
-import { loadCurrentTask } from '../task/actions';
-import { ETaskListCompletionStatus, ITaskListItem, ITemplateStep, TTaskListItemResponse } from '../../types/tasks';
+import { loadCurrentTask, setCurrentTask } from '../task/actions';
+import { ETaskListCompletionStatus } from '../../types/tasks';
+import type { ITaskListItem, TTaskListItemResponse } from '../../types/tasks';
+import type { ITemplateStep } from '../../types/template';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { mapTasksToISOStringToRedux } from '../../utils/mappers';
 import { getTemplateSteps } from '../../api/getTemplateSteps';
 import { checkShouldInsertNewTask } from './utils/checkShouldInsertNewTask';
 import { getTaskListWithNewTask } from './utils/getTaskListWithNewTask';
 import { handleLoadTemplateVariables } from '../templates/saga';
-import { ETaskListStatus } from '../../components/Tasks/types';
-import { setCurrentTask } from '../actions';
 import { getCurrentTask } from '../selectors/task';
 import { NotificationManager } from '../../components/UI/Notifications';
-import { getTemplatesTitlesByTasks, TGetTemplatesTitlesByTasksResponse } from '../../api/getTemplatesTitlesByTasks';
-import { TLoadFilterStepsPayload, TShiftTaskListPayload } from './types';
+import { getTemplatesTitlesByTasks } from '../../api/getTemplatesTitlesByTasks';
+import type { TGetTemplatesTitlesByTasksResponse } from '../../api/getTemplatesTitlesByTasks';
+import { ETaskListStatus } from './types';
+import type { IStoreTasks, TLoadFilterStepsPayload, TShiftTaskListPayload } from './types';
 
 export function* setDetailedTask(taskId: number) {
   yield put(setTaskListDetailedTaskId(taskId));

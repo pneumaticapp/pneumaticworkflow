@@ -1,5 +1,5 @@
-import { TCloneTemplatePayload, TDeleteTemplatePayload } from '../../../redux/actions';
-import { ITemplateListItem } from '../../../types/template';
+import type { TCloneTemplatePayload, TDeleteTemplatePayload } from '../../../redux/actions';
+import type { ITemplateListItem } from '../../../types/template';
 
 export interface ITemplateCardProps extends ITemplateListItem {
   canEdit: boolean | undefined;

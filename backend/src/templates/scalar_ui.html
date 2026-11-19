@@ -10,9 +10,16 @@
         margin: 0;
         padding: 0;
       }
+      #schema-warning {
+        padding: 12px 20px;
+        font: 14px system-ui, sans-serif;
+        color: #713f12;
+        background: #fef3c7;
+      }
     </style>
   </head>
   <body>
+    <div id="schema-warning" role="status" hidden></div>
     <script>
       // Core API and Files API are separate services with a schema each;
       // the page merges both schemas into one document.
@@ -67,9 +74,60 @@
         });
       }
 
+      function normalizeSchema(schema) {
+        if (!schema || typeof schema !== 'object') return schema;
+        if (Array.isArray(schema.examples)) {
+          if (!('example' in schema) && schema.examples.length) {
+            schema.example = schema.examples[0];
+          }
+          delete schema.examples;
+        }
+        Object.keys(schema.properties || {}).forEach((name) => {
+          schema.properties[name] = normalizeSchema(schema.properties[name]);
+        });
+        ['items', 'additionalProperties', 'not'].forEach((key) => {
+          if (schema[key] && typeof schema[key] === 'object') {
+            schema[key] = normalizeSchema(schema[key]);
+          }
+        });
+        ['allOf', 'anyOf', 'oneOf'].forEach((key) => {
+          if (Array.isArray(schema[key])) schema[key] = schema[key].map(normalizeSchema);
+        });
+        if (Array.isArray(schema.anyOf)) {
+          const values = schema.anyOf.filter((item) => item.type !== 'null');
+          if (values.length !== schema.anyOf.length) {
+            delete schema.anyOf;
+            if (values.length === 1) {
+              return values[0].$ref
+                ? { ...schema, anyOf: [...values, { type: 'object', nullable: true, enum: [null] }] }
+                : { ...values[0], ...schema, nullable: true };
+            }
+            schema.anyOf = [...values, { type: 'object', nullable: true, enum: [null] }];
+          }
+        }
+        return schema;
+      }
+
+      function normalizeSchemaLocations(node) {
+        if (Array.isArray(node)) return node.forEach(normalizeSchemaLocations);
+        if (!node || typeof node !== 'object') return;
+        Object.entries(node).forEach(([key, value]) => {
+          if (key === 'schema') node[key] = normalizeSchema(value);
+          else if (!['example', 'examples', 'value'].includes(key)) normalizeSchemaLocations(value);
+        });
+      }
+
       function mergeSchemas(core, files) {
         const coreComponents = core.components;
         const filesSchemas = files.components.schemas;
+
+        // FastAPI emits 3.1; the combined Core reference uses OpenAPI 3.0.
+        if (core.openapi.startsWith('3.0') && files.openapi.startsWith('3.1')) {
+          Object.keys(filesSchemas).forEach((name) => {
+            filesSchemas[name] = normalizeSchema(filesSchemas[name]);
+          });
+          normalizeSchemaLocations(files.paths);
+        }
 
         // Both services define ValidationError, with different shapes.
         const renames = {};
@@ -116,6 +174,9 @@
         if (files.status === 'rejected') {
           // Core API stays documented while the file service is down.
           console.warn('Files API schema is unavailable:', files.reason);
+          const warning = document.getElementById('schema-warning');
+          warning.textContent = 'Files API documentation is temporarily unavailable. Core API documentation is shown below.';
+          warning.hidden = false;
           return core.value;
         }
         return mergeSchemas(core.value, files.value);

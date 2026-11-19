@@ -1,6 +1,6 @@
-import * as React from 'react';
+import React from 'react';
 
-import { ITemplateListItem } from '../../types/template';
+import type { ITemplateListItem } from '../../types/template';
 import { RichText } from '../RichText';
 import { SideModalCard } from '../UI/SideModalCard';
 

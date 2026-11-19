@@ -1,4 +1,4 @@
-import { EIntegrations } from '../../../types/integrations';
+import type { EIntegrations } from '../../../types/integrations';
 import { isArrayWithItems } from '../../../utils/helpers';
 
 export function checkShowDraftTemplateWarning(

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { useSelector } from 'react-redux';
 
@@ -23,7 +23,6 @@ jest.mock('react-intl', () => ({
 
 jest.mock('../../../../UI/form/UsersDropdown', () => ({
   UsersDropdown: jest.fn(() => null),
-  EOptionTypes: { User: 'user', Group: 'group' },
   getUsersDropdownOptionValue: (optionType: string, id: number | string) => `${optionType}-${id}`,
 }));
 

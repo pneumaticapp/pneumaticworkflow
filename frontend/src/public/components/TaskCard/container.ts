@@ -1,9 +1,9 @@
 import { connect } from 'react-redux';
-import { ITaskCardWrapperProps, TaskCardWrapper } from './TaskCard';
+import { TaskCardWrapper } from './TaskCard';
+import type { ITaskCardWrapperProps } from './TaskCard';
 import {
   setTaskCompleted,
   setTaskReverted,
-  ETaskStatus,
   setCurrentTask,
   addTaskPerformer,
   removeTaskPerformer,
@@ -15,8 +15,9 @@ import {
   sendTaskWorkflowLogComments,
   toggleTaskSkippedTasksVisibility,
 } from '../../redux/actions';
-import { openWorkflowLogPopup, clearWorkflow, setWorkflowFinished } from '../../redux/workflows/slice';
-import { IApplicationState } from '../../types/redux';
+import { ETaskCardState } from '../../redux/task/types';
+import { openWorkflowLogPopup, clearWorkflow } from '../../redux/workflows/slice';
+import type { RootState } from '../../redux/store';
 import { getNotDeletedUsers } from '../../utils/users';
 
 type TStoreProps = Pick<
@@ -27,7 +28,6 @@ type TDispatchProps = Pick<
   ITaskCardWrapperProps,
   | 'setTaskCompleted'
   | 'setTaskReverted'
-  | 'setWorkflowFinished'
   | 'changeTaskWorkflowLogViewSettings'
   | 'sendTaskWorkflowLogComments'
   | 'toggleTaskSkippedTasksVisibility'
@@ -46,8 +46,8 @@ export function mapStateToProps({
   authUser,
   task: { data: task, status, workflowLog, workflow, isWorkflowLoading },
   accounts: { users },
-}: IApplicationState): TStoreProps {
-  const taskStatus = task?.isCompleted ? ETaskStatus.Completed : status;
+}: RootState): TStoreProps {
+  const taskStatus = task?.isCompleted ? ETaskCardState.Completed : status;
 
   return {
     accountId: authUser.account.id || -1,
@@ -64,7 +64,6 @@ export function mapStateToProps({
 export const mapDispatchToProps: TDispatchProps = {
   setTaskCompleted,
   setTaskReverted,
-  setWorkflowFinished,
   changeTaskWorkflowLogViewSettings,
   sendTaskWorkflowLogComments,
   toggleTaskSkippedTasksVisibility,

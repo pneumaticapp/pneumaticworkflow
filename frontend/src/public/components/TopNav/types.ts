@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
 
-import { EPaywallReminderType } from './utils/getPaywallType';
-import { EPlanActions } from '../../utils/getPlanPendingActions';
-import { ESubscriptionPlan } from '../../types/account';
-import { IAccount, TAccountLeaseLevel } from '../../types/user';
-import { EWorkflowsView } from '../../types/workflow';
+import type { EPaywallReminderType } from './utils/getPaywallType';
+import type { EPlanActions } from '../../utils/getPlanPendingActions';
+import type { ESubscriptionPlan } from '../../types/account';
+import type { IAccount, TAccountLeaseLevel } from '../../types/user';
+import type { EWorkflowsView } from '../../types/workflow';
 
 export interface ITopNavProps {
   leftContent?: ReactNode;

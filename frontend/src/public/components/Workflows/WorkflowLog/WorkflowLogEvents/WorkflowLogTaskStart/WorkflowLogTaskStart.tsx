@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 import { useSelector } from 'react-redux';
 import { getLanguage } from '../../../../../redux/selectors/user';
 import classnames from 'classnames';
@@ -13,21 +13,12 @@ import { ERoutes } from '../../../../../constants/routes';
 import { getLastTaskLogEventId } from './utils/getLastTaskLogEventId';
 import { ClockIcon } from '../../../../icons';
 import { getDueInData } from '../../../../DueIn/utils/getDueInData';
-import { EWorkflowsLogSorting, IWorkflowLogItem } from '../../../../../types/workflow';
-import { TWorkflowLogTheme } from '../../WorkflowLog';
+import type { IWorkflowLogTaskStartProps, TWorkflowLogTheme } from '../../types';
 
 import styles from './WorkflowLogTaskStart.css';
 import UserDataWithGroup from '../../../../UserDataWithGroup';
 
 const MAX_SHOW_USERS = 5;
-
-export interface IWorkflowLogTaskStartProps extends Pick<IWorkflowLogItem, 'task' | 'created' | 'id'> {
-  logItems: IWorkflowLogItem[];
-  sorting: EWorkflowsLogSorting;
-  areTasksClickable?: boolean;
-  theme: TWorkflowLogTheme;
-  onClickTask?(): void;
-}
 
 export function WorkflowLogTaskStart({
   id,

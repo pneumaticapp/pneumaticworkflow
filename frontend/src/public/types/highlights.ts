@@ -1,7 +1,7 @@
-import { EWorkflowLogEvent, EWorkflowStatus, IWorkflowDelay, IWorkflowDetailsKickoff } from './workflow';
-import { TUserId } from './user';
-import { IExtraField, ITemplateTitle } from './template';
-import { IFieldsetRuntime } from './fieldset';
+import type { EWorkflowLogEvent, EWorkflowStatus, IWorkflowDelay, IWorkflowDetailsKickoff } from './workflow';
+import type { TUserId } from './user';
+import type { IExtraField, ITemplateTitle } from './template';
+import type { IFieldsetRuntime } from './fieldset';
 
 export interface IHighlightsItem {
   id: number;

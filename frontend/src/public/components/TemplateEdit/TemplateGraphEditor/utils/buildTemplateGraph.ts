@@ -1,5 +1,5 @@
-import { ITemplateClient } from '../../../../types/template';
-import { IGraphState, TGraphNodePositions } from '../types';
+import type { ITemplateClient } from '../../../../types/template';
+import type { IGraphState, TGraphNodePositions } from '../types';
 import { applyDagreLayout } from './applyDagreLayout';
 import { applyStoredPositions } from './applyStoredPositions';
 import { routeGraph } from './routeGraph';

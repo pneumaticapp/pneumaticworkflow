@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from src.generics.fields import TimeStampField
@@ -71,6 +72,7 @@ class ActivityWorkflowSerializer(serializers.ModelSerializer):
     template = TaskActivityTemplateSerializer()
     kickoff = serializers.SerializerMethodField()
 
+    @extend_schema_field(ActivityKickoffValueSerializer(allow_null=True))
     def get_kickoff(self, instance):
         kickoff = instance.kickoff_instance
         return (

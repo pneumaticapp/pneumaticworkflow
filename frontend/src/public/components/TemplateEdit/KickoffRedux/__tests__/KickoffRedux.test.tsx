@@ -1,13 +1,13 @@
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
 import { makeFieldsetBindingClient, makeFieldsetField } from '../../../../__stubs__/fieldsets.factory';
-import { IExtraField, ITemplateKickoffClient, ITemplateClient } from '../../../../types/template';
-import { IFieldsetCatalogItem } from '../../../../types/fieldset';
-import { ETemplateStatus } from '../../../../types/redux';
+import type { IExtraField, ITemplateKickoffClient, ITemplateClient } from '../../../../types/template';
+import type { IFieldsetCatalogItem } from '../../../../types/fieldset';
+import { ETemplateStatus } from '../../../../redux/template/types';
 
 jest.mock('../../../../redux/selectors/fieldsets', () => ({
   getFieldsetsCatalogIsLoading: jest.fn(() => false),

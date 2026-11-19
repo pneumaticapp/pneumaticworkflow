@@ -1,6 +1,7 @@
 /* prettier-ignore */
 import { connect } from 'react-redux';
-import { IVideoPlayerProps, VideoPlayer } from './VideoPlayer';
+import type { IVideoPlayerProps } from './VideoPlayer';
+import { VideoPlayer } from './VideoPlayer';
 import { DEFAULT_VIDEO_PLAYER_CONFIG } from '../../constants/defaultValues';
 
 export function mapStateToProps(): IVideoPlayerProps {

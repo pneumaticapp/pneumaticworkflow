@@ -1,4 +1,4 @@
-import { EGraphViewMode } from '../../../components/TemplateEdit/TemplateGraphEditor/types';
+import { EGraphViewMode } from '../../../types/template';
 import { getGraphViewMode } from '../../../components/TemplateEdit/TemplateGraphEditor/utils/graphViewModeStorage';
 import reducer, { resetGraphView, setSelectedTask, setViewMode } from '../slice';
 

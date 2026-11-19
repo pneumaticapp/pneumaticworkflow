@@ -1,9 +1,9 @@
-import * as React from 'react';
+import React from 'react';
 import * as ReactDOM from 'react-dom';
 import { useIntl } from 'react-intl';
 
 import { ModalCloseIcon } from '../../../../icons';
-import { IGraphTaskEditorPanelProps } from '../../types';
+import type { IGraphTaskEditorPanelProps } from '../../types';
 
 import styles from './GraphTaskEditorPanel.css';
 

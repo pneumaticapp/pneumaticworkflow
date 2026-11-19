@@ -1,7 +1,7 @@
-import { ComponentType } from 'react';
+import type { ComponentType } from 'react';
 import { connect } from 'react-redux';
 
-import { IApplicationState } from '../../types/redux';
+import type { RootState } from '../../redux/store';
 import {
   changeWorkflowsSorting,
   loadFilterTemplates as loadWorkflowsFilterTemplates,
@@ -20,7 +20,7 @@ import {
 } from '../../redux/workflows/slice';
 import { getActiveUsers } from '../../utils/users';
 import { getIsUserSubsribed } from '../../redux/selectors/user';
-import { IWorkflowsFiltersProps } from './types';
+import type { IWorkflowsFiltersProps } from './types';
 import { getRegularGroupsList } from '../../redux/selectors/groups';
 
 export type TWorkflowsFiltersStoreProps = Pick<
@@ -63,7 +63,7 @@ type TDispatchProps = Pick<
   | 'clearFilters'
 >;
 
-export function mapStateToProps(state: IApplicationState): TWorkflowsFiltersStoreProps {
+export function mapStateToProps(state: RootState): TWorkflowsFiltersStoreProps {
   const {
     workflows: {
       workflowsSettings: {

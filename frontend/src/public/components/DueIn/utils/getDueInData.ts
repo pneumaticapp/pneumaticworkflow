@@ -1,5 +1,5 @@
 import { getTimeDiff, isExpired } from '../../../utils/dateTime';
-import { ELocale } from '../../../types/redux';
+import { ELocale } from '../../../types/locale';
 
 export interface IDueInData {
   timeLeft: string;

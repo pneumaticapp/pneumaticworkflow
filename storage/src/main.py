@@ -3,6 +3,7 @@
 import contextlib
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from copy import deepcopy
 from typing import Any
 
 from fastapi import FastAPI
@@ -12,6 +13,11 @@ from fastapi.openapi.utils import get_openapi
 from src.infra.adapters import StorageServiceHolder
 from src.infra.http_client import close_shared_client, get_shared_client
 from src.presentation.api import files_router
+from src.presentation.openapi import (
+    BINARY_CONTENT,
+    FILES_SECURITY,
+    FILES_SECURITY_SCHEMES,
+)
 from src.shared_kernel.auth import close_redis_client
 from src.shared_kernel.config import get_settings
 from src.shared_kernel.events import close_event_emitter
@@ -31,28 +37,44 @@ init_sentry()
 # ── Constants ────────────────────────────────────────────────
 
 API_DESCRIPTION = """\
-The Pneumatic Files API provides high-performance file storage \
-and streaming capabilities (powered by SeaweedFS / GCS).
+Upload files and download their bytes through the configured storage backend.
 
 ### Authentication
-Every request requires a `Bearer` token. You can find your \
-personal API key inside the app:
-1. Go to **Integrations** in the left menu.
-2. Copy your key from the **Your API Key** section.
+Both file operations require one valid credential:
+- `Authorization: Bearer <API key or session token>`;
+- `X-Guest-Authorization: <guest JWT>`;
+- `X-Public-Authorization: Token <public or embed template token>`;
+- a browser cookie: `file_service_auth` or `token` (user token),
+  `guest-token` (guest JWT), or `public-token` (`Token <public/embed token>`).
 
-Pass the key in the `Authorization` header:
-```http
-Authorization: Bearer <your_api_key>
-```
+Headers are checked before cookies, in the order above. Authentication does
+not grant access to every file: ownership and Core backend permissions apply.
+The OpenAPI document itself is available without a credential.
 
 ### Key Capabilities
-- **Direct Uploads:** Upload attachments for workflows, tasks, \
-and system templates.
-- **Resumable & Chunked Uploads:** Stream large attachments efficiently.
-- **Secure File Serving:** Range requests, content disposition, \
-and instant streaming.
-- **Permission Validation:** Automatic permission verification \
-against Pneumatic Core Backend.\
+- **Upload:** Send one multipart `file`; ownership comes from authentication.
+  Store the returned `file_id`/URL in the relevant Core workflow/task field.
+- **Download:** Return a complete binary stream (200), or a single byte range
+  (206), after storage accepts the request. `Range` is forwarded unchanged:
+  storage rejection, including `InvalidRange`, becomes API error 503 with
+  code `STORAGE_003` and no `Content-Range`. Only when storage accepts the
+  stream can the local planner return 416 with `Content-Range` for a range
+  unsatisfiable against file metadata. Malformed headers may also be rejected
+  by storage; falling back to a full download is not guaranteed.
+- **Errors:** Application errors use `code`, `message`, and optional
+  `details.reason`. Rate limiting instead returns `detail` and `retry_after`,
+  with a `Retry-After` header. Streaming failures after headers are sent may
+  terminate the transfer instead of returning a new JSON response.
+- **Browser navigation:** GET with `Accept: text/html` may redirect (302)
+  to sign-in or the frontend error page. Use `Accept: application/json` when
+  integrating to receive JSON errors.
+
+### Deployment limits
+The maximum upload size is `MAX_FILE_SIZE` bytes. When rate limiting is
+enabled, each client IP has separate sliding-window limits:
+`RATE_LIMIT_UPLOAD_REQUESTS` per `RATE_LIMIT_UPLOAD_WINDOW` seconds and
+`RATE_LIMIT_DOWNLOAD_REQUESTS` per `RATE_LIMIT_DOWNLOAD_WINDOW` seconds.
+These values are configured by the deployment, not a universal API quota.
 """
 
 
@@ -113,17 +135,24 @@ def _custom_openapi_schema(application: FastAPI) -> dict[str, Any]:
         for path, item in schema.get('paths', {}).items()
     }
 
-    schema.setdefault('components', {})['securitySchemes'] = {
-        'tokenAuth': {
-            'type': 'http',
-            'scheme': 'bearer',
-            'bearerFormat': 'Token',
-            'description': (
-                'User API key or token (Authorization: Bearer <token>)'
-            ),
-        },
-    }
-    schema['security'] = [{'tokenAuth': []}]
+    # Describe the existing stream without changing the route response class.
+    responses = (
+        schema['paths']
+        .get('/files/{file_id}', {})
+        .get(
+            'get',
+            {},
+        )
+        .get('responses', {})
+    )
+    for status_code in ('200', '206'):
+        if status_code in responses:
+            responses[status_code]['content'] = deepcopy(BINARY_CONTENT)
+
+    schema.setdefault('components', {})['securitySchemes'] = (
+        FILES_SECURITY_SCHEMES
+    )
+    schema['security'] = FILES_SECURITY
 
     application.openapi_schema = schema
     return schema

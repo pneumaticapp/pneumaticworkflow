@@ -1,12 +1,7 @@
 export { SetEditorRefPlugin } from './SetEditorRefPlugin';
 export { SubmitOnKeyPlugin } from './SubmitOnKeyPlugin';
-export {
-  InsertAttachmentPlugin,
-  INSERT_ATTACHMENT_COMMAND,
-  type TInsertAttachmentPayload,
-} from './InsertAttachmentPlugin';
+export { InsertAttachmentPlugin, INSERT_ATTACHMENT_COMMAND } from './InsertAttachmentPlugin';
 export { PasteAttachmentPlugin } from './PasteAttachmentPlugin/PasteAttachmentPlugin';
-export type { IPasteAttachmentPluginProps } from './PasteAttachmentPlugin/PasteAttachmentPlugin';
 export { LinkPluginProvider, useLinkPlugin } from './LinkPlugin/index';
 export { LinkTooltipPlugin } from './LinkTooltipPlugin';
 export { VariableTooltipPlugin } from './VariableTooltipPlugin';

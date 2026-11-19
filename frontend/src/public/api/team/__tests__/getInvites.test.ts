@@ -1,7 +1,7 @@
 import { commonRequest } from '../../commonRequest';
 import { getInvites } from '../getInvites';
 import { makeUserInvite } from '../../../__stubs__/team.factory';
-import type { UserInvite } from '../../../redux/team/types';
+import type { IUserInvite } from '../../../types/team';
 
 jest.mock('../../../utils/getConfig', () => {
   const commonConfig = require('../../../../../config/common.json');
@@ -29,7 +29,7 @@ describe('getInvites API client', () => {
   });
 
   it('calls commonRequest with getInvites URL, shouldThrow: true, and returns the invites list', async () => {
-    const mockResponse: UserInvite[] = [makeUserInvite()];
+    const mockResponse: IUserInvite[] = [makeUserInvite()];
     mockCommonRequest.mockResolvedValueOnce(mockResponse);
 
     const result = await getInvites();

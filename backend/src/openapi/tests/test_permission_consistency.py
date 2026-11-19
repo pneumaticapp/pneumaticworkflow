@@ -1,6 +1,7 @@
 """Verify documented Access blocks match actual permissions."""
 
 import re
+from types import SimpleNamespace
 from typing import Any, Dict, Iterable, Optional, Set, Tuple
 
 import pytest
@@ -14,20 +15,6 @@ from src.openapi.entities import PermissionDoc
 pytestmark = pytest.mark.django_db
 
 Endpoint = Tuple[str, str, str, Any]
-
-# Pre-existing doc/code mismatches to fix separately.
-# Format: (operationId,)
-_KNOWN_MISMATCHES = frozenset({
-    # Docs claim UserIsAuthenticated + gates,
-    # but code uses broader IsAuthenticated.
-    'accounts_account_retrieve',
-    'accounts_account_update',
-    # Docs use ACCESS_HIGHLIGHTS instead of
-    # ACCESS_DASHBOARD (copy-paste error).
-    'reports_dashboard_workflows_breakdown_list',
-    'reports_dashboard_workflows_by_tasks_list',
-    'reports_dashboard_workflows_overview_retrieve',
-})
 
 _DOCS_PREFIXES = (
     '/api/schema',
@@ -105,20 +92,17 @@ def _iter_permission_classes(
         return ()
 
     actions = getattr(callback, 'actions', None)
-    if (
-        actions is not None
-        and hasattr(view_cls, 'get_permissions')
-    ):
-        action_name = actions.get(method.lower())
-        if action_name is not None:
-            view = view_cls()
-            view.action = action_name
-            view.args = ()
-            view.kwargs = {}
-            try:
-                return tuple(view.get_permissions())
-            except AttributeError:
-                pass
+    if hasattr(view_cls, 'get_permissions'):
+        view = view_cls()
+        if actions is not None:
+            view.action = actions.get(method.lower())
+        view.request = SimpleNamespace(method=method.upper())
+        view.args = ()
+        view.kwargs = {}
+        try:
+            return tuple(view.get_permissions())
+        except AttributeError:
+            pass
 
     return getattr(
         view_cls, 'permission_classes', (),
@@ -135,7 +119,8 @@ def _actual_permission_keys(
         cls = perm if isinstance(perm, type) else type(perm)
         name = cls.__name__
         if hasattr(PermissionDoc, name):
-            keys.add(name)
+            # Permissions with identical documented meaning share a key.
+            keys.add(_TEXT_TO_KEY[getattr(PermissionDoc, name)])
     return keys
 
 
@@ -160,7 +145,9 @@ def test_access_blocks__vs_get_perms__match():
     endpoints = enumerator.get_api_endpoints()
     ep_map: Dict[Tuple[str, str], Any] = {}
     for path, _regex, method, callback in endpoints:
-        ep_map[(path, method.lower())] = callback
+        view = generator.create_view(callback, method)
+        normalized = generator.coerce_path(path, method, view)
+        ep_map[(normalized, method.lower())] = callback
 
     # act
     mismatches = []
@@ -188,9 +175,6 @@ def test_access_blocks__vs_get_perms__match():
             op_id = operation.get(
                 'operationId', '',
             )
-            if op_id in _KNOWN_MISMATCHES:
-                continue
-
             if doc_keys != actual_keys:
                 only_doc = doc_keys - actual_keys
                 only_actual = actual_keys - doc_keys

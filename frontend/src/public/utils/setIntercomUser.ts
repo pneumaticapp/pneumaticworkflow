@@ -3,7 +3,7 @@
 /* eslint-disable no-var */
 // @ts-nocheck
 
-import { TAuthUserResult } from '../redux/actions';
+import type { TAuthUserResult } from '../types/user';
 import { getBrowserConfig } from './getConfig';
 import { getUserFullName } from './users';
 

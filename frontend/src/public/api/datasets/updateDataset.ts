@@ -1,5 +1,5 @@
 import { commonRequest } from '../commonRequest';
-import { IDataset, IUpdateDatasetParams } from '../../types/dataset';
+import type { IDataset, IUpdateDatasetParams } from '../../types/dataset';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { mapRequestBody } from '../../utils/mappers';
 

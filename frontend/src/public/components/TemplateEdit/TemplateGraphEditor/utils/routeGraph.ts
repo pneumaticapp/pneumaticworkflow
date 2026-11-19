@@ -1,5 +1,5 @@
-import { Node } from 'reactflow';
-import { IGraphState, TGraphEdge, TGraphNode } from '../types';
+import type { Node } from 'reactflow';
+import type { IGraphState, TGraphEdge, TGraphNode } from '../types';
 import { alignJunctionNodes } from './alignJunctionNodes';
 import { applyConnectedHandles } from './applyConnectedHandles';
 import { applyEdgeAnchors } from './applyEdgeAnchors';

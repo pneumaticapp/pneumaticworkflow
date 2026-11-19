@@ -1,7 +1,7 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { ETemplatesSorting } from '../types/workflow';
-import { ITemplateListItem } from '../types/template';
+import type { ITemplateListItem } from '../types/template';
 
 export interface IGetTemplatesResponsePaginated {
   count: number;

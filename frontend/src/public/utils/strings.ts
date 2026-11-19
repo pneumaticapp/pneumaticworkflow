@@ -4,7 +4,7 @@ import 'moment/locale/ru';
 
 import { PNEUMATIC_SUFFIX } from '../constants/titles';
 import { getPairedArrayItems } from './helpers';
-import { ELocale } from '../types/redux';
+import { ELocale } from '../types/locale';
 
 export const sanitizeText = (textContent?: string | null) => (textContent && textContent.replace(/\u00A0/g, ' ')) || '';
 

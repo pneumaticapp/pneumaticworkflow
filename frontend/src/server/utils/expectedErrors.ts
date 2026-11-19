@@ -1,5 +1,5 @@
 import { logger } from '../../public/utils/logger';
-import { TLoggerArgs } from './types';
+import type { TLoggerArgs } from './types';
 
 /**
  * Known non-critical error patterns from backend API responses.

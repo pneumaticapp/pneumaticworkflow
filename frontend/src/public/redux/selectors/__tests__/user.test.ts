@@ -1,4 +1,6 @@
-import { ELoggedState, IApplicationState, IAuthUser } from '../../../types/redux';
+import { ELoggedState } from '../../auth/types';
+import type { IAuthUser } from '../../auth/types';
+import type { RootState } from '../../store';
 import { ESubscriptionPlan } from '../../../types/account';
 import { EUserStatus } from '../../../types/user';
 import {
@@ -55,10 +57,10 @@ const createMockAuthUser = (overrides: Partial<IAuthUser> = {}): IAuthUser => ({
   ...overrides,
 });
 
-const createMockState = (authUserOverrides: Partial<IAuthUser> = {}): IApplicationState =>
+const createMockState = (authUserOverrides: Partial<IAuthUser> = {}): RootState =>
   ({
     authUser: createMockAuthUser(authUserOverrides),
-  }) as IApplicationState;
+  }) as RootState;
 
 describe('user selectors', () => {
   describe('getIsAdmin', () => {

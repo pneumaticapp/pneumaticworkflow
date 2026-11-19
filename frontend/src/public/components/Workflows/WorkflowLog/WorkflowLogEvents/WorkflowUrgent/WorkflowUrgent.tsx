@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 
 import { Avatar } from '../../../../UI/Avatar';
@@ -6,7 +6,7 @@ import { UrgentColorIcon, NotUrgentIcon } from '../../../../icons';
 import { DateFormat } from '../../../../UI/DateFormat';
 import { getUserFullName } from '../../../../../utils/users';
 import { UserData } from '../../../../UserData';
-import { IWorkflowLogItem } from '../../../../../types/workflow';
+import type { IWorkflowLogItem } from '../../../../../types/workflow';
 
 import styles from './WorkflowUrgent.css';
 

@@ -1,5 +1,5 @@
-import { IExtraField } from '../../../types/template';
-import { IFieldsetRuntime } from '../../../types/fieldset';
+import type { IExtraField } from '../../../types/template';
+import type { IFieldsetRuntime } from '../../../types/fieldset';
 
 type TStorageEntry<T, TMetadata> = {
   taskId: number;

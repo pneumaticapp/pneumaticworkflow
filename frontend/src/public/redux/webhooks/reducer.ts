@@ -1,9 +1,10 @@
 import { produce } from 'immer';
-import { TWebhooksActions, EWebhooksActions } from './actions';
+import { EWebhooksActions } from './actions';
+import type { TWebhooksActions } from './actions';
 import { EWebhooksSubscriberStatus, EWebhooksTypeEvent } from '../../types/webhooks';
-import { IWebhookStore } from '../../types/redux';
+import type { TWebhookStore } from './types';
 
-const initialWebhooks: IWebhookStore = {
+const initialWebhooks: TWebhookStore = {
   [EWebhooksTypeEvent.workflowStarted]: {
     status: EWebhooksSubscriberStatus.Unknown,
     url: null,
@@ -22,7 +23,7 @@ const initialWebhooks: IWebhookStore = {
   },
 };
 
-export const reducer = (state = initialWebhooks, action: TWebhooksActions): IWebhookStore => {
+export const reducer = (state = initialWebhooks, action: TWebhooksActions): TWebhookStore => {
   switch (action.type) {
     case EWebhooksActions.SetWebhooksUrl:
       return produce(state, (draftState) => {

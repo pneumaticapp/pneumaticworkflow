@@ -1,13 +1,13 @@
 import { all, fork, put, select, takeEvery } from 'redux-saga/effects';
-import { PayloadAction } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 
 import { getUserObjectPermissions } from '../../api/getUserObjectPermissions';
-import { IObjectPermissionResponseItem } from '../../types/permissions';
+import type { IObjectPermissionResponseItem } from '../../types/permissions';
 import { logger } from '../../utils/logger';
 import { getPermissionsUserId } from '../selectors/permissions';
 
 import { loadObjectPermissions, setObjectPermissions } from './slice';
-import { ILoadObjectPermissionsPayload } from './types';
+import type { ILoadObjectPermissionsPayload } from './types';
 
 export function* fetchObjectPermissions({
   payload: { objType, objIds },

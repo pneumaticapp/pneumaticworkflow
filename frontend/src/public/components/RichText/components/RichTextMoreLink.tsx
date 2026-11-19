@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 
 import { ELLIPSIS_CHAR } from '../../../constants/defaultValues';

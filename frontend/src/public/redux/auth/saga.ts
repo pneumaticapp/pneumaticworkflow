@@ -14,7 +14,16 @@ import {
   sendForgotPasswordSuccess,
   sendResetPasswordFail,
   sendResetPasswordSuccess,
-  TAuthUserResult,
+  sendChangePasswordSuccess,
+  sendChangePasswordFail,
+  redirectToLogin,
+  setUserToken,
+  setUserPhoto,
+  logoutUserSuccess,
+  makeStripePayment,
+  vacationSuccess,
+} from './actions';
+import type {
   TEditAccount,
   TEditUser,
   TLoginUser,
@@ -23,24 +32,14 @@ import {
   TSendChangePassword,
   TSendForgotPassword,
   TSendResetPassword,
-  sendChangePasswordSuccess,
-  sendChangePasswordFail,
-  EAuthUserFailType,
-  redirectToLogin,
   TSetRedirectUrl,
   TSetUserToken,
-  setUserToken,
   TLoginSuperuser,
-  IUserRegister,
   TUploadUserPhoto,
-  setUserPhoto,
-  logoutUserSuccess,
   TLoginPartnerSuperuser,
   TLogoutUser,
   TMakeStripePayment,
-  makeStripePayment,
   TVacationActivate,
-  vacationSuccess,
 } from './actions';
 
 import { resendVerification } from '../../api/resendVerification';
@@ -48,49 +47,60 @@ import { ERoutes } from '../../constants/routes';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { setJwtCookie, removeAuthCookies } from '../../utils/authCookie';
 import { setOAuthRegistrationCompleted } from '../../api/setOAuthRegistrationCompleted';
-import { TUserInvited, IUserResponse } from '../../types/user';
+import type { TUserInvited, IUserResponse, IUserRegister, IUserUtm, TAuthUserResult } from '../../types/user';
 import { getAuthUser, getInvitedUser } from '../selectors/user';
 import { getOAuthId, getOAuthType } from '../../utils/auth';
-import { editProfile, IUpdateUserRequest, IUpdateUserResponse, TUpdateUserMappedResponse } from '../../api/editProfile';
+import { editProfile } from '../../api/editProfile';
+import type { IUpdateUserRequest, IUpdateUserResponse, TUpdateUserMappedResponse } from '../../api/editProfile';
 import { logger } from '../../utils/logger';
 import { mapToCamelCase } from '../../utils/mappers';
 import { resetPassword } from '../../api/resetPassword';
-import { ICustomError, getErrorMessage } from '../../utils/getErrorMessage';
-import { IResetPasswordSetResponse, resetPasswordSet } from '../../api/resetPasswordSet';
-import { editAccount, IUpdateAccountResponse } from '../../api/editAccount';
-import { changePassword, IChangePasswordResponse } from '../../api/changePassword';
-import { analytics } from '../../utils/analytics';
+import { getErrorMessage } from '../../utils/getErrorMessage';
+import type { ICustomError } from '../../utils/getErrorMessage';
+import { resetPasswordSet } from '../../api/resetPasswordSet';
+import type { IResetPasswordSetResponse } from '../../api/resetPasswordSet';
+import { editAccount } from '../../api/editAccount';
+import type { IUpdateAccountResponse } from '../../api/editAccount';
+import { changePassword } from '../../api/changePassword';
+import type { IChangePasswordResponse } from '../../api/changePassword';
+import { analytics, setAnalyticsSupermode } from '../../utils/analytics';
 import { sendSignOut } from '../../api/sendSignOut';
 import { REDIRECT_URL_STORAGE_KEY } from '../../constants/storageKeys';
-import { getUTMParams, IUserUtm } from '../../views/user/utils/utmParams';
+import { getUTMParams } from '../../views/user/utils/utmParams';
 import { clearAppFilters, setGeneralLoaderVisibility } from '../general/actions';
 import { getQueryStringParams, history } from '../../utils/history';
 import { watchWsEvents } from '../realtime/watchWsEvents';
 import { closeAllConnections } from '../utils/webSocketConnections';
-import { TUploadedFile, uploadUserAvatar } from '../../utils/uploadFiles';
+import { uploadUserAvatar } from '../../utils/uploadFiles';
+import type { TUploadedFile } from '../../types/attachments';
 import { changePhotoProfile } from '../../api/changePhotoProfile';
-import { ELoggedState, IAuthUser } from '../../types/redux';
+import { EAuthUserFailType, ELoggedState } from './types';
+import type { IAuthUser } from './types';
 import { resetFirebaseDeviceToken } from '../../firebase';
-import { getTenantToken, IGetTenantTokenResponse } from '../../api/tenants/getTenantToken';
+import { getTenantToken } from '../../api/tenants/getTenantToken';
+import type { IGetTenantTokenResponse } from '../../api/tenants/getTenantToken';
 import { resetSuperuserToken, setSuperuserToken } from './utils/superuserToken';
 import {
   getSuperuserReturnRoute,
   resetSuperuserReturnRoute,
   setSuperuserReturnRoute,
 } from './utils/superuserReturnRoute';
-import { IMakePaymentResponse, makePayment } from '../../api/makePayment';
+import { makePayment } from '../../api/makePayment';
+import type { IMakePaymentResponse } from '../../api/makePayment';
 import { fetchPlan } from '../accounts/saga';
 import { changeUserReports } from '../accounts/slice';
 import { getAbsolutePath } from '../../utils/getAbsolutePath';
-import { ICardSetupResponse, cardSetup } from '../../api/cardSetup';
-import { confirmPaymentDetailsProvided } from './utils/confirmPaymentDetailsProvided';
+import { cardSetup } from '../../api/cardSetup';
+import type { ICardSetupResponse } from '../../api/cardSetup';
+import { confirmPaymentDetails } from '../../api/confirmPaymentDetails';
+import { showPaymentSuccessMessage } from './utils/showPaymentSuccessMessage';
 import { createAITemplate } from './utils/createAITemplate';
 import { trackCrozdesk } from '../../utils/analytics/trackCrozdesk';
 import { getBrowserConfig } from '../../utils/getConfig';
 import { getCustomerPortalLink } from '../../api/getCustomerPortalLink';
 import { setSentryUser } from '../../utils/sentryUser';
 import { createTemplateFromName } from './utils/createTemplateFromName';
-import { ITemplateResponse } from '../../types/template';
+import type { ITemplateResponse } from '../../types/template';
 import { removeLocalStorage } from '../../utils/localStorage';
 import { isEnvBilling } from '../../constants/enviroment';
 import { activateVacation, deactivateVacation } from '../../api/vacation';
@@ -101,6 +111,7 @@ export function* authenticateUser(redirectUrl?: string, isRegister: boolean = fa
     const {
       account: { isSubscribed, billingPlan, billingSync },
     } = user;
+    setAnalyticsSupermode(Boolean(user.isSupermode));
     yield put(authUserSuccess(user));
 
     setSentryUser({ id: user.id, email: user.email });
@@ -118,6 +129,7 @@ export function* authenticateUser(redirectUrl?: string, isRegister: boolean = fa
     if (redirectUrl) history.replace(redirectUrl);
   } catch (err) {
     logger.error(err);
+    setAnalyticsSupermode(false);
     yield put(redirectToLogin());
     yield put(authUserFail());
   }
@@ -272,6 +284,7 @@ function* handleLogoutUnsubscribing({ shouldExpireToken }: { shouldExpireToken: 
   yield put(clearAppFilters());
   yield call(resetFirebaseDeviceToken);
   resetSuperuserToken();
+  setAnalyticsSupermode(false);
   analytics.reset();
 
   if (shouldExpireToken) {
@@ -536,6 +549,22 @@ export function* makeStripePaymentSaga({
   }
 }
 
+function* confirmPaymentDetailsProvided() {
+  try {
+    if (!history.location.search) throw new Error('No token provided');
+    const { token } = getQueryStringParams(history.location.search);
+    if (!token) throw new Error('No token provided');
+    yield call(confirmPaymentDetails, { token });
+    yield fetchPlan();
+    yield authenticateUser();
+    showPaymentSuccessMessage();
+  } catch (error) {
+    logger.error(error);
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+    history.push(ERoutes.Tasks);
+  }
+}
+
 export function* onAfterPaymentDetailsProvidedSaga() {
   yield confirmPaymentDetailsProvided();
 
@@ -748,8 +777,19 @@ export function* watchVacationDeactivate() {
   yield takeEvery(EAuthActions.VacationDeactivate, handleVacationDeactivate);
 }
 
+export function resetAnalyticsSupermode() {
+  setAnalyticsSupermode(false);
+}
+
+export function* watchAnalyticsSupermode() {
+  yield takeEvery(EAuthActions.LogoutUserSuccess, resetAnalyticsSupermode);
+  const { authUser }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
+  setAnalyticsSupermode(Boolean(authUser.isSupermode));
+}
+
 export function* rootSaga() {
   yield all([
+    fork(watchAnalyticsSupermode),
     fork(watchLoginUser),
     fork(watchLoginSuperuser),
     fork(watchLoginPartnerSuperuser),

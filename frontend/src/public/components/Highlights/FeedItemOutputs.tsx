@@ -1,12 +1,13 @@
 import React from 'react';
 
-import { EExtraFieldType, IExtraField } from '../../types/template';
+import type { IExtraField } from '../../types/template';
+import { EExtraFieldType } from '../../types/template';
 import { EWorkflowLogEvent } from '../../types/workflow';
 import { isArrayWithItems } from '../../utils/helpers';
 import { EKickoffOutputsViewModes, KickoffOutputs } from '../KickoffOutputs';
 
 import { Ellipsis } from './Ellipsis';
-import { IFeedItemOutputsProps } from './types';
+import type { IFeedItemOutputsProps } from './types';
 
 export function FeedItemOutputs({ kickoff, isTextExpanded, onExpand, task, type }: IFeedItemOutputsProps) {
   const outputsByEvent: { [key in EWorkflowLogEvent]?: IExtraField[] } = {

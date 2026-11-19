@@ -1,15 +1,16 @@
-import { IApplicationState } from '../../types/redux';
-import { EUserListSorting } from '../../types/user';
-import { EUserGroupType, IGroup } from '../team/types';
+import type { RootState } from '../store';
+import type { EUserListSorting } from '../../types/user';
+import { EUserGroupType } from '../../types/team';
+import type { IGroup } from '../../types/team';
 
-export const getGroupsList = (state: IApplicationState): IGroup[] => state.groups.list;
+export const getGroupsList = (state: RootState): IGroup[] => state.groups.list;
 
-export const getRegularGroupsList = (state: IApplicationState): IGroup[] =>
+export const getRegularGroupsList = (state: RootState): IGroup[] =>
   state.groups.list.filter((group) => group.type !== EUserGroupType.Personal);
 
-export const getGroupsIsLoading = (state: IApplicationState): boolean => state.groups.isLoading;
+export const getGroupsIsLoading = (state: RootState): boolean => state.groups.isLoading;
 
-export const getCurrentGroupData = (state: IApplicationState): IGroup | null => state.groups.currentGroup.data;
+export const getCurrentGroupData = (state: RootState): IGroup | null => state.groups.currentGroup.data;
 
-export const getCurrentGroupUserListSorting = (state: IApplicationState): EUserListSorting =>
+export const getCurrentGroupUserListSorting = (state: RootState): EUserListSorting =>
   state.groups.currentGroup.userListSorting;

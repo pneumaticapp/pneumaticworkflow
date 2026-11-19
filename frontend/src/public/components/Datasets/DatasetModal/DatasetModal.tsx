@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+import type { FormEvent, ChangeEvent } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -13,7 +13,8 @@ import {
 } from '../../../redux/datasets/slice';
 import { isCreateModalOpen, isEditModalOpen, getCurrentDataset } from '../../../redux/selectors/datasets';
 
-import { EDatasetModalType, IDatasetModalProps } from './types';
+import type { IDatasetModalProps } from './types';
+import { EDatasetModalType } from './types';
 import styles from './DatasetModal.css';
 
 const CONFIG = {

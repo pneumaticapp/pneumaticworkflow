@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
@@ -17,7 +16,7 @@ import { NotificationManager } from '../../UI/Notifications';
 import { getErrorMessage } from '../../../utils/getErrorMessage';
 import { InputField, Loader } from '../../UI';
 import { PageTitle } from '../../PageTitle/PageTitle';
-import { IWorkflowsProps } from '../types';
+import type { IWorkflowsProps } from '../types';
 import { EWorkflowsLoadingStatus } from '../../../types/workflow';
 
 import { WorkflowCardContainer } from './WorkflowCard';

@@ -1,13 +1,9 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 
-import { IFieldsetsStore, IFieldsetsList } from '../../types/redux';
-import {
-  IFieldsetCatalogItem,
-  ICreateFieldsetParams,
-  IUpdateFieldsetParams,
-  EFieldsetsSorting,
-} from '../../types/fieldset';
-import { TDeleteFieldsetPayload } from './types';
+import { EFieldsetsSorting } from '../../types/fieldset';
+import type { IFieldsetCatalogItem, ICreateFieldsetParams, IUpdateFieldsetParams } from '../../types/fieldset';
+import type { IFieldsetsList, IFieldsetsStore, TDeleteFieldsetPayload } from './types';
 
 export const initialState: IFieldsetsStore = {
   fieldsetsList: {

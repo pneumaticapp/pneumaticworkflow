@@ -1,8 +1,9 @@
-import * as React from 'react';
+import React from 'react';
 import classNames from 'classnames';
 
 import { EInputNameBackgroundColor } from '../../../types/workflow';
-import { EExtraFieldMode, IExtraField } from '../../../types/template';
+import type { IExtraField } from '../../../types/template';
+import { EExtraFieldMode } from '../../../types/template';
 import { mapFieldsetBindingClientToRuntime } from '../../../utils/mapFieldsetBindingClientToRuntime';
 import { EFieldLabelPosition } from '../../../types/fieldset';
 import { isArrayWithItems } from '../../../utils/helpers';
@@ -10,7 +11,7 @@ import { ExtraFieldIntl } from '../ExtraFields';
 import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
 import { FieldsetFlowRowDropdown } from './FieldsetFlowRowDropdown';
 import { FieldsetEditorTitle } from './FieldsetEditorTitle';
-import { TMergedTaskOutputRow } from './mergeTaskOutputFlow';
+import type { TMergedTaskOutputRow } from './mergeTaskOutputFlow';
 
 import styles from '../OutputForm/OutputForm.css';
 import kickoffStyles from '../KickoffRedux/KickoffRedux.css';

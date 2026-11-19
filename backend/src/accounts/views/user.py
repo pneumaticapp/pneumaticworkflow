@@ -39,17 +39,15 @@ from src.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
 )
-from src.openapi import (
+from src.openapi.helpers import single_response_schema, unpaginated_schema
+from src.openapi.permission_docs import (
     ACCESS_AUTH,
     ACCESS_AUTH_BASIC,
     ACCESS_AUTH_LITE,
-    CONTACTS_PARAMS,
-    FORBIDDEN,
-    UNAUTHORIZED,
-    USER_PERMISSION_PARAMS,
-    UserCountersSerializer,
-    VALIDATION_ERROR,
 )
+from src.openapi.parameters import CONTACTS_PARAMS, USER_PERMISSION_PARAMS
+from src.openapi.responses import FORBIDDEN, UNAUTHORIZED, VALIDATION_ERROR
+from src.openapi.serializers import UserCountersSerializer
 from src.permissions.exceptions import (
     UserObjectPermissionServiceException,
 )
@@ -160,8 +158,9 @@ class UserViewSet(
         summary='List user contacts',
         description=ACCESS_AUTH_BASIC,
         parameters=CONTACTS_PARAMS,
+        filters=False,
         responses={
-            200: ContactResponseSerializer,
+            200: ContactResponseSerializer(many=True),
             401: UNAUTHORIZED,
             403: FORBIDDEN,
         },
@@ -174,6 +173,7 @@ class UserViewSet(
             self.filter_queryset(self.get_queryset()),
         )
 
+    @unpaginated_schema
     @extend_schema(
         tags=['Accounts'],
         summary='Get current user permissions for objects',
@@ -199,6 +199,7 @@ class UserViewSet(
             self.get_serializer(instance=data, many=True).data,
         )
 
+    @single_response_schema
     @extend_schema(
         tags=['Accounts'],
         summary='Get current user profile',
@@ -216,7 +217,7 @@ class UserViewSet(
     @extend_schema(
         tags=['Accounts'],
         summary='Update current user profile',
-        description=ACCESS_AUTH,
+        description=ACCESS_AUTH_BASIC,
         request=UserSerializer,
         responses={
             200: UserSerializer,
@@ -298,6 +299,7 @@ class UserViewSet(
         tags=['Accounts'],
         summary='Deactivate vacation for current user',
         description=ACCESS_AUTH,
+        request=None,
         responses={
             200: UserSerializer,
             400: VALIDATION_ERROR,

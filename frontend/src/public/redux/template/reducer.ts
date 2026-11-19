@@ -1,10 +1,12 @@
 import { produce } from 'immer';
 
-import { ITemplateClient, ITemplateTaskClient } from '../../types/template';
-import { ETemplateStatus, ITemplateStore } from '../../types/redux';
+import type { ITemplateClient, ITemplateTaskClient } from '../../types/template';
+import { ETemplateStatus } from './types';
+import type { ITemplateStore } from './types';
 import { getEmptyKickoff } from '../../utils/template';
 
-import { ETemplateActions, TTemplateActions } from './actions';
+import { ETemplateActions } from './actions';
+import type { TTemplateActions } from './actions';
 
 export const initialTemplate: ITemplateStore = {
   data: {

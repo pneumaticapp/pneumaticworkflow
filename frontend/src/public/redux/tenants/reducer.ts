@@ -1,6 +1,7 @@
-import { ITenantsStore } from '../../types/redux';
+import type { ITenantsStore } from './types';
 import { ETenantsSorting } from '../../types/tenants';
-import { ETenantsActions, TTenantsActions } from './actions';
+import { ETenantsActions } from './actions';
+import type { TTenantsActions } from './actions';
 
 const INIT_STATE: ITenantsStore = {
   list: [],

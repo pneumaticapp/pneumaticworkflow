@@ -1,7 +1,8 @@
 /* prettier-ignore */
-import { ETemplateStatus, ITypedReduxAction } from '../../types/redux';
+import type { ETemplateStatus } from './types';
+import type { ITypedReduxAction } from '../types';
 import { actionGenerator } from '../../utils/redux';
-import { ITemplateClient, ITemplateTaskClient, TAITemplateGenerationStatus } from '../../types/template';
+import type { ITemplateClient, ITemplateTaskClient, TAITemplateGenerationStatus } from '../../types/template';
 
 export const enum ETemplateActions {
   Load = 'LOAD_TEMPLATE',

@@ -13,3 +13,9 @@ export type TVariableNodePayload = {
   title?: string;
   subtitle?: string;
 };
+
+export interface IVariableComponentProps {
+  apiName: string;
+  title: string;
+  subtitle?: string;
+}

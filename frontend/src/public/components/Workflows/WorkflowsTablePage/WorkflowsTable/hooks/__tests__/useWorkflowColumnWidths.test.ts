@@ -1,10 +1,10 @@
 /// <reference types="jest" />
-import { Column } from 'react-table';
+import type { Column } from 'react-table';
 
-import { TableColumns } from '../../types';
+import type { TTableColumns } from '../../types';
 import { mergeColumnWidths } from '../useWorkflowColumnWidths';
 
-const performerColumn = (width: number): Column<TableColumns> => ({
+const performerColumn = (width: number): Column<TTableColumns> => ({
   accessor: 'system-column-performer',
   width,
 });

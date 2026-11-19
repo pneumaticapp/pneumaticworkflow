@@ -1,6 +1,6 @@
 import { actionGenerator } from '../../utils/redux';
-import { ITypedReduxAction } from '../../types/redux';
-import { IApiKeyItem, IIntegrationDetailed, IIntegrationListItem } from '../../types/integrations';
+import type { ITypedReduxAction } from '../types';
+import type { IApiKeyItem, IIntegrationDetailed, IIntegrationListItem } from '../../types/integrations';
 
 export const enum EIntegrationsActions {
   LoadApiKeys = 'LOAD_API_KEYS',

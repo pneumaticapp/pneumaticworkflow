@@ -66,6 +66,7 @@ from src.processes.services.workflow_permissions import (
 from src.processes.tests.guardian_helpers import (
     assert_guardian_view,
 )
+from src.processes.tests.matchers import UnorderedRecipients
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -3116,6 +3117,10 @@ class TestGroupPerformerService:
         user2 = create_test_user(account=account, email='test2@test.test')
         user3 = create_test_user(account=account, email='test3@test.test')
         group = create_test_group(account, users=[user2, user3])
+        expected_recipients = UnorderedRecipients(recipients=[
+            (user2.id, user2.email, user2.is_new_tasks_subscriber),
+            (user3.id, user3.email, user3.is_new_tasks_subscriber),
+        ])
         workflow = create_test_workflow(user=user)
         task = workflow.tasks.get(number=1)
         task.due_date = timezone.now() + timedelta(hours=1)
@@ -3162,10 +3167,7 @@ class TestGroupPerformerService:
         send_new_task_notification_mock.assert_called_once_with(
             logging=account.log_api_requests,
             account_id=account.id,
-            recipients=[
-                (user2.id, user2.email, user2.is_new_tasks_subscriber),
-                (user3.id, user3.email, user3.is_new_tasks_subscriber),
-            ],
+            recipients=expected_recipients,
             task_id=task.id,
             task_name=task.name,
             task_description=task.description,

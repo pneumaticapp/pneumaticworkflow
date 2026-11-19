@@ -5,7 +5,7 @@ jest.mock('../sentryCapture', () => ({
 import { logger } from '../logger';
 import { captureException } from '../sentryCapture';
 import { InterceptorError } from '../../api/InterceptorError';
-import { ApiError } from '../../api/commonRequest';
+import { ApiError } from '../../api/ApiError';
 
 const mockCaptureException = captureException as jest.Mock;
 

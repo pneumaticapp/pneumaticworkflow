@@ -1,13 +1,7 @@
 import { useCallback } from 'react';
 import { TOGGLE_LINK_COMMAND } from '@lexical/link';
-import {
-  LexicalEditor,
-  $getSelection,
-  $isRangeSelection,
-  $createTextNode,
-  $createRangeSelection,
-  $setSelection,
-} from 'lexical';
+import type { LexicalEditor } from 'lexical';
+import { $getSelection, $isRangeSelection, $createTextNode, $createRangeSelection, $setSelection } from 'lexical';
 
 export function useLinkActions(editor: LexicalEditor, onFormClose: () => void) {
   const applyLink = useCallback(

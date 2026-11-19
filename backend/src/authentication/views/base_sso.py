@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 
@@ -15,6 +16,14 @@ from src.generics.mixins.views import (
     AnonymousMixin,
     CustomViewSetMixin,
 )
+from src.openapi.serializers import AuthTokenResponseSerializer
+from src.openapi.responses import (
+    FORBIDDEN,
+    TOO_MANY_REQUESTS,
+    UNAUTHORIZED,
+    VALIDATION_ERROR,
+)
+from src.openapi.internal_serializers import AuthUriResponseSerializer
 from src.utils.validation import raise_validation_error
 
 
@@ -44,6 +53,25 @@ class BaseSSOViewSet(
             return (SSOAuthUriThrottle,)
         return ()
 
+    @extend_schema(
+        tags=['Auth'],
+        summary='Exchange an SSO authorization code',
+        description=(
+            'No existing session is required. SSO must be enabled for this '
+            'deployment. After redirecting to auth_uri, forward the callback '
+            'code and unchanged state to this endpoint. State identifies '
+            'the SSO domain. Returns a Pneumatic Bearer session token.'
+        ),
+        auth=[],
+        parameters=[SSOTokenSerializer],
+        responses={
+            200: AuthTokenResponseSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            429: TOO_MANY_REQUESTS,
+        },
+    )
     @action(methods=('GET',), detail=False)
     def token(self, request, *args, **kwargs):
         slz = SSOTokenSerializer(data=request.GET)
@@ -63,6 +91,25 @@ class BaseSSOViewSet(
             self.identify(user)
             return self.response_ok({'token': token})
 
+    @extend_schema(
+        tags=['Auth'],
+        summary='Get the SSO authorization URL',
+        description=(
+            'No existing session is required. SSO must be enabled. Supply '
+            'domain for the account SSO configuration when needed, then '
+            'redirect the browser to the returned auth_uri. Preserve the '
+            'provider state for the code exchange.'
+        ),
+        auth=[],
+        parameters=[AuthUriSerializer],
+        responses={
+            200: AuthUriResponseSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            429: TOO_MANY_REQUESTS,
+        },
+    )
     @action(methods=('GET',), detail=False, url_path='auth-uri')
     def auth_uri(self, request, *args, **kwargs):
         slz = AuthUriSerializer(data=request.GET)

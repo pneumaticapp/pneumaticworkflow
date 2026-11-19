@@ -10,7 +10,7 @@ import {
   $isChecklistItemNode,
 } from '../nodes';
 import { parseTextWithVariables } from './variableMarkdown';
-import type { TTaskVariable } from '../../TemplateEdit/types';
+import type { TTaskVariable } from '../../../types/template';
 
 const CLIST_START_REGEX = /\[clist:([\w-]+)\|([\w-]+)\]/;
 const CLIST_END_REGEX = /\[\/clist\]/;

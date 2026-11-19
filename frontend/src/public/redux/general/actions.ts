@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import { ITypedReduxAction } from '../../types/redux';
+import type { ITypedReduxAction } from '../types';
 import { actionGenerator } from '../../utils/redux';
 
 export const enum EGeneralActions {

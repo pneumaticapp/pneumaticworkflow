@@ -1,4 +1,5 @@
-import { EExtraFieldType, IExtraField } from '../types/template';
+import type { IExtraField } from '../types/template';
+import { EExtraFieldType } from '../types/template';
 
 export const makeExtraField = (overrides: Partial<IExtraField> = {}): IExtraField => ({
   apiName: 'field-1',

@@ -1,12 +1,15 @@
 import { produce } from 'immer';
 import { endOfToday, startOfToday } from 'date-fns';
 
-import { IHighlightsStore, IHighlightsFilters } from '../../types/redux';
-import { IHighlightsItem, EHighlightsDateFilter } from '../../types/highlights';
-import { ITemplateTitleBaseWithCount } from '../../types/template';
+import type { IHighlightsFilters, IHighlightsStore } from './types';
+import { EHighlightsDateFilter } from '../../types/highlights';
+import type { IHighlightsItem } from '../../types/highlights';
+import type { ITemplateTitleBaseWithCount } from '../../types/template';
 
-import { THighlightsActions, EHighlightsActions } from './actions';
-import { EGeneralActions, TGeneralActions } from '../actions';
+import { EHighlightsActions } from './actions';
+import type { THighlightsActions } from './actions';
+import { EGeneralActions } from '../general/actions';
+import type { TGeneralActions } from '../general/actions';
 
 export const INIT_FILTERS: IHighlightsFilters = {
   timeRange: EHighlightsDateFilter.Today,

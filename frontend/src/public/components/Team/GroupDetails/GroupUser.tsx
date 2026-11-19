@@ -8,13 +8,14 @@ import { updateUsersGroup } from '../../../redux/actions';
 import { loadChangeUserAdmin } from '../../../redux/accounts/slice';
 import { getCurrentGroupData } from '../../../redux/selectors/groups';
 import { getAuthUserId } from '../../../redux/selectors/authUser';
-import { TUserListItem, EUserStatus } from '../../../types/user';
+import { EUserStatus } from '../../../types/user';
+import type { TUserListItem } from '../../../types/user';
 import { getUserFullName } from '../../../utils/users';
 import { TrashIcon } from '../../icons';
 import { Header, Avatar } from '../../UI';
 import { getDate } from '../../../utils/strings';
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
-import { IGroup } from '../../../redux/team/types';
+import type { IGroup } from '../../../types/team';
 
 import styles from './User.css';
 

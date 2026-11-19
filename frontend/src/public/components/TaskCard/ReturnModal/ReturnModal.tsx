@@ -1,11 +1,10 @@
-import * as React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useIntl } from 'react-intl';
 
 import { Modal } from '../../UI/Modal';
 import { RichEditor } from '../../RichEditor';
 import { Button } from '../../UI';
-import { IReturnModalProps } from './types';
+import type { IReturnModalProps } from './types';
 
 import styles from './ReturnModal.css';
 

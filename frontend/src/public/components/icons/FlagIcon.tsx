@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 
 export const FlagIcon = ({ fill = 'currentColor', ...rest }) => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill={fill} xmlns="http://www.w3.org/2000/svg" {...rest}>

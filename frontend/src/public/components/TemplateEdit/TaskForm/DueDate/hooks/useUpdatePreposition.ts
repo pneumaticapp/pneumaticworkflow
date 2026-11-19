@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { TDueDateRulePreposition } from '../../../../../types/template';
-import { TRulePrepositionOption } from '../utils/getRulePrepositionOptions';
-import { TRuleTargetOption } from '../utils/getRuleTargetOptions';
+import type { TDueDateRulePreposition } from '../../../../../types/template';
+import type { TRulePrepositionOption } from '../utils/getRulePrepositionOptions';
+import type { TRuleTargetOption } from '../utils/getRuleTargetOptions';
 
 export function useUpdatePreposition(
   prepositionOptions: TRulePrepositionOption[],

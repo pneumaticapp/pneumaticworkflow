@@ -1,5 +1,5 @@
-import { Dispatch, SetStateAction } from 'react';
-import { IExtraFieldSelection } from '../../../../types/template';
+import type { Dispatch, SetStateAction } from 'react';
+import type { IExtraFieldSelection } from '../../../../types/template';
 import { getSelectionDuplicateError } from '../../../../utils/validators';
 
 export const handleSelectionBlur =

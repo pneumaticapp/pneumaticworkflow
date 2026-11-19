@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Switch from 'rc-switch';
 import { Link } from 'react-router-dom';
 import classnames from 'classnames';
@@ -15,12 +14,17 @@ import { ShowMore } from '../../UI/ShowMore';
 import { getLinkToWorkflows } from '../../../utils/routes/getLinkToWorkflows';
 import { getLinkToHighlightsByTemplate } from '../../../utils/routes/getLinkToHighlightsByTemplate';
 import { Button } from '../../UI/Buttons/Button';
-import { ETemplateOwnerRole, ITemplateOwner, ITemplateClient } from '../../../types/template';
-import { TCloneTemplatePayload, TDeleteTemplatePayload, TPatchTemplatePayload } from '../../../redux/actions';
+import { ETemplateOwnerRole } from '../../../types/template';
+import type { ITemplateOwner, ITemplateClient } from '../../../types/template';
+import type {
+  TCloneTemplatePayload,
+  TDeleteTemplatePayload,
+  TPatchTemplatePayload,
+} from '../../../redux/template/actions';
 import { getRunnableWorkflow, loadDatasetsMap } from '../utils/getRunnableWorkflow';
 import { mapFieldsetBindingClientToRuntime } from '../../../utils/mapFieldsetBindingClientToRuntime';
-import { ETemplateStatus } from '../../../types/redux';
-import { IRunWorkflow } from '../../WorkflowEditPopup/types';
+import { ETemplateStatus } from '../../../redux/template/types';
+import type { IRunWorkflow } from '../../../types/workflow';
 import { WarningPopup } from '../../UI/WarningPopup';
 import { isCreateTemplate } from '../../../utils/history';
 import { InfoWarningsModal } from '../InfoWarningsModal';

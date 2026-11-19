@@ -1,11 +1,12 @@
-import React, { FormEvent, useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { editModalClose, updateGroup } from '../../../../redux/actions';
 import { validateGroupName } from '../../../../utils/validators';
 import { Button, Header, InputField, Modal } from '../../../UI';
-import { IApplicationState } from '../../../../types/redux';
+import type { RootState } from '../../../../redux/store';
 
 import styles from './EditGroupModal.css';
 
@@ -13,7 +14,7 @@ export function EditGroupModal() {
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
 
-  const { isOpen, editGroup } = useSelector(({ groups }: IApplicationState) => groups.editModal);
+  const { isOpen, editGroup } = useSelector(({ groups }: RootState) => groups.editModal);
 
   const [inputName, setInputName] = useState('');
   const [changedInput, setChangedInput] = useState(false);

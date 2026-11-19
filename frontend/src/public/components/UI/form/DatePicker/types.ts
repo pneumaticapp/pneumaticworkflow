@@ -1,4 +1,4 @@
-import { DatePickerProps } from 'react-datepicker';
+import type { DatePickerProps } from 'react-datepicker';
 
 type TSingleLibraryProps = Extract<DatePickerProps, { selectsMultiple?: never; selectsRange?: never }>;
 type TRangeLibraryProps = Extract<DatePickerProps, { selectsRange: true }>;

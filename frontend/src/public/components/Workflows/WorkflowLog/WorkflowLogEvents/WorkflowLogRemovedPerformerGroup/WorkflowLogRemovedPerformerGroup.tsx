@@ -1,6 +1,6 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
-import { IWorkflowLogItem } from '../../../../../types/workflow';
+import type { IWorkflowLogItem } from '../../../../../types/workflow';
 
 import { DateFormat } from '../../../../UI/DateFormat';
 import { Avatar } from '../../../../UI/Avatar';

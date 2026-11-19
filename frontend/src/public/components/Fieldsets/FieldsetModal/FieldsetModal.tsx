@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+import type { FormEvent, ChangeEvent } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -13,7 +13,8 @@ import {
 } from '../../../redux/fieldsets/slice';
 import { isCreateModalOpen, isEditModalOpen, getCurrentFieldset } from '../../../redux/selectors/fieldsets';
 
-import { EFieldsetModalType, IFieldsetModalProps } from './types';
+import type { IFieldsetModalProps } from './types';
+import { EFieldsetModalType } from './types';
 import styles from './FieldsetModal.css';
 
 const CONFIG = {

@@ -1,8 +1,9 @@
-import * as React from 'react';
-import { Handle, Position, NodeProps } from 'reactflow';
+import React from 'react';
+import type { NodeProps } from 'reactflow';
+import { Handle, Position } from 'reactflow';
 import { useIntl } from 'react-intl';
 
-import { IJunctionNodeData } from '../../types';
+import type { IJunctionNodeData } from '../../types';
 import { isCheckIfJunctionId } from '../../utils/graphConstants';
 import styles from './JunctionNode.css';
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { IWorkflowsProps } from '../types';
+import type { IWorkflowsProps } from '../types';
 import { WorkflowsTableContainer } from './WorkflowsTable';
 
 export const WorkflowsTablePage = function Workflows({

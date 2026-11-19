@@ -5,18 +5,19 @@ import { useIntl } from 'react-intl';
 import { Link } from 'react-router-dom';
 import { debounce } from 'throttle-debounce';
 
-import { ETaskListStatus } from './types';
 import { TasksPlaceholderIcon } from './TasksPlaceholderIcon';
 
 import { ERoutes } from '../../constants/routes';
 import { useCheckDevice } from '../../hooks/useCheckDevice';
-import { ETaskListCompleteSorting, ETaskListCompletionStatus, ETaskListSorting, ITask } from '../../types/tasks';
+import { ETaskCardViewMode } from '../../types/tasks';
+import type { ETaskListCompleteSorting, ETaskListCompletionStatus, ETaskListSorting, ITask } from '../../types/tasks';
 import { TITLES } from '../../constants/titles';
-import { ITaskList } from '../../types/redux';
-import { ETaskCardViewMode, TaskCardContainer } from '../TaskCard';
+import { ETaskListStatus } from '../../redux/tasks/types';
+import type { ITaskList } from '../../redux/tasks/types';
+import { TaskCardContainer } from '../TaskCard';
 import { TaskPreviewCardSkeleton } from './Skeletons';
 import { TaskPreviewCard } from './TaskPreviewCard';
-import { TLoadCurrentTaskPayload } from '../../redux/actions';
+import type { TLoadCurrentTaskPayload } from '../../redux/task/actions';
 import { history } from '../../utils/history';
 import { getTaskDetailRoute } from '../../utils/routes';
 import { TaskCarkSkeleton } from '../TaskCard/TaskCarkSkeleton';
