@@ -1,10 +1,9 @@
-import * as React from 'react';
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 
-import { ITemplateTaskClient } from '../../../types/template';
-import { TUserListItem } from '../../../types/user';
-import { EMoveDirections } from '../../../types/workflow';
-import { ITemplateEditorController } from '../types';
+import type { ITemplateTaskClient } from '../../../types/template';
+import type { TUserListItem } from '../../../types/user';
+import type { EMoveDirections } from '../../../types/workflow';
+import type { ITemplateEditorController } from '../types';
 import { KickoffReduxContainer } from '../KickoffRedux';
 import { TemplateEntity } from '../TemplateEntity';
 import { AddEntityButton, EEntityTitle } from '../AddEntityButton';

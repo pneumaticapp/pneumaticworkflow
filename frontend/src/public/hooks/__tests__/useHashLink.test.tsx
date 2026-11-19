@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { act, render } from '@testing-library/react';
 
 import { useHashLink } from '../useHashLink';

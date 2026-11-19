@@ -8,7 +8,7 @@ import { Attachments } from '../Attachments';
 import { RichText } from '../RichText';
 
 import { Ellipsis } from './Ellipsis';
-import { IFeedItemCommentProps } from './types';
+import type { IFeedItemCommentProps } from './types';
 import { TruncatedContent } from './utils/TruncatedContent';
 
 import styles from './FeedItem.css';

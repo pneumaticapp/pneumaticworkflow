@@ -1,8 +1,8 @@
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { EExtraFieldType } from '../../../types/template';
 import { RichEditor } from '..';
-import type { IRichEditorHandle, IRichEditorProps } from '..';
+import type { IRichEditorHandle, IRichEditorProps } from '../types';
 
 jest.mock('../RichEditor', () => {
   const React = require('react');

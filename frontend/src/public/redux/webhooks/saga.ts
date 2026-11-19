@@ -1,18 +1,21 @@
 /* prettier-ignore */
 import { all, call, put, fork, takeEvery, select } from 'redux-saga/effects';
-import { EWebhooksActions, setWebhooksUrl, setWebhooksStatus, TAddWebhook, TRemoveWebhook } from '../actions';
+import { EWebhooksActions, setWebhooksUrl, setWebhooksStatus } from './actions';
+import type { TAddWebhook, TRemoveWebhook } from './actions';
 import { logger } from '../../utils/logger';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { unsubscribeFromWebhooks } from '../../api/unsubscribeFromWebhooks';
 import { subscribeToWebhooks } from '../../api/subscribeToWebhooks';
-import { EWebhooksSubscriberStatus, EWebhooksTypeEvent } from '../../types/webhooks';
-import { loadWebhooks, TLoadWebhooksResponse } from '../../api/loadWebhooks';
+import { EWebhooksSubscriberStatus } from '../../types/webhooks';
+import type { EWebhooksTypeEvent } from '../../types/webhooks';
+import { loadWebhooks } from '../../api/loadWebhooks';
+import type { TLoadWebhooksResponse } from '../../api/loadWebhooks';
 import { getWebhooks } from '../selectors/webhooks';
-import { IWebhookStore } from '../../types/redux';
+import type { TWebhookStore } from './types';
 
 function* updateWebhooksStatus(status: EWebhooksSubscriberStatus) {
-  const webhooks: IWebhookStore = yield select(getWebhooks);
+  const webhooks: TWebhookStore = yield select(getWebhooks);
 
   // tslint:disable-next-line: forin
   for (const event in webhooks) {
@@ -56,7 +59,7 @@ function* loadWebhooksSaga() {
 }
 
 function* addWebhooksSaga({ payload }: TAddWebhook) {
-  const webhooks: IWebhookStore = yield select(getWebhooks);
+  const webhooks: TWebhookStore = yield select(getWebhooks);
   const prevStatus: EWebhooksSubscriberStatus = webhooks[payload.event].status;
 
   try {
@@ -99,7 +102,7 @@ function* addWebhooksSaga({ payload }: TAddWebhook) {
 }
 
 function* removeWebhooksSaga({ payload: { event } }: TRemoveWebhook) {
-  const webhooks: IWebhookStore = yield select(getWebhooks);
+  const webhooks: TWebhookStore = yield select(getWebhooks);
   const prevStatus: EWebhooksSubscriberStatus = webhooks[event].status;
 
   try {

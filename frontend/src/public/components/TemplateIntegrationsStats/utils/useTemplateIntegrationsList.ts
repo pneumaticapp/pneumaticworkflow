@@ -1,6 +1,6 @@
 import { useSelector } from 'react-redux';
 import { getTemplatesIntegrationsStats } from '../../../redux/selectors/templates';
-import { EIntegrations } from '../../../types/integrations';
+import type { EIntegrations } from '../../../types/integrations';
 
 export const useTemplateIntegrationsList = (
   templateId?: number,

@@ -1,11 +1,12 @@
 import { connect } from 'react-redux';
 
-import { IUserLayoutProps, UserLayout } from './UserLayout';
-import { IApplicationState } from '../../types/redux';
+import type { IUserLayoutProps } from './UserLayout';
+import { UserLayout } from './UserLayout';
+import type { RootState } from '../../redux/store';
 
 type TUserLayoutStoreProps = Pick<IUserLayoutProps, 'pages'>;
 
-export const mapStateToProps = ({ pages: { list } }: IApplicationState): TUserLayoutStoreProps => {
+export const mapStateToProps = ({ pages: { list } }: RootState): TUserLayoutStoreProps => {
   return { pages: list };
 };
 

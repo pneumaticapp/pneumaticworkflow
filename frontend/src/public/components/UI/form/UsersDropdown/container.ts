@@ -1,9 +1,9 @@
 import { connect } from 'react-redux';
 
-import { IApplicationState } from '../../../../types/redux';
+import type { RootState } from '../../../../redux/store';
 import { openTeamInvitesPopup } from '../../../../redux/team/slice';
+import type { TUsersDropdownOption, IUsersDropdownProps } from './types';
 import { UsersDropdownComponent } from './UsersDropdown';
-import type { IUsersDropdownProps, TUsersDropdownOption } from './types';
 
 type TStoreProps = Pick<
   IUsersDropdownProps<TUsersDropdownOption>,
@@ -15,7 +15,7 @@ function mapStateToProps({
   team: { isInvitesPopupOpen: isTeamInvitesModalOpen, recentInvitedUsers },
   authUser: { isAdmin },
   accounts: { users },
-}: IApplicationState): TStoreProps {
+}: RootState): TStoreProps {
   return {
     users,
     isTeamInvitesModalOpen,

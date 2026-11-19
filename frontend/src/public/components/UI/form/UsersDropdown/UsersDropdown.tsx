@@ -1,15 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
-import { ActionMeta, FormatOptionLabelMeta } from 'react-select';
+import type { ActionMeta, FormatOptionLabelMeta } from 'react-select';
 
-import { Select, Checkbox, Avatar, TAvatarUser } from '../..';
-import { EUserStatus, TUserListItem, isUserAbsent } from '../../../../types/user';
+import { Select } from '../../Select';
+import { Checkbox } from '../../Fields/Checkbox';
+import { Avatar } from '../../Avatar';
+import type { TAvatarUser } from '../../Avatar/types';
+import { EUserStatus, isUserAbsent } from '../../../../types/user';
+import type { TUserListItem } from '../../../../types/user';
 import { BoldPlusIcon } from '../../../icons';
 import { getUserById } from '../../../UserData/utils/getUserById';
 
+import { EOptionTypes } from './types';
+import type { IUsersDropdownProps, TUsersDropdownOption } from './types';
 import { isUsersDropdownOptionSelected } from './usersDropdownOptionValue';
-import { EOptionTypes, IUsersDropdownProps, TUsersDropdownOption } from './types';
 
 import styles from './UsersDropdown.css';
 

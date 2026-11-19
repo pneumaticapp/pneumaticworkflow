@@ -4,38 +4,17 @@ import { useIntl } from 'react-intl';
 
 import { Select } from '../../../UI';
 import { getEnumSelectProps } from '../../../../utils/getEnumSelectProps';
-import { IDropdownOperator } from './utils/getDropdownOperators';
+import type { IDropdownOperator } from './utils/types';
 import { CONDITION_DISABLED_OPERATOR, OPERATORS_WITHOUT_VALUE } from './utils/shared';
 import { getFormattedDropdownOption } from './utils/getFormattedDropdownOption';
 import { ConditionValueField } from './ConditionValueField';
 import { TrashIcon } from '../../../icons';
-import { EConditionLogicOperations, EConditionOperators, TConditionRule } from './types';
-import { TUserListItem } from '../../../../types/user';
-import { IDropdownVariable } from './CheckIfConditions';
+import { EConditionLogicOperations, EConditionOperators } from '../../../../types/templateTaskConditions';
+import type { IDropdownVariable, IPredicateProps } from './types';
 
 import { TemplateValidationError } from '../../TemplateValidationError';
 import styles from './Conditions.css';
 import stylesTaskForm from '../TaskForm.css';
-
-interface IPredicateProps {
-  rule: TConditionRule;
-  ruleIndex: number;
-  accessConditions: boolean;
-  changeCurrentRule: (changedFields: Partial<TConditionRule>) => void;
-  displayedVariable: IDropdownVariable | null;
-  isDisabledOperator: boolean;
-  selectedOperator: IDropdownOperator | null;
-  dropdownOperators: IDropdownOperator[];
-  selectedVariable?: IDropdownVariable | null;
-  users?: TUserListItem[];
-  handleRemoveRule: (conditionIndex?: number) => (ruleIndex: number) => () => void;
-  conditionIndex?: number;
-  isCheckIs?: boolean;
-  options: {
-    label: string;
-    options: IDropdownVariable[];
-  }[];
-}
 
 export function Predicate({
   rule,

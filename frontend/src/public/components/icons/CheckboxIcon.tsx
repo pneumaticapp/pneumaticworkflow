@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 
 export type TCheckboxIconProps = React.SVGAttributes<SVGElement>;
 

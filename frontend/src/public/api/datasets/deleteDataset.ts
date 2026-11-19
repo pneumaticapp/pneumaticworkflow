@@ -1,5 +1,5 @@
 import { commonRequest } from '../commonRequest';
-import { IDeleteDatasetParams } from '../../types/dataset';
+import type { IDeleteDatasetParams } from '../../types/dataset';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 
 export function deleteDataset({ id }: IDeleteDatasetParams) {

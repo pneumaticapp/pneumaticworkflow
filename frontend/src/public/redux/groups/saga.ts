@@ -1,5 +1,5 @@
 import { all, fork, takeEvery, put, select, debounce } from 'redux-saga/effects';
-import { PayloadAction } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { logger } from '../../utils/logger';
@@ -9,12 +9,12 @@ import { createGroup as createGroupApi } from '../../api/team/createGroup';
 import { deleteGroup as deleteGroupApi } from '../../api/team/deleteGroup';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { getGroupsStore } from '../selectors/user';
-import { IGroupsStore } from '../../types/redux';
+import type { IGroupsStore } from './types';
 import { updateGroupApi } from '../../api/team/updateGroupApi';
 import { getGroup } from '../../api/team/getGroup';
 import { ERoutes } from '../../constants/routes';
 import { EResponseStatuses } from '../../constants/defaultValues';
-import { IGroup } from '../team/types';
+import type { IGroup } from '../../types/team';
 
 import {
   loadGroups,

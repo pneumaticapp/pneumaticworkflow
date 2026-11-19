@@ -1,11 +1,11 @@
-import * as React from 'react';
-import { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { Modal, Button } from '../../UI';
+import type { TUsersDropdownOption } from '../../UI/form/UsersDropdown/types';
+import { EOptionTypes } from '../../UI/form/UsersDropdown/types';
 import { UsersDropdownComponent } from '../../UI/form/UsersDropdown/UsersDropdown';
-import { EOptionTypes, TUsersDropdownOption } from '../../UI/form/UsersDropdown/types';
 import { getUsers } from '../../../redux/selectors/user';
 import { getNotDeletedUsers, getUserFullName } from '../../../utils/users';
 import { openTeamInvitesPopup } from '../../../redux/team/slice';

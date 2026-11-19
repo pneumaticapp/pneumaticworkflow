@@ -1,4 +1,4 @@
-import { IGraphState, TGraphEdge, TGraphNode } from '../types';
+import type { IGraphState, TGraphEdge, TGraphNode } from '../types';
 import { getGraphEdgeVisual, isConditionalGraphEdge } from './edgeStyles';
 import { CHECK_IF_FORK_PREFIX, CHECK_IF_JOIN_PREFIX } from './graphConstants';
 import { GRAPH_EDGE_Z_INDEX, isCardNode } from './graphGeometry';

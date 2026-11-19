@@ -1,4 +1,4 @@
-import {
+import type {
   ITask,
   ITaskAPI,
   TTaskChecklists,
@@ -6,7 +6,7 @@ import {
   TTaskChecklistsItem,
   TTaskChecklist,
 } from '../types/tasks';
-import { IFieldsetRuntime } from '../types/fieldset';
+import type { IFieldsetRuntime } from '../types/fieldset';
 import { mapFieldsetTaskAPIToRuntime } from './mapFieldsetsAPIToClient';
 
 export const getNormalizedTask = (

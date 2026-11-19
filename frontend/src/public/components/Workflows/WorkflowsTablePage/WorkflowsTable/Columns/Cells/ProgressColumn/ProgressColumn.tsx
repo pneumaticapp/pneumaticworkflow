@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { CellProps } from 'react-table';
+import React from 'react';
+import type { CellProps } from 'react-table';
 import { useSelector } from 'react-redux';
 import { getLanguage } from '../../../../../../../redux/selectors/user';
 import { ProgressBar } from '../../../../../../ProgressBar';
@@ -7,9 +7,9 @@ import { getWorkflowProgress } from '../../../../../utils/getWorkflowProgress';
 import { getWorkflowProgressColor } from '../../../../../utils/getWorkflowProgressColor';
 import { ProgressbarTooltipContents } from '../../../../../utils/ProgressbarTooltipContents';
 
-import { TableColumns } from '../../../types';
+import type { TTableColumns } from '../../../types';
 
-type TProps = React.PropsWithChildren<CellProps<TableColumns, TableColumns['system-column-progress']>>;
+type TProps = React.PropsWithChildren<CellProps<TTableColumns, TTableColumns['system-column-progress']>>;
 
 export function ProgressColumn({ value: workflow }: TProps) {
   const { completedTasks, tasksCountWithoutSkipped, status, oldestDeadline, areOverdueTasks } = workflow;

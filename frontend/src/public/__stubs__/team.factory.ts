@@ -1,4 +1,5 @@
-import { IGroup, EUserGroupType } from '../redux/team/types';
+import { EUserGroupType } from '../types/team';
+import type { IGroup } from '../types/team';
 
 export const makeGroup = (overrides: Partial<IGroup> = {}): IGroup => ({
   id: 1,

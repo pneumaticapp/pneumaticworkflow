@@ -1,10 +1,10 @@
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { IExtraField } from '../types/template';
+import type { IExtraField } from '../types/template';
 import { mapRequestBody } from '../utils/mappers';
 import { ExtraFieldsHelper } from '../components/TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
 
 import { commonRequest } from './commonRequest';
-import { ITaskAPI } from '../types/tasks';
+import type { ITaskAPI } from '../types/tasks';
 
 export function completeTask(taskId: number, output: IExtraField[]) {
   const {

@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { IPages } from '../redux/pages/types';
+import type { IPages } from '../redux/pages/types';
 
 export function getPages() {
   const {

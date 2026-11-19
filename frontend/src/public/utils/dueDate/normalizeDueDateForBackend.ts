@@ -1,5 +1,5 @@
 import { START_DURATION } from '../../components/TemplateEdit/constants';
-import { IDueDate, IDueDateAPI } from '../../types/template';
+import type { IDueDate, IDueDateAPI } from '../../types/template';
 
 export const normalizeDueDateForBackend = ({
   rulePreposition,

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 
 import { Select } from '../../../UI/Select';
@@ -12,12 +12,13 @@ import { FieldWithName } from '../utils/FieldWithName';
 import { FieldLabel } from '../utils/FieldLabel';
 import { OutputFieldContent } from '../utils/OutputFieldContent';
 import { getFieldValidator } from '../utils/getFieldValidator';
-import { EExtraFieldMode, IExtraFieldSelection } from '../../../../types/template';
+import type { IExtraFieldSelection } from '../../../../types/template';
+import { EExtraFieldMode } from '../../../../types/template';
 import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { validateCheckboxAndRadioField } from '../../../../utils/validators';
 import { handleSelectionBlur, recalculateDuplicateErrors } from '../utils/handleSelectionBlur';
 
-import { IWorkflowExtraFieldProps } from '..';
+import type { IWorkflowExtraFieldProps } from '../types';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
 import inputStyles from './ExtraFieldCreatable.css';

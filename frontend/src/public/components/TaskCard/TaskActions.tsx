@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import { ETaskStatus } from '../../redux/actions';
+import { ETaskCardState } from '../../redux/task/types';
 import { EWorkflowStatus } from '../../types/workflow';
 import { useCheckDevice } from '../../hooks/useCheckDevice';
 import { Button } from '../UI/Buttons/Button';
@@ -10,7 +10,8 @@ import { Tooltip } from '../UI';
 import { DateFormat } from '../UI/DateFormat';
 import { DoneInfoIcon, PlayLogoIcon, ReturnTaskInfoIcon, ReturnToIcon } from '../icons';
 import { ReturnModal } from './ReturnModal';
-import { ETaskCardViewMode, TTaskActionsProps } from './types';
+import { ETaskCardViewMode } from '../../types/tasks';
+import type { TTaskActionsProps } from './types';
 
 import styles from './TaskCard.css';
 
@@ -30,7 +31,7 @@ export function TaskActions({
   const { isMobile } = useCheckDevice();
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const { id: taskId, dateStarted, dateCompleted } = task;
-  const isSubmitting = status === ETaskStatus.Completing || status === ETaskStatus.Returning;
+  const isSubmitting = status === ETaskCardState.Completing || status === ETaskCardState.Returning;
   const isActionBlocked = isOutputUploading || isSubmitting;
 
   const handleReturnTask = (comment: string) => {
@@ -48,7 +49,7 @@ export function TaskActions({
 
   if (task.isReadOnlyViewer) return null;
 
-  if (status === ETaskStatus.Completed || task.workflow.status === EWorkflowStatus.Finished) {
+  if (status === ETaskCardState.Completed || task.workflow.status === EWorkflowStatus.Finished) {
     const completedAt = dateCompleted || task.workflow.dateCompleted;
     return (
       <div className={styles.completed}>
@@ -84,7 +85,7 @@ export function TaskActions({
   const actionsDisabled = !embeddedWorkflowsComplete || isActionBlocked;
   const completeButton = (
     <Button
-      isLoading={status === ETaskStatus.Completing}
+      isLoading={status === ETaskCardState.Completing}
       onClick={() => {
         if (actionsDisabled) return;
         flushOutputs();
@@ -136,7 +137,7 @@ export function TaskActions({
                 buttonStyle="transparent-black"
                 className={styles['buttons__return']}
                 size="md"
-                isLoading={status === ETaskStatus.Returning}
+                isLoading={status === ETaskCardState.Returning}
               />
             </div>
           </Tooltip>
@@ -150,7 +151,7 @@ export function TaskActions({
               buttonStyle="transparent-black"
               className={styles['buttons__return']}
               size="md"
-              isLoading={status === ETaskStatus.Returning}
+              isLoading={status === ETaskCardState.Returning}
             />
           </Tooltip>
         )}

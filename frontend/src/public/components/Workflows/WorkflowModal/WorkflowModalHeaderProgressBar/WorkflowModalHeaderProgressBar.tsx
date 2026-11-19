@@ -1,13 +1,13 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 
 import { ConfirmableDropdownItem } from '../../../UI/DropdownMenu/ConfirmableDropdownItem';
 import { CircleProgressBar } from '../../../CircleProgressBar';
 import { ProgressBar } from '../../../ProgressBar';
-import { EProgressbarColor } from '../../utils/getWorfkflowClientProperties';
-import { IWorkflowDetailsClient } from '../../../../types/workflow';
+import type { EProgressbarColor, IWorkflowDetailsClient } from '../../../../types/workflow';
 import { WorkflowControlls } from '../../WorkflowControlls';
-import { DropdownMenu, getDropdownItemColorClass, TDropdownMenuOption } from '../../../UI';
+import type { TDropdownMenuOption } from '../../../UI/DropdownMenu/types';
+import { DropdownMenu, getDropdownItemColorClass } from '../../../UI';
 import { isArrayWithItems } from '../../../../utils/helpers';
 
 import styles from '../WorkflowModal.css';

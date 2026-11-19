@@ -1,8 +1,8 @@
 /* prettier-ignore */
 // tslint:disable: max-line-length
-import { ITypedReduxAction } from '../../types/redux';
+import type { ITypedReduxAction } from '../types';
 import { actionGenerator } from '../../utils/redux';
-import { TNotificationsListItem } from '../../types';
+import type { TNotificationsListItem } from '../../types/notifications';
 
 export const enum ENotificationsActions {
   LoadList = 'LOAD_NOTIFICATIONS_LIST',

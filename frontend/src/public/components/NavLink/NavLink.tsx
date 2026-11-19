@@ -1,5 +1,6 @@
-import * as React from 'react';
-import { Route, Link, LinkProps } from 'react-router-dom';
+import React from 'react';
+import type { LinkProps } from 'react-router-dom';
+import { Route, Link } from 'react-router-dom';
 import type * as H from 'history';
 
 import { history } from '../../utils/history';

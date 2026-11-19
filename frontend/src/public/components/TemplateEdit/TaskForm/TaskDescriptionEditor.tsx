@@ -2,8 +2,9 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
-import { TTaskVariable } from '../types';
-import { RichEditor, type IRichEditorHandle } from '../../RichEditor';
+import type { TOutputChecklist, TTaskVariable } from '../../../types/template';
+import { RichEditor } from '../../RichEditor';
+import type { IRichEditorHandle } from '../../RichEditor/types';
 import { getMentionData } from '../../RichEditor/utils/getMentionData';
 import { getUsers } from '../../../redux/selectors/user';
 import { getNotDeletedUsers } from '../../../utils/users';
@@ -18,7 +19,7 @@ export interface ITaskDescriptionEditorProps {
   templateVariables: TTaskVariable[];
   value?: string;
   handleChange(value: string): Promise<string>;
-  handleChangeChecklists?(checklists: import('../../../types/template').TOutputChecklist[]): void;
+  handleChangeChecklists?(checklists: TOutputChecklist[]): void;
 }
 
 export function TaskDescriptionEditor({

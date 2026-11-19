@@ -1,13 +1,13 @@
-import * as React from 'react';
-import { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
-import { IFieldsetCatalogItem } from '../../../types/fieldset';
+import type { IFieldsetCatalogItem } from '../../../types/fieldset';
 import { getFieldsetsCatalogItems } from '../../../redux/selectors/fieldsets';
 import { CustomTooltip } from '../../UI/CustomTooltip';
 import { Tooltip } from '../../UI/Tooltip';
-import { Select, TSelectOption } from '../../UI/Select';
+import type { TSelectOption } from '../../UI/Select/types';
+import { Select } from '../../UI/Select';
 import { FieldsetIcon } from '../../icons/FieldsetIcon';
 
 import pickerStyles from './FieldsetIconPicker.css';

@@ -1,5 +1,7 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { EGraphViewMode, ITemplateGraphViewState } from '../../components/TemplateEdit/TemplateGraphEditor/types';
+import { createSlice } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
+import type { EGraphViewMode } from '../../types/template';
+import type { ITemplateGraphViewState } from './types';
 import {
   getGraphViewMode,
   saveGraphViewMode,

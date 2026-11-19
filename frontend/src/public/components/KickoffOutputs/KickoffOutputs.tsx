@@ -1,5 +1,5 @@
 /* eslint-disable */
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
@@ -16,7 +16,7 @@ import { FileOutput } from './FileOutput';
 import { UserOutput } from './UserOutput';
 import { isArrayWithItems } from '../../utils/helpers';
 import { Attachments } from '../Attachments';
-import { TUploadedFile } from '../../utils/uploadFiles';
+import type { TUploadedFile } from '../../types/attachments';
 import { parseMarkdownToFiles } from '../../utils/parseMarkdownFiles';
 import { RichText } from '../RichText';
 

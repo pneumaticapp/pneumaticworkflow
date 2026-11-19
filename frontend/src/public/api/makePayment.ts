@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { mapRequestBody } from '../utils/mappers';
-import { TPlanCode } from '../types/account';
+import type { TPlanCode } from '../types/account';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 
 interface IMakePaymentParams {

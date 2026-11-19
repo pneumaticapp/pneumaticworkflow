@@ -1,6 +1,6 @@
-import { ETemplateOwnerRole, ETemplateOwnerType, ITemplateClient } from '../../../types/template';
-import { IAuthUser } from '../../../types/redux';
-import { TUserListItem } from '../../../types/user';
+import { ETemplateOwnerRole, ETemplateOwnerType } from '../../../types/template';
+import type { ITemplateClient } from '../../../types/template';
+import type { TAuthUserResult, TUserListItem } from '../../../types/user';
 import { createOwnerApiName } from '../../../utils/createId';
 import { getEmptyKickoff, getNormalizedTemplateOwners } from '../../../utils/template';
 import { DEFAULT_TEMPLATE_NAME } from '../constants';
@@ -8,7 +8,7 @@ import { getKickoffConditions } from '../TaskForm/Conditions/utils/getKickoffCon
 import { createTemplateTask } from './createTemplateTask';
 
 export interface ICreateEmptyTemplateOptions {
-  authUser: IAuthUser;
+  authUser: TAuthUserResult;
   accessConditions: boolean;
   users: TUserListItem[];
 }

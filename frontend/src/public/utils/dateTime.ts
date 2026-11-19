@@ -4,8 +4,13 @@ import 'moment-duration-format';
 import { isAfter, format } from 'date-fns';
 import { useIntl } from 'react-intl';
 
-import { IWorkflowDelay, IWorkflowTaskDelay, WorkflowWithDateFields, WorkflowWithTspFields } from '../types/workflow';
-import { TaskWithDateFields, TaskWithTspFields } from '../types/tasks';
+import type {
+  IWorkflowDelay,
+  IWorkflowTaskDelay,
+  WorkflowWithDateFields,
+  WorkflowWithTspFields,
+} from '../types/workflow';
+import type { TaskWithDateFields, TaskWithTspFields } from '../types/taskDate';
 import { getDate } from './strings';
 
 export const SEC_IN_DAY = 24 * 60 * 60;

@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useIntl } from 'react-intl';
 
-import { ITemplateTaskClient } from '../types/template';
+import type { ITemplateTaskClient } from '../types/template';
 import { NotificationManager } from '../components/UI/Notifications';
 import { START_DURATION } from '../components/TemplateEdit/constants';
 import { updateTemplateTaskDelay } from '../components/TemplateEdit/utils/templateTaskList';

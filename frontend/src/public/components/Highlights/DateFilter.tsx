@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
@@ -9,7 +8,7 @@ import { ShowMore } from '../UI/ShowMore';
 import { DatePickerCustom } from '../UI/form/DatePicker';
 import { formatDatePickerDisplayValue } from '../UI/form/DatePicker/utils/normalizeDatePickerDate';
 import { useDatePickerSettings } from '../../hooks/useDatePickerSettings';
-import { IDateFilterProps } from './types';
+import type { IDateFilterProps } from './types';
 
 import styles from './Filters.css';
 

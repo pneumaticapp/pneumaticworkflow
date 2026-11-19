@@ -1,7 +1,8 @@
-import { TUserId } from './user';
-import { TUploadedFile } from '../utils/uploadFiles';
-import { ITask, ITemplateStep, TaskWithTsp } from './tasks';
-import {
+import type { TUserId } from './user';
+import type { TUploadedFile } from './attachments';
+import type { ITask } from './tasks';
+import type { TaskWithTsp } from './taskDate';
+import type {
   IRuntimeKickoffClient,
   IExtraField,
   ITemplateTitle,
@@ -9,9 +10,12 @@ import {
   RawPerformer,
   ITableViewFields,
   TTemplatePreset,
+  ITemplateClient,
+  ITemplateKickoffClient,
+  ITemplateStep,
+  TTemplateFieldFieldset,
 } from './template';
-import { IFieldsetRuntime } from './fieldset';
-import { EProgressbarColor } from '../components/Workflows/utils/getWorfkflowClientProperties';
+import type { IFieldsetRuntime } from './fieldset';
 
 export type WorkflowWithDateFields = {
   dueDate: string | null;
@@ -137,6 +141,13 @@ export interface IWorkflowTaskDelay {
   endDate: string;
   estimatedEndDate: string;
   estimatedEndDateTsp: number | null;
+}
+
+export enum EProgressbarColor {
+  Yellow = '#FFC107',
+  Red = '#E53D00',
+  Grey = '#979795',
+  Green = '#5FAD56',
 }
 
 export interface IWorkflowTaskClient extends IWorkflowTaskItem {
@@ -368,11 +379,35 @@ export enum EWorkflowsLoadingStatus {
   EmptyList = 'list-empty',
 }
 
-export interface IDropdownMenuProps {
-  renderedOptions: React.ReactNode;
-  isWide: boolean;
-  level: number;
-  direction?: 'right' | 'left';
-  className?: string;
-  renderMenuContent?(renderedOptions: React.ReactNode): React.ReactNode;
+export interface IRunWorkflow extends Omit<
+  Pick<ITemplateClient, 'wfNameTemplate' | 'name' | 'kickoff' | 'description'>,
+  'kickoff'
+> {
+  id: number;
+  tasksCount: number;
+  performersCount: number;
+  kickoff: ITemplateKickoffClient | IRuntimeKickoffClient;
+  isUrgent?: boolean;
+  ancestorTaskId?: number;
+  dueDate?: string;
+  loadedFieldsets?: IFieldsetRuntime[];
 }
+
+export type TSystemField = {
+  apiName: string;
+  name: string;
+  isDisabled: boolean;
+  hasNotTooltip: boolean;
+};
+
+export type TRuntimeMergedOutputPart =
+  | { kind: 'field'; field: IExtraField }
+  | { kind: 'fieldset'; data: IFieldsetRuntime | TTemplateFieldFieldset }
+  | { kind: 'system'; field: TSystemField };
+
+export type TTransformedTask = {
+  apiName: string;
+  name: string;
+  needSteName?: boolean | null;
+  mergedOutputs: TRuntimeMergedOutputPart[];
+};

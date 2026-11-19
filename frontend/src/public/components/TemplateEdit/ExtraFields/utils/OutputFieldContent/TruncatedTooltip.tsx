@@ -1,6 +1,6 @@
-import * as React from 'react';
+import React from 'react';
 import { Tooltip } from '../../../../UI/Tooltip';
-import { ITruncatedTooltipProps } from './types';
+import type { ITruncatedTooltipProps } from './types';
 import styles from './OutputFieldContent.css';
 
 export function TruncatedTooltip({ label, containerClassName, trigger, delay, children }: ITruncatedTooltipProps) {

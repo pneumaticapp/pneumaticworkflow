@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import * as ReactDOM from 'react-dom';
 import { Redirect, Route, Router, Switch } from 'react-router-dom';
 import { IntlProvider } from 'react-intl';

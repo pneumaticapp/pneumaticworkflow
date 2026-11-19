@@ -1,5 +1,5 @@
-import { EFieldLabelPosition } from '../../../../types/fieldset';
-import { IExtraField } from '../../../../types/template';
+import type { EFieldLabelPosition } from '../../../../types/fieldset';
+import type { IExtraField } from '../../../../types/template';
 
 export interface IExtraFieldFileTemplateProps {
   field: IExtraField;

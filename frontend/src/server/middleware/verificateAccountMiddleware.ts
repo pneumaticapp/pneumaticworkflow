@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 
 import { ERoutes } from '../../public/constants/routes';
 import { logServerError } from '../utils/expectedErrors';

@@ -1,5 +1,7 @@
-import React, { type FocusEvent } from 'react';
-import { FieldHookConfig, useField } from 'formik';
+import React from 'react';
+import type { FocusEvent } from 'react';
+import type { FieldHookConfig } from 'formik';
+import { useField } from 'formik';
 
 import { Select } from './Select';
 import type { ISelectProps, TSelectOption } from './types';

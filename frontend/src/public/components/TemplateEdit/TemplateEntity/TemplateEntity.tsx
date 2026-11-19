@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { EMoveDirections } from '../../../types/workflow';
-import { AddEntityButton, EEntityTitle, ITemplateEntity } from '../AddEntityButton';
+import type { ITemplateEntity } from '../AddEntityButton';
+import { AddEntityButton, EEntityTitle } from '../AddEntityButton';
 import { Delay } from '../Delay';
 import { WorkflowTaskFormContainer } from '../TaskForm';
 import { TaskItem } from '../TaskItem';
 import { TaskMenu } from '../TaskMenu';
-import { TTaskFormPart } from '../types';
+import type { TTaskFormPart } from '../types';
 import { useOpenOnValidationError } from '../TemplateValidationError';
-import { ITemplateEntityProps } from './TemplateEntity.props';
+import type { ITemplateEntityProps } from './TemplateEntity.props';
 import styles from './TemplateEntity.css';
 
 export function TemplateEntity({

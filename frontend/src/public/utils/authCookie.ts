@@ -1,4 +1,5 @@
-import { deleteCookie, setCookie, ICookieOptions } from './cookie';
+import type { ICookieOptions } from './cookie';
+import { deleteCookie, setCookie } from './cookie';
 
 function getSecondsByDays(days: number) {
   return days * 24 * 60 * 60;

@@ -2,10 +2,10 @@ import { useCallback, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
-import { ITemplateClient } from '../types/template';
-import { TPatchTemplatePayload } from '../redux/actions';
+import type { ITemplateClient } from '../types/template';
+import type { TPatchTemplatePayload } from '../redux/actions';
 import { NotificationManager } from '../components/UI/Notifications';
-import { IInfoWarningProps } from '../components/TemplateEdit/InfoWarningsModal';
+import type { IInfoWarningProps } from '../components/TemplateEdit/InfoWarningsModal';
 import { validateTemplate } from '../components/TemplateEdit/utils/validateTemplate';
 import { collectTemplateValidationErrors } from '../components/TemplateEdit/utils/collectTemplateValidationErrors';
 import { setTemplateValidationErrors } from '../redux/templateValidation/slice';

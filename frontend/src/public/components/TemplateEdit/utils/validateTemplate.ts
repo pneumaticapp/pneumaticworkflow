@@ -1,10 +1,11 @@
 /* prettier-ignore */
-import { IntlShape } from 'react-intl';
+import type { IntlShape } from 'react-intl';
 
-import { ITemplateClient } from '../../../types/template';
+import type { ITemplateClient } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { validateWorkflowName } from '../../../utils/validators';
-import { PremiumFeaturesWarning, IInfoWarningProps } from '../InfoWarningsModal/warnings';
+import type { IInfoWarningProps } from '../InfoWarningsModal/warnings';
+import { PremiumFeaturesWarning } from '../InfoWarningsModal/warnings';
 
 type TWarningRule<T> = {
   check(): boolean;

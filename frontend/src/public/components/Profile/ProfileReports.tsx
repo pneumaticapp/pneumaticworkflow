@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
@@ -10,7 +9,7 @@ import { SelectReportsModal } from '../Team/SelectReportsModal';
 import { Button, Header } from '../UI';
 import { SectionTitle } from '../UI/Typeography/SectionTitle';
 import { Avatar } from '../UI/Avatar';
-import { IUpdateUserRequest } from '../../api/editProfile';
+import type { IUpdateUserRequest } from '../../api/editProfile';
 
 import styles from './Profile.css';
 

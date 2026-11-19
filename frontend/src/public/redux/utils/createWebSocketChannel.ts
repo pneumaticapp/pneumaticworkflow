@@ -2,10 +2,7 @@ import { eventChannel } from 'redux-saga';
 import { mapToCamelCase } from '../../utils/mappers';
 import { logger } from '../../utils/logger';
 import { addConnection } from './webSocketConnections';
-
-export interface WebSocketWithRemoveFlag extends WebSocket {
-  shouldRemove?: boolean;
-}
+import type { WebSocketWithRemoveFlag } from '../realtime/types';
 
 const HEARTBEAT_PING_MESSAGE = 'PING';
 const HEARTBEAT_PONG_MESSAGE = 'PONG';

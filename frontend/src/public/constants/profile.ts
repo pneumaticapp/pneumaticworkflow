@@ -1,5 +1,5 @@
 import { envLanguageCode } from './enviroment';
-import { TSelectOption } from '../components/UI';
+import type { TSelectOption } from '../components/UI/Select/types';
 
 // The Russian language is present, but it should not be shown yet
 export const LANGUAGE_OPTIONS: TSelectOption[] = [

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
@@ -6,11 +6,11 @@ import moment from 'moment-timezone';
 import { useSelector } from 'react-redux';
 
 import { DateIcon, RoundClearIconLg, RoundClearIconMd, RoundClearIconSm } from '../../../icons';
-import { TForegroundColor } from '../common/types';
+import type { TForegroundColor } from '../common/types';
 import { getForegroundClass } from '../common/utils/getForegroundClass';
 import { DatePickerCustom } from '../../form/DatePicker';
-import { ISingleDatePickerProps } from '../../form/DatePicker/types';
-import { IApplicationState } from '../../../../types/redux';
+import type { ISingleDatePickerProps } from '../../form/DatePicker/types';
+import type { RootState } from '../../../../redux/store';
 
 import styles from './DateField.css';
 import commonStyles from '../common/styles.css';
@@ -68,7 +68,7 @@ export function DateField({
   ...props
 }: TDateFieldProps) {
   const { formatMessage, messages } = useIntl();
-  const { timezone } = useSelector((state: IApplicationState) => state.authUser);
+  const { timezone } = useSelector((state: RootState) => state.authUser);
   const normalizedErrorMessage = errorMessage && (messages[errorMessage] || errorMessage);
   const selectedDate = value ? moment.tz(value, 'YYYY-MM-DD', timezone).toDate() : null;
 

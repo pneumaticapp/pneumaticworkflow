@@ -1,14 +1,14 @@
-import * as React from 'react';
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
-import { Location } from 'history';
+import type { Location } from 'history';
 import classnames from 'classnames';
 
 import { Button, RouteLeavingGuard } from '../../UI';
 import { ERoutes } from '../../../constants/routes';
 import { checkSomeRouteMatchesLocation, history } from '../../../utils/history';
-import { discardTemplateChanges, patchTemplate, TPatchTemplatePayload } from '../../../redux/actions';
+import type { TPatchTemplatePayload } from '../../../redux/actions';
+import { discardTemplateChanges, patchTemplate } from '../../../redux/actions';
 import { getTemplateData } from '../../../redux/selectors/template';
 import { getIsUserSubsribed, getSubscriptionPlan } from '../../../redux/selectors/user';
 import { ESubscriptionPlan } from '../../../types/account';

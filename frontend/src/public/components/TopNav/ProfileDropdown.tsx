@@ -14,8 +14,9 @@ import {
   TurnOffIcon,
   UsersIcon,
 } from '../icons';
-import { CurrentUserAvatar, DropdownMenu, TDropdownMenuOption } from '../UI';
-import { TProfileDropdownProps } from './types';
+import type { TDropdownMenuOption } from '../UI/DropdownMenu/types';
+import { CurrentUserAvatar, DropdownMenu } from '../UI';
+import type { TProfileDropdownProps } from './types';
 
 import styles from './TopNav.css';
 

@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 
 export function FieldsetIcon({ fill = 'currentColor', ...rest }: React.SVGAttributes<SVGElement>) {
   return (

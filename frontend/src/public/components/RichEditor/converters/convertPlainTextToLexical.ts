@@ -2,7 +2,7 @@ import type { LexicalEditor } from 'lexical';
 import { $createParagraphNode, $getRoot } from 'lexical';
 
 import { parseTextWithVariables, removeUnknownVariableTokens } from './variableMarkdown';
-import type { TTaskVariable } from '../../TemplateEdit/types';
+import type { TTaskVariable } from '../../../types/template';
 
 const PLAIN_TEXT_PARSE_OPTIONS = {
   variablesOnly: true,

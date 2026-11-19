@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { act, render, waitFor } from '@testing-library/react';
 import { Node } from 'reactflow';
 

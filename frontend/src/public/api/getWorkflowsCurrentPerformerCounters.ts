@@ -1,5 +1,5 @@
 import { commonRequest } from './commonRequest';
-import { TUserCounter } from '../types/workflow';
+import type { TUserCounter } from '../types/workflow';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { EXTERNAL_USER_ID } from '../utils/users';
 

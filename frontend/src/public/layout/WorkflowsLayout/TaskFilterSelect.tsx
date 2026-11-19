@@ -10,7 +10,7 @@ import {
 import { Select } from '../../components/UI/Select';
 import { StepName } from '../../components/StepName';
 import { TaskFilterIcon } from '../../components/icons';
-import { ITemplateFilterItem, TTemplateStepFilter } from '../../types/workflow';
+import type { ITemplateFilterItem, TTemplateStepFilter } from '../../types/workflow';
 import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
 import { isArrayWithItems } from '../../utils/helpers';
 import { canFilterByTemplateStep } from '../../utils/workflows/filters';

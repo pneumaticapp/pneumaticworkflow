@@ -1,6 +1,6 @@
-import * as React from 'react';
+import React from 'react';
 import { RichText } from '../RichText';
-import { IExtraField } from '../../types/template';
+import type { IExtraField } from '../../types/template';
 
 import styles from './KickoffOutputs.css';
 

@@ -12,7 +12,7 @@ import highlightsReducer, {
   setHighlightsFilters,
 } from '../../../redux/highlights/slice';
 import { EHighlightsDateFilter } from '../../../types/highlights';
-import { ELocale } from '../../../types/redux';
+import { ELocale } from '../../../types/locale';
 import { enMessages } from '../../../lang/locales/en_US';
 
 jest.unmock('react-redux');

@@ -1,6 +1,5 @@
 import classnames from 'classnames';
-import * as React from 'react';
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useIntl } from 'react-intl';
 
 import { scrollToElement } from '../../../utils/helpers';
@@ -9,7 +8,8 @@ import { IntlMessages } from '../../IntlMessages';
 import { EditIcon, MoreIcon, TrashIcon } from '../../icons';
 import { Duration } from '../../UI/Duration';
 import { START_DURATION } from '../constants';
-import { DropdownMenu, TDropdownMenuOption } from '../../UI';
+import type { TDropdownMenuOption } from '../../UI/DropdownMenu/types';
+import { DropdownMenu } from '../../UI';
 
 import styles from './Delay.css';
 

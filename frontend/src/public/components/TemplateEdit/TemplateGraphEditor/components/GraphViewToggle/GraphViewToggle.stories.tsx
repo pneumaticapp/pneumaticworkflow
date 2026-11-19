@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { userEvent, within, expect } from '@storybook/test';
 
 import { GraphViewToggle } from './GraphViewToggle';
-import { EGraphViewMode } from '../../types';
+import { EGraphViewMode } from '../../../../../types/template';
 
 const meta = {
   title: 'TemplateEdit/GraphViewToggle',

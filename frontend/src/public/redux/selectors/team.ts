@@ -1,10 +1,9 @@
-import { IApplicationState } from '../../types/redux';
-import { TeamPages } from '../team/types';
+import type { RootState } from '../store';
+import type { ETeamPages } from '../team/types';
 
-export const getTeamPage = (state: IApplicationState): TeamPages => state.team.page;
+export const getTeamPage = (state: RootState): ETeamPages => state.team.page;
 
-export const getTeamCreatePerformerModalIsOpen = (state: IApplicationState): boolean =>
-  state.team.createPerformerModal.isOpen;
+export const getTeamCreatePerformerModalIsOpen = (state: RootState): boolean => state.team.createPerformerModal.isOpen;
 
-export const getTeamCreatePerformerModalIsSubmitting = (state: IApplicationState): boolean =>
+export const getTeamCreatePerformerModalIsSubmitting = (state: RootState): boolean =>
   state.team.createPerformerModal.isSubmitting;

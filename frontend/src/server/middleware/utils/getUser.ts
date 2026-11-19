@@ -1,10 +1,10 @@
-import { Request } from 'express';
+import type { Request } from 'express';
 
 import { identifyAppPartOnServer } from '../../../public/utils/identifyAppPart/identifyAppPartOnServer';
 import { logServerError } from '../../utils/expectedErrors';
 import { serverApi } from '../../utils';
 import { getAuthHeader } from '../../utils/getAuthHeader';
-import { IAuthenticatedUser } from '../../utils/types';
+import type { IAuthenticatedUser } from '../../utils/types';
 
 export async function getUser(req: Request, token: string, userAgent?: string) {
   try {

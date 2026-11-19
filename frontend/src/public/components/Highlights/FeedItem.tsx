@@ -7,11 +7,12 @@ import { Avatar } from '../UI/Avatar';
 import { EWorkflowLogEvent } from '../../types/workflow';
 import { FeedItemIcon } from './FeedItemIcon';
 import { getUserFullName, EXTERNAL_USER } from '../../utils/users';
-import { IHighlightsItem } from '../../types/highlights';
+import type { IHighlightsItem } from '../../types/highlights';
 import { EditIcon, MoreIcon } from '../icons';
 import { UserData } from '../UserData';
 import { ERoutes } from '../../constants/routes';
-import { DropdownMenu, Loader, TDropdownMenuOption } from '../UI';
+import type { TDropdownMenuOption } from '../UI/DropdownMenu/types';
+import { DropdownMenu, Loader } from '../UI';
 
 import { FeedItemHeader } from './FeedItemHeader';
 import { DateFormat } from '../UI/DateFormat';

@@ -1,4 +1,5 @@
-import { TUserListItem, EUserStatus } from '../types/user';
+import type { TUserListItem } from '../types/user';
+import { EUserStatus } from '../types/user';
 
 export const makeUser = (overrides: Partial<TUserListItem> = {}): TUserListItem => ({
   id: 1,

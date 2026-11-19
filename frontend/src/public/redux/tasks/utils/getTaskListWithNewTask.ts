@@ -1,7 +1,8 @@
 /* prettier-ignore */
 import moment from 'moment';
-import { ITaskList } from '../../../types/redux';
-import { ETaskListCompleteSorting, ETaskListSorting, ITaskListItem } from '../../../types/tasks';
+import type { ITaskList } from '../types';
+import { ETaskListSorting } from '../../../types/tasks';
+import type { ETaskListCompleteSorting, ITaskListItem } from '../../../types/tasks';
 
 export function getTaskListWithNewTask(
   initialTaskList: ITaskList,

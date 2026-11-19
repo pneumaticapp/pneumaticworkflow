@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { useState, FormEvent, MouseEvent } from 'react';
+import type { FormEvent, MouseEvent } from 'react';
+import React, { useState } from 'react';
 import classnames from 'classnames';
 import { Form, Modal, ModalBody, ModalHeader } from 'reactstrap';
 import { useIntl } from 'react-intl';
@@ -9,9 +9,10 @@ import { ERoutes } from '../../constants/routes';
 
 import { history } from '../../utils/history';
 import { IntlMessages } from '../IntlMessages';
+import type { IRunWorkflow } from '../../types/workflow';
 import { EInputNameBackgroundColor } from '../../types/workflow';
-import { IExtraField } from '../../types/template';
-import { IFieldsetRuntime } from '../../types/fieldset';
+import type { IExtraField } from '../../types/template';
+import type { IFieldsetRuntime } from '../../types/fieldset';
 import { getPluralNoun, isArrayWithItems } from '../../utils/helpers';
 import { getEditedFields } from '../TemplateEdit/ExtraFields/utils/getEditedFields';
 import { MergedOutputList } from '../MergedOutputList';
@@ -20,7 +21,6 @@ import { getInitialKickoff } from './utils/getInitialKickoff';
 import { PlayLogoIcon } from '../icons';
 import { validateWorkflowName } from '../../utils/validators';
 import { checkExtraFieldsAreValid } from './utils/areKickoffFieldsValid';
-import { IRunWorkflow } from './types';
 import { Button } from '../UI/Buttons/Button';
 import { RichText } from '../RichText';
 import { SectionTitle } from '../UI';

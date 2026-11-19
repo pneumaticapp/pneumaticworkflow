@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 
 export function EnableIcon({ fill = 'currentColor', ...rest }: React.SVGProps<SVGSVGElement>) {
   return (

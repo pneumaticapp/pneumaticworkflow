@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef, ComponentProps } from 'react';
+import type { ComponentProps } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import classnames from 'classnames';
 import { useDispatch } from 'react-redux';
 // tslint:disable-next-line: match-default-export-name
@@ -9,7 +10,7 @@ import { debounce } from 'throttle-debounce';
 import { base64ToBlob } from './utils/base64ToBlob';
 import { blobToBase64 } from './utils/blobToBase64';
 
-import { IAuthUser } from '../../../types/redux';
+import type { TAuthUserResult } from '../../../types/user';
 import { Avatar, Modal, Button, Header } from '../../UI';
 import { BrowseIcon, DeleteBoldIcon } from '../../icons';
 import { useDidUpdateEffect } from '../../../hooks/useDidUpdateEffect';
@@ -21,7 +22,7 @@ import { NotificationManager } from '../../UI/Notifications';
 import styles from './AvatarController.css';
 
 interface IAvatarControllerProps {
-  user: IAuthUser;
+  user: TAuthUserResult;
   containerClassname?: string;
 }
 

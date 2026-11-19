@@ -1,5 +1,5 @@
-import { TDueDateRulePreposition, TDueDateRuleTarget } from '../../../../../types/template';
-import { TSelectOption } from '../../../../UI';
+import type { TDueDateRulePreposition, TDueDateRuleTarget } from '../../../../../types/template';
+import type { TSelectOption } from '../../../../UI/Select/types';
 
 export type TRulePrepositionOption = TSelectOption & {
   rulePreposition: TDueDateRulePreposition;

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
-import { ITemplateClient } from '../../types/template';
-import { TLoadTemplateVariablesSuccessPayload } from '../../redux/actions';
+import type { ITemplateClient } from '../../types/template';
+import type { TLoadTemplateVariablesSuccessPayload } from '../../redux/actions';
 import { getVariables } from './TaskForm/utils/getTaskVariables';
 
 export interface ITemplateEditVariablesSyncProps {

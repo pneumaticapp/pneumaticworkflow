@@ -1,10 +1,10 @@
-import { IApplicationState, IWorkflowLog } from '../../types/redux';
+import type { IWorkflowLog } from '../types';
+import type { RootState } from '../store';
 
-export const getWorkflowLogStore = (state: IApplicationState): IWorkflowLog => {
+export const getWorkflowLogStore = (state: RootState): IWorkflowLog => {
   return state.workflows.workflowLog;
 };
 
-export const getWorkflowLogIsLoading = (state: IApplicationState): boolean => state.workflows.workflowLog.isLoading;
+export const getWorkflowLogIsLoading = (state: RootState): boolean => state.workflows.workflowLog.isLoading;
 
-export const getWorkflowLogWorkflowId = (state: IApplicationState): number | null =>
-  state.workflows.workflowLog.workflowId;
+export const getWorkflowLogWorkflowId = (state: RootState): number | null => state.workflows.workflowLog.workflowId;

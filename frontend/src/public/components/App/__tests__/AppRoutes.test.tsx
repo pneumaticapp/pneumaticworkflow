@@ -1,8 +1,8 @@
-import * as React from 'react';
+import React from 'react';
 import { render } from '@testing-library/react';
 import { AppRoutes } from '../AppRoutes';
 import { REDIRECT_URL_STORAGE_KEY } from '../../../constants/storageKeys';
-import { ELoggedState } from '../../../types/redux';
+import { ELoggedState } from '../../../redux/auth/types';
 
 jest.mock('react-redux', () => ({
   connect: () => (ReactComponent: unknown) => ReactComponent,

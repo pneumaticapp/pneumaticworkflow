@@ -1,12 +1,13 @@
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import { makeTemplateTaskClient } from '../../../../../__stubs__/templates.factory';
-import { ETaskPerformerType, ITemplateTaskClient } from '../../../../../types/template';
-import { TUserListItem } from '../../../../../types/user';
-import { IGroup } from '../../../../../redux/team/types';
+import { ETaskPerformerType } from '../../../../../types/template';
+import type { ITemplateTaskClient } from '../../../../../types/template';
+import type { TUserListItem } from '../../../../../types/user';
+import type { IGroup } from '../../../../../types/team';
 import { makeUser } from '../../../../../__stubs__/users.factory';
 import { makeGroup } from '../../../../../__stubs__/team.factory';
 import { getPerformersForDropdown } from '../getPerformersForDropdown';
-import { EOptionTypes } from '../../../../UI/form/UsersDropdown';
+import { EOptionTypes } from '../../../../UI/form/UsersDropdown/types';
 
 jest.mock('../../../../../utils/users', () => ({
   getUserFullName: jest.fn((u: { firstName?: string; lastName?: string }) => `${u.firstName} ${u.lastName}`),

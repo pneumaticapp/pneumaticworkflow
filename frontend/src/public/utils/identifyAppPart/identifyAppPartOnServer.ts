@@ -1,4 +1,4 @@
-import { Request } from 'express';
+import type { Request } from 'express';
 import { GUEST_URLS, FORMS_PATH_PREFIX, isFormPath } from './constants';
 import { EAppPart } from './types';
 

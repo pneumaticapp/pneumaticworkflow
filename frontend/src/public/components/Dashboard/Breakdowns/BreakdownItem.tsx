@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { history } from '../../../utils/history';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
@@ -6,10 +6,11 @@ import { Link } from 'react-router-dom';
 
 import { EIntegrations } from '../../../types/integrations';
 import { TemplateIntegrationsIndicator } from '../../TemplateIntegrationsStats';
-import { IDashboardCounterProps } from '../Counters';
-import { EDashboardModes, TDashboardBreakdownItem } from '../../../types/redux';
+import type { IDashboardCounterProps } from '../Counters';
+import { EDashboardModes } from '../../../redux/dashboard/types';
+import type { TDashboardBreakdownItem } from '../../../types/dashboard';
 import { DashboardCounters } from '../Counters/DashboardCounters';
-import { ILoadBreakdownTasksPayload } from '../../../redux/dashboard/actions';
+import type { ILoadBreakdownTasksPayload } from '../../../redux/dashboard/actions';
 import { getLinkToWorkflows } from '../../../utils/routes/getLinkToWorkflows';
 import { getLinkToTemplate } from '../../../utils/routes/getLinkToTemplate';
 import { EDashboardCounterType } from '../Counters/types';
@@ -30,7 +31,8 @@ import {
   WorkflowOpen,
   WorkflowMinimize,
 } from '../../icons';
-import { DropdownMenu, Header, Loader, TDropdownMenuOption } from '../../UI';
+import { DropdownMenu, Header, Loader } from '../../UI';
+import type { TDropdownMenuOption } from '../../UI/DropdownMenu/types';
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
 import { IntegrateButton } from '../../IntegrateButton';
 

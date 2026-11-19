@@ -1,16 +1,17 @@
 import { connect } from 'react-redux';
 import { injectIntl } from 'react-intl';
 
-import { IApplicationState } from '../../../types/redux';
+import type { RootState } from '../../../redux/store';
 
-import { IKickoffReduxProps, KickoffRedux } from './KickoffRedux';
+import type { IKickoffReduxProps } from './KickoffRedux';
+import { KickoffRedux } from './KickoffRedux';
 
 type TStoreProps = Pick<IKickoffReduxProps, 'template' | 'accountId' | 'templateStatus'>;
 
 export function mapStateToProps({
   template: { data: template, status },
   authUser: { account },
-}: IApplicationState): TStoreProps {
+}: RootState): TStoreProps {
   return {
     template,
     templateStatus: status,

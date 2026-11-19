@@ -6,7 +6,7 @@ import { teamFetchFinished, usersFetchFinished } from '../../accounts/slice';
 import { getTotalTasksCount } from '../../selectors/tasks';
 import { getAccountPlan } from '../../selectors/accounts';
 import { getTenantsCountStore } from '../../selectors/tenants';
-import { IAccountPlan } from '../../../types/redux';
+import type { IAccountPlan } from '../../../types/account';
 
 const plan = { activeUsers: 3 } as IAccountPlan;
 

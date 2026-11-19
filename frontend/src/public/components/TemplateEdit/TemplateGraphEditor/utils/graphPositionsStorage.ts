@@ -1,4 +1,4 @@
-import { IGraphNodePosition, TGraphNodePositions, TGraphPositionsStorage } from '../types';
+import type { IGraphNodePosition, TGraphNodePositions, TGraphPositionsStorage } from '../types';
 
 export const GRAPH_POSITIONS_STORAGE_KEY = 'template_graph_node_positions';
 

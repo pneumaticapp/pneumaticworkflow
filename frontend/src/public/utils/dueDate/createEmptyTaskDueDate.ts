@@ -1,4 +1,4 @@
-import { IDueDate } from '../../types/template';
+import type { IDueDate } from '../../types/template';
 import { createDueDateApiName } from '../createId';
 
 export function createEmptyTaskDueDate(sourceId: string | null = null): IDueDate {

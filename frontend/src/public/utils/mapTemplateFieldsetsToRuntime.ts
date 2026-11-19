@@ -1,5 +1,5 @@
-import { ITemplateResponse } from '../types/template';
-import { IFieldsetRuntime } from '../types/fieldset';
+import type { ITemplateResponse } from '../types/template';
+import type { IFieldsetRuntime } from '../types/fieldset';
 import { mapFieldsetBindingsToClient } from './mapFieldsetsAPIToClient';
 import { mapFieldsetBindingClientToRuntime } from './mapFieldsetBindingClientToRuntime';
 

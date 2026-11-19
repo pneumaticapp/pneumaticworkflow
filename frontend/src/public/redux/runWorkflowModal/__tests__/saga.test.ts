@@ -8,9 +8,8 @@ import { getAuthUser, getIsAdmin, getUsers } from '../../selectors/user';
 import { runWorkflow } from '../actions';
 import { rootSaga } from '../saga';
 import { ERoutes } from '../../../constants/routes';
-import { EWorkflowTaskStatus } from '../../../types/workflow';
+import { EWorkflowTaskStatus, IRunWorkflow } from '../../../types/workflow';
 import { loadCurrentTask } from '../../actions';
-import { IRunWorkflow } from '../../../components/WorkflowEditPopup/types';
 
 jest.mock('../../../utils/history', () => ({
   history: { push: jest.fn(), replace: jest.fn() },

@@ -1,9 +1,9 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 
 import { Attachments } from '../Attachments';
-import { IExtraField } from '../../types/template';
+import type { IExtraField } from '../../types/template';
 import { isArrayWithItems } from '../../utils/helpers';
 import { parseMarkdownToFiles } from '../../utils/parseMarkdownFiles';
 

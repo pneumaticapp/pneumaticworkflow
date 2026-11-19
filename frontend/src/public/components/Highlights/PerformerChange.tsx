@@ -7,7 +7,7 @@ import { getUserFullName } from '../../utils/users';
 import { UserData } from '../UserData';
 import UserDataWithGroup from '../UserDataWithGroup';
 
-import { TPerformerChangeProps } from './types';
+import type { TPerformerChangeProps } from './types';
 
 import styles from './FeedItem.css';
 

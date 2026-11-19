@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { memo, useState, useEffect, useRef, KeyboardEvent } from 'react';
+import type { KeyboardEvent } from 'react';
+import React, { memo, useState, useEffect, useRef } from 'react';
 import { useIntl } from 'react-intl';
 
 import { CommentEditCancelIcon } from '../../icons/CommentEditCancelIcon';
@@ -9,7 +9,7 @@ import { EDIT_ICON_COLOR } from './constants';
 import { EModifyDropdownToggle } from '../../UI/ModifyDropdown/types';
 import { validateDatasetRow } from '../../../utils/validators';
 
-import { IDatasetRowProps } from './types';
+import type { IDatasetRowProps } from './types';
 
 import styles from './DatasetRow.css';
 

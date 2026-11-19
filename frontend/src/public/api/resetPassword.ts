@@ -1,5 +1,5 @@
 import { commonRequest } from './commonRequest';
-import { TForgotPassword } from '../redux/auth/actions';
+import type { TForgotPassword } from '../redux/auth/actions';
 import { mapRequestBody } from '../utils/mappers';
 
 export function resetPassword(body: TForgotPassword) {

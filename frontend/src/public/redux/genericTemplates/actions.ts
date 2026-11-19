@@ -1,7 +1,7 @@
 /* prettier-ignore */
-import { ITypedReduxAction } from '../../types/redux';
+import type { ITypedReduxAction } from '../types';
 import { actionGenerator } from '../../utils/redux';
-import { IAccountGenericTemplate } from '../../types/genericTemplates';
+import type { IAccountGenericTemplate } from '../../types/genericTemplates';
 
 export const enum EGenericTemplatesActions {
   Change = 'CHANGE_GENERIC_TEMPLATE',

@@ -1,18 +1,19 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import OutsideClickHandler from '../../UI/OutsideClickHandler';
 import TextareaAutosize from 'react-textarea-autosize';
 import { Modal, ModalBody } from 'reactstrap';
 
-import {
+import type {
   EWorkflowsLogSorting,
   IWorkflowDetailsClient,
   IWorkflowEdit,
   IWorkflowEditData,
   IWorkflowLogItem,
 } from '../../../types/workflow';
-import { EExtraFieldType, IExtraField } from '../../../types/template';
-import { IFieldsetRuntime } from '../../../types/fieldset';
+import { EExtraFieldType } from '../../../types/template';
+import type { IExtraField } from '../../../types/template';
+import type { IFieldsetRuntime } from '../../../types/fieldset';
 import { Avatar } from '../../UI/Avatar';
 import { EditIcon, ModalCloseIcon } from '../../icons';
 import { EditKickoffContainer } from '../../KickoffEdit';
@@ -35,11 +36,8 @@ import { DateFormat } from '../../UI/DateFormat';
 import { RichText } from '../../RichText';
 
 import styles from './WorkflowModal.css';
-import {
-  IChangeWorkflowLogViewSettingsPayload,
-  ISendWorkflowLogComment,
-  TEditWorkflowPayload,
-} from '../../../redux/workflows/types';
+import type { IChangeWorkflowLogViewSettingsPayload, ISendWorkflowLogComment } from '../../../redux/types';
+import type { TEditWorkflowPayload } from '../../../redux/workflows/types';
 
 export interface IWorkflowModalOwnProps {
   onClose?(): void;

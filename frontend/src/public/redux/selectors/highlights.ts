@@ -1,17 +1,18 @@
-import { IApplicationState, IHighlightsFilters } from '../../types/redux';
-import { IHighlightsItem } from '../../types/highlights';
-import { ITemplateTitleBaseWithCount } from '../../types/template';
+import type { IHighlightsFilters } from '../highlights/types';
+import type { RootState } from '../store';
+import type { IHighlightsItem } from '../../types/highlights';
+import type { ITemplateTitleBaseWithCount } from '../../types/template';
 
-export const getHighlightsCount = (state: IApplicationState): number => state.highlights.count;
+export const getHighlightsCount = (state: RootState): number => state.highlights.count;
 
-export const getHighlightsItems = (state: IApplicationState): IHighlightsItem[] => state.highlights.items;
+export const getHighlightsItems = (state: RootState): IHighlightsItem[] => state.highlights.items;
 
-export const getHighlightsIsFeedLoading = (state: IApplicationState): boolean => state.highlights.isFeedLoading;
+export const getHighlightsIsFeedLoading = (state: RootState): boolean => state.highlights.isFeedLoading;
 
-export const getHighlightsIsTemplatesTitlesLoading = (state: IApplicationState): boolean =>
+export const getHighlightsIsTemplatesTitlesLoading = (state: RootState): boolean =>
   state.highlights.isTemplatesTitlesLoading;
 
-export const getHighlightsTemplatesTitles = (state: IApplicationState): ITemplateTitleBaseWithCount[] =>
+export const getHighlightsTemplatesTitles = (state: RootState): ITemplateTitleBaseWithCount[] =>
   state.highlights.templatesTitles;
 
-export const getHighlightsFilters = (state: IApplicationState): IHighlightsFilters => state.highlights.filters;
+export const getHighlightsFilters = (state: RootState): IHighlightsFilters => state.highlights.filters;

@@ -1,4 +1,4 @@
-import { ApiError } from '../commonRequest';
+import { ApiError } from '../ApiError';
 
 export function createApiError(responseData: unknown, status?: number): ApiError {
   let payload: unknown;

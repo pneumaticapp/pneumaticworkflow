@@ -1,4 +1,4 @@
-import { Request } from 'express';
+import type { Request } from 'express';
 
 import {
   logServerError,
@@ -8,7 +8,7 @@ import {
 } from '../../utils/expectedErrors';
 import { serverApi } from '../../utils';
 import { getAuthHeader } from '../../utils/getAuthHeader';
-import { IAuthenticatedUser } from '../../utils/types';
+import type { IAuthenticatedUser } from '../../utils/types';
 import { EAppPart } from '../../../public/utils/identifyAppPart/types';
 import { logger } from '../../../public/utils/logger';
 

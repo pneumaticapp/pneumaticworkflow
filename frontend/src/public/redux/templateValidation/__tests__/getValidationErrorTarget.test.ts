@@ -12,11 +12,8 @@ import {
 } from '../../../__stubs__/fieldsets.factory';
 import { makeKickoffClient, makeTemplateTaskClient } from '../../../__stubs__/templates.factory';
 import { ETaskFormParts } from '../../../components/TemplateEdit/types';
-import {
-  EConditionAction,
-  EConditionLogicOperations,
-  ICondition,
-} from '../../../components/TemplateEdit/TaskForm/Conditions/types';
+import { EConditionAction, EConditionLogicOperations } from '../../../types/templateTaskConditions';
+import type { ICondition } from '../../../types/templateTaskConditions';
 import { EExtraFieldType, ETaskPerformerType, ITemplateClient } from '../../../types/template';
 
 const makeCondition = (apiName: string, action: EConditionAction, predicateApiName: string): ICondition => ({

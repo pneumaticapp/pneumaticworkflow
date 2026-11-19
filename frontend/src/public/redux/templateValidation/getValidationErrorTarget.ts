@@ -1,7 +1,7 @@
 import type { IFieldsetBindingClient, IFieldsetField } from '../../types/fieldset';
 import type { IExtraField, ITemplateClient, ITemplateTaskClient } from '../../types/template';
 import { ETaskFormParts } from '../../components/TemplateEdit/types';
-import { EConditionAction } from '../../components/TemplateEdit/TaskForm/Conditions/types';
+import { EConditionAction } from '../../types/templateTaskConditions';
 import type { ITemplateValidationError, ITemplateValidationErrorMatch } from './types';
 
 const hasSelection = (field: IExtraField | IFieldsetField, apiName: string) =>

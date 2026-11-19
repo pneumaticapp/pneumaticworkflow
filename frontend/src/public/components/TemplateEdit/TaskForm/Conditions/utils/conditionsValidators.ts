@@ -1,4 +1,4 @@
-import { ICondition, TConditionRule } from '..';
+import type { ICondition, TConditionRule } from '../../../../../types/templateTaskConditions';
 import { EExtraFieldType } from '../../../../../types/template';
 import { numberRegex } from '../../../../../constants/defaultValues';
 import { OPERATORS_WITHOUT_VALUE } from './shared';

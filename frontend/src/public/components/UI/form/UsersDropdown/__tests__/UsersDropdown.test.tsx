@@ -6,13 +6,29 @@ import { enMessages } from '../../../../../lang/locales/en_US';
 import { EUserStatus } from '../../../../../types/user';
 import { UsersDropdownComponent } from '../UsersDropdown';
 import { EOptionTypes } from '../types';
+import type { TUsersDropdownOption } from '../types';
 
-jest.mock('../../..', () => ({
+jest.mock('../../../Avatar', () => ({
   Avatar: () => null,
+}));
+
+jest.mock('../../../Fields/Checkbox', () => ({
   Checkbox: ({ title }: { title: React.ReactNode }) => <span>{title}</span>,
-  Select: ({ options, formatOptionLabel }: any) => (
+}));
+
+jest.mock('../../../Select', () => ({
+  Select: ({
+    options,
+    formatOptionLabel,
+  }: {
+    options: TUsersDropdownOption[];
+    formatOptionLabel: (
+      option: TUsersDropdownOption,
+      meta: { context: 'menu'; selectValue: TUsersDropdownOption[] },
+    ) => React.ReactNode;
+  }) => (
     <div>
-      {options.map((option: any) => (
+      {options.map((option) => (
         <div key={option.value}>{formatOptionLabel(option, { context: 'menu', selectValue: [] })}</div>
       ))}
     </div>

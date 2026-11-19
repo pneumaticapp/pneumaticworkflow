@@ -1,6 +1,6 @@
 import { getAIAgentsSorted } from '../ai';
 import { EAIAgentsSorting } from '../../ai/types';
-import type { IApplicationState } from '../../../types/redux';
+import type { RootState } from '../../store';
 import type { IAIAgent } from '../../../api/ai/types';
 
 const buildAgent = (id: number, name: string): IAIAgent => ({
@@ -19,7 +19,7 @@ const getState = (agentsSorting: EAIAgentsSorting) =>
       agents: { isLoading: false, list: [buildAgent(1, 'Bravo'), buildAgent(3, 'Alpha'), buildAgent(2, 'Charlie')] },
       agentsSorting,
     },
-  }) as unknown as IApplicationState;
+  }) as unknown as RootState;
 
 const getNames = (agentsSorting: EAIAgentsSorting) =>
   getAIAgentsSorted(getState(agentsSorting)).map(({ name }) => name);

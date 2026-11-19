@@ -1,10 +1,10 @@
-import { createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAction, createSlice } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 
-import { IHighlightsFilters, IHighlightsStore } from '../../types/redux';
-import { IGetHighlightsResponse } from '../../api/getHighlights';
-import { IGetHighlightsTitlesRequestConfig, TGetHighlightsTitlesResponse } from '../../api/getHighlightsTitles';
+import type { IHighlightsFilters, IHighlightsStore, ILoadHighlightsConfig } from './types';
+import type { IGetHighlightsResponse } from '../../api/getHighlights';
+import type { IGetHighlightsTitlesRequestConfig, TGetHighlightsTitlesResponse } from '../../api/getHighlightsTitles';
 import { EGeneralActions } from '../general/actions';
-import { ILoadHighlightsConfig } from './types';
 import { getInitHighlightsFilters } from './utils/getInitHighlightsFilters';
 
 const getInitState = (): IHighlightsStore => ({

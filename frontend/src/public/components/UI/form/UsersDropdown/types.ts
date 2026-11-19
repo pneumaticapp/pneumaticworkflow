@@ -1,6 +1,7 @@
-import type { ISelectProps, TSelectOption } from '../../Select';
-import type { EUserStatus, TUserListItem } from '../../../../types/user';
+import type { ISelectProps, TSelectOption } from '../../Select/types';
+import type { IGroup } from '../../../../types/team';
 import { ETaskPerformerType } from '../../../../types/template';
+import type { EUserStatus, TUserListItem } from '../../../../types/user';
 
 export enum EOptionTypes {
   Group = ETaskPerformerType.UserGroup,
@@ -10,6 +11,13 @@ export enum EOptionTypes {
   Manager = ETaskPerformerType.Manager,
   InviteUsers = 'invite-users',
   AllUsers = 'all-users',
+}
+
+export interface IGroupDropdownOption extends Omit<IGroup, 'type'> {
+  optionType: EOptionTypes.Group;
+  label: string;
+  value: string;
+  type: ETaskPerformerType.UserGroup;
 }
 
 export type TUsersDropdownOption = TSelectOption & {

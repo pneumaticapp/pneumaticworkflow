@@ -1,18 +1,18 @@
-import { createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ETaskListStatus } from '../../components/Tasks/types';
-import { IStoreTasks, ITaskList } from '../../types/redux';
-import {
-  ETaskListCompletionStatus,
-  ETaskListCompleteSorting,
-  ETaskListSorting,
-  ITaskListItem,
-  ITasksSettings,
-  ITemplateStep,
-} from '../../types/tasks';
-import { ITemplateTitleBaseWithCount } from '../../types/template';
+import { createAction, createSlice } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
+import { ETaskListCompletionStatus, ETaskListSorting } from '../../types/tasks';
+import type { ETaskListCompleteSorting, ITaskListItem, ITasksSettings } from '../../types/tasks';
+import type { ITemplateStep, ITemplateTitleBaseWithCount } from '../../types/template';
 import { isObjectChanged } from '../../utils/helpers';
 import { EGeneralActions } from '../general/actions';
-import { TLoadFilterStepsPayload, TPatchTaskInListPayload, TShiftTaskListPayload } from './types';
+import { ETaskListStatus } from './types';
+import type {
+  IStoreTasks,
+  ITaskList,
+  TLoadFilterStepsPayload,
+  TPatchTaskInListPayload,
+  TShiftTaskListPayload,
+} from './types';
 
 const initTasksList = {
   count: 0,

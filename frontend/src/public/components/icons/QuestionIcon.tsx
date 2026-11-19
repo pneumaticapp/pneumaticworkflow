@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 
 export const enum QuestionIconSize {
   Small = 'sm',

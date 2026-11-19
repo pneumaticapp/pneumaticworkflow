@@ -1,4 +1,4 @@
-import { IHighlightsFilters } from '../../../types/redux';
+import type { IHighlightsFilters } from '../types';
 import { EHighlightsDateFilter } from '../../../types/highlights';
 import { getTodayDateRange } from '../../../components/Highlights/utils/highlightsDateRange';
 

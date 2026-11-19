@@ -1,6 +1,7 @@
 import { all, fork, put, takeLatest } from 'redux-saga/effects';
 
-import { EProfileSettingsActions, changeProfileSettingsActiveTab, TSetProfileSettingsActiveTab } from './actions';
+import type { TSetProfileSettingsActiveTab } from './actions';
+import { EProfileSettingsActions, changeProfileSettingsActiveTab } from './actions';
 
 import { ERoutes } from '../../constants/routes';
 import { ESettingsTabs } from '../../types/profile';

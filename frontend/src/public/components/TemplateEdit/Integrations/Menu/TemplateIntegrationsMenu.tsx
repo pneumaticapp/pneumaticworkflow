@@ -1,9 +1,10 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { EditIcon, MoreIcon } from '../../../icons';
-import { DropdownMenu, TDropdownMenuOption } from '../../../UI';
+import type { TDropdownMenuOption } from '../../../UI/DropdownMenu/types';
+import { DropdownMenu } from '../../../UI';
 
 import styles from './TemplateIntegrationsMenu.css';
 

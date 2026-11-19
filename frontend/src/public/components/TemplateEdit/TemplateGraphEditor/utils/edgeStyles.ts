@@ -1,5 +1,5 @@
-import { CSSProperties } from 'react';
-import { TGraphEdge, TGraphEdgeLine } from '../types';
+import type { CSSProperties } from 'react';
+import type { TGraphEdge, TGraphEdgeLine } from '../types';
 
 export const GRAPH_EDGE_CLASS_CONDITIONAL = 'graph-edge--conditional';
 export const GRAPH_EDGE_CLASS_SKIP = GRAPH_EDGE_CLASS_CONDITIONAL;

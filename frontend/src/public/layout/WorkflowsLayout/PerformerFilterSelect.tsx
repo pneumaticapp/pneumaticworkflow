@@ -8,8 +8,8 @@ import {
   setFilterPerformersGroup as setWorkflowsFilterPerfomersGroup,
 } from '../../redux/workflows/slice';
 
-import { IGroup } from '../../redux/team/types';
-import { TUserListItem } from '../../types/user';
+import type { IGroup } from '../../types/team';
+import type { TUserListItem } from '../../types/user';
 import { ETemplateOwnerType } from '../../types/template';
 import { EWorkflowsStatus } from '../../types/workflow';
 

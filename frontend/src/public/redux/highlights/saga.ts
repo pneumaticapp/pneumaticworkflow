@@ -1,8 +1,9 @@
-import { PayloadAction } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 import { all, fork, put, select, takeLatest } from 'redux-saga/effects';
 
 import { getHighlightsItems, getHighlightsFilters } from '../selectors/highlights';
-import { getHighlights, IGetHighlightsResponse, IGetHighlightsFilters } from '../../api/getHighlights';
+import type { IGetHighlightsResponse, IGetHighlightsFilters } from '../../api/getHighlights';
+import { getHighlights } from '../../api/getHighlights';
 import { logger } from '../../utils/logger';
 
 import {
@@ -13,12 +14,9 @@ import {
   setHighlightsIsFeedLoading,
   setHighlightsTemplatesTitles,
 } from './slice';
-import { ILoadHighlightsConfig } from './types';
-import {
-  getHighlightsTitles,
-  IGetHighlightsTitlesRequestConfig,
-  TGetHighlightsTitlesResponse,
-} from '../../api/getHighlightsTitles';
+import type { ILoadHighlightsConfig } from './types';
+import type { IGetHighlightsTitlesRequestConfig, TGetHighlightsTitlesResponse } from '../../api/getHighlightsTitles';
+import { getHighlightsTitles } from '../../api/getHighlightsTitles';
 import { mapWorkflowsForSetHighlights } from '../../utils/mappers';
 import { getUserTimezone } from '../selectors/user';
 import { NotificationManager } from '../../components/UI/Notifications';

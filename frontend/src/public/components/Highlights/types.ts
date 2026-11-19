@@ -1,9 +1,9 @@
-import { ChangeEvent } from 'react';
+import type { ChangeEvent } from 'react';
 
-import { EHighlightsDateFilter, IHighlightsItem, THighlightsDateFilter } from '../../types/highlights';
-import { ITemplateTitleBaseWithCount } from '../../types/template';
-import { TUserListItem } from '../../types/user';
-import { IHighlightsFilters } from '../../types/redux';
+import type { EHighlightsDateFilter, IHighlightsItem, THighlightsDateFilter } from '../../types/highlights';
+import type { ITemplateTitleBaseWithCount } from '../../types/template';
+import type { TUserListItem } from '../../types/user';
+import type { IHighlightsFilters } from '../../redux/highlights/types';
 
 export interface IDateFilterProps {
   endDate: Date | null;

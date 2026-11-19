@@ -5,7 +5,11 @@ import { makeExtraField } from '../../../../__stubs__/fields.factory';
 import { makeFieldsetBindingClient } from '../../../../__stubs__/fieldsets.factory';
 import { makeKickoffClient, makeTemplateTaskClient } from '../../../../__stubs__/templates.factory';
 import { ETaskFormParts } from '../../types';
-import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../TaskForm/Conditions/types';
+import {
+  EConditionAction,
+  EConditionLogicOperations,
+  EConditionOperators,
+} from '../../../../types/templateTaskConditions';
 import { EExtraFieldType, ETaskPerformerType, ITemplateClient } from '../../../../types/template';
 
 const performer = { apiName: 'performer-1', label: 'Ann', type: ETaskPerformerType.User, sourceId: '1' };

@@ -7,7 +7,7 @@ import { getSnoozedUntilDate } from '../../utils/dateTime';
 import { FeedItemComment } from './FeedItemComment';
 import { FeedItemOutputs } from './FeedItemOutputs';
 import { PerformerChange } from './PerformerChange';
-import { TFeedItemHeaderProps } from './types';
+import type { TFeedItemHeaderProps } from './types';
 
 export function FeedItemHeader({
   attachments,
