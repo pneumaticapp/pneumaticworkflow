@@ -1,5 +1,5 @@
 import classnames from 'classnames';
-import type { ChangeEvent} from 'react';
+import type { ChangeEvent } from 'react';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 

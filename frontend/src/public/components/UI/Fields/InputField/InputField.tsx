@@ -1,7 +1,7 @@
 import React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
-import type { FieldHookConfig} from 'formik';
+import type { FieldHookConfig } from 'formik';
 import { useField } from 'formik';
 
 import type { TForegroundColor } from '../common/types';

@@ -7,7 +7,7 @@ import { TrashIcon, PencilIcon, UnionIcon, SettingsIcon, MoreIcon } from '../../
 import type { TDropdownOption } from '../Dropdown';
 import { Dropdown } from '../Dropdown';
 
-import type { IModifyDropdownProps} from './types';
+import type { IModifyDropdownProps } from './types';
 import { EModifyDropdownToggle } from './types';
 
 import buttonStyles from '../Buttons/Button/Button.css';

@@ -1,15 +1,6 @@
 import classnames from 'classnames';
-import type {
-  ChangeEvent,
-  KeyboardEvent,
-  MutableRefObject,
-  ReactNode,
-  Ref} from 'react';
-import React, {
-  forwardRef,
-  useCallback,
-  useMemo,
-} from 'react';
+import type { ChangeEvent, KeyboardEvent, MutableRefObject, ReactNode, Ref } from 'react';
+import React, { forwardRef, useCallback, useMemo } from 'react';
 
 import type { EFieldTagName } from '../../../Field';
 import { Field } from '../../../Field';

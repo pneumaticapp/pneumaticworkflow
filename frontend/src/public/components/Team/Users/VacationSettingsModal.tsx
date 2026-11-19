@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 
-import type { TUserListItem} from '../../../types/user';
+import type { TUserListItem } from '../../../types/user';
 import { isUserAbsent } from '../../../types/user';
-import type { IVacationActivateRequest} from '../../../api/vacation';
+import type { IVacationActivateRequest } from '../../../api/vacation';
 import { activateVacation, deactivateVacation } from '../../../api/vacation';
 import { VacationSettings } from '../../VacationSettings';
 import { Modal } from '../../UI/Modal';

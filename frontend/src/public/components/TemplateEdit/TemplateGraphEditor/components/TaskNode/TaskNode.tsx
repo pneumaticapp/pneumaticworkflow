@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
-import type { NodeProps} from 'reactflow';
+import type { NodeProps } from 'reactflow';
 import { useUpdateNodeInternals } from 'reactflow';
 import { useIntl } from 'react-intl';
 

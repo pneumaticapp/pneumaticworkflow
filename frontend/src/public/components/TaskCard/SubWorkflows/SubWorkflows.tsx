@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import classnames from 'classnames';
 
-import type { IWorkflowControllsProps} from '../../Workflows/WorkflowControlls';
+import type { IWorkflowControllsProps } from '../../Workflows/WorkflowControlls';
 import { WorkflowControlls } from '../../Workflows/WorkflowControlls';
 import type { IWorkflowClient } from '../../../types/workflow';
 import { Dropdown, Tooltip } from '../../UI';

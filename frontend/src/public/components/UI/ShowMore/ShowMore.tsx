@@ -1,4 +1,4 @@
-import type { ReactNode} from 'react';
+import type { ReactNode } from 'react';
 import React, { useState, useEffect } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';

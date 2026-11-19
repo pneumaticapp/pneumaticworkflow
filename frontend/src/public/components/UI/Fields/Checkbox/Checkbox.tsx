@@ -1,7 +1,7 @@
-import type { HTMLProps} from 'react';
+import type { HTMLProps } from 'react';
 import React, { useEffect, useRef } from 'react';
 import classnames from 'classnames';
-import type { FieldHookConfig} from 'formik';
+import type { FieldHookConfig } from 'formik';
 import { useField } from 'formik';
 
 import styles from './Checkbox.css';

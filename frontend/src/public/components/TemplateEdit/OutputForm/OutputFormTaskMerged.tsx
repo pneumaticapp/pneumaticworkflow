@@ -14,15 +14,14 @@ import { FieldsetIconPicker } from '../TaskOutputFlow/FieldsetIconPicker';
 import { MergedOutputRows } from '../TaskOutputFlow/MergedOutputRows';
 import type { TPatchTaskPayload } from '../../../redux/actions';
 
-import type {
-  TMergedTaskOutputRow} from '../TaskOutputFlow/mergeTaskOutputFlow';
+import type { TMergedTaskOutputRow } from '../TaskOutputFlow/mergeTaskOutputFlow';
 import {
   buildMergedTaskOutputRows,
   buildRowsWithAddedFieldset,
   buildRowsWithRemovedFieldset,
   createFieldsetBinding,
   moveMergedRow,
-  normalizeMergedTaskOutputOrders
+  normalizeMergedTaskOutputOrders,
 } from '../TaskOutputFlow/mergeTaskOutputFlow';
 
 import styles from './OutputForm.css';

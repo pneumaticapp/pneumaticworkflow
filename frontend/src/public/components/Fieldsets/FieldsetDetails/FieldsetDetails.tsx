@@ -36,13 +36,8 @@ import type { IExtraField } from '../../../types/template';
 import { EExtraFieldMode, EExtraFieldType } from '../../../types/template';
 import { FilledInfoIcon, ArrowDropdownIcon, DateIcon, LinkIcon } from '../../icons';
 import { EInputNameBackgroundColor, EMoveDirections } from '../../../types/workflow';
-import type {
-  IFieldsetTemplateRule,
-  EFieldsetRuleType,
-  IUpdateFieldsetParams} from '../../../types/fieldset';
-import {
-  EFieldLabelPosition
-} from '../../../types/fieldset';
+import type { IFieldsetTemplateRule, EFieldsetRuleType, IUpdateFieldsetParams } from '../../../types/fieldset';
+import { EFieldLabelPosition } from '../../../types/fieldset';
 import { ExtraFieldsMap } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldsMap';
 import { ExtraFieldIcon } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldIcon';
 import { ExtraFieldIntl } from '../../TemplateEdit/ExtraFields';
