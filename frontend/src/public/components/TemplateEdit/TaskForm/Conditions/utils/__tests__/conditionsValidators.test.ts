@@ -1,5 +1,6 @@
 import { getConditionRuleErrorId } from '../conditionsValidators';
-import { EConditionLogicOperations, EConditionOperators, TConditionRule } from '../../types';
+import { EConditionLogicOperations, EConditionOperators } from '../../../../../../types/templateTaskConditions';
+import type { TConditionRule } from '../../../../../../types/templateTaskConditions';
 import { EExtraFieldType } from '../../../../../../types/template';
 
 const makeRule = (overrides: Partial<TConditionRule> = {}): TConditionRule =>
