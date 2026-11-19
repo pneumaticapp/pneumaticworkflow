@@ -18,7 +18,8 @@ RUN npm ci --ignore-scripts
 ADD . /pneumatic_frontend/
 
 # Build webpack bundle at image build time (env-independent since runtime config refactor)
-ENV NODE_OPTIONS="--max-old-space-size=3072"
+ENV NODE_ENV=production \
+    NODE_OPTIONS="--max-old-space-size=3072"
 RUN npm run build-client:prod
 
-CMD ["pm2-runtime", "start", "pm2.json"]
+CMD ["pm2-runtime", "start", "pm2.json", "--env", "production"]

@@ -1,4 +1,3 @@
-import { Workbook } from 'exceljs';
 import { EExtraFieldType, ETemplateOwnerType } from '../../../types/template';
 import type { ITableViewFields } from '../../../types/template';
 import type { TUserListItem } from '../../../types/user';
@@ -134,6 +133,7 @@ export function buildWorkflowsExportRows({
 }
 
 export async function buildWorkflowsXlsxBuffer(rows: string[][]) {
+  const { Workbook } = await import('exceljs');
   const workbook = new Workbook();
   const sheet = workbook.addWorksheet('Workflows');
   rows.forEach((cells) => {

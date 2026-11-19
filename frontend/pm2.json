@@ -1,12 +1,15 @@
 {
   "name": "pneumatic-frontend",
   "script": "npm",
-  "args" : "run start:prod",
+  "args": "run start:prod",
   "instances": "1",
   "env": {
-    "NODE_ENV": "development"
-  },
-  "env_production" : {
     "NODE_ENV": "production"
+  },
+  "env_production": {
+    "NODE_ENV": "production"
+  },
+  "env_development": {
+    "NODE_ENV": "development"
   }
 }
