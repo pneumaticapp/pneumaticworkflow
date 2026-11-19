@@ -54,11 +54,17 @@ class PublicFieldTemplateSerializer(ModelSerializer):
             'order',
             'api_name',
             'default',
+            'rulesets',
         )
 
     order = IntegerField()
     api_name = CharField(required=False, max_length=200)
     selections = SerializerMethodField()
+    rulesets = FieldTemplateRuleSetSerializer(
+        many=True,
+        required=False,
+        default=list,
+    )
 
     def get_selections(self, instance: FieldTemplate) -> list:
         result = list(

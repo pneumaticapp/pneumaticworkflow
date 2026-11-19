@@ -5,10 +5,16 @@ from src.authentication.tokens import (
     PublicToken,
 )
 from src.processes.enums import (
-    FieldType, FieldSetRuleOperator,
+    FieldType, FieldSetRuleOperator, FieldRuleType,
+    FieldRuleOperator,
 )
-from src.processes.models.templates.fields import FieldTemplate, \
-    FieldTemplateSelection
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateSelection,
+    FieldTemplateRuleSet,
+    FieldTemplateRuleGroupOr,
+    FieldTemplateRuleGroupAnd,
+)
 from src.processes.tests.fixtures import (
     create_test_template,
     create_test_fieldset_template,
@@ -626,6 +632,110 @@ class TestRetrievePublicTemplate:
         assert fieldsets[1]['api_name'] == fieldset_2.api_name
         get_token_mock.assert_called_once()
         get_template_mock.assert_called_once_with(token)
+
+
+    def test_retrieve__kickoff_field_rulesets__ok(
+        self,
+        api_client,
+        mocker,
+    ):
+
+        """ GET /templates/public returns field rulesets. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        template = create_test_template(
+            user=user,
+            is_active=True,
+            is_public=True,
+            tasks_count=1,
+        )
+        kickoff = template.kickoff_instance
+        field = FieldTemplate.objects.create(
+            order=1,
+            name='First name',
+            type=FieldType.STRING,
+            kickoff=kickoff,
+            template=template,
+            account=account,
+            api_name='first-name',
+        )
+        target_field = FieldTemplate.objects.create(
+            order=2,
+            name='Last name',
+            type=FieldType.STRING,
+            kickoff=kickoff,
+            template=template,
+            account=account,
+            api_name='last-name',
+            is_hidden=True,
+        )
+        ruleset = FieldTemplateRuleSet.objects.create(
+            field=target_field,
+            template=template,
+            account=account,
+            name='Show last name',
+            type=FieldRuleType.SHOW,
+            order=0,
+        )
+        group_or = FieldTemplateRuleGroupOr.objects.create(
+            ruleset=ruleset,
+            template=template,
+            account=account,
+        )
+        FieldTemplateRuleGroupAnd.objects.create(
+            group_or=group_or,
+            template=template,
+            account=account,
+            operator=FieldRuleOperator.NOT_EQUAL,
+            value='',
+            field=field.api_name,
+        )
+        auth_header_value = (
+            f'Token {template.public_id}'
+        )
+        token = PublicToken(template.public_id)
+        mocker.patch(
+            'src.authentication.services.public_auth.'
+            'PublicAuthService.get_token',
+            return_value=token,
+        )
+        mocker.patch(
+            'src.authentication.services.public_auth.'
+            'PublicAuthService.get_template',
+            return_value=template,
+        )
+        settings_mock = mocker.patch(
+            'src.processes.views.public.'
+            'template.settings',
+        )
+        settings_mock.PROJECT_CONF = {'CAPTCHA': True}
+
+        # act
+        response = api_client.get(
+            path='/templates/public',
+            **{
+                'X-Public-Authorization':
+                    auth_header_value,
+            },
+        )
+
+        # assert
+        assert response.status_code == 200
+        fields = response.data['kickoff']['fields']
+        assert len(fields) == 2
+        target_field_data = next(
+            f for f in fields
+            if f['api_name'] == 'last-name'
+        )
+        assert 'rulesets' in target_field_data, (
+            'rulesets missing from public kickoff field'
+        )
+        assert len(target_field_data['rulesets']) == 1
+        ruleset_data = target_field_data['rulesets'][0]
+        assert ruleset_data['name'] == 'Show last name'
+        assert ruleset_data['type'] == FieldRuleType.SHOW
 
 
 class TestRetrieveEmbedTemplate:
