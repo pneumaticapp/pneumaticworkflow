@@ -10,6 +10,10 @@ from src.processes.messages.fieldset import (
     MSG_FS_0002,
     MSG_FS_0003,
     MSG_FS_0012,
+    MSG_FS_0017,
+    MSG_FS_0018,
+    MSG_FS_0019,
+    MSG_FS_0020,
 )
 from src.processes.models.templates.fieldset import (
     FieldSetTemplateRuleGroupAnd,
@@ -37,6 +41,17 @@ class FieldSetRuleSetService(BaseModelService):
         FieldSetRuleOperator.SUM_EQUAL: eq,
         FieldSetRuleOperator.SUM_GREATER_THAN: gt,
         FieldSetRuleOperator.SUM_LESS_THAN: lt,
+    }
+    OPERATOR_MESSAGE_MAP = {
+        FieldSetRuleOperator.SUM_EQUAL: (
+            MSG_FS_0002, MSG_FS_0012,
+        ),
+        FieldSetRuleOperator.SUM_GREATER_THAN: (
+            MSG_FS_0017, MSG_FS_0019,
+        ),
+        FieldSetRuleOperator.SUM_LESS_THAN: (
+            MSG_FS_0018, MSG_FS_0020,
+        ),
     }
 
     def _create_instance(
@@ -207,10 +222,16 @@ class FieldSetRuleSetService(BaseModelService):
     ) -> str:
         if self.instance.message:
             return self.instance.message
-        if len(all_ands) == 1:
-            return MSG_FS_0002(all_ands[0].value)
-        values_str = ', '.join(str(item.value) for item in all_ands)
-        return MSG_FS_0012(values_str)
+
+        operators = {item.operator for item in all_ands}
+        operator = operators.pop() if len(operators) == 1 else None
+        single_msg, multi_msg = self.OPERATOR_MESSAGE_MAP.get(
+            operator, (MSG_FS_0002, MSG_FS_0012),
+        )
+
+        msg = single_msg if len(all_ands) == 1 else multi_msg
+        values = ', '.join(str(item.value) for item in all_ands)
+        return msg(values)
 
     def validate(self, **kwargs) -> bool:
         """Call after objects save. Checks OR-logic across groups_or,
