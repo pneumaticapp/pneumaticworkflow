@@ -140,7 +140,12 @@ class TestRetrievePublicTemplate:
         assert field_data['order'] == field_template.order
         assert field_data['api_name'] == field_template.api_name
         assert field_data['default'] == ''
-        assert field_data['selections'] == [selection.value]
+        assert field_data['selections'] == [
+            {
+                'value': selection.value,
+                'api_name': selection.api_name,
+            },
+        ]
         get_token_mock.assert_called_once()
         get_template_mock.assert_called_once_with(token)
 
@@ -203,7 +208,12 @@ class TestRetrievePublicTemplate:
         assert field_data['order'] == field_template.order
         assert field_data['api_name'] == field_template.api_name
         assert field_data['default'] == ''
-        assert field_data['selections'] == [dataset_item.value]
+        assert field_data['selections'] == [
+            {
+                'value': dataset_item.value,
+                'api_name': None,
+            },
+        ]
         get_token_mock.assert_called_once()
         get_template_mock.assert_called_once_with(token)
 
@@ -265,8 +275,14 @@ class TestRetrievePublicTemplate:
         assert response.status_code == 200
         field_data = response.data['kickoff']['fields'][0]
         assert field_data['selections'] == [
-            selection.value,
-            dataset_item.value,
+            {
+                'value': selection.value,
+                'api_name': selection.api_name,
+            },
+            {
+                'value': dataset_item.value,
+                'api_name': None,
+            },
         ]
         get_token_mock.assert_called_once()
         get_template_mock.assert_called_once_with(token)

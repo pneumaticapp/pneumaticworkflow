@@ -61,11 +61,18 @@ class PublicFieldTemplateSerializer(ModelSerializer):
     selections = SerializerMethodField()
 
     def get_selections(self, instance: FieldTemplate) -> list:
-        result = list(instance.selections.values_list('value', flat=True))
+        result = list(
+            instance.selections.values('value', 'api_name'),
+        )
         if instance.dataset_id:
             dataset = instance.dataset
-            dataset_values = dataset.items.values_list('value', flat=True)
-            result.extend(list(dataset_values))
+            dataset_values = dataset.items.values_list(
+                'value', flat=True,
+            )
+            result.extend(
+                [{'value': v, 'api_name': None}
+                 for v in dataset_values],
+            )
         return result
 
 
