@@ -10,6 +10,8 @@ from src.processes.enums import (
     FieldRuleValueType,
     FieldType,
 )
+from src.storage.enums import AccessType, SourceType
+from src.storage.models import Attachment
 from src.processes.messages.workflow import (
     MSG_PW_0092,
 )
@@ -1016,6 +1018,537 @@ class TestFieldRuleCheckService:
 
         # assert
         assert values == ('raw', '')
+
+    def test_show_rule__file_exists__field_is_visible(self):
+
+        """ File with attachments passes EXIST rule. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+
+        source_field = TaskField.objects.create(
+            name='File Source',
+            api_name='file-source',
+            type=FieldType.FILE,
+            value='',
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        Attachment.objects.create(
+            file_id='doc.pdf',
+            account=account,
+            source_type=SourceType.TASK,
+            access_type=AccessType.RESTRICTED,
+            output=source_field,
+            workflow=workflow,
+        )
+        target_field = TaskField.objects.create(
+            name='Target Field',
+            api_name='target-field',
+            type=FieldType.STRING,
+            workflow=workflow,
+            task=task,
+            account=account,
+            is_hidden=True,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=target_field,
+            name='Show when file exists',
+            type=FieldRuleType.SHOW,
+            order=1,
+            api_name='ruleset-file-ex',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-file-ex',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=group_or,
+            field=source_field.api_name,
+            operator=FieldRuleOperator.EXIST,
+            api_name='group-and-file-ex',
+        )
+
+        # act
+        FieldRuleCheckService(
+            ruleset.field, user.timezone,
+        ).apply_rulesets(
+            [ruleset],
+            fields_by_api_name=field_map(
+                source_field, target_field,
+            ),
+        )
+
+        # assert
+        assert target_field.is_hidden is False
+
+    def test_show_rule__file_not_exists__field_is_visible(self):
+
+        """ File without attachments passes NOT_EXIST rule. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+
+        source_field = TaskField.objects.create(
+            name='File Source',
+            api_name='file-source',
+            type=FieldType.FILE,
+            value='',
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        target_field = TaskField.objects.create(
+            name='Target Field',
+            api_name='target-field',
+            type=FieldType.STRING,
+            workflow=workflow,
+            task=task,
+            account=account,
+            is_hidden=True,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=target_field,
+            name='Show when file not exists',
+            type=FieldRuleType.SHOW,
+            order=1,
+            api_name='ruleset-file-nex',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-file-nex',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=group_or,
+            field=source_field.api_name,
+            operator=FieldRuleOperator.NOT_EXIST,
+            api_name='group-and-file-nex',
+        )
+
+        # act
+        FieldRuleCheckService(
+            ruleset.field, user.timezone,
+        ).apply_rulesets(
+            [ruleset],
+            fields_by_api_name=field_map(
+                source_field, target_field,
+            ),
+        )
+
+        # assert
+        assert target_field.is_hidden is False
+
+    def test_show_rule__unknown_operator__field_is_hidden(self):
+
+        """ Unknown operator falls back to None → hidden. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+
+        source_field = TaskField.objects.create(
+            name='Source Field',
+            api_name='source-field',
+            type=FieldType.STRING,
+            value='yes',
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        target_field = TaskField.objects.create(
+            name='Target Field',
+            api_name='target-field',
+            type=FieldType.STRING,
+            workflow=workflow,
+            task=task,
+            account=account,
+            is_hidden=True,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=target_field,
+            name='Show unknown op',
+            type=FieldRuleType.SHOW,
+            order=1,
+            api_name='ruleset-unk-op',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-unk-op',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=group_or,
+            field=source_field.api_name,
+            operator='nonexistent_op',
+            api_name='group-and-unk-op',
+        )
+
+        # act
+        FieldRuleCheckService(
+            ruleset.field, user.timezone,
+        ).apply_rulesets(
+            [ruleset],
+            fields_by_api_name=field_map(
+                source_field, target_field,
+            ),
+        )
+
+        # assert
+        assert target_field.is_hidden is True
+
+    def test_show_rule__checkbox_empty__contains_false__hidden(
+        self,
+    ):
+
+        """ Empty checkbox → set() → CONTAIN fails. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+
+        source_field = TaskField.objects.create(
+            name='Checkbox Source',
+            api_name='checkbox-source',
+            type=FieldType.CHECKBOX,
+            value='',
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        target_field = TaskField.objects.create(
+            name='Target Field',
+            api_name='target-field',
+            type=FieldType.STRING,
+            workflow=workflow,
+            task=task,
+            account=account,
+            is_hidden=True,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=target_field,
+            name='Show when contains option-a',
+            type=FieldRuleType.SHOW,
+            order=1,
+            api_name='ruleset-chk-empty',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-chk-empty',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=group_or,
+            field=source_field.api_name,
+            operator=FieldRuleOperator.CONTAIN,
+            value='option-a',
+            api_name='group-and-chk-empty',
+        )
+
+        # act
+        FieldRuleCheckService(
+            ruleset.field, user.timezone,
+        ).apply_rulesets(
+            [ruleset],
+            fields_by_api_name=field_map(
+                source_field, target_field,
+            ),
+        )
+
+        # assert
+        assert target_field.is_hidden is True
+
+    def test_show_rule__user_exist_no_value_type__group_id(
+        self,
+    ):
+
+        """ EXIST + no value_type → user_id or group_id. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+
+        source_field = TaskField.objects.create(
+            name='User Source',
+            api_name='user-source',
+            type=FieldType.USER,
+            user_id=None,
+            group_id=42,
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        target_field = TaskField.objects.create(
+            name='Target Field',
+            api_name='target-field',
+            type=FieldType.STRING,
+            workflow=workflow,
+            task=task,
+            account=account,
+            is_hidden=True,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=target_field,
+            name='Show when user exists',
+            type=FieldRuleType.SHOW,
+            order=1,
+            api_name='ruleset-usr-exist',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-usr-exist',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=group_or,
+            field=source_field.api_name,
+            operator=FieldRuleOperator.EXIST,
+            api_name='group-and-usr-exist',
+        )
+
+        # act
+        FieldRuleCheckService(
+            ruleset.field, user.timezone,
+        ).apply_rulesets(
+            [ruleset],
+            fields_by_api_name=field_map(
+                source_field, target_field,
+            ),
+        )
+
+        # assert
+        assert target_field.is_hidden is False
+
+    def test_validator_rule__self_ref__field_none__uses_self(
+        self,
+    ):
+
+        """ field=None in predicate → self-reference. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+
+        field = TaskField.objects.create(
+            name='Number Field',
+            api_name='number-field',
+            type=FieldType.NUMBER,
+            value='5',
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=field,
+            name='Must be > 10',
+            type=FieldRuleType.VALIDATOR,
+            message='Must be > 10',
+            order=1,
+            api_name='ruleset-self-ref',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-self-ref',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=group_or,
+            field=None,
+            operator=FieldRuleOperator.GREATER_THAN,
+            value='10',
+            api_name='group-and-self-ref',
+        )
+
+        # act & assert
+        with pytest.raises(
+            FieldRuleCheckServiceException,
+        ) as exc_info:
+            FieldRuleCheckService(
+                ruleset.field, user.timezone,
+            ).apply_rulesets(
+                [ruleset],
+                fields_by_api_name=field_map(field),
+            )
+
+        assert exc_info.value.field_api_name == 'number-field'
+        assert exc_info.value.message == 'Must be > 10'
+
+    def test_show_rule__string_exists__field_is_visible(self):
+
+        """ STRING + EXIST → value truthy → visible. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+
+        source_field = TaskField.objects.create(
+            name='Source Field',
+            api_name='source-field',
+            type=FieldType.STRING,
+            value='hello',
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        target_field = TaskField.objects.create(
+            name='Target Field',
+            api_name='target-field',
+            type=FieldType.STRING,
+            workflow=workflow,
+            task=task,
+            account=account,
+            is_hidden=True,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=target_field,
+            name='Show when string exists',
+            type=FieldRuleType.SHOW,
+            order=1,
+            api_name='ruleset-str-exist',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-str-exist',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=group_or,
+            field=source_field.api_name,
+            operator=FieldRuleOperator.EXIST,
+            api_name='group-and-str-exist',
+        )
+
+        # act
+        FieldRuleCheckService(
+            ruleset.field, user.timezone,
+        ).apply_rulesets(
+            [ruleset],
+            fields_by_api_name=field_map(
+                source_field, target_field,
+            ),
+        )
+
+        # assert
+        assert target_field.is_hidden is False
+
+    def test_show_rule__radio_equal__field_is_visible(self):
+
+        """ RADIO + EQUAL → matching value → visible. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+
+        source_field = TaskField.objects.create(
+            name='Radio Source',
+            api_name='radio-source',
+            type=FieldType.RADIO,
+            value='option-b',
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        target_field = TaskField.objects.create(
+            name='Target Field',
+            api_name='target-field',
+            type=FieldType.STRING,
+            workflow=workflow,
+            task=task,
+            account=account,
+            is_hidden=True,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=target_field,
+            name='Show when radio is option-b',
+            type=FieldRuleType.SHOW,
+            order=1,
+            api_name='ruleset-radio-eq',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-radio-eq',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=group_or,
+            field=source_field.api_name,
+            operator=FieldRuleOperator.EQUAL,
+            value='option-b',
+            api_name='group-and-radio-eq',
+        )
+
+        # act
+        FieldRuleCheckService(
+            ruleset.field, user.timezone,
+        ).apply_rulesets(
+            [ruleset],
+            fields_by_api_name=field_map(
+                source_field, target_field,
+            ),
+        )
+
+        # assert
+        assert target_field.is_hidden is False
 
 
 class TestFieldRuleActionIntegration:
