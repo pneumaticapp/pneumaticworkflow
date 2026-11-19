@@ -1,6 +1,4 @@
-import {
-  EFieldLabelPosition,
-  EFieldsetRuleType,
+import type {
   IFieldsetBinding,
   IFieldsetBindingClient,
   IFieldsetCatalogItem,
@@ -9,7 +7,8 @@ import {
   IFieldsetTaskAPI,
   IFieldsetTemplateRule,
 } from '../types/fieldset';
-import { IExtraField } from '../types/template';
+import { EFieldLabelPosition, EFieldsetRuleType } from '../types/fieldset';
+import type { IExtraField } from '../types/template';
 
 export const makeFieldsetField = (overrides: Partial<IFieldsetField> = {}): IFieldsetField => ({
   apiName: 'field-1',

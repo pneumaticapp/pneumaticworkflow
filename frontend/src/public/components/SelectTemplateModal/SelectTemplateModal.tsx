@@ -1,15 +1,15 @@
-import * as React from 'react';
+import React from 'react';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import { useIntl } from 'react-intl';
 
 import { Loader, SectionTitle } from '../UI';
-import { ITemplateListItem } from '../../types/template';
+import type { ITemplateListItem } from '../../types/template';
 import { SearchIcon } from '../icons';
 import { SideModal } from '../UI/SideModal';
 import { useDelayUnmount } from '../../hooks/useDelayUnmount';
 
 import { StartProcessModalItem } from './SelectTemplateModalItem';
-import { openRunWorkflowModalSideMenu } from '../../redux/actions';
+import type { openRunWorkflowModalSideMenu } from '../../redux/actions';
 
 import styles from './SelectTemplateModal.css';
 

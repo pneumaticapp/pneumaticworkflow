@@ -2,8 +2,8 @@ import { all, put } from 'redux-saga/effects';
 
 import { setCurrentTask } from '../../actions';
 import { patchTaskInList } from '../../tasks/slice';
-import { ITask } from '../../../types/tasks';
-import { IWorkflowTaskClient } from '../../../types/workflow';
+import type { ITask } from '../../../types/tasks';
+import type { IWorkflowTaskClient } from '../../../types/workflow';
 
 export function getTaskWithRenamedWorkflow(task: ITask, workflowId: number, workflowName: string): ITask | null {
   const isMainWorkflow = workflowId === task.workflow.id;

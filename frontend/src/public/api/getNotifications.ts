@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { TNotificationsListItem } from '../types';
+import type { TNotificationsListItem } from '../types';
 
 export type TGetNotificationsResponse = {
   count: number;

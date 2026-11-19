@@ -1,12 +1,11 @@
 /* eslint-disable */
 /* prettier-ignore */
 import Switch from 'rc-switch';
-import * as React from 'react';
+import React, { useMemo, useState } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 import { useDispatch, useSelector } from 'react-redux';
 import { default as TextareaAutosize } from 'react-textarea-autosize';
-import { useMemo, useState } from 'react';
 
 import { patchTemplate } from '../../../../redux/actions';
 import { getTemplateData } from '../../../../redux/selectors/template';

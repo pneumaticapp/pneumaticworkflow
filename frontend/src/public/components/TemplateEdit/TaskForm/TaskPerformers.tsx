@@ -4,16 +4,13 @@ import { useSelector } from 'react-redux';
 import classNames from 'classnames';
 
 import { Checkbox } from '../../UI/Fields/Checkbox';
-import { TUserListItem } from '../../../types/user';
-import { ETaskPerformerType, ITemplateTaskClient, ITemplateTaskPerformer } from '../../../types/template';
-import { TTaskVariable } from '../types';
+import type { TUserListItem } from '../../../types/user';
+import type { ITemplateTaskClient, ITemplateTaskPerformer, TTaskVariable } from '../../../types/template';
+import { ETaskPerformerType } from '../../../types/template';
 import { trackInviteTeamInPage } from '../../../utils/analytics';
-import {
-  EOptionTypes,
-  TUsersDropdownOption,
-  UsersDropdown,
-  getUsersDropdownOptionValue,
-} from '../../UI/form/UsersDropdown';
+import type { TUsersDropdownOption } from '../../UI/form/UsersDropdown/types';
+import { EOptionTypes } from '../../UI/form/UsersDropdown/types';
+import { UsersDropdown, getUsersDropdownOptionValue } from '../../UI/form/UsersDropdown';
 import { getUserFullName } from '../../../utils/users';
 import { getPerformersForDropdown } from './utils/getPerformersForDropdown';
 import { EBgColorTypes, UserPerformer } from '../../UI/UserPerformer';

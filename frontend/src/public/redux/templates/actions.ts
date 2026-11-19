@@ -1,15 +1,9 @@
 // tslint:disable: max-line-length
-import {
-  ITemplatesList,
-  ITemplatesSystemCategories,
-  ITemplatesSystemList,
-  ITemplatesSystemSelection,
-  ITypedReduxAction,
-} from '../../types/redux';
+import type { ETemplatesSystemStatus, ITemplatesList, ITemplatesSystemList, ITemplatesSystemSelection } from './types';
+import type { ITypedReduxAction } from '../types';
 import { actionGenerator } from '../../utils/redux';
-import { TTemplateIntegrationStatsApi, TTransformedTask } from '../../types/template';
-import { ETemplatesSorting } from '../../types/workflow';
-import { TTaskVariable } from '../../components/TemplateEdit/types';
+import type { ITemplatesSystemCategories, TTemplateIntegrationStatsApi, TTaskVariable } from '../../types/template';
+import type { ETemplatesSorting, TTransformedTask } from '../../types/workflow';
 
 export const enum ETemplatesActions {
   SetCurrentTemplatesSystemStatus = 'SET_CURRENT_TEMPLATES_SYSTEM_STATUS',
@@ -34,13 +28,6 @@ export const enum ETemplatesActions {
   SetTemplateIntegrationsStats = 'SET_TEMPLATE_INTEGRATIONS_STATS',
   CheckIsTemplateOwner = 'CHECK_IS_TEMPLATE_OWNER',
   SetIsTemplateOwner = 'SET_IS_TEMPLATE_OWNER',
-}
-
-export enum ETemplatesSystemStatus {
-  WaitingForAction = 'waiting-for-action',
-  Loading = 'loading',
-  Searching = 'searching',
-  NoTemplates = 'no-templates',
 }
 
 export type TSetCurrentTemplatesSystemStatus = ITypedReduxAction<

@@ -1,13 +1,13 @@
 /* eslint-disable jsx-a11y/interactive-supports-focus */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import * as ReactDOM from 'react-dom';
 import { debounce } from 'throttle-debounce';
 
 import { InfoAlertIcon, SuccessCheckMark } from '../../icons';
 import { IntlMessages } from '../../IntlMessages';
-import { ETemplateStatus } from '../../../types/redux';
+import { ETemplateStatus } from '../../../redux/template/types';
 import { usePrevious } from '../../../hooks/usePrevious';
 
 import styles from './AutoSaveStatus.css';

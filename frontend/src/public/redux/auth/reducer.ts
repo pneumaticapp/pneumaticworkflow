@@ -3,11 +3,13 @@ import moment from 'moment-timezone';
 import { mapToCamelCase } from '../../utils/mappers';
 
 import { getBrowserConfig } from '../../utils/getConfig';
-import { ELoggedState, IAuthUser } from '../../types/redux';
+import { EAuthUserFailType, ELoggedState } from './types';
+import type { IAuthUser } from './types';
 import { parseCookies } from '../../utils/cookie';
 import { EUserStatus } from '../../types/user';
 
-import { EAuthActions, EAuthUserFailType, TAuthActions } from './actions';
+import { EAuthActions } from './actions';
+import type { TAuthActions } from './actions';
 import { setCurrentPlan, changeUserManager, changeUserReports } from '../accounts/slice';
 import { ESubscriptionPlan } from '../../types/account';
 

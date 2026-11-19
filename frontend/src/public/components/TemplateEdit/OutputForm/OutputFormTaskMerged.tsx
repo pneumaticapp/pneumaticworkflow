@@ -1,10 +1,9 @@
-import * as React from 'react';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import classNames from 'classnames';
-import { IntlShape } from 'react-intl';
+import type { IntlShape } from 'react-intl';
 
-import { EExtraFieldType, IExtraField, ITemplateTaskClient } from '../../../types/template';
-import { IFieldsetCatalogItem } from '../../../types/fieldset';
+import type { EExtraFieldType, IExtraField, ITemplateTaskClient } from '../../../types/template';
+import type { IFieldsetCatalogItem } from '../../../types/fieldset';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { useDatasetOptions } from '../ExtraFields/utils/useDatasetOptions';
 import { getEditedFields } from '../ExtraFields/utils/getEditedFields';
@@ -13,16 +12,17 @@ import { ExtraFieldsMap } from '../ExtraFields/utils/ExtraFieldsMap';
 import { ExtraFieldIcon } from '../ExtraFields/utils/ExtraFieldIcon';
 import { FieldsetIconPicker } from '../TaskOutputFlow/FieldsetIconPicker';
 import { MergedOutputRows } from '../TaskOutputFlow/MergedOutputRows';
-import { TPatchTaskPayload } from '../../../redux/actions';
+import type { TPatchTaskPayload } from '../../../redux/actions';
 
+import type {
+  TMergedTaskOutputRow} from '../TaskOutputFlow/mergeTaskOutputFlow';
 import {
   buildMergedTaskOutputRows,
   buildRowsWithAddedFieldset,
   buildRowsWithRemovedFieldset,
   createFieldsetBinding,
   moveMergedRow,
-  normalizeMergedTaskOutputOrders,
-  TMergedTaskOutputRow,
+  normalizeMergedTaskOutputOrders
 } from '../TaskOutputFlow/mergeTaskOutputFlow';
 
 import styles from './OutputForm.css';

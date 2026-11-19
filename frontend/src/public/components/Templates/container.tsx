@@ -6,7 +6,7 @@ import { changeTemplatesSorting } from '../../redux/actions';
 import { getTemplatesListSorting } from '../../redux/selectors/templates';
 import { ETemplatesSorting } from '../../types/workflow';
 import { Templates } from './Templates';
-import { ITemplatesSortingSyncProps } from './types';
+import type { ITemplatesSortingSyncProps } from './types';
 
 const TemplatesSortingSync: React.FC<ITemplatesSortingSyncProps> = () => <Templates />;
 

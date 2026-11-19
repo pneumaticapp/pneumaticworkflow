@@ -1,7 +1,7 @@
-import * as React from 'react';
-import { IExtraField, EExtraFieldMode } from '../../types/template';
-import { EInputNameBackgroundColor } from '../../types/workflow';
-import { EFieldLabelPosition } from '../../types/fieldset';
+import React from 'react';
+import type { IExtraField, EExtraFieldMode } from '../../types/template';
+import type { EInputNameBackgroundColor } from '../../types/workflow';
+import type { EFieldLabelPosition } from '../../types/fieldset';
 import { ExtraFieldIntl } from '../TemplateEdit/ExtraFields';
 
 import styles from './FieldsetFieldGroup.css';

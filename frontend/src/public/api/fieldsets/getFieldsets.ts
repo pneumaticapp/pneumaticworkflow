@@ -1,5 +1,5 @@
 import { commonRequest } from '../commonRequest';
-import { IGetFieldsetsResponse, IGetFieldsetsParams } from '../../types/fieldset';
+import type { IGetFieldsetsResponse, IGetFieldsetsParams } from '../../types/fieldset';
 import { fieldsetsOrderingMap } from '../../constants/sortings';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 

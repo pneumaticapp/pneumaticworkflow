@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { ITaskAPI } from '../types/tasks';
+import type { ITaskAPI } from '../types/tasks';
 
 export function getTask(id: number) {
   const {

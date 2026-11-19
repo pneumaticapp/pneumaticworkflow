@@ -1,5 +1,5 @@
 import { commonRequest } from '../commonRequest';
-import { IFieldsetCatalogItem, IGetFieldsetParams } from '../../types/fieldset';
+import type { IFieldsetCatalogItem, IGetFieldsetParams } from '../../types/fieldset';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 
 export function getFieldset({ id, signal }: IGetFieldsetParams) {

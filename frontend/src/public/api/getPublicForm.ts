@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { IPublicForm } from '../components/PublicFormsApp/common/types';
+import type { IPublicForm } from '../components/PublicFormsApp/common/types';
 
 export type TPublicFormResponse = IPublicForm;
 

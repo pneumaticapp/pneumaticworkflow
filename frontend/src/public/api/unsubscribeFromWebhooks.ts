@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { EWebhooksTypeEvent } from '../types/webhooks';
+import type { EWebhooksTypeEvent } from '../types/webhooks';
 
 export function unsubscribeFromWebhooks(event: EWebhooksTypeEvent) {
   const {

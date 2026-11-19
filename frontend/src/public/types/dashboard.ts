@@ -22,3 +22,29 @@ export interface IGettingStartedChecklist {
   conditionCreated: boolean;
   templatePublicated: boolean;
 }
+
+export interface IDashboardTask {
+  id: number;
+  apiName: string;
+  number: number;
+  name: string;
+  started: number | null;
+  inProgress: number;
+  overdue: number;
+  completed: number | null;
+}
+
+export type TDashboardBreakdownItemResponse = {
+  templateId: number;
+  templateName: string;
+  started: number | null;
+  inProgress: number;
+  overdue: number;
+  isActive?: boolean;
+  completed: number | null;
+};
+
+export type TDashboardBreakdownItem = TDashboardBreakdownItemResponse & {
+  tasks: IDashboardTask[];
+  areTasksLoading: boolean;
+};

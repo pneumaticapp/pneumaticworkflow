@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
@@ -6,7 +6,7 @@ import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
 import { Button, RouteLeavingGuard } from '../../UI';
 import { getCurrentFieldset } from '../../../redux/selectors/fieldsets';
-import { TFieldsetUnsavedChangesModalProps } from './types';
+import type { TFieldsetUnsavedChangesModalProps } from './types';
 
 export function FieldsetUnsavedChangesModal({ isChanged, onSave }: TFieldsetUnsavedChangesModalProps) {
   const { formatMessage } = useIntl();

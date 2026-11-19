@@ -1,4 +1,4 @@
-import {
+import type {
   IDueDate,
   IDueDateAPI,
   ITemplateTaskResponse,

@@ -1,4 +1,4 @@
-import { ELocale } from '../types/redux';
+import { ELocale } from '../types/locale';
 import { EnLang } from './entries/en-US';
 import { RuLang } from './entries/ru-RU';
 

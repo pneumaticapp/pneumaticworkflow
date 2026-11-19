@@ -1,4 +1,4 @@
-import { EGraphViewMode } from '../types';
+import { EGraphViewMode } from '../../../../types/template';
 
 export const GRAPH_VIEW_MODE_STORAGE_KEY = 'template_graph_view_mode';
 

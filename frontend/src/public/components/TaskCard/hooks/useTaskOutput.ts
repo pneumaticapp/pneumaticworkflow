@@ -1,19 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { IFieldsetRuntime } from '../../../types/fieldset';
-import { IExtraField } from '../../../types/template';
+import type { IFieldsetRuntime } from '../../../types/fieldset';
+import type { IExtraField } from '../../../types/template';
 import { sortFieldsByOrder } from '../../../utils/workflows';
 import { ExtraFieldsHelper } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
 import { getEditedFields } from '../../TemplateEdit/ExtraFields/utils/getEditedFields';
-import { ITask } from '../../../types/tasks';
+import type { ITask } from '../../../types/tasks';
+import type { TFieldsetDraftMetadata, TOutputDraftMetadata } from '../utils/storageOutputs';
 import {
   addOrUpdateStorageOutput,
   getOutputFromStorage,
   removeOutputFromLocalStorage,
   fieldsetsStorage,
   outputStorage,
-  TFieldsetDraftMetadata,
-  TOutputDraftMetadata,
 } from '../utils/storageOutputs';
 import { createFlushableDebounce } from '../utils/createFlushableDebounce';
 import { getTaskOutputFingerprint } from '../utils/getTaskOutputFingerprint';

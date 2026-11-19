@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { TTemplateIntegrationStatsApi } from '../types/template';
+import type { TTemplateIntegrationStatsApi } from '../types/template';
 
 type TGetTemplatesIntegrationsStatsConfig = {
   templates: number[];

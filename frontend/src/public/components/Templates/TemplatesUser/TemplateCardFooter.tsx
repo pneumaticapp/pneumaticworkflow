@@ -11,7 +11,7 @@ import { TemplateIntegrationsIndicator, useTemplateIntegrationsList } from '../.
 import { hasTemplateCardIntegrations, TEMPLATE_CARD_INTEGRATIONS_EXCLUDE } from '../utils/templateIntegrations';
 
 import styles from '../Templates.css';
-import { ITemplateCardFooterProps } from './types';
+import type { ITemplateCardFooterProps } from './types';
 
 export function TemplateCardFooter({ templateId, tasksCount, isActive, onRunWorkflow }: ITemplateCardFooterProps) {
   const { formatMessage } = useIntl();

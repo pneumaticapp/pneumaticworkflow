@@ -1,4 +1,4 @@
-import { ICondition } from '../../TaskForm/Conditions';
+import type { ICondition } from '../../../../types/templateTaskConditions';
 import { getFilledConditions } from '../../TaskForm/Conditions/utils/conditionsValidators';
 
 export function getConditionsCount(conditions: ICondition[]) {

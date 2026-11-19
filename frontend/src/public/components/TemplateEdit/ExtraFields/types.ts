@@ -1,9 +1,9 @@
-import { Ref } from 'react';
-import { IntlShape } from 'react-intl';
+import type { Ref } from 'react';
+import type { IntlShape } from 'react-intl';
 
-import { EExtraFieldMode, IExtraField } from '../../../types/template';
-import { EInputNameBackgroundColor } from '../../../types/workflow';
-import { EFieldLabelPosition } from '../../../types/fieldset';
+import type { EExtraFieldMode, IExtraField } from '../../../types/template';
+import type { EInputNameBackgroundColor } from '../../../types/workflow';
+import type { EFieldLabelPosition } from '../../../types/fieldset';
 
 export interface IWorkflowExtraFieldProps {
   field: IExtraField;

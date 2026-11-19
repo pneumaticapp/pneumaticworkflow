@@ -1,7 +1,8 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
-import { FieldHookConfig, useField } from 'formik';
+import type { FieldHookConfig} from 'formik';
+import { useField } from 'formik';
 
 import styles from './RadioButton.css';
 import commonStyles from '../common/styles.css';

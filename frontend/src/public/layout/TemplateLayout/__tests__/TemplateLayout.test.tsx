@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { IntlProvider } from 'react-intl';
 
 import { TemplateLayout } from '../TemplateLayout';
-import { EGraphViewMode } from '../../../components/TemplateEdit/TemplateGraphEditor/types';
+import { EGraphViewMode } from '../../../types/template';
 import { ERoutes } from '../../../constants/routes';
 import { setViewMode } from '../../../redux/templateGraphView/slice';
 import { enMessages } from '../../../lang/locales/en_US';

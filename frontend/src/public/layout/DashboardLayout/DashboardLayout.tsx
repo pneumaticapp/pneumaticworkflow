@@ -1,10 +1,11 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { TopNavContainer } from '../../components/TopNav';
 import { EDashboardTimeRange } from '../../types/dashboard';
-import { EDashboardModes, IApplicationState } from '../../types/redux';
+import { EDashboardModes } from '../../redux/dashboard/types';
+import type { RootState } from '../../redux/store';
 import { SelectMenu, Tabs } from '../../components/UI';
 import { FilterIcon } from '../../components/icons';
 import { getCanAccessWorkflows } from '../../redux/selectors/user';
@@ -23,8 +24,8 @@ export const DashboardLayoutComponent: React.FC = ({ children }) => {
   const intl = useIntl();
   const dispatch = useDispatch();
 
-  const currentTimeRange = useSelector((state: IApplicationState) => state.dashboard.timeRange);
-  const dashboardMode = useSelector((state: IApplicationState) => state.dashboard.mode);
+  const currentTimeRange = useSelector((state: RootState) => state.dashboard.timeRange);
+  const dashboardMode = useSelector((state: RootState) => state.dashboard.mode);
   const canAccessWorkflows = useSelector(getCanAccessWorkflows);
 
   const dashboardModes = React.useMemo(

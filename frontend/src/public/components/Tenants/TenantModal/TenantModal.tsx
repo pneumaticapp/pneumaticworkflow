@@ -2,14 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 
 import { validateTenantName } from '../../../utils/validators';
-import { TChangeTenantNamePayload } from '../../../redux/actions';
+import type { TChangeTenantNamePayload } from '../../../redux/actions';
 import { Button, Header, InputField, Modal } from '../../UI';
 import {
   ELearnMoreLinks,
   PRICE_UNLIMITED_USER_IN_USD_ANN,
   PRICE_UNLIMITED_USER_IN_USD_MO,
 } from '../../../constants/defaultValues';
-import { ETypeTenantModal, ITenant } from '../../../types/tenants';
+import type { ITenant } from '../../../types/tenants';
+import { ETypeTenantModal } from '../../../types/tenants';
 
 import styles from './TenantModal.css';
 

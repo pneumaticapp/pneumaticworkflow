@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import classnames from 'classnames';
 
 import { PencilSmallIcon } from '../../icons';
@@ -8,7 +7,7 @@ import { validateFieldsetTitle } from '../../../utils/validators';
 import styles from '../OutputForm/OutputForm.css';
 import kickoffStyles from '../KickoffRedux/KickoffRedux.css';
 
-import { IFieldsetEditorTitleProps } from './types';
+import type { IFieldsetEditorTitleProps } from './types';
 
 export function FieldsetEditorTitle({
   apiNameBinding,

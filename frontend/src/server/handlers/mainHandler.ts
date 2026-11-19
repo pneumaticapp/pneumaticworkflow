@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 
 import { ERoutes } from '../../public/constants/routes';
 import { serverConfigToBrowser } from '../../public/utils/getConfig';

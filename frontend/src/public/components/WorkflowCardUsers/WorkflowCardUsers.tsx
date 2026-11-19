@@ -1,7 +1,8 @@
 import React from 'react';
 import { Avatar } from '../UI/Avatar';
 import { isArrayWithItems } from '../../utils/helpers';
-import { ETemplateOwnerType, RawPerformer } from '../../types/template';
+import type { RawPerformer } from '../../types/template';
+import { ETemplateOwnerType } from '../../types/template';
 import UserDataWithGroup from '../UserDataWithGroup';
 
 import styles from './WorkflowCardUsers.css';

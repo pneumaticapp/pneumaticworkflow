@@ -2,8 +2,10 @@
 import Autolinker from 'autolinker';
 import type MarkdownIt from 'markdown-it';
 
-import { createMarkdownToken, IMarkdownToken } from '../createMarkdownToken';
-import { IRenderEmbedVideoHtmlOptions, renderLinkHtml } from '../renderEmbedVideoHtml';
+import type { IMarkdownToken } from '../createMarkdownToken';
+import { createMarkdownToken } from '../createMarkdownToken';
+import type { IRenderEmbedVideoHtmlOptions } from '../renderEmbedVideoHtml';
+import { renderLinkHtml } from '../renderEmbedVideoHtml';
 
 const LINK_SCAN_RE = /www|@|:\/\//;
 const HTML_ANCHOR_OPEN_RE = /^<a\b/i;

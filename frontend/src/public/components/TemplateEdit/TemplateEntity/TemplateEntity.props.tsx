@@ -1,6 +1,6 @@
-import { ITemplateTaskClient } from '../../../types/template';
-import { TUserListItem } from '../../../types/user';
-import { EMoveDirections } from '../../../types/workflow';
+import type { ITemplateTaskClient } from '../../../types/template';
+import type { TUserListItem } from '../../../types/user';
+import type { EMoveDirections } from '../../../types/workflow';
 
 export interface ITemplateEntityProps {
   index: number;

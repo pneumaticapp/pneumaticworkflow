@@ -1,6 +1,6 @@
 /* prettier-ignore */
-import * as React from 'react';
-import { RouteComponentProps } from 'react-router-dom';
+import React from 'react';
+import type { RouteComponentProps } from 'react-router-dom';
 
 import styles from './Auth.css';
 import { Button } from 'reactstrap';

@@ -1,11 +1,11 @@
-import * as React from 'react';
+import React from 'react';
 import { EExtraFieldMode } from '../../types/template';
 import { EFieldLabelPosition } from '../../types/fieldset';
 import { ExtraFieldIntl } from '../TemplateEdit/ExtraFields';
 import { FieldsetFieldGroup } from '../FieldsetFieldGroup';
 import { buildRuntimeMergedOutputParts } from '../TemplateEdit/TaskOutputFlow/mergeTaskOutputFlow';
 import { useCheckDevice } from '../../hooks/useCheckDevice';
-import { IMergedOutputListProps } from './types';
+import type { IMergedOutputListProps } from './types';
 
 export function MergedOutputList({
   fields,

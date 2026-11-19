@@ -1,0 +1,69 @@
+import type { ReactNode, SVGAttributes } from 'react';
+
+export type TOptionId = number | string | null;
+
+export type TOptionBase<IdKey extends string, LabelKey extends string> = {
+  [key in IdKey]: TOptionId;
+} & {
+  [key in LabelKey]: string | ReactNode;
+} & {
+  customClickHandler?(): void;
+  areSubOptionsLoading?: boolean;
+  count?: number;
+  subTitle?: string;
+  searchByText?: string;
+  isTitle?: boolean;
+  type?: string;
+};
+
+export interface IFilterSelectCommonProps<
+  IdKey extends string,
+  LabelKey extends string,
+  TOption extends TOptionBase<IdKey, LabelKey>,
+> {
+  isLoading?: boolean;
+  options: TOption[];
+  groupedOptions?: Map<number, { title: string; options: TOption[] }>;
+  flatGroupedOptions?: TOption[];
+  isSearchShown?: boolean;
+  isDisabled?: boolean;
+  noValueLabel?: string;
+  placeholderText: string;
+  searchPlaceholder?: string;
+  toggleClassName?: string;
+  arrowClassName?: string;
+  menuClassName?: string;
+  isWideMenu?: boolean;
+  optionIdKey: IdKey;
+  optionLabelKey: LabelKey;
+  containerClassname?: string;
+  selectAllLabel?: string;
+  id?: string;
+  resetFilter(): void;
+  selectAll?(): void;
+  Icon?(props: SVGAttributes<SVGElement>): JSX.Element;
+  renderPlaceholder(options: TOption[]): string | JSX.Element;
+  positionFixed?: boolean;
+  getOptionSelectionKey?: (option: TOption) => TOptionId;
+}
+
+export interface IFilterSelectMultiOptionsProps {
+  isMultiple: true;
+  selectedOption?: never;
+  selectedOptions: TOptionId[];
+  onChange(optionIds: TOptionId[] | string[], option: any): void;
+}
+
+export interface IFilterSelectSingleOptionsProps {
+  isMultiple?: false;
+  selectedOption: TOptionId;
+  selectedOptions?: never;
+  onChange(optionId: TOptionId | string | null): void;
+}
+
+export type TFilterSelectProps<
+  IdKey extends string,
+  LabelKey extends string,
+  TOption extends TOptionBase<IdKey, LabelKey>,
+> = IFilterSelectCommonProps<IdKey, LabelKey, TOption> &
+  (IFilterSelectMultiOptionsProps | IFilterSelectSingleOptionsProps);

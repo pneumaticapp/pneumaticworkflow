@@ -61,7 +61,6 @@ jest.mock('../../../server/utils/helpers', () => ({
 }));
 
 jest.mock('../../types/user', () => ({}));
-jest.mock('../../types/redux', () => ({}));
 jest.mock('../../redux/pages/types', () => ({}));
 
 describe('getConfig', () => {

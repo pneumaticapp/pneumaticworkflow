@@ -1,4 +1,4 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import type { Router, Request, Response, NextFunction } from 'express';
 
 type TSubdomainHosts = string[];
 

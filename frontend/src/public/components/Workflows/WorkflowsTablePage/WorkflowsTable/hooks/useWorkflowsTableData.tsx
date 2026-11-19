@@ -1,17 +1,18 @@
-import React, { ReactElement, useEffect, useMemo, useRef, useState } from 'react';
-import { CellProps } from 'react-table';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import type { ReactElement } from 'react';
+import type { CellProps } from 'react-table';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
-import { ITableViewFields } from '../../../../../types/template';
+import type { ITableViewFields } from '../../../../../types/template';
 import { EWorkflowsLoadingStatus } from '../../../../../types/workflow';
-import { IWorkflowsList } from '../../../../../types/redux';
+import type { IWorkflowsList } from '../../../../../redux/workflows/types';
 import { getCurrentUser } from '../../../../../redux/selectors/authUser';
 import { getLastLoadedTemplateIdForTable, getSavedFields } from '../../../../../redux/selectors/workflows';
 import * as ColumnCells from '../Columns/Cells';
 import { EColumnWidthMinWidth, ETableViewFieldsWidth } from '../Columns/Cells/WorkflowTableConstants';
 import { ALL_SYSTEM_FIELD_NAMES } from '../constants';
-import { TableColumns, WorkflowColumn } from '../types';
+import type { TTableColumns, TWorkflowColumn } from '../types';
 import { useSavedColumnWidths } from './useWorkflowColumnWidths';
 
 import styles from '../WorkflowsTable.css';
@@ -21,7 +22,7 @@ type TUseWorkflowsTableDataParams = {
   workflowsLoadingStatus: EWorkflowsLoadingStatus;
   templatesIdsFilter: number[];
   searchHeader: ReactElement;
-  renderWorkflowColumn(props: CellProps<TableColumns>): ReactElement;
+  renderWorkflowColumn(props: CellProps<TTableColumns>): ReactElement;
 };
 
 export function useWorkflowsTableData({
@@ -35,7 +36,7 @@ export function useWorkflowsTableData({
   const currentUser = useSelector(getCurrentUser);
   const selectedFields = useSelector(getSavedFields);
   const lastLoadedTemplateId = useSelector(getLastLoadedTemplateIdForTable);
-  const cachedColumnsRef = useRef<WorkflowColumn[]>([]);
+  const cachedColumnsRef = useRef<TWorkflowColumn[]>([]);
   const [isTemplateChanging, setIsTemplateChanging] = useState(false);
   const currentTemplateId = templatesIdsFilter.length === 1 ? templatesIdsFilter[0] : undefined;
   const previousTemplateIdRef = useRef(currentTemplateId);
@@ -61,7 +62,7 @@ export function useWorkflowsTableData({
     previousTemplateIdRef.current = currentTemplateId;
   }, [currentTemplateId, lastLoadedTemplateId]);
 
-  const fieldsColumns = useMemo<WorkflowColumn[]>(
+  const fieldsColumns = useMemo<TWorkflowColumn[]>(
     () =>
       workflowsList.items[0]?.fields?.map((field: ITableViewFields) => ({
         Header: <div className={styles['column-header__title']}>{field.name}</div>,
@@ -88,12 +89,12 @@ export function useWorkflowsTableData({
       workflowsList.items.length === 0 &&
       String(lastLoadedTemplateId) === String(currentTemplateId ?? null));
 
-  const columns = useMemo<WorkflowColumn[]>(() => {
+  const columns = useMemo<TWorkflowColumn[]>(() => {
     if (shouldSkeletonOptionalTable) {
       return cachedColumnsRef.current;
     }
 
-    const systemColumns: WorkflowColumn[] = [
+    const systemColumns: TWorkflowColumn[] = [
       ...(selectedFieldsSet.has('system-column-workflow')
         ? [
             {
@@ -213,7 +214,7 @@ export function useWorkflowsTableData({
     }
   }, [columns, workflowsLoadingStatus]);
 
-  const data = useMemo<TableColumns[]>(
+  const data = useMemo<TTableColumns[]>(
     () =>
       workflowsList.items.map((workflow) => {
         const row = {
@@ -223,7 +224,7 @@ export function useWorkflowsTableData({
           'system-column-progress': workflow,
           'system-column-step': workflow,
           'system-column-performer': workflow,
-        } as TableColumns;
+        } as TTableColumns;
 
         workflow.fields?.forEach((field: ITableViewFields) => {
           row[field.apiName] = field;

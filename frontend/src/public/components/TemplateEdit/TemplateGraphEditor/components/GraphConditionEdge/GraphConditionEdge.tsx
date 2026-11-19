@@ -1,8 +1,8 @@
-import * as React from 'react';
-import { useCallback, useState } from 'react';
-import { EdgeLabelRenderer, EdgeProps } from 'reactflow';
+import React, { useCallback, useState } from 'react';
+import type { EdgeProps } from 'reactflow';
+import { EdgeLabelRenderer } from 'reactflow';
 
-import { IConditionEdgeData } from '../../types';
+import type { IConditionEdgeData } from '../../types';
 import { getGraphEdgePath } from '../../utils/getGraphEdgePath';
 import { ConditionEdgeInfo } from '../ConditionEdgeInfo/ConditionEdgeInfo';
 import { GraphAddTaskButton } from '../GraphAddTaskButton/GraphAddTaskButton';

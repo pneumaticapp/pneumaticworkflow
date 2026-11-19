@@ -1,8 +1,9 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import { Dropdown, TDropdownOption } from '../../../UI';
+import type { TDropdownOption } from '../../../UI';
+import { Dropdown } from '../../../UI';
 import { EditIcon, MoreIcon, ReturnToIcon } from '../../../icons';
 
 import styles from './KickoffMenu.css';

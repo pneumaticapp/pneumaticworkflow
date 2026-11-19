@@ -1,10 +1,14 @@
-import * as React from 'react';
+import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { ReactFlowProvider } from 'reactflow';
 
 import { EExtraFieldType, ETaskPerformerType, ITemplateTaskClient } from '../../../../../types/template';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
-import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../../TaskForm/Conditions';
+import {
+  EConditionAction,
+  EConditionLogicOperations,
+  EConditionOperators,
+} from '../../../../../types/templateTaskConditions';
 import { TaskNode } from './TaskNode';
 
 const task: ITemplateTaskClient = {

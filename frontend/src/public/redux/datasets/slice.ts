@@ -1,15 +1,15 @@
-import { createSlice, PayloadAction, createAction } from '@reduxjs/toolkit';
+import { createSlice, createAction } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 
-import { IDatasetsStore, IDatasetsList } from '../../types/redux';
-import {
+import { EDatasetsSorting } from '../../types/dataset';
+import type {
   IDataset,
   ICreateDatasetParams,
   IDatasetListItem,
   IUpdateDatasetParams,
-  EDatasetsSorting,
   TDatasetItemsSortOrder,
 } from '../../types/dataset';
-import { TDeleteDatasetPayload } from './types';
+import type { IDatasetsList, IDatasetsStore, TDeleteDatasetPayload } from './types';
 
 export const initialState: IDatasetsStore = {
   datasetsList: {

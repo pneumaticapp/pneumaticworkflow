@@ -1,9 +1,11 @@
-import * as React from 'react';
-import { injectIntl, IntlShape } from 'react-intl';
+import React from 'react';
+import type { IntlShape } from 'react-intl';
+import { injectIntl } from 'react-intl';
 import classNames from 'classnames';
 
 import { EMoveDirections, EInputNameBackgroundColor } from '../../../types/workflow';
-import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../types/template';
+import type { EExtraFieldType, IExtraField } from '../../../types/template';
+import { EExtraFieldMode } from '../../../types/template';
 import { EFieldLabelPosition } from '../../../types/fieldset';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { getNormalizeFieldsOrders, moveWorkflowField } from '../../../utils/workflows';
@@ -14,7 +16,8 @@ import { ExtraFieldIntl } from '../ExtraFields';
 import { getEditedFields } from '../ExtraFields/utils/getEditedFields';
 import { getEmptyField } from '../KickoffRedux/utils/getEmptyField';
 
-import { OutputFormTaskMerged, IOutputFormTaskMergedOwnProps } from './OutputFormTaskMerged';
+import type { IOutputFormTaskMergedOwnProps } from './OutputFormTaskMerged';
+import { OutputFormTaskMerged } from './OutputFormTaskMerged';
 
 import styles from './OutputForm.css';
 import stylesTaskForm from '../TaskForm/TaskForm.css';

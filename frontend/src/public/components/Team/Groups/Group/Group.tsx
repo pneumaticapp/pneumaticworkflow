@@ -4,17 +4,19 @@ import { useIntl } from 'react-intl';
 import { NavLink } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 
-import { Dropdown, TDropdownOption } from '../../../UI';
+import { Dropdown } from '../../../UI';
+import type { TDropdownOption } from '../../../UI/Dropdown';
 import { GroupIcon, IntegrateIcon, MoreIcon, PencilIcon, TrashIcon, UnionIcon } from '../../../icons';
 import { WorkflowCardUsers } from '../../../WorkflowCardUsers';
-import { IGroup } from '../../../../redux/team/types';
+import type { IGroup } from '../../../../types/team';
 import { ERoutes } from '../../../../constants/routes';
 import { createGroup, deleteGroup, editModalOpen, updateUsersGroup } from '../../../../redux/actions';
 import { UserSelection } from '../../UserSelection';
 
 import styles from './Group.css';
 import { useCheckDevice } from '../../../../hooks/useCheckDevice';
-import { ETemplateOwnerType, RawPerformer } from '../../../../types/template';
+import { ETemplateOwnerType } from '../../../../types/template';
+import type { RawPerformer } from '../../../../types/template';
 
 export interface IGroupProps {
   group: IGroup;

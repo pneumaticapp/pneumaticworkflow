@@ -1,4 +1,5 @@
-import { EGraphNodeType, TGraphEdge, TGraphNode } from '../types';
+import type { TGraphEdge, TGraphNode } from '../types';
+import { EGraphNodeType } from '../types';
 import { isConditionalGraphEdge } from './edgeStyles';
 import { getJunctionKind, isCardNode } from './graphGeometry';
 

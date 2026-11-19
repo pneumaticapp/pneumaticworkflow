@@ -1,6 +1,7 @@
-import { getWorkflows, IGetWorkflowsConfig } from '../getWorkflows';
+import type { IGetWorkflowsConfig } from '../getWorkflows';
+import { getWorkflows } from '../getWorkflows';
 import { mapWorkflowsToISOStringToRedux, mapWorkflowsAddComputedPropsToRedux } from '../../utils/mappers';
-import { IWorkflow, IWorkflowClient, TWorkflowResponse } from '../../types/workflow';
+import type { IWorkflow, IWorkflowClient, TWorkflowResponse } from '../../types/workflow';
 
 const EXPORT_PAGE_LIMIT = 100;
 

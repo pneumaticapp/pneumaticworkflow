@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { IHighlightsItem } from '../types/highlights';
+import type { IHighlightsItem } from '../types/highlights';
 import { isArrayWithItems } from '../utils/helpers';
 import { toTspDate } from '../utils/dateTime';
 

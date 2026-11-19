@@ -1,7 +1,8 @@
 import { actionGenerator } from '../../utils/redux';
-import { ITypedReduxAction, IHighlightsFilters } from '../../types/redux';
-import { IGetHighlightsConfig, IGetHighlightsResponse } from '../../api/getHighlights';
-import { IGetHighlightsTitlesRequestConfig, TGetHighlightsTitlesResponse } from '../../api/getHighlightsTitles';
+import type { IHighlightsFilters } from './types';
+import type { ITypedReduxAction } from '../types';
+import type { IGetHighlightsConfig, IGetHighlightsResponse } from '../../api/getHighlights';
+import type { IGetHighlightsTitlesRequestConfig, TGetHighlightsTitlesResponse } from '../../api/getHighlightsTitles';
 
 export enum EHighlightsActions {
   LoadHighlights = 'LOAD_HIGHLIGHTS',

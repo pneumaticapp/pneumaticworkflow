@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 
 export const useTransitionSwitch = (active?: boolean): [boolean, React.Dispatch<React.SetStateAction<boolean>>] => {
   const [visibleActive, setVisibleActive] = React.useState(false);

@@ -1,11 +1,22 @@
 import classnames from 'classnames';
-import * as React from 'react';
-import { ChangeEvent, forwardRef, KeyboardEvent, MutableRefObject, ReactNode, Ref, useCallback, useMemo } from 'react';
+import type {
+  ChangeEvent,
+  KeyboardEvent,
+  MutableRefObject,
+  ReactNode,
+  Ref} from 'react';
+import React, {
+  forwardRef,
+  useCallback,
+  useMemo,
+} from 'react';
 
-import { Field, EFieldTagName } from '../../../Field';
+import type { EFieldTagName } from '../../../Field';
+import { Field } from '../../../Field';
 import { validateKickoffFieldName } from '../../../../utils/validators';
-import { EInputNameBackgroundColor } from '../../../../types/workflow';
-import { EExtraFieldMode, IExtraField } from '../../../../types/template';
+import type { EInputNameBackgroundColor } from '../../../../types/workflow';
+import type { IExtraField } from '../../../../types/template';
+import { EExtraFieldMode } from '../../../../types/template';
 import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { FieldLabel } from './FieldLabel';
 

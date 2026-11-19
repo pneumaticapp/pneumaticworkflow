@@ -1,6 +1,7 @@
 import { connect } from 'react-redux';
-import { IProfileAccountProps, ProfileAccount } from './ProfileAccount';
-import { IApplicationState } from '../../types/redux';
+import type { IProfileAccountProps } from './ProfileAccount';
+import { ProfileAccount } from './ProfileAccount';
+import type { RootState } from '../../redux/store';
 import { editCurrentAccount } from '../../redux/auth/actions';
 import { setProfileSettingsActiveTab } from '../../redux/profile/actions';
 
@@ -10,7 +11,7 @@ type TProfileAccountProps = Pick<
 >;
 type TProfileAccountDispatchProps = Pick<IProfileAccountProps, 'editCurrentAccount' | 'onChangeTab'>;
 
-export function mapStateToProps({ authUser, accounts: { planInfo } }: IApplicationState): TProfileAccountProps {
+export function mapStateToProps({ authUser, accounts: { planInfo } }: RootState): TProfileAccountProps {
   const { account, loading, isAdmin } = authUser;
 
   return {

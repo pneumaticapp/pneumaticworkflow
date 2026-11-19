@@ -1,6 +1,6 @@
 import { ExtraFieldsHelper } from '../ExtraFieldsHelper';
 import { EExtraFieldType, IExtraField } from '../../../../../types/template';
-import { TUploadedFile } from '../../../../../utils/uploadFiles';
+import type { TUploadedFile } from '../../../../../types/attachments';
 
 jest.mock('../../../../../utils/getConfig', () => ({
   getBrowserConfigEnv: () => ({

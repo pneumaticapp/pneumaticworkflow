@@ -1,8 +1,8 @@
-import { ChangeEvent } from 'react';
+import type { ChangeEvent } from 'react';
 
-import { EHighlightsDateFilter, IHighlightsItem, THighlightsDateFilter } from '../../types/highlights';
-import { ITemplateTitleBaseWithCount } from '../../types/template';
-import { TUserListItem } from '../../types/user';
+import type { EHighlightsDateFilter, IHighlightsItem, THighlightsDateFilter } from '../../types/highlights';
+import type { ITemplateTitleBaseWithCount } from '../../types/template';
+import type { TUserListItem } from '../../types/user';
 
 export interface IDateFilterProps {
   endDate: Date | null;

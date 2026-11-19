@@ -3,7 +3,7 @@
  * loses React context (createElement undefined). So we test export and contract via a mock.
  * Real render is covered by integration tests and usage in LexicalRichEditor.
  */
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 
 const MockHeader = (props: { title?: string; foregroundColor?: string }) => {

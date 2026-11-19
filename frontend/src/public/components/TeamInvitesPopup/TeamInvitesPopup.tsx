@@ -5,8 +5,8 @@ import classnames from 'classnames';
 import { EmailInvitesTab } from './tabs/EmailInvitesTab';
 import { OAuthInvitesTab } from './tabs/OAuthInvitesTab';
 import { useDelayUnmount } from '../../hooks/useDelayUnmount';
-import { InvitesType } from '../../redux/team/types';
-import { ITeamInvitesPopupProps } from './types';
+import { EInvitesType } from '../../types/team';
+import type { ITeamInvitesPopupProps } from './types';
 import { Header, SideModal } from '../UI';
 import { IntlMessages } from '../IntlMessages';
 import { isEnvGoogleAuth, isEnvMsAuth } from '../../constants/enviroment';
@@ -21,7 +21,7 @@ export function TeamInvitesPopup({
   closeTeamInvitesPopup,
 }: ITeamInvitesPopupProps) {
   const { formatMessage } = useIntl();
-  const [activeTab, setActiveTab] = useState(InvitesType.Email);
+  const [activeTab, setActiveTab] = useState(EInvitesType.Email);
 
   useEffect(() => {
     if (filteredTabsList.length > 0) {
@@ -31,34 +31,34 @@ export function TeamInvitesPopup({
 
   const tabsListMap = useMemo(
     () => ({
-      [InvitesType.Google]: {
+      [EInvitesType.Google]: {
         label: formatMessage({ id: 'team.modal-google-tab' }),
-        isActive: activeTab === InvitesType.Google,
+        isActive: activeTab === EInvitesType.Google,
         content: (
           <OAuthInvitesTab
-            type={InvitesType.Google}
-            users={invitesUsersList.filter((user) => user.source === InvitesType.Google)}
+            type={EInvitesType.Google}
+            users={invitesUsersList.filter((user) => user.source === EInvitesType.Google)}
             teamUsers={teamUsers}
           />
         ),
-        isVisible: isEnvGoogleAuth && invitesUsersList.some((user) => user.source === InvitesType.Google),
+        isVisible: isEnvGoogleAuth && invitesUsersList.some((user) => user.source === EInvitesType.Google),
       },
-      [InvitesType.Microsoft]: {
+      [EInvitesType.Microsoft]: {
         label: formatMessage({ id: 'team.modal-microsoft-tab' }),
-        isActive: activeTab === InvitesType.Microsoft,
+        isActive: activeTab === EInvitesType.Microsoft,
         content: (
           <OAuthInvitesTab
-            type={InvitesType.Microsoft}
-            users={invitesUsersList.filter((user) => user.source === InvitesType.Microsoft)}
+            type={EInvitesType.Microsoft}
+            users={invitesUsersList.filter((user) => user.source === EInvitesType.Microsoft)}
             teamUsers={teamUsers}
           />
         ),
-        isVisible: isEnvMsAuth && invitesUsersList.some((user) => user.source === InvitesType.Microsoft),
+        isVisible: isEnvMsAuth && invitesUsersList.some((user) => user.source === EInvitesType.Microsoft),
       },
-      [InvitesType.Email]: {
+      [EInvitesType.Email]: {
         label: formatMessage({ id: 'team.modal-email-tab' }),
         content: <EmailInvitesTab />,
-        isActive: activeTab === InvitesType.Email,
+        isActive: activeTab === EInvitesType.Email,
         isVisible: true,
       },
     }),
@@ -66,11 +66,11 @@ export function TeamInvitesPopup({
   );
 
   const filteredTabsList = useMemo(() => {
-    return Object.values(InvitesType).filter((tabName) => tabsListMap[tabName].isVisible);
+    return Object.values(EInvitesType).filter((tabName) => tabsListMap[tabName].isVisible);
   }, [tabsListMap]);
 
   const renderTabsLabels = () => {
-    const tabs = filteredTabsList.map((tabName: InvitesType) => {
+    const tabs = filteredTabsList.map((tabName: EInvitesType) => {
       const { label, isActive } = tabsListMap[tabName];
 
       return (

@@ -6,17 +6,11 @@ jest.mock('../../../utils/getConfig', () => ({
   }),
 }));
 import { INIT_STATE, reducer } from '../reducer';
-import {
-  authUserFail,
-  authUserSuccess,
-  editCurrentAccountSuccess,
-  loginUser,
-  registerUserSuccess,
-  TAuthActions,
-  EAuthUserFailType,
-} from '../actions';
+import { authUserFail, authUserSuccess, editCurrentAccountSuccess, loginUser, registerUserSuccess } from '../actions';
+import type { TAuthActions } from '../actions';
 import { ESubscriptionPlan } from '../../../types/account';
-import { ELoggedState, IAuthUser } from '../../../types/redux';
+import { EAuthUserFailType, ELoggedState } from '../types';
+import type { IAuthUser } from '../types';
 
 const mockUser = {
   id: 9,

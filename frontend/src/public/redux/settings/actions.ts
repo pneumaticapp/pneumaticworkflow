@@ -1,4 +1,5 @@
-import { ELocale, ITypedReduxAction } from '../../types/redux';
+import type { ELocale } from '../../types/locale';
+import type { ITypedReduxAction } from '../types';
 import { actionGenerator } from '../../utils/redux';
 
 export const enum ESettingsActions {

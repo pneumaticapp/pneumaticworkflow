@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { findScrollableElements } from '../utils/findScrollableElements';
+import type { IUseFloatingFormPositionOptions, IUseFloatingFormPositionResult } from './types';
 
 const DEFAULT_OFFSET_PX = 10;
 const VIEWPORT_EDGE_PX = 10;
@@ -46,26 +47,6 @@ function computePositionInViewport(
   if (top + formHeight > vh) top = vh - formHeight - VIEWPORT_EDGE_PX;
 
   return { top, left };
-}
-
-export interface IUseFloatingFormPositionOptions {
-  anchorElement?: HTMLElement | null;
-  containerRef?: React.RefObject<HTMLElement | null>;
-  getAnchorRect?: (() => DOMRect | null) | null;
-  isVisible: boolean;
-  offsetPx?: number;
-}
-
-export interface IFloatingFormPosition {
-  top: number;
-  left: number;
-}
-
-export type TFloatingFormPositionMode = 'fixed' | 'absolute';
-
-export interface IUseFloatingFormPositionResult {
-  position: IFloatingFormPosition | null;
-  positionMode: TFloatingFormPositionMode;
 }
 
 export function useFloatingFormPosition(

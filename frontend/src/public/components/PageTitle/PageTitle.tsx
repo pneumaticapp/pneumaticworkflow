@@ -1,8 +1,9 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
-import { Tooltip, Header, THeaderSize } from '../UI';
+import type { THeaderSize } from '../UI';
+import { Tooltip, Header } from '../UI';
 import { FilledInfoIcon } from '../icons';
 import { ELearnMoreLinks, EPageTitle } from '../../constants/defaultValues';
 

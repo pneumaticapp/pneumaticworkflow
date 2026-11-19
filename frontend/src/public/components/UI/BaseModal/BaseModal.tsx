@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { useState, useEffect, useRef, ReactNode, useCallback } from 'react';
+import type { ReactNode} from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import classnames from 'classnames';
 

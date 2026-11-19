@@ -1,7 +1,8 @@
-import { createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
+import { createAction, createSlice } from '@reduxjs/toolkit';
 
 import { getBrowserConfig } from '../../utils/getConfig';
-import { IPages, IPagesStore } from './types';
+import type { IPages, IPagesStore } from './types';
 
 const { pages } = getBrowserConfig();
 

@@ -2,18 +2,12 @@ import React, { useCallback } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
-import { IWorkflowLogItem, IWorkflowLogTask, EWorkflowLogEvent } from '../../../../../types/workflow';
+import { EWorkflowLogEvent } from '../../../../../types/workflow';
 import { getSnoozedUntilDate } from '../../../../../utils/dateTime';
 import { Header } from '../../../../UI/Typeography/Header';
-import { TWorkflowLogTheme } from '../../WorkflowLog';
+import type { IWorkflowLogDelayProps, TWorkflowLogTheme } from '../../types';
 
 import styles from './WorkflowLogDelay.css';
-
-export interface IWorkflowLogDelayProps extends Pick<IWorkflowLogItem, 'delay'> {
-  theme: TWorkflowLogTheme;
-  task?: IWorkflowLogTask | null;
-  type?: EWorkflowLogEvent;
-}
 
 export function WorkflowLogDelay({ delay, task, theme, type }: IWorkflowLogDelayProps) {
   if (!delay) {

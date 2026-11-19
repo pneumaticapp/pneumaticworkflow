@@ -1,6 +1,7 @@
 /* prettier-ignore */
-import { EGenericTemplatesActions, TGenericTemplatesActions } from './actions';
-import { IGenericTemplatesStore } from '../../types/redux';
+import { EGenericTemplatesActions } from './actions';
+import type { TGenericTemplatesActions } from './actions';
+import type { IGenericTemplatesStore } from './types';
 import { toggleValueInArray } from '../../utils/helpers';
 
 const INIT_STATE: IGenericTemplatesStore = {

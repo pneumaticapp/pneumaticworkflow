@@ -1,4 +1,4 @@
-import { RefObject } from 'react';
+import type { RefObject } from 'react';
 import { diff } from 'deep-object-diff';
 
 import { EPayPeriod } from '../types/pricing';

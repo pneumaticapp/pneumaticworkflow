@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { IIntegrationListItem } from '../types/integrations';
+import type { IIntegrationListItem } from '../types/integrations';
 
 export type TGetIntegrationsResponse = IIntegrationListItem[];
 

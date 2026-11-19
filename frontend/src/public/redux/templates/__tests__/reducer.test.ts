@@ -7,9 +7,9 @@ import {
   saveTemplateTasks,
   TTemplatesActions,
 } from '../../actions';
-import { TTransformedTask } from '../../../types/template';
-import { TTaskVariable } from '../../../components/TemplateEdit/types';
 import { EExtraFieldType } from '../../../types/template';
+import type { TTaskVariable } from '../../../types/template';
+import type { TTransformedTask } from '../../../types/workflow';
 
 describe('reducer', () => {
   it('returns the initial state if no action was passed', () => {

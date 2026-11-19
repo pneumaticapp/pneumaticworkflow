@@ -1,7 +1,7 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 
-import { IPlaceholderIconProps, TPlaceholderMood } from '../UI/Placeholder/types';
+import type { IPlaceholderIconProps, TPlaceholderMood } from '../UI/Placeholder/types';
 
 export function TasksPlaceholderIcon({ mood }: IPlaceholderIconProps) {
   const iconsMoodMap: { [key in TPlaceholderMood]: React.ReactNode } = {

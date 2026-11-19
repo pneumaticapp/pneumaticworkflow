@@ -1,6 +1,6 @@
 /* eslint-disable */
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 
 export interface IReplayGreenIconProps extends React.SVGAttributes<SVGElement> {}
 

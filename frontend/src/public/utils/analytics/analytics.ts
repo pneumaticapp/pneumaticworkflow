@@ -1,11 +1,9 @@
 import * as sentry from '@sentry/react';
 import { diff } from 'deep-object-diff';
 
-import { IAccount } from '../../types/user';
+import type { IAccount, TAuthUserResult } from '../../types/user';
 import { parseCookies } from '../cookie';
-import { TAuthUserResult } from '../../redux/auth/actions';
 import { TITLES } from '../../constants/titles';
-import { store } from '../../redux/store';
 import { loadAnalytics } from './segmentSnippet';
 import { isObjectEmpty } from '../helpers';
 import { isEnvAnalytics } from '../../constants/enviroment';
@@ -42,20 +40,33 @@ export type TAnalyticsMethods = {
   reset(...args: any[]): void;
 };
 
+let isSupermodeState = false;
+
+export const setAnalyticsSupermode = (isSupermode: boolean): void => {
+  isSupermodeState = isSupermode;
+};
+
 export class Analytics {
   private isThrottleMode = false;
+
+  private isLoaded = false;
 
   private eventsCounter = 0;
 
   private periodStarted = 0;
 
   public constructor(isSupermode: boolean) {
-    if (!isEnvAnalytics || isSupermode) {
+    this.init(isSupermode);
+  }
+
+  private init = (isSupermode: boolean) => {
+    if (!isEnvAnalytics || isSupermode || this.isLoaded) {
       return;
     }
 
+    this.isLoaded = true;
     loadAnalytics();
-  }
+  };
 
   private increaseEventsCounter = () => {
     const now = Date.now();
@@ -79,6 +90,13 @@ export class Analytics {
     let argumentsChanged = true;
 
     return (...args: any[]) => {
+      if (methodName !== 'reset') {
+        if (isSupermodeState) {
+          return;
+        }
+
+        this.init(isSupermodeState);
+      }
       this.increaseEventsCounter();
       argumentsChanged = !isObjectEmpty(diff(prevArgs, args));
       prevArgs = args;
@@ -118,8 +136,7 @@ let analyticsInstance: Analytics | null = null;
 
 function getAnalyticsInstance(): Analytics {
   if (!analyticsInstance) {
-    const isSupermode = store?.getState?.().authUser?.isSupermode ?? false;
-    analyticsInstance = new Analytics(isSupermode);
+    analyticsInstance = new Analytics(isSupermodeState);
   }
   return analyticsInstance;
 }
