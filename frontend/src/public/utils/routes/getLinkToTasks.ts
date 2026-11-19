@@ -1,5 +1,5 @@
 import { ERoutes } from '../../constants/routes';
-import { ETaskListCompleteSorting, ETaskListCompletionStatus, ETaskListSorting } from '../../types/tasks';
+import type { ETaskListCompleteSorting, ETaskListCompletionStatus, ETaskListSorting } from '../../types/tasks';
 import { isArrayWithItems } from '../helpers';
 
 type TGetLinkToTasks = {

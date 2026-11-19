@@ -1,4 +1,5 @@
-import { EDatasetsSorting, IDatasetItem } from '../types/dataset';
+import type { IDatasetItem } from '../types/dataset';
+import { EDatasetsSorting } from '../types/dataset';
 
 export function getSortedAndFilteredDatasetItems(
   items: IDatasetItem[],

@@ -10,7 +10,7 @@ import { Button } from '../../../UI/Buttons/Button';
 import { FieldLabel } from '../utils/FieldLabel';
 import kickoffStyles from '../../KickoffRedux/KickoffRedux.css';
 import { EExtraFieldMode } from '../../../../types/template';
-import { IExtraFieldFileTemplateProps } from './types';
+import type { IExtraFieldFileTemplateProps } from './types';
 
 import styles from './ExtraFieldFile.css';
 

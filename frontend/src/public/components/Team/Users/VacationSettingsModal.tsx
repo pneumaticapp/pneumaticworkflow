@@ -1,10 +1,11 @@
-import * as React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 
-import { TUserListItem, isUserAbsent } from '../../../types/user';
-import { IVacationActivateRequest, activateVacation, deactivateVacation } from '../../../api/vacation';
+import type { TUserListItem} from '../../../types/user';
+import { isUserAbsent } from '../../../types/user';
+import type { IVacationActivateRequest} from '../../../api/vacation';
+import { activateVacation, deactivateVacation } from '../../../api/vacation';
 import { VacationSettings } from '../../VacationSettings';
 import { Modal } from '../../UI/Modal';
 import { NotificationManager } from '../../UI/Notifications';

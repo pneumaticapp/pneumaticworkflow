@@ -2,7 +2,8 @@ import { call, put, select } from 'redux-saga/effects';
 
 import { routeRealtimeEvent } from '../utils/routeRealtimeEvent';
 import { handleRemoveTask } from '../../tasks/saga';
-import { ERealtimeEnvelopeType, IRealtimeWsEnvelope } from '../types';
+import { ERealtimeEnvelopeType } from '../types';
+import type { TRealtimeWsEnvelope } from '../types';
 import { ETaskListCompletionStatus, ETaskStatus } from '../../../types/tasks';
 import { getTasksSettings } from '../../selectors/tasks';
 import { activeUsersCountFetchFinished, upsertUserFromWs } from '../../accounts/slice';
@@ -24,7 +25,7 @@ jest.mock('../../../components/UI/Notifications', () => ({
   },
 }));
 
-const createDeletedEnvelope = (id: number, status: ETaskStatus): IRealtimeWsEnvelope =>
+const createDeletedEnvelope = (id: number, status: ETaskStatus): TRealtimeWsEnvelope =>
   ({
     id: String(id),
     dateCreatedTsp: 0,
@@ -35,7 +36,7 @@ const createDeletedEnvelope = (id: number, status: ETaskStatus): IRealtimeWsEnve
       workflowName: 'WF',
       status,
     },
-  }) as IRealtimeWsEnvelope;
+  }) as TRealtimeWsEnvelope;
 
 describe('routeRealtimeEvent — task_deleted list updates', () => {
   afterEach(() => {
@@ -98,7 +99,7 @@ describe('routeRealtimeEvent — task_deleted list updates', () => {
         dateCompletedTsp: 123,
         performers: [],
       },
-    } as IRealtimeWsEnvelope;
+    } as TRealtimeWsEnvelope;
 
     const gen = routeRealtimeEvent(envelope);
     const step = gen.next();
@@ -122,7 +123,7 @@ describe('routeRealtimeEvent — task_deleted list updates', () => {
         managerId: null,
         subordinatesIds: [],
       },
-    } as IRealtimeWsEnvelope;
+    } as TRealtimeWsEnvelope;
 
     const gen = routeRealtimeEvent(envelope);
 
@@ -139,7 +140,7 @@ describe('routeRealtimeEvent — task_deleted list updates', () => {
         activeUsers: 2,
         tenantsActiveUsers: 1,
       },
-    } as IRealtimeWsEnvelope;
+    } as TRealtimeWsEnvelope;
 
     const gen = routeRealtimeEvent(envelope);
 

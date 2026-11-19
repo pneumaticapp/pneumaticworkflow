@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 
 import { Checkbox } from '../UI/Fields/Checkbox';
@@ -7,7 +6,7 @@ import { getUserFullName } from '../../utils/users';
 import { IntlMessages } from '../IntlMessages';
 import { isArrayWithItems } from '../../utils/helpers';
 import { ShowMore } from '../UI/ShowMore';
-import { IUsersFilterProps } from './types';
+import type { IUsersFilterProps } from './types';
 
 import styles from './Filters.css';
 

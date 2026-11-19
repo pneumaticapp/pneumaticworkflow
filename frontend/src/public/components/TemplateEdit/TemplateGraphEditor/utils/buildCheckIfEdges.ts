@@ -1,7 +1,8 @@
-import { IExtraField, ITemplateClient, ITemplateTaskClient } from '../../../../types/template';
-import { EConditionLogicOperations, TConditionRule } from '../../TaskForm/Conditions';
-import { EStartingType } from '../../TaskForm/Conditions/utils/getDropdownOperators';
-import { IGraphConditionClause, TGraphEdge } from '../types';
+import type { IExtraField, ITemplateClient, ITemplateTaskClient } from '../../../../types/template';
+import { EStartingType } from '../../../../types/template';
+import { EConditionLogicOperations } from '../../../../types/templateTaskConditions';
+import type { TConditionRule } from '../../../../types/templateTaskConditions';
+import type { IGraphConditionClause, TGraphEdge } from '../types';
 import { getGraphEdgeVisual } from './edgeStyles';
 import { isCheckIfCondition } from './countCheckIfConditions';
 import { KICKOFF_NODE_ID, KICKOFF_START_AFTER } from './graphConstants';

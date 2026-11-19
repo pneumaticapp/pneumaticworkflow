@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 import Switch from 'rc-switch';
 import classnames from 'classnames';
 
-import { TDropdownOption } from '../../UI';
+import type { TDropdownOption } from '../../UI';
 import {
   UnionIcon,
   PencilIcon,
@@ -17,7 +17,8 @@ import {
 } from '../../icons';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { getCanChangeWorkflow } from '../../../redux/selectors/permissions';
-import { EWorkflowStatus, IPassedTask, IWorkflowClient, IWorkflowDetailsClient } from '../../../types/workflow';
+import type { IPassedTask, IWorkflowClient, IWorkflowDetailsClient } from '../../../types/workflow';
+import { EWorkflowStatus } from '../../../types/workflow';
 import { NotificationManager } from '../../UI/Notifications';
 import {
   setWorkflowResumed,

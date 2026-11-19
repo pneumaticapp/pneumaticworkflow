@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { ICreateUserRequest, IUserResponse } from '../types/user';
+import type { ICreateUserRequest, IUserResponse } from '../types/user';
 import { mapRequestBody } from '../utils/mappers';
 
 export function createUser(data: ICreateUserRequest) {

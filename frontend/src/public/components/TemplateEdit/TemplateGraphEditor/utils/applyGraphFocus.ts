@@ -1,4 +1,4 @@
-import { TGraphEdge, TGraphEdgeFocus, TGraphNode } from '../types';
+import type { TGraphEdge, TGraphEdgeFocus, TGraphNode } from '../types';
 import {
   EDGE_STYLE_CONDITIONAL_FOCUSED,
   EDGE_STYLE_FOCUSED,

@@ -1,9 +1,9 @@
-import * as React from 'react';
-import { useEffect } from 'react';
-import { NodeProps, useUpdateNodeInternals } from 'reactflow';
+import React, { useEffect } from 'react';
+import type { NodeProps} from 'reactflow';
+import { useUpdateNodeInternals } from 'reactflow';
 import { useIntl } from 'react-intl';
 
-import { IKickoffNodeData } from '../../types';
+import type { IKickoffNodeData } from '../../types';
 import { EMPTY_CONNECTED_HANDLES } from '../../utils/applyConnectedHandles';
 import { getPlainText } from '../../utils/getPlainText';
 import { GraphAddTaskButton } from '../GraphAddTaskButton/GraphAddTaskButton';

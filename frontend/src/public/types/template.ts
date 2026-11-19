@@ -1,15 +1,8 @@
-import { EIntegrations } from './integrations';
-import {
-  EConditionAction,
-  EConditionOperators,
-  ICondition,
-  TConditionPredicateValue,
-} from '../components/TemplateEdit/TaskForm/Conditions';
-import { TUploadedFile } from '../utils/uploadFiles';
-import { TSystemField } from '../components/Workflows/WorkflowsTablePage/WorkflowsTable/types';
-import { IFieldsetBinding, IFieldsetBindingClient, IFieldsetBindingMeta, IFieldsetRuntime } from './fieldset';
-
-export type { IFieldsetBindingClient } from './fieldset';
+import type { ReactNode } from 'react';
+import type { EIntegrations } from './integrations';
+import type { ICondition, IConditionAPI } from './templateTaskConditions';
+import type { TUploadedFile } from './attachments';
+import type { IFieldsetBinding, IFieldsetBindingClient, IFieldsetBindingMeta, IFieldsetRuntime } from './fieldset';
 
 export interface ITemplate {
   id?: number;
@@ -54,18 +47,6 @@ export interface ITemplateOwner {
 
 export type ITemplateViewer = ITemplateOwner;
 export type ITemplateStarter = ITemplateOwner;
-
-export type TRuntimeMergedOutputPart =
-  | { kind: 'field'; field: IExtraField }
-  | { kind: 'fieldset'; data: IFieldsetRuntime | TTemplateFieldFieldset }
-  | { kind: 'system'; field: TSystemField };
-
-export type TTransformedTask = {
-  apiName: string;
-  name: string;
-  needSteName?: boolean | null;
-  mergedOutputs: TRuntimeMergedOutputPart[];
-};
 
 export type TTemplateFieldFieldset = Pick<
   IFieldsetRuntime,
@@ -161,7 +142,7 @@ export interface ITemplateTaskResponse extends Omit<
   'uuid' | 'conditions' | 'rawDueDate' | 'apiName' | 'id' | 'fieldsets'
 > {
   id: number;
-  conditions: IConditionResponse[];
+  conditions: IConditionAPI[];
   rawDueDate: IDueDateAPI | null;
   dueIn?: string | null; // deprecated
   apiName?: string;
@@ -174,21 +155,13 @@ export interface ITemplateRequest extends Omit<ITemplate, 'tasks' | 'kickoff'> {
 }
 
 export interface ITemplateTaskRequest extends Omit<ITemplateTask, 'uuid' | 'conditions' | 'rawDueDate' | 'fieldsets'> {
-  conditions: IConditionResponse[];
+  conditions: IConditionAPI[];
   rawDueDate: IDueDateAPI | null;
   fieldsets: IFieldsetBindingMeta[];
 }
 
 export interface ITemplateKickoffRequest extends Omit<IKickoff, 'fieldsets'> {
   fieldsets: IFieldsetBindingMeta[];
-}
-
-export interface IConditionResponse {
-  id?: number;
-  apiName: string;
-  order: number;
-  rules: IConditionRuleResponse[];
-  action: EConditionAction;
 }
 
 export interface IDueDateAPI {
@@ -198,19 +171,6 @@ export interface IDueDateAPI {
   rule: IDueDateRuleAPI;
   sourceId: string | null;
 }
-
-export interface IConditionRuleResponse {
-  id?: number;
-  apiName: string;
-  predicates: TConditionRulePredicateResponse[];
-}
-
-export type TConditionRulePredicateResponse = {
-  id?: number;
-  apiName: string;
-  field: string;
-  operator: EConditionOperators;
-} & TConditionPredicateValue;
 
 /** Fieldset template object from list API response (camelCased by commonRequest) */
 export interface IFieldsetTemplateData {
@@ -353,6 +313,13 @@ export interface ITemplateTitleBaseWithCount {
   count: number;
 }
 
+export interface ITemplateStep {
+  id: number;
+  name: string;
+  number: number;
+  apiName: string;
+}
+
 export enum ETemplateTitleWorkflowStatuses {
   running = 'running',
   delayed = 'delayed',
@@ -410,4 +377,34 @@ export enum ETemplatesTab {
 
 export interface ITemplatesLayoutProps {
   children: JSX.Element;
+}
+
+export interface ITemplatesSystemCategories {
+  id: number;
+  order: number;
+  name: string;
+  icon: string;
+  color: string;
+  templateColor: string;
+}
+
+export enum EStartingType {
+  Task = 'task',
+  Kickoff = 'kickoff',
+}
+
+export type TTaskVariable = {
+  title: string;
+  apiName: string;
+  type: EExtraFieldType | EStartingType;
+  subtitle?: string;
+  richSubtitle?: ReactNode;
+  selections?: string[];
+  datasetId?: number | null;
+};
+
+export enum EGraphViewMode {
+  /** Linear task list. UI label is "Line". */
+  List = 'list',
+  Graph = 'graph',
 }

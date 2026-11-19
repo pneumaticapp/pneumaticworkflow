@@ -1,5 +1,5 @@
-import { ITypedReduxAction } from '../../types/redux';
-import { ESettingsTabs } from '../../types/profile';
+import type { ITypedReduxAction } from '../types';
+import type { ESettingsTabs } from '../../types/profile';
 import { actionGenerator } from '../../utils/redux';
 
 export const enum EProfileSettingsActions {

@@ -1,10 +1,10 @@
-import { IApplicationState } from '../../types/redux';
-import { EGraphViewMode } from '../../components/TemplateEdit/TemplateGraphEditor/types';
+import type { RootState } from '../store';
+import { EGraphViewMode } from '../../types/template';
 
-export const selectTemplateViewMode = (state: IApplicationState): EGraphViewMode => state.templateGraphView.viewMode;
+export const selectTemplateViewMode = (state: RootState): EGraphViewMode => state.templateGraphView.viewMode;
 
-export const selectTemplateSelectedTaskApiName = (state: IApplicationState): string | null =>
+export const selectTemplateSelectedTaskApiName = (state: RootState): string | null =>
   state.templateGraphView.selectedTaskApiName;
 
-export const selectIsGraphCanvas = (state: IApplicationState): boolean =>
+export const selectIsGraphCanvas = (state: RootState): boolean =>
   state.templateGraphView.viewMode === EGraphViewMode.Graph;

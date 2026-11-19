@@ -1,4 +1,5 @@
-import React, { SVGAttributes } from 'react';
+import type { SVGAttributes } from 'react';
+import React from 'react';
 
 export function CircleWithArrowRightIcon({ fill = 'currentColor', ...rest }: SVGAttributes<SVGElement>) {
   return (

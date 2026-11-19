@@ -1,9 +1,10 @@
-import { createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAction, createSlice } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 
 import { getTeamPageByRoute } from '../../utils/team/getTeamPageByRoute';
-import { ITeamStore } from '../../types/redux';
-import { TeamPages, TInviteUsersPayload, UserInvite } from './types';
-import { TUserListItem } from '../../types/user';
+import type { ETeamPages, ITeamStore, TInviteUsersPayload } from './types';
+import type { IUserInvite } from '../../types/team';
+import type { TUserListItem } from '../../types/user';
 
 const initialState: ITeamStore = {
   page: getTeamPageByRoute(),
@@ -20,16 +21,16 @@ const teamSlice = createSlice({
   name: 'team',
   initialState,
   reducers: {
-    changeTeamActiveTab: (state, action: PayloadAction<TeamPages>) => {
+    changeTeamActiveTab: (state, action: PayloadAction<ETeamPages>) => {
       state.page = action.payload;
     },
-    updateTeamActiveTab: (state, action: PayloadAction<TeamPages>) => {
+    updateTeamActiveTab: (state, action: PayloadAction<ETeamPages>) => {
       state.page = action.payload;
     },
     setRecentInvitedUsers: (state, action: PayloadAction<TUserListItem[]>) => {
       state.recentInvitedUsers = action.payload;
     },
-    loadInvitesUsersSuccess: (state, action: PayloadAction<UserInvite[]>) => {
+    loadInvitesUsersSuccess: (state, action: PayloadAction<IUserInvite[]>) => {
       state.invitesUsersList = action.payload;
     },
     openTeamInvitesPopup: (state) => {
@@ -53,7 +54,7 @@ const teamSlice = createSlice({
   },
 });
 
-export const setTeamActivePage = createAction<TeamPages>('team/setTeamActivePage');
+export const setTeamActivePage = createAction<ETeamPages>('team/setTeamActivePage');
 export const inviteUsers = createAction<TInviteUsersPayload>('team/inviteUsers');
 export const loadInvitesUsers = createAction<void>('team/loadInvitesUsers');
 export const loadInvitesUsersFailed = createAction<void>('team/loadInvitesUsersFailed');

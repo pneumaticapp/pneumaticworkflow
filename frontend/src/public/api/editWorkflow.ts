@@ -1,8 +1,8 @@
 import { commonRequest } from './commonRequest';
 import { mapRequestBody, getNormalizedKickoff } from '../utils/mappers';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { TEditWorkflowPayload } from '../redux/workflows/types';
-import { IWorkflowDetails, WorkflowWithTsp } from '../types/workflow';
+import type { TEditWorkflowPayload } from '../redux/workflows/types';
+import type { IWorkflowDetails, WorkflowWithTsp } from '../types/workflow';
 
 export interface IEditWorkflowResponse extends WorkflowWithTsp<IWorkflowDetails> {}
 

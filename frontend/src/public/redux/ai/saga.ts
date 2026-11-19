@@ -27,7 +27,7 @@ import { NotificationManager } from '../../components/UI/Notifications';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { logger } from '../../utils/logger';
 import { uploadUserAvatar } from '../../utils/uploadFiles';
-import type { TUploadedFile } from '../../utils/uploadFiles';
+import type { TUploadedFile } from '../../types/attachments';
 
 import {
   cloneAIAgent,

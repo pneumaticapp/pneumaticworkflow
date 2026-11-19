@@ -1,9 +1,9 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { mapRequestBody } from '../utils/mappers';
-import { IAuthUser } from '../types/redux';
+import type { TAuthUserResult } from '../types/user';
 
-export function changePhotoProfile(changedProfileFields: Partial<IAuthUser>) {
+export function changePhotoProfile(changedProfileFields: Partial<TAuthUserResult>) {
   const {
     api: { urls },
   } = getBrowserConfigEnv();

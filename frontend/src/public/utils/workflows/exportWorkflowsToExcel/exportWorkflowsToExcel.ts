@@ -1,14 +1,15 @@
 import { Workbook } from 'exceljs';
-import { ITableViewFields, EExtraFieldType, ETemplateOwnerType } from '../../../types/template';
-import { TUserListItem } from '../../../types/user';
-import { IGroup } from '../../../redux/team/types';
+import { EExtraFieldType, ETemplateOwnerType } from '../../../types/template';
+import type { ITableViewFields } from '../../../types/template';
+import type { TUserListItem } from '../../../types/user';
+import type { IGroup } from '../../../types/team';
 import { getUserFullName, EXTERNAL_USER } from '../../users';
 import { getUserById } from '../../../components/UserData/utils/getUserById';
 import { toDateString } from '../../dateTime';
 import { getWorkflowProgress } from '../../../components/Workflows/utils/getWorkflowProgress';
 import { ALL_SYSTEM_FIELD_NAMES } from '../../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
 import { downloadBlobInBrowser } from '../downloadBlobInBrowser';
-import { IExportWorkflowsToExcelConfig } from './types';
+import type { IExportWorkflowsToExcelConfig } from './types';
 
 export const WORKFLOWS_XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 

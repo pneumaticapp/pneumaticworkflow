@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import { ITemplateKickoffClient } from '../../../../types/template';
+import type { ITemplateKickoffClient } from '../../../../types/template';
 import { isArrayWithItems } from '../../../../utils/helpers';
 
 export const isKickoffCleared = (kickoff: ITemplateKickoffClient) => {

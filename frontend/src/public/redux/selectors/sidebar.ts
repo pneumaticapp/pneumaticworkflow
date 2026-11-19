@@ -1,10 +1,10 @@
 import { createSelector } from 'reselect';
 
-import type { IApplicationState } from '../../types/redux';
+import type { RootState } from '../store';
 import { getUserPendingActions } from './user';
 
-const getMenu = ({ menu }: IApplicationState) => menu;
-const getAuthUser = ({ authUser }: IApplicationState) => authUser;
+const getMenu = ({ menu }: RootState) => menu;
+const getAuthUser = ({ authUser }: RootState) => authUser;
 
 export const getSidebarState = createSelector(
   getMenu,

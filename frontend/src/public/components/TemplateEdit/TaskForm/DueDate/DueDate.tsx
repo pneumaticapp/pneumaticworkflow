@@ -5,10 +5,12 @@ import classnames from 'classnames';
 import { DropdownList, Duration } from '../../../UI';
 import { TrashIcon } from '../../../icons';
 
-import { IDueDate, ITemplateKickoffClient, ITemplateTaskClient } from '../../../../types/template';
+import type { IDueDate, ITemplateKickoffClient, ITemplateTaskClient } from '../../../../types/template';
 import { START_DURATION } from '../../constants';
-import { getRuleTargetOptions, TRuleTargetOption } from './utils/getRuleTargetOptions';
-import { getRulePrepositionOptions, TRulePrepositionOption } from './utils/getRulePrepositionOptions';
+import type { TRuleTargetOption } from './utils/getRuleTargetOptions';
+import { getRuleTargetOptions } from './utils/getRuleTargetOptions';
+import type { TRulePrepositionOption } from './utils/getRulePrepositionOptions';
+import { getRulePrepositionOptions } from './utils/getRulePrepositionOptions';
 import { useUpdatePreposition } from './hooks/useUpdatePreposition';
 
 import styles from './DueDate.css';

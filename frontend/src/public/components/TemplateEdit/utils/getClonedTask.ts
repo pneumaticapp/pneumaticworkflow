@@ -1,4 +1,4 @@
-import {
+import type {
   IDueDate,
   IExtraField,
   IExtraFieldSelection,
@@ -7,7 +7,7 @@ import {
   TOutputChecklist,
   TOutputChecklistItem,
 } from '../../../types/template';
-import { IFieldsetBindingClient } from '../../../types/fieldset';
+import type { IFieldsetBindingClient } from '../../../types/fieldset';
 import {
   createTaskApiName,
   createFieldApiName,
@@ -23,7 +23,7 @@ import {
   createFieldsetBindingApiName,
 } from '../../../utils/createId';
 import { omit } from '../../../utils/helpers';
-import { ICondition, TConditionRule } from '../TaskForm/Conditions';
+import type { ICondition, TConditionRule } from '../../../types/templateTaskConditions';
 
 export function getClonedTask(task: ITemplateTaskClient) {
   const mapChecklist: { [old: string]: string } = {};

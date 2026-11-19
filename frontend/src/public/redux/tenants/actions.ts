@@ -1,6 +1,6 @@
 import { actionGenerator } from '../../utils/redux';
-import { ITypedReduxAction } from '../../types/redux';
-import { ETenantsSorting, ITenant } from '../../types/tenants';
+import type { ITypedReduxAction } from '../types';
+import type { ETenantsSorting, ITenant } from '../../types/tenants';
 
 export const enum ETenantsActions {
   LoadTenants = 'LOAD_TENANTS',

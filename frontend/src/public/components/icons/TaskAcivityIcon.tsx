@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 
 export function TaskAcivityIcon({ fill = 'currentColor' }: React.SVGAttributes<SVGElement>) {
   return (

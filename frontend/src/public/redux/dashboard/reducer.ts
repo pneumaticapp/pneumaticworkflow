@@ -1,9 +1,11 @@
 /* prettier-ignore */
 import { produce } from 'immer';
 
-import { EDashboardActions, TDashboardActions } from './actions';
+import { EDashboardActions } from './actions';
+import type { TDashboardActions } from './actions';
 import { EDashboardTimeRange } from '../../types/dashboard';
-import { IDashboardStore, EDashboardModes } from '../../types/redux';
+import { EDashboardModes } from './types';
+import type { IDashboardStore } from './types';
 
 import { REHYDRATE } from 'redux-persist/es/constants';
 

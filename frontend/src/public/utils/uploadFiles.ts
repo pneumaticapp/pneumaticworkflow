@@ -5,16 +5,7 @@ import { NotificationManager } from '../components/UI/Notifications';
 import { getErrorMessage } from './getErrorMessage';
 import { uploadFileToFileService } from '../api/fileServiceUpload';
 import { createUniqueId } from './createId';
-
-export type TUploadedFile = {
-  id: string;
-  name: string;
-  url: string;
-  thumbnailUrl?: string;
-  size: number;
-  isRemoved?: boolean;
-  error?: string;
-};
+import type { TUploadedFile } from '../types/attachments';
 
 export const MAX_FILE_SIZE = 100 * 1024 * 1024;
 const UPLOAD_BATCH_LIMIT = 3;

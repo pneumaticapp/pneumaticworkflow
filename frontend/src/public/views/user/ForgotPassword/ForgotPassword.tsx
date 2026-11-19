@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Formik, FormikConfig, useFormikContext } from 'formik';
+import type { FormikConfig } from 'formik';
+import { Formik, useFormikContext } from 'formik';
 import { NavLink } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 import ReCAPTCHA from 'react-google-recaptcha';
@@ -15,7 +16,7 @@ import styles from '../User.css';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
 import { isEnvCaptcha, isEnvSignup } from '../../../constants/enviroment';
 
-import { ICaptchaFieldProps, IForgotPasswordProps, TForgotPasswordValues } from './types';
+import type { ICaptchaFieldProps, IForgotPasswordProps, TForgotPasswordValues } from './types';
 
 const INITIAL_VALUES_FORMIK: TForgotPasswordValues = {
   email: '',

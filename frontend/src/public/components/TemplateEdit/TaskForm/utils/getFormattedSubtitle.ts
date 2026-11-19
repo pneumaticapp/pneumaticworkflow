@@ -1,9 +1,7 @@
 import { variableRegex } from '../../../../constants/defaultValues';
-import { TTaskVariable } from '../../types';
-import { getLocalizedSystemVariable, isSystemVariable } from './getTaskVariables';
-
-export type TSubtitleSegment =
-  { type: 'text'; value: string; id: string } | { type: 'variable'; title: string; id: string };
+import type { TTaskVariable } from '../../../../types/template';
+import { getLocalizedSystemVariable, isSystemVariable } from './getLocalizedSystemVariable';
+import type { TSubtitleSegment } from './types';
 
 export const getFormattedSubtitleSegments = (
   subtitle: string,

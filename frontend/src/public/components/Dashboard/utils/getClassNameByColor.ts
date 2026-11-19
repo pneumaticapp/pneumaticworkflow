@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import { TDashboardColor } from '../types';
+import type { TDashboardColor } from '../types';
 
 import styles from '../Dashboard.css';
 

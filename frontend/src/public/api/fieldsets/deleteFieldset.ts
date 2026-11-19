@@ -1,5 +1,5 @@
 import { commonRequest } from '../commonRequest';
-import { IDeleteFieldsetParams } from '../../types/fieldset';
+import type { IDeleteFieldsetParams } from '../../types/fieldset';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 
 export function deleteFieldset({ id }: IDeleteFieldsetParams) {

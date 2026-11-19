@@ -1,9 +1,9 @@
-import * as React from 'react';
-import { useCallback, useEffect } from 'react';
-import { NodeProps, useUpdateNodeInternals } from 'reactflow';
+import React, { useCallback, useEffect } from 'react';
+import type { NodeProps} from 'reactflow';
+import { useUpdateNodeInternals } from 'reactflow';
 import { useIntl } from 'react-intl';
 
-import { ITaskNodeData } from '../../types';
+import type { ITaskNodeData } from '../../types';
 import { EMPTY_CONNECTED_HANDLES } from '../../utils/applyConnectedHandles';
 import { countCheckIfConditions } from '../../utils/countCheckIfConditions';
 import { GraphAddTaskButton } from '../GraphAddTaskButton/GraphAddTaskButton';

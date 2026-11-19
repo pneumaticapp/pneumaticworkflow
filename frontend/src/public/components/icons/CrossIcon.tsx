@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 
 export interface ICrossIconProps extends React.SVGAttributes<SVGElement> {
   background?: string;

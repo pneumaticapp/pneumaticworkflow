@@ -1,8 +1,8 @@
 import { startOfToday, endOfToday, isValid } from 'date-fns';
 import { connect } from 'react-redux';
-import { AnyAction } from 'redux';
+import type { AnyAction } from 'redux';
 
-import { IApplicationState } from '../../types/redux';
+import type { RootState } from '../../redux/store';
 import { openWorkflowLogPopup } from '../../redux/workflows/slice';
 import {
   loadHighlights,
@@ -12,7 +12,8 @@ import {
   setHighlightsFiltersManuallyChanged,
 } from '../../redux/highlights/actions';
 
-import { HighlightsFeed, IHighlightsFeedProps } from './HighlightsFeed';
+import type { IHighlightsFeedProps } from './HighlightsFeed';
+import { HighlightsFeed } from './HighlightsFeed';
 import { withSyncedQueryString } from '../../HOCs/withSyncedQueryString';
 import { EHighlightsDateFilter } from '../../types/highlights';
 import { getActiveUsers } from '../../utils/users';
@@ -58,7 +59,7 @@ export function mapStateToProps({
     templatesTitles,
     filters: { timeRange, startDate, endDate, usersFilter, templatesFilter, filtersChanged },
   },
-}: IApplicationState): THighlightsFeedStoreProps {
+}: RootState): THighlightsFeedStoreProps {
   return {
     count,
     isFeedLoading,

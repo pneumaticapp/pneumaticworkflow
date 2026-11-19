@@ -1,5 +1,6 @@
-import * as React from 'react';
-import { Redirect, Route, RouteProps } from 'react-router-dom';
+import React from 'react';
+import type { RouteProps } from 'react-router-dom';
+import { Redirect, Route } from 'react-router-dom';
 
 import { ERoutes } from '../../constants/routes';
 

@@ -1,7 +1,7 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 
-import { IInfoWarningProps } from './warnings';
+import type { IInfoWarningProps } from './warnings';
 
 import { Header, Modal, Button } from '../../UI';
 

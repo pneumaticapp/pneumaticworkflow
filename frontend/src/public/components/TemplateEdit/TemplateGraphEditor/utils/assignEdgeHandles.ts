@@ -1,10 +1,9 @@
-import { TGraphEdge, TGraphNode } from '../types';
+import type { TGraphEdge, TGraphNode } from '../types';
 import { isConditionalGraphEdge, isLaneRoutedGraphEdge } from './edgeStyles';
 import { isCheckIfJunctionId } from './graphConstants';
+import type { IGraphNodeBox, TGraphFace } from './graphGeometry';
 import {
   GRAPH_EDGE_SIDEWAYS_THRESHOLD,
-  IGraphNodeBox,
-  TGraphFace,
   faceFromHandle,
   getGraphNodeBox,
   getJunctionKind,

@@ -1,6 +1,6 @@
-import * as React from 'react';
-import { useState } from 'react';
-import { DropdownItemProps, DropdownItem } from 'reactstrap';
+import React, { useState } from 'react';
+import type { DropdownItemProps} from 'reactstrap';
+import { DropdownItem } from 'reactstrap';
 import { useIntl } from 'react-intl';
 import OutsideClickHandler from '../OutsideClickHandler';
 

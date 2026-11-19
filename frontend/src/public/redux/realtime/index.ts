@@ -1,12 +1,3 @@
-export type {
-  IRealtimeWsEnvelope,
-  INotificationWsEnvelope,
-  TNotificationWsEventType,
-  TRealtimeEventType,
-  IWsTaskCreatedData,
-  IWsTaskCompletedData,
-  IWsTaskDeletedData,
-} from './types';
 export {
   REALTIME_EVENT_TYPES,
   NOTIFICATION_WS_TYPES,

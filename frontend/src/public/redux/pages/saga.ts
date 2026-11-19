@@ -5,7 +5,7 @@ import { getErrorMessage } from '../../utils/getErrorMessage';
 import { logger } from '../../utils/logger';
 
 import { loadPagesSuccess, loadPagesFailed, loadPages } from './slice';
-import { IPages } from './types';
+import type { IPages } from './types';
 import { getPages } from '../../api/getPages';
 
 function* loadPagesSaga() {

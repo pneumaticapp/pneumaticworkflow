@@ -1,5 +1,5 @@
-import { UnregisterCallback } from 'history';
-import * as React from 'react';
+import type { UnregisterCallback } from 'history';
+import React from 'react';
 import * as ReactDOM from 'react-dom';
 import InnerImageZoom from 'react-inner-image-zoom';
 import classnames from 'classnames';

@@ -1,4 +1,4 @@
-import { EGraphViewMode } from '../../types';
+import { EGraphViewMode } from '../../../../../types/template';
 import { GRAPH_VIEW_MODE_STORAGE_KEY, getGraphViewMode, saveGraphViewMode } from '../graphViewModeStorage';
 
 describe('graphViewModeStorage', () => {

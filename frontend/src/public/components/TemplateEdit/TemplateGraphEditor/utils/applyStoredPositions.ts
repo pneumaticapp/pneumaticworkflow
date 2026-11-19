@@ -1,4 +1,4 @@
-import { TGraphEdge, TGraphNode, TGraphNodePositions } from '../types';
+import type { TGraphEdge, TGraphNode, TGraphNodePositions } from '../types';
 import { alignJunctionNodes } from './alignJunctionNodes';
 import { isCardNode } from './graphGeometry';
 

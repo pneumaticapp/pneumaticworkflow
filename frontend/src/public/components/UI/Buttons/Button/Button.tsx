@@ -1,7 +1,8 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
-import { Link, NavLinkProps } from 'react-router-dom';
-import { Loader, TSpinnerColor } from '../../Loader';
+import type { Link, NavLinkProps } from 'react-router-dom';
+import type { TSpinnerColor } from '../../Loader';
+import { Loader } from '../../Loader';
 
 import styles from './Button.css';
 

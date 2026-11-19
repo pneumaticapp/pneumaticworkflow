@@ -1,6 +1,6 @@
-import * as React from 'react';
+import React from 'react';
 
-import { TUserListItem } from '../../types/user';
+import type { TUserListItem } from '../../types/user';
 
 export interface IUserdataProps {
   userId?: number | null;

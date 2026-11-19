@@ -5,7 +5,7 @@ import { SKELETON_ROWS } from './constants';
 import { defaultSystemSkeletonTable } from './Columns/Cells';
 import { SkeletonDefaultCell80 } from './Columns/Cells/SystemDefaultColumns';
 import { Skeleton } from '../../../UI/Skeleton';
-import { CustomHeaderGroup, TableColumns, WorkflowsTableGridProps } from './types';
+import type { TCustomHeaderGroup, TTableColumns, IWorkflowsTableGridProps } from './types';
 
 import styles from './WorkflowsTable.css';
 
@@ -22,7 +22,7 @@ export function WorkflowsTableGrid({
   shouldSkeletonBody,
   shouldSkeletonDefaultTable,
   shouldSkeletonOptionalTable,
-}: WorkflowsTableGridProps) {
+}: IWorkflowsTableGridProps) {
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = table;
 
   const getTableBodyContent = () => {
@@ -103,7 +103,7 @@ export function WorkflowsTableGrid({
         ) : (
           headerGroups.map((headerGroup) => (
             <tr {...headerGroup.getHeaderGroupProps()} key={headerGroup.id}>
-              {headerGroup.headers.map((column: CustomHeaderGroup<TableColumns>) => (
+              {headerGroup.headers.map((column: TCustomHeaderGroup<TTableColumns>) => (
                 <th
                   {...column.getHeaderProps({
                     style: {

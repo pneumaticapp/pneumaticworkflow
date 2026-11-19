@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 
 import { CustomTooltip } from '../../components/UI/CustomTooltip';

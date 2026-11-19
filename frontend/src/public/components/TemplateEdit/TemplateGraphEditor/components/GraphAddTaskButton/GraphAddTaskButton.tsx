@@ -1,9 +1,8 @@
-import * as React from 'react';
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { useIntl } from 'react-intl';
 
 import { PlusCircleIcon } from '../../../../icons';
-import { TGraphAddTaskIntent } from '../../types';
+import type { TGraphAddTaskIntent } from '../../types';
 import styles from './GraphAddTaskButton.css';
 
 export interface IGraphAddTaskButtonProps {

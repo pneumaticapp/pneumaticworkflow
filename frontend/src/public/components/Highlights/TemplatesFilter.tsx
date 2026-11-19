@@ -6,7 +6,7 @@ import { Checkbox } from '../UI/Fields/Checkbox';
 import { IntlMessages } from '../IntlMessages';
 import { isArrayWithItems } from '../../utils/helpers';
 import { ShowMore } from '../UI/ShowMore';
-import { ITemplatesFilterProps } from './types';
+import type { ITemplatesFilterProps } from './types';
 
 import styles from './Filters.css';
 

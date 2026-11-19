@@ -3,13 +3,14 @@ import { call } from 'redux-saga/effects';
 import { fetchTemplate, watchPatchTemplate, watchSaveTemplate } from '../saga';
 import { getTemplate } from '../../../api/getTemplate';
 import { updateTemplate } from '../../../api/updateTemplate';
-import { ETemplateActions, TLoadTemplate } from '../actions';
+import { ETemplateActions } from '../actions';
+import type { TLoadTemplate } from '../actions';
 import { loadFieldsetsCatalog, loadFieldsetsCatalogSuccess, loadFieldsetsCatalogFailed } from '../../fieldsets/slice';
-import { ETemplateStatus } from '../../../types/redux';
+import { ETemplateStatus } from '../types';
 import { ESubscriptionPlan } from '../../../types/account';
 import { cleanTemplateReferences, mapTemplateRequest } from '../../../utils/template';
 import { checkSomeRouteIsActive } from '../../../utils/history';
-import { ITemplate } from '../../../types/template';
+import type { ITemplate } from '../../../types/template';
 import { makeFieldsetBindingClient } from '../../../__stubs__/fieldsets.factory';
 
 jest.mock('../../../utils/getConfig', () => ({

@@ -1,7 +1,7 @@
-import * as React from 'react';
+import React from 'react';
 import { Handle, Position } from 'reactflow';
 
-import { IConnectedHandles } from '../../types';
+import type { IConnectedHandles } from '../../types';
 import { graphNodeHandleClassName } from '../GraphNodeCard/GraphNodeCard';
 import cardStyles from '../GraphNodeCard/GraphNodeCard.css';
 

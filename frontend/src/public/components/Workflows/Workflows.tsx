@@ -1,6 +1,7 @@
-import * as React from 'react';
+import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
+import type { RouteComponentProps} from 'react-router-dom';
+import { withRouter } from 'react-router-dom';
 
 import WorkflowsGridPage from './WorkflowsGridPage';
 import WorkflowsTablePage from './WorkflowsTablePage';

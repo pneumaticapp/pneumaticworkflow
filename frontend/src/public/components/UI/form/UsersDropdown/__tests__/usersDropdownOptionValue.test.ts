@@ -1,5 +1,5 @@
 /// <reference types="jest" />
-import { EOptionTypes } from '../UsersDropdown';
+import { EOptionTypes } from '../types';
 import {
   getUsersDropdownOptionValue,
   isUsersDropdownOptionEqual,

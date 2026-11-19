@@ -3,10 +3,12 @@ import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { TITLES } from '../../constants/titles';
-import { TChangeTenantNamePayload, TLoginPartnerSuperuserPayload } from '../../redux/actions';
+import type { TChangeTenantNamePayload, TLoginPartnerSuperuserPayload } from '../../redux/actions';
 import { TenantsSkeleton } from './TenantSkeleton/TenantsSkeleton';
-import { TStateEditModal, TStateModal, TenantModal } from './TenantModal';
-import { ETenantsSorting, ETypeTenantModal, ITenant } from '../../types/tenants';
+import type { TStateEditModal, TStateModal } from './TenantModal';
+import { TenantModal } from './TenantModal';
+import type { ETenantsSorting, ITenant } from '../../types/tenants';
+import { ETypeTenantModal } from '../../types/tenants';
 import { Tenant } from './Tenant/Tenant';
 import { TenantGuestBanner } from './TenantGuestBanner';
 

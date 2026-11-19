@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { useEffect, useState, useMemo, useCallback, useRef, ChangeEvent } from 'react';
+import type { ChangeEvent } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
@@ -32,14 +32,16 @@ import { FieldsetUnsavedChangesModal } from './FieldsetUnsavedChangesModal';
 import { getCurrentFieldset, isCurrentFieldsetLoading } from '../../../redux/selectors/fieldsets';
 import { getAccountId } from '../../../redux/selectors/user';
 
-import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../types/template';
+import type { IExtraField } from '../../../types/template';
+import { EExtraFieldMode, EExtraFieldType } from '../../../types/template';
 import { FilledInfoIcon, ArrowDropdownIcon, DateIcon, LinkIcon } from '../../icons';
 import { EInputNameBackgroundColor, EMoveDirections } from '../../../types/workflow';
-import {
+import type {
   IFieldsetTemplateRule,
-  EFieldLabelPosition,
   EFieldsetRuleType,
-  IUpdateFieldsetParams,
+  IUpdateFieldsetParams} from '../../../types/fieldset';
+import {
+  EFieldLabelPosition
 } from '../../../types/fieldset';
 import { ExtraFieldsMap } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldsMap';
 import { ExtraFieldIcon } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldIcon';
@@ -60,7 +62,7 @@ import {
 
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
 
-import { TFieldsetDetailsProps, TDetailFieldsetState, TDetailFieldsetChanges } from './types';
+import type { TFieldsetDetailsProps, TDetailFieldsetState, TDetailFieldsetChanges } from './types';
 import styles from './FieldsetDetails.css';
 
 const READONLY_FIELD_ICONS: Partial<Record<EExtraFieldType, React.FC<React.SVGAttributes<SVGElement>>>> = {

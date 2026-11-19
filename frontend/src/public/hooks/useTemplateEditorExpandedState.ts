@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { TTemplateEditorExpandedState } from '../components/TemplateEdit/types';
+import type { TTemplateEditorExpandedState } from '../components/TemplateEdit/types';
 
 export interface ITemplateEditorExpandedState {
   openedTasks: TTemplateEditorExpandedState;

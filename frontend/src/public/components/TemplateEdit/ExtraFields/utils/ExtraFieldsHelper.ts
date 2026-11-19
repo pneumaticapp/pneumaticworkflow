@@ -1,4 +1,5 @@
-import { EExtraFieldType, IExtraField, TExtraFieldValue } from '../../../../types/template';
+import type { IExtraField, TExtraFieldValue } from '../../../../types/template';
+import { EExtraFieldType } from '../../../../types/template';
 import { getEndOfDayTsp } from '../../../../utils/dateTime';
 import { parseMarkdownToFiles } from '../../../../utils/parseMarkdownFiles';
 import { normalizeCheckboxValue } from '../../../../utils/fields';

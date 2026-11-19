@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { PaywallReminder } from './PaywallReminder';
 import { BellIcon } from '../icons';
 import { EPlanActions } from '../../utils/getPlanPendingActions';
-import { TAccountLeaseLevel } from '../../types/user';
+import type { TAccountLeaseLevel } from '../../types/user';
 import { truncateString } from '../../utils/truncateString';
 import { ESubscriptionPlan } from '../../types/account';
 import { EWorkflowsView } from '../../types/workflow';
@@ -18,7 +18,7 @@ import {
 } from '../../redux/actions';
 import { getTopNavState } from '../../redux/selectors/topNav';
 import { ProfileDropdown } from './ProfileDropdown';
-import { ITopNavProps, TTopNavContentProps } from './types';
+import type { ITopNavProps, TTopNavContentProps } from './types';
 
 import styles from './TopNav.css';
 

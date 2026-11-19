@@ -1,8 +1,10 @@
 /* eslint-disable */
 /* prettier-ignore */
-import { EMenuActions, TMenuActions } from './actions';
+import { EMenuActions } from './actions';
+import type { TMenuActions } from './actions';
 import { defaultMenuType } from '../../constants/defaultValues';
-import { IMenu } from '../../types/redux';
+import type { IMenu } from './types';
+import type { IMenuItem } from '../../types/menu';
 import merge from 'lodash.merge';
 
 const { DESKTOP_MIN_WIDTH_BREAKPOINT, SUB_HIDDEN_BREAKPOINT } = require('../../constants/breakpoints');
@@ -23,7 +25,8 @@ export const reducer = (state: IMenu = INIT_STATE, action: TMenuActions) => {
       return { ...state, items: action.payload };
     }
     case EMenuActions.MergeMenuItems: {
-      const newItems = merge(state.items, action.payload);
+      const emptyItems: IMenuItem[] = [];
+      const newItems = merge(emptyItems, state.items, action.payload);
 
       return { ...state, items: newItems };
     }

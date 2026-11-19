@@ -1,10 +1,14 @@
-import { createSlice, PayloadAction, createAction } from '@reduxjs/toolkit';
+import { createSlice, createAction } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 
-import { EDeleteUserModalState, IAccounts, IAccountPlan } from '../../types/redux';
-import { EUserListSorting, EUserStatus, TUserListItem, ICreateUserRequest } from '../../types/user';
+import { EUserListSorting, EUserStatus } from '../../types/user';
+import type { TUserListItem, ICreateUserRequest } from '../../types/user';
 import { ESubscriptionPlan } from '../../types/account';
+import type { IAccountPlan } from '../../types/account';
 
-import {
+import { EDeleteUserModalState } from './types';
+import type {
+  IAccounts,
   IChangeUserAdminProps,
   TOpenDeleteUserModalPayload,
   TActiveUsersCountFetchFinishedPayload,

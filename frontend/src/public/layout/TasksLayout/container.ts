@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 
-import { IApplicationState } from '../../types/redux';
+import type { RootState } from '../../redux/store';
 import {
   changeTaskListSorting,
   changeTaskListCompletionStatus,
@@ -12,7 +12,8 @@ import {
 } from '../../redux/tasks/slice';
 import { closeWorkflowLogPopup } from '../../redux/workflows/slice';
 
-import { ITasksLayoutDispatchProps, ITasksLayoutStoreProps, TasksLayoutComponent } from './TasksLayout';
+import type { ITasksLayoutDispatchProps, ITasksLayoutStoreProps } from './TasksLayout';
+import { TasksLayoutComponent } from './TasksLayout';
 
 const mapStateToProps = ({
   tasks: {
@@ -25,7 +26,7 @@ const mapStateToProps = ({
       templateStepList,
     },
   },
-}: IApplicationState): ITasksLayoutStoreProps => {
+}: RootState): ITasksLayoutStoreProps => {
   return {
     isHasFilter,
     sorting,

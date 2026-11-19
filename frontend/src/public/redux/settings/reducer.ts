@@ -1,14 +1,17 @@
 import { defaultLocale, localeOptions } from '../../constants/defaultValues';
 import { envLanguageCode } from '../../constants/enviroment';
+import type { ISettings } from './types';
+import type { ELocale } from '../../types/locale';
 import { getBrowserConfig } from '../../utils/getConfig';
 
-import { ESettingsActions, TSettingsActions } from './actions';
+import { ESettingsActions } from './actions';
+import type { TSettingsActions } from './actions';
 
-const INIT_STATE = {
+const INIT_STATE: ISettings = {
   locale: getLocale(),
 };
 
-export const reducer = (state = INIT_STATE, action: TSettingsActions) => {
+export const reducer = (state = INIT_STATE, action: TSettingsActions): ISettings => {
   switch (action.type) {
     case ESettingsActions.ChangeLocale:
       return { ...state, locale: action.payload };
@@ -18,13 +21,14 @@ export const reducer = (state = INIT_STATE, action: TSettingsActions) => {
   }
 };
 
-function getLocale() {
+function getLocale(): ELocale {
   const { user } = getBrowserConfig();
   const localStorageLang: string | null = localStorage.getItem('currentLanguage');
 
-  if (user?.language && localeOptions.find((item) => item.id === user.language)) return user.language;
-  if (envLanguageCode && localeOptions.find((item) => item.id === envLanguageCode)) return envLanguageCode;
-  if (localStorageLang && localeOptions.find((item) => item.id === localStorageLang)) return localStorageLang;
+  const matchedOption =
+    localeOptions.find((item) => item.id === user?.language) ||
+    localeOptions.find((item) => item.id === envLanguageCode) ||
+    localeOptions.find((item) => item.id === localStorageLang);
 
-  return defaultLocale;
+  return matchedOption?.id || defaultLocale;
 }

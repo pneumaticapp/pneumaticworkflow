@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Formik, FormikConfig } from 'formik';
+import type { FormikConfig } from 'formik';
+import { Formik } from 'formik';
 import { NavLink } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 
@@ -7,7 +8,7 @@ import { confirmResetPassword, EResetPasswordStatus } from '../../../api/confirm
 import { ERoutes } from '../../../constants/routes';
 import { TITLES } from '../../../constants/titles';
 import { getQueryStringParams, history } from '../../../utils/history';
-import { IConfirmResetPassword } from '../../../redux/actions';
+import type { IConfirmResetPassword } from '../../../redux/actions';
 import { IntlMessages } from '../../../components/IntlMessages';
 import { NotificationManager } from '../../../components/UI/Notifications';
 import { getErrorMessage, UNKNOWN_ERROR } from '../../../utils/getErrorMessage';

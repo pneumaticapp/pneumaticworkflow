@@ -1,4 +1,4 @@
-import { WebSocketWithRemoveFlag } from './createWebSocketChannel';
+import type { WebSocketWithRemoveFlag } from '../realtime/types';
 
 const connections: WebSocketWithRemoveFlag[] = [];
 

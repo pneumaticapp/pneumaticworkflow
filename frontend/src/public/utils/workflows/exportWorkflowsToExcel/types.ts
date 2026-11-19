@@ -1,7 +1,7 @@
-import { IWorkflowClient } from '../../../types/workflow';
-import { ITableViewFields } from '../../../types/template';
-import { TUserListItem } from '../../../types/user';
-import { IGroup } from '../../../redux/team/types';
+import type { IWorkflowClient } from '../../../types/workflow';
+import type { ITableViewFields } from '../../../types/template';
+import type { TUserListItem } from '../../../types/user';
+import type { IGroup } from '../../../types/team';
 
 export type TWorkflowExportFormat = 'xlsx' | 'csv';
 

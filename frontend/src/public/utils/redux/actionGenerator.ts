@@ -1,4 +1,4 @@
-import { ITypedReduxAction } from '../../types/redux';
+import type { ITypedReduxAction } from '../../redux/types';
 
 export function actionGenerator<Type>(type: Type): () => ITypedReduxAction<Type, void>;
 export function actionGenerator<Type, Payload>(type: Type): (payload: Payload) => ITypedReduxAction<Type, Payload>;
