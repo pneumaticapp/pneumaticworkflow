@@ -512,7 +512,7 @@ services:
       FIREBASE_APP_ID: ${FIREBASE_APP_ID:-}
       FIREBASE_MEASUREMENT_ID: ${FIREBASE_MEASUREMENT_ID:-}
       RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
-    command: pm2-runtime start pm2.json
+    command: pm2-runtime start pm2.json --env production
     expose:
       - 8000
     networks:

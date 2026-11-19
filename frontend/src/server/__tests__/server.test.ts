@@ -1,4 +1,5 @@
 const utils = jest.requireActual('../../public/utils/getConfig');
+const mockWebpackModuleLoaded = jest.fn();
 
 jest.mock('mini-css-extract-plugin', () => {
   class MiniCssExtractPlugin {}
@@ -7,6 +8,7 @@ jest.mock('mini-css-extract-plugin', () => {
 });
 
 jest.mock('webpack', () => {
+  mockWebpackModuleLoaded();
   const webpackFn = Object.assign(() => ({}), {
     DefinePlugin: class DefinePlugin {},
     HotModuleReplacementPlugin: class HotModuleReplacementPlugin {},
@@ -103,7 +105,7 @@ describe('server', () => {
       return jest.requireActual('../server');
     };
 
-    it('starts the server for the production environment', () => {
+    it('starts the server for the production environment', async () => {
       const log = jest.spyOn(console, 'info');
 
       const { initServer } = setEnvAndGetInitServer({
@@ -111,7 +113,7 @@ describe('server', () => {
         SSO_AUTH: 'no',
       });
 
-      initServer();
+      await initServer();
       const appListenCallback = app.listen.mock.calls[0][1];
       appListenCallback();
 
@@ -120,7 +122,15 @@ describe('server', () => {
       expect(log).toHaveBeenCalledWith('App listening on port 8000');
     });
 
-    it('returns port 8000 if not specified in the config', () => {
+    it('does not load webpack infrastructure in production', async () => {
+      const { initServer } = setEnvAndGetInitServer({ NODE_ENV: 'production', SSO_AUTH: 'no' });
+
+      await initServer();
+
+      expect(mockWebpackModuleLoaded).not.toHaveBeenCalled();
+    });
+
+    it('returns port 8000 if not specified in the config', async () => {
       const log = jest.spyOn(console, 'info');
       mockConfig = { ...mockConfig, port: undefined };
 
@@ -129,7 +139,7 @@ describe('server', () => {
         SSO_AUTH: 'no',
       });
 
-      initServer();
+      await initServer();
       const [appListenPort, appListenCallback] = app.listen.mock.calls[0];
       appListenCallback();
 
@@ -137,50 +147,51 @@ describe('server', () => {
       expect(log).toHaveBeenCalledWith('App listening on port 8000');
     });
 
-    it('starts the server for the development environment', () => {
+    it('starts the server for the development environment', async () => {
       const { initServer } = setEnvAndGetInitServer({
         NODE_ENV: 'development',
         SSO_AUTH: 'no',
       });
 
-      initServer();
+      await initServer();
 
       expect(app.use).toHaveBeenCalledTimes(7);
       expect(app.get).toHaveBeenCalledTimes(6);
+      expect(mockWebpackModuleLoaded).toHaveBeenCalledTimes(1);
     });
 
-    it('adds Auth0 SSO route when SSO_AUTH is enabled and SSO_PROVIDER is Auth0', () => {
+    it('adds Auth0 SSO route when SSO_AUTH is enabled and SSO_PROVIDER is Auth0', async () => {
       const { initServer } = setEnvAndGetInitServer({
         NODE_ENV: 'production',
         SSO_AUTH: 'yes',
         SSO_PROVIDER: 'auth0',
       });
 
-      initServer();
+      await initServer();
 
       expect(app.get).toHaveBeenCalledTimes(7);
     });
 
-    it('adds Okta SSO route when SSO_AUTH is enabled and SSO_PROVIDER is Okta', () => {
+    it('adds Okta SSO route when SSO_AUTH is enabled and SSO_PROVIDER is Okta', async () => {
       const { initServer } = setEnvAndGetInitServer({
         NODE_ENV: 'production',
         SSO_AUTH: 'yes',
         SSO_PROVIDER: 'okta',
       });
 
-      initServer();
+      await initServer();
 
       expect(app.get).toHaveBeenCalledTimes(7);
     });
 
-    it('does not add SSO routes when SSO_AUTH is disabled', () => {
+    it('does not add SSO routes when SSO_AUTH is disabled', async () => {
       const { initServer } = setEnvAndGetInitServer({
         NODE_ENV: 'production',
         SSO_AUTH: 'no',
         SSO_PROVIDER: 'auth0',
       });
 
-      initServer();
+      await initServer();
 
       expect(app.get).toHaveBeenCalledTimes(6);
     });
