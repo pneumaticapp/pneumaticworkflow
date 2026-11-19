@@ -130,6 +130,17 @@ describe('server', () => {
       expect(mockWebpackModuleLoaded).not.toHaveBeenCalled();
     });
 
+    it('serves frontend assets with the default Express static policy', async () => {
+      const { initServer } = setEnvAndGetInitServer({ NODE_ENV: 'production', SSO_AUTH: 'no' });
+      const staticMiddleware = jest.fn();
+      (express.static as unknown as jest.Mock).mockReturnValue(staticMiddleware);
+
+      await initServer();
+
+      expect(express.static).toHaveBeenCalledWith('public');
+      expect(app.use).toHaveBeenCalledWith('/static/', staticMiddleware);
+    });
+
     it('returns port 8000 if not specified in the config', async () => {
       const log = jest.spyOn(console, 'info');
       mockConfig = { ...mockConfig, port: undefined };

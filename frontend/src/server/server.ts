@@ -11,7 +11,6 @@ import { setPublicAuthCookie } from './utils/cookie';
 import { getUserPublic } from './middleware/utils/getUserPublic';
 import { mapToCamelCase } from '../public/utils/mappers';
 import { SSOProvider } from './types';
-import { createStaticMiddleware } from './utils/createStaticMiddleware';
 
 const { NODE_ENV = 'development' } = process.env;
 
@@ -51,7 +50,7 @@ export async function initServer() {
   app.set('view engine', 'ejs');
   app.use(express.json());
   app.use('/assets/', express.static('assets'));
-  app.use('/static/', createStaticMiddleware('public'));
+  app.use('/static/', express.static('public'));
 
   app.use('/api/:path(*)', apiProxy());
 
