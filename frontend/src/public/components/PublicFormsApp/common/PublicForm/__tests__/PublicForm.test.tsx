@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux';
 import { PublicForm } from '../PublicForm';
 import { getPublicForm } from '../../../../../api/getPublicForm';
 import { runPublicForm } from '../../../../../api/runPublicForm';
+import { getNormalizedKickoff } from '../../../../../utils/mappers';
 import { MergedOutputList } from '../../../../MergedOutputList';
 import { NotificationManager } from '../../../../UI/Notifications';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
@@ -550,6 +551,66 @@ describe('PublicForm', () => {
       expect(mappedFieldset.apiNameBinding).toBe('fieldset-meta');
       expect(mappedFieldset).not.toHaveProperty('sharedFieldsetId');
       expect(mappedFieldset).not.toHaveProperty('rulesets');
+    });
+  });
+
+  describe('Initializing default values for fieldset fields from GET /templates/public', () => {
+    it('initializes default values by field type when fieldset fields arrive without value', async () => {
+      const rawFieldset = makePublicFormFieldsetResponse({
+        fields: [
+          makeExtraField({ apiName: 'fs-url', type: EExtraFieldType.Url, value: undefined }),
+          makeExtraField({ apiName: 'fs-number', type: EExtraFieldType.Number, value: undefined }),
+          makeExtraField({ apiName: 'fs-checkbox', type: EExtraFieldType.Checkbox, value: undefined }),
+          makeExtraField({ apiName: 'fs-file', type: EExtraFieldType.File, value: undefined, attachments: undefined }),
+          makeExtraField({ apiName: 'fs-radio', type: EExtraFieldType.Radio, selections: ['Yes'], value: undefined }),
+        ],
+      });
+
+      (getPublicForm as jest.Mock).mockResolvedValue(makePublicFormResponse({ fieldsets: [rawFieldset] }));
+
+      render(React.createElement(PublicForm, { type: 'shared' }));
+
+      await screen.findByRole('button', { name: SUBMIT_LABEL });
+
+      expect(MergedOutputList).toHaveBeenCalledTimes(1);
+      const { fieldsets: mappedFieldsets } = getLastMergedOutputListProps();
+      expect(mappedFieldsets[0].fields).toEqual([
+        expect.objectContaining({ apiName: 'fs-url', value: '' }),
+        expect.objectContaining({ apiName: 'fs-number', value: '' }),
+        expect.objectContaining({ apiName: 'fs-checkbox', value: [] }),
+        expect.objectContaining({ apiName: 'fs-file', value: [], attachments: [] }),
+        expect.objectContaining({ apiName: 'fs-radio', value: null }),
+      ]);
+    });
+
+    it('passes empty string values for untouched url and number fieldset fields on submit', async () => {
+      const rawFieldset = makePublicFormFieldsetResponse({
+        fields: [
+          makeExtraField({ apiName: 'fs-url', type: EExtraFieldType.Url, value: undefined }),
+          makeExtraField({ apiName: 'fs-number', type: EExtraFieldType.Number, value: undefined }),
+        ],
+      });
+
+      (getPublicForm as jest.Mock).mockResolvedValue(makePublicFormResponse({ fieldsets: [rawFieldset] }));
+
+      render(React.createElement(PublicForm, { type: 'shared' }));
+
+      const submitButton = await screen.findByRole('button', { name: SUBMIT_LABEL });
+      userEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(runPublicForm).toHaveBeenCalledTimes(1);
+      });
+
+      expect(getNormalizedKickoff).toHaveBeenCalledTimes(1);
+      expect(getNormalizedKickoff).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fields: [
+            expect.objectContaining({ apiName: 'fs-url', value: '' }),
+            expect.objectContaining({ apiName: 'fs-number', value: '' }),
+          ],
+        }),
+      );
     });
   });
 });
