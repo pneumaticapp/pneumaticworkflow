@@ -1,8 +1,9 @@
-import { createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAction, createSlice } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 
-import { IGroupsStore } from '../../types/redux';
+import type { IGroupsStore } from './types';
 import { EGroupsListSorting, EUserListSorting } from '../../types/user';
-import { IGroup } from '../team/types';
+import type { IGroup } from '../../types/team';
 
 const initialState: IGroupsStore = {
   isLoading: true,

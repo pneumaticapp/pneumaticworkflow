@@ -21,14 +21,12 @@ from src.generics.permissions import (
     UserIsAuthenticated,
 )
 from src.logs.events import AuditEventService
-from src.openapi import (
+from src.openapi.permission_docs import (
     ACCESS_ADMIN_BASE,
     ACCESS_AUTH,
     ACCESS_AUTH_BASIC,
-    FORBIDDEN,
-    UNAUTHORIZED,
-    VALIDATION_ERROR,
 )
+from src.openapi.responses import FORBIDDEN, UNAUTHORIZED, VALIDATION_ERROR
 
 UserModel = get_user_model()
 

@@ -5,10 +5,7 @@ import classnames from 'classnames';
 
 import { DropdownList } from '../../../UI';
 import { getRuleOperators } from './utils';
-import {
-  IFieldRuleBaseOperatorOption,
-  IRuleOperatorSelectProps,
-} from './types';
+import type { IFieldRuleBaseOperatorOption, IRuleOperatorSelectProps } from './types';
 
 import styles from '../FieldsetRulesetsList/FieldsetRulesets.css';
 

@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { Component } from 'react';
+import React, { Component } from 'react';
 import classnames from 'classnames';
 import * as ReactDOM from 'react-dom';
 import OutsideClickHandler from '../OutsideClickHandler';

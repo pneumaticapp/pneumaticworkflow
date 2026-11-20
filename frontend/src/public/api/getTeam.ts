@@ -1,6 +1,7 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { EUserListSorting, EUserStatus, TUserListItem } from '../types/user';
+import type { EUserStatus, TUserListItem } from '../types/user';
+import { EUserListSorting } from '../types/user';
 import { isArrayWithItems } from '../utils/helpers';
 import { identifyAppPartOnClient } from '../utils/identifyAppPart/identifyAppPartOnClient';
 import { EAppPart } from '../utils/identifyAppPart/types';

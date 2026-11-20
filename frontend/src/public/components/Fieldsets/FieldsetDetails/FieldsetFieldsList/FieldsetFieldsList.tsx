@@ -3,7 +3,8 @@ import { useMemo } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../../types/template';
+import type { IExtraField } from '../../../../types/template';
+import { EExtraFieldMode, EExtraFieldType } from '../../../../types/template';
 import { EInputNameBackgroundColor, EMoveDirections } from '../../../../types/workflow';
 import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { ExtraFieldsMap } from '../../../TemplateEdit/ExtraFields/utils/ExtraFieldsMap';
@@ -15,7 +16,7 @@ import { useCheckDevice } from '../../../../hooks/useCheckDevice';
 
 import { getSortedFields, createField, editField, deleteFieldWithCleanup, moveField } from './utils';
 import { removeDeletedFieldFromRulesets } from '../FieldsetRulesetsList/utils';
-import { IFieldsetFieldsListProps } from './types';
+import type { IFieldsetFieldsListProps } from './types';
 import { SINGLE_LINE_FIELD_TYPES } from '../constants';
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
 import styles from './FieldsetFieldsList.css';
@@ -69,9 +70,7 @@ export function FieldsetFieldsList({
         <div className={classnames(styles['fields'], isReadOnly && styles['fieldset_readonly'])}>
           {sortedFields.map((field, index) => {
             const readOnlyField =
-              isReadOnly && SINGLE_LINE_FIELD_TYPES.has(field.type)
-                ? { ...field, type: EExtraFieldType.Text }
-                : field;
+              isReadOnly && SINGLE_LINE_FIELD_TYPES.has(field.type) ? { ...field, type: EExtraFieldType.Text } : field;
 
             const IconComponent = isReadOnly && READONLY_FIELD_ICONS[field.type];
 
@@ -102,8 +101,7 @@ export function FieldsetFieldsList({
                 {...(openFieldRule && {
                   fieldRulesets: field.rulesets,
                   onOpenFieldRules: (ruleset) => openFieldRule(field.apiName, ruleset),
-                  onDeleteFieldRuleset: (rulesetApiName: string) =>
-                    deleteFieldRuleset?.(field.apiName, rulesetApiName),
+                  onDeleteFieldRuleset: (rulesetApiName: string) => deleteFieldRuleset?.(field.apiName, rulesetApiName),
                 })}
               />
             );

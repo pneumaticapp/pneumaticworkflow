@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 
 import { TopNavContainer } from '../../components/TopNav';
 import { IntegrationsCommonContainer } from '../../components/IntegrationsCommon';

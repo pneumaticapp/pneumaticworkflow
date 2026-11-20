@@ -16,11 +16,10 @@ from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
-from src.openapi import (
-    ACCESS_PRESET,
+from src.openapi.permission_docs import ACCESS_PRESET
+from src.openapi.responses import (
     EMPTY,
     FORBIDDEN,
-    NOT_FOUND,
     UNAUTHORIZED,
     VALIDATION_ERROR,
 )
@@ -74,7 +73,6 @@ class TemplatePresetViewSet(
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
-            404: NOT_FOUND,
         },
     )
     def update(self, request, *args, **kwargs):
@@ -108,7 +106,6 @@ class TemplatePresetViewSet(
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
-            404: NOT_FOUND,
         },
     )
     def partial_update(self, request, *args, **kwargs):
@@ -121,10 +118,8 @@ class TemplatePresetViewSet(
         description=ACCESS_PRESET,
         responses={
             204: EMPTY,
-            400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
-            404: NOT_FOUND,
         },
     )
     def destroy(self, request, *args, **kwargs):
@@ -145,12 +140,11 @@ class TemplatePresetViewSet(
         tags=['Templates'],
         summary='Set template preset as default',
         description=ACCESS_PRESET,
+        request=None,
         responses={
             204: EMPTY,
-            400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
-            404: NOT_FOUND,
         },
     )
     @action(methods=['POST'], detail=True, url_path='default')

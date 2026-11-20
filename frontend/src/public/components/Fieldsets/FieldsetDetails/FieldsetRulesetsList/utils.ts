@@ -1,23 +1,18 @@
-import {
+import type {
   IBaseRuleGroupAnd,
   IFieldsetRuleGroupAnd,
-  EFieldsetRulesetNumericOperator,
   ERuleCombinator,
   IFieldsetRuleSet,
 } from '../../../../types/fieldset';
+import { EFieldsetRulesetNumericOperator } from '../../../../types/fieldset';
 
 import {
   createRulesetApiName,
   createRulesetGroupOrApiName,
   createRulesetGroupAndApiName,
 } from '../../../../utils/createId';
-import { TRulesetsParams, TRulesetParams } from './types';
-import {
-  updateRule,
-  deleteRule,
-  addRule,
-  regroupRules,
-} from '../RuleBase/utils';
+import type { TRulesetsParams, TRulesetParams } from './types';
+import { updateRule, deleteRule, addRule, regroupRules } from '../RuleBase/utils';
 
 export { getRuleCombinator } from '../RuleBase/utils';
 
@@ -43,18 +38,12 @@ export const addRuleset = ({ rulesets, onRulesetsChange }: TRulesetsParams) => {
   onRulesetsChange(getNormalizedRulesetOrders([...rulesets, createEmptyRuleset()]));
 };
 
-export const addGroupAndToRulesets = ({
-  rulesets,
-  rulesetApiName,
-  onRulesetsChange,
-}: TRulesetParams) => {
+export const addGroupAndToRulesets = ({ rulesets, rulesetApiName, onRulesetsChange }: TRulesetParams) => {
   const ruleSet = rulesets.find((ruleset) => ruleset.apiName === rulesetApiName);
   if (!ruleSet) return;
 
   const updatedRulesets = rulesets.map((ruleset) =>
-    ruleset.apiName === rulesetApiName
-      ? addRule(ruleset, createEmptyGroupAnd)
-      : ruleset,
+    ruleset.apiName === rulesetApiName ? addRule(ruleset, createEmptyGroupAnd) : ruleset,
   );
   onRulesetsChange(updatedRulesets);
 };
@@ -78,13 +67,10 @@ export const removeDeletedFieldFromRulesets = (
       ...ruleSet,
       fields: ruleSet.fields.filter((apiName) => apiName !== deletedFieldApiName),
     }))
-    .filter((ruleSet, index) =>
-      ruleSet.fields.length > 0 || !rulesets[index].fields.includes(deletedFieldApiName),
-    );
+    .filter((ruleSet, index) => ruleSet.fields.length > 0 || !rulesets[index].fields.includes(deletedFieldApiName));
 
   return getNormalizedRulesetOrders(updatedRulesets);
 };
-
 
 export const updateRuleInRulesets = ({
   rulesets,
@@ -100,9 +86,7 @@ export const updateRuleInRulesets = ({
   ruleChanges: Partial<IBaseRuleGroupAnd>;
 }) => {
   const updatedRulesets = rulesets.map((ruleset) =>
-    ruleset.apiName === rulesetApiName
-      ? updateRule(ruleset, groupOrApiName, groupAndApiName, ruleChanges)
-      : ruleset,
+    ruleset.apiName === rulesetApiName ? updateRule(ruleset, groupOrApiName, groupAndApiName, ruleChanges) : ruleset,
   );
   onRulesetsChange(updatedRulesets);
 };
@@ -125,23 +109,15 @@ export const updateRulesetFields = ({
   fieldApiNames,
   onRulesetsChange,
 }: TRulesetParams & { fieldApiNames: (string | number | null)[] }) => {
-  const stringFieldApiNames = fieldApiNames.filter(
-    (name): name is string => typeof name === 'string',
-  );
+  const stringFieldApiNames = fieldApiNames.filter((name): name is string => typeof name === 'string');
 
   const updatedRulesets = rulesets.map((ruleSet) =>
-    ruleSet.apiName === rulesetApiName
-      ? { ...ruleSet, fields: stringFieldApiNames }
-      : ruleSet,
+    ruleSet.apiName === rulesetApiName ? { ...ruleSet, fields: stringFieldApiNames } : ruleSet,
   );
   onRulesetsChange(updatedRulesets);
 };
 
-export const deleteRuleset = ({
-  rulesets,
-  rulesetApiName,
-  onRulesetsChange,
-}: TRulesetParams) => {
+export const deleteRuleset = ({ rulesets, rulesetApiName, onRulesetsChange }: TRulesetParams) => {
   const filtered = rulesets.filter((ruleSet) => ruleSet.apiName !== rulesetApiName);
   onRulesetsChange(getNormalizedRulesetOrders(filtered));
 };
@@ -158,9 +134,7 @@ export const deleteRuleFromRulesets = ({
   groupAndApiName: string;
 }) => {
   const updatedRulesets = rulesets.map((ruleset) =>
-    ruleset.apiName === rulesetApiName
-      ? deleteRule(ruleset, groupOrApiName, groupAndApiName)
-      : ruleset,
+    ruleset.apiName === rulesetApiName ? deleteRule(ruleset, groupOrApiName, groupAndApiName) : ruleset,
   );
   onRulesetsChange(updatedRulesets);
 };

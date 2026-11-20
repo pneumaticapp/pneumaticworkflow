@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
-import { TStateEditModal } from '../TenantModal';
+import type { TStateEditModal } from '../TenantModal';
 import { WarningPopup } from '../../UI/WarningPopup';
-import { Dropdown, Header, TDropdownOption } from '../../UI';
+import type { TDropdownOption } from '../../UI';
+import { Dropdown, Header } from '../../UI';
 import { DateFormat } from '../../UI/DateFormat';
-import { TLoginPartnerSuperuserPayload } from '../../../redux/actions';
+import type { TLoginPartnerSuperuserPayload } from '../../../redux/actions';
 import { MoreIcon, PencilIcon, TenantIcon, TrashIcon } from '../../icons';
 
 import styles from './Tenant.css';

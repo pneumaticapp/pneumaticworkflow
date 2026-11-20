@@ -5,7 +5,8 @@ import classnames from 'classnames';
 import { useSelector } from 'react-redux';
 
 import { isArrayWithItems } from '../../../../utils/helpers';
-import { EStartingType, getDropdownOperators } from './utils/getDropdownOperators';
+import { getDropdownOperators } from './utils/getDropdownOperators';
+import { EStartingType } from '../../../../types/template';
 import { setRulesApiNamesAndIds } from './utils/setRulesApiNames';
 import {
   handleAddNewCondition,
@@ -16,32 +17,19 @@ import {
   removeEmptyRules,
 } from './utils/shared';
 
-import { TTaskVariable } from '../../types';
-import { TUserListItem } from '../../../../types/user';
 import { ESubscriptionPlan } from '../../../../types/account';
 
 import { getSubscriptionPlan } from '../../../../redux/selectors/user';
 import { usePrevious } from '../../../../hooks/usePrevious';
-import { EConditionAction, TConditionRule } from './types';
+import { EConditionAction } from '../../../../types/templateTaskConditions';
+import type { ICondition, TConditionRule } from '../../../../types/templateTaskConditions';
 import { SelectMenu, Tooltip } from '../../../UI';
-import { ICondition, Predicate, RichLabel } from '.';
+import { Predicate } from './Predicate';
+import { RichLabel } from './RichLabel';
+import type { IConditionsProps, IDropdownVariable } from './types';
 
 import styles from './Conditions.css';
 import stylesTaskForm from '../TaskForm.css';
-
-export interface IConditionsProps {
-  conditions: ICondition[];
-  startingOrder: TTaskVariable[];
-  variables: TTaskVariable[];
-  users: TUserListItem[];
-  isSubscribed: boolean;
-  onEdit(value: ICondition[]): void;
-}
-
-export interface IDropdownVariable extends TTaskVariable {
-  label: string;
-  richLabel: any;
-}
 
 const CHECK_IF_VALUES = [EConditionAction.SkipTask, EConditionAction.EndProcess];
 const CHECK_IF_CONDITIONS_ORDER = 2;

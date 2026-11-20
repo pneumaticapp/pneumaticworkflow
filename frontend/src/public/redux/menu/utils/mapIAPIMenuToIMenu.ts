@@ -1,5 +1,5 @@
-import { IAPIMenuItemSub } from '../../../api/menu/getNavMenuItem';
-import { IMenuItemSub } from '../../../types/menu';
+import type { IAPIMenuItemSub } from '../../../api/menu/getNavMenuItem';
+import type { IMenuItemSub } from '../../../types/menu';
 
 export function mapArrayIAPIMenuSubToIMenuSub(arrMenuSub: IAPIMenuItemSub[]): IMenuItemSub[] {
   return arrMenuSub.map(mapIAPIMenuSubToIMenuSub);

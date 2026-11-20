@@ -1,6 +1,7 @@
 from typing import Any, Dict
 
 from django.contrib.auth import get_user_model
+from drf_spectacular.utils import extend_schema_field
 from rest_framework.serializers import (
     BooleanField,
     CharField,
@@ -30,6 +31,7 @@ class PublicTemplateSerializer(ModelSerializer):
     description = CharField(allow_blank=True, default='')
     kickoff = SerializerMethodField()
 
+    @extend_schema_field(PublicKickoffSerializer)
     def get_kickoff(self, instance: Template):
         # PublicTemplateSerializer cannot return a single Kickoff
         # object because the Template related with Kickoff by

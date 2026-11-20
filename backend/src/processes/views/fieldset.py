@@ -19,16 +19,15 @@ from src.generics.exceptions import BaseServiceException
 from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import UserIsAuthenticated
-from src.openapi import (
-    ACCESS_ADMIN,
+from src.openapi.permission_docs import ACCESS_ADMIN
+from src.openapi.responses import (
     EMPTY,
     FORBIDDEN,
-    LIMIT_OFFSET_LEGACY_NOTE,
     NOT_FOUND,
     UNAUTHORIZED,
     VALIDATION_ERROR,
-    with_access_text,
 )
+from src.openapi.helpers import LIMIT_OFFSET_LEGACY_NOTE, with_access_text
 from src.processes.filters import FieldSetFilter
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
@@ -261,6 +260,7 @@ class SharedFieldsetTemplateViewSet(
         tags=['Fieldsets'],
         summary='Clone shared fieldset',
         description=ACCESS_ADMIN,
+        request=None,
         responses={
             201: SharedFieldsetTemplateSerializer,
             400: VALIDATION_ERROR,

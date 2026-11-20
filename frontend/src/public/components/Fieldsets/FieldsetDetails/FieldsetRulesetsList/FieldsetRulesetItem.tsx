@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 import { EExtraFieldType } from '../../../../types/template';
 import { EFieldRuleType } from '../../../../types/fieldset';
 
-import { TFieldsetRulesetItemProps } from './types';
+import type { TFieldsetRulesetItemProps } from './types';
 import {
   updateRulesetMessage,
   deleteRuleset,
@@ -13,10 +13,7 @@ import {
   deleteRuleFromRulesets,
   regroupRulesInRulesets,
 } from './utils';
-import {
-  RulesetRuleList,
-  RulesetMessageInput,
-} from '../RuleBase';
+import { RulesetRuleList, RulesetMessageInput } from '../RuleBase';
 import { RulesetFieldsSelector } from './RulesetFieldsSelector';
 
 import styles from './FieldsetRulesets.css';
@@ -52,9 +49,7 @@ export const FieldsetRulesetItem = ({
         fieldType={EExtraFieldType.Number}
         isFieldsetRuleset
         isReadOnly={isReadOnly}
-        addRule={() =>
-          addGroupAndToRulesets({ rulesets, rulesetApiName: ruleSet.apiName, onRulesetsChange })
-        }
+        addRule={() => addGroupAndToRulesets({ rulesets, rulesetApiName: ruleSet.apiName, onRulesetsChange })}
         updateRule={(params) =>
           updateRuleInRulesets({
             ...params,
@@ -95,9 +90,7 @@ export const FieldsetRulesetItem = ({
           <button
             type="button"
             className={styles['ruleset-card__delete-btn']}
-            onClick={() =>
-              deleteRuleset({ rulesets, rulesetApiName: ruleSet.apiName, onRulesetsChange })
-            }
+            onClick={() => deleteRuleset({ rulesets, rulesetApiName: ruleSet.apiName, onRulesetsChange })}
           >
             {formatMessage({ id: 'fieldsets.ruleset-delete' })}
           </button>

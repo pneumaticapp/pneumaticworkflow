@@ -1,72 +1,65 @@
-import { EExtraFieldType } from '../../../../types/template';
-import { EStartingType } from './utils/getDropdownOperators';
+import type { TTaskVariable } from '../../../../types/template';
+import type { EConditionOperators, ICondition, TConditionRule } from '../../../../types/templateTaskConditions';
+import type { TUserListItem } from '../../../../types/user';
+import type { IDropdownOperator } from './utils/types';
 
-export interface IChecklists {
-  id?: number;
-  apiName: string;
-  order: number;
-  rules: TConditionRule[];
-  action: EConditionAction;
+export interface IConditionsProps {
+  conditions: ICondition[];
+  startingOrder: TTaskVariable[];
+  variables: TTaskVariable[];
+  users: TUserListItem[];
+  isSubscribed: boolean;
+  onEdit(value: ICondition[]): void;
 }
 
-export interface ICondition {
-  id?: number;
-  apiName: string;
-  order: number;
-  rules: TConditionRule[];
-  action: EConditionAction;
+export interface IDropdownVariable extends TTaskVariable {
+  label: string;
+  richLabel: any;
 }
 
-export type TConditionRule = {
-  ruleId?: number;
-  ruleApiName: string;
-  predicateId?: number;
-  predicateApiName: string;
-  logicOperation: EConditionLogicOperations;
-  field: string | null;
-  operator: EConditionOperators | null;
-} & TConditionPredicateValue;
-
-export interface ITypedConditionPredicateValue<FieldType, ValueType> {
-  fieldType?: FieldType;
-  value?: ValueType | null;
+export interface IPredicateProps {
+  rule: TConditionRule;
+  ruleIndex: number;
+  accessConditions: boolean;
+  changeCurrentRule: (changedFields: Partial<TConditionRule>) => void;
+  displayedVariable: IDropdownVariable | null;
+  isDisabledOperator: boolean;
+  selectedOperator: IDropdownOperator | null;
+  dropdownOperators: IDropdownOperator[];
+  selectedVariable?: IDropdownVariable | null;
+  users?: TUserListItem[];
+  handleRemoveRule: (conditionIndex?: number) => (ruleIndex: number) => () => void;
+  conditionIndex?: number;
+  isCheckIs?: boolean;
+  options: {
+    label: string;
+    options: IDropdownVariable[];
+  }[];
 }
 
-export type TConditionPredicateValue =
-  | ITypedConditionPredicateValue<EExtraFieldType.String, string>
-  | ITypedConditionPredicateValue<EExtraFieldType.Text, string>
-  | ITypedConditionPredicateValue<EExtraFieldType.Creatable, string>
-  | ITypedConditionPredicateValue<EExtraFieldType.Checkbox, string>
-  | ITypedConditionPredicateValue<EExtraFieldType.Radio, string>
-  | ITypedConditionPredicateValue<EExtraFieldType.Date, string>
-  | ITypedConditionPredicateValue<EExtraFieldType.File, null>
-  | ITypedConditionPredicateValue<EExtraFieldType.Url, string>
-  | ITypedConditionPredicateValue<EExtraFieldType.User, number>
-  | ITypedConditionPredicateValue<EStartingType.Task, null>
-  | ITypedConditionPredicateValue<EStartingType.Kickoff, null>
-  | ITypedConditionPredicateValue<EExtraFieldType.Number, number>;
-
-export enum EConditionAction {
-  SkipTask = 'skip_task',
-  StartTask = 'start_task',
-  EndProcess = 'end_process',
+export interface IRichLabelProps {
+  variables: TTaskVariable[];
+  variable: TTaskVariable;
+  isSelected?: boolean;
+  isFromStartingOrder?: boolean;
 }
 
-export enum EConditionOperators {
-  Equal = 'equals',
-  NotEqual = 'not_equals',
-  Exist = 'exists',
-  NotExist = 'not_exists',
-  Contain = 'contains',
-  NotContain = 'not_contains',
-  MoreThan = 'more_than',
-  LessThan = 'less_than',
-  Completed = 'completed',
-  Skipped = 'skipped',
-  CompletedOrSkipped = 'completed_or_skipped',
+export interface IConditionValueFieldProps {
+  variable: TTaskVariable | null;
+  rule: TConditionRule;
+  users: TUserListItem[];
+  operator?: EConditionOperators | null;
+  isDisabled: boolean;
+  changeRuleValue(value: TConditionRule[keyof TConditionRule], kind?: 'user' | 'group'): void;
 }
 
-export enum EConditionLogicOperations {
-  And = 'and',
-  Or = 'or',
+export interface IDropdownSelection {
+  value: string;
+  label: string;
+}
+
+export interface IDropdownUser extends TUserListItem {
+  label: string;
+  entityType: 'user' | 'group';
+  value: string;
 }

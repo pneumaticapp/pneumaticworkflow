@@ -1,27 +1,26 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import Switch from 'rc-switch';
 import { useIntl } from 'react-intl';
 
 import { IntlMessages } from '../../../IntlMessages';
 import { ArrowDownIcon, ArrowRightIcon, ArrowUpIcon, BurgerIcon, DropdownCrossIcon, TrashIcon } from '../../../icons';
-import { Dropdown, TDropdownOption } from '../../../UI';
-import { IKickoffDropdownProps } from './types';
+import type { TDropdownOption } from '../../../UI';
+import { Dropdown } from '../../../UI';
+import type { IKickoffDropdownProps } from './types';
 
-import { IFieldRuleSet } from '../../../../types/fieldset';
+import type { IFieldRuleSet } from '../../../../types/fieldset';
 import { DeletableDropdownOption } from './DeletableDropdownOption';
 import styles from '../../KickoffRedux/KickoffRedux.css';
 
-const renderRulesetOption = (
-  ruleset: IFieldRuleSet,
-  onDeleteFieldRuleset?: (rulesetApiName: string) => void,
-) => (closeDropdown?: () => void) => (
-  <DeletableDropdownOption
-    label={ruleset.name}
-    onDelete={() => onDeleteFieldRuleset?.(ruleset.apiName)}
-    closeDropdown={closeDropdown}
-  />
-);
+const renderRulesetOption =
+  (ruleset: IFieldRuleSet, onDeleteFieldRuleset?: (rulesetApiName: string) => void) => (closeDropdown?: () => void) => (
+    <DeletableDropdownOption
+      label={ruleset.name}
+      onDelete={() => onDeleteFieldRuleset?.(ruleset.apiName)}
+      closeDropdown={closeDropdown}
+    />
+  );
 
 export function ExtraFieldDropdown({
   apiName,

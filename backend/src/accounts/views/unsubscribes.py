@@ -1,5 +1,11 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    extend_schema,
+    extend_schema_view,
+)
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.exceptions import TokenError
@@ -23,6 +29,27 @@ from src.logs.events import AuditEventService
 UserModel = get_user_model()
 
 
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Accounts'],
+        summary='Unsubscribe from workflow digest emails',
+        description=(
+            'Email-link operation requiring no session. A valid token '
+            'turns off workflow digests for its user. Returns an HTML '
+            'status message and a script redirecting to the frontend after '
+            'three seconds. Missing/invalid tokens also return HTML 200 '
+            'with an error message; this is not an HTTP 302 redirect.'
+        ),
+        auth=[],
+        parameters=[OpenApiParameter(
+            name='token',
+            location=OpenApiParameter.QUERY,
+            type=OpenApiTypes.STR,
+            description='Signed unsubscribe token from the email link.',
+        )],
+        responses={(200, 'text/html'): OpenApiTypes.STR},
+    ),
+)
 class UnsubscribeDigestView(
     ListAPIView,
     BaseResponseMixin,
@@ -60,6 +87,27 @@ class UnsubscribeDigestView(
         return self.response_raw(redirect_script)
 
 
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Accounts'],
+        summary='Unsubscribe from the email category in an email link',
+        description=(
+            'Email-link operation requiring no session. The signed token '
+            'selects the user and email preference to disable. Returns an '
+            'HTML status message with a scripted frontend redirect after '
+            'three seconds. Missing/invalid tokens also return HTML 200 '
+            'with an error message.'
+        ),
+        auth=[],
+        parameters=[OpenApiParameter(
+            name='token',
+            location=OpenApiParameter.QUERY,
+            type=OpenApiTypes.STR,
+            description='Signed unsubscribe token from the email link.',
+        )],
+        responses={(200, 'text/html'): OpenApiTypes.STR},
+    ),
+)
 class UnsubscribeEmailView(
     ListAPIView,
     BaseResponseMixin,

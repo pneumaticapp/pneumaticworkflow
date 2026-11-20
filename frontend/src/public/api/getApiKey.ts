@@ -1,4 +1,4 @@
-import { IApiKeyCreateResponse, IApiKeyItem } from '../types/integrations';
+import type { IApiKeyCreateResponse, IApiKeyItem } from '../types/integrations';
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 

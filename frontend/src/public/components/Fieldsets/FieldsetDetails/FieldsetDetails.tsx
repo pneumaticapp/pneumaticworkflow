@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -23,13 +22,13 @@ import { FieldsetUnsavedChangesModal } from './FieldsetUnsavedChangesModal';
 import { getCurrentFieldset, isCurrentFieldsetLoading } from '../../../redux/selectors/fieldsets';
 import { getAccountId } from '../../../redux/selectors/user';
 
-import { IExtraField } from '../../../types/template';
+import type { IExtraField } from '../../../types/template';
 import { useDatasetOptions } from '../../TemplateEdit/ExtraFields/utils/useDatasetOptions';
 
 import { EMPTY_LOCAL_FIELDSET } from './constants';
 import { initLocalFieldset, checkIsTitleError, updateFieldsetProperty, saveFieldset, cloneFieldset } from './utils';
 
-import { TFieldsetDetailsProps, TLocalFieldsetState, TFieldsetChanges } from './types';
+import type { TFieldsetDetailsProps, TLocalFieldsetState, TFieldsetChanges } from './types';
 import { FieldsetRulesetsList } from './FieldsetRulesetsList/FieldsetRulesetsList';
 import { FieldsetFieldsList } from './FieldsetFieldsList/FieldsetFieldsList';
 import { FieldRuleModal } from './FieldRuleModal';

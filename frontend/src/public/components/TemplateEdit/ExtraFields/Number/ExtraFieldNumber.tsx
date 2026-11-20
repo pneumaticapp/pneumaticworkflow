@@ -1,11 +1,11 @@
-import * as React from 'react';
-import { useCallback, ChangeEvent, ReactElement } from 'react';
+import type { ChangeEvent, ReactElement } from 'react';
+import React, { useCallback } from 'react';
 
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { EExtraFieldMode } from '../../../../types/template';
 import { FieldWithName } from '../utils/FieldWithName';
 
-import { IWorkflowExtraFieldProps } from '..';
+import type { IWorkflowExtraFieldProps } from '../types';
 
 import fieldStyles from './ExtraFieldNumber.css';
 

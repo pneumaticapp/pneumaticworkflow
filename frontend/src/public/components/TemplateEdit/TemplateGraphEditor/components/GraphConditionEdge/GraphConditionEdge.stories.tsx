@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Position, ReactFlowProvider } from 'reactflow';
 

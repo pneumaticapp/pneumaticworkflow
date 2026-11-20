@@ -1,5 +1,5 @@
 import { commonRequest } from '../commonRequest';
-import { IDataset, IGetDatasetParams } from '../../types/dataset';
+import type { IDataset, IGetDatasetParams } from '../../types/dataset';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 
 export function getDataset({ id, signal }: IGetDatasetParams) {

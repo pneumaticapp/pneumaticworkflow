@@ -1,10 +1,24 @@
-import { IFieldsetBindingClient, IFieldsetRuntime, EFieldLabelPosition, IFieldsetField } from '../types/fieldset';
-import { IExtraField, EExtraFieldType } from '../types/template';
+import type { IFieldsetBindingClient, IFieldsetRuntime, IFieldsetField } from '../types/fieldset';
+import { EFieldLabelPosition } from '../types/fieldset';
+import type { IExtraField } from '../types/template';
+import { EExtraFieldType } from '../types/template';
 
 export function mapFieldsToExtraFields(fields: IFieldsetField[]): IExtraField[] {
   return (fields || []).map(
     (
-      { apiName, name, description, type, isRequired, isHidden, order, default: defaultValue, selections, dataset, rulesets },
+      {
+        apiName,
+        name,
+        description,
+        type,
+        isRequired,
+        isHidden,
+        order,
+        default: defaultValue,
+        selections,
+        dataset,
+        rulesets,
+      },
       index,
     ) => ({
       apiName: apiName || '',

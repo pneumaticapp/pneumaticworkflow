@@ -1,6 +1,6 @@
 import { commonRequest } from '../commonRequest';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
-import { ISendWorkflowCommentResponse } from '../sendWorkflowComment';
+import type { ISendWorkflowCommentResponse } from '../sendWorkflowComment';
 
 export interface IDeleteComment {
   id: number;

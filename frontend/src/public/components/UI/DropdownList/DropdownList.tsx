@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import classnames from 'classnames';
 import Select from 'react-select';
 import OutsideClickHandler from '../OutsideClickHandler';

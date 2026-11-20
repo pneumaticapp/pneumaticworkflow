@@ -1,5 +1,5 @@
-import { IExtraField } from '../../../../types/template';
-import { EFieldLabelPosition, IFieldRuleSet, IFieldsetRuleSet } from '../../../../types/fieldset';
+import type { IExtraField } from '../../../../types/template';
+import type { EFieldLabelPosition, IFieldRuleSet, IFieldsetRuleSet } from '../../../../types/fieldset';
 
 export interface IFieldsetFieldsListProps {
   fields: IExtraField[];

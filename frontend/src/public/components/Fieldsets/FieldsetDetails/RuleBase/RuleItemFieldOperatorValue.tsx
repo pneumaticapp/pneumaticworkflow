@@ -5,10 +5,7 @@ import classnames from 'classnames';
 import { FilterSelect } from '../../../UI';
 import { RuleOperatorSelect } from './RuleOperatorSelect';
 import { RuleValueInput } from './RuleValueInput';
-import {
-  IFieldRuleShowFieldOption,
-  IRuleItemFieldOperatorValueProps,
-} from './types';
+import type { IFieldRuleShowFieldOption, IRuleItemFieldOperatorValueProps } from './types';
 import { isOperatorWithoutValue } from './utils';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
@@ -55,10 +52,7 @@ export const RuleItemFieldOperatorValue = ({
         resetFilter={() => {}}
         placeholderText={fieldPlaceholderText}
         isDisabled={isFieldSelectDisabled}
-        containerClassname={classnames(
-          fieldsetDetailsStyles['rule-operator-select'],
-          styles['rule-field-select'],
-        )}
+        containerClassname={classnames(fieldsetDetailsStyles['rule-operator-select'], styles['rule-field-select'])}
         toggleClassName={fieldsetDetailsStyles['rule-operator-select__toggle']}
         menuClassName={fieldsetDetailsStyles['rule-operator-select__menu']}
         renderPlaceholder={() =>

@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/react';
 
 import { setSentryCapture } from './sentryCapture';
 import { DEV_SENTRY_DSN, PROD_SENTRY_DSN } from '../constants/defaultValues';
-import { TEnvironment } from './getConfig';
+import type { TEnvironment } from './getConfig';
 import { envSentryRelease } from '../constants/enviroment';
 
 export type TSentryApp = 'main' | 'forms';

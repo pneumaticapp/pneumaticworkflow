@@ -1,5 +1,5 @@
-import { IExtraField } from '../../../../types/template';
-import { IFieldRuleSet } from '../../../../types/fieldset';
+import type { IExtraField } from '../../../../types/template';
+import type { IFieldRuleSet } from '../../../../types/fieldset';
 
 export interface IDatasetOption {
   label: string;

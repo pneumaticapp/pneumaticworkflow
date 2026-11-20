@@ -1,6 +1,6 @@
-import { ChangeEvent } from 'react';
+import type { ChangeEvent } from 'react';
 
-import { EFieldLabelPosition } from '../../../../types/fieldset';
+import type { EFieldLabelPosition } from '../../../../types/fieldset';
 
 export type TFieldsetSettingsProps = {
   title: string;

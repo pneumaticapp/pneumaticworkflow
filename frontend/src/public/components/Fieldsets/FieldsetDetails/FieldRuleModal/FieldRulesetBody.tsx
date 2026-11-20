@@ -8,7 +8,7 @@ import { EFieldRuleType } from '../../../../types/fieldset';
 import { RulesetRuleList, RulesetMessageInput } from '../RuleBase';
 import { addRule, deleteRule, regroupRules, updateRule } from '../RuleBase/utils';
 import { createEmptyFieldRule, createEmptyFieldRuleGroupOr } from './utils';
-import { IFieldRulesetBodyProps } from './types';
+import type { IFieldRulesetBodyProps } from './types';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
 import rulesetStyles from '../FieldsetRulesetsList/FieldsetRulesets.css';
@@ -60,9 +60,10 @@ export function FieldRulesetBody({
     },
   ];
 
-  const selectedTypeLabel = type === EFieldRuleType.Show
-    ? formatMessage({ id: 'fieldsets.field-rule-modal.type-show' })
-    : formatMessage({ id: 'fieldsets.field-rule-modal.type-validator' });
+  const selectedTypeLabel =
+    type === EFieldRuleType.Show
+      ? formatMessage({ id: 'fieldsets.field-rule-modal.type-show' })
+      : formatMessage({ id: 'fieldsets.field-rule-modal.type-validator' });
 
   return (
     <>
@@ -85,7 +86,11 @@ export function FieldRulesetBody({
       <span className={rulesetStyles['ruleset-card__label']}>
         {formatMessage({ id: 'fieldsets.field-rule-modal.type-label' })}
       </span>
-      <FilterSelect<'apiName', 'name', { apiName: EFieldRuleType; name: React.ReactNode; customClickHandler?: () => void }>
+      <FilterSelect<
+        'apiName',
+        'name',
+        { apiName: EFieldRuleType; name: React.ReactNode; customClickHandler?: () => void }
+      >
         optionIdKey="apiName"
         optionLabelKey="name"
         options={typeOptions}
@@ -109,10 +114,7 @@ export function FieldRulesetBody({
         renderPlaceholder={() => selectedTypeLabel}
       />
       {type === EFieldRuleType.Validator && (
-        <RulesetMessageInput
-          message={message}
-          onChange={(newMessage) => onUpdateRuleSet({ message: newMessage })}
-        />
+        <RulesetMessageInput message={message} onChange={(newMessage) => onUpdateRuleSet({ message: newMessage })} />
       )}
       <RulesetRuleList
         ruleSet={localRuleSet}
@@ -135,5 +137,3 @@ export function FieldRulesetBody({
     </>
   );
 }
-
-

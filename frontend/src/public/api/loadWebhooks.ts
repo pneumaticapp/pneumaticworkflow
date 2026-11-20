@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { EWebhooksTypeEvent, IWebhookUrl } from '../types/webhooks';
+import type { EWebhooksTypeEvent, IWebhookUrl } from '../types/webhooks';
 
 export type TLoadWebhooksResponse = {
   event: EWebhooksTypeEvent;

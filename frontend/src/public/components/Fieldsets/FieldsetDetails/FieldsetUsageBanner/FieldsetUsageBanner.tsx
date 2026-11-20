@@ -8,7 +8,7 @@ import { getTemplateEditRoute } from '../../../../utils/routes';
 import { Tooltip } from '../../../UI';
 import { DropdownList } from '../../../UI/DropdownList';
 
-import { TFieldsetUsageBannerProps } from './types';
+import type { TFieldsetUsageBannerProps } from './types';
 
 import styles from './FieldsetUsageBanner.css';
 
@@ -20,9 +20,7 @@ export const FieldsetUsageBanner = ({ usage }: TFieldsetUsageBannerProps) => {
     return (
       <div className={`${styles['usage-banner']} ${styles['usage-banner--linked']}`}>
         <div className={styles['usage-banner__row']}>
-          <span>
-            {formatMessage({ id: 'fieldsets.usage.linked' }, { count: usage.length })}
-          </span>
+          <span>{formatMessage({ id: 'fieldsets.usage.linked' }, { count: usage.length })}</span>
           <DropdownList
             controlSize="sm"
             className={styles['usage-banner__dropdown']}
@@ -41,10 +39,7 @@ export const FieldsetUsageBanner = ({ usage }: TFieldsetUsageBannerProps) => {
                   containerClassName={styles['usage-banner__option-tooltip']}
                   contentClassName={styles['usage-banner__tooltip-content']}
                 >
-                  <Link
-                    to={getTemplateEditRoute(template.id)}
-                    className={styles['usage-banner__link']}
-                  >
+                  <Link to={getTemplateEditRoute(template.id)} className={styles['usage-banner__link']}>
                     {template.name}
                   </Link>
                 </Tooltip>

@@ -1,5 +1,5 @@
-import { IExtraField } from '../../../../types/template';
-import { IFieldsetRuleSet } from '../../../../types/fieldset';
+import type { IExtraField } from '../../../../types/template';
+import type { IFieldsetRuleSet } from '../../../../types/fieldset';
 
 export type TRulesetsParams = {
   rulesets: IFieldsetRuleSet[];
@@ -18,6 +18,15 @@ export type TFieldsetRulesetsListProps = {
 };
 
 export type TFieldsetRulesetItemProps = {
+  ruleSet: IFieldsetRuleSet;
+  rulesets: IFieldsetRuleSet[];
+  fields: IExtraField[];
+  numericFields: IExtraField[];
+  onRulesetsChange: (rulesets: IFieldsetRuleSet[]) => void;
+  isReadOnly?: boolean;
+};
+
+export type TRulesetFieldsSelectorProps = {
   ruleSet: IFieldsetRuleSet;
   rulesets: IFieldsetRuleSet[];
   fields: IExtraField[];

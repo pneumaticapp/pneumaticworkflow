@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { RuleOperatorSelect } from './RuleOperatorSelect';
 import { RuleValueInput } from './RuleValueInput';
-import { IRuleItemOperatorValueProps } from './types';
+import type { IRuleItemOperatorValueProps } from './types';
 import { isOperatorWithoutValue } from './utils';
 
 export const RuleItemOperatorValue = ({

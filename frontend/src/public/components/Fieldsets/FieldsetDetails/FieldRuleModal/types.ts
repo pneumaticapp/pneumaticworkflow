@@ -1,6 +1,6 @@
-import { IFieldRuleSet } from '../../../../types/fieldset';
-import { EExtraFieldType, IExtraFieldSelection } from '../../../../types/template';
-import { IFieldRuleShowFieldOption } from '../RuleBase/types';
+import type { IFieldRuleSet } from '../../../../types/fieldset';
+import type { EExtraFieldType, IExtraFieldSelection } from '../../../../types/template';
+import type { IFieldRuleShowFieldOption } from '../RuleBase/types';
 
 export interface IFieldRuleModalProps {
   isOpen: boolean;

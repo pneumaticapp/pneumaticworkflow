@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 from rest_framework.serializers import (
     CharField,
@@ -66,7 +66,10 @@ class PublicFieldTemplateSerializer(ModelSerializer):
         default=list,
     )
 
-    def get_selections(self, instance: FieldTemplate) -> list:
+    def get_selections(
+        self,
+        instance: FieldTemplate,
+    ) -> List[Dict[str, Optional[str]]]:
         result = list(
             instance.selections.values('value', 'api_name'),
         )
@@ -347,7 +350,7 @@ class FieldTemplateListSerializer(ModelSerializer):
 
     selections = SerializerMethodField()
 
-    def get_selections(self, instance: FieldTemplate) -> list:
+    def get_selections(self, instance: FieldTemplate) -> List[str]:
         result = [s.value for s in instance.selections_values]
         if instance.dataset_id:
             for i in instance.dataset.dataset_values:

@@ -2,7 +2,11 @@ from typing import List, Optional
 
 from django.contrib.auth import get_user_model
 from django.db.models import Prefetch
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import (
+    OpenApiResponse,
+    extend_schema,
+    extend_schema_view,
+)
 from rest_framework.decorators import action
 from rest_framework.generics import ListAPIView, get_object_or_404
 from rest_framework.pagination import LimitOffsetPagination
@@ -27,23 +31,29 @@ from src.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
 )
-from src.openapi import (
+from src.openapi.permission_docs import (
     ACCESS_AUTH,
     ACCESS_TASK_COMMENT,
     ACCESS_TASK_COMPLETE,
     ACCESS_TASK_PERFORMER,
     ACCESS_TASK_RETRIEVE,
     ACCESS_TASK_REVERT,
+)
+from src.openapi.responses import (
+    FIELD_VALIDATION_ERROR,
     EMPTY,
     FORBIDDEN,
     NOT_FOUND,
-    TASK_LIST_PARAMS,
-    TaskWebhookExampleSerializer,
-    TOO_MANY_REQUESTS,
     UNAUTHORIZED,
     VALIDATION_ERROR,
-    WEBHOOK_EXAMPLE_PARAMS,
+)
+from src.openapi.parameters import (
+    TASK_LIST_PARAMS,
     WORKFLOW_EVENTS_PARAMS,
+)
+from src.openapi.misc_contract_serializers import (
+    TASK_WEBHOOK_EXAMPLE_PARAMS,
+    TaskWebhookPayloadExampleSerializer,
 )
 from src.openapi.examples import TASK_COMPLETE_EXAMPLE
 from src.processes.enums import WorkflowEventType
@@ -83,6 +93,7 @@ from src.processes.serializers.workflows.task import (
     TaskCompleteSerializer,
     TaskListFilterSerializer,
     TaskListSerializer,
+    TaskRevertRequestSerializer,
     TaskRevertSerializer,
     TaskSerializer,
 )
@@ -141,6 +152,7 @@ UserModel = get_user_model()
         parameters=TASK_LIST_PARAMS,
         responses={
             200: TaskListSerializer,
+            400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
         },
@@ -384,7 +396,7 @@ class TaskViewSet(
         description=ACCESS_TASK_PERFORMER,
         request=TaskPerformerSerializer,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -420,7 +432,7 @@ class TaskViewSet(
         description=ACCESS_TASK_PERFORMER,
         request=TaskGroupPerformerSerializer,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -455,7 +467,7 @@ class TaskViewSet(
         description=ACCESS_TASK_PERFORMER,
         request=TaskPerformerSerializer,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -490,7 +502,7 @@ class TaskViewSet(
         description=ACCESS_TASK_PERFORMER,
         request=TaskGroupPerformerSerializer,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -531,7 +543,6 @@ class TaskViewSet(
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
-            429: TOO_MANY_REQUESTS,
         },
     )
     @action(methods=('POST',), detail=True, url_path='create-guest-performer')
@@ -564,7 +575,7 @@ class TaskViewSet(
         description=ACCESS_TASK_PERFORMER,
         request=TaskGuestPerformerSerializer,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -595,12 +606,26 @@ class TaskViewSet(
 
     @extend_schema(
         tags=['Tasks'],
-        summary='Set or clear task due date',
+        summary='Set task due date',
         description=ACCESS_TASK_PERFORMER,
+        methods=['POST'],
         request=DueDateSerializer,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
+    @extend_schema(
+        tags=['Tasks'],
+        summary='Clear task due date',
+        description=ACCESS_TASK_PERFORMER,
+        methods=['DELETE'],
+        request=None,
+        responses={
+            204: EMPTY,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
@@ -630,8 +655,9 @@ class TaskViewSet(
         summary='List task events',
         description=ACCESS_TASK_RETRIEVE,
         parameters=WORKFLOW_EVENTS_PARAMS,
+        filters=False,
         responses={
-            200: WorkflowEventSerializer,
+            200: WorkflowEventSerializer(many=True),
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
@@ -653,10 +679,15 @@ class TaskViewSet(
     @extend_schema(
         tags=['Tasks'],
         summary='Revert completed task',
-        description=ACCESS_TASK_REVERT,
-        request=TaskRevertSerializer,
+        description=(
+            'Returns a completed task to work. A non-empty comment is '
+            'required; an omitted or whitespace-only comment is invalid. '
+            'The service validates the workflow and task state.\n\n'
+            f'{ACCESS_TASK_REVERT}'
+        ),
+        request=TaskRevertRequestSerializer,
         responses={
-            200: EMPTY,
+            204: EMPTY,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -686,7 +717,15 @@ class TaskViewSet(
     @extend_schema(
         tags=['Tasks'],
         summary='Complete task',
-        description=ACCESS_TASK_COMPLETE,
+        description=(
+            'Completes the active task for the current performer. The '
+            'workflow must be running; required output fields, checklist '
+            'selections and child workflows must be completed. For tasks '
+            'requiring all performers, each performer completes their '
+            'own assignment. Output is keyed by field api_name; read '
+            'GET /v2/tasks/{id} for field types and selections.\n\n'
+            f'{ACCESS_TASK_COMPLETE}'
+        ),
         request=TaskCompleteSerializer,
         examples=[TASK_COMPLETE_EXAMPLE],
         responses={
@@ -809,12 +848,15 @@ class TaskViewSet(
         tags=['Tasks'],
         summary='Webhook payload example',
         description=ACCESS_AUTH,
-        parameters=WEBHOOK_EXAMPLE_PARAMS,
+        parameters=TASK_WEBHOOK_EXAMPLE_PARAMS,
         responses={
-            200: TaskWebhookExampleSerializer,
+            200: TaskWebhookPayloadExampleSerializer,
+            400: FIELD_VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
-            404: NOT_FOUND,
+            404: OpenApiResponse(
+                description='Not found; empty response body.',
+            ),
         },
     )
     @action(methods=['get'], url_path='webhook-example', detail=False)

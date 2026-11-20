@@ -1,7 +1,7 @@
 import { commonRequest } from '../commonRequest';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { mapRequestBody } from '../../utils/mappers';
-import { ISendWorkflowCommentResponse } from '../sendWorkflowComment';
+import type { ISendWorkflowCommentResponse } from '../sendWorkflowComment';
 
 export interface IEditComment {
   id: number;

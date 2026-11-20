@@ -1,7 +1,7 @@
 import { commonRequest } from './commonRequest';
 import { ETimeouts } from '../constants/defaultValues';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { ITemplateResponse } from '../types/template';
+import type { ITemplateResponse } from '../types/template';
 
 export function copyTemplate(id: number) {
   const {

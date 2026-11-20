@@ -1,22 +1,22 @@
-import { IWorkflowsList } from '../../types/redux';
-import { openSelectTemplateModal } from '../../redux/actions';
-import {
+import type { TOpenModalPayload } from '../../redux/selectTemplateModal/actions';
+import type {
+  IWorkflowsList,
   TLoadWorkflowsFilterStepsPayload,
   TOpenWorkflowLogPopupPayload,
   TRemoveWorkflowFromListPayload,
 } from '../../redux/workflows/types';
-import { IRunWorkflow } from '../WorkflowEditPopup/types';
-import { ITemplateTitle } from '../../types/template';
-import {
+import type { ITemplateTitle } from '../../types/template';
+import type {
   EWorkflowsLoadingStatus,
   EWorkflowsSorting,
   EWorkflowsStatus,
   EWorkflowsView,
   ITemplateFilterItem,
   TUserCounter,
+  IRunWorkflow,
 } from '../../types/workflow';
-import { TUserListItem } from '../../types/user';
-import { IGroup } from '../../redux/team/types';
+import type { TUserListItem } from '../../types/user';
+import type { IGroup } from '../../types/team';
 
 export interface IWorkflowsProps {
   workflowsLoadingStatus: EWorkflowsLoadingStatus;
@@ -32,7 +32,7 @@ export interface IWorkflowsProps {
   openWorkflowLogPopup(payload: TOpenWorkflowLogPopupPayload): void;
   loadTemplatesTitles(): void;
   resetWorkflows(): void;
-  openSelectTemplateModal: typeof openSelectTemplateModal;
+  openSelectTemplateModal(payload?: TOpenModalPayload): void;
   removeWorkflowFromList(payload: TRemoveWorkflowFromListPayload): void;
 }
 

@@ -1,13 +1,12 @@
-import { EExtraFieldType, IExtraField, ITemplateClient, ITemplateTaskClient } from '../../../../types/template';
+import type { IExtraField, ITemplateClient, ITemplateTaskClient } from '../../../../types/template';
+import { EExtraFieldType, EStartingType } from '../../../../types/template';
 import { createEmptyTaskDueDate } from '../../../../utils/dueDate/createEmptyTaskDueDate';
 import {
   EConditionAction,
   EConditionLogicOperations,
   EConditionOperators,
-  ICondition,
-  TConditionRule,
-} from '../../TaskForm/Conditions';
-import { EStartingType } from '../../TaskForm/Conditions/utils/getDropdownOperators';
+} from '../../../../types/templateTaskConditions';
+import type { ICondition, TConditionRule } from '../../../../types/templateTaskConditions';
 
 const COST_CENTER_FIELD = 'field-270bb2';
 const AMOUNT_FIELD = 'field-093a2e';

@@ -7,7 +7,7 @@ import { TrashIcon } from '../../../icons';
 import { EFieldRuleType } from '../../../../types/fieldset';
 import { FIELDSET_RULE_COMBINATORS } from '../../constants';
 import { getRuleCombinator } from './utils';
-import { IRulesetRuleItemProps } from './types';
+import type { IRulesetRuleItemProps } from './types';
 import { RuleItemFieldOperatorValue } from './RuleItemFieldOperatorValue';
 import { RuleItemOperatorValue } from './RuleItemOperatorValue';
 

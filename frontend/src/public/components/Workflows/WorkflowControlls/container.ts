@@ -1,10 +1,11 @@
 import { connect } from 'react-redux';
-import { IWorkflowControllsProps, WorkflowControllsComponents } from './WorkflowControlls';
-import { IApplicationState } from '../../../types/redux';
+import type { IWorkflowControllsProps } from './WorkflowControlls';
+import { WorkflowControllsComponents } from './WorkflowControlls';
+import type { RootState } from '../../../redux/store';
 
 type TStoreProps = Pick<IWorkflowControllsProps, 'timezone'>;
 
-function mapStateToProps({ authUser: { timezone } }: IApplicationState): TStoreProps {
+function mapStateToProps({ authUser: { timezone } }: RootState): TStoreProps {
   return {
     timezone,
   };

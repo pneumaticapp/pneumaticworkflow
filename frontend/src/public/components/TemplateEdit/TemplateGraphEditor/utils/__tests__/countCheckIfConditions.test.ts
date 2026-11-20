@@ -2,8 +2,8 @@ import {
   EConditionAction,
   EConditionLogicOperations,
   EConditionOperators,
-  ICondition,
-} from '../../../TaskForm/Conditions';
+} from '../../../../../types/templateTaskConditions';
+import type { ICondition } from '../../../../../types/templateTaskConditions';
 import { countCheckIfConditions, isCheckIfCondition } from '../countCheckIfConditions';
 
 function createCondition(action: EConditionAction, field = 'field-1'): ICondition {

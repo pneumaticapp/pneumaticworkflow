@@ -1,8 +1,9 @@
-import { Locale } from 'date-fns';
+import type { Locale } from 'date-fns';
 import { enUS, ru } from 'date-fns/locale';
 import { useSelector } from 'react-redux';
 
-import { ELocale, IApplicationState } from '../types/redux';
+import { ELocale } from '../types/locale';
+import type { RootState } from '../redux/store';
 
 const localeMap: { [key: string]: Locale } = {
   [ELocale.English]: enUS,
@@ -16,7 +17,7 @@ export interface IDatePickerSettings {
 }
 
 export const useDatePickerSettings = (): IDatePickerSettings => {
-  const { dateFdw, language, timezone } = useSelector((state: IApplicationState) => state.authUser);
+  const { dateFdw, language, timezone } = useSelector((state: RootState) => state.authUser);
 
   return {
     locale: localeMap[language],

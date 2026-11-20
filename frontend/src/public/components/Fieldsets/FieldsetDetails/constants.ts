@@ -1,6 +1,6 @@
 import { EExtraFieldType } from '../../../types/template';
 import { EFieldLabelPosition } from '../../../types/fieldset';
-import { TLocalFieldsetState } from './types';
+import type { TLocalFieldsetState } from './types';
 
 export const SINGLE_LINE_FIELD_TYPES = new Set<EExtraFieldType>([
   EExtraFieldType.String,

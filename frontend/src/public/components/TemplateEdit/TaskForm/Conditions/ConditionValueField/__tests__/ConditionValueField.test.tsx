@@ -1,12 +1,12 @@
 /// <reference types="jest" />
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 
 import { enMessages } from '../../../../../../lang/locales/en_US';
-import { EExtraFieldType } from '../../../../../../types/template';
-import { TTaskVariable } from '../../../../types';
-import { EConditionLogicOperations, EConditionOperators, TConditionRule } from '../../types';
+import { EExtraFieldType, TTaskVariable } from '../../../../../../types/template';
+import { EConditionLogicOperations, EConditionOperators } from '../../../../../../types/templateTaskConditions';
+import type { TConditionRule } from '../../../../../../types/templateTaskConditions';
 import { ConditionValueField } from '../ConditionValueField';
 
 jest.mock('react-redux', () => {

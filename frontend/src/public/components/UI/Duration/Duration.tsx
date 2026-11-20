@@ -5,22 +5,10 @@ import { useIntl } from 'react-intl';
 import { Field } from '../../Field';
 import { formatDelayRequest, getSeconds, parseDuration, SEC_IN_DAY } from '../../../utils/dateTime';
 import { START_DURATION } from '../../TemplateEdit/constants';
+import { EDurationFieldType } from './types';
+import type { IDurationProps } from './types';
 
 import styles from './Duration.css';
-
-export interface IDurationProps {
-  duration: string | null;
-  durationMonths?: number | null;
-  onEditDuration(duration: string): void;
-  onEditDurationMonths?(months: number): void;
-  dueDateDuration?: boolean;
-}
-
-export enum EDurationFieldType {
-  Hour = 'hours',
-  Day = 'days',
-  Minute = 'minutes',
-}
 
 export function Duration({
   duration,

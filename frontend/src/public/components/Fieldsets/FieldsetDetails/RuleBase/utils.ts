@@ -1,17 +1,10 @@
-import {
-  IBaseRuleGroupAnd,
-  IBaseRuleSet,
-  ERuleCombinator,
-} from '../../../../types/fieldset';
+import type { IBaseRuleGroupAnd, IBaseRuleSet, EFieldRuleOperator } from '../../../../types/fieldset';
+import { ERuleCombinator } from '../../../../types/fieldset';
 import { createRulesetGroupOrApiName } from '../../../../utils/createId';
-import { EExtraFieldType } from '../../../../types/template';
+import type { EExtraFieldType } from '../../../../types/template';
+import type { IFieldRuleBaseOperatorOption, TOperatorOption } from './types';
 import {
-  IFieldRuleBaseOperatorOption,
-  TOperatorOption,
   FIELD_RULE_OPERATORS_WITHOUT_VALUE,
-  EFieldRuleOperator,
-} from './types';
-import {
   fieldRuleOperatorsByFieldTypeMap,
   FIELDSET_RULESET_NUMERIC_OPERATOR_OPTIONS,
 } from './constants';
@@ -40,15 +33,15 @@ export const traverseGroupsAnd = <T extends IBaseRuleSet>(
   groupOrApiName: string,
   changeRules: (groupsAnd: IBaseRuleGroupAnd[]) => IBaseRuleGroupAnd[],
 ): T => ({
-    ...ruleSet,
-    groupsOr: ruleSet.groupsOr
-      .map((groupOr) => {
-        if (groupOr.apiName !== groupOrApiName) return groupOr;
+  ...ruleSet,
+  groupsOr: ruleSet.groupsOr
+    .map((groupOr) => {
+      if (groupOr.apiName !== groupOrApiName) return groupOr;
 
-        return { ...groupOr, groupsAnd: changeRules(groupOr.groupsAnd || []) };
-      })
-      .filter((groupOr) => groupOr.groupsAnd.length > 0),
-  });
+      return { ...groupOr, groupsAnd: changeRules(groupOr.groupsAnd || []) };
+    })
+    .filter((groupOr) => groupOr.groupsAnd.length > 0),
+});
 
 export const updateRule = <T extends IBaseRuleSet>(
   ruleSet: T,
@@ -56,25 +49,12 @@ export const updateRule = <T extends IBaseRuleSet>(
   ruleApiName: string,
   changes: Partial<IBaseRuleGroupAnd>,
 ): T =>
-    traverseGroupsAnd(
-      ruleSet,
-      groupOrApiName,
-      (groupsAnd) =>
-        groupsAnd.map((rule) =>
-          rule.apiName === ruleApiName ? { ...rule, ...changes } : rule,
-        ),
-    );
+  traverseGroupsAnd(ruleSet, groupOrApiName, (groupsAnd) =>
+    groupsAnd.map((rule) => (rule.apiName === ruleApiName ? { ...rule, ...changes } : rule)),
+  );
 
-export const deleteRule = <T extends IBaseRuleSet>(
-  ruleSet: T,
-  groupOrApiName: string,
-  ruleApiName: string,
-): T =>
-    traverseGroupsAnd(
-      ruleSet,
-      groupOrApiName,
-      (groupsAnd) => groupsAnd.filter((rule) => rule.apiName !== ruleApiName),
-    );
+export const deleteRule = <T extends IBaseRuleSet>(ruleSet: T, groupOrApiName: string, ruleApiName: string): T =>
+  traverseGroupsAnd(ruleSet, groupOrApiName, (groupsAnd) => groupsAnd.filter((rule) => rule.apiName !== ruleApiName));
 
 export const addRule = <T extends IBaseRuleSet>(
   ruleSet: T,
@@ -85,19 +65,12 @@ export const addRule = <T extends IBaseRuleSet>(
   const targetGroupOr = groupOrApiName || lastGroupOr?.apiName;
 
   if (targetGroupOr) {
-    return traverseGroupsAnd(
-      ruleSet,
-      targetGroupOr,
-      (groupsAnd) => [...groupsAnd, createEmptyItem()],
-    );
+    return traverseGroupsAnd(ruleSet, targetGroupOr, (groupsAnd) => [...groupsAnd, createEmptyItem()]);
   }
 
   return {
     ...ruleSet,
-    groupsOr: [
-      ...ruleSet.groupsOr,
-      { apiName: createRulesetGroupOrApiName(), groupsAnd: [createEmptyItem()] },
-    ],
+    groupsOr: [...ruleSet.groupsOr, { apiName: createRulesetGroupOrApiName(), groupsAnd: [createEmptyItem()] }],
   };
 };
 
@@ -113,9 +86,7 @@ export const regroupRules = <T extends IBaseRuleSet>(
     const newGroupsOr = groupsOr.flatMap((groupOr) => {
       if (groupOr.apiName !== groupOrApiName) return [groupOr];
 
-      const splitIndex = groupOr.groupsAnd.findIndex(
-        (groupAnd) => groupAnd.apiName === groupAndApiName,
-      );
+      const splitIndex = groupOr.groupsAnd.findIndex((groupAnd) => groupAnd.apiName === groupAndApiName);
       if (splitIndex <= 0) return [groupOr];
 
       const before = groupOr.groupsAnd.slice(0, splitIndex);
@@ -140,11 +111,7 @@ export const regroupRules = <T extends IBaseRuleSet>(
     groupsAnd: [...prevGroupOr.groupsAnd, ...currentGroupOr.groupsAnd],
   };
 
-  const newGroupsOr = [
-    ...groupsOr.slice(0, groupOrIndex - 1),
-    merged,
-    ...groupsOr.slice(groupOrIndex + 1),
-  ];
+  const newGroupsOr = [...groupsOr.slice(0, groupOrIndex - 1), merged, ...groupsOr.slice(groupOrIndex + 1)];
 
   return { ...ruleSet, groupsOr: newGroupsOr };
 };

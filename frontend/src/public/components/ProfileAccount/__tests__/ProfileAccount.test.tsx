@@ -1,10 +1,10 @@
-import * as React from 'react';
+import React from 'react';
 import { act, fireEvent, render } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 
 import { enMessages } from '../../../lang/locales/en_US';
 import { ESubscriptionPlan } from '../../../types/account';
-import { TUploadedFile } from '../../../utils/uploadFiles';
+import type { TUploadedFile } from '../../../types/attachments';
 import { AttachmentField, IAttachmentFieldProps } from '../../UI/Fields/AttachmentField';
 import { IProfileAccountProps, ProfileAccount } from '../ProfileAccount';
 

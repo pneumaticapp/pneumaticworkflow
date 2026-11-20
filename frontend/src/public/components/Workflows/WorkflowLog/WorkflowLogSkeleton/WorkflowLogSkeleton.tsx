@@ -2,14 +2,9 @@ import React from 'react';
 import classnames from 'classnames';
 
 import { Skeleton } from '../../../UI/Skeleton';
-import { TWorkflowLogTheme } from '../WorkflowLog';
+import type { IWorkflowLogSkeletonProps } from '../types';
 
 import styles from './WorkflowLogSkeleton.css';
-
-export interface IWorkflowLogSkeletonProps {
-  className?: string;
-  theme?: TWorkflowLogTheme;
-}
 
 export function WorkflowLogSkeleton({ className, theme }: IWorkflowLogSkeletonProps) {
   return (

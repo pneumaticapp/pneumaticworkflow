@@ -9,7 +9,7 @@ import {
 
 import { getGenericTemplates } from '../../api/getGenericTemplates';
 import { getAccountGenericTemplates } from '../../api/getAccountGenericTemplates';
-import { IAccountGenericTemplate } from '../../types/genericTemplates';
+import type { IAccountGenericTemplate } from '../../types/genericTemplates';
 import { saveAccountGenericTemplates } from '../../api/saveAccountGenericTemplates';
 import { getSelectedGenericTemplates } from '../selectors/user';
 import { logger } from '../../utils/logger';

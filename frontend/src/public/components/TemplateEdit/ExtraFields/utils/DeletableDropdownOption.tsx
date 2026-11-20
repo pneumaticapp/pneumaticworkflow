@@ -1,10 +1,10 @@
-import * as React from 'react';
-import { useState, MouseEventHandler, KeyboardEventHandler } from 'react';
+import type { MouseEventHandler, KeyboardEventHandler } from 'react';
+import React, { useState } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { TrashIcon } from '../../../icons';
-import { IDeletableDropdownOptionProps } from './types';
+import type { IDeletableDropdownOptionProps } from './types';
 import dropdownStyles from '../../../UI/Dropdown/Dropdown.css';
 import styles from './DeletableDropdownOption.css';
 
@@ -62,19 +62,11 @@ export function DeletableDropdownOption({ label, onDelete, onClick, closeDropdow
       >
         <span>{formatMessage({ id: 'dropdown.are-you-sure' })}</span>
         <span>
-          <button
-            type="button"
-            onClick={handleConfirm}
-            className={dropdownStyles['dropdown-confirm-option']}
-          >
+          <button type="button" onClick={handleConfirm} className={dropdownStyles['dropdown-confirm-option']}>
             {formatMessage({ id: 'dropdown.yes' })}
           </button>
           {' / '}
-          <button
-            type="button"
-            onClick={handleReject}
-            className={dropdownStyles['dropdown-confirm-option']}
-          >
+          <button type="button" onClick={handleReject} className={dropdownStyles['dropdown-confirm-option']}>
             {formatMessage({ id: 'dropdown.no' })}
           </button>
         </span>

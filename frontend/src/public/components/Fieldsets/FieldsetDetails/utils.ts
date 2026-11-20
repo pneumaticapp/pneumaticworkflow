@@ -1,25 +1,21 @@
-import { SetStateAction } from 'react';
-import { Dispatch } from 'redux';
-import { IExtraField } from '../../../types/template';
-import {
+import type { SetStateAction } from 'react';
+import type { Dispatch } from 'redux';
+import type { IExtraField } from '../../../types/template';
+import type {
   IFieldRuleSet,
   IFieldRuleShowGroupAnd,
-  EFieldRuleType,
   IUpdateFieldsetParams,
   IFieldsetCatalogItem,
 } from '../../../types/fieldset';
+import { EFieldRuleType } from '../../../types/fieldset';
 import { validateFieldsetTitle } from '../../../utils/validators';
 import { validateFieldsetRules } from '../validators';
 import { normalizeFieldsForUI } from './fieldsetFieldMappers';
 import { NotificationManager } from '../../UI/Notifications';
 import { cloneFieldsetAction, updateFieldsetAction } from '../../../redux/fieldsets/slice';
-import { TLocalFieldsetState, TFieldsetChanges } from './types';
+import type { TLocalFieldsetState, TFieldsetChanges } from './types';
 
-export function saveFieldRuleset(
-  fields: IExtraField[],
-  fieldApiName: string,
-  ruleset: IFieldRuleSet,
-): IExtraField[] {
+export function saveFieldRuleset(fields: IExtraField[], fieldApiName: string, ruleset: IFieldRuleSet): IExtraField[] {
   return fields.map((field) => {
     if (field.apiName !== fieldApiName) return field;
 
@@ -27,35 +23,26 @@ export function saveFieldRuleset(
       (existingRuleset) => existingRuleset.apiName === ruleset.apiName,
     );
     const updatedRulesets = isExistingRuleset
-      ? (field.rulesets || []).map(
-        (existingRuleset) => existingRuleset.apiName === ruleset.apiName ? ruleset : existingRuleset,
-      )
+      ? (field.rulesets || []).map((existingRuleset) =>
+          existingRuleset.apiName === ruleset.apiName ? ruleset : existingRuleset,
+        )
       : [...(field.rulesets || []), ruleset];
 
     return { ...field, rulesets: updatedRulesets };
   });
 }
 
-export function deleteFieldRuleset(
-  fields: IExtraField[],
-  fieldApiName: string,
-  rulesetApiName: string,
-): IExtraField[] {
+export function deleteFieldRuleset(fields: IExtraField[], fieldApiName: string, rulesetApiName: string): IExtraField[] {
   return fields.map((field) => {
     if (field.apiName !== fieldApiName) return field;
 
-    const updatedRulesets = (field.rulesets || []).filter(
-      (ruleset) => ruleset.apiName !== rulesetApiName,
-    );
+    const updatedRulesets = (field.rulesets || []).filter((ruleset) => ruleset.apiName !== rulesetApiName);
 
     return { ...field, rulesets: updatedRulesets };
   });
 }
 
-export function getFieldsWithFilteredRulesets(
-  fields: IExtraField[],
-  deletedFieldApiName: string,
-): IExtraField[] {
+export function getFieldsWithFilteredRulesets(fields: IExtraField[], deletedFieldApiName: string): IExtraField[] {
   return fields.map((field) => {
     if (!field.rulesets?.length) return field;
 
@@ -148,9 +135,7 @@ export const saveFieldset = ({
     payload.labelPosition = fieldsetChanges.labelPosition;
   }
   if (fieldsetChanges.fields) {
-    payload.fields = fieldsetChanges.fields.map(
-      ({ id: _id, ...rest }) => rest,
-    ) as IUpdateFieldsetParams['fields'];
+    payload.fields = fieldsetChanges.fields.map(({ id: _id, ...rest }) => rest) as IUpdateFieldsetParams['fields'];
   }
   if (fieldsetChanges.rulesets) {
     payload.rulesets = fieldsetChanges.rulesets;

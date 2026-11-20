@@ -3,6 +3,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Prefetch, Q
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from src.accounts.enums import (
@@ -134,6 +135,7 @@ class UserSerializer(
     )
     vacation = VacationSerializer(read_only=True)
 
+    @extend_schema_field(UserListInviteSerializer)
     def get_invite(self, instance: UserModel):
         if instance.status_invited and instance.invite:
             return UserListInviteSerializer(instance.invite).data
@@ -193,6 +195,7 @@ class UserPrivilegesSerializer(UserSerializer):
     )
     templates = serializers.SerializerMethodField()
 
+    @extend_schema_field(TemplateUserPrivilegesSerializer(many=True))
     def get_templates(self, instance: UserModel):
         groups = instance.user_groups.values_list('id', flat=True)
 

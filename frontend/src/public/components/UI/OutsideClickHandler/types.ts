@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 export type OutsideClickHandlerDisplay = 'block' | 'flex' | 'inline' | 'inline-block' | 'contents';
 

@@ -1,5 +1,6 @@
 import { commonRequest } from './commonRequest';
-import { EWorkflowsStatus, TUserCounter } from '../types/workflow';
+import type { TUserCounter } from '../types/workflow';
+import { EWorkflowsStatus } from '../types/workflow';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { canFilterByCurrentPerformer } from '../utils/workflows/filters';
 

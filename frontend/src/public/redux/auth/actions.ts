@@ -1,10 +1,11 @@
-import { IUnsavedUser, IUserVacation, TUserInvited } from '../../types/user';
+import type { IUnsavedUser, IUserRegister, IUserVacation, TAuthUserResult, TUserInvited } from '../../types/user';
 import { actionGenerator } from '../../utils/redux';
-import { IAuthUser, ITypedReduxAction } from '../../types/redux';
-import { IUpdateUserRequest, TUpdateUserMappedResponse } from '../../api/editProfile';
-import { IUpdateAccountRequest, IUpdatedAccount } from '../../api/editAccount';
-import { TPlanCode } from '../../types/account';
-import { IVacationActivateRequest } from '../../api/vacation';
+import type { EAuthUserFailType } from './types';
+import type { ITypedReduxAction } from '../types';
+import type { IUpdateUserRequest, TUpdateUserMappedResponse } from '../../api/editProfile';
+import type { IUpdateAccountRequest, IUpdatedAccount } from '../../api/editAccount';
+import type { TPlanCode } from '../../types/account';
+import type { IVacationActivateRequest } from '../../api/vacation';
 
 export const enum EAuthActions {
   AuthUser = 'AUTH_USER',
@@ -61,18 +62,6 @@ export interface IUserCredentials {
 export type TForgotPassword = Pick<IUserCredentials, 'email'> & { captcha?: string };
 export type TChangePassword = IConfirmChangePassword;
 
-export interface IUserRegister {
-  email: string;
-  firstName: string;
-  lastName: string;
-  photo: string;
-  fromEmail: boolean;
-  timezone: string;
-  password?: string;
-  phone?: string;
-  companyName?: string;
-}
-
 export interface IConfirmResetPassword {
   newPassword: string;
   confirmNewPassword: string;
@@ -84,8 +73,6 @@ export interface IConfirmChangePassword {
   newPassword: string;
   confirmNewPassword: string;
 }
-
-export type TAuthUserResult = Omit<IAuthUser, 'loading' | 'error' | 'superUserToken' | 'loggedState'>;
 
 export type TAuthSuccessResult = Pick<IUnsavedUser, 'token'>;
 
@@ -181,11 +168,6 @@ export const authUserSuccess: (payload: TAuthUserResult) => TAuthUserSuccess = a
   EAuthActions.AuthUserSuccess,
   TAuthUserResult
 >(EAuthActions.AuthUserSuccess);
-
-export enum EAuthUserFailType {
-  Common = 'common',
-  NotVerified = 'not-verified',
-}
 
 export type TAuthUserFail = ITypedReduxAction<EAuthActions.AuthUserFail, EAuthUserFailType>;
 export const authUserFail: (payload?: EAuthUserFailType) => TAuthUserFail = actionGenerator<
@@ -323,10 +305,10 @@ export const deleteUserPhoto: (payload?: void) => TDeleteUserPhoto = actionGener
   void
 >(EAuthActions.DeleteUserPhoto);
 
-export type TSetUserPhoto = ITypedReduxAction<EAuthActions.SetUserPhoto, IAuthUser['photo']>;
-export const setUserPhoto: (payload: IAuthUser['photo']) => TSetUserPhoto = actionGenerator<
+export type TSetUserPhoto = ITypedReduxAction<EAuthActions.SetUserPhoto, TAuthUserResult['photo']>;
+export const setUserPhoto: (payload: TAuthUserResult['photo']) => TSetUserPhoto = actionGenerator<
   EAuthActions.SetUserPhoto,
-  IAuthUser['photo']
+  TAuthUserResult['photo']
 >(EAuthActions.SetUserPhoto);
 
 export type TMakeStripePaymentPayload = {

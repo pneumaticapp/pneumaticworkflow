@@ -1,5 +1,5 @@
 import { all, call, fork, put, takeEvery, takeLatest, select } from 'redux-saga/effects';
-import { PayloadAction } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 
 import uniqBy from 'lodash.uniqby';
 import { NotificationManager } from '../../components/UI/Notifications';
@@ -9,13 +9,13 @@ import { history } from '../../utils/history';
 import { ERoutes } from '../../constants/routes';
 import { isRequestCanceled } from '../../utils/isRequestCanceled';
 
-import {
+import type {
   IFieldsetCatalogItem,
   IGetFieldsetsResponse,
   ICreateFieldsetParams,
   IUpdateFieldsetParams,
 } from '../../types/fieldset';
-import { TDeleteFieldsetPayload } from './types';
+import type { TDeleteFieldsetPayload } from './types';
 import { LIMIT_LOAD_FIELDSETS } from '../../constants/defaultValues';
 import { getFieldsetsStore } from '../selectors/fieldsets';
 import { getFieldsets } from '../../api/fieldsets/getFieldsets';

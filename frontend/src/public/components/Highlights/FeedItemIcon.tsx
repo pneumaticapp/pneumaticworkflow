@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
@@ -18,7 +18,7 @@ import {
   ClockIcon,
   WorkflowEndedIcon,
 } from '../icons';
-import { IHighlightsItem } from '../../types/highlights';
+import type { IHighlightsItem } from '../../types/highlights';
 import { getDueInData } from '../DueIn/utils/getDueInData';
 import { Tooltip } from '../UI';
 import { DateFormat } from '../UI/DateFormat';

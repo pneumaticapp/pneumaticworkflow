@@ -1,4 +1,4 @@
-import { IFieldRuleSet } from '../../../types/fieldset';
+import type { IFieldRuleSet } from '../../../types/fieldset';
 
 export interface IFieldsetRulesetsBadgeProps {
   rulesets?: IFieldRuleSet[];

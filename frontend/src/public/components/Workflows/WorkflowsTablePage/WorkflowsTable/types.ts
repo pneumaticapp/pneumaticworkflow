@@ -1,14 +1,17 @@
-import { MouseEvent, ReactNode, RefObject } from 'react';
-import { Column, HeaderGroup, TableInstance } from 'react-table';
+import type { MouseEvent, ReactNode, RefObject } from 'react';
+import type { Column, HeaderGroup, TableInstance } from 'react-table';
 
-import { ITableViewFields } from '../../../../types/template';
-import { EWorkflowsLoadingStatus, IWorkflowClient } from '../../../../types/workflow';
-import { IWorkflowsList } from '../../../../types/redux';
-import { TOpenWorkflowLogPopupPayload, TRemoveWorkflowFromListPayload } from '../../../../redux/workflows/types';
-import { IWorkflowsFiltersProps } from '../../types';
-import { EColumnWidthMinWidth } from './Columns/Cells/WorkflowTableConstants';
+import type { ITableViewFields } from '../../../../types/template';
+import type { EWorkflowsLoadingStatus, IWorkflowClient } from '../../../../types/workflow';
+import type {
+  IWorkflowsList,
+  TOpenWorkflowLogPopupPayload,
+  TRemoveWorkflowFromListPayload,
+} from '../../../../redux/workflows/types';
+import type { IWorkflowsFiltersProps } from '../../types';
+import type { EColumnWidthMinWidth } from './Columns/Cells/WorkflowTableConstants';
 
-export type TableColumns = {
+export type TTableColumns = {
   'system-column-workflow': IWorkflowClient;
   'system-column-templateName': IWorkflowClient;
   'system-column-starter': IWorkflowClient;
@@ -19,18 +22,11 @@ export type TableColumns = {
   [key: string]: ITableViewFields;
 };
 
-export type TSystemField = {
-  apiName: string;
-  name: string;
-  isDisabled: boolean;
-  hasNotTooltip: boolean;
-};
-
-export type WorkflowColumn = Column<TableColumns> & {
+export type TWorkflowColumn = Column<TTableColumns> & {
   columnType: keyof typeof EColumnWidthMinWidth;
 };
 
-export type CustomHeaderGroup<T extends object> = HeaderGroup<T> & {
+export type TCustomHeaderGroup<T extends object> = HeaderGroup<T> & {
   columnType: keyof typeof EColumnWidthMinWidth;
   minWidth: number;
 };
@@ -45,19 +41,19 @@ export interface IWorkflowsTableProps extends IWorkflowsFiltersProps {
   openWorkflowLogPopup(payload: TOpenWorkflowLogPopupPayload): void;
 }
 
-export interface TableViewContainerRef {
+export interface ITableViewContainerRef {
   element: HTMLDivElement | null;
 }
 
-export interface TableViewContainerProps {
+export interface ITableViewContainerProps {
   children: ReactNode;
 }
 
-export interface WorkflowsTableGridProps {
-  table: TableInstance<TableColumns>;
+export interface IWorkflowsTableGridProps {
+  table: TableInstance<TTableColumns>;
   tableRef: RefObject<HTMLTableElement>;
   tableHeight: number;
-  columns: Column<TableColumns>[];
+  columns: Column<TTableColumns>[];
   colWidths: Record<string, number>;
   handleMouseDown(event: MouseEvent, columnId: string, minWidth: number): void;
   itemsCount: number;
@@ -66,7 +62,7 @@ export interface WorkflowsTableGridProps {
   shouldSkeletonOptionalTable: boolean;
 }
 
-export interface WorkflowsTableActionsProps {
+export interface IWorkflowsTableActionsProps {
   workflowsLoadingStatus: EWorkflowsLoadingStatus;
   isWideTable?: boolean;
   isMobile?: boolean;

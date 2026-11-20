@@ -7,7 +7,7 @@ import { getLanguage } from '../../../../../redux/selectors/user';
 import { Avatar } from '../../../../UI/Avatar';
 import { AlarmIcon } from '../../../../icons';
 import { DateFormat } from '../../../../UI/DateFormat';
-import { IWorkflowLogItem, IWorkflowDelay } from '../../../../../types/workflow';
+import type { IWorkflowLogItem, IWorkflowDelay } from '../../../../../types/workflow';
 import { getSnoozedUntilDate } from '../../../../../utils/dateTime';
 
 import styles from './WorkflowLogWorkflowSnoozedManually.css';

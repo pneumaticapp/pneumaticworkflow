@@ -3,7 +3,7 @@ import classnames from 'classnames';
 
 import { IntlMessages } from '../../IntlMessages';
 
-import { IFieldsetRulesetsBadgeProps } from './types';
+import type { IFieldsetRulesetsBadgeProps } from './types';
 import styles from './FieldsetRulesetsBadge.css';
 
 export function FieldsetRulesetsBadge({ rulesets, count, className }: IFieldsetRulesetsBadgeProps) {

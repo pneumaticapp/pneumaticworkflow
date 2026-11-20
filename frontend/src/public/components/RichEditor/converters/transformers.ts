@@ -4,7 +4,7 @@ import { MARKDOWN_LINK } from './linkMarkdown';
 import { createVariableTransformer } from './variableMarkdown';
 import { createChecklistTransformer } from './checklistMarkdown';
 import { ATTACHMENT, ATTACHMENT_INLINE } from './attachmentMarkdown';
-import type { TTaskVariable } from '../../TemplateEdit/types';
+import type { TTaskVariable } from '../../../types/template';
 
 /**
  * Transformers for import (markdown → Lexical) and export (Lexical → markdown).

@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from 'react';
-import { ELoggedState } from '../../types/redux';
+import { ELoggedState } from '../../redux/auth/types';
 
 export const LOGGED_STATE_STORAGE_KEY = 'logged_state';
 

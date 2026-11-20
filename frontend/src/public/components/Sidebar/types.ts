@@ -3,11 +3,11 @@ import type { IntlShape } from 'react-intl';
 
 import type { ESubscriptionPlan } from '../../types/account';
 import type { IMenuItem, IMenuItemSub } from '../../types/menu';
-import type { IAuthUser } from '../../types/redux';
+import type { TAccountLeaseLevel } from '../../types/user';
 
 export interface ISidebarRibbonProps {
   formatMessage: IntlShape['formatMessage'];
-  leaseLevel: IAuthUser['account']['leaseLevel'];
+  leaseLevel: TAccountLeaseLevel;
   plan: ESubscriptionPlan;
   trialIsActive: boolean;
 }

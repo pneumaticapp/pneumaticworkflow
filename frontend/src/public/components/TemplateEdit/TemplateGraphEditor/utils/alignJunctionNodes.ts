@@ -1,11 +1,12 @@
-import { EGraphNodeType, TGraphEdge, TGraphNode } from '../types';
+import type { TGraphEdge, TGraphNode } from '../types';
+import { EGraphNodeType } from '../types';
 import { CHECK_IF_FORK_PREFIX, isCheckIfJunctionId } from './graphConstants';
+import type { IGraphNodeBox } from './graphGeometry';
 import {
   GRAPH_JUNCTION_SIZE,
   GRAPH_ROW_GAP,
   GRAPH_SKIP_LANE_GAP,
   GRAPH_SKIP_LANE_STEP,
-  IGraphNodeBox,
   getGraphNodeBox,
 } from './graphGeometry';
 

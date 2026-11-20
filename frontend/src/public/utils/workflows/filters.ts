@@ -1,5 +1,6 @@
-import { IntlShape } from 'react-intl';
-import { EWorkflowsSorting, EWorkflowsStatus, EWorkflowsView } from '../../types/workflow';
+import type { IntlShape } from 'react-intl';
+import type { EWorkflowsView } from '../../types/workflow';
+import { EWorkflowsSorting, EWorkflowsStatus } from '../../types/workflow';
 
 export const WORKFLOW_VIEW_STATE_STORAGE_KEY = 'workflow_view_state';
 

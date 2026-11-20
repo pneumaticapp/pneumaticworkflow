@@ -2,7 +2,7 @@ import React from 'react';
 import classnames from 'classnames';
 
 import styles from './Sidebar.css';
-import { TMenuCounterType } from '../../types/menu';
+import type { TMenuCounterType } from '../../types/menu';
 
 export interface ISidebarMenuItemCounter {
   value: number;

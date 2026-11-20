@@ -3,7 +3,7 @@ import { useIntl } from 'react-intl';
 
 import { EExtraFieldType } from '../../../../types/template';
 
-import { TFieldsetRulesetsListProps } from './types';
+import type { TFieldsetRulesetsListProps } from './types';
 import { addRuleset } from './utils';
 import { FieldsetRulesetItem } from './FieldsetRulesetItem';
 

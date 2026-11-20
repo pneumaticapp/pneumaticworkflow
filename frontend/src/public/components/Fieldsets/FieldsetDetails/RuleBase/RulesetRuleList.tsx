@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 
-import { IRulesetRuleListProps } from './types';
+import type { IRulesetRuleListProps } from './types';
 import { RulesetRuleItem } from './RulesetRuleItem';
 
 import styles from '../FieldsetRulesetsList/FieldsetRulesets.css';
@@ -26,9 +26,7 @@ export const RulesetRuleList = ({
 
   return (
     <>
-      <span className={styles['ruleset-card__label']}>
-        {formatMessage({ id: 'fieldsets.rules' })}
-      </span>
+      <span className={styles['ruleset-card__label']}>{formatMessage({ id: 'fieldsets.rules' })}</span>
 
       {groupsOr.map(({ apiName: groupOrApiName, groupsAnd }, groupOrIndex) =>
         groupsAnd.map((groupAndRule, groupAndIndex) => (
@@ -53,11 +51,7 @@ export const RulesetRuleList = ({
       )}
 
       {!isReadOnly && (
-        <button
-          type="button"
-          className={styles['add-rule-btn']}
-          onClick={addRule}
-        >
+        <button type="button" className={styles['add-rule-btn']} onClick={addRule}>
           {formatMessage({
             id: groupsOr.length > 0 ? 'fieldsets.add-another-rule' : 'fieldsets.add-rule',
           })}

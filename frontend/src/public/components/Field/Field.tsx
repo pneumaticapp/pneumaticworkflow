@@ -13,7 +13,6 @@ import { EFieldTagName } from './types';
 
 import styles from './Field.css';
 
-export type { IFieldProps };
 export { EFieldTagName } from './types';
 
 export function Field({

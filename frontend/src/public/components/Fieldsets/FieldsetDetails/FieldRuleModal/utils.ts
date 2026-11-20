@@ -3,13 +3,13 @@ import {
   createFieldRuleGroupOrApiName,
   createFieldRuleGroupAndApiName,
 } from '../../../../utils/createId';
-import {
-  EFieldRuleType,
+import type {
   IFieldRuleShowGroupAnd,
   IFieldRuleValidatorGroupAnd,
   IFieldRuleGroupOr,
   IFieldRuleSet,
 } from '../../../../types/fieldset';
+import { EFieldRuleType } from '../../../../types/fieldset';
 import { isOperatorWithoutValue } from '../RuleBase/utils';
 
 export const createEmptyFieldRule = (): IFieldRuleValidatorGroupAnd => ({
@@ -32,9 +32,7 @@ export const createEmptyFieldRuleSet = (type: EFieldRuleType = EFieldRuleType.Va
   groupsOr: [createEmptyFieldRuleGroupOr()],
 });
 
-export const isFieldRulesetValid = (
-  ruleSet: IFieldRuleSet,
-): boolean => {
+export const isFieldRulesetValid = (ruleSet: IFieldRuleSet): boolean => {
   if (!ruleSet.name?.trim()) {
     return false;
   }

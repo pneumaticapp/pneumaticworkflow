@@ -11,10 +11,11 @@ import { DatePickerCustom } from '../../../UI/form/DatePicker';
 import { toDate, toTspDate } from '../../../../utils/dateTime';
 import { getUsers } from '../../../../redux/selectors/user';
 import { getNotDeletedUsers, getUserFullName } from '../../../../utils/users';
-import { IFieldRuleValueInputProps, SELECTION_FIELD_TYPES } from './types';
+import type { IFieldRuleValueInputProps } from './types';
+import { SELECTION_FIELD_TYPES } from './constants';
 import { loadDatasetForMap } from '../../../../redux/datasets/slice';
 import { getDatasetFromMap } from '../../../../redux/selectors/datasets';
-import { IApplicationState } from '../../../../types/redux';
+import type { RootState } from '../../../../redux/store';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
 import styles from '../FieldsetRulesetsList/FieldsetRulesets.css';
@@ -33,7 +34,7 @@ export const RuleValueInput = ({
 
   const isSelectionField = Boolean(fieldType && SELECTION_FIELD_TYPES.includes(fieldType));
 
-  const datasetFromMap = useSelector((state: IApplicationState) =>
+  const datasetFromMap = useSelector((state: RootState) =>
     datasetId ? getDatasetFromMap(datasetId)(state) : undefined,
   );
 

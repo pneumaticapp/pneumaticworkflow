@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { IGettingStartedChecklist } from '../types/dashboard';
+import type { IGettingStartedChecklist } from '../types/dashboard';
 
 export function getGettingStartedChecklist() {
   const {

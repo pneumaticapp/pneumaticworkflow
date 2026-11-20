@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useDispatch, useSelector } from 'react-redux';
@@ -21,7 +21,7 @@ import { makeExtraField } from '../../../../__stubs__/fields.factory';
 import { FieldsetSettings } from '../FieldsetSettings/FieldsetSettings';
 import { FieldsetFieldsList } from '../FieldsetFieldsList/FieldsetFieldsList';
 import { FieldsetRulesetsList } from '../FieldsetRulesetsList/FieldsetRulesetsList';
-import { IApplicationState } from '../../../../types/redux';
+import type { RootState } from '../../../../redux/store';
 import { saveFieldset, cloneFieldset } from '../utils';
 
 jest.mock('../utils', () => ({
@@ -118,28 +118,28 @@ describe('FieldsetDetails', () => {
 
   const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField(overrides);
 
-  const loadingState: Partial<IApplicationState> = {
-    fieldsets: { currentFieldset: null, isCurrentFieldsetLoading: true } as IApplicationState['fieldsets'],
-    authUser: { account: { id: 1 } } as IApplicationState['authUser'],
-    accounts: { users: [] } as unknown as IApplicationState['accounts'],
+  const loadingState: Partial<RootState> = {
+    fieldsets: { currentFieldset: null, isCurrentFieldsetLoading: true } as RootState['fieldsets'],
+    authUser: { account: { id: 1 } } as RootState['authUser'],
+    accounts: { users: [] } as unknown as RootState['accounts'],
   };
 
-  const nullFieldsetState: Partial<IApplicationState> = {
-    fieldsets: { currentFieldset: null, isCurrentFieldsetLoading: false } as IApplicationState['fieldsets'],
-    authUser: { account: { id: 1 } } as IApplicationState['authUser'],
-    accounts: { users: [] } as unknown as IApplicationState['accounts'],
+  const nullFieldsetState: Partial<RootState> = {
+    fieldsets: { currentFieldset: null, isCurrentFieldsetLoading: false } as RootState['fieldsets'],
+    authUser: { account: { id: 1 } } as RootState['authUser'],
+    accounts: { users: [] } as unknown as RootState['accounts'],
   };
 
-  const makeLoadedState = (fieldsetOverrides = {}): Partial<IApplicationState> => {
+  const makeLoadedState = (fieldsetOverrides = {}): Partial<RootState> => {
     const fieldset = makeFieldsetCatalogItem({
       id: 10,
       layout: 'horizontal' as const,
       ...fieldsetOverrides,
     });
     return {
-      fieldsets: { currentFieldset: fieldset, isCurrentFieldsetLoading: false } as IApplicationState['fieldsets'],
-      authUser: { account: { id: 1 } } as IApplicationState['authUser'],
-      accounts: { users: [] } as unknown as IApplicationState['accounts'],
+      fieldsets: { currentFieldset: fieldset, isCurrentFieldsetLoading: false } as RootState['fieldsets'],
+      authUser: { account: { id: 1 } } as RootState['authUser'],
+      accounts: { users: [] } as unknown as RootState['accounts'],
     };
   };
 
@@ -157,13 +157,13 @@ describe('FieldsetDetails', () => {
     return calls[calls.length - 1][0];
   };
 
-  const mockSelectorState = (state: Partial<IApplicationState>) => {
-    (useSelector as unknown as jest.Mock).mockImplementation((selector: (state: IApplicationState) => unknown) =>
-      selector(state as IApplicationState),
+  const mockSelectorState = (state: Partial<RootState>) => {
+    (useSelector as unknown as jest.Mock).mockImplementation((selector: (state: RootState) => unknown) =>
+      selector(state as RootState),
     );
   };
 
-  const renderWithState = (state: Partial<IApplicationState>, props = makeProps()) => {
+  const renderWithState = (state: Partial<RootState>, props = makeProps()) => {
     mockSelectorState(state);
     return render(React.createElement(FieldsetDetails, props));
   };

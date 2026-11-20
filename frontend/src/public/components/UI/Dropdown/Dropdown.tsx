@@ -1,9 +1,11 @@
-import React, { useState, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import React, { useState } from 'react';
 import classnames from 'classnames';
 import { UncontrolledDropdown, DropdownToggle, DropdownMenu } from 'reactstrap';
 import OutsideClickHandler from '../OutsideClickHandler';
 
-import { ConfirmableDropdownItem, TDropdownItemState } from './ConfirmableDropdownItem';
+import type { TDropdownItemState } from './ConfirmableDropdownItem';
+import { ConfirmableDropdownItem } from './ConfirmableDropdownItem';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { ArrowRightIcon } from '../../icons';
 

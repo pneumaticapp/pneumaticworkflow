@@ -1,13 +1,12 @@
-import * as React from 'react';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
-import { ETaskStatus } from '../../redux/actions';
+import { ETaskCardState } from '../../redux/task/types';
 import { EInputNameBackgroundColor } from '../../types/workflow';
 import { isArrayWithItems } from '../../utils/helpers';
 import { IntlMessages } from '../IntlMessages';
 import { MergedOutputList } from '../MergedOutputList';
 import { getVisibleFieldsByShowRules } from '../../utils/fieldShowVisibility';
-import { ITaskOutputFieldsProps } from './types';
+import type { ITaskOutputFieldsProps } from './types';
 
 import styles from './TaskCard.css';
 
@@ -27,7 +26,10 @@ export function TaskOutputFields({
     [outputValues, fieldsetOutputValues],
   );
 
-  if ((!isArrayWithItems(visibleOutputs) && !isArrayWithItems(visibleFieldsets)) || status === ETaskStatus.Completed) {
+  if (
+    (!isArrayWithItems(visibleOutputs) && !isArrayWithItems(visibleFieldsets)) ||
+    status === ETaskCardState.Completed
+  ) {
     return null;
   }
 

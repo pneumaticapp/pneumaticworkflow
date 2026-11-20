@@ -1,4 +1,5 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosHeaders } from 'axios';
+import type { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosHeaders } from 'axios';
 import { logger } from '../utils/logger';
 import { ETimeouts } from '../constants/defaultValues';
 import { getAuthHeader } from '../../server/utils/getAuthHeader';
@@ -21,25 +22,6 @@ export { InterceptorError };
 
 export type TRequestType = 'public' | 'local' | 'fileService';
 export type TResponseType = 'json' | 'text' | 'empty';
-
-export class ApiError extends InterceptorError {
-  status?: number;
-
-  data?: unknown;
-
-  [key: string]: unknown;
-
-  constructor(message: string, payload: unknown, status?: number) {
-    super(message);
-    this.name = 'ApiError';
-    this.data = payload;
-    this.status = status;
-    if (payload && typeof payload === 'object') {
-      Object.assign(this, payload);
-    }
-    Object.setPrototypeOf(this, ApiError.prototype);
-  }
-}
 
 interface ICommonRequestOptions {
   type: TRequestType;

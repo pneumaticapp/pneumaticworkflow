@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -27,7 +27,14 @@ type TFieldsetFlowRowDropdownMockProps = {
 };
 
 jest.mock('../../ExtraFields', () => ({
-  ExtraFieldIntl: ({ field, moveFieldUp, moveFieldDown, onOpenFieldRules, fieldRulesets, onDeleteFieldRuleset }: TExtraFieldIntlMockProps) =>
+  ExtraFieldIntl: ({
+    field,
+    moveFieldUp,
+    moveFieldDown,
+    onOpenFieldRules,
+    fieldRulesets,
+    onDeleteFieldRuleset,
+  }: TExtraFieldIntlMockProps) =>
     React.createElement(
       'div',
       { 'data-testid': 'extra-field-intl' },
@@ -40,20 +47,16 @@ jest.mock('../../ExtraFields', () => ({
           { 'data-testid': `field-down-${field.apiName}`, onClick: moveFieldDown },
           'FieldDown',
         ),
-      onOpenFieldRules
-        && React.createElement(
+      onOpenFieldRules &&
+        React.createElement(
           'button',
           { 'data-testid': `open-rules-${field.apiName}`, onClick: () => onOpenFieldRules() },
           'OpenRules',
         ),
-      fieldRulesets
-        && React.createElement(
-          'span',
-          { 'data-testid': `rulesets-count-${field.apiName}` },
-          String(fieldRulesets.length),
-        ),
-      onDeleteFieldRuleset
-        && React.createElement(
+      fieldRulesets &&
+        React.createElement('span', { 'data-testid': `rulesets-count-${field.apiName}` }, String(fieldRulesets.length)),
+      onDeleteFieldRuleset &&
+        React.createElement(
           'button',
           { 'data-testid': `delete-rule-${field.apiName}`, onClick: () => onDeleteFieldRuleset('rule-1') },
           'DeleteRule',
@@ -241,12 +244,7 @@ describe('MergedOutputRows', () => {
     });
 
     it('does not pass field rule props when onOpenFieldRules is not provided', () => {
-      render(
-        React.createElement(
-          MergedOutputRows,
-          makeProps({ mergedRows: [fieldRow('f-1')] }),
-        ),
-      );
+      render(React.createElement(MergedOutputRows, makeProps({ mergedRows: [fieldRow('f-1')] })));
 
       expect(screen.queryByTestId('open-rules-f-1')).not.toBeInTheDocument();
       expect(screen.queryByTestId('rulesets-count-f-1')).not.toBeInTheDocument();

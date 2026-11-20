@@ -1,13 +1,10 @@
 import { useState, useMemo } from 'react';
 
-import { IExtraField } from '../../../types/template';
-import { IFieldRuleSet } from '../../../types/fieldset';
+import type { IExtraField } from '../../../types/template';
+import type { IFieldRuleSet } from '../../../types/fieldset';
 import { saveFieldRuleset, deleteFieldRuleset } from './utils';
 
-export function useFieldRuleModal(
-  fields: IExtraField[],
-  onFieldsChange: (fields: IExtraField[]) => void,
-) {
+export function useFieldRuleModal(fields: IExtraField[], onFieldsChange: (fields: IExtraField[]) => void) {
   const [activeFieldApiName, setActiveFieldApiName] = useState<string | null>(null);
   const [activeFieldRuleset, setActiveFieldRuleset] = useState<IFieldRuleSet | null>(null);
 

@@ -1,7 +1,7 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { mapRequestBody } from '../utils/mappers';
-import { TUserListItem } from '../types/user';
+import type { TUserListItem } from '../types/user';
 
 export function addTaskGuest(taskId: number, guestEmail: string) {
   const {

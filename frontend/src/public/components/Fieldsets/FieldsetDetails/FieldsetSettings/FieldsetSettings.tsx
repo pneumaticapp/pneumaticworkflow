@@ -7,10 +7,10 @@ import TextareaAutosize from 'react-textarea-autosize';
 
 import { Tooltip, FilterSelect } from '../../../UI';
 import { FilledInfoIcon } from '../../../icons';
-import { EFieldLabelPosition } from '../../../../types/fieldset';
+import type { EFieldLabelPosition } from '../../../../types/fieldset';
 import { FIELDSET_LABEL_POSITION_OPTIONS } from '../../constants';
 
-import { TFieldsetSettingsProps } from './types';
+import type { TFieldsetSettingsProps } from './types';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
 import styles from './FieldsetSettings.css';
@@ -52,10 +52,7 @@ export const FieldsetSettings = ({
         <div className={styles['settings-field']}>
           <label htmlFor="fieldset-title" className={styles['settings-label']}>
             {formatMessage({ id: 'fieldsets.settings.title' })}
-            <Tooltip
-              content={formatMessage({ id: 'fieldsets.settings.title-tooltip' })}
-              placement="top"
-            >
+            <Tooltip content={formatMessage({ id: 'fieldsets.settings.title-tooltip' })} placement="top">
               <span>
                 <FilledInfoIcon />
               </span>
@@ -73,10 +70,7 @@ export const FieldsetSettings = ({
             <input
               id="fieldset-title"
               type="text"
-              className={classnames(
-                styles['settings-title'],
-                isTitleError && styles['settings-title_error'],
-              )}
+              className={classnames(styles['settings-title'], isTitleError && styles['settings-title_error'])}
               value={title}
               placeholder={formatMessage({ id: 'fieldsets.settings.title-placeholder' })}
               onChange={onTitleChange}
@@ -87,10 +81,7 @@ export const FieldsetSettings = ({
         <div className={styles['settings-field']}>
           <label htmlFor="fieldset-description" className={styles['settings-label']}>
             {formatMessage({ id: 'fieldsets.settings.description' })}
-            <Tooltip
-              content={formatMessage({ id: 'fieldsets.settings.description-tooltip' })}
-              placement="top"
-            >
+            <Tooltip content={formatMessage({ id: 'fieldsets.settings.description-tooltip' })} placement="top">
               <span className={styles['settings-info-icon']}>
                 <FilledInfoIcon />
               </span>
@@ -140,7 +131,7 @@ export const FieldsetSettings = ({
                   onLabelPositionChange(key as EFieldLabelPosition);
                 }
               }}
-              resetFilter={() => { }}
+              resetFilter={() => {}}
               placeholderText=""
               isDisabled={isReadOnly}
               containerClassname={fieldsetDetailsStyles['settings-select']}

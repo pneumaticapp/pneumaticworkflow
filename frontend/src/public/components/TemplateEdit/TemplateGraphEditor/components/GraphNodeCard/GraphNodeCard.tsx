@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 
 import { MoreIcon } from '../../../../icons';
 import styles from './GraphNodeCard.css';

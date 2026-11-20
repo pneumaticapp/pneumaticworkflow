@@ -1,5 +1,6 @@
-import { EFieldRuleOperator, EFieldRuleType, IFieldRuleShowGroupAnd } from '../types/fieldset';
-import { IExtraField } from '../types/template';
+import type { IFieldRuleShowGroupAnd } from '../types/fieldset';
+import { EFieldRuleOperator, EFieldRuleType } from '../types/fieldset';
+import type { IExtraField } from '../types/template';
 
 export const checkDependentFieldValue = (
   dependentField: IExtraField,

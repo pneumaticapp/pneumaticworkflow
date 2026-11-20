@@ -1,6 +1,6 @@
-import { IntlShape } from 'react-intl';
+import type { IntlShape } from 'react-intl';
 
-import { EExtraFieldType, IExtraField } from '../../../../types/template';
+import type { EExtraFieldType, IExtraField } from '../../../../types/template';
 import { EMoveDirections } from '../../../../types/workflow';
 import { getEmptyField } from '../../../TemplateEdit/KickoffRedux/utils/getEmptyField';
 import { getEditedFields } from '../../../TemplateEdit/ExtraFields/utils/getEditedFields';
@@ -37,11 +37,7 @@ export function deleteFieldWithCleanup(sortedFields: IExtraField[], apiName: str
   return getFieldsWithFilteredRulesets(updatedFields, apiName);
 }
 
-export function moveField(
-  sortedFields: IExtraField[],
-  from: number,
-  direction: EMoveDirections,
-): IExtraField[] {
+export function moveField(sortedFields: IExtraField[], from: number, direction: EMoveDirections): IExtraField[] {
   const to = direction === EMoveDirections.Up ? from - 1 : from + 1;
 
   return moveWorkflowField(from, to, sortedFields);

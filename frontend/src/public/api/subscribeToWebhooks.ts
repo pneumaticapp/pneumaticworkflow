@@ -1,7 +1,7 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { mapRequestBody } from '../utils/mappers';
-import { EWebhooksTypeEvent } from '../types/webhooks';
+import type { EWebhooksTypeEvent } from '../types/webhooks';
 
 export function subscribeToWebhooks(event: EWebhooksTypeEvent, url: string) {
   const {

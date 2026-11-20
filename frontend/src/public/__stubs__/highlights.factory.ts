@@ -1,4 +1,4 @@
-import { IHighlightsItem } from '../types/highlights';
+import type { IHighlightsItem } from '../types/highlights';
 import { EWorkflowLogEvent, EWorkflowStatus } from '../types/workflow';
 
 export const makeHighlightsItem = (

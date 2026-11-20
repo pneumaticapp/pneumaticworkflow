@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
@@ -9,7 +8,6 @@ import {
   EWorkflowLogAttachmentsModes,
   EWorkflowsLogSorting,
   EWorkflowLogEvent,
-  IWorkflowLogItem,
   EWorkflowStatus,
 } from '../../../types/workflow';
 import { ETaskStatus } from '../../../types/tasks';
@@ -41,7 +39,7 @@ import { WorkflowLogAddedPerformerGroup } from './WorkflowLogEvents/WorkflowLogA
 import { WorkflowLogRemovedPerformerGroup } from './WorkflowLogEvents/WorkflowLogRemovedPerformerGroup';
 
 import styles from './WorkflowLog.css';
-import { IChangeWorkflowLogViewSettingsPayload, ISendWorkflowLogComment } from '../../../redux/workflows/types';
+import type { IWorkflowLogProps } from './types';
 import { getUsers } from '../../../redux/selectors/user';
 import { getNotDeletedUsers } from '../../../utils/users';
 import { getMentionData } from '../../RichEditor/utils/getMentionData';
@@ -322,31 +320,3 @@ export const WorkflowLog = ({
     </div>
   );
 };
-
-export type TWorkflowLogTheme = 'white' | 'beige';
-
-export interface IWorkflowLogProps {
-  theme: TWorkflowLogTheme;
-  items: IWorkflowLogItem[];
-  sorting: EWorkflowsLogSorting;
-  isCommentsShown: boolean;
-  isCommentFieldHidden?: boolean;
-  isOnlyAttachmentsShown: boolean;
-  isSkippedTasksShown: boolean;
-  workflowId: number | null;
-  includeHeader: boolean;
-  workflowStatus: EWorkflowStatus;
-  isLogMinimized?: boolean;
-  isLoading?: boolean;
-  minimizedLogMaxEvents?: number;
-  areTasksClickable?: boolean;
-  areRightTogglesHidden?: boolean;
-  changeWorkflowLogViewSettings(payload: IChangeWorkflowLogViewSettingsPayload): void;
-  toggleSkippedTasksVisibility(): void;
-  sendComment({ text, taskId }: ISendWorkflowLogComment): void;
-  onClickTask?(): void;
-  onUnmount?(): void;
-  isInTaskCard?: boolean;
-  taskId?: number;
-  taskStatus?: ETaskStatus;
-}

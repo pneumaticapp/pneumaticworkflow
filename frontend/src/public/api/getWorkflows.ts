@@ -1,5 +1,6 @@
 import { commonRequest } from './commonRequest';
-import { EWorkflowsSorting, IWorkflow, EWorkflowsStatus } from '../types/workflow';
+import type { IWorkflow } from '../types/workflow';
+import { EWorkflowsSorting, EWorkflowsStatus } from '../types/workflow';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { EXTERNAL_USER_ID } from '../utils/users';
 import { canFilterByCurrentPerformer, canFilterByTemplateStep } from '../utils/workflows/filters';

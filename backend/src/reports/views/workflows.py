@@ -30,13 +30,15 @@ from src.reports.queries.workflows import (
     WorkflowBreakdownNowQuery,
     WorkflowBreakdownQuery,
 )
-from src.openapi import (
-    ACCESS_DASHBOARD,
-    BREAKDOWN_BY_STEPS_PARAMS,
-    DATE_RANGE_PARAMS,
+from src.openapi.permission_docs import ACCESS_DASHBOARD
+from src.openapi.parameters import BREAKDOWN_BY_STEPS_PARAMS, DATE_RANGE_PARAMS
+from src.openapi.responses import (
     FORBIDDEN,
+    NOT_FOUND,
     UNAUTHORIZED,
+    VALIDATION_ERROR,
 )
+from src.openapi.helpers import unpaginated_schema
 from src.reports.serializers import (
     AccountDashboardOverviewSerializer,
     BreakdownByStepsFilterSerializer,
@@ -69,6 +71,7 @@ class WorkflowsDashboardViewSet(
         parameters=DATE_RANGE_PARAMS,
         responses={
             200: DashboardOverviewResponseSerializer,
+            400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
         },
@@ -92,6 +95,7 @@ class WorkflowsDashboardViewSet(
         data = RawSqlExecutor.fetchone(*query.get_sql())
         return self.response_ok(data)
 
+    @unpaginated_schema
     @extend_schema(
         tags=['Reports'],
         summary='Workflows breakdown',
@@ -99,6 +103,7 @@ class WorkflowsDashboardViewSet(
         parameters=DATE_RANGE_PARAMS,
         responses={
             200: WorkflowsDashboardBreakdownItemSerializer(many=True),
+            400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
         },
@@ -122,6 +127,7 @@ class WorkflowsDashboardViewSet(
         data = list(RawSqlExecutor.fetch(*query.get_sql()))
         return self.response_ok(data)
 
+    @unpaginated_schema
     @extend_schema(
         tags=['Reports'],
         summary='Workflows breakdown by tasks',
@@ -129,8 +135,10 @@ class WorkflowsDashboardViewSet(
         parameters=BREAKDOWN_BY_STEPS_PARAMS,
         responses={
             200: DashboardBreakdownByStepItemSerializer(many=True),
+            400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
+            404: NOT_FOUND,
         },
     )
     @action(methods=['get'], detail=False, url_path='by-tasks')

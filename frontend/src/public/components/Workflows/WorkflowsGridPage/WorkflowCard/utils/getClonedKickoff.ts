@@ -1,15 +1,15 @@
-import {
-  EExtraFieldType,
+import type {
   IExtraField,
   ITemplateKickoffClient,
   IRuntimeKickoffClient,
   TExtraFieldValue,
 } from '../../../../../types/template';
-import { IWorkflowDetailsKickoff } from '../../../../../types/workflow';
+import { EExtraFieldType } from '../../../../../types/template';
+import type { IWorkflowDetailsKickoff } from '../../../../../types/workflow';
 import { getEditKickoff } from '../../../../../utils/workflows';
 import { normalizeSelections } from '../../../../TemplateEdit/utils/normalizeSelections';
 import { normalizeCheckboxValue } from '../../../../../utils/fields';
-import { IFieldsetField, IFieldsetRuntime } from '../../../../../types/fieldset';
+import type { IFieldsetField, IFieldsetRuntime } from '../../../../../types/fieldset';
 
 function normalizeKickoffFields(
   fields: (IExtraField | IFieldsetField)[] = [],

@@ -1,4 +1,14 @@
-import { EPermissionObjectType, IObjectPermissionResponseItem } from '../../types/permissions';
+import type {
+  EPermissionObjectType,
+  IObjectPermissionResponseItem,
+  TObjectPermissionsById,
+} from '../../types/permissions';
+
+export type TPermissionsStore = {
+  [objType in EPermissionObjectType]: TObjectPermissionsById;
+} & {
+  userId: number | null;
+};
 
 export interface ILoadObjectPermissionsPayload {
   objType: EPermissionObjectType;

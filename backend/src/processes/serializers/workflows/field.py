@@ -1,3 +1,5 @@
+from typing import List
+
 from rest_framework import serializers
 
 from src.generics.fields import (
@@ -286,7 +288,7 @@ class TaskFieldSerializer(serializers.ModelSerializer):
         ),
     )
 
-    def get_selections(self, instance: TaskField) -> list:
+    def get_selections(self, instance: TaskField) -> List[str]:
         if hasattr(instance, 'selections_values'):
             # Prefetched values
             result = [s.value for s in instance.selections_values]

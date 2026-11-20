@@ -1,13 +1,14 @@
-import { EDashboardModes, IApplicationState, IDashboardStore, TDashboardBreakdownItem } from '../../types/redux';
-import { EDashboardTimeRange } from '../../types/dashboard';
+import type { EDashboardModes, IDashboardStore } from '../dashboard/types';
+import type { EDashboardTimeRange, TDashboardBreakdownItem } from '../../types/dashboard';
+import type { RootState } from '../store';
 
-export const getDashboardStore = (state: IApplicationState): IDashboardStore => state.dashboard;
+export const getDashboardStore = (state: RootState): IDashboardStore => state.dashboard;
 
-export const getDashboardTimeRange = (state: IApplicationState): EDashboardTimeRange => {
+export const getDashboardTimeRange = (state: RootState): EDashboardTimeRange => {
   return state.dashboard.timeRange;
 };
 
-export const getDashboardBreakdownItems = (state: IApplicationState): TDashboardBreakdownItem[] =>
+export const getDashboardBreakdownItems = (state: RootState): TDashboardBreakdownItem[] =>
   state.dashboard.breakdownItems;
 
-export const getDashboardMode = (state: IApplicationState): EDashboardModes => state.dashboard.mode;
+export const getDashboardMode = (state: RootState): EDashboardModes => state.dashboard.mode;

@@ -1,25 +1,5 @@
-import {
-  IBaseRuleGroupAnd,
-  IBaseRuleSet,
-  ERuleCombinator,
-  EFieldRuleType,
-  EFieldRuleOperator,
-} from '../../../../types/fieldset';
-import { EExtraFieldType, IExtraFieldSelection } from '../../../../types/template';
-
-export { EFieldRuleOperator };
-
-export const FIELD_RULE_OPERATORS_WITHOUT_VALUE: EFieldRuleOperator[] = [
-  EFieldRuleOperator.Exist,
-  EFieldRuleOperator.NotExist,
-];
-
-export const SELECTION_FIELD_TYPES: EExtraFieldType[] = [
-  EExtraFieldType.Checkbox,
-  EExtraFieldType.Radio,
-  EExtraFieldType.Creatable,
-];
-
+import type { IBaseRuleGroupAnd, IBaseRuleSet, ERuleCombinator, EFieldRuleType } from '../../../../types/fieldset';
+import type { EExtraFieldType, IExtraFieldSelection } from '../../../../types/template';
 
 export type IFieldRuleBaseHandlers = {
   updateRule: (params: {
@@ -27,15 +7,8 @@ export type IFieldRuleBaseHandlers = {
     groupAndApiName: string;
     ruleChanges: Partial<IBaseRuleGroupAnd>;
   }) => void;
-  deleteRule: (params: {
-    groupOrApiName: string;
-    groupAndApiName: string;
-  }) => void;
-  regroupRules: (params: {
-    groupOrApiName: string;
-    groupAndApiName: string;
-    ruleCombinator: ERuleCombinator;
-  }) => void;
+  deleteRule: (params: { groupOrApiName: string; groupAndApiName: string }) => void;
+  regroupRules: (params: { groupOrApiName: string; groupAndApiName: string; ruleCombinator: ERuleCombinator }) => void;
 };
 
 export type TOperatorOption = {
@@ -124,4 +97,3 @@ export type IRuleOperatorSelectProps = {
   isFieldsetRuleset?: boolean;
   onChange: (newOperator: string) => void;
 };
-

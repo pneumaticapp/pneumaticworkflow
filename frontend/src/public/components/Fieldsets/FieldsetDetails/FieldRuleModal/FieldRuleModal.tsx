@@ -4,8 +4,8 @@ import { useIntl } from 'react-intl';
 
 import { BaseModal, ModalHeader, ModalBody, ModalFooter } from '../../../UI/BaseModal';
 import { Button } from '../../../UI/Buttons/Button';
-import { IFieldRuleSet } from '../../../../types/fieldset';
-import { IFieldRuleModalProps } from './types';
+import type { IFieldRuleSet } from '../../../../types/fieldset';
+import type { IFieldRuleModalProps } from './types';
 import { createEmptyFieldRuleSet, isFieldRulesetValid } from './utils';
 import { FieldRulesetBody } from './FieldRulesetBody';
 
@@ -22,9 +22,7 @@ export function FieldRuleModal({
   onClose,
 }: IFieldRuleModalProps) {
   const { formatMessage } = useIntl();
-  const [localRuleSet, setLocalRuleSet] = useState<IFieldRuleSet>(
-    () => ruleset || createEmptyFieldRuleSet(),
-  );
+  const [localRuleSet, setLocalRuleSet] = useState<IFieldRuleSet>(() => ruleset || createEmptyFieldRuleSet());
 
   useEffect(() => {
     if (isOpen) {
@@ -40,9 +38,7 @@ export function FieldRuleModal({
 
   return (
     <BaseModal isOpen={isOpen} toggle={onClose} className={styles['modal-dialog']}>
-      <ModalHeader toggle={onClose}>
-        {formatMessage({ id: 'fieldsets.field-rule-modal.title' })}
-      </ModalHeader>
+      <ModalHeader toggle={onClose}>{formatMessage({ id: 'fieldsets.field-rule-modal.title' })}</ModalHeader>
       <ModalBody>
         <FieldRulesetBody
           localRuleSet={localRuleSet}

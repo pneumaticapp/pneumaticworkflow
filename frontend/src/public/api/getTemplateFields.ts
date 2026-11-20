@@ -1,6 +1,6 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { IKickoff, ITemplateTask, TTemplateFieldFieldset } from '../types/template';
+import type { IKickoff, ITemplateTask, TTemplateFieldFieldset } from '../types/template';
 
 export type TGetTemplateFieldsResponse = {
   tasks: (Pick<ITemplateTask, 'id' | 'fields' | 'name' | 'apiName'> & {

@@ -1,8 +1,9 @@
-import { ComponentType, createElement } from 'react';
+import type { ComponentType } from 'react';
+import { createElement } from 'react';
 import { connect } from 'react-redux';
 
-import { IApplicationState } from '../../types/redux';
-import { IWorkflowsProps } from './types';
+import type { RootState } from '../../redux/store';
+import type { IWorkflowsProps } from './types';
 import { openSelectTemplateModal, openRunWorkflowModal } from '../../redux/actions';
 import {
   openWorkflowLogPopup,
@@ -43,7 +44,7 @@ export function mapStateToProps({
       templateList,
     },
   },
-}: IApplicationState): TStoreProps {
+}: RootState): TStoreProps {
   const templatesFilter = templateList.items.filter((template) =>
     templatesIdsFilter.some((templateId) => templateId === template.id),
   );

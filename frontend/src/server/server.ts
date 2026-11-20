@@ -1,8 +1,5 @@
-import * as path from 'path';
+import path from 'path';
 import express from 'express';
-import webpack from 'webpack';
-import devMiddleware from 'webpack-dev-middleware';
-import hotMiddleware from 'webpack-hot-middleware';
 
 import { initSentryServer } from './utils/initSentryServer';
 import { mainHandler, oAuthHandler, apiProxy } from './handlers';
@@ -15,11 +12,9 @@ import { getUserPublic } from './middleware/utils/getUserPublic';
 import { mapToCamelCase } from '../public/utils/mappers';
 import { SSOProvider } from './types';
 
-const webpackConfig = require('../../webpack.config');
-
 const { NODE_ENV = 'development' } = process.env;
 
-const devMode = NODE_ENV !== 'production';
+const isDevMode = NODE_ENV !== 'production';
 
 const isSSOAuth = process.env.SSO_AUTH !== 'no';
 const envSSOProvider = process.env.SSO_PROVIDER;
@@ -28,14 +23,21 @@ const {
   api: { urls },
 } = getConfig();
 
-export function initServer() {
+export async function initServer() {
   initSentryServer();
 
-  const webpackCompiler = webpack(webpackConfig);
   const app = express();
   const { host, port = 8000, formSubdomain, mainPage, firebase } = getConfig();
 
-  if (devMode) {
+  if (isDevMode) {
+    const [{ default: webpack }, { default: devMiddleware }, { default: hotMiddleware }, { default: webpackConfig }] =
+      await Promise.all([
+        import('webpack'),
+        import('webpack-dev-middleware'),
+        import('webpack-hot-middleware'),
+        import('../../webpack.config'),
+      ]);
+    const webpackCompiler = webpack(webpackConfig);
     app.use(devMiddleware(webpackCompiler, { writeToDisk: true }));
     app.use(
       hotMiddleware(webpackCompiler, {

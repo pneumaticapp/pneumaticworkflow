@@ -1,12 +1,12 @@
-import * as React from 'react';
-import { useEffect, useState } from 'react';
-import { Field, Formik, FormikConfig } from 'formik';
+import React, { useEffect, useState } from 'react';
+import type { FormikConfig } from 'formik';
+import { Field, Formik } from 'formik';
 import { useIntl } from 'react-intl';
 import ReCAPTCHA from 'react-google-recaptcha';
 import moment from 'moment-timezone';
 import classNames from 'classnames';
 
-import { TRegisterUserPayload } from '../../../redux/actions';
+import type { TRegisterUserPayload } from '../../../redux/actions';
 import { IntlMessages } from '../../../components/IntlMessages';
 import { ERoutes } from '../../../constants/routes';
 import { TITLES } from '../../../constants/titles';

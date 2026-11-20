@@ -1,16 +1,14 @@
 import { all, fork, takeEvery, takeLatest, put, select } from 'redux-saga/effects';
 
-import { ITenant } from '../../types/tenants';
+import type { ITenant } from '../../types/tenants';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { getTenantsSorting } from '../selectors/tenants';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { logger } from '../../utils/logger';
 
+import type { TChangeTenantName, TCreateTenant, TDeleteTenant } from './actions';
 import {
   ETenantsActions,
-  TChangeTenantName,
-  TCreateTenant,
-  TDeleteTenant,
   loadTenants,
   loadTenantsCount,
   loadTenantsCountSuccess,
@@ -24,7 +22,8 @@ import { getTenants } from '../../api/tenants/getTenants';
 import { createTenant } from '../../api/tenants/createTenant';
 import { deleteTenant } from '../../api/tenants/deleteTenant';
 import { changeNameTenant } from '../../api/tenants/changeNameTenant';
-import { IGetTenantsCountResponse, getTenantsCount } from '../../api/tenants/getTenantsCount';
+import type { IGetTenantsCountResponse } from '../../api/tenants/getTenantsCount';
+import { getTenantsCount } from '../../api/tenants/getTenantsCount';
 import { setMenuItemCounter } from '../actions';
 
 function* loadTenantsCountSaga() {

@@ -5,26 +5,12 @@ import { useIntl } from 'react-intl';
 import { FilterSelect, Tooltip } from '../../../UI';
 import { DeleteRoundIcon } from '../../../icons';
 
-import { IExtraField } from '../../../../types/template';
-import { IFieldsetRuleSet } from '../../../../types/fieldset';
+import type { TRulesetFieldsSelectorProps } from './types';
 
-import {
-  getFieldsTooltipText,
-  updateRulesetFields,
-  removeFieldFromRuleset,
-} from './utils';
+import { getFieldsTooltipText, updateRulesetFields, removeFieldFromRuleset } from './utils';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
 import styles from './FieldsetRulesets.css';
-
-export type TRulesetFieldsSelectorProps = {
-  ruleSet: IFieldsetRuleSet;
-  rulesets: IFieldsetRuleSet[];
-  fields: IExtraField[];
-  numericFields: IExtraField[];
-  onRulesetsChange: (rulesets: IFieldsetRuleSet[]) => void;
-  isReadOnly?: boolean;
-};
 
 export const RulesetFieldsSelector = ({
   ruleSet,
@@ -39,17 +25,11 @@ export const RulesetFieldsSelector = ({
   const selectedFieldApiNames = new Set(ruleSet.fields || []);
   const selectedFields = numericFields.filter((field) => selectedFieldApiNames.has(field.apiName));
 
-  const tooltipText = getFieldsTooltipText(
-    fields.length > 0,
-    numericFields.length > 0,
-    formatMessage,
-  );
+  const tooltipText = getFieldsTooltipText(fields.length > 0, numericFields.length > 0, formatMessage);
 
   return (
     <>
-      <span className={styles['ruleset-card__label']}>
-        {formatMessage({ id: 'fieldsets.rule-fields' })}
-      </span>
+      <span className={styles['ruleset-card__label']}>{formatMessage({ id: 'fieldsets.rule-fields' })}</span>
       <Tooltip
         content={tooltipText}
         disabled={numericFields.length > 0 || isReadOnly}
@@ -88,7 +68,7 @@ export const RulesetFieldsSelector = ({
           />
         </div>
       </Tooltip>
-      
+
       {selectedFields.length > 0 && (
         <div className={styles['field-tags-list']}>
           {selectedFields.map((field) => (

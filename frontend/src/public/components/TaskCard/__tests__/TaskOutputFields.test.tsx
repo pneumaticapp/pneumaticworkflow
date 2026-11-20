@@ -2,7 +2,7 @@ import * as React from 'react';
 import { render } from '@testing-library/react';
 
 import { TaskOutputFields } from '../TaskOutputFields';
-import { ETaskStatus } from '../../../redux/actions';
+import { ETaskCardState } from '../../../redux/task/types';
 import { makeExtraField } from '../../../__stubs__/fields.factory';
 import {
   makeFieldsetRuntime,
@@ -28,7 +28,7 @@ describe('TaskOutputFields: dynamic field visibility by show rules', () => {
     editFieldsetField: jest.fn(),
     onUploadStateChange: jest.fn(),
     isDisabled: false,
-    status: ETaskStatus.WaitingForAction,
+    status: ETaskCardState.WaitingForAction,
     taskId: 10,
     fieldsetOutputValues: [],
     outputValues: [],

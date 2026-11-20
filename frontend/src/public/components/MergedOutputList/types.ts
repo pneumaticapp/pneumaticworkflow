@@ -1,6 +1,6 @@
-import { IExtraField } from '../../types/template';
-import { IFieldsetRuntime } from '../../types/fieldset';
-import { EInputNameBackgroundColor } from '../../types/workflow';
+import type { IExtraField } from '../../types/template';
+import type { IFieldsetRuntime } from '../../types/fieldset';
+import type { EInputNameBackgroundColor } from '../../types/workflow';
 
 export interface IMergedOutputListProps {
   fields: IExtraField[];

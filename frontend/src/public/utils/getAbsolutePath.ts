@@ -1,4 +1,4 @@
-import { ERoutes } from '../constants/routes';
+import type { ERoutes } from '../constants/routes';
 import { getBrowserConfigEnv } from './getConfig';
 import { getQueryStringByParams } from './history';
 

@@ -1,6 +1,6 @@
 /* eslint-disable */
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 import Slider, { SliderProps, Handle, HandleProps } from 'rc-slider';
 
 import 'rc-slider/assets/index.css';

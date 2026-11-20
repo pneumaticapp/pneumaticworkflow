@@ -1,4 +1,4 @@
-import { IMenuItem, TMenuCounterType } from '../types/menu';
+import type { IMenuItem, TMenuCounter } from '../types/menu';
 import {
   DashboardIcon,
   InboxIcon,
@@ -12,21 +12,15 @@ import {
 
 import { ERoutes } from './routes';
 import { HelpIcon } from '../components/icons/HelpIcon';
-import { IAuthUser } from '../types/redux';
+import type { TAuthUserResult } from '../types/user';
 import { getCanAccessWorkflows } from '../redux/selectors/user';
-
-export type TMenuCounter = {
-  id: IMenuItem['id'];
-  value: number;
-  type: TMenuCounterType;
-};
 
 export interface IGetUserMenuItemsOptions {
   isTemplateOwner?: boolean;
 }
 
 export const getUserMenuItems = (
-  user: IAuthUser,
+  user: TAuthUserResult,
   counters?: TMenuCounter[],
   _options?: IGetUserMenuItemsOptions,
 ): IMenuItem[] => {

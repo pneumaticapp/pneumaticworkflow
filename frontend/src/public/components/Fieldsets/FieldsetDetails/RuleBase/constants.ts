@@ -1,9 +1,6 @@
 import { EExtraFieldType } from '../../../../types/template';
-import {
-  EFieldsetRulesetNumericOperator,
-  EFieldRuleOperator,
-} from '../../../../types/fieldset';
-import { TOperatorOption } from './types';
+import { EFieldsetRulesetNumericOperator, EFieldRuleOperator } from '../../../../types/fieldset';
+import type { TOperatorOption } from './types';
 
 const operatorLabelMap: Record<EFieldRuleOperator, string> = {
   [EFieldRuleOperator.Equal]: 'templates.conditions.equal',
@@ -44,10 +41,7 @@ const selectionOperators = toOptions([
   EFieldRuleOperator.NotExist,
 ]);
 
-const fileOperators = toOptions([
-  EFieldRuleOperator.Exist,
-  EFieldRuleOperator.NotExist,
-]);
+const fileOperators = toOptions([EFieldRuleOperator.Exist, EFieldRuleOperator.NotExist]);
 
 export const fieldRuleOperatorsByFieldTypeMap: Record<EExtraFieldType, TOperatorOption[]> = {
   [EExtraFieldType.Number]: numericOperators,
@@ -66,4 +60,15 @@ export const FIELDSET_RULESET_NUMERIC_OPERATOR_OPTIONS: TOperatorOption[] = [
   { value: EFieldsetRulesetNumericOperator.SumEqual, labelKey: 'fieldsets.rule-type-sum_equal' },
   { value: EFieldsetRulesetNumericOperator.SumGreaterThan, labelKey: 'fieldsets.rule-type-sum_greater_than' },
   { value: EFieldsetRulesetNumericOperator.SumLessThan, labelKey: 'fieldsets.rule-type-sum_less_than' },
+];
+
+export const FIELD_RULE_OPERATORS_WITHOUT_VALUE: EFieldRuleOperator[] = [
+  EFieldRuleOperator.Exist,
+  EFieldRuleOperator.NotExist,
+];
+
+export const SELECTION_FIELD_TYPES: EExtraFieldType[] = [
+  EExtraFieldType.Checkbox,
+  EExtraFieldType.Radio,
+  EExtraFieldType.Creatable,
 ];

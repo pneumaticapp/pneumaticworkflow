@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from src.generics.fields import TimeStampField
@@ -12,6 +13,7 @@ from src.processes.serializers.workflows.fieldset import (
     FieldSetEventSerializer,
 )
 from src.processes.serializers.workflows.task_performer import (
+    TaskUserGroupPerformerSerializer,
     get_performers_for_task,
 )
 
@@ -78,9 +80,11 @@ class TaskEventJsonSerializer(serializers.ModelSerializer):
     due_date_tsp = TimeStampField(source='due_date')
     sub_workflow = serializers.SerializerMethodField()
 
+    @extend_schema_field(TaskUserGroupPerformerSerializer(many=True))
     def get_performers(self, instance):
         return get_performers_for_task(instance)
 
+    @extend_schema_field(TaskFieldEventSerializer(many=True))
     def get_output(self, instance):
         if self.context['event_type'] == WorkflowEventType.TASK_COMPLETE:
             return TaskFieldEventSerializer(
@@ -89,6 +93,7 @@ class TaskEventJsonSerializer(serializers.ModelSerializer):
             ).data
         return None
 
+    @extend_schema_field(FieldSetEventSerializer(many=True))
     def get_fieldsets(self, instance):
         if (
             self.context['event_type'] == WorkflowEventType.TASK_COMPLETE
@@ -100,6 +105,7 @@ class TaskEventJsonSerializer(serializers.ModelSerializer):
             ).data
         return None
 
+    @extend_schema_field(SubWorkflowEventSerializer)
     def get_sub_workflow(self, instance):
         if self.context['event_type'] == WorkflowEventType.SUB_WORKFLOW_RUN:
             return SubWorkflowEventSerializer(

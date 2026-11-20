@@ -8,10 +8,11 @@ import {
   cancelTemplateTasksCounters,
   setFilterTemplateTasks as setWorkflowsFilterTasks,
 } from '../../redux/workflows/slice';
-import { FilterSelect, TOptionBase } from '../../components/UI';
+import type { TOptionBase } from '../../components/UI/Select/types';
+import { FilterSelect } from '../../components/UI';
 import { StepName } from '../../components/StepName';
 import { TaskFilterIcon } from '../../components/icons';
-import { ITemplateFilterItem, TTemplateStepFilter } from '../../types/workflow';
+import type { ITemplateFilterItem, TTemplateStepFilter } from '../../types/workflow';
 import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
 import { isArrayWithItems } from '../../utils/helpers';
 import { canFilterByTemplateStep } from '../../utils/workflows/filters';

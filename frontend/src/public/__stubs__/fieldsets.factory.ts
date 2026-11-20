@@ -1,6 +1,4 @@
-import {
-  EFieldLabelPosition,
-  EFieldsetRulesetNumericOperator,
+import type {
   IFieldsetBinding,
   IFieldsetBindingClient,
   IFieldsetCatalogItem,
@@ -14,10 +12,14 @@ import {
   IFieldRuleShowGroupAnd,
   IFieldRuleValidatorGroupAnd,
   IFieldRuleGroupOr,
+} from '../types/fieldset';
+import {
+  EFieldLabelPosition,
+  EFieldsetRulesetNumericOperator,
   EFieldRuleType,
   EFieldRuleOperator,
 } from '../types/fieldset';
-import { IExtraField } from '../types/template';
+import type { IExtraField } from '../types/template';
 
 export const makeFieldsetField = (overrides: Partial<IFieldsetField> = {}): IFieldsetField => ({
   apiName: 'field-1',
@@ -122,9 +124,7 @@ export const makeFieldsetTaskAPI = (overrides: Partial<IFieldsetTaskAPI> = {}): 
   ...overrides,
 });
 
-export const makeFieldRuleShowGroupAnd = (
-  overrides: Partial<IFieldRuleShowGroupAnd> = {},
-): IFieldRuleShowGroupAnd => ({
+export const makeFieldRuleShowGroupAnd = (overrides: Partial<IFieldRuleShowGroupAnd> = {}): IFieldRuleShowGroupAnd => ({
   apiName: 'field-rule-and-1',
   field: '',
   operator: EFieldRuleOperator.Equal,

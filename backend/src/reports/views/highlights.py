@@ -11,12 +11,9 @@ from src.generics.mixins.views import BasePrefetchMixin
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
-from src.openapi import (
-    ACCESS_HIGHLIGHTS,
-    FORBIDDEN,
-    HIGHLIGHTS_PARAMS,
-    UNAUTHORIZED,
-)
+from src.openapi.permission_docs import ACCESS_HIGHLIGHTS
+from src.openapi.responses import FORBIDDEN, UNAUTHORIZED, VALIDATION_ERROR
+from src.openapi.parameters import HIGHLIGHTS_PARAMS
 from src.processes.models.workflows.event import WorkflowEvent
 from src.reports.serializers import (
     EventHighlightsSerializer,
@@ -33,6 +30,7 @@ UserModel = get_user_model()
     parameters=HIGHLIGHTS_PARAMS,
     responses={
         200: EventHighlightsSerializer(many=True),
+        400: VALIDATION_ERROR,
         401: UNAUTHORIZED,
         403: FORBIDDEN,
     },

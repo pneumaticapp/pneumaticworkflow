@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import classnames from 'classnames';
 import { injectIntl } from 'react-intl';
 
@@ -18,7 +17,7 @@ import { EExtraFieldType } from '../../../types/template';
 import { EFieldLabelPosition } from '../../../types/fieldset';
 import { ExtraFieldDropdown } from './utils/ExtraFieldDropdown';
 import { getInputNameBackground } from './utils/getInputNameBackground';
-import { IExtraFieldProps } from './types';
+import type { IExtraFieldProps } from './types';
 
 import styles from '../KickoffRedux/KickoffRedux.css';
 

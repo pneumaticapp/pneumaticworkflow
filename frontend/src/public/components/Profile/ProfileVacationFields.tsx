@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useFormikContext } from 'formik';
 import classNames from 'classnames';
@@ -8,7 +7,7 @@ import { DateField } from '../UI/Fields/DateField';
 import { UsersDropdown } from '../UI/form/UsersDropdown';
 import { UserPerformer, EBgColorTypes } from '../UI/UserPerformer';
 import { ETaskPerformerType } from '../../types/template';
-import { TUserListItem } from '../../types/user';
+import type { TUserListItem } from '../../types/user';
 import { FormikDropdownList } from '../UI';
 import { SectionTitle } from '../UI/Typeography/SectionTitle';
 

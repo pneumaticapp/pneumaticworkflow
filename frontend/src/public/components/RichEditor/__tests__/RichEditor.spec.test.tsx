@@ -3,11 +3,11 @@
  * Unit tests run in Jest with mocked RichEditor. E2E by spec runs in product via Playwright (see docs/lexical-editor/e2e.md).
  */
 
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { EExtraFieldType } from '../../../types/template';
 import { RichEditor } from '..';
-import type { IRichEditorHandle, IRichEditorProps } from '..';
+import type { IRichEditorHandle, IRichEditorProps } from '../types';
 
 jest.mock('../RichEditor', () => {
   const React = require('react');

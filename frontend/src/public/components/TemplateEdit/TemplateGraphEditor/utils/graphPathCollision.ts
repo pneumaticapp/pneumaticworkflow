@@ -1,7 +1,8 @@
-import { TGraphEdge, TGraphNode } from '../types';
+import type { TGraphEdge, TGraphNode } from '../types';
 import { isConditionalGraphEdge } from './edgeStyles';
 import { isCheckIfStemEdge } from './graphConstants';
 import { getGraphEdgePath } from './getGraphEdgePath';
+import type { IGraphNodeBox } from './graphGeometry';
 import {
   GRAPH_EDGE_STANDOFF,
   GRAPH_LANE_CLEARANCE,
@@ -10,7 +11,6 @@ import {
   GRAPH_SKIP_LANE_STEP,
   faceFromHandle,
   getGraphNodeBox,
-  IGraphNodeBox,
   getHandleAnchor,
   isCardNode,
   offsetAlongFace,

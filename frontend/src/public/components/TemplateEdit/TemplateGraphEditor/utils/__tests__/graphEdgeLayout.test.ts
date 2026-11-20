@@ -1,7 +1,10 @@
-import { EExtraFieldType, ITemplateClient, ITemplateTaskClient } from '../../../../../types/template';
+import { EExtraFieldType, ITemplateClient, ITemplateTaskClient, EStartingType } from '../../../../../types/template';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
-import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../../TaskForm/Conditions';
-import { EStartingType } from '../../../TaskForm/Conditions/utils/getDropdownOperators';
+import {
+  EConditionAction,
+  EConditionLogicOperations,
+  EConditionOperators,
+} from '../../../../../types/templateTaskConditions';
 import { GRAPH_APPROVAL_LADDER_TEMPLATE } from '../../fixtures/graphApprovalLadderTemplate';
 import { GRAPH_SHOWCASE_TEMPLATE } from '../../fixtures/graphShowcaseTemplate';
 import { GRAPH_TEMPLATE_259 } from '../../fixtures/graphTemplate259';
@@ -104,7 +107,7 @@ function getHandlePoint(node: TGraphNode, handleId?: string | null): IPoint {
 }
 
 function parseSegments(edge: TGraphEdge, path: string, source: TGraphNode, target: TGraphNode): ISegment[] {
-  const tokens = path.match(/[MLQ][^MLQ]*/g) ?? [];
+  const tokens: string[] = path.match(/[MLQ][^MLQ]*/g) ?? [];
   const segments: ISegment[] = [];
   let cursor: IPoint = { x: 0, y: 0 };
 

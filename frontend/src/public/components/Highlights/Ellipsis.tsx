@@ -1,6 +1,6 @@
 /* eslint-disable */
 /* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 
 import styles from './FeedItem.css';

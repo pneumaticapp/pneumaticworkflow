@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { ReactFlowProvider } from 'reactflow';
 import { configure } from '@testing-library/react';

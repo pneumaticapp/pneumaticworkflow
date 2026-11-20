@@ -1,5 +1,5 @@
 import { numberRegex } from '../../constants/defaultValues';
-import { IFieldsetField, IFieldsetRuleSet } from '../../types/fieldset';
+import type { IFieldsetField, IFieldsetRuleSet } from '../../types/fieldset';
 import { EExtraFieldType } from '../../types/template';
 import {
   FIELDSET_RULES_MSG_FIELDS_NUMBER,
@@ -35,10 +35,7 @@ export function validateFieldsetRules(
         return FIELDSET_RULES_MSG_VALUE_REQUIRED;
       }
 
-      if (
-        rule.operator &&
-        FIELDSET_RULESET_NUMERIC_OPERATOR_OPTIONS.some((option) => option.value === rule.operator)
-      ) {
+      if (rule.operator && FIELDSET_RULESET_NUMERIC_OPERATOR_OPTIONS.some((option) => option.value === rule.operator)) {
         if (!numberRegex.test(value)) {
           return FIELDSET_RULES_MSG_VALUE_NUMBER;
         }

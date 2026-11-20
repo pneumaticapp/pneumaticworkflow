@@ -7,7 +7,7 @@ import { ESelectTemplateModalActions, setSelectTemplateModalTemplates } from './
 
 import { getTemplates } from '../../api/getTemplates';
 import { ETemplatesSorting } from '../../types/workflow';
-import { ITemplateListItem } from '../../types/template';
+import type { ITemplateListItem } from '../../types/template';
 import { getTemplatesModalFilter } from '../selectors/selectTemplateModal';
 import { isArrayWithItems } from '../../utils/helpers';
 import { NotificationManager } from '../../components/UI/Notifications';

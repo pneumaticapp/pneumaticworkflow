@@ -1,4 +1,4 @@
-import { TForgotPassword } from '../../../redux/actions';
+import type { TForgotPassword } from '../../../redux/actions';
 
 export interface IForgotPasswordProps {
   loading?: boolean;

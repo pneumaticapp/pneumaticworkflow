@@ -1,7 +1,7 @@
 /* prettier-ignore */
 import { commonRequest } from '../commonRequest';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
-import { TMenuItemId } from '../../types/menu';
+import type { TMenuItemId } from '../../types/menu';
 
 export interface IAPIMenuItem {
   slug: string;

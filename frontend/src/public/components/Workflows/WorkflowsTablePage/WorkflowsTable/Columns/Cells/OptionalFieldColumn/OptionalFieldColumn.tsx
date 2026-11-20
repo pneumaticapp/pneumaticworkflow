@@ -1,12 +1,14 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { CellProps } from 'react-table';
+import type { CellProps } from 'react-table';
 
 import { toDateString } from '../../../../../../../utils/dateTime';
-import { TableColumns } from '../../../types';
-import { EExtraFieldType, ETaskPerformerType, ITableViewFields } from '../../../../../../../types/template';
+import type { TTableColumns } from '../../../types';
+import { EExtraFieldType, ETaskPerformerType } from '../../../../../../../types/template';
+import type { ITableViewFields } from '../../../../../../../types/template';
 import { getUserById } from '../../../../../../UserData/utils/getUserById';
-import { Avatar, TAvatarUser } from '../../../../../../UI';
+import { Avatar } from '../../../../../../UI';
+import type { TAvatarUser } from '../../../../../../UI/Avatar/types';
 import { getAttachmentTypeByFilename } from '../../../../../../Attachments/utils/getAttachmentType';
 import { DocumentInfoIcon, ImageFileIcon } from '../../../../../../icons';
 import { urlWithProtocolRegex } from '../../../../../../../constants/defaultValues';
@@ -16,7 +18,7 @@ import { getRegularGroupsList } from '../../../../../../../redux/selectors/group
 import { getAccountsUsers } from '../../../../../../../redux/selectors/accounts';
 import { getTimezone } from '../../../../../../../redux/selectors/authUser';
 
-type TProps = React.PropsWithChildren<CellProps<TableColumns, ITableViewFields>>;
+type TProps = React.PropsWithChildren<CellProps<TTableColumns, ITableViewFields>>;
 
 export function OptionalFieldColumn({ value }: TProps) {
   if (!value) {

@@ -1,7 +1,7 @@
 import { reducer } from './reducer';
 import { EIntegrationsActions } from './actions';
-import { IIntegrationsStore } from '../../types/redux';
-import { IApiKeyItem } from '../../types/integrations';
+import type { IIntegrationsStore } from './types';
+import type { IApiKeyItem } from '../../types/integrations';
 
 const mockApiKey: IApiKeyItem = {
   id: 1,
