@@ -6,10 +6,10 @@ user action events and let people search and chart them.
 The application machine does not run anything from this directory. There the
 backend and the file service write events into a Redis stream, and the
 OpenTelemetry collector (`otel-collector/` in the root of the repository)
-forwards them to the store named by `LOGS_BACKEND` in `.env`. `start.sh` starts
-the collector on its own when `LOGS_BACKEND` is `otlp` or `elasticsearch`
-(compose profiles `logs-otlp` / `logs-elasticsearch`); with `LOGS_BACKEND`
-unset, the default, the journal is off and no collector runs.
+forwards them to the store named by `LOGS_BACKEND` in `.env`. While
+`LOGS_ENABLE` is empty, `start.sh` asks whether to enable the journal, asks
+for the store settings and starts the collector through the compose profile
+`logs-otlp` or `logs-elasticsearch`; with the journal off, no collector runs.
 
 ```
 application machine                                  storage machine
@@ -59,6 +59,52 @@ stacks show the journal of every account in the installation: keep Loki and
 Elasticsearch reachable from the application machine only, and Grafana and
 Kibana behind your own access control.
 
+## Configuration
+
+The variables below belong to the **repository-root `.env` of the application
+machine**, read by [docker-compose.yml](../docker-compose.yml),
+[docker-compose.src.yml](../docker-compose.src.yml) and `start.sh`; `default.env`
+lists them all. The storage machine has its own settings, see
+`grafana/grafana.env.example` and `elasticsearch/elasticsearch.env.example`.
+The **Mode** column shows the `LOGS_BACKEND` value a variable applies to.
+Defaults apply when a variable is omitted.
+
+| Variable                       | Mode            | Default                              | Meaning / example                                                                                                                                                                                                                                                                                              |
+| ------------------------------ | --------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LOGS_ENABLE`                  | All             | Unset: not decided                   | `yes` or `no`, the answer to the `start.sh` question about the journal. While empty, `start.sh` asks it and fills in this variable, `LOGS_BACKEND` and the settings of the chosen mode. Change it to empty to answer again.                                                                                    |
+| `LOGS_BACKEND`                 | All             | Unset: journal off                   | `otlp` sends events to an OTLP/HTTP receiver (Loki of `grafana/` or a stack of your own), `elasticsearch` to the store of `elasticsearch/`. Unset or empty: no collector runs and nothing is written to Redis. Set by the `start.sh` dialog.                                                                   |
+| `LOGS_OTLP_ENDPOINT`           | All             | `http://otel-collector:4318`         | Address of the bundled collector the backend sends batches to. Change it only for a collector of your own.                                                                                                                                                                                                     |
+| `LOGS_STREAM_MAXLEN`           | All             | `250000`                             | Events the Redis buffer keeps before the oldest are dropped. Also its memory budget: plan with 1 KB per event, so the default takes ~250 MB plus 10 MB of dead letter. Sets how long the collector may be down without losses: ~69 hours at 1 event/s, ~7 hours at 10/s, ~42 minutes at 100/s.                 |
+| `LOGS_CONSUMER_BATCH_SIZE`     | All             | `1000`                               | Events in one POST to the collector. A batch refused with `413` (body too large for the collector or a proxy in front of it) goes to the dead letter; lower the value then.                                                                                                                                    |
+| `LOGS_OTLP_EXPORT_ENDPOINT`    | `otlp`          | Unset                                | OTLP/HTTP receiver URL on the storage machine, e.g. `http://<storage machine>:3100/otlp` for Loki of `grafana/`.                                                                                                                                                                                               |
+| `LOGS_OTLP_EXPORT_AUTH`        | `otlp`          | Unset                                | Whole `Authorization` header value, e.g. `Bearer <token>` or `Basic <base64>`. Sent even when empty, see `otel-collector/backend-otlp.yaml`; Loki of `grafana/` needs none.                                                                                                                                    |
+| `LOGS_ELASTICSEARCH_URL`       | `elasticsearch` | Unset                                | Store address, HTTPS only, e.g. `https://es.pneumatic.internal:9200`. The host must be one of the names in `ES_CERT_DNS` of the storage machine.                                                                                                                                                               |
+| `LOGS_ELASTICSEARCH_API_KEY`   | `elasticsearch` | Unset                                | Collector API key printed by `elasticsearch/scripts/bootstrap.sh` or `rotate-api-key.sh`. Its role can only append to the journal, and it expires after `ES_API_KEY_EXPIRATION`; rotation is this line plus a collector restart. Preferred over login and password.                                            |
+| `LOGS_ELASTICSEARCH_USER`      | `elasticsearch` | Unset                                | Elasticsearch account login, an alternative to the API key for a store without API keys. Set the key or the login and password, never both.                                                                                                                                                                    |
+| `LOGS_ELASTICSEARCH_PASSWORD`  | `elasticsearch` | Unset                                | Password of `LOGS_ELASTICSEARCH_USER`.                                                                                                                                                                                                                                                                         |
+| `LOGS_ELASTICSEARCH_CA_FILE`   | `elasticsearch` | `/etc/otel/es-ca.crt`                | CA certificate of the store inside the collector: copy `elasticsearch/certs/ca/ca.crt` from the storage machine to `otel-collector/es-ca.crt`, that directory is already mounted. Empty means the system certificate store, for a publicly trusted certificate.                                                |
+| `LOGS_ELASTICSEARCH_INDEX`     | `elasticsearch` | `logs-pneumatic.events.otel-default` | Data stream the events are written to. Keeps the form `logs-<dataset>.otel-<namespace>` and matches `ES_DATA_STREAM` and `ES_INDEX_PATTERN` of the storage machine: the index template, retention policy and writer role are bound to it.                                                                      |
+| `LOGS_ELASTICSEARCH_QUEUE_DIR` | `elasticsearch` | `/var/lib/otelcol/queue`             | Collector disk queue of undelivered batches, in the `./otel-queue` directory next to the compose files. No reason to change it.                                                                                                                                                                               |
+| `COMPOSE_PROFILES`             | —               | Unset                                | Rewritten by `start.sh` from `LOGS_ENABLE`, `LOGS_BACKEND` and `MCP_ENABLE` whenever one of its dialogs runs; edit it by hand only without `start.sh`. `logs-otlp` or `logs-elasticsearch` starts the collector; without it an enabled journal piles events up in the buffer until `LOGS_STREAM_MAXLEN` drops the oldest. One line for all profiles, e.g. `logs-otlp,mcp`. |
+
+The buffer is a Redis stream in db4 of the shared Redis, opened with
+`REDIS_PASSWORD`. It holds the only copy of an event until the collector takes
+it, and that Redis keeps RDB snapshots only, so a crash costs at most ~20
+seconds of events. To size `LOGS_STREAM_MAXLEN`, check the rate of workflow
+events, the bulk of the journal, over the last day:
+
+```sql
+select count(*) / 86400.0 from processes_workflowevent
+where created > now() - interval '1 day';
+```
+
+The file service writes into the same journal (uploads, downloads and refused
+downloads) and reads `LOGS_BACKEND`, `REDIS_PASSWORD` and `LOGS_STREAM_MAXLEN`
+from the same `.env`; it has nothing to configure separately. On an upgrade,
+deploy the backend first, then the file service: the backend declares the file
+event types, and a file service ahead of it files its records under the other
+category with the file name exposed.
+
 ## Loki + Grafana
 
 On the storage machine, in `logging/grafana`:
@@ -93,17 +139,19 @@ On the storage machine, in `logging/grafana`:
    `docker compose restart grafana`. Alerts fire into the Grafana UI only until
    a contact point is added under Alerting -> Contact points.
 
-On the application machine, in `.env`:
+On the application machine, run `./start.sh`, enable the journal, pick `otlp`
+and enter `http://<storage machine>:3100/otlp` as the receiver URL; leave the
+`Authorization` header empty, this Loki needs none. The script writes to `.env`:
 
 ```
+LOGS_ENABLE=yes
 LOGS_BACKEND=otlp
 LOGS_OTLP_EXPORT_ENDPOINT=http://<storage machine>:3100/otlp
+LOGS_OTLP_EXPORT_AUTH=
 ```
 
-`LOGS_OTLP_EXPORT_AUTH` is the whole `Authorization` header value for a
-receiver that needs one; this Loki does not. Then run `./start.sh` (it adds the
-`logs-otlp` profile), or with `docker compose` by hand set
-`COMPOSE_PROFILES=logs-otlp` in `.env`.
+With `docker compose` by hand, write these lines yourself and add `logs-otlp`
+to `COMPOSE_PROFILES`.
 
 A developer can run this stack on the application machine: with the default
 `LOKI_BIND=127.0.0.1` the collector reaches it at
@@ -172,29 +220,27 @@ On the application machine:
 1. Copy `logging/elasticsearch/certs/ca/ca.crt` from the storage machine to
    `otel-collector/es-ca.crt` (that directory is already mounted into the
    collector).
-2. Hand the queue volume to the collector once, before the first start:
-
-   ```
-   docker volume create pneumatic_otel-queue
-   docker run --rm -v pneumatic_otel-queue:/q alpine chown 10001:10001 /q
-   ```
-
-3. In `.env`:
-
-   ```
-   LOGS_BACKEND=elasticsearch
-   LOGS_ELASTICSEARCH_URL=https://<a name from ES_CERT_DNS>:9200
-   LOGS_ELASTICSEARCH_API_KEY=<printed by bootstrap.sh or rotate-api-key.sh>
-   ```
-
-   `LOGS_ELASTICSEARCH_CA_FILE` defaults to `/etc/otel/es-ca.crt`, and
-   `LOGS_ELASTICSEARCH_INDEX` must match `ES_DATA_STREAM` of the storage
+2. Run `./start.sh`, enable the journal, pick `elasticsearch`, enter
+   `https://<a name from ES_CERT_DNS>:9200` and either the API key printed by
+   `bootstrap.sh` or `rotate-api-key.sh`, or a login and password for a store
+   without API keys. The script writes `LOGS_ENABLE`, `LOGS_BACKEND`,
+   `LOGS_ELASTICSEARCH_URL` and the chosen credentials to `.env` and clears the
+   other pair. `LOGS_ELASTICSEARCH_CA_FILE` defaults to `/etc/otel/es-ca.crt`,
+   and `LOGS_ELASTICSEARCH_INDEX` must match `ES_DATA_STREAM` of the storage
    machine (both default to `logs-pneumatic.events.otel-default`).
-   `LOGS_ELASTICSEARCH_USER` / `LOGS_ELASTICSEARCH_PASSWORD` replace the API key
-   for a store without API keys; set one or the other, never both.
-4. Run `./start.sh` (it adds the `logs-elasticsearch` profile), or with
-   `docker compose` by hand set `COMPOSE_PROFILES=logs-elasticsearch` in
-   `.env`.
+
+   On every start in this mode the script creates `./otel-queue`, the
+   collector disk queue, and hands it to uid 10001, the user of the collector
+   image. With `docker compose` by hand, write the variables yourself, add
+   `logs-elasticsearch` to `COMPOSE_PROFILES` and prepare the directory once:
+
+   ```
+   mkdir -p otel-queue
+   docker run --rm -v "$PWD/otel-queue:/q" alpine chown 10001:10001 /q
+   ```
+
+   After the start the collector log has no "permission denied", and
+   `ls -l otel-queue/queue` shows the queue database.
 
 The collector API key expires after `ES_API_KEY_EXPIRATION` (90 days). Rotate
 it before that: `./scripts/rotate-api-key.sh` on the storage machine, the new
@@ -202,14 +248,22 @@ it before that: `./scripts/rotate-api-key.sh` on the storage machine, the new
 `docker compose up -d otel-collector` there, then
 `./scripts/rotate-api-key.sh --revoke-old` once events keep arriving.
 
-Stop the collector before restarting Elasticsearch: batches sent to a store
-that cannot be reached at all are dropped, not retried (see the Elasticsearch
-section of `default.env`).
+Stop the collector before restarting Elasticsearch. A store that cannot be
+reached at all (connection refused, name does not resolve) makes the exporter
+drop the batch instead of retrying it, and by then the records are already out
+of the buffer. Watch the counters the collector publishes on `:8888`:
+
+```
+docker exec pneumatic-otel-collector wget -qO- localhost:8888/metrics \
+  | grep -E 'send_failed_log_records|queue_size'
+```
+
+`send_failed_log_records` counts events lost for good, `queue_size` shows how
+full the disk queue is; `otel-collector/backend-elasticsearch.yaml` has the
+details.
 
 ## Further reading
 
-- `default.env`, section "Logging / Events": every variable of the application
-  machine.
 - `otel-collector/base.yaml`, `backend-otlp.yaml`, `backend-elasticsearch.yaml`:
   the collector configuration of each mode.
 - The headers of `grafana/docker-compose.yml`, `grafana/grafana.env.example`,

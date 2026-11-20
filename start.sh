@@ -14,11 +14,17 @@ cd "$SCRIPT_DIR"
 # by this script — never inherited from the caller's environment.
 unset SERVER_ADDRESS
 unset DJANGO_SECRET_KEY
+unset MCP_SECRET
 unset POSTGRES_PASSWORD REDIS_PASSWORD RABBITMQ_PASSWORD
 unset CERTBOT_ENABLE CERTBOT_EMAIL NGINX_CONF_TEMPLATE
 unset FORM_DOMAIN
 unset GIT_BRANCH
-unset LOGS_BACKEND
+unset LOGS_ENABLE LOGS_BACKEND
+unset LOGS_OTLP_EXPORT_ENDPOINT LOGS_OTLP_EXPORT_AUTH
+unset LOGS_ELASTICSEARCH_URL LOGS_ELASTICSEARCH_API_KEY LOGS_ELASTICSEARCH_USER LOGS_ELASTICSEARCH_PASSWORD
+unset MCP_ENABLE
+# Compose prefers COMPOSE_PROFILES from the environment over .env; .env must be the only source
+unset COMPOSE_PROFILES
 
 RED='\033[0;31m'
 ORANGE='\033[0;33m'
@@ -34,13 +40,57 @@ gen_password() {
 }
 
 set_env_var() {
-    local name="$1" value="$2"
+    local name="$1" value="$2" escaped
     if grep -qE "^#?\s*${name}=" "$ENV_FILE"; then
-        sed -i "s|^#\?\s*${name}=.*|${name}=${value}|" "$ENV_FILE"
+        # Values typed by the user may contain characters special to the sed replacement
+        escaped=$(printf '%s' "$value" | sed 's/[\\|&]/\\&/g')
+        sed -i "s|^#\?\s*${name}=.*|${name}=${escaped}|" "$ENV_FILE"
     else
         [ -z "$(tail -c1 "$ENV_FILE")" ] || echo "" >> "$ENV_FILE"
         echo "${name}=${value}" >> "$ENV_FILE"
     fi
+}
+
+# Applies NAME=VALUE pairs to a copy of .env and replaces .env in one mv,
+# so an interrupted run leaves .env either untouched or fully updated.
+write_env_vars() {
+    local target="$ENV_FILE" pair
+    _env_tmp="$target.tmp.$$"
+    trap 'rm -f "$_env_tmp"' EXIT
+    cp -p "$target" "$_env_tmp"
+    local ENV_FILE="$_env_tmp"
+    for pair in "$@"; do
+        set_env_var "${pair%%=*}" "${pair#*=}"
+    done
+    mv "$_env_tmp" "$target"
+    trap - EXIT
+}
+
+# read that exits on EOF: inside `if` and `while` conditions set -e does not apply
+prompt_value() {
+    local _input
+    if ! IFS= read -r -p "$2" _input; then
+        echo ""
+        print_error "Input aborted, nothing was saved for this step."
+        exit 1
+    fi
+    printf -v "$1" '%s' "$(strip_invisible "$_input")"
+}
+
+ask_yes_no() {
+    local _answer
+    while true; do
+        prompt_value _answer "$1 [y/n]: "
+        case "$_answer" in
+            [Yy]|[Yy][Ee][Ss]) return 0 ;;
+            [Nn]|[Nn][Oo])     return 1 ;;
+            *) print_error "Please answer yes (y) or no (n)." ;;
+        esac
+    done
+}
+
+read_env_value() {
+    grep -E "^\s*$1=" "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | sed 's/#.*//' | tr -d '"'"'"'[:space:]'
 }
 
 strip_invisible() {
@@ -360,33 +410,187 @@ case "$COMPOSE_FILE" in
   3) COMPOSE_LABEL="From sources (Branch: \"$GIT_BRANCH\")"; COMPOSE_ARGS=('-f' 'docker-compose.src.yml'); COMPOSE_TAG=""   ;;
 esac
 
-# 3.1.1 The collector of the audit journal follows LOGS_BACKEND of .env
-# --------------------------------------------------------------------
-# The root compose files declare the collector behind a profile, so it
-# stays down unless .env names a backend. Passing --profile here would
-# otherwise override a COMPOSE_PROFILES line in .env without saying so.
-# The trailing comment of a line like `LOGS_BACKEND=otlp  # the Grafana
-# machine` is cut off first: it is part of the value otherwise.
-LOGS_BACKEND_VALUE=$(
-    grep -E "^\s*LOGS_BACKEND=" "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | sed 's/#.*//' | tr -d '"'"'"'[:space:]'
-)
-case "$LOGS_BACKEND_VALUE" in
-  "")
-    ;;
-  otlp)
-    COMPOSE_ARGS+=('--profile' 'logs-otlp')
-    print_info "LOGS_BACKEND=otlp: only the collector runs"
-    ;;
-  elasticsearch)
-    COMPOSE_ARGS+=('--profile' 'logs-elasticsearch')
-    print_info "LOGS_BACKEND=elasticsearch: only the collector runs, queue on disk"
-    print_info "First start only: hand the queue volume to the collector, see the Elasticsearch section of default.env"
-    ;;
-  *)
-    print_error "LOGS_BACKEND=$LOGS_BACKEND_VALUE is not one of: otlp, elasticsearch (leave it empty to keep the journal off)"
-    exit 1
-    ;;
-esac
+# 3.1.0 Optional modules: compose profiles are derived from LOGS_ENABLE,
+# LOGS_BACKEND and MCP_ENABLE and written to COMPOSE_PROFILES of .env,
+# so `docker compose up` needs no --profile flags.
+_docker_profiles=()
+_profiles_changed=false
+
+# 3.1.1 Logging dialog (yes = enabled, no = declined, empty = not decided yet)
+_logs_enable=$(read_env_value LOGS_ENABLE)
+_logs_backend=$(read_env_value LOGS_BACKEND)
+_logs_updates=()
+
+if [ -z "$_logs_enable" ] && [ -n "$_logs_backend" ]; then
+    # Installation configured before LOGS_ENABLE existed
+    _logs_enable=yes
+    _logs_updates+=("LOGS_ENABLE=yes")
+    _profiles_changed=true
+elif [ -z "$_logs_enable" ]; then
+    _profiles_changed=true
+    echo ""
+    if ask_yes_no "Enable the audit journal (logging)?"; then
+        _logs_enable=yes
+        echo "Select the logging backend:"
+        echo "  1. otlp (an OTLP/HTTP receiver, e.g. Loki + Grafana)"
+        echo "  2. elasticsearch"
+        while true; do
+            prompt_value _logs_backend_choice "Enter number (1-2): "
+            case "$_logs_backend_choice" in
+                1) _logs_backend=otlp;          break ;;
+                2) _logs_backend=elasticsearch; break ;;
+                *) print_error "Please enter 1 or 2." ;;
+            esac
+        done
+
+        if [ "$_logs_backend" = otlp ]; then
+            while true; do
+                prompt_value _logs_otlp_endpoint "Enter the OTLP/HTTP receiver URL (LOGS_OTLP_EXPORT_ENDPOINT, e.g. http://storage-host:3100/otlp): "
+                [[ "$_logs_otlp_endpoint" =~ ^https?:// ]] && break
+                print_error "The URL must start with http:// or https://"
+            done
+            echo "Authorization header value, e.g. \"Bearer <token>\" or \"Basic <base64>\"."
+            echo "Leave empty if the receiver has no authentication (Loki of logging/grafana)."
+            prompt_value _logs_otlp_auth "LOGS_OTLP_EXPORT_AUTH: "
+
+            _logs_updates+=(
+                "LOGS_ENABLE=yes"
+                "LOGS_BACKEND=otlp"
+                "LOGS_OTLP_EXPORT_ENDPOINT=$_logs_otlp_endpoint"
+                "LOGS_OTLP_EXPORT_AUTH=$_logs_otlp_auth"
+            )
+
+            print_info "Logging: OTLP mode. Only the OpenTelemetry collector runs on this machine."
+            print_info "It forwards events to $_logs_otlp_endpoint; the receiver (e.g. Loki + Grafana"
+            print_info "from logging/grafana) must run on a separate storage server."
+            print_warning "Until the receiver is reachable, events wait in the Redis buffer; once it is full"
+            print_warning "(LOGS_STREAM_MAXLEN), the oldest events are dropped. See logging/README.md"
+        else
+            print_warning "Elasticsearch mode needs the store address (LOGS_ELASTICSEARCH_URL) and collector"
+            print_warning "credentials: an API key (LOGS_ELASTICSEARCH_API_KEY) or a login and password."
+            while true; do
+                prompt_value _logs_es_url "Enter the Elasticsearch URL (LOGS_ELASTICSEARCH_URL, e.g. https://es.example.internal:9200): "
+                [[ "$_logs_es_url" =~ ^https:// ]] && break
+                print_error "The URL must start with https://"
+            done
+
+            echo "Select how the collector authenticates (set one pair, never both):"
+            echo "  1. API key (recommended)"
+            echo "  2. Login and password"
+            while true; do
+                prompt_value _logs_es_auth_choice "Enter number (1-2): "
+                case "$_logs_es_auth_choice" in
+                    1|2) break ;;
+                    *) print_error "Please enter 1 or 2." ;;
+                esac
+            done
+
+            _logs_es_api_key=""
+            _logs_es_user=""
+            _logs_es_password=""
+            if [ "$_logs_es_auth_choice" = 1 ]; then
+                while [ -z "$_logs_es_api_key" ]; do
+                    prompt_value _logs_es_api_key "Enter the API key (LOGS_ELASTICSEARCH_API_KEY): "
+                    [ -n "$_logs_es_api_key" ] || print_error "The API key cannot be empty."
+                done
+            else
+                while [ -z "$_logs_es_user" ]; do
+                    prompt_value _logs_es_user "Enter the login (LOGS_ELASTICSEARCH_USER): "
+                    [ -n "$_logs_es_user" ] || print_error "The login cannot be empty."
+                done
+                while [ -z "$_logs_es_password" ]; do
+                    prompt_value _logs_es_password "Enter the password (LOGS_ELASTICSEARCH_PASSWORD): "
+                    [ -n "$_logs_es_password" ] || print_error "The password cannot be empty."
+                done
+            fi
+
+            _logs_updates+=(
+                "LOGS_ENABLE=yes"
+                "LOGS_BACKEND=elasticsearch"
+                "LOGS_ELASTICSEARCH_URL=$_logs_es_url"
+                "LOGS_ELASTICSEARCH_API_KEY=$_logs_es_api_key"
+                "LOGS_ELASTICSEARCH_USER=$_logs_es_user"
+                "LOGS_ELASTICSEARCH_PASSWORD=$_logs_es_password"
+            )
+
+            print_info "Logging: Elasticsearch mode. Only the OpenTelemetry collector runs on this machine."
+            print_info "Elasticsearch and Kibana must run on a separate storage server (logging/elasticsearch)."
+            print_info "Undelivered batches are kept on disk in ./otel-queue and survive collector restarts."
+            print_warning "The collector connects to Elasticsearch over HTTPS and must trust its certificate."
+            print_warning "Copy logging/elasticsearch/certs/ca/ca.crt from the storage server to otel-collector/es-ca.crt"
+            print_warning "on this machine. For a publicly trusted certificate, set LOGS_ELASTICSEARCH_CA_FILE= (empty)."
+            print_info "Details: logging/README.md, section \"Elasticsearch + Kibana\""
+        fi
+    else
+        _logs_enable=no
+        _logs_backend=""
+        _logs_updates+=("LOGS_ENABLE=no" "LOGS_BACKEND=")
+    fi
+fi
+
+# 3.1.2 Logging profiles
+if [ "$_logs_enable" = yes ]; then
+    _docker_profiles+=("logs-$_logs_backend")
+fi
+
+# 3.1.3 Write logging values
+if [ ${#_logs_updates[@]} -gt 0 ]; then
+    write_env_vars "${_logs_updates[@]}"
+fi
+
+# 3.1.4 MCP dialog
+_mcp_enable=$(read_env_value MCP_ENABLE)
+_mcp_updates=()
+
+if [ -z "$_mcp_enable" ]; then
+    _profiles_changed=true
+    echo ""
+    if ask_yes_no "Enable the MCP connector?"; then
+        _mcp_enable=yes
+    else
+        _mcp_enable=no
+    fi
+    _mcp_updates+=("MCP_ENABLE=$_mcp_enable")
+fi
+
+if [ "$_mcp_enable" = yes ]; then
+    if [ -z "$(read_env_value MCP_SECRET)" ]; then
+        _mcp_updates+=("MCP_SECRET=$(openssl rand -hex 32)")
+    fi
+    MCP_PUBLIC_ORIGIN=$(read_env_value MCP_PUBLIC_URL)
+    if [ -z "$MCP_PUBLIC_ORIGIN" ]; then
+        MCP_PUBLIC_ORIGIN=$(read_env_value FRONTEND_URL)
+    fi
+    case "$MCP_PUBLIC_ORIGIN" in
+      https://*|http://localhost|http://localhost:*|http://127.0.0.1|http://127.0.0.1:*|"")
+        ;;
+      *)
+        print_warning "The MCP server needs HTTPS outside localhost (PUBLIC_URL=$MCP_PUBLIC_ORIGIN): set MCP_PUBLIC_URL or FRONTEND_URL to an https:// origin"
+        ;;
+    esac
+fi
+
+# 3.1.5 MCP profiles
+if [ "$_mcp_enable" = yes ]; then
+    _docker_profiles+=("mcp")
+fi
+
+# 3.1.6 Write MCP values and COMPOSE_PROFILES
+if [ "$_profiles_changed" = true ]; then
+    _mcp_updates+=("COMPOSE_PROFILES=$(IFS=,; echo "${_docker_profiles[*]}")")
+fi
+if [ ${#_mcp_updates[@]} -gt 0 ]; then
+    write_env_vars "${_mcp_updates[@]}"
+fi
+
+# 3.1.7 Prepare the collector queue directory (owned by the uid of the collector image)
+if [ "$_logs_enable" = yes ] && [ "$_logs_backend" = elasticsearch ]; then
+    mkdir -p ./otel-queue
+    if ! output=$(docker run --rm -v "$SCRIPT_DIR/otel-queue:/q" alpine chown 10001:10001 /q 2>&1); then
+        print_error "$output"
+        exit 1
+    fi
+fi
 
 print_info "Selected configuration: $COMPOSE_LABEL"
 echo ""

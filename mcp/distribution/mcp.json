@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "pneumatic": {
+      "url": "https://mcp.pneumatic.app/mcp"
+    }
+  }
+}

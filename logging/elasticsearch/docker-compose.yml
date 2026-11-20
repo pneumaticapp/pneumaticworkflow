@@ -4,7 +4,7 @@
 # Pneumatic. The application side is one collector config
 # (otel-collector/backend-elasticsearch.yaml in the root of the repository)
 # plus a few variables in the .env of that machine, described in the
-# Elasticsearch section of default.env.
+# Configuration section of logging/README.md.
 #
 #   cp elasticsearch.env.example .env   # then fill every REQUIRED line in
 #   ./scripts/make-certs.sh             # CA + node certificates

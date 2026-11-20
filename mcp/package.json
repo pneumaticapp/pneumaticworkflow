@@ -1,0 +1,45 @@
+{
+  "name": "pneumatic-connector",
+  "version": "0.1.0",
+  "description": "MCP server for Pneumatic Workflow",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "pneumatic-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "lint": "oxlint --import-plugin --deny-warnings .",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "smoke": "tsx scripts/smoke.ts",
+    "smoke:write": "tsx scripts/smoke-write.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/express": "^2.0.2",
+    "@modelcontextprotocol/node": "^2.1.1",
+    "@modelcontextprotocol/server": "^2.3.1",
+    "express": "^5.3.0",
+    "zod": "^4.6.6"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "^2.3.1",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.5",
+    "oxfmt": "^0.73.0",
+    "oxlint": "^1.88.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.4"
+  }
+}

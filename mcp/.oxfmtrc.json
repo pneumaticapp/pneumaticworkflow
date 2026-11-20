@@ -1,0 +1,6 @@
+{
+  "singleQuote": true,
+  "printWidth": 120,
+  "sortPackageJson": false,
+  "ignorePatterns": ["dist/**", "node_modules/**", "package-lock.json"]
+}
