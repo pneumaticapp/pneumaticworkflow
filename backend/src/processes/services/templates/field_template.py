@@ -1,20 +1,33 @@
-from typing import Optional
-
+from typing import Optional, List, Dict
 from django.db.models import Model
 
 from src.generics.base.service import BaseModelService
 from src.processes.enums import FieldType
-from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+)
 from src.processes.services.exceptions import (
     FieldTemplateSelectionsRequired,
-    FieldTemplateUserMustBeRequired,
+    FieldTemplateUserMustBeRequired, FieldTemplateServiceException,
+    FieldTemplateRuleSetServiceException,
+)
+from src.processes.services.templates.field_template_rule import (
+    FieldTemplateRuleSetService,
 )
 from src.processes.services.templates.field_template_selection import (
     FieldTemplateSelectionService,
 )
+from src.processes.services.templates.ruleset_mixins import (
+    TemplateRulesetsMixin,
+)
 
 
-class FieldTemplateService(BaseModelService):
+class FieldTemplateService(TemplateRulesetsMixin, BaseModelService):
+
+    ruleset_service_class = FieldTemplateRuleSetService
+    ruleset_exception_class = FieldTemplateRuleSetServiceException
+    parent_service_exception = FieldTemplateServiceException
+    parent_id_field = 'field_id'
 
     def _validate(self, **kwargs):
         field_type = kwargs.get('type')
@@ -35,10 +48,13 @@ class FieldTemplateService(BaseModelService):
     def partial_update(self, **update_kwargs) -> Model:
         self._validate(**update_kwargs)
         selections_data = update_kwargs.pop('selections', None)
+        rulesets_data = update_kwargs.pop('rulesets', None)
         result = super().partial_update(**update_kwargs)
         if selections_data is not None:
             self.instance.selections.all().delete()
             self.create_selections(selections_data=selections_data)
+        if rulesets_data is not None:
+            self.update_rulesets(rulesets_data=rulesets_data)
         return result
 
     def _create_instance(
@@ -84,10 +100,13 @@ class FieldTemplateService(BaseModelService):
     def _create_related(
         self,
         selections: Optional[list] = None,
+        rulesets: Optional[List[Dict]] = None,
         **kwargs,
     ):
         if selections:
             self.create_selections(selections_data=selections)
+        if rulesets:
+            self.create_rulesets(rulesets_data=rulesets)
 
     def create_selections(self, selections_data: list):
         service = FieldTemplateSelectionService(

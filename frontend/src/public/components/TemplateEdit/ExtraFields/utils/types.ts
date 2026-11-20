@@ -1,4 +1,5 @@
 import type { IExtraField } from '../../../../types/template';
+import type { IFieldRuleSet } from '../../../../types/fieldset';
 
 export interface IDatasetOption {
   label: string;
@@ -20,4 +21,14 @@ export interface IKickoffDropdownProps {
   datasetOptions: IDatasetOption[];
   selectedDatasetId?: number;
   onDatasetSelect: (datasetId: number) => void;
+  fieldRulesets?: IFieldRuleSet[];
+  onOpenFieldRules?(ruleset?: IFieldRuleSet): void;
+  onDeleteFieldRuleset?(rulesetApiName: string): void;
+}
+
+export interface IDeletableDropdownOptionProps {
+  label: string;
+  onDelete(): void;
+  onClick?(): void;
+  closeDropdown?(): void;
 }

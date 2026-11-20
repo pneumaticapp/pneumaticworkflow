@@ -143,7 +143,7 @@ export function createFieldsetBinding(catalogItem: IFieldsetCatalogItem): IField
     order: -1,
     labelPosition: catalogItem.labelPosition,
     layout: catalogItem.layout,
-    rules: catalogItem.rules,
+    rulesets: catalogItem.rulesets,
     fields: catalogItem.fields,
   };
 }

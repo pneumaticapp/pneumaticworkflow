@@ -2,7 +2,13 @@ import type { ReactNode } from 'react';
 import type { EIntegrations } from './integrations';
 import type { ICondition, IConditionAPI } from './templateTaskConditions';
 import type { TUploadedFile } from './attachments';
-import type { IFieldsetBinding, IFieldsetBindingClient, IFieldsetBindingMeta, IFieldsetRuntime } from './fieldset';
+import type {
+  IFieldsetBinding,
+  IFieldsetBindingClient,
+  IFieldsetBindingMeta,
+  IFieldsetRuntime,
+  IFieldRuleSet,
+} from './fieldset';
 
 export interface ITemplate {
   id?: number;
@@ -261,6 +267,7 @@ export interface IExtraField {
   order: number;
   userId: number | null;
   groupId: number | null;
+  rulesets?: IFieldRuleSet[];
 }
 
 export type TExtraFieldValue = TExtraFieldSingleValue | TExtraFieldMultipleValue | TExtraFieldTimestampValue | null;
@@ -273,6 +280,10 @@ export interface IExtraFieldSelection {
   isSelected?: boolean;
   value: string;
   key?: number;
+}
+
+export interface IExtraFieldSelectionAPI extends Omit<IExtraFieldSelection, 'apiName'> {
+  apiName: string | null;
 }
 
 export enum EExtraFieldType {

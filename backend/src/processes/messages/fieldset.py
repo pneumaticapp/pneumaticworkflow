@@ -73,3 +73,34 @@ MSG_FS_0016 = lambda name, api_name: format_lazy(
     name=name,
     api_name=api_name,
 )
+MSG_FS_0017 = lambda value: format_lazy(
+    _(
+        'The sum of the fields in this field set '
+        'must be greater than "{value}".',
+    ),
+    value=value,
+)
+MSG_FS_0018 = lambda value: format_lazy(
+    _(
+        'The sum of the fields in this field set '
+        'must be less than "{value}".',
+    ),
+    value=value,
+)
+MSG_FS_0019 = lambda values: format_lazy(
+    _(
+        'The sum of the fields in this field set '
+        'must be greater than one of '
+        'the following values: "{values}".',
+    ),
+    values=values,
+)
+MSG_FS_0020 = lambda values: format_lazy(
+    _(
+        'The sum of the fields in this field set '
+        'must be less than one of '
+        'the following values: "{values}".',
+    ),
+    values=values,
+)
+MSG_FS_0021 = _('Validation rule failed.')

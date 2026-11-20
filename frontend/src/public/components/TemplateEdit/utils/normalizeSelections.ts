@@ -1,7 +1,6 @@
-import type { IExtraFieldSelection } from '../../../types/template';
+import type { IExtraFieldSelectionAPI } from '../../../types/template';
 
-export function normalizeSelections(selections?: IExtraFieldSelection[] | string[]): string[] {
+export function normalizeSelections(selections?: (IExtraFieldSelectionAPI | string)[]): string[] {
   if (!selections?.length) return [];
-  if (typeof selections[0] === 'string') return selections as string[];
-  return (selections as IExtraFieldSelection[]).map((item) => item.value);
+  return selections.map((item) => (typeof item === 'string' ? item : item.value));
 }

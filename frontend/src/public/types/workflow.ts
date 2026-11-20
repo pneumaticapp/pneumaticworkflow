@@ -15,7 +15,7 @@ import type {
   ITemplateStep,
   TTemplateFieldFieldset,
 } from './template';
-import type { IFieldsetRuntime } from './fieldset';
+import type { IFieldsetRuntime, IFieldsetTaskAPI } from './fieldset';
 
 export type WorkflowWithDateFields = {
   dueDate: string | null;
@@ -36,7 +36,15 @@ export type WorkflowWithTsp<T> = Omit<T, keyof WorkflowWithDateFields> &
     tasks: TaskWithTsp<IWorkflowTaskItem>[];
   };
 
-export type TWorkflowDetailsResponse = WorkflowWithTsp<IWorkflowDetails>;
+export type TWorkflowDetailsKickoffResponse = Omit<IWorkflowDetailsKickoff, 'fieldsets'> & {
+  fieldsets: IFieldsetTaskAPI[];
+};
+
+export type TWorkflowDetailsResponse = WorkflowWithTsp<
+  Omit<IWorkflowDetails, 'kickoff'> & {
+    kickoff: TWorkflowDetailsKickoffResponse;
+  }
+>;
 export interface IWorkflowClientProperties {
   tasks: IWorkflowTaskClient[];
   completedTasks: IWorkflowTaskClient[];
@@ -92,7 +100,7 @@ export interface IWorkflowDetailsKickoff {
   id: number;
   description: string | null;
   output: IExtraField[];
-  fieldsets?: IFieldsetRuntime[];
+  fieldsets: IFieldsetRuntime[];
 }
 
 export interface IWorkflowLogItem {

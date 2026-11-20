@@ -24,6 +24,7 @@ describe('getEditKickoff', () => {
       id: 1,
       description: null,
       output: [],
+      fieldsets: [],
     };
 
     const result = getEditKickoff(workflowKickoff);

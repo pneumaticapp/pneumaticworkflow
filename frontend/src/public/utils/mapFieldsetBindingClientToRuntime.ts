@@ -6,7 +6,19 @@ import { EExtraFieldType } from '../types/template';
 export function mapFieldsToExtraFields(fields: IFieldsetField[]): IExtraField[] {
   return (fields || []).map(
     (
-      { apiName, name, description, type, isRequired, isHidden, order, default: defaultValue, selections, dataset },
+      {
+        apiName,
+        name,
+        description,
+        type,
+        isRequired,
+        isHidden,
+        order,
+        default: defaultValue,
+        selections,
+        dataset,
+        rulesets,
+      },
       index,
     ) => ({
       apiName: apiName || '',
@@ -21,6 +33,7 @@ export function mapFieldsToExtraFields(fields: IFieldsetField[]): IExtraField[] 
       dataset: dataset || null,
       userId: null,
       groupId: null,
+      ...(rulesets !== undefined && { rulesets }),
     }),
   );
 }

@@ -1,0 +1,19 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.confirmation-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.delete-icon {
+  margin-left: 0.8rem;
+  color: var(--pneumatic-color-notification1);
+  cursor: pointer;
+}

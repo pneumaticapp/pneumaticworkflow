@@ -1,5 +1,5 @@
 import { normalizeSelections } from '../normalizeSelections';
-import { IExtraFieldSelection } from '../../../../types/template';
+import type { IExtraFieldSelection, IExtraFieldSelectionAPI } from '../../../../types/template';
 
 describe('normalizeSelections', () => {
   it('returns empty array for undefined', () => {
@@ -25,5 +25,26 @@ describe('normalizeSelections', () => {
     ];
     const result = normalizeSelections(input);
     expect(result).toEqual(['a', 'b']);
+  });
+
+  describe('IExtraFieldSelectionAPI normalization', () => {
+    it('extracts .value from objects with string apiName and dataset items with null apiName', () => {
+      const input: IExtraFieldSelectionAPI[] = [
+        { value: 'Yes', apiName: 'selection-1' },
+        { value: 'From dataset', apiName: null },
+      ];
+
+      const result = normalizeSelections(input);
+
+      expect(result).toEqual(['Yes', 'From dataset']);
+    });
+
+    it('extracts values from a mixed array of strings and selection objects', () => {
+      const input: (IExtraFieldSelectionAPI | string)[] = ['Already string', { value: 'From object', apiName: null }];
+
+      const result = normalizeSelections(input);
+
+      expect(result).toEqual(['Already string', 'From object']);
+    });
   });
 });

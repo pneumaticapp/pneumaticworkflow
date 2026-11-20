@@ -12,6 +12,12 @@ from src.processes.serializers.templates.fieldset import \
     FieldsetTemplateSerializer
 
 
+class PublicFieldsetTemplateSerializer(FieldsetTemplateSerializer):
+    fields = PublicFieldTemplateSerializer(
+        many=True, required=False, default=list,
+    )
+
+
 class PublicKickoffSerializer(ModelSerializer):
 
     class Meta:
@@ -24,7 +30,9 @@ class PublicKickoffSerializer(ModelSerializer):
 
     description = CharField(allow_blank=True, default='')
     fields = PublicFieldTemplateSerializer(many=True, required=False)
-    fieldsets = FieldsetTemplateSerializer(many=True, required=False)
+    fieldsets = PublicFieldsetTemplateSerializer(
+        many=True, required=False,
+    )
 
     def to_representation(self, data: Dict[str, Any]):
         data = super().to_representation(data)
