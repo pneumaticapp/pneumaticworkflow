@@ -1,4 +1,4 @@
-import type { IFieldsetRuntime } from './fieldset';
+import type { IFieldsetBinding } from './fieldset';
 import type { IExtraField, IExtraFieldSelectionAPI, IRuntimeKickoffClient } from './template';
 
 export type TPublicFormType = 'shared' | 'embedded';
@@ -17,7 +17,7 @@ export interface IPublicFormFieldResponse extends Omit<IExtraField, 'selections'
   selections?: IExtraFieldSelectionAPI[] | string[];
 }
 
-export interface IPublicFormFieldsetResponse extends Omit<IFieldsetRuntime, 'fields'> {
+export interface IPublicFormFieldsetResponse extends Omit<IFieldsetBinding, 'fields'> {
   fields: IPublicFormFieldResponse[];
 }
 

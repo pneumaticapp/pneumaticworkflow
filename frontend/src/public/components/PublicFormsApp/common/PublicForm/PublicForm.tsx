@@ -86,9 +86,10 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
         kickoff: {
           ...fetchedForm.kickoff,
           fields: new ExtraFieldsHelper(normalizeFieldsSelections(fetchedForm.kickoff.fields)).getFieldsWithValues(),
-          fieldsets: fetchedForm.kickoff.fieldsets.map((fieldset) => ({
-            ...fieldset,
-            fields: normalizeFieldsSelections(fieldset.fields),
+          fieldsets: fetchedForm.kickoff.fieldsets.map(({ apiName, sharedFieldsetId, rulesets, fields, ...rest }) => ({
+            ...rest,
+            apiNameBinding: apiName,
+            fields: normalizeFieldsSelections(fields),
           })),
         },
       };
