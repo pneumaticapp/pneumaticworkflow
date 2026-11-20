@@ -11,7 +11,6 @@ import { Button } from '../../../UI/Buttons/Button';
 import { getEditedFields } from '../../../TemplateEdit/ExtraFields/utils/getEditedFields';
 import { EInputNameBackgroundColor } from '../../../../types/workflow';
 import { getPublicForm } from '../../../../api/getPublicForm';
-import type { IPublicForm } from '../types';
 import { EPublicFormState } from '../types';
 import { logger } from '../../../../utils/logger';
 import { getErrorMessage } from '../../../../utils/getErrorMessage';
@@ -21,12 +20,13 @@ import { runPublicForm } from '../../../../api/runPublicForm';
 import { checkExtraFieldsAreValid } from '../../../WorkflowEditPopup/utils/areKickoffFieldsValid';
 import { getVisibleFieldsByShowRules } from '../../../../utils/fieldShowVisibility';
 import { ExtraFieldsHelper } from '../../../TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
+import { normalizeSelections } from '../../../TemplateEdit/utils/normalizeSelections';
 import { getNormalizedKickoff } from '../../../../utils/mappers';
 import { Header } from '../../../UI/Typeography/Header';
 import { getPublicFormConfig } from '../../../../utils/getConfig';
 import { RichText } from '../../../RichText';
 import { usersFetchStarted } from '../../../../redux/accounts/slice';
-import type { TPublicFormType } from '../../../../types/publicForms';
+import type { IPublicForm, IPublicFormFieldResponse, TPublicFormType } from '../../../../types/publicForms';
 import { Copyright } from '../Copyright';
 import { FormSkeleton } from '../FormSkeleton';
 import { useShouldHideIntercom } from '../../../../hooks/useShouldHideIntercom';
@@ -48,6 +48,12 @@ import styles from './PublicForm.css';
 interface IPublicFormsAppProps {
   type: TPublicFormType;
 }
+
+const normalizeFieldsSelections = (fields: IPublicFormFieldResponse[]): IExtraField[] =>
+  fields.map((field) => ({
+    ...field,
+    selections: normalizeSelections(field.selections),
+  }));
 
 export function PublicForm({ type }: IPublicFormsAppProps) {
   const { formatMessage } = useIntl();
@@ -75,9 +81,17 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
         return;
       }
 
-      const normalizedForm = produce(fetchedForm, (draftPublicForm) => {
-        draftPublicForm.kickoff.fields = new ExtraFieldsHelper(fetchedForm.kickoff.fields).getFieldsWithValues();
-      });
+      const normalizedForm: IPublicForm = {
+        ...fetchedForm,
+        kickoff: {
+          ...fetchedForm.kickoff,
+          fields: new ExtraFieldsHelper(normalizeFieldsSelections(fetchedForm.kickoff.fields)).getFieldsWithValues(),
+          fieldsets: fetchedForm.kickoff.fieldsets.map((fieldset) => ({
+            ...fieldset,
+            fields: normalizeFieldsSelections(fieldset.fields),
+          })),
+        },
+      };
 
       setPublicForm(normalizedForm);
       setFormState(EPublicFormState.WaitingForAction);

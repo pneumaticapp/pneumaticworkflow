@@ -15,7 +15,9 @@ import {
   makeFieldRuleGroupOr,
   makeFieldRuleSet,
 } from '../../../../../__stubs__/fieldsets.factory';
-import { IExtraField } from '../../../../../types/template';
+import { EExtraFieldType } from '../../../../../types/template';
+import type { IExtraField, IExtraFieldSelectionAPI } from '../../../../../types/template';
+import type { IPublicFormFieldResponse, IPublicFormFieldsetResponse } from '../../../../../types/publicForms';
 import { IFieldsetRuntime, EFieldRuleOperator, EFieldRuleType } from '../../../../../types/fieldset';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import { logger } from '../../../../../utils/logger';
@@ -106,8 +108,8 @@ const SUBMIT_LABEL = formatMsg('public-form.launch');
 
 const makePublicFormResponse = (
   overrides: {
-    fields?: IExtraField[];
-    fieldsets?: IFieldsetRuntime[];
+    fields?: IPublicFormFieldResponse[];
+    fieldsets?: IPublicFormFieldsetResponse[];
   } = {},
 ) => ({
   accountId: 1,
@@ -452,6 +454,51 @@ describe('PublicForm', () => {
       expect(logger.info).toHaveBeenCalledTimes(1);
       expect(logger.info).toHaveBeenCalledWith('Failed to fetch public form:', apiError);
       expect(logger.error).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Normalizing API selections from GET /templates/public', () => {
+    const rawSelections: IExtraFieldSelectionAPI[] = [
+      { value: 'Yes', apiName: 'selection-1' },
+      { value: 'From dataset', apiName: null },
+    ];
+
+    it('normalizes selection objects and null-apiName datasets to strings for kickoff.fields', async () => {
+      const rawCheckboxField: IPublicFormFieldResponse = {
+        ...makeExtraField({ apiName: 'checkbox-field', type: EExtraFieldType.Checkbox }),
+        selections: rawSelections,
+      };
+
+      (getPublicForm as jest.Mock).mockResolvedValue(makePublicFormResponse({ fields: [rawCheckboxField] }));
+
+      render(React.createElement(PublicForm, { type: 'shared' }));
+
+      await screen.findByRole('button', { name: SUBMIT_LABEL });
+
+      expect(MergedOutputList).toHaveBeenCalledTimes(1);
+      const mergedProps = getLastMergedOutputListProps();
+      expect(mergedProps.fields[0].selections).toEqual(['Yes', 'From dataset']);
+    });
+
+    it('normalizes selection objects and null-apiName datasets to strings for kickoff.fieldsets', async () => {
+      const rawFieldsetField: IPublicFormFieldResponse = {
+        ...makeExtraField({ apiName: 'fs-checkbox', type: EExtraFieldType.Checkbox, order: 1 }),
+        selections: rawSelections,
+      };
+      const rawFieldset: IPublicFormFieldsetResponse = {
+        ...makeFieldsetRuntime({ order: 1 }),
+        fields: [rawFieldsetField],
+      };
+
+      (getPublicForm as jest.Mock).mockResolvedValue(makePublicFormResponse({ fieldsets: [rawFieldset] }));
+
+      render(React.createElement(PublicForm, { type: 'shared' }));
+
+      await screen.findByRole('button', { name: SUBMIT_LABEL });
+
+      expect(MergedOutputList).toHaveBeenCalledTimes(1);
+      const mergedProps = getLastMergedOutputListProps();
+      expect(mergedProps.fieldsets[0].fields[0].selections).toEqual(['Yes', 'From dataset']);
     });
   });
 });

@@ -282,6 +282,10 @@ export interface IExtraFieldSelection {
   key?: number;
 }
 
+export interface IExtraFieldSelectionAPI extends Omit<IExtraFieldSelection, 'apiName'> {
+  apiName: string | null;
+}
+
 export enum EExtraFieldType {
   Number = 'number',
   Text = 'text',
