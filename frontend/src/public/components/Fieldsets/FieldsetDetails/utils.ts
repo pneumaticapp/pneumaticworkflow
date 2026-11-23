@@ -1,18 +1,21 @@
-import type { SetStateAction } from 'react';
 import type { Dispatch } from 'redux';
 import type { IExtraField } from '../../../types/template';
 import type {
   IFieldRuleSet,
   IFieldRuleShowGroupAnd,
+  IFieldsetRuleSet,
   IUpdateFieldsetParams,
   IFieldsetCatalogItem,
 } from '../../../types/fieldset';
 import { EFieldRuleType } from '../../../types/fieldset';
+import { deepCopy, isObjectChanged } from '../../../utils/helpers';
+import { getNormalizeFieldsOrders, sortFieldsByOrder } from '../../../utils/workflows';
 import { validateFieldsetTitle } from '../../../utils/validators';
 import { validateFieldsetRules } from '../validators';
 import { normalizeFieldsForUI } from './fieldsetFieldMappers';
 import { NotificationManager } from '../../UI/Notifications';
 import { cloneFieldsetAction, updateFieldsetAction } from '../../../redux/fieldsets/slice';
+import { FIELDSET_CHANGE_KEYS } from './constants';
 import type { TLocalFieldsetState, TFieldsetChanges } from './types';
 
 export function saveFieldRuleset(fields: IExtraField[], fieldApiName: string, ruleset: IFieldRuleSet): IExtraField[] {
@@ -71,14 +74,73 @@ export const initLocalFieldset = (fieldset: IFieldsetCatalogItem): TLocalFieldse
 export const checkIsTitleError = (title: string, hasTitleChanged: boolean): boolean =>
   (hasTitleChanged || Boolean(title)) && Boolean(validateFieldsetTitle(title));
 
-export const updateFieldsetProperty = <K extends keyof TLocalFieldsetState>(
-  key: K,
-  value: TLocalFieldsetState[K],
-  setLocalFieldset: (value: SetStateAction<TLocalFieldsetState>) => void,
-  setFieldsetChanges: (value: SetStateAction<TFieldsetChanges>) => void,
-): void => {
-  setLocalFieldset((prev) => ({ ...prev, [key]: value }));
-  setFieldsetChanges((prev) => ({ ...prev, [key]: value }));
+const isFieldsetPropertyChanged = (
+  key: keyof TLocalFieldsetState,
+  initialFieldset: TLocalFieldsetState,
+  localFieldset: TLocalFieldsetState,
+): boolean => {
+  if (initialFieldset[key] === localFieldset[key]) {
+    return false;
+  }
+
+  const normalizeRuleset = (ruleset: IFieldsetRuleSet | IFieldRuleSet) => ({
+    ...ruleset,
+    message: ruleset.message || '',
+    ...('fields' in ruleset && { fields: [...ruleset.fields].sort() }),
+    groupsOr: ruleset.groupsOr.map(({ groupsAnd }) => groupsAnd),
+  });
+
+  if (key === 'fields') {
+    const normalizeFields = (fields: IExtraField[]) =>
+      deepCopy(
+        getNormalizeFieldsOrders(sortFieldsByOrder(fields)).map((field) => ({
+          ...field,
+          selections: field.selections?.length ? field.selections : [],
+          rulesets: (field.rulesets || []).map(normalizeRuleset),
+        })),
+      );
+
+    return isObjectChanged(normalizeFields(initialFieldset.fields), normalizeFields(localFieldset.fields));
+  }
+
+  if (key === 'rulesets') {
+    const normalizeRulesets = (rulesets: IFieldsetRuleSet[]) => deepCopy(rulesets.map(normalizeRuleset));
+
+    return isObjectChanged(normalizeRulesets(initialFieldset.rulesets), normalizeRulesets(localFieldset.rulesets));
+  }
+
+  return true;
+};
+
+export const getFieldsetChanges = (
+  initialFieldset: TLocalFieldsetState,
+  localFieldset: TLocalFieldsetState,
+): TFieldsetChanges => {
+  const changes: TFieldsetChanges = {};
+
+  FIELDSET_CHANGE_KEYS.forEach((key) => {
+    if (!isFieldsetPropertyChanged(key, initialFieldset, localFieldset)) return;
+
+    switch (key) {
+      case 'title':
+        changes.title = localFieldset.title;
+        break;
+      case 'description':
+        changes.description = localFieldset.description;
+        break;
+      case 'labelPosition':
+        changes.labelPosition = localFieldset.labelPosition;
+        break;
+      case 'fields':
+        changes.fields = localFieldset.fields;
+        break;
+      case 'rulesets':
+        changes.rulesets = localFieldset.rulesets;
+        break;
+    }
+  });
+
+  return changes;
 };
 
 export const saveFieldset = ({

@@ -1,7 +1,4 @@
-import {
-  EFieldRuleType,
-  EFieldLabelPosition,
-} from '../../../../types/fieldset';
+import { EFieldRuleType, EFieldLabelPosition } from '../../../../types/fieldset';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
 import {
   makeFieldRuleSet,
@@ -9,6 +6,8 @@ import {
   makeFieldRuleShowGroupAnd,
   makeFieldsetCatalogItem,
   makeFieldsetRuleset,
+  makeFieldsetRuleGroupOr,
+  makeFieldsetRuleGroupAnd,
   makeFieldsetField,
 } from '../../../../__stubs__/fieldsets.factory';
 import { intlMock } from '../../../../__stubs__/intlMock';
@@ -20,7 +19,7 @@ import {
   getFieldsWithFilteredRulesets,
   initLocalFieldset,
   checkIsTitleError,
-  updateFieldsetProperty,
+  getFieldsetChanges,
   saveFieldset,
   cloneFieldset,
 } from '../utils';
@@ -52,9 +51,11 @@ describe('getFieldsWithFilteredRulesets', () => {
       rulesets: [
         makeFieldRuleSet({
           type: EFieldRuleType.Show,
-          groupsOr: [makeFieldRuleGroupOr({
-            groupsAnd: [makeFieldRuleShowGroupAnd({ field: 'field_b' })],
-          })],
+          groupsOr: [
+            makeFieldRuleGroupOr({
+              groupsAnd: [makeFieldRuleShowGroupAnd({ field: 'field_b' })],
+            }),
+          ],
         }),
       ],
     });
@@ -70,9 +71,11 @@ describe('getFieldsWithFilteredRulesets', () => {
       rulesets: [
         makeFieldRuleSet({
           type: EFieldRuleType.Show,
-          groupsOr: [makeFieldRuleGroupOr({
-            groupsAnd: [makeFieldRuleShowGroupAnd({ field: 'field_c' })],
-          })],
+          groupsOr: [
+            makeFieldRuleGroupOr({
+              groupsAnd: [makeFieldRuleShowGroupAnd({ field: 'field_c' })],
+            }),
+          ],
         }),
       ],
     });
@@ -104,9 +107,11 @@ describe('getFieldsWithFilteredRulesets', () => {
   it('removes show ruleset and keeps validator ruleset on the same field', () => {
     const showRuleset = makeFieldRuleSet({
       type: EFieldRuleType.Show,
-      groupsOr: [makeFieldRuleGroupOr({
-        groupsAnd: [makeFieldRuleShowGroupAnd({ field: 'field_b' })],
-      })],
+      groupsOr: [
+        makeFieldRuleGroupOr({
+          groupsAnd: [makeFieldRuleShowGroupAnd({ field: 'field_b' })],
+        }),
+      ],
     });
     const validatorRuleset = makeFieldRuleSet({ type: EFieldRuleType.Validator });
 
@@ -173,24 +178,236 @@ describe('checkIsTitleError', () => {
   });
 });
 
-describe('updateFieldsetProperty', () => {
-  it('calls both state setters with updated property value', () => {
-    const setLocalFieldset = jest.fn();
-    const setFieldsetChanges = jest.fn();
+describe('getFieldsetChanges', () => {
+  it('returns empty object when fieldset has not changed', () => {
+    const initialFieldset = makeLocalFieldsetState({
+      title: 'Title',
+      description: 'Description',
+      labelPosition: EFieldLabelPosition.Top,
+      fields: [makeExtraField({ apiName: 'field-1', order: 0 })],
+      rulesets: [makeFieldsetRuleset({ apiName: 'ruleset-1' })],
+    });
+    const localFieldset = { ...initialFieldset };
 
-    updateFieldsetProperty('title', 'New Title', setLocalFieldset, setFieldsetChanges);
+    const changes = getFieldsetChanges(initialFieldset, localFieldset);
 
-    expect(setLocalFieldset).toHaveBeenCalledTimes(1);
-    expect(setFieldsetChanges).toHaveBeenCalledTimes(1);
+    expect(changes).toEqual({});
+  });
 
-    const localUpdater = setLocalFieldset.mock.calls[0][0];
-    const changesUpdater = setFieldsetChanges.mock.calls[0][0];
-    expect(localUpdater(makeLocalFieldsetState({ title: 'Old' }))).toEqual(
-      expect.objectContaining({ title: 'New Title' }),
+  it('returns only changed scalar properties', () => {
+    const initialFieldset = makeLocalFieldsetState({
+      title: 'Old Title',
+      description: 'Same description',
+      labelPosition: EFieldLabelPosition.Top,
+    });
+    const localFieldset = makeLocalFieldsetState({
+      title: 'New Title',
+      description: 'Same description',
+      labelPosition: EFieldLabelPosition.Left,
+    });
+
+    const changes = getFieldsetChanges(initialFieldset, localFieldset);
+
+    expect(changes).toEqual({
+      title: 'New Title',
+      labelPosition: EFieldLabelPosition.Left,
+    });
+  });
+
+  it('returns empty description when description is cleared', () => {
+    const initialFieldset = makeLocalFieldsetState({ description: 'Old description' });
+    const localFieldset = makeLocalFieldsetState({ description: '' });
+
+    const changes = getFieldsetChanges(initialFieldset, localFieldset);
+
+    expect(changes).toEqual({ description: '' });
+  });
+
+  it('returns fields when two fields are swapped', () => {
+    const initialFields = [
+      makeExtraField({ apiName: 'field-1', order: 1 }),
+      makeExtraField({ apiName: 'field-2', order: 0 }),
+    ];
+    const reorderedFields = [
+      makeExtraField({ apiName: 'field-2', order: 1 }),
+      makeExtraField({ apiName: 'field-1', order: 0 }),
+    ];
+
+    const changes = getFieldsetChanges(
+      makeLocalFieldsetState({ fields: initialFields }),
+      makeLocalFieldsetState({ fields: reorderedFields }),
     );
-    expect(changesUpdater({})).toEqual(
-      expect.objectContaining({ title: 'New Title' }),
+
+    expect(changes).toEqual({ fields: reorderedFields });
+  });
+
+  it('ignores fields array ordering and order offset shifts', () => {
+    const initialFieldset = makeLocalFieldsetState({
+      fields: [makeExtraField({ apiName: 'field-2', order: 1 }), makeExtraField({ apiName: 'field-1', order: 2 })],
+    });
+    const localFieldset = makeLocalFieldsetState({
+      fields: [makeExtraField({ apiName: 'field-1', order: 1 }), makeExtraField({ apiName: 'field-2', order: 0 })],
+    });
+
+    const changes = getFieldsetChanges(initialFieldset, localFieldset);
+
+    expect(changes).toEqual({});
+  });
+
+  it('ignores stripped undefined keys after moving field back', () => {
+    const initialField = makeExtraField({
+      apiName: 'field-1',
+      order: 0,
+      value: undefined,
+    });
+    const fieldAfterMoveBack = makeExtraField({
+      apiName: 'field-1',
+      order: 0,
+    });
+    delete fieldAfterMoveBack.value;
+
+    const changes = getFieldsetChanges(
+      makeLocalFieldsetState({ fields: [initialField] }),
+      makeLocalFieldsetState({ fields: [fieldAfterMoveBack] }),
     );
+
+    expect(changes).toEqual({});
+  });
+
+  it('ignores undefined vs empty array mismatches in field selections and rulesets', () => {
+    const initialField = makeExtraField({
+      apiName: 'field-1',
+      order: 0,
+      dataset: 5,
+      selections: [],
+      rulesets: undefined,
+    });
+    const revertedField = makeExtraField({
+      apiName: 'field-1',
+      order: 0,
+      dataset: 5,
+      selections: undefined,
+      rulesets: [],
+    });
+
+    const changes = getFieldsetChanges(
+      makeLocalFieldsetState({ fields: [initialField] }),
+      makeLocalFieldsetState({ fields: [revertedField] }),
+    );
+
+    expect(changes).toEqual({});
+  });
+
+  it('ignores null vs empty message and regenerated groupOr apiName in field rulesets', () => {
+    const firstRule = makeFieldRuleShowGroupAnd({ apiName: 'and-1', field: 'field-2', value: 'yes' });
+    const secondRule = makeFieldRuleShowGroupAnd({ apiName: 'and-2', field: 'field-2', value: 'no' });
+
+    const initialField = makeExtraField({
+      apiName: 'field-1',
+      rulesets: [
+        makeFieldRuleSet({
+          apiName: 'field-rs-1',
+          message: null,
+          groupsOr: [
+            makeFieldRuleGroupOr({ apiName: 'or-original-1', groupsAnd: [firstRule] }),
+            makeFieldRuleGroupOr({ apiName: 'or-original-2', groupsAnd: [secondRule] }),
+          ],
+        }),
+      ],
+    });
+    const localField = makeExtraField({
+      apiName: 'field-1',
+      rulesets: [
+        makeFieldRuleSet({
+          apiName: 'field-rs-1',
+          message: '',
+          groupsOr: [
+            makeFieldRuleGroupOr({ apiName: 'or-original-1', groupsAnd: [firstRule] }),
+            makeFieldRuleGroupOr({ apiName: 'or-regenerated-2', groupsAnd: [secondRule] }),
+          ],
+        }),
+      ],
+    });
+
+    const changes = getFieldsetChanges(
+      makeLocalFieldsetState({ fields: [initialField] }),
+      makeLocalFieldsetState({ fields: [localField] }),
+    );
+
+    expect(changes).toEqual({});
+  });
+
+  it('returns rulesets when a fieldset rule value changes', () => {
+    const initialRulesets = [
+      makeFieldsetRuleset({
+        apiName: 'rs-1',
+        fields: ['field-1'],
+        groupsOr: [makeFieldsetRuleGroupOr({ groupsAnd: [makeFieldsetRuleGroupAnd({ value: '100' })] })],
+      }),
+    ];
+    const updatedRulesets = [
+      makeFieldsetRuleset({
+        apiName: 'rs-1',
+        fields: ['field-1'],
+        groupsOr: [makeFieldsetRuleGroupOr({ groupsAnd: [makeFieldsetRuleGroupAnd({ value: '200' })] })],
+      }),
+    ];
+
+    const changes = getFieldsetChanges(
+      makeLocalFieldsetState({ rulesets: initialRulesets }),
+      makeLocalFieldsetState({ rulesets: updatedRulesets }),
+    );
+
+    expect(changes).toEqual({ rulesets: updatedRulesets });
+  });
+
+  it('ignores reordered field list in fieldset sum ruleset', () => {
+    const initialRulesets = [makeFieldsetRuleset({ apiName: 'rs-1', fields: ['field-1', 'field-2'] })];
+    const localRulesets = [makeFieldsetRuleset({ apiName: 'rs-1', fields: ['field-2', 'field-1'] })];
+
+    const changes = getFieldsetChanges(
+      makeLocalFieldsetState({ rulesets: initialRulesets }),
+      makeLocalFieldsetState({ rulesets: localRulesets }),
+    );
+
+    expect(changes).toEqual({});
+  });
+
+  it('ignores null vs empty message and regenerated groupOr apiName in fieldset rulesets', () => {
+    const firstCondition = makeFieldsetRuleGroupAnd({ apiName: 'and-1', value: '10' });
+    const secondCondition = makeFieldsetRuleGroupAnd({ apiName: 'and-2', value: '20' });
+
+    const initialRulesets = [
+      makeFieldsetRuleset({
+        apiName: 'rs-1',
+        order: 0,
+        message: null,
+        fields: ['field-1'],
+        groupsOr: [
+          makeFieldsetRuleGroupOr({ apiName: 'or-1', groupsAnd: [firstCondition] }),
+          makeFieldsetRuleGroupOr({ apiName: 'or-2', groupsAnd: [secondCondition] }),
+        ],
+      }),
+    ];
+    const localRulesets = [
+      makeFieldsetRuleset({
+        apiName: 'rs-1',
+        order: 0,
+        message: '',
+        fields: ['field-1'],
+        groupsOr: [
+          makeFieldsetRuleGroupOr({ apiName: 'or-1', groupsAnd: [firstCondition] }),
+          makeFieldsetRuleGroupOr({ apiName: 'or-new', groupsAnd: [secondCondition] }),
+        ],
+      }),
+    ];
+
+    const changes = getFieldsetChanges(
+      makeLocalFieldsetState({ rulesets: initialRulesets }),
+      makeLocalFieldsetState({ rulesets: localRulesets }),
+    );
+
+    expect(changes).toEqual({});
   });
 });
 
@@ -274,9 +491,7 @@ describe('saveFieldset', () => {
     });
 
     expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
-    expect(NotificationManager.warning).toHaveBeenCalledWith(
-      expect.objectContaining({ message: RULE_REQUIRED_MSG }),
-    );
+    expect(NotificationManager.warning).toHaveBeenCalledWith(expect.objectContaining({ message: RULE_REQUIRED_MSG }));
     expect(dispatchMock).not.toHaveBeenCalled();
     expect(updateFieldsetAction).not.toHaveBeenCalled();
   });
@@ -311,9 +526,7 @@ describe('saveFieldset', () => {
         id: 10,
         title: 'Updated Name',
         onSuccess,
-        fields: [
-          expect.not.objectContaining({ id: expect.anything() }),
-        ],
+        fields: [expect.not.objectContaining({ id: expect.anything() })],
       }),
     );
     expect(dispatchMock).toHaveBeenCalledTimes(1);

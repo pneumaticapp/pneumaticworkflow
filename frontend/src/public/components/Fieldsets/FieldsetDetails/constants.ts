@@ -1,5 +1,4 @@
 import { EExtraFieldType } from '../../../types/template';
-import { EFieldLabelPosition } from '../../../types/fieldset';
 import type { TLocalFieldsetState } from './types';
 
 export const SINGLE_LINE_FIELD_TYPES = new Set<EExtraFieldType>([
@@ -10,10 +9,10 @@ export const SINGLE_LINE_FIELD_TYPES = new Set<EExtraFieldType>([
   EExtraFieldType.Url,
 ]);
 
-export const EMPTY_LOCAL_FIELDSET: TLocalFieldsetState = {
-  title: '',
-  description: '',
-  labelPosition: EFieldLabelPosition.Top,
-  fields: [],
-  rulesets: [],
-};
+export const FIELDSET_CHANGE_KEYS: (keyof TLocalFieldsetState)[] = [
+  'title',
+  'description',
+  'labelPosition',
+  'fields',
+  'rulesets',
+];

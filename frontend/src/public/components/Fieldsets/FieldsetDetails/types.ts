@@ -1,13 +1,17 @@
 import type { RouteComponentProps } from 'react-router-dom';
 
 import type { IExtraField } from '../../../types/template';
-import type { EFieldLabelPosition, IFieldsetRuleSet } from '../../../types/fieldset';
+import type { EFieldLabelPosition, IFieldsetCatalogItem, IFieldsetRuleSet } from '../../../types/fieldset';
 
 export interface IFieldsetDetailsRouteParams {
   id: string;
 }
 
 export type TFieldsetDetailsProps = RouteComponentProps<IFieldsetDetailsRouteParams>;
+
+export type TFieldsetDetailsFormProps = {
+  fieldset: IFieldsetCatalogItem;
+};
 
 export type TLocalFieldsetState = {
   title: string;
