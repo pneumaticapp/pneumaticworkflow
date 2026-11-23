@@ -19,10 +19,10 @@ export const checkDependentFieldValue = (
     }
 
     case EFieldRuleOperator.Equal:
-      return value === expectedValue;
-
-    case EFieldRuleOperator.NotEqual:
-      return value !== expectedValue;
+    case EFieldRuleOperator.NotEqual: {
+      const isEqual = Array.isArray(value) ? value.length === 1 && value[0] === expectedValue : value === expectedValue;
+      return operator === EFieldRuleOperator.Equal ? isEqual : !isEqual;
+    }
 
     case EFieldRuleOperator.Contain:
     case EFieldRuleOperator.NotContain: {
@@ -52,7 +52,10 @@ export const isFieldHidden = (field: IExtraField, fieldsMap: Map<string, IExtraF
   const hasMatchingShowRuleset = showRulesets.some((ruleset) =>
     ruleset.groupsOr.some((groupOr) =>
       groupOr.groupsAnd.every((groupAnd: IFieldRuleShowGroupAnd) => {
-        const dependentField = fieldsMap.get(groupAnd.field)!;
+        const dependentField = fieldsMap.get(groupAnd.field);
+        if (!dependentField) {
+          return false;
+        }
         return checkDependentFieldValue(dependentField, groupAnd.operator, groupAnd.value);
       }),
     ),

@@ -78,6 +78,30 @@ describe('checkDependentFieldValue: conditions for individual operators', () => 
       expect(checkDependentFieldValue(emptyField, EFieldRuleOperator.Equal, 'value')).toBe(false);
       expect(checkDependentFieldValue(emptyField, EFieldRuleOperator.NotEqual, 'value')).toBe(true);
     });
+
+    it('evaluates equal operator for checkbox array values', () => {
+      const singleMatchField = makeExtraField({ type: EExtraFieldType.Checkbox, value: ['Yes'] });
+      const singleMismatchField = makeExtraField({ type: EExtraFieldType.Checkbox, value: ['No'] });
+      const multipleSelectedField = makeExtraField({ type: EExtraFieldType.Checkbox, value: ['Yes', 'No'] });
+      const emptyCheckboxField = makeExtraField({ type: EExtraFieldType.Checkbox, value: [] });
+
+      expect(checkDependentFieldValue(singleMatchField, EFieldRuleOperator.Equal, 'Yes')).toBe(true);
+      expect(checkDependentFieldValue(singleMismatchField, EFieldRuleOperator.Equal, 'Yes')).toBe(false);
+      expect(checkDependentFieldValue(multipleSelectedField, EFieldRuleOperator.Equal, 'Yes')).toBe(false);
+      expect(checkDependentFieldValue(emptyCheckboxField, EFieldRuleOperator.Equal, 'Yes')).toBe(false);
+    });
+
+    it('evaluates not_equal operator for checkbox array values', () => {
+      const singleMatchField = makeExtraField({ type: EExtraFieldType.Checkbox, value: ['Yes'] });
+      const singleMismatchField = makeExtraField({ type: EExtraFieldType.Checkbox, value: ['No'] });
+      const multipleSelectedField = makeExtraField({ type: EExtraFieldType.Checkbox, value: ['Yes', 'No'] });
+      const emptyCheckboxField = makeExtraField({ type: EExtraFieldType.Checkbox, value: [] });
+
+      expect(checkDependentFieldValue(singleMatchField, EFieldRuleOperator.NotEqual, 'Yes')).toBe(false);
+      expect(checkDependentFieldValue(singleMismatchField, EFieldRuleOperator.NotEqual, 'Yes')).toBe(true);
+      expect(checkDependentFieldValue(multipleSelectedField, EFieldRuleOperator.NotEqual, 'Yes')).toBe(true);
+      expect(checkDependentFieldValue(emptyCheckboxField, EFieldRuleOperator.NotEqual, 'Yes')).toBe(true);
+    });
   });
 
   describe('contain and not_contain operators', () => {
@@ -166,6 +190,22 @@ describe('isFieldHidden: determining field visibility considering show rules', (
 
     trigger.value = 'no';
     expect(isFieldHidden(controlled, fieldsMap)).toBe(true);
+  });
+
+  it('returns true when show ruleset references a field missing from fieldsMap', () => {
+    const showRuleset = makeFieldRuleSet({
+      type: EFieldRuleType.Show,
+      groupsOr: [
+        makeFieldRuleGroupOr({
+          groupsAnd: [
+            makeFieldRuleShowGroupAnd({ field: 'missing-field', operator: EFieldRuleOperator.Equal, value: 'yes' }),
+          ],
+        }),
+      ],
+    });
+    const controlled = makeExtraField({ apiName: 'controlled', isHidden: false, rulesets: [showRuleset] });
+
+    expect(isFieldHidden(controlled, new Map())).toBe(true);
   });
 });
 
