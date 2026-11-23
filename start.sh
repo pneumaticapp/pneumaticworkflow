@@ -380,36 +380,6 @@ fi
 # 3. Start Docker containers
 # =============================================================================
 
-# 3.1 Select docker-compose configuration
-echo ""
-echo "Select a version to start:"
-echo "  1. Stable (recommended)"
-echo "  2. Latest"
-echo "  3. From sources (Branch: \"$GIT_BRANCH\")"
-
-while true; do
-    read -r -p "Enter number (1-3): " COMPOSE_FILE
-    COMPOSE_FILE=$(strip_invisible "$COMPOSE_FILE")
-
-    if ! [[ "$COMPOSE_FILE" =~ ^[0-9]+$ ]]; then
-        print_error "Please enter a number."
-        continue
-    fi
-
-    if [ "$COMPOSE_FILE" -lt 1 ] || [ "$COMPOSE_FILE" -gt 3 ]; then
-        print_error "Please enter 1, 2 or 3."
-        continue
-    fi
-
-    break
-done
-
-case "$COMPOSE_FILE" in
-  1) COMPOSE_LABEL="Stable (recommended)";   COMPOSE_ARGS=('-f' 'docker-compose.yml');     COMPOSE_TAG="stable" ;;
-  2) COMPOSE_LABEL="Latest";                 COMPOSE_ARGS=('-f' 'docker-compose.yml');     COMPOSE_TAG="latest" ;;
-  3) COMPOSE_LABEL="From sources (Branch: \"$GIT_BRANCH\")"; COMPOSE_ARGS=('-f' 'docker-compose.src.yml'); COMPOSE_TAG=""   ;;
-esac
-
 # 3.1.0 Optional modules: compose profiles are derived from LOGS_ENABLE,
 # LOGS_BACKEND and MCP_ENABLE and written to COMPOSE_PROFILES of .env,
 # so `docker compose up` needs no --profile flags.
@@ -429,11 +399,11 @@ if [ -z "$_logs_enable" ] && [ -n "$_logs_backend" ]; then
 elif [ -z "$_logs_enable" ]; then
     _profiles_changed=true
     echo ""
-    if ask_yes_no "Enable the audit journal (logging)?"; then
+    if ask_yes_no "Enable the audit journal (logging)? You will need to enter the receiver's details."; then
         _logs_enable=yes
-        echo "Select the logging backend:"
-        echo "  1. otlp (an OTLP/HTTP receiver, e.g. Loki + Grafana)"
-        echo "  2. elasticsearch"
+        echo "Select the receiver backend:"
+        echo "  1. OTLP"
+        echo "  2. Elasticsearch"
         while true; do
             prompt_value _logs_backend_choice "Enter number (1-2): "
             case "$_logs_backend_choice" in
@@ -444,15 +414,8 @@ elif [ -z "$_logs_enable" ]; then
         done
 
         if [ "$_logs_backend" = otlp ]; then
-            while true; do
-                prompt_value _logs_otlp_endpoint "Enter the OTLP/HTTP receiver URL (LOGS_OTLP_EXPORT_ENDPOINT, e.g. http://storage-host:3100/otlp): "
-                [[ "$_logs_otlp_endpoint" =~ ^https?:// ]] && break
-                print_error "The URL must start with http:// or https://"
-            done
-            echo "Authorization header value, e.g. \"Bearer <token>\" or \"Basic <base64>\"."
-            echo "Leave empty if the receiver has no authentication (Loki of logging/grafana)."
-            prompt_value _logs_otlp_auth "LOGS_OTLP_EXPORT_AUTH: "
-
+            prompt_value _logs_otlp_endpoint "Enter the OTLP/HTTP receiver URL: "
+            prompt_value _logs_otlp_auth "Enter the authorization header value, e.g. \"Bearer <token>\". Leave empty if the receiver has no authentication (Loki of logging/grafana): "
             _logs_updates+=(
                 "LOGS_ENABLE=yes"
                 "LOGS_BACKEND=otlp"
@@ -460,11 +423,9 @@ elif [ -z "$_logs_enable" ]; then
                 "LOGS_OTLP_EXPORT_AUTH=$_logs_otlp_auth"
             )
 
-            print_info "Logging: OTLP mode. Only the OpenTelemetry collector runs on this machine."
-            print_info "It forwards events to $_logs_otlp_endpoint; the receiver (e.g. Loki + Grafana"
-            print_info "from logging/grafana) must run on a separate storage server."
+            print_warning "Logging: OTLP mode. Only the OpenTelemetry collector runs on this machine."
             print_warning "Until the receiver is reachable, events wait in the Redis buffer; once it is full"
-            print_warning "(LOGS_STREAM_MAXLEN), the oldest events are dropped. See logging/README.md"
+            print_warning "the oldest events are dropped. See logging/README.md"
         else
             print_warning "Elasticsearch mode needs the store address (LOGS_ELASTICSEARCH_URL) and collector"
             print_warning "credentials: an API key (LOGS_ELASTICSEARCH_API_KEY) or a login and password."
@@ -592,9 +553,6 @@ if [ "$_logs_enable" = yes ] && [ "$_logs_backend" = elasticsearch ]; then
     fi
 fi
 
-print_info "Selected configuration: $COMPOSE_LABEL"
-echo ""
-
 # 2.9 Write SeaweedFS S3 config (only on first setup, same guard as passwords)
 # We generate this file directly because seaweedfs-filer does not natively support env variables for S3 credentials
 if [ "$ENV_FILE_CREATED" = true ]; then
@@ -624,6 +582,39 @@ if [ "$ENV_FILE_CREATED" = true ]; then
 }
 EOF
 fi
+
+# 3.1 Select docker-compose configuration
+echo ""
+echo "Select a version to start:"
+echo "  1. Stable (recommended)"
+echo "  2. Latest"
+echo "  3. From sources (Branch: \"$GIT_BRANCH\")"
+
+while true; do
+    read -r -p "Enter number (1-3): " COMPOSE_FILE
+    COMPOSE_FILE=$(strip_invisible "$COMPOSE_FILE")
+
+    if ! [[ "$COMPOSE_FILE" =~ ^[0-9]+$ ]]; then
+        print_error "Please enter a number."
+        continue
+    fi
+
+    if [ "$COMPOSE_FILE" -lt 1 ] || [ "$COMPOSE_FILE" -gt 3 ]; then
+        print_error "Please enter 1, 2 or 3."
+        continue
+    fi
+
+    break
+done
+
+case "$COMPOSE_FILE" in
+  1) COMPOSE_LABEL="Stable (recommended)";   COMPOSE_ARGS=('-f' 'docker-compose.yml');     COMPOSE_TAG="stable" ;;
+  2) COMPOSE_LABEL="Latest";                 COMPOSE_ARGS=('-f' 'docker-compose.yml');     COMPOSE_TAG="latest" ;;
+  3) COMPOSE_LABEL="From sources (Branch: \"$GIT_BRANCH\")"; COMPOSE_ARGS=('-f' 'docker-compose.src.yml'); COMPOSE_TAG=""   ;;
+esac
+
+print_info "Selected configuration: $COMPOSE_LABEL"
+echo ""
 
 # 3.2 Start containers
 

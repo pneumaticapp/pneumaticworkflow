@@ -45,7 +45,7 @@ printf '%s\\n' "$*" >> "$MCP_TEST_DOCKER_LOG"
   const spawn = (answers: string[], overrides: NodeJS.ProcessEnv) => {
     writeFileSync(dockerLog, '');
     const result = spawnSync('bash', [join(directory, 'start.sh')], {
-      input: ['3', ...answers].map((answer) => `${answer}\n`).join(''),
+      input: [...answers, '3'].map((answer) => `${answer}\n`).join(''),
       encoding: 'utf8',
       env: {
         ...process.env,

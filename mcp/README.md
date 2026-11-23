@@ -73,7 +73,7 @@ Backend, file and app URLs accept HTTP(S) without credentials, query strings or 
 
 Requires a configured Pneumatic installation and Docker Compose. Run commands from the repository root. For remote clients, configure HTTPS for the installation (`SSL=yes` with the bundled nginx) and set `FRONTEND_URL` and `FILE_SERVICE_URL` to your public addresses. HTTP is accepted only on loopback.
 
-1. Run `./start.sh`; select **From sources** to build this checkout. While `MCP_ENABLE` is empty, the script asks whether to enable the connector, writes `MCP_ENABLE` and `COMPOSE_PROFILES` to the root `.env` and generates `MCP_SECRET` if missing, including on existing installations. To change the answer later, empty `MCP_ENABLE` and run `./start.sh` again.
+1. Run `./start.sh`. While `MCP_ENABLE` is empty, the script asks whether to enable the connector, writes `MCP_ENABLE` and `COMPOSE_PROFILES` to the root `.env` and generates `MCP_SECRET` if missing, including on existing installations. It then asks which version to start; select **From sources** to build this checkout. To change the answer later, empty `MCP_ENABLE` and run `./start.sh` again.
 2. Alternatively, start directly with Compose: generate a secret with `openssl rand -hex 32`, set `MCP_SECRET=<generated value>` in the root `.env` (paste the value, not the command), then run:
 
    ```bash

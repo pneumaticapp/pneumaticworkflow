@@ -1,5 +1,5 @@
 .idea
-.env
+*.env
 postgres
 redis
 rabbitmq
