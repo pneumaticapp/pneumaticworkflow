@@ -1686,6 +1686,8 @@ export const enMessages = {
   'tasks.task-fieldsets': 'Fieldsets',
   'template.fieldset-picker.placeholder': 'Select fieldsets...',
   'template.fieldset-picker.empty': 'No fieldsets available. Create one first.',
+  'template.task-output-fieldset-icon-help': 'Click to choose a fieldset for this step',
+  'search.placeholder': 'Search...',
   'fieldset.group-title': 'Fieldset: {name}',
   'fieldset.validation-error.sum-max': 'The sum of numeric fields in "{name}" must not exceed {value}.',
   'fieldsets.usage.linked': 'Used in {count} {count, plural, one {template} other {templates}}. Editing is locked.',
