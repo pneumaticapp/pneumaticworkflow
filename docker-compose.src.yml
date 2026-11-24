@@ -4,6 +4,15 @@ services:
   postgres:
     image: postgres:15-bookworm
     container_name: pneumatic-postgres
+    # Copy the script before the official entrypoint switches to postgres.
+    entrypoint:
+      - sh
+      - -ec
+      - |
+        install -m 0644 /postgres-init/create-file-service-db.sh /docker-entrypoint-initdb.d/
+        exec docker-entrypoint.sh "$$@"
+      - --
+    command: [postgres]
     environment:
       PGDATA: ${PGDATA:-var/lib/postgresql/data}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
@@ -20,7 +29,7 @@ services:
     volumes:
       - ./postgres/data:/var/lib/postgresql/data:rw
       - ./postgres/backups:/backups:rw
-      - ./scripts/postgres-init:/docker-entrypoint-initdb.d:ro
+      - ./scripts/postgres-init:/postgres-init:ro
     expose:
       - 5432
     healthcheck:
