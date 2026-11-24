@@ -2,6 +2,7 @@
   "name": "pneumatic-frontend",
   "script": "npm",
   "args": "run start:prod",
+  "exec_mode": "fork",
   "instances": "1",
   "env": {
     "NODE_ENV": "production"
