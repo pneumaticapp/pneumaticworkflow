@@ -265,7 +265,9 @@ class UserGroupService(BaseModelService):
                     self.instance.users.clear()
                 template_ids = self._get_template_ids()
                 if template_ids:
-                    update_workflow_owners.delay(template_ids)
+                    transaction.on_commit(
+                        lambda: update_workflow_owners.delay(template_ids),
+                    )
                 self._sync_performer_group_permissions(
                     member_ids=(
                         list(new_users_ids) if users else []

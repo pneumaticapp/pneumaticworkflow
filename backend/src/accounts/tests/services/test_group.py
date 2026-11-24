@@ -238,7 +238,9 @@ class TestUserGroupService:
         assert len(template_ids) == 1
         assert template.id in template_ids
 
-    def test_partial_update__with_template__ok(self, mocker):
+    def test_partial_update__with_template__ok(
+        self, mocker, django_capture_on_commit_callbacks,
+    ):
 
         # arrange
         account = create_test_account()
@@ -289,12 +291,14 @@ class TestUserGroupService:
         )
 
         # act
-        service.partial_update(
-            name=group.name,
-            photo=group.photo,
-            users=[user.id],
-            force_save=True,
-        )
+        with django_capture_on_commit_callbacks(execute=True):
+            service.partial_update(
+                name=group.name,
+                photo=group.photo,
+                users=[user.id],
+                force_save=True,
+            )
+            update_workflow_owners_mock.assert_not_called()
 
         # assert
         get_template_ids_mock.assert_called_once_with()
