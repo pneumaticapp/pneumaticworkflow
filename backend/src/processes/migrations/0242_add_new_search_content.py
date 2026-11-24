@@ -59,7 +59,7 @@ class Migration(migrations.Migration):
             WHERE is_deleted = FALSE;
         """),
         # create prepare search text func
-        migrations.RunSQL("""
+        migrations.RunSQL(r"""
          -- Union text parts and excluding unwanted lexemes (www, <, >, **) from the text
              CREATE OR REPLACE FUNCTION prepare_search_content(TEXT default '', TEXT default '', TEXT default '', TEXT default '')
              RETURNS TEXT AS $$ 
