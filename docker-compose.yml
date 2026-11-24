@@ -83,12 +83,17 @@ services:
       context: ./backend
     image: pneumaticworkflow/pneumatic-backend:${TAG:-stable}
     container_name: pneumatic-backend
-    command: >
-      sh -c "python manage.py migrate &&
-             python manage.py collectstatic --no-input &&
-             python manage.py init_periodic_tasks &&
-             python manage.py compilemessages &&
-             gunicorn src.asgi:application --workers ${WORKERS_COUNT:-2} -k uvicorn_worker.UvicornWorker --worker-tmp-dir /dev/shm --bind unix:/tmp/gunicorn/pneumatic-backend.sock --timeout 200"
+    command:
+      - sh
+      - -ec
+      - |-
+        python manage.py migrate
+        python manage.py collectstatic --no-input
+        python manage.py init_periodic_tasks
+        python manage.py compilemessages
+        exec gunicorn src.asgi:application --workers "${WORKERS_COUNT:-2}" \
+          -k uvicorn_worker.UvicornWorker --worker-tmp-dir /dev/shm \
+          --bind unix:/tmp/gunicorn/pneumatic-backend.sock --timeout 200
     environment:
       BACKEND_URL: ${BACKEND_URL:-http://localhost:8001}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
@@ -586,9 +591,13 @@ services:
       LOGS_BACKEND: ${LOGS_BACKEND:-}
       LOGS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/4"
       LOGS_STREAM_MAXLEN: ${LOGS_STREAM_MAXLEN:-250000}
-    command: >
-      sh -c "poetry run alembic -c src/shared_kernel/database/alembic.ini upgrade head &&
-             poetry run uvicorn src.main:app --host 0.0.0.0 --port ${FILE_PORT:-8000} --workers ${FILE_WORKERS:-1}"
+    command:
+      - sh
+      - -ec
+      - |-
+        poetry run alembic -c src/shared_kernel/database/alembic.ini upgrade head
+        exec poetry run uvicorn src.main:app --host 0.0.0.0 \
+          --port "${FILE_PORT:-8000}" --workers "${FILE_WORKERS:-1}"
     depends_on:
       postgres:
         condition: service_healthy
