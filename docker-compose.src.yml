@@ -607,6 +607,13 @@ services:
     image: chrislusf/seaweedfs:3.95
     container_name: pneumatic-seaweedfs-master
     command: master -ip=seaweedfs-master -port=9333
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          wget -qO- http://seaweedfs-master:9333/cluster/status | grep -q '"IsLeader":true'
+      interval: 5s
+      start_period: 30s
     expose:
       - 9333
     volumes:
@@ -623,10 +630,14 @@ services:
       - -port=8080
       - -ip=seaweedfs-volume
       - -publicUrl=localhost:8080
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://seaweedfs-volume:8080/status"]
+      interval: 5s
     expose:
       - 8080
     depends_on:
-      - seaweedfs-master
+      seaweedfs-master:
+        condition: service_healthy
     volumes:
       - ./seaweedfs/volume/data:/data:rw
     networks:
@@ -639,8 +650,8 @@ services:
     expose:
       - 8333
     depends_on:
-      - seaweedfs-master
-      - seaweedfs-volume
+      seaweedfs-volume:
+        condition: service_healthy
     volumes:
       - ./storage/seaweedfs/filer.toml:/etc/seaweedfs/filer.toml
       - ./storage/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
