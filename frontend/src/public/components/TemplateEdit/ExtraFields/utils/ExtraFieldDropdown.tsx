@@ -11,12 +11,19 @@ import type { IKickoffDropdownProps } from './types';
 
 import type { IFieldRuleSet } from '../../../../types/fieldset';
 import { DeletableDropdownOption } from './DeletableDropdownOption';
+import deletableOptionStyles from './DeletableDropdownOption.css';
 import styles from '../../KickoffRedux/KickoffRedux.css';
 
 const renderRulesetOption =
-  (ruleset: IFieldRuleSet, onDeleteFieldRuleset?: (rulesetApiName: string) => void) => (closeDropdown?: () => void) => (
+  (
+    ruleset: IFieldRuleSet,
+    onOpenFieldRules?: (ruleset?: IFieldRuleSet) => void,
+    onDeleteFieldRuleset?: (rulesetApiName: string) => void,
+  ) =>
+  (closeDropdown?: () => void) => (
     <DeletableDropdownOption
       label={ruleset.name}
+      onClick={() => onOpenFieldRules?.(ruleset)}
       onDelete={() => onDeleteFieldRuleset?.(ruleset.apiName)}
       closeDropdown={closeDropdown}
     />
@@ -152,8 +159,8 @@ export function ExtraFieldDropdown({
             },
             ...(fieldRulesets || []).map((ruleset, index) => ({
               mapKey: `field-ruleset-${ruleset.apiName}`,
-              onClick: handleOptionClick(() => onOpenFieldRules?.(ruleset)),
-              label: renderRulesetOption(ruleset, onDeleteFieldRuleset),
+              className: deletableOptionStyles['option-item'],
+              label: renderRulesetOption(ruleset, onOpenFieldRules, onDeleteFieldRuleset),
               withUpperline: index === 0,
             })),
           ],

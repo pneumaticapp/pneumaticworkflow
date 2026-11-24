@@ -14,6 +14,7 @@ export function DeletableDropdownOption({ label, onDelete, onClick, closeDropdow
 
   const handleLabelClick: MouseEventHandler<HTMLSpanElement> = (event) => {
     event.stopPropagation();
+    closeDropdown?.();
     onClick?.();
   };
 
@@ -21,6 +22,7 @@ export function DeletableDropdownOption({ label, onDelete, onClick, closeDropdow
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       event.stopPropagation();
+      closeDropdown?.();
       onClick?.();
     }
   };
@@ -36,12 +38,12 @@ export function DeletableDropdownOption({ label, onDelete, onClick, closeDropdow
     setIsConfirming(false);
   };
 
-  const handleDeleteClick: MouseEventHandler<SVGSVGElement> = (event) => {
+  const handleDeleteClick: MouseEventHandler<HTMLSpanElement> = (event) => {
     event.stopPropagation();
     setIsConfirming(true);
   };
 
-  const handleContainerClick: MouseEventHandler<HTMLDivElement> = (event) => {
+  const handleContainerClick: MouseEventHandler<HTMLSpanElement> = (event) => {
     event.stopPropagation();
   };
 
@@ -55,7 +57,7 @@ export function DeletableDropdownOption({ label, onDelete, onClick, closeDropdow
 
   if (isConfirming) {
     return (
-      <div
+      <span
         className={classnames(dropdownStyles['dropdown-confirm'], styles['confirmation-container'])}
         role="presentation"
         onClick={handleContainerClick}
@@ -70,13 +72,14 @@ export function DeletableDropdownOption({ label, onDelete, onClick, closeDropdow
             {formatMessage({ id: 'dropdown.no' })}
           </button>
         </span>
-      </div>
+      </span>
     );
   }
 
   return (
-    <div className={styles['container']}>
+    <span className={styles['container']}>
       <span
+        className={styles['label']}
         {...(onClick && {
           role: 'button',
           tabIndex: 0,
@@ -86,13 +89,16 @@ export function DeletableDropdownOption({ label, onDelete, onClick, closeDropdow
       >
         {label}
       </span>
-      <TrashIcon
-        className={styles['delete-icon']}
-        role="button"
-        tabIndex={0}
-        onClick={handleDeleteClick}
-        onKeyDown={handleDeleteKeyDown}
-      />
-    </div>
+      <span className={styles['divider']} aria-hidden="true" />
+      <span className={styles['delete-button']} role="presentation" onClick={handleDeleteClick}>
+        <TrashIcon
+          className={styles['delete-icon']}
+          role="button"
+          tabIndex={0}
+          aria-label={formatMessage({ id: 'fieldsets.rule-delete' })}
+          onKeyDown={handleDeleteKeyDown}
+        />
+      </span>
+    </span>
   );
 }

@@ -10,8 +10,11 @@ import { ModifyDropdown } from '../../../UI';
 import { EExtraFieldType } from '../../../../types/template';
 import { EFieldLabelPosition } from '../../../../types/fieldset';
 import type { IFieldsetCatalogItem } from '../../../../types/fieldset';
-import { makeFieldsetCatalogItem, makeFieldsetRuleset } from '../../../../__stubs__/fieldsets.factory';
-import { makeExtraField } from '../../../../__stubs__/fields.factory';
+import {
+  makeFieldsetCatalogItem,
+  makeFieldsetField,
+  makeFieldsetRuleset,
+} from '../../../../__stubs__/fieldsets.factory';
 import { FieldsetSettings } from '../FieldsetSettings/FieldsetSettings';
 import { FieldsetFieldsList } from '../FieldsetFieldsList/FieldsetFieldsList';
 import { FieldsetRulesetsList } from '../FieldsetRulesetsList/FieldsetRulesetsList';
@@ -161,7 +164,7 @@ describe('FieldsetDetailsForm', () => {
 
   describe('Initial save bar state', () => {
     it('shows disabled Save button on initial render', () => {
-      const fields = [makeExtraField({ apiName: 'f1', order: 1 })];
+      const fields = [makeFieldsetField({ apiName: 'f1', order: 1 })];
       const rulesets = [makeFieldsetRuleset({ apiName: 'rule-1', fields: ['f1'] })];
       render(React.createElement(FieldsetDetailsForm, { fieldset: makeFieldset({ fields, rulesets }) }));
 
@@ -276,7 +279,7 @@ describe('FieldsetDetailsForm', () => {
 
   describe('Field rule modal integration', () => {
     it('opens FieldRuleModal when onOpenFieldRule callback is called', () => {
-      const fields = [makeExtraField({ apiName: 'f1', order: 1, type: EExtraFieldType.String })];
+      const fields = [makeFieldsetField({ apiName: 'f1', order: 1, type: EExtraFieldType.String })];
       render(React.createElement(FieldsetDetailsForm, { fieldset: makeFieldset({ fields }) }));
 
       expect(screen.queryByTestId('field-rule-modal')).not.toBeInTheDocument();

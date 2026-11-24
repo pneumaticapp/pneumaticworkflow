@@ -21,6 +21,18 @@ jest.mock('../../../../UI/OutsideClickHandler', () => ({
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
+jest.mock('reactstrap/lib/DropdownMenu', () => {
+  const ReactLocal = require('react');
+  const { DropdownContext } = require('reactstrap/lib/DropdownContext');
+  return {
+    __esModule: true,
+    default: ({ children }: { children: React.ReactNode }) => {
+      const context = ReactLocal.useContext(DropdownContext);
+      return ReactLocal.createElement('div', { role: 'menu', 'aria-hidden': !context.isOpen }, children);
+    },
+  };
+});
+
 const baseProps = {
   isRequired: false,
   isRequiredDisabled: false,
@@ -180,27 +192,77 @@ describe('ExtraFieldDropdown', () => {
       expect(onOpenFieldRules).toHaveBeenCalledWith(rulesetProps.fieldRulesets[0]);
     });
 
-    it('triggers onDeleteFieldRuleset with ruleset apiName when deletion is confirmed', () => {
-      const onDeleteFieldRuleset = jest.fn();
-      renderWithIntl(<ExtraFieldDropdown {...rulesetProps} onDeleteFieldRuleset={onDeleteFieldRuleset} />);
+    describe('Interactive deletion and dropdown closing in Rulesets submenu', () => {
+      const RULESETS_LABEL = enMessages['fieldsets.field-rulesets-submenu'];
+      const DELETE_RULE_LABEL = enMessages['fieldsets.rule-delete'];
+      const YES_LABEL = enMessages['dropdown.yes'];
+      const NO_LABEL = enMessages['dropdown.no'];
 
-      const dropdownProps = (Dropdown as jest.Mock).mock.calls[0]?.[0];
-      const rulesetMenuItem = dropdownProps.options.find(
-        (option: TDropdownOption) =>
-          option.className &&
-          option.className.includes('dataset-submenu') &&
-          option.className.includes('dropdown-item-rules'),
-      );
-      const ruleOption = rulesetMenuItem.subOptions[1];
-      const renderedLabel = ruleOption.label(jest.fn());
+      const openRulesetsSubmenu = () => {
+        const toggleButton = screen.getByRole('button');
+        userEvent.click(toggleButton);
+        userEvent.click(screen.getByRole('button', { name: RULESETS_LABEL }));
+        return toggleButton;
+      };
 
-      const { container: labelContainer } = renderWithIntl(renderedLabel);
-      const deleteIcon = labelContainer.querySelector('.delete-icon');
-      if (deleteIcon) {
-        userEvent.click(deleteIcon);
-        userEvent.click(screen.getByRole('button', { name: 'Yes', hidden: true }));
+      it('enters deletion confirmation mode without React validateDOMNesting warning', () => {
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        try {
+          renderWithIntl(<ExtraFieldDropdown {...rulesetProps} onDeleteFieldRuleset={jest.fn()} />);
+          openRulesetsSubmenu();
+
+          userEvent.click(screen.getByRole('button', { name: DELETE_RULE_LABEL }));
+
+          expect(screen.getByRole('button', { name: YES_LABEL })).toBeInTheDocument();
+          expect(screen.getByRole('button', { name: NO_LABEL })).toBeInTheDocument();
+          const hasDomNestingWarning = consoleErrorSpy.mock.calls.some((callArgs) =>
+            callArgs.some((argument) => typeof argument === 'string' && argument.includes('validateDOMNesting')),
+          );
+          expect(hasDomNestingWarning).toBe(false);
+        } finally {
+          consoleErrorSpy.mockRestore();
+        }
+      });
+
+      it('closes dropdown when an existing ruleset name is clicked', () => {
+        renderWithIntl(<ExtraFieldDropdown {...rulesetProps} />);
+        const toggleButton = openRulesetsSubmenu();
+
+        expect(toggleButton).toHaveAttribute('aria-expanded', 'true');
+
+        userEvent.click(screen.getByRole('button', { name: 'Rule 1' }));
+
+        expect(onOpenFieldRules).toHaveBeenCalledTimes(1);
+        expect(onOpenFieldRules).toHaveBeenCalledWith(rulesetProps.fieldRulesets[0]);
+        expect(toggleButton).toHaveAttribute('aria-expanded', 'false');
+      });
+
+      it('calls onDeleteFieldRuleset and closes dropdown when deletion is confirmed', () => {
+        const onDeleteFieldRuleset = jest.fn();
+        renderWithIntl(<ExtraFieldDropdown {...rulesetProps} onDeleteFieldRuleset={onDeleteFieldRuleset} />);
+        const toggleButton = openRulesetsSubmenu();
+
+        userEvent.click(screen.getByRole('button', { name: DELETE_RULE_LABEL }));
+        userEvent.click(screen.getByRole('button', { name: YES_LABEL }));
+
+        expect(onDeleteFieldRuleset).toHaveBeenCalledTimes(1);
         expect(onDeleteFieldRuleset).toHaveBeenCalledWith('rule_1');
-      }
+        expect(toggleButton).toHaveAttribute('aria-expanded', 'false');
+      });
+
+      it('keeps dropdown open and skips deletion when No is clicked', () => {
+        const onDeleteFieldRuleset = jest.fn();
+        renderWithIntl(<ExtraFieldDropdown {...rulesetProps} onDeleteFieldRuleset={onDeleteFieldRuleset} />);
+        const toggleButton = openRulesetsSubmenu();
+
+        userEvent.click(screen.getByRole('button', { name: DELETE_RULE_LABEL }));
+        userEvent.click(screen.getByRole('button', { name: NO_LABEL }));
+
+        expect(onDeleteFieldRuleset).not.toHaveBeenCalled();
+        expect(screen.getByRole('button', { name: 'Rule 1' })).toBeInTheDocument();
+        expect(toggleButton).toHaveAttribute('aria-expanded', 'true');
+      });
     });
   });
 });

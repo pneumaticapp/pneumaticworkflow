@@ -103,4 +103,30 @@ describe('DeletableDropdownOption', () => {
 
     expect(onClick).not.toHaveBeenCalled();
   });
+
+  describe('Closing dropdown on label selection', () => {
+    it('calls closeDropdown when label is clicked', () => {
+      const onClick = jest.fn();
+      const closeDropdown = jest.fn();
+      render(<DeletableDropdownOption {...defaultProps} onClick={onClick} closeDropdown={closeDropdown} />);
+
+      userEvent.click(screen.getByText('Rule 1'));
+
+      expect(closeDropdown).toHaveBeenCalledTimes(1);
+      expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls closeDropdown and onClick when Enter is pressed on label', () => {
+      const onClick = jest.fn();
+      const closeDropdown = jest.fn();
+      render(<DeletableDropdownOption {...defaultProps} onClick={onClick} closeDropdown={closeDropdown} />);
+
+      userEvent.tab();
+      expect(screen.getByText('Rule 1')).toHaveFocus();
+      userEvent.keyboard('{enter}');
+
+      expect(closeDropdown).toHaveBeenCalledTimes(1);
+      expect(onClick).toHaveBeenCalledTimes(1);
+    });
+  });
 });
