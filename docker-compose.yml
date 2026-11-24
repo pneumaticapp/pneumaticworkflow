@@ -667,7 +667,7 @@ services:
       READ_ONLY: ${MCP_READ_ONLY:-false}
       LOG_LEVEL: ${MCP_LOG_LEVEL:-info}
     volumes:
-      - mcp-state:/state
+      - ./state:/state
     expose:
       - 3000
     networks:
