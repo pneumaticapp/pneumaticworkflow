@@ -426,16 +426,11 @@ fi
 echo "Starting Docker containers..."
 
 if [ -n "$COMPOSE_TAG" ]; then
-    output=$(TAG="$COMPOSE_TAG" docker compose "${COMPOSE_ARGS[@]}" up -d 2>&1)
+    TAG="$COMPOSE_TAG" docker compose "${COMPOSE_ARGS[@]}" up -d
 else
-    output=$(docker compose "${COMPOSE_ARGS[@]}" up -d 2>&1)
+    docker compose "${COMPOSE_ARGS[@]}" up -d --build
 fi
-if [ $? -eq 0 ]; then
-  print_info "Done"
-else
-  print_error "$output"
-  exit 1
-fi
+print_info "Done"
 
 # =============================================================================
 # 4. Summary
