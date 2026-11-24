@@ -28,12 +28,12 @@ class Migration(migrations.Migration):
         migrations.RunSQL(sql="DROP TRIGGER IF EXISTS processes_fileattachment_ins ON processes_fileattachment"),
 
         # create prepare search text func
-        migrations.RunSQL("""
+        migrations.RunSQL(r"""
              -- Union text parts and excluding unwanted lexemes (www, <, >) from the text
              CREATE OR REPLACE FUNCTION prepare_search_content(TEXT default '', TEXT default '', TEXT default '', TEXT default '')
              RETURNS TEXT AS $$ 
              BEGIN
-               RETURN REGEXP_REPLACE(CONCAT($1, ' ', $2, ' ', $3, ' ', $4), 'http(s)?:\\\\(www\.)?|www\.|\<|\>', '', 'g');
+               RETURN REGEXP_REPLACE(CONCAT($1, ' ', $2, ' ', $3, ' ', $4), 'http(s)?:\\(www\.)?|www\.|\<|\>', '', 'g');
              END;
              $$ LANGUAGE plpgsql;
         """),
