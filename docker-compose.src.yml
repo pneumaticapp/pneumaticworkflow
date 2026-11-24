@@ -655,6 +655,11 @@ services:
     container_name: pneumatic-mcp
     profiles: ["mcp"]
     environment:
+      NODE_ENV: production
+      MCP_TRANSPORT: http
+      HOST: 0.0.0.0
+      OAUTH_REPLAY_FILE: /state/replay.json
+      OAUTH_REPLAY_CREATE_ON_EMPTY_VOLUME: "true"
       BACKEND_PRIVATE_URL: ${BACKEND_PRIVATE_URL:-http://pneumatic-nginx}
       FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://localhost/files}
       PNEUMATIC_FILES_URL: http://pneumatic-file-service:${FILE_PORT:-8000}
@@ -666,8 +671,10 @@ services:
       TOOLSETS: ${MCP_TOOLSETS:-}
       READ_ONLY: ${MCP_READ_ONLY:-false}
       LOG_LEVEL: ${MCP_LOG_LEVEL:-info}
+    entrypoint: ["/app/mcp-entrypoint.sh"]
+    command: node dist/index.js
     volumes:
-      - ./state:/state
+      - ./mcp/state:/state
     expose:
       - 3000
     networks:

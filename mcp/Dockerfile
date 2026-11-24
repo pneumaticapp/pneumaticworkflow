@@ -1,26 +1,21 @@
-FROM node:24-alpine AS build
+FROM node:24-bookworm-slim
+
+LABEL org.opencontainers.image.title="Pneumatic MCP server" \
+      org.opencontainers.image.source="https://github.com/pneumaticapp/pneumaticworkflow/mcp" \
+      org.opencontainers.image.url="https://www.pneumatic.app" \
+      org.opencontainers.image.authors="support@pneumatic.app" \
+      org.opencontainers.image.vendor="Pneumatic Software Inc." \
+      org.opencontainers.image.documentation="https://github.com/pneumaticapp/pneumaticworkflow/wiki" \
+      org.opencontainers.image.licenses="Apache-2.0"
+
+RUN apt-get update
+RUN apt-get install -y sudo curl nano
+
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
-COPY tsconfig.json tsconfig.build.json ./
-COPY src ./src
+
+COPY . .
 RUN npm run build && npm prune --omit=dev
 
-FROM node:24-alpine
-WORKDIR /app
-ENV NODE_ENV=production \
-    MCP_TRANSPORT=http \
-    HOST=0.0.0.0 \
-    PORT=3000 \
-    OAUTH_REPLAY_FILE=/state/replay.json \
-    OAUTH_REPLAY_CREATE_ON_EMPTY_VOLUME=true
-COPY --from=build /app/package.json ./
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY --chmod=755 mcp-entrypoint.sh /usr/local/bin/
-RUN mkdir /state && chown node:node /state
-USER node
-EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO- "http://127.0.0.1:${PORT}/healthz" || exit 1
-ENTRYPOINT ["mcp-entrypoint.sh"]
 CMD ["node", "dist/index.js"]

@@ -28,9 +28,9 @@ Create a key in your installation under **Integrations → Your API Keys → Cre
 
 ## Configuration
 
-Use the **repository-root `.env`** for [docker-compose.yml](../docker-compose.yml), [docker-compose.src.yml](../docker-compose.src.yml) and `start.sh`. The **Root Compose setting** column shows which installation variable supplies each process variable. Compose does not read `mcp/.env`; settings marked **Image** come from the Docker image, and **—** means the setting is not passed by the bundled service. To change an image setting or pass an additional variable, add it to the service's `environment` in a Compose override; adding it only to the root `.env` is insufficient.
+Use the **repository-root `.env`** for [docker-compose.yml](../docker-compose.yml), [docker-compose.src.yml](../docker-compose.src.yml) and `start.sh`. The **Root Compose setting** column shows which installation variable supplies each process variable. Compose does not read `mcp/.env`; settings marked **Compose** are fixed in the bundled service, and **—** means the setting is not passed by the bundled service. To change a fixed setting or pass an additional variable, add it to the service's `environment` in a Compose override; adding it only to the root `.env` is insufficient.
 
-For a standalone process, copy [`.env.example`](.env.example) to `.env` and use the **Process variable** names below. Load it explicitly with `node --env-file=.env`; `npm start` and `npm run dev` do not load env files. Exported shell variables take precedence over the env file. Defaults below apply when a variable is omitted; the example file supplies local development values.
+For a standalone process, create `.env` in `mcp/` from the example in [Standalone Docker](#standalone-docker) or [For Developers](#for-developers) and use the **Process variable** names below for other settings. Load it explicitly with `node --env-file=.env`; `npm start` and `npm run dev` do not load env files. Exported shell variables take precedence over the env file. Defaults below apply when a variable is omitted.
 
 | Process variable                      | Root Compose setting                       | Default                                                                                                                                                     | Meaning / example                                                                                                                                                                                                                                                                                                                           |
 | ------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -38,17 +38,17 @@ For a standalone process, copy [`.env.example`](.env.example) to `.env` and use 
 | `PNEUMATIC_FILES_URL`                 | Derived from `FILE_PORT`                   | Process: `FILE_SERVICE_URL`, otherwise Cloud storage for the default API or unset for a custom API; Compose: `http://pneumatic-file-service:<FILE_PORT>`    | Address used for storage requests. A standalone process can use its public file URL here. If storage requests use an internal address, set the public address separately in `FILE_SERVICE_URL`.                                                                                                                                             |
 | `FILE_SERVICE_URL`                    | `FILE_SERVICE_URL`                         | Process: `PNEUMATIC_FILES_URL`, otherwise `https://my.pneumatic.app/files` for the default API or unset for a custom API; Compose: `http://localhost/files` | Public file URL prefix matching the backend, used in links and download URL validation, e.g. `https://app.example.com/files`.                                                                                                                                                                                                               |
 | `FRONTEND_URL`                        | `FRONTEND_URL`                             | Process: public storage URL with a final `/files` removed, otherwise unset; Compose: `http://localhost`                                                     | Web app URL for task, workflow and template links. Set explicitly if storage uses another path; unset means no web app links in results.                                                                                                                                                                                                    |
-| `MCP_TRANSPORT`                       | Image: `http`                              | `stdio`                                                                                                                                                     | `stdio` or `http`. Command-line `--http` / `--stdio` overrides this value.                                                                                                                                                                                                                                                                  |
+| `MCP_TRANSPORT`                       | Compose: `http`                            | `stdio`                                                                                                                                                     | `stdio` or `http`. Command-line `--http` / `--stdio` overrides this value.                                                                                                                                                                                                                                                                  |
 | `PNEUMATIC_API_KEY`                   | —                                          | Unset                                                                                                                                                       | Required for stdio and smoke scripts. HTTP requests supply a key per user; leave this unset on a shared HTTP server.                                                                                                                                                                                                                        |
 | `TOOLSETS`                            | `MCP_TOOLSETS`                             | All groups                                                                                                                                                  | Comma-separated groups listed below, or `all`; empty also selects all. Unknown names fail startup.                                                                                                                                                                                                                                          |
 | `READ_ONLY`                           | `MCP_READ_ONLY`                            | `false`                                                                                                                                                     | `true`/`yes`/`1` hides write tools; `false`/`no`/`0` or empty permits writes.                                                                                                                                                                                                                                                               |
 | `LOG_LEVEL`                           | `MCP_LOG_LEVEL`                            | `info`                                                                                                                                                      | `debug`, `info`, `warn`, `error`, `off`; logs are JSON lines on stderr. Invalid values fail startup.                                                                                                                                                                                                                                        |
-| `HOST`                                | Image: `0.0.0.0`                           | `127.0.0.1`                                                                                                                                                 | HTTP listen address. A standalone container needs `0.0.0.0` to accept connections from its proxy. Ignored in stdio mode.                                                                                                                                                                                                                    |
-| `PORT`                                | Image: `3000`                              | `3000`                                                                                                                                                      | HTTP listen port, integer from `1` to `65535`. Ignored in stdio mode.                                                                                                                                                                                                                                                                       |
+| `HOST`                                | Compose: `0.0.0.0`                         | `127.0.0.1`                                                                                                                                                 | HTTP listen address. A standalone container needs `0.0.0.0` to accept connections from its proxy. Ignored in stdio mode.                                                                                                                                                                                                                    |
+| `PORT`                                | —                                          | `3000`                                                                                                                                                      | HTTP listen port, integer from `1` to `65535`. Ignored in stdio mode.                                                                                                                                                                                                                                                                       |
 | `PUBLIC_URL`                          | `MCP_PUBLIC_URL`, otherwise `FRONTEND_URL` | Process: `http://localhost:<PORT>`; Compose: `http://localhost` if both root settings are unset                                                             | Connector origin for OAuth metadata, consent and upload links, e.g. `https://mcp.example.com`. No path, query, fragment or credentials; HTTPS required except for `localhost`, `127.0.0.1`, `[::1]`. Do not append `/mcp`. A separate origin needs its own DNS, TLS and proxy routing. Ignored in stdio mode.                               |
 | `TOKEN_SECRET`                        | `MCP_SECRET`                               | Unset                                                                                                                                                       | Required for HTTP; at least 32 characters. Generate once with `openssl rand -hex 32`. `start.sh` generates a separate 64-character hex secret if missing and the connector is enabled; direct Compose startup requires an explicit value. Keep across restarts; rotation invalidates OAuth tokens and registrations. Ignored in stdio mode. |
-| `OAUTH_REPLAY_FILE`                   | Image: `/state/replay.json`                | Unset                                                                                                                                                       | Required for HTTP: existing, writable persistent file containing spent OAuth identifiers and revocations. Local example: `./.state/replay.json`. Compose mounts `mcp-state` at `/state`; preserve it on upgrades. Ignored in stdio mode.                                                                                                    |
-| `OAUTH_REPLAY_CREATE_ON_EMPTY_VOLUME` | Image: `true`                              | Unset: creation disabled                                                                                                                                    | Docker entrypoint setting, not read by Node.js. Exactly `true` creates the replay file only if its directory exists and is empty, initializing a fresh volume without silently replacing lost state.                                                                                                                                        |
+| `OAUTH_REPLAY_FILE`                   | Compose: `/state/replay.json`              | Unset                                                                                                                                                       | Required for HTTP: existing, writable persistent file containing spent OAuth identifiers and revocations. Local example: `./.state/replay.json`. Compose mounts `mcp-state` at `/state`; preserve it on upgrades. Ignored in stdio mode.                                                                                                    |
+| `OAUTH_REPLAY_CREATE_ON_EMPTY_VOLUME` | Compose: `true`                            | Unset: creation disabled                                                                                                                                    | Docker entrypoint setting, not read by Node.js. Exactly `true` creates the replay file only if its directory exists and is empty, initializing a fresh volume without silently replacing lost state.                                                                                                                                        |
 | `OAUTH_ALLOWED_REDIRECT_HOSTS`        | `MCP_OAUTH_ALLOWED_REDIRECT_HOSTS`         | `claude.ai,claude.com,www.cursor.com,localhost,127.0.0.1,[::1]`                                                                                             | Comma-separated OAuth callback hostnames without schemes, paths or ports. Set the full list when adding a client; `*` permits any host. Ignored in stdio mode.                                                                                                                                                                              |
 | `RATE_LIMIT_PER_MINUTE`               | `MCP_RATE_LIMIT_PER_MINUTE`                | `120`                                                                                                                                                       | Non-negative integer, MCP requests per API key per minute; `0` disables this limit. Consent failures have a separate fixed limit of 10 per client IP per minute. Ignored in stdio mode.                                                                                                                                                     |
 | `TRUST_PROXY`                         | —                                          | `loopback,uniquelocal`                                                                                                                                      | Trusted reverse proxy addresses/subnets, hop count, or `true`/`false`. Controls trusted `X-Forwarded-For` values for client IP limits; match your proxy network. Ignored in stdio mode.                                                                                                                                                     |
@@ -85,7 +85,7 @@ Requires a configured Pneumatic installation and Docker Compose. Run commands fr
    ```bash
    docker compose --profile mcp ps mcp
    docker compose --profile mcp logs --tail=50 mcp
-   docker compose --profile mcp exec mcp wget -qO- http://127.0.0.1:3000/healthz
+   docker compose --profile mcp exec mcp node -e "fetch('http://127.0.0.1:3000/healthz').then(r => r.text()).then(console.log)"
    curl -i -X POST https://mcp.example.com/mcp -H 'Content-Type: application/json' --data '{}'
    curl -fsS https://mcp.example.com/.well-known/oauth-authorization-server
    ```
@@ -100,7 +100,21 @@ When upgrading an earlier connector configuration, replace `MCP_ENABLED=true` wi
 
 ### Standalone Docker
 
-Run from `mcp/`. Copy `.env.example` to `.env` and configure your installation's addresses, HTTP secret and container settings using [Configuration](#configuration). The API and storage request addresses must be reachable from the container.
+Run from `mcp/`. Create `.env` with your installation's addresses and HTTP secret; other settings are described in [Configuration](#configuration). The API and storage request addresses must be reachable from the container.
+
+```dotenv
+BACKEND_PRIVATE_URL=https://pneumatic.example.com
+FRONTEND_URL=https://pneumatic.example.com
+PNEUMATIC_FILES_URL=https://pneumatic.example.com/files
+PUBLIC_URL=https://mcp.example.com
+TOKEN_SECRET=<output of openssl rand -hex 32>
+MCP_TRANSPORT=http
+HOST=0.0.0.0
+OAUTH_REPLAY_FILE=/state/replay.json
+OAUTH_REPLAY_CREATE_ON_EMPTY_VOLUME=true
+```
+
+The image has no entrypoint of its own, so pass the one that creates the replay file on a fresh volume together with the start command:
 
 ```bash
 docker build -t pneumatic-mcp:local .
@@ -109,7 +123,8 @@ docker run -d --name pneumatic-mcp --restart unless-stopped \
   --env-file .env \
   -v pneumatic-mcp-state:/state \
   -p 127.0.0.1:3000:3000 \
-  pneumatic-mcp:local
+  --entrypoint /app/mcp-entrypoint.sh \
+  pneumatic-mcp:local node dist/index.js
 ```
 
 Put a TLS reverse proxy in front of `127.0.0.1:3000`. Forward `/mcp` and its subpaths. Forward public OAuth discovery requests either unchanged or internally rewritten from `/.well-known/oauth-*` to `/mcp/.well-known/oauth-*`, as in the bundled [MCP proxy location](../nginx/includes/location_mcp.conf). Preserve `Host`, set trusted forwarding headers, disable response buffering and allow request bodies of at least 26 MiB. Keep upload-token paths out of access logs. `PUBLIC_URL` must match the externally reachable origin.
@@ -180,13 +195,28 @@ Use Node.js **22.12+** (Node 24 is used by the Docker image) and npm. Run from t
 ```bash
 cd mcp
 npm ci
-cp .env.example .env
 openssl rand -hex 32
 mkdir -p .state
 touch .state/replay.json
 ```
 
-For this first local setup, paste the generated secret into `.env` as `TOKEN_SECRET`. The example targets a local Pneumatic stack: API at `http://localhost:8001`, web app at `http://localhost`, files at `http://localhost/files`, connector at `http://localhost:3000`. Change these addresses for another installation. Keep the existing replay file on subsequent starts.
+Create `mcp/.env`, pasting the generated secret as `TOKEN_SECRET`:
+
+```dotenv
+BACKEND_PRIVATE_URL=http://localhost:8001
+PNEUMATIC_FILES_URL=http://localhost/files
+FRONTEND_URL=http://localhost
+PNEUMATIC_API_KEY=
+MCP_TRANSPORT=http
+HOST=127.0.0.1
+PUBLIC_URL=http://localhost:3000
+TOKEN_SECRET=<output of openssl rand -hex 32>
+OAUTH_REPLAY_FILE=./.state/replay.json
+OAUTH_ALLOWED_REDIRECT_HOSTS=claude.ai,claude.com,www.cursor.com,localhost,127.0.0.1,[::1]
+TRUST_PROXY=loopback,uniquelocal
+```
+
+The example targets a local Pneumatic stack: API at `http://localhost:8001`, web app at `http://localhost`, files at `http://localhost/files`, connector at `http://localhost:3000`. Change these addresses for another installation. Keep the existing replay file on subsequent starts.
 
 Start with file watching and explicit env loading:
 
