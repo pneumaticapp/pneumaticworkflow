@@ -6823,7 +6823,7 @@ def test_run__kickoff_fieldset_sum_all_empty_not_required__ok(
     api_client,
 ):
 
-    """ Sum validation skipped for empty not-required. """
+    """Empty non-required fields skip sum validation."""
 
     # arrange
     account = create_test_account()

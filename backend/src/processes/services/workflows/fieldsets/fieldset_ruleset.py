@@ -196,8 +196,9 @@ class FieldSetRuleSetService(BaseModelService):
                 try:
                     total += Decimal(field.value)
                 except (ValueError, TypeError, DecimalException):
-                    # Skipping the value lets the sum match on a partial set.
-                    raise FieldsetServiceException(MSG_FS_0003) from None
+                    raise FieldsetServiceException(
+                        MSG_FS_0003,
+                    ) from None
                 values_exists = True
         return total, values_exists
 

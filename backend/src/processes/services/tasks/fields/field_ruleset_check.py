@@ -414,7 +414,12 @@ class FieldRuleCheckService:
         fields_by_api_name: Dict[str, TaskField],
     ):
 
-        """ Raise FieldRuleCheckServiceException if validation fails. """
+        """ Raise FieldRuleCheckServiceException if validation fails.
+            Non-required fields with no value are skipped: validators
+            only apply when the user actually filled the field. """
+
+        if not self.field.is_required and not self.field.value:
+            return
 
         is_satisfied = self._check_ruleset_condition(
             ruleset,
