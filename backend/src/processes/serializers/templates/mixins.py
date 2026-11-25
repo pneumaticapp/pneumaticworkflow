@@ -12,6 +12,7 @@ from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
 from src.processes.models.templates.fieldset import FieldsetTemplate
+from src.generics.exceptions import BaseServiceException
 from src.processes.services.fieldsets.fieldset import (
     FieldSetTemplateService,
 )
@@ -357,6 +358,11 @@ class FieldsetMixin:
                             title=fieldset_data.get('title'),
                             description=fieldset_data.get('description'),
                         )
+                except BaseServiceException as ex:
+                    raise_validation_error(
+                        api_name=fieldset_api_name,
+                        message=ex.message,
+                    )
                 except IntegrityError:
                     step_name = 'Kickoff' if kickoff else task.name
                     raise_validation_error(
