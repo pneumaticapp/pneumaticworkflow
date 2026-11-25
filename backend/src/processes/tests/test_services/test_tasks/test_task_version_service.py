@@ -3543,3 +3543,120 @@ def test_update_from_version__no_fieldsets__skip(mocker):
 
     # assert
     update_fieldsets_mock.assert_not_called()
+
+
+
+def test__update_field__preserves_runtime_is_hidden():
+
+    """ Version update does not overwrite runtime is_hidden. """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+
+    # create field with is_hidden=True
+    field = TaskField.objects.create(
+        task=task,
+        workflow=workflow,
+        account=user.account,
+        api_name='field-1',
+        name='Test Field',
+        description='Test description',
+        type=FieldType.STRING,
+        is_required=False,
+        is_hidden=True,
+        order=1,
+    )
+
+    # simulate runtime show-rule revealing the field
+    field.is_hidden = False
+    field.save(update_fields=['is_hidden'])
+
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    field_data = {
+        'api_name': 'field-1',
+        'name': 'Test Field updated',
+        'description': 'Updated description',
+        'type': FieldType.STRING,
+        'is_required': False,
+        'is_hidden': True,
+        'order': 1,
+        'dataset_id': None,
+    }
+
+    # act — version update brings is_hidden=True in template
+    field, created = service._update_field(field_data=field_data)
+
+    # assert — runtime is_hidden preserved, name updated
+    assert created is False
+    assert field.is_hidden is False
+    assert field.name == 'Test Field updated'
+
+
+def test__update_field__fieldset__preserves_runtime_is_hidden():
+
+    """
+    Version update with fieldset does not overwrite runtime is_hidden.
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fs-1',
+    )
+    fieldset.fields.all().delete()
+
+    field = TaskField.objects.create(
+        fieldset=fieldset,
+        workflow=workflow,
+        account=user.account,
+        api_name='field-1',
+        name='Hidden field',
+        description='',
+        type=FieldType.STRING,
+        is_required=False,
+        is_hidden=True,
+        order=1,
+    )
+
+    # simulate runtime show-rule revealing the field
+    field.is_hidden = False
+    field.save(update_fields=['is_hidden'])
+
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    field_data = {
+        'api_name': 'field-1',
+        'name': 'Hidden field updated',
+        'description': 'Updated desc',
+        'type': FieldType.STRING,
+        'is_required': False,
+        'is_hidden': True,
+        'order': 1,
+        'dataset_id': None,
+    }
+
+    # act
+    field, created = service._update_field(
+        field_data=field_data,
+        fieldset=fieldset,
+    )
+
+    # assert — runtime is_hidden preserved, name updated
+    assert created is False
+    assert field.is_hidden is False
+    assert field.name == 'Hidden field updated'
