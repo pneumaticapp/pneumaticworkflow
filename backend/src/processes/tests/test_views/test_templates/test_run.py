@@ -46,7 +46,7 @@ from src.processes.messages.workflow import (
     MSG_PW_0028,
     MSG_PW_0030,
     MSG_PW_0031,
-    MSG_PW_0092,
+    MSG_PW_0094,
 )
 from src.processes.models.templates.conditions import (
     ConditionTemplate,
@@ -6396,7 +6396,7 @@ def test_run__kickoff_field_ruleset_validator_no_message__default_msg(
     api_client,
 ):
 
-    """ Validator without message uses default MSG_PW_0092. """
+    """ Validator without message uses default MSG_PW_0094. """
 
     # arrange
     account = create_test_account()
@@ -6466,7 +6466,7 @@ def test_run__kickoff_field_ruleset_validator_no_message__default_msg(
         == ErrorCode.VALIDATION_ERROR
     )
     assert (
-        response.data['message'] == str(MSG_PW_0092)
+        response.data['message'] == str(MSG_PW_0094)
     )
     assert not Workflow.objects.filter(
         template=template,

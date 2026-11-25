@@ -13,7 +13,7 @@ from src.processes.enums import (
 from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
 from src.processes.messages.workflow import (
-    MSG_PW_0092,
+    MSG_PW_0094,
 )
 from src.processes.models.workflows.fields import (
     FieldRuleGroupAnd,
@@ -796,7 +796,7 @@ class TestFieldRuleCheckService:
             )
 
         assert exc_info.value.field_api_name == 'age-field'
-        assert exc_info.value.message == MSG_PW_0092
+        assert exc_info.value.message == MSG_PW_0094
 
     def test_validator_rule__hidden_field__skipped(self):
         # arrange

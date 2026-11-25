@@ -15,7 +15,7 @@ from src.processes.enums import (
     FieldType,
 )
 from src.processes.messages.workflow import (
-    MSG_PW_0092,
+    MSG_PW_0094,
 )
 from src.processes.models.workflows.fields import (
     FieldRuleGroupAnd,
@@ -428,7 +428,7 @@ class FieldRuleCheckService:
         if not is_satisfied:
             raise FieldRuleCheckServiceException(
                 field_api_name=self.field.api_name,
-                message=ruleset.message or MSG_PW_0092,
+                message=ruleset.message or MSG_PW_0094,
             )
 
     def apply_rulesets(
