@@ -13,6 +13,7 @@ from src.processes.messages.fieldset import (
     MSG_FS_0018,
     MSG_FS_0019,
     MSG_FS_0020,
+    MSG_FS_0021,
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.fieldset import (
@@ -542,7 +543,7 @@ def test_validate__and_logic__one_fails__raises():
     with pytest.raises(FieldsetServiceException) as ex:
         service.validate()
 
-    assert ex.value.message == MSG_FS_0012('60, 100')
+    assert ex.value.message == MSG_FS_0021
 
 
 def test_validate__required_empty_field__sum_zero__ok():
@@ -1665,7 +1666,7 @@ def test_validate__non_required_blank_field_skipped__ok():
 
 def test_validate__mixed_ops_failed__raises_fallback():
 
-    """ Mixed operators fall back to MSG_FS_0012 """
+    """ Mixed operators fall back to MSG_FS_0021. """
 
     # arrange
     account = create_test_account()
@@ -1725,7 +1726,7 @@ def test_validate__mixed_ops_failed__raises_fallback():
     with pytest.raises(FieldsetServiceException) as ex:
         service.validate()
 
-    assert ex.value.message == MSG_FS_0012('100, 200')
+    assert ex.value.message == MSG_FS_0021
 
 
 def test_validate__sum_gt_zero__empty_non_required__skipped():

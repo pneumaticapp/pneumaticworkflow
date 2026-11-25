@@ -14,6 +14,7 @@ from src.processes.messages.fieldset import (
     MSG_FS_0018,
     MSG_FS_0019,
     MSG_FS_0020,
+    MSG_FS_0021,
 )
 from src.processes.models.templates.fieldset import (
     FieldSetTemplateRuleGroupAnd,
@@ -225,7 +226,9 @@ class FieldSetRuleSetService(BaseModelService):
             return self.instance.message
 
         operators = {item.operator for item in all_ands}
-        operator = operators.pop() if len(operators) == 1 else None
+        if len(operators) != 1:
+            return MSG_FS_0021
+        operator = operators.pop()
         single_msg, multi_msg = self.OPERATOR_MESSAGE_MAP.get(
             operator, (MSG_FS_0002, MSG_FS_0012),
         )
