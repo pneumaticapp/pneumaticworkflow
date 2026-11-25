@@ -2,6 +2,8 @@ import pytest
 
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
+    FieldRuleOperator,
+    FieldRuleType,
     FieldSetLayout,
     FieldSetRuleOperator,
     FieldType,
@@ -10,6 +12,9 @@ from src.processes.enums import (
 from src.processes.messages import fieldset as fs_messages
 from src.processes.models.templates.fields import (
     FieldTemplate,
+    FieldTemplateRuleGroupAnd,
+    FieldTemplateRuleGroupOr,
+    FieldTemplateRuleSet,
     FieldTemplateSelection,
 )
 from src.processes.models.templates.fieldset import (
@@ -1841,6 +1846,93 @@ def test__replace_api_names__original_not_mutated__ok(mocker):
     assert shared_fieldset_data['api_name'] == 'old-fs'
     assert shared_fieldset_data['fields'][0]['api_name'] == old_field_api
     assert create_api_name_mock.call_count == 2
+
+
+def test__replace_api_names__field_rulesets_cross_ref__ok(mocker):
+
+    """
+    Field-level Show rulesets referencing another field within the same
+    fieldset get their field api_name remapped correctly.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    shared_fieldset_data = {
+        'api_name': 'old-fs',
+        'fields': [
+            {
+                'api_name': 'old-field-trigger',
+                'name': 'Trigger',
+                'selections': [],
+                'rulesets': [],
+            },
+            {
+                'api_name': 'old-field-secret',
+                'name': 'Secret',
+                'selections': [],
+                'rulesets': [
+                    {
+                        'api_name': 'old-ruleset-1',
+                        'name': 'Show when trigger',
+                        'type': FieldRuleType.SHOW,
+                        'groups_or': [
+                            {
+                                'api_name': 'old-group-or-1',
+                                'groups_and': [
+                                    {
+                                        'api_name': 'old-group-and-1',
+                                        'field': 'old-field-trigger',
+                                        'operator': (
+                                            FieldRuleOperator.EQUAL
+                                        ),
+                                        'value': 'show',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+        'rulesets': [],
+    }
+    new_fs = 'new-fs'
+    new_trigger = 'new-field-trigger'
+    new_secret = 'new-field-secret'
+    new_ruleset = 'new-ruleset-1'
+    new_group_or = 'new-group-or-1'
+    new_group_and = 'new-group-and-1'
+    mocker.patch(
+        'src.processes.services.fieldsets.fieldset.create_api_name',
+        side_effect=[
+            new_fs,
+            new_trigger,
+            new_secret,
+            new_ruleset,
+            new_group_or,
+            new_group_and,
+        ],
+    )
+
+    # act
+    result = service._replace_api_names(
+        shared_fieldset_data=shared_fieldset_data,
+    )
+
+    # assert — field reference remapped from old to new
+    secret_field = result['fields'][1]
+    group_and = (
+        secret_field['rulesets'][0]['groups_or'][0]['groups_and'][0]
+    )
+    assert group_and['field'] == new_trigger
+    assert group_and['api_name'] == new_group_and
+    assert secret_field['api_name'] == new_secret
 
 
 def test__get_new_fieldset_data__default_params__ok(mocker):
