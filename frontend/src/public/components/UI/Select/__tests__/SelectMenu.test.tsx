@@ -59,4 +59,58 @@ describe('SelectMenu', () => {
 
     expect(onChange).not.toHaveBeenCalled();
   });
+
+  describe('isDisabled behavior', () => {
+    const buildSelectMenuElement = (isDisabled?: boolean) => (
+      <IntlProvider locale="en" messages={enMessages}>
+        <SelectMenu
+          activeValue={ETaskListSorting.DateDesc}
+          values={Object.values(ETaskListSorting)}
+          isDisabled={isDisabled}
+          onChange={onChange}
+        />
+      </IntlProvider>
+    );
+
+    it('disables the toggle button when isDisabled is true', () => {
+      render(buildSelectMenuElement(true));
+
+      expect(screen.getByRole('button', { name: ACTIVE_LABEL })).toBeDisabled();
+    });
+
+    it('does not open the menu via keyboard when isDisabled is true', () => {
+      render(buildSelectMenuElement(true));
+      const toggleButton = screen.getByRole('button', { name: ACTIVE_LABEL });
+
+      userEvent.tab();
+      userEvent.keyboard('{enter}');
+
+      expect(toggleButton).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('opens the menu via keyboard when isDisabled is false', () => {
+      render(buildSelectMenuElement(false));
+      const toggleButton = screen.getByRole('button', { name: ACTIVE_LABEL });
+
+      expect(toggleButton).toBeEnabled();
+      userEvent.tab();
+      userEvent.keyboard('{enter}');
+
+      expect(toggleButton).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('resets open menu state when isDisabled becomes true', () => {
+      const { rerender } = render(buildSelectMenuElement(false));
+      const toggleButton = screen.getByRole('button', { name: ACTIVE_LABEL });
+
+      userEvent.click(toggleButton);
+      expect(toggleButton).toHaveAttribute('aria-expanded', 'true');
+
+      rerender(buildSelectMenuElement(true));
+      expect(toggleButton).toHaveAttribute('aria-expanded', 'false');
+
+      rerender(buildSelectMenuElement(false));
+      expect(toggleButton).toHaveAttribute('aria-expanded', 'false');
+    });
+  });
 });
