@@ -257,12 +257,11 @@ Set `PNEUMATIC_API_KEY` in `mcp/.env` and build the server. Configure the client
 Run checks from `mcp/`:
 
 ```bash
-npm run lint
-npm run format:check
-npm run typecheck
-npm test
+npm run check
 npm run build
 ```
+
+`npm run check` runs `npm run lint` (formatting check, oxlint, typecheck) and then `npm test`. `npm run lint:fix` applies formatting and autofixable lint rules.
 
 Tests use the fake API in `test/fakePneumatic.ts` and MCP client helpers in `test/harness.ts`. Add tools in `src/tools/`, assign their group in `src/tools/index.ts`, supply a title and annotations, and cover the behavior through the harness. `test/catalog.test.ts` validates catalog metadata; `test/http.test.ts` covers HTTP and OAuth.
 
