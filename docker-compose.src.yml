@@ -674,7 +674,7 @@ services:
     entrypoint: ["/app/mcp-entrypoint.sh"]
     command: node dist/index.js
     volumes:
-      - ./mcp/state:/state
+      - ./mcp/.state:/state
     expose:
       - 3000
     networks:
@@ -714,4 +714,3 @@ networks:
 volumes:
   backend-staticfiles:
   backend-socket:
-  mcp-state:
