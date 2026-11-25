@@ -13,7 +13,12 @@ from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
 )
-from src.processes.enums import FieldRuleOperator, FieldRuleType, FieldType
+from src.processes.enums import (
+    FieldRuleOperator,
+    FieldRuleType,
+    FieldRuleValueType,
+    FieldType,
+)
 from src.processes.messages.template import (
     MSG_PT_0075,
     MSG_PT_0079,
@@ -47,12 +52,14 @@ class FieldTemplateRuleGroupAndSerializer(
             'field',
             'operator',
             'value',
+            'value_type',
         )
         create_or_update_fields = {
             'api_name',
             'field',
             'operator',
             'value',
+            'value_type',
             'group_or',
             'template',
             'account',
@@ -90,6 +97,15 @@ class FieldTemplateRuleGroupAndSerializer(
         example='yes',
         help_text=(
             'Value the source field is compared against.'
+        ),
+    )
+    value_type = DocChoiceField(
+        choices=FieldRuleValueType.CHOICES,
+        required=False,
+        allow_null=True,
+        help_text=(
+            'How to interpret `value` for a User field: '
+            '"user" or "group".'
         ),
     )
 
