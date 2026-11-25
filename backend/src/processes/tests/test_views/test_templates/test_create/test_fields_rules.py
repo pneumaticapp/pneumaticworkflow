@@ -3,6 +3,7 @@ import pytest
 from src.processes.enums import (
     FieldRuleOperator,
     FieldRuleType,
+    FieldRuleValueType,
     FieldType,
     OwnerRole,
     OwnerType,
@@ -15,7 +16,9 @@ from src.processes.models.templates.fields import (
 )
 from src.processes.messages.template import MSG_PT_0079, MSG_PT_0080
 from src.processes.tests.fixtures import (
-    create_test_account, create_test_owner,
+    create_test_account,
+    create_test_group,
+    create_test_owner,
 )
 
 pytestmark = pytest.mark.django_db
@@ -670,6 +673,215 @@ def test_create_task_field_rules__validator_types_with_selections__ok(
     assert group_and_data['field'] is None
     assert group_and_data['operator'] == operator
     assert group_and_data['value'] == value
+
+
+def test_create_task_field_rules__group_value_type__ok(api_client):
+
+    """ User-field rule keeps group id and value_type. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    group = create_test_group(account=account)
+    source_api_name = 'user-field'
+    target_api_name = 'target-field'
+    group_id = str(group.id)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        '/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fields': [
+                        {
+                            'type': FieldType.USER,
+                            'name': 'User field',
+                            'order': 1,
+                            'api_name': source_api_name,
+                            'is_required': True,
+                        },
+                        {
+                            'type': FieldType.STRING,
+                            'name': 'Target field',
+                            'order': 2,
+                            'api_name': target_api_name,
+                            'rulesets': [
+                                {
+                                    'name': 'Show when group matches',
+                                    'type': FieldRuleType.SHOW,
+                                    'order': 1,
+                                    'groups_or': [
+                                        {
+                                            'groups_and': [
+                                                {
+                                                    'field': source_api_name,
+                                                    'operator': (
+                                                        FieldRuleOperator.EQUAL
+                                                    ),
+                                                    'value': group_id,
+                                                    'value_type': (
+                                                        FieldRuleValueType
+                                                        .GROUP
+                                                    ),
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    fields = response.data['tasks'][0]['fields']
+    field_data = next(
+        item for item in fields
+        if item['api_name'] == target_api_name
+    )
+    group_and_data = (
+        field_data['rulesets'][0]['groups_or'][0]['groups_and'][0]
+    )
+    assert group_and_data['field'] == source_api_name
+    assert group_and_data['operator'] == FieldRuleOperator.EQUAL
+    assert group_and_data['value'] == group_id
+    assert group_and_data['value_type'] == FieldRuleValueType.GROUP
+
+    group_and = FieldTemplateRuleGroupAnd.objects.get(
+        api_name=group_and_data['api_name'],
+    )
+    assert group_and.value == group_id
+    assert group_and.value_type == FieldRuleValueType.GROUP
+
+
+def test_create_kickoff_field_rules__group_value_type__ok(api_client):
+
+    """ Kickoff user-field rule keeps group id and value_type. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    group = create_test_group(account=account)
+    source_api_name = 'user-field'
+    target_api_name = 'target-field'
+    group_id = str(group.id)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        '/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'fields': [
+                    {
+                        'type': FieldType.USER,
+                        'name': 'User field',
+                        'order': 1,
+                        'api_name': source_api_name,
+                        'is_required': True,
+                    },
+                    {
+                        'type': FieldType.STRING,
+                        'name': 'Target field',
+                        'order': 2,
+                        'api_name': target_api_name,
+                        'rulesets': [
+                            {
+                                'name': 'Show when group matches',
+                                'type': FieldRuleType.SHOW,
+                                'order': 1,
+                                'groups_or': [
+                                    {
+                                        'groups_and': [
+                                            {
+                                                'field': source_api_name,
+                                                'operator': (
+                                                    FieldRuleOperator.EQUAL
+                                                ),
+                                                'value': group_id,
+                                                'value_type': (
+                                                    FieldRuleValueType.GROUP
+                                                ),
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    fields = response.data['kickoff']['fields']
+    field_data = next(
+        item for item in fields
+        if item['api_name'] == target_api_name
+    )
+    group_and_data = (
+        field_data['rulesets'][0]['groups_or'][0]['groups_and'][0]
+    )
+    assert group_and_data['field'] == source_api_name
+    assert group_and_data['operator'] == FieldRuleOperator.EQUAL
+    assert group_and_data['value'] == group_id
+    assert group_and_data['value_type'] == FieldRuleValueType.GROUP
+
+    group_and = FieldTemplateRuleGroupAnd.objects.get(
+        api_name=group_and_data['api_name'],
+    )
+    assert group_and.value == group_id
+    assert group_and.value_type == FieldRuleValueType.GROUP
+
+
+
 def test_create__date_show_rule_cross_field__ok(api_client):
 
     """ Show rule from a Date field to another field accepts
