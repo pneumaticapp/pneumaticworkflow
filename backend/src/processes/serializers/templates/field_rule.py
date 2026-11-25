@@ -106,6 +106,11 @@ class FieldTemplateRuleGroupAndSerializer(
 
     def additional_validate_value(self, value, data: Dict[str, Any]):
         field = self.context.get('field')
+        source_api = data.get('field')
+        if source_api and (
+            not field or source_api != field.api_name
+        ):
+            return
         if field and field.type == FieldType.DATE and value:
             try:
                 datetime.fromtimestamp(int(value), tz=tz.utc)
