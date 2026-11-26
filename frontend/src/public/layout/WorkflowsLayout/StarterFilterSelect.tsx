@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
-import { Avatar, FilterSelect } from '../../components/UI';
+import { FilterSelect, UserSelectOption } from '../../components/UI';
 import {
   cancelCurrentPerformersCounters,
   cancelTemplateTasksCounters,
@@ -40,12 +40,7 @@ export function StarterFilterSelect() {
       const workflowsCount = workflowStartersCounters.find(({ sourceId }) => sourceId === user.id)?.workflowsCount || 0;
       return {
         ...user,
-        displayName: (
-          <div className={styles['user']}>
-            <Avatar user={user} className={styles['user-avatar']} size="sm" />
-            <span className={styles['user-name']}>{userFullName}</span>
-          </div>
-        ),
+        displayName: <UserSelectOption user={user} name={userFullName} />,
         ...(workflowsCount > 0 && { count: workflowsCount }),
         searchByText: userFullName,
       };

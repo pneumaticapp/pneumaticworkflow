@@ -9,10 +9,9 @@ import { EExtraFieldType } from '../../../../types/template';
 import { FilterSelect } from '../../../UI';
 import { DatePickerCustom } from '../../../UI/form/DatePicker';
 import { toDate, toTspDate } from '../../../../utils/dateTime';
-import { getUsers } from '../../../../redux/selectors/user';
-import { getNotDeletedUsers, getUserFullName } from '../../../../utils/users';
 import type { IFieldRuleValueInputProps } from './types';
 import { SELECTION_FIELD_TYPES } from './constants';
+import { RuleUserValueSelect } from './RuleUserValueSelect';
 import { loadDatasetForMap } from '../../../../redux/datasets/slice';
 import { getDatasetFromMap } from '../../../../redux/selectors/datasets';
 import type { RootState } from '../../../../redux/store';
@@ -23,6 +22,7 @@ import styles from '../FieldsetRulesetsList/FieldsetRulesets.css';
 export const RuleValueInput = ({
   fieldType,
   value,
+  valueType,
   selections,
   datasetId,
   isReadOnly,
@@ -30,7 +30,6 @@ export const RuleValueInput = ({
 }: IFieldRuleValueInputProps) => {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const users = useSelector(getUsers) || [];
 
   const isSelectionField = Boolean(fieldType && SELECTION_FIELD_TYPES.includes(fieldType));
 
@@ -50,19 +49,11 @@ export const RuleValueInput = ({
     setIsTouched(false);
   }, [value, fieldType]);
 
-  const isUserField = fieldType === EExtraFieldType.User;
-
   const isDatasetLoading = Boolean(datasetId && !datasetFromMap);
 
   const dropdownOptions = useMemo(() => {
-    if (!isSelectionField && !isUserField) {
+    if (!isSelectionField) {
       return [];
-    }
-    if (isUserField) {
-      return getNotDeletedUsers(users).map((user) => ({
-        apiName: String(user.id),
-        name: getUserFullName(user),
-      }));
     }
     if (datasetId) {
       const options = (datasetFromMap?.items || []).map((item) => ({
@@ -81,29 +72,30 @@ export const RuleValueInput = ({
         name: optionValue,
       };
     });
-  }, [isSelectionField, isUserField, users, datasetId, datasetFromMap?.items, selections, value]);
+  }, [isSelectionField, datasetId, datasetFromMap?.items, selections, value]);
 
   if (fieldType === EExtraFieldType.File) {
     return null;
   }
 
-  if (isSelectionField || isUserField) {
-    const selectedOption = dropdownOptions.find((option) => option.apiName === value);
-    const selectedLabel = selectedOption?.name || '';
+  if (fieldType === EExtraFieldType.User) {
+    return <RuleUserValueSelect value={value} valueType={valueType} isReadOnly={isReadOnly} onChange={onChange} />;
+  }
+
+  if (isSelectionField) {
+    const selectedLabel = dropdownOptions.find((option) => option.apiName === value)?.name || '';
     const placeholderText = formatMessage({ id: 'templates.conditions.value-placeholder' });
 
     return (
       <div className={styles['rule-value-select']}>
-        <FilterSelect<'apiName', 'name', { apiName: string; name: string }>
+        <FilterSelect
           optionIdKey="apiName"
           optionLabelKey="name"
           options={dropdownOptions}
           selectedOption={value}
           isLoading={isDatasetLoading}
           onChange={(key) => {
-            if (key) {
-              onChange(String(key));
-            }
+            if (key) onChange(String(key));
           }}
           resetFilter={() => {}}
           placeholderText={placeholderText}

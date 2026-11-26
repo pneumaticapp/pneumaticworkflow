@@ -1,4 +1,12 @@
-import type { IBaseRuleGroupAnd, IBaseRuleSet, ERuleCombinator, EFieldRuleType } from '../../../../types/fieldset';
+import type { ReactNode } from 'react';
+import type { TAvatarUser } from '../../../UI/Avatar/types';
+import type {
+  IBaseRuleGroupAnd,
+  IBaseRuleSet,
+  ERuleCombinator,
+  EFieldRuleType,
+  EFieldRuleValueType,
+} from '../../../../types/fieldset';
 import type { EExtraFieldType, IExtraFieldSelection } from '../../../../types/template';
 
 export type IFieldRuleBaseHandlers = {
@@ -81,13 +89,36 @@ export type IRuleItemOperatorValueProps = {
   updateRule: IFieldRuleBaseHandlers['updateRule'];
 };
 
+export type TUserRuleDropdownOption = {
+  apiName: string;
+  name: ReactNode;
+  searchByText: string;
+  rawValue: string;
+  valueType: EFieldRuleValueType;
+};
+
+export type TBuildUserDropdownOptionParams = {
+  id: number;
+  displayName: string;
+  valueType: EFieldRuleValueType;
+  avatarUser: TAvatarUser;
+};
+
+export type IRuleUserValueSelectProps = {
+  value: string;
+  valueType?: EFieldRuleValueType | null;
+  isReadOnly?: boolean;
+  onChange: (value: string, valueType: EFieldRuleValueType) => void;
+};
+
 export type IFieldRuleValueInputProps = {
   fieldType?: EExtraFieldType;
   value: string;
+  valueType?: EFieldRuleValueType | null;
   selections?: IExtraFieldSelection[] | string[];
   datasetId?: number | null;
   isReadOnly?: boolean;
-  onChange: (value: string) => void;
+  onChange: (value: string, valueType?: EFieldRuleValueType | null) => void;
 };
 
 export type IRuleOperatorSelectProps = {

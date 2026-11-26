@@ -23,7 +23,7 @@ import { getRegularGroupsList } from '../../redux/selectors/groups';
 import { getAccountsUsers } from '../../redux/selectors/accounts';
 
 import { getActiveUsers, getUserFullName } from '../../utils/users';
-import { Avatar, FilterSelect } from '../../components/UI';
+import { FilterSelect, UserSelectOption } from '../../components/UI';
 import { PerformerFilterIcon } from '../../components/icons';
 import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
 import { canFilterByTemplateStep } from '../../utils/workflows/filters';
@@ -57,12 +57,7 @@ export function PerformerFilterSelect() {
         return {
           ...group,
           type: ETemplateOwnerType.UserGroup,
-          displayName: (
-            <div className={styles['user']}>
-              <Avatar user={{ type: ETemplateOwnerType.UserGroup }} size="sm" />
-              <span className={styles['user-name']}>{group.name}</span>
-            </div>
-          ),
+          displayName: <UserSelectOption user={{ type: ETemplateOwnerType.UserGroup }} name={group.name} />,
           ...(count > 0 && { count }),
           searchByText: group.name,
         };
@@ -79,12 +74,7 @@ export function PerformerFilterSelect() {
         const count = performersCountersMap.get(user.id) || 0;
         return {
           ...user,
-          displayName: (
-            <div className={styles['user']}>
-              <Avatar user={user} size="sm" />
-              <span className={styles['user-name']}>{userFullName}</span>
-            </div>
-          ),
+          displayName: <UserSelectOption user={user} name={userFullName} />,
           ...(count > 0 && { count }),
           searchByText: userFullName,
         };

@@ -63,18 +63,3 @@
 .view-switch-tab {
   padding: 0.6rem 1.6rem;
 }
-
-.user {
-  display: flex;
-  align-items: center;
-}
-
-.user-avatar {
-  flex-shrink: 0;
-}
-
-.user-name {
-  margin: 0 0.8rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}

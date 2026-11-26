@@ -19,7 +19,7 @@ export const RuleItemFieldOperatorValue = ({
   updateRule,
 }: IRuleItemFieldOperatorValueProps) => {
   const { formatMessage } = useIntl();
-  const { apiName: groupAndApiName, operator, value, field: fieldApiName } = groupAndRule;
+  const { apiName: groupAndApiName, operator, value, valueType, field: fieldApiName } = groupAndRule;
 
   const fieldPlaceholderText = formatMessage({ id: 'fieldsets.field-rule.select-field-placeholder' });
 
@@ -45,6 +45,7 @@ export const RuleItemFieldOperatorValue = ({
                 field: String(key),
                 operator: null,
                 value: '',
+                ...(valueType && { valueType: null }),
               },
             });
           }
@@ -70,7 +71,7 @@ export const RuleItemFieldOperatorValue = ({
             groupAndApiName,
             ruleChanges: {
               operator: newOperator,
-              ...(isOperatorWithoutValue(newOperator) ? { value: '' } : {}),
+              ...(isOperatorWithoutValue(newOperator) ? { value: '', ...(valueType && { valueType: null }) } : {}),
             },
           });
         }}
@@ -80,14 +81,18 @@ export const RuleItemFieldOperatorValue = ({
         <RuleValueInput
           fieldType={selectedFieldOption?.type}
           value={value}
+          valueType={valueType}
           selections={selectedFieldOption?.selections}
           datasetId={selectedFieldOption?.datasetId}
           isReadOnly={isReadOnly}
-          onChange={(newValue) =>
+          onChange={(selectedValue, selectedValueType) =>
             updateRule({
               groupOrApiName,
               groupAndApiName,
-              ruleChanges: { value: newValue },
+              ruleChanges: {
+                value: selectedValue,
+                ...(selectedValueType !== undefined && { valueType: selectedValueType }),
+              },
             })
           }
         />

@@ -1,10 +1,16 @@
 import type { IExtraField } from './template';
 
+export enum EFieldRuleValueType {
+  User = 'user',
+  Group = 'group',
+}
+
 export interface IBaseRuleGroupAnd {
   apiName: string;
   field?: string | null;
   operator: string | null;
   value: string;
+  valueType?: EFieldRuleValueType | null;
 }
 
 export interface IBaseRuleGroupOr {
@@ -68,12 +74,14 @@ export interface IFieldRuleShowGroupAnd {
   field: string;
   operator: EFieldRuleOperator;
   value: string;
+  valueType?: EFieldRuleValueType | null;
 }
 
 export interface IFieldRuleValidatorGroupAnd {
   apiName: string;
   operator: EFieldRuleOperator | null;
   value: string;
+  valueType?: EFieldRuleValueType | null;
 }
 
 export type IFieldRuleGroupAnd = IFieldRuleShowGroupAnd | IFieldRuleValidatorGroupAnd;

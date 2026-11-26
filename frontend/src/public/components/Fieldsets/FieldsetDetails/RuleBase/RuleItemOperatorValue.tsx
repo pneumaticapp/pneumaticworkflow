@@ -14,7 +14,7 @@ export const RuleItemOperatorValue = ({
   isFieldsetRuleset,
   updateRule,
 }: IRuleItemOperatorValueProps) => {
-  const { apiName: groupAndApiName, operator, value } = groupAndRule;
+  const { apiName: groupAndApiName, operator, value, valueType } = groupAndRule;
 
   const isWithoutValue = isOperatorWithoutValue(operator);
 
@@ -31,7 +31,7 @@ export const RuleItemOperatorValue = ({
             groupAndApiName,
             ruleChanges: {
               operator: newOperator,
-              ...(isOperatorWithoutValue(newOperator) ? { value: '' } : {}),
+              ...(isOperatorWithoutValue(newOperator) ? { value: '', ...(valueType && { valueType: null }) } : {}),
             },
           });
         }}
@@ -41,14 +41,18 @@ export const RuleItemOperatorValue = ({
         <RuleValueInput
           fieldType={fieldType}
           value={value}
+          valueType={valueType}
           selections={selections}
           datasetId={datasetId}
           isReadOnly={isReadOnly}
-          onChange={(newValue) => {
+          onChange={(selectedValue, selectedValueType) => {
             updateRule({
               groupOrApiName,
               groupAndApiName,
-              ruleChanges: { value: newValue },
+              ruleChanges: {
+                value: selectedValue,
+                ...(selectedValueType !== undefined && { valueType: selectedValueType }),
+              },
             });
           }}
         />

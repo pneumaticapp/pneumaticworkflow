@@ -1,0 +1,11 @@
+.user-select-option {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.user-select-option__name {
+  @mixin text-truncate;
+
+  min-width: 0;
+}

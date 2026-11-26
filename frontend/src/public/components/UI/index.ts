@@ -25,3 +25,4 @@ export * from './Dropdown';
 export * from './ShowMore';
 export * from './ReturnLink';
 export * from './ModifyDropdown';
+export * from './UserSelectOption';

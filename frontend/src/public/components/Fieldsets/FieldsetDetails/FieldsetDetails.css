@@ -60,12 +60,11 @@
   transition: border-color 0.2s;
 
   &:focus-within,
-  &:hover:not(:has(:disabled)) {
+  &:hover:not(:has(> button:disabled)) {
     border-color: var(--pneumatic-color-blue);
   }
 
-  &:has(:disabled),
-  &:has(button:disabled),
+  &:has(> button:disabled),
   &[class*='filter-select_disabled'] {
     cursor: default;
     background-color: var(--pneumatic-color-black4);
@@ -132,13 +131,11 @@
   opacity: 0.55;
 }
 
-
 .empty-text {
   color: var(--pneumatic-color-black48);
 
   @mixin text-base;
 }
-
 
 .save-bar {
   display: flex;
@@ -152,7 +149,6 @@
 
   @mixin text-small;
 }
-
 
 .header-skeleton {
   background-color: var(--pneumatic-color-skeleton-gray-bg);
