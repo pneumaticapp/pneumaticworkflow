@@ -1676,6 +1676,7 @@ def test_highlights__task_complete_fieldsets_present__ok(api_client):
     assert fieldset_data['order'] == fieldset.order
     assert fieldset_data['label_position'] == fieldset.label_position
     assert fieldset_data['layout'] == fieldset.layout
+    assert 'rulesets' not in fieldset_data
     fields_data = fieldset_data['fields']
     assert len(fields_data) == 2
     field_2_data = fields_data[0]
@@ -1692,8 +1693,10 @@ def test_highlights__task_complete_fieldsets_present__ok(api_client):
     assert field_2_data['clear_value'] == field_2.clear_value
     assert field_2_data['user_id'] == field_2.user_id
     assert field_2_data['group_id'] == field_2.group_id
+    assert 'rulesets' not in field_2_data
     field_1_data = fields_data[1]
     assert field_1_data['id'] == field_1.id
+    assert 'rulesets' not in field_1_data
 
 
 def test_highlights__task_complete_fieldsets_absent__ok(api_client):
@@ -1801,6 +1804,7 @@ def test_highlights__start_workflow_kickoff_fieldset_present__ok(api_client):
     assert fieldset_data['order'] == fieldset.order
     assert fieldset_data['label_position'] == fieldset.label_position
     assert fieldset_data['layout'] == fieldset.layout
+    assert 'rulesets' not in fieldset_data
     fields_data = fieldset_data['fields']
     assert len(fields_data) == 1
     field_data = fields_data[0]
@@ -1817,6 +1821,7 @@ def test_highlights__start_workflow_kickoff_fieldset_present__ok(api_client):
     assert field_data['clear_value'] == field.clear_value
     assert field_data['user_id'] == field.user_id
     assert field_data['group_id'] == field.group_id
+    assert 'rulesets' not in field_data
 
 
 def test_highlights__start_workflow_kickoff_field_present__ok(api_client):

@@ -5,6 +5,7 @@ import { EInputNameBackgroundColor } from '../../../types/workflow';
 import type { IExtraField } from '../../../types/template';
 import { EExtraFieldMode } from '../../../types/template';
 import { mapFieldsetBindingClientToRuntime } from '../../../utils/mapFieldsetBindingClientToRuntime';
+import type { IFieldRuleSet } from '../../../types/fieldset';
 import { EFieldLabelPosition } from '../../../types/fieldset';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { ExtraFieldIntl } from '../ExtraFields';
@@ -27,6 +28,8 @@ export interface IMergedOutputRowsProps {
   formatMessage: (descriptor: { id: string }) => string;
   innerRef?: React.RefObject<HTMLInputElement>;
   onEditFieldsetTitle: (apiNameBinding: string, title: string) => void;
+  onOpenFieldRules?: (fieldApiName: string, ruleset?: IFieldRuleSet) => void;
+  onDeleteFieldRuleset?: (fieldApiName: string, rulesetApiName: string) => void;
 }
 
 export function MergedOutputRows({
@@ -40,6 +43,8 @@ export function MergedOutputRows({
   formatMessage,
   innerRef,
   onEditFieldsetTitle,
+  onOpenFieldRules,
+  onDeleteFieldRuleset,
 }: IMergedOutputRowsProps) {
   return (
     <>
@@ -65,6 +70,12 @@ export function MergedOutputRows({
               showDropdown
               datasetOptions={datasetOptions}
               labelPosition={EFieldLabelPosition.Top}
+              {...(onOpenFieldRules && {
+                fieldRulesets: row.field.rulesets,
+                onOpenFieldRules: (ruleset) => onOpenFieldRules(row.field.apiName, ruleset),
+                onDeleteFieldRuleset: (rulesetApiName: string) =>
+                  onDeleteFieldRuleset?.(row.field.apiName, rulesetApiName),
+              })}
             />
           );
         }

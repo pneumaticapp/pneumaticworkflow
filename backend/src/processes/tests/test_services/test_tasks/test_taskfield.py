@@ -3,29 +3,29 @@ from django.contrib.auth import get_user_model
 from django.test import override_settings
 
 from src.processes.enums import (
-    FieldSetRuleType,
+    FieldRuleOperator,
+    FieldRuleType,
+    FieldSetRuleOperator,
     FieldType,
     WorkflowEventType,
 )
 from src.processes.messages import workflow as messages
 from src.processes.models.templates.fields import (
     FieldTemplate,
+    FieldTemplateRuleGroupAnd,
+    FieldTemplateRuleGroupOr,
+    FieldTemplateRuleSet,
     FieldTemplateSelection,
 )
-from src.processes.models.templates.fieldset import (
-    FieldsetTemplateRule,
-)
-from src.processes.models.workflows.fieldset import (
-    FieldSetRule,
-)
 from src.processes.models.workflows.fields import (
-    TaskField,
+    FieldRuleSet,
     FieldSelection,
+    TaskField,
 )
 from src.processes.services.tasks.exceptions import (
     TaskFieldException,
 )
-from src.processes.services.tasks.field import (
+from src.processes.services.tasks.fields.field import (
     FieldData,
     TaskFieldService,
 )
@@ -41,7 +41,6 @@ from src.processes.tests.fixtures import (
     create_test_workflow,
     create_test_dataset,
     create_test_fieldset_template,
-    create_test_fieldset,
 )
 from src.storage.models import Attachment
 from src.storage.enums import SourceType, AccessType
@@ -215,7 +214,7 @@ def test_create_instance__task_field__ok(mocker):
     user_id = 123
     group_id = 321
     get_valid_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_value',
         return_value=FieldData(
             value=value,
@@ -276,7 +275,7 @@ def test_create_instance__kickoff_field__ok(mocker):
     value = 'https://john.cena/john.cena'
     markdown_value = '[john.cena](https://john.cena/john.cena)'
     get_valid_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_value',
         return_value=FieldData(
             value=value,
@@ -324,7 +323,7 @@ def test_create_instance__skip_value__ok(mocker):
     user_id = 123
     group_id = 321
     get_valid_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_value',
         return_value=FieldData(
             value=value,
@@ -402,7 +401,7 @@ def test_create_selections__ok(
         return_value=None,
     )
     create_selection_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'SelectionService.create',
     )
 
@@ -463,7 +462,7 @@ def test_create_selections__not_selection_template__skip(mocker):
         return_value=None,
     )
     create_selection_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'SelectionService.create',
     )
 
@@ -868,16 +867,16 @@ def test__create_related__file_type_not_skip__ok(mocker):
         account=account,
     )
     link_new_attachments_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
     create_selections_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._create_selections',
     )
-    link_rules_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
-        'TaskFieldService._link_rules',
+    create_rulesets_mock = mocker.patch(
+        'src.processes.services.tasks.fields.field.'
+        'TaskFieldService._create_rulesets',
     )
     service = TaskFieldService(instance=task_field, user=user)
     raw_value = ['123']
@@ -892,7 +891,11 @@ def test__create_related__file_type_not_skip__ok(mocker):
     # assert
     link_new_attachments_mock.assert_called_once_with(raw_value)
     create_selections_mock.assert_not_called()
-    link_rules_mock.assert_not_called()
+    create_rulesets_mock.assert_called_once_with(
+        field_template,
+        value=raw_value,
+        skip_value=False,
+    )
 
 
 def test__create_related__file_type_skip__skip(mocker):
@@ -921,16 +924,16 @@ def test__create_related__file_type_skip__skip(mocker):
         account=account,
     )
     link_new_attachments_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
     create_selections_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._create_selections',
     )
-    link_rules_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
-        'TaskFieldService._link_rules',
+    create_rulesets_mock = mocker.patch(
+        'src.processes.services.tasks.fields.field.'
+        'TaskFieldService._create_rulesets',
     )
     service = TaskFieldService(instance=task_field, user=user)
 
@@ -944,7 +947,11 @@ def test__create_related__file_type_skip__skip(mocker):
     # assert
     link_new_attachments_mock.assert_not_called()
     create_selections_mock.assert_not_called()
-    link_rules_mock.assert_not_called()
+    create_rulesets_mock.assert_called_once_with(
+        field_template,
+        value=['123'],
+        skip_value=True,
+    )
 
 
 def test__create_related__selection_type__ok(mocker):
@@ -973,16 +980,16 @@ def test__create_related__selection_type__ok(mocker):
         account=account,
     )
     link_new_attachments_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
     create_selections_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._create_selections',
     )
-    link_rules_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
-        'TaskFieldService._link_rules',
+    create_rulesets_mock = mocker.patch(
+        'src.processes.services.tasks.fields.field.'
+        'TaskFieldService._create_rulesets',
     )
     service = TaskFieldService(instance=task_field, user=user)
 
@@ -994,7 +1001,7 @@ def test__create_related__selection_type__ok(mocker):
     # assert
     create_selections_mock.assert_called_once_with(field_template)
     link_new_attachments_mock.assert_not_called()
-    link_rules_mock.assert_not_called()
+    create_rulesets_mock.assert_called_once_with(field_template)
 
 
 def test__create_related__other_type__skip(mocker):
@@ -1023,16 +1030,16 @@ def test__create_related__other_type__skip(mocker):
         account=account,
     )
     link_new_attachments_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
     create_selections_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._create_selections',
     )
-    link_rules_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
-        'TaskFieldService._link_rules',
+    create_rulesets_mock = mocker.patch(
+        'src.processes.services.tasks.fields.field.'
+        'TaskFieldService._create_rulesets',
     )
     service = TaskFieldService(instance=task_field, user=user)
 
@@ -1044,7 +1051,7 @@ def test__create_related__other_type__skip(mocker):
     # assert
     link_new_attachments_mock.assert_not_called()
     create_selections_mock.assert_not_called()
-    link_rules_mock.assert_not_called()
+    create_rulesets_mock.assert_called_once_with(field_template)
 
 
 def test__create_related__with_rules__ok(mocker):
@@ -1058,11 +1065,11 @@ def test__create_related__with_rules__ok(mocker):
         account=account,
         template=template,
         task=task_template,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
     field_template = fieldset_template.fields.first()
-    rule_template = fieldset_template.rules.first()
-    rule_template.fields.add(field_template)
+    ruleset_template = fieldset_template.rulesets.first()
+    ruleset_template.fields.add(field_template)
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
     task_field = TaskField.objects.create(
@@ -1073,16 +1080,16 @@ def test__create_related__with_rules__ok(mocker):
         account=account,
     )
     link_new_attachments_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
     create_selections_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._create_selections',
     )
-    link_rules_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
-        'TaskFieldService._link_rules',
+    create_rulesets_mock = mocker.patch(
+        'src.processes.services.tasks.fields.field.'
+        'TaskFieldService._create_rulesets',
     )
     service = TaskFieldService(instance=task_field, user=user)
     kwargs = {'some': 'data'}
@@ -1096,7 +1103,7 @@ def test__create_related__with_rules__ok(mocker):
     # assert
     link_new_attachments_mock.assert_not_called()
     create_selections_mock.assert_not_called()
-    link_rules_mock.assert_called_once_with(field_template, **kwargs)
+    create_rulesets_mock.assert_called_once_with(field_template, **kwargs)
 
 
 def test_partial_update__ok(mocker):
@@ -1119,7 +1126,7 @@ def test_partial_update__ok(mocker):
     user_id = 123
     group_id = 321
     get_valid_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_value',
         return_value=FieldData(
             value=value,
@@ -1130,7 +1137,7 @@ def test_partial_update__ok(mocker):
         ),
     )
     link_new_attachments_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
     service = TaskFieldService(
@@ -1182,7 +1189,7 @@ def test_partial_update__type_file__ok(mocker):
     clear_value = 'new_file_456.jpg'
     markdown_value = 'File: new_file_456.jpg'
     get_valid_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_value',
         return_value=FieldData(
             value=value,
@@ -1191,7 +1198,7 @@ def test_partial_update__type_file__ok(mocker):
         ),
     )
     link_new_attachments_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
 
@@ -1251,7 +1258,7 @@ def test_partial_update__type_file_null_value__ok(mocker):
     raw_value = None
 
     get_valid_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_value',
         return_value=FieldData(
             value=value,
@@ -1261,7 +1268,7 @@ def test_partial_update__type_file_null_value__ok(mocker):
     )
 
     link_new_attachments_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
 
@@ -1320,7 +1327,7 @@ def test_remove_unused_attachments__event_linked_attachment_preserved(
         event=comment_event,
     )
     get_valid_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_value',
         return_value=FieldData(
             value='',
@@ -1329,11 +1336,11 @@ def test_remove_unused_attachments__event_linked_attachment_preserved(
         ),
     )
     link_new_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
     create_selections_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._create_selections',
     )
     service = TaskFieldService(
@@ -1382,7 +1389,7 @@ def test_remove_unused_attachments__field_only_attachment_deleted(mocker):
         event=None,
     )
     get_valid_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_value',
         return_value=FieldData(
             value='',
@@ -1391,11 +1398,11 @@ def test_remove_unused_attachments__field_only_attachment_deleted(mocker):
         ),
     )
     link_new_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
     create_selections_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._create_selections',
     )
     service = TaskFieldService(
@@ -1449,7 +1456,7 @@ def test_remove_unused_attachments__comment_attachment_unchanged(mocker):
         event=comment_event,
     )
     get_valid_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_value',
         return_value=FieldData(
             value='',
@@ -1458,7 +1465,7 @@ def test_remove_unused_attachments__comment_attachment_unchanged(mocker):
         ),
     )
     link_new_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
     service = TaskFieldService(
@@ -1492,16 +1499,16 @@ def test__partial_update__no_value_kwarg__ok(mocker):
         account=account,
     )
     get_valid_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_value',
         return_value=FieldData(),
     )
     remove_unused_attachments_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._remove_unused_attachments',
     )
     link_new_attachments_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._link_new_attachments',
     )
     service = TaskFieldService(instance=task_field, user=user)
@@ -1568,7 +1575,7 @@ def test_get_valid_string_value__ok(mocker):
     raw_value = 'text 123'
     clear_value = 'clear value'
     clear_markdown_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'MarkdownService.clear',
         return_value=clear_value,
     )
@@ -1603,7 +1610,7 @@ def test_get_valid_string_value__invalid_value__raise_exception(
     )
     service = TaskFieldService(instance=task_field)
     clear_markdown_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'MarkdownService.clear',
     )
 
@@ -1653,7 +1660,7 @@ def test_get_valid_text_value__ok(mocker):
     raw_value = 'text 123'
     clear_value = 'clear value'
     clear_markdown_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'MarkdownService.clear',
         return_value=clear_value,
     )
@@ -1688,7 +1695,7 @@ def test_get_valid_text_value__invalid_value__raise_exception(
     )
     service = TaskFieldService(instance=task_field)
     clear_markdown_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'MarkdownService.clear',
     )
 
@@ -1709,7 +1716,7 @@ def test_get_valid_dropdown_value__ok(mocker):
     raw_value = 'api_name'
     result_mock = mocker.Mock()
     get_valid_radio_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_radio_value',
         return_value=result_mock,
     )
@@ -1740,13 +1747,13 @@ def test_get_valid_radio_value__ok(mocker):
     raw_value = value_1
     allowed_values = {value_1, value_2}
     get_selections_valid_values_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_selections_values',
         return_value=allowed_values,
     )
     clear_value = 'clear value'
     clear_markdown_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'MarkdownService.clear',
         return_value=clear_value,
     )
@@ -1779,7 +1786,7 @@ def test_get_valid_radio_value__not_string__raise_exception(raw_value, mocker):
         account=user.account,
     )
     get_selections_valid_values_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_selections_values',
     )
     service = TaskFieldService(instance=task_field)
@@ -1812,7 +1819,7 @@ def test_get_valid_radio_value__not_exists_selection__raise_exception(mocker):
     value_2 = 'first option'
     allowed_values = {value_1, value_2}
     get_selections_valid_values_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_selections_values',
         return_value=allowed_values,
     )
@@ -1846,13 +1853,13 @@ def test_get_valid_checkbox_value__one_value__ok(mocker):
     raw_value = [value_1]
     allowed_values = {value_1, value_2}
     get_selections_valid_values_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_selections_values',
         return_value=allowed_values,
     )
     clear_value = 'clear value'
     clear_markdown_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'MarkdownService.clear',
         return_value=clear_value,
     )
@@ -1888,13 +1895,13 @@ def test_get_valid_checkbox_value__many_values__ok(mocker):
     value = f'{value_1}, {value_2}'
     allowed_values = {value_1, value_2}
     get_selections_valid_values_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_selections_values',
         return_value=allowed_values,
     )
     clear_value = 'clear value'
     clear_markdown_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'MarkdownService.clear',
         return_value=clear_value,
     )
@@ -1929,7 +1936,7 @@ def test__get_valid_checkbox_value__not_list__raise_exception(mocker):
         account=account,
     )
     get_selections_values_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_selections_values',
     )
     service = TaskFieldService(instance=task_field, user=user)
@@ -1962,7 +1969,7 @@ def test__get_valid_checkbox_value__element_not_str__raise_exception(mocker):
         account=account,
     )
     get_selections_values_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_selections_values',
     )
     service = TaskFieldService(instance=task_field, user=user)
@@ -1996,7 +2003,7 @@ def test__get_valid_checkbox_value__not_in_allowed__raise_exception(mocker):
     )
     allowed_values = {'allowed_1', 'allowed_2'}
     get_selections_values_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_selections_values',
         return_value=allowed_values,
     )
@@ -2594,7 +2601,7 @@ def test__get_valid_value__required_and_null_value__raise_exception(
         account=account,
     )
     get_valid_string_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_string_value',
     )
     service = TaskFieldService(instance=task_field, user=user)
@@ -2630,7 +2637,7 @@ def test__get_valid_value__not_required_and_null_value__ok(
         account=account,
     )
     get_valid_string_value_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
+        'src.processes.services.tasks.fields.field.'
         'TaskFieldService._get_valid_string_value',
     )
     service = TaskFieldService(instance=task_field, user=user)
@@ -2643,313 +2650,389 @@ def test__get_valid_value__not_required_and_null_value__ok(
     get_valid_string_value_mock.assert_not_called()
 
 
-def test__link_rules__one_rule__ok():
+@pytest.mark.parametrize('raw_value', ['', None, []])
+def test__get_valid_value__hidden_required_null__ok(
+    mocker,
+    raw_value,
+):
 
-    """One template rule → one FieldSetRule linked"""
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    task_template = template.tasks.first()
-    fieldset_api_name = 'fs1'
-    fieldset_template = create_test_fieldset_template(
-        account=account,
-        template=template,
-        task=task_template,
-        api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
-    )
-    field_template = fieldset_template.fields.first()
-    rule_template = fieldset_template.rules.first()
-    rule_template.fields.add(field_template)
-
-    workflow = create_test_workflow(
-        user=user,
-        template=template,
-    )
-    task = workflow.tasks.get(number=1)
-    fieldset = create_test_fieldset(
-        workflow=workflow,
-        task=task,
-        api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
-    )
-    rule = fieldset.rules.first()
-    task_field = fieldset.fields.first()
-
-    service = TaskFieldService(
-        instance=task_field,
-        user=user,
-    )
-
-    # act
-    service._link_rules(
-        instance_template=field_template,
-        fieldset_id=fieldset.id,
-    )
-
-    # assert
-    assert task_field.rules.count() == 1
-    assert task_field.rules.first() == rule
-
-
-def test__link_rules__multiple_rules__ok():
-
-    """Two template rules → two FieldSetRules linked"""
+    """Hidden required field with null value — returns empty FieldData."""
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    task_template = template.tasks.first()
-    fieldset_api_name = 'fs1'
-    fieldset_template = create_test_fieldset_template(
-        account=account,
-        template=template,
-        task=task_template,
-        api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
-    )
-    rule_tmpl_2 = FieldsetTemplateRule.objects.create(
-        fieldset=fieldset_template,
-        account=account,
-        api_name=f'{fieldset_api_name}-rule-2',
-        type=FieldSetRuleType.SUM_EQUAL,
-        value='200',
-    )
-    field_template = fieldset_template.fields.first()
-    rule_tmpl_1 = fieldset_template.rules.get(
-        api_name=f'{fieldset_api_name}-rule-1',
-    )
-    field_template.rules.set(
-        [rule_tmpl_1, rule_tmpl_2],
-    )
-
-    workflow = create_test_workflow(
-        user=user,
-        template=template,
-    )
+    workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
-    fieldset = create_test_fieldset(
-        workflow=workflow,
+    task_field = TaskField.objects.create(
         task=task,
-        api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
-    )
-    rule_2 = FieldSetRule.objects.create(
-        fieldset=fieldset,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        is_required=True,
+        is_hidden=True,
+        workflow=workflow,
         account=account,
-        api_name=f'{fieldset_api_name}-rule-2',
-        type=FieldSetRuleType.SUM_EQUAL,
-        value='200',
     )
-    rule_1 = fieldset.rules.exclude(id=rule_2.id).first()
-    task_field = fieldset.fields.first()
-
-    service = TaskFieldService(
-        instance=task_field,
-        user=user,
+    get_valid_string_value_mock = mocker.patch(
+        'src.processes.services.tasks.fields.field.'
+        'TaskFieldService._get_valid_string_value',
     )
+    service = TaskFieldService(instance=task_field, user=user)
 
     # act
-    service._link_rules(
-        instance_template=field_template,
-        fieldset_id=fieldset.id,
-    )
+    result = service._get_valid_value(raw_value=raw_value)
 
     # assert
-    assert task_field.rules.count() == 2
-    linked_ids = set(
-        task_field.rules.values_list('id', flat=True),
-    )
-    assert linked_ids == {rule_1.id, rule_2.id}
+    assert result == FieldData()
+    get_valid_string_value_mock.assert_not_called()
 
 
-def test__link_rules__partial_match__ok():
+@pytest.mark.parametrize('raw_value', ['', None, []])
+def test__get_valid_value__required_null_has_show_ruleset__ok(
+    mocker,
+    raw_value,
+):
 
-    """Two template rules, only one FieldSetRule exists
-    — only matched one linked"""
+    """Required field with null value but has Show ruleset — no raise."""
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    task_template = template.tasks.first()
-    fieldset_api_name = 'fs1'
-    fieldset_template = create_test_fieldset_template(
-        account=account,
-        template=template,
-        task=task_template,
-        api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
-    )
-    rule_tmpl_2 = FieldsetTemplateRule.objects.create(
-        fieldset=fieldset_template,
-        account=account,
-        api_name=f'{fieldset_api_name}-rule-2',
-        type=FieldSetRuleType.SUM_EQUAL,
-        value='200',
-    )
-    field_template = fieldset_template.fields.first()
-    rule_tmpl_1 = fieldset_template.rules.get(
-        api_name=f'{fieldset_api_name}-rule-1',
-    )
-    field_template.rules.set(
-        [rule_tmpl_1, rule_tmpl_2],
-    )
-
-    workflow = create_test_workflow(
-        user=user,
-        template=template,
-    )
+    workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
-    fieldset = create_test_fieldset(
-        workflow=workflow,
+    task_field = TaskField.objects.create(
         task=task,
-        api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        is_required=True,
+        workflow=workflow,
+        account=account,
     )
-    rule = fieldset.rules.first()
-    task_field = fieldset.fields.first()
-
-    service = TaskFieldService(
-        instance=task_field,
-        user=user,
+    FieldRuleSet.objects.create(
+        account=account,
+        workflow=workflow,
+        field=task_field,
+        name='Show when filled',
+        type=FieldRuleType.SHOW,
+        order=0,
+        api_name='ruleset-show-1',
     )
+    get_valid_string_value_mock = mocker.patch(
+        'src.processes.services.tasks.fields.field.'
+        'TaskFieldService._get_valid_string_value',
+    )
+    service = TaskFieldService(instance=task_field, user=user)
 
     # act
-    service._link_rules(
-        instance_template=field_template,
-        fieldset_id=fieldset.id,
-    )
+    result = service._get_valid_value(raw_value=raw_value)
 
     # assert
-    assert task_field.rules.count() == 1
-    assert task_field.rules.first() == rule
+    assert result == FieldData()
+    get_valid_string_value_mock.assert_not_called()
 
 
-def test__link_rules__no_matching_rules__empty():
+def test__has_show_rulesets__instance_has_show__true():
 
-    """Template has rule, but no FieldSetRule
-    with that api_name — M2M stays empty"""
+    """Runtime field has Show ruleset (no template) — returns True."""
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    task_template = template.tasks.first()
-    fieldset_api_name = 'fs1'
-    fieldset_template = create_test_fieldset_template(
-        account=account,
-        template=template,
-        task=task_template,
-        api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
-    )
-    field_template = fieldset_template.fields.first()
-    rule_template = fieldset_template.rules.first()
-    rule_template.fields.add(field_template)
-
-    workflow = create_test_workflow(
-        user=user,
-        template=template,
-    )
+    workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
-    fieldset = create_test_fieldset(
-        workflow=workflow,
+    task_field = TaskField.objects.create(
         task=task,
-        api_name=fieldset_api_name,
-    )
-    FieldSetRule.objects.create(
-        fieldset=fieldset,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        workflow=workflow,
         account=account,
-        api_name='different-rule',
-        type=FieldSetRuleType.SUM_EQUAL,
-        value='999',
     )
-    task_field = fieldset.fields.first()
-
-    service = TaskFieldService(
-        instance=task_field,
-        user=user,
+    FieldRuleSet.objects.create(
+        account=account,
+        workflow=workflow,
+        field=task_field,
+        name='Show rule',
+        type=FieldRuleType.SHOW,
+        order=0,
+        api_name='ruleset-show-1',
     )
+    service = TaskFieldService(instance=task_field, user=user)
 
     # act
-    service._link_rules(
-        instance_template=field_template,
-        fieldset_id=fieldset.id,
-    )
+    result = service._has_show_rulesets()
 
     # assert
-    assert task_field.rules.count() == 0
+    assert result is True
 
 
-def test__link_rules__another_fieldset_rule__not_linked():
+def test__has_show_rulesets__instance_no_rulesets__false():
 
-    """FieldSetRule has matching api_name
-    but belongs to another fieldset — not linked"""
+    """Runtime field has no rulesets (no template) — returns False."""
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        workflow=workflow,
+        account=account,
     )
+    service = TaskFieldService(instance=task_field, user=user)
+
+    # act
+    result = service._has_show_rulesets()
+
+    # assert
+    assert result is False
+
+
+def test__has_show_rulesets__template_has_show__true():
+
+    """instance_template has Show ruleset — returns True."""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
     task_template = template.tasks.first()
-    fieldset_api_name = 'fs1'
-    fieldset_template = create_test_fieldset_template(
+    field_template = FieldTemplate.objects.create(
+        task=task_template,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        name='Field',
+        template=template,
+        account=account,
+    )
+    FieldTemplateRuleSet.objects.create(
+        account=account,
+        template=template,
+        field=field_template,
+        name='Show rule',
+        type=FieldRuleType.SHOW,
+        order=0,
+        api_name='ruleset-show-tpl',
+    )
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        workflow=workflow,
+        account=account,
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+    service.instance_template = field_template
+
+    # act
+    result = service._has_show_rulesets()
+
+    # assert
+    assert result is True
+
+
+def test__has_show_rulesets__template_no_show__false():
+
+    """instance_template has no Show rulesets — returns False."""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    task_template = template.tasks.first()
+    field_template = FieldTemplate.objects.create(
+        task=task_template,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        name='Field',
+        template=template,
+        account=account,
+    )
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        workflow=workflow,
+        account=account,
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+    service.instance_template = field_template
+
+    # act
+    result = service._has_show_rulesets()
+
+    # assert
+    assert result is False
+
+
+def test__create_rulesets__one_ruleset__ok():
+
+    """ Template ruleset of the field is copied with its group tree """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    task_template = template.tasks.first()
+    field_template = FieldTemplate.objects.create(
         account=account,
         template=template,
         task=task_template,
-        api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        name='Source',
+        type=FieldType.STRING,
+        order=1,
+        api_name='field-1',
     )
-    field_template = fieldset_template.fields.first()
-    rule_template = fieldset_template.rules.first()
-    rule_template.fields.add(field_template)
-
-    workflow = create_test_workflow(
-        user=user,
+    ruleset_template = FieldTemplateRuleSet.objects.create(
+        account=account,
         template=template,
+        field=field_template,
+        api_name='ruleset-1',
+        name='Show when filled',
+        type=FieldRuleType.SHOW,
+        message='Fill it in',
+        order=2,
     )
+    group_or_template = FieldTemplateRuleGroupOr.objects.create(
+        account=account,
+        template=template,
+        ruleset=ruleset_template,
+        api_name='group-or-1',
+    )
+    FieldTemplateRuleGroupAnd.objects.create(
+        account=account,
+        template=template,
+        group_or=group_or_template,
+        api_name='group-and-1',
+        field='field-1',
+        operator=FieldRuleOperator.EQUAL,
+        value='yes',
+    )
+    workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
-    fieldset_1 = create_test_fieldset(
+    task_field = TaskField.objects.create(
+        account=account,
         workflow=workflow,
         task=task,
-        api_name=fieldset_api_name,
+        name='Source',
+        type=FieldType.STRING,
+        order=1,
+        api_name='field-1',
     )
-    task_field = fieldset_1.fields.first()
-    create_test_fieldset(
-        workflow=workflow,
-        task=task,
-        api_name='fs2',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
-    )
-
-    service = TaskFieldService(
-        instance=task_field,
-        user=user,
-    )
+    service = TaskFieldService(instance=task_field, user=user)
 
     # act
-    service._link_rules(
-        instance_template=field_template,
-        fieldset_id=fieldset_1.id,
-    )
+    service._create_rulesets(instance_template=field_template)
 
     # assert
-    assert task_field.rules.count() == 0
+    ruleset = task_field.rulesets.get()
+    assert ruleset.api_name == ruleset_template.api_name
+    assert ruleset.name == ruleset_template.name
+    assert ruleset.type == ruleset_template.type
+    assert ruleset.message == ruleset_template.message
+    assert ruleset.order == ruleset_template.order
+    assert ruleset.workflow_id == workflow.id
+    group_or = ruleset.groups_or.get()
+    assert group_or.api_name == group_or_template.api_name
+    group_and = group_or.groups_and.get()
+    assert group_and.api_name == 'group-and-1'
+    assert group_and.field == 'field-1'
+    assert group_and.operator == FieldRuleOperator.EQUAL
+    assert group_and.value == 'yes'
+
+
+def test__create_rulesets__two_rulesets__ok():
+
+    """ Every template ruleset of the field gets its runtime copy """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    task_template = template.tasks.first()
+    field_template = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        task=task_template,
+        name='Source',
+        type=FieldType.STRING,
+        order=1,
+        api_name='field-1',
+    )
+    for number in (1, 2):
+        FieldTemplateRuleSet.objects.create(
+            account=account,
+            template=template,
+            field=field_template,
+            api_name=f'ruleset-{number}',
+            name=f'Rule {number}',
+            type=FieldRuleType.SHOW,
+            order=number,
+        )
+    workflow = create_test_workflow(user=user, template=template)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        task=task,
+        name='Source',
+        type=FieldType.STRING,
+        order=1,
+        api_name='field-1',
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+
+    # act
+    service._create_rulesets(instance_template=field_template)
+
+    # assert
+    api_names = list(
+        task_field.rulesets.order_by('order').values_list(
+            'api_name',
+            flat=True,
+        ),
+    )
+    assert api_names == ['ruleset-1', 'ruleset-2']
+
+
+def test__create_rulesets__no_rulesets__empty():
+
+    """ A field without template rulesets gets none """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    task_template = template.tasks.first()
+    field_template = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        task=task_template,
+        name='Source',
+        type=FieldType.STRING,
+        order=1,
+        api_name='field-1',
+    )
+    workflow = create_test_workflow(user=user, template=template)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        task=task,
+        name='Source',
+        type=FieldType.STRING,
+        order=1,
+        api_name='field-1',
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+
+    # act
+    service._create_rulesets(instance_template=field_template)
+
+    # assert
+    assert task_field.rulesets.count() == 0

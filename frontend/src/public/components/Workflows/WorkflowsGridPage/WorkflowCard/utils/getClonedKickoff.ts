@@ -1,17 +1,15 @@
-/* eslint-disable */
-/* prettier-ignore */
-import {
-  EExtraFieldType,
+import type {
   IExtraField,
   ITemplateKickoffClient,
   IRuntimeKickoffClient,
   TExtraFieldValue,
 } from '../../../../../types/template';
-import { IWorkflowDetailsKickoff } from '../../../../../types/workflow';
+import { EExtraFieldType } from '../../../../../types/template';
+import type { IWorkflowDetailsKickoff } from '../../../../../types/workflow';
 import { getEditKickoff } from '../../../../../utils/workflows';
 import { normalizeSelections } from '../../../../TemplateEdit/utils/normalizeSelections';
 import { normalizeCheckboxValue } from '../../../../../utils/fields';
-import { IFieldsetField, IFieldsetRuntime } from '../../../../../types/fieldset';
+import type { IFieldsetField, IFieldsetRuntime } from '../../../../../types/fieldset';
 
 function normalizeKickoffFields(
   fields: (IExtraField | IFieldsetField)[] = [],
@@ -38,10 +36,7 @@ export function getClonedKickoff(
 
   const finalFieldsets: IFieldsetRuntime[] = (kickoff.fieldsets || [])
     .map((fieldset) => {
-      // TODO (Technical Debt): Backend workflow fieldsets contain raw properties (id, apiName),
-      // while client-side template fieldsets expect apiNameBinding.
-      // We fall back to fieldset.apiName to safely match template fieldsets.
-      const fieldsetApiName = fieldset.apiNameBinding || (fieldset as any).apiName;
+      const fieldsetApiName = fieldset.apiNameBinding;
 
       const templateFieldset = (templateKickoff.fieldsets || []).find(
         (fieldsetFromTemplate) => fieldsetFromTemplate.apiNameBinding === fieldsetApiName,

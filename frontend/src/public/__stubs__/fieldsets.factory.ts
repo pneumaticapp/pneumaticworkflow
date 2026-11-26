@@ -5,9 +5,20 @@ import type {
   IFieldsetField,
   IFieldsetRuntime,
   IFieldsetTaskAPI,
-  IFieldsetTemplateRule,
+  IFieldsetRuleSet,
+  IFieldsetRuleGroupAnd,
+  IFieldsetRuleGroupOr,
+  IFieldRuleSet,
+  IFieldRuleShowGroupAnd,
+  IFieldRuleValidatorGroupAnd,
+  IFieldRuleGroupOr,
 } from '../types/fieldset';
-import { EFieldLabelPosition, EFieldsetRuleType } from '../types/fieldset';
+import {
+  EFieldLabelPosition,
+  EFieldsetRulesetNumericOperator,
+  EFieldRuleType,
+  EFieldRuleOperator,
+} from '../types/fieldset';
 import type { IExtraField } from '../types/template';
 
 export const makeFieldsetField = (overrides: Partial<IFieldsetField> = {}): IFieldsetField => ({
@@ -36,11 +47,24 @@ export const makeFieldsetRuntime = (overrides: Partial<IFieldsetRuntime> = {}): 
   ...overrides,
 });
 
-export const makeFieldsetTemplateRule = (overrides: Partial<IFieldsetTemplateRule> = {}): IFieldsetTemplateRule => ({
-  apiName: 'rule-1',
-  type: EFieldsetRuleType.SumEqual,
+export const makeFieldsetRuleGroupAnd = (overrides: Partial<IFieldsetRuleGroupAnd> = {}): IFieldsetRuleGroupAnd => ({
+  apiName: 'group-and-1',
+  operator: EFieldsetRulesetNumericOperator.SumEqual,
   value: '100',
+  ...overrides,
+});
+
+export const makeFieldsetRuleGroupOr = (overrides: Partial<IFieldsetRuleGroupOr> = {}): IFieldsetRuleGroupOr => ({
+  apiName: 'group-or-1',
+  groupsAnd: [makeFieldsetRuleGroupAnd()],
+  ...overrides,
+});
+
+export const makeFieldsetRuleset = (overrides: Partial<IFieldsetRuleSet> = {}): IFieldsetRuleSet => ({
+  apiName: 'rule-1',
+  order: 0,
   fields: [],
+  groupsOr: [makeFieldsetRuleGroupOr()],
   ...overrides,
 });
 
@@ -53,7 +77,7 @@ export const makeFieldsetCatalogItem = (overrides: Partial<IFieldsetCatalogItem>
   labelPosition: EFieldLabelPosition.Top,
   layout: 'vertical',
   order: 0,
-  rules: [],
+  rulesets: [],
   fields: [],
   usage: [],
   ...overrides,
@@ -68,7 +92,7 @@ export const makeFieldsetBindingClient = (overrides: Partial<IFieldsetBindingCli
   labelPosition: EFieldLabelPosition.Top,
   layout: 'vertical',
   order: 0,
-  rules: [],
+  rulesets: [],
   fields: [],
   ...overrides,
 });
@@ -82,7 +106,7 @@ export const makeFieldsetBinding = (overrides: Partial<IFieldsetBinding> = {}): 
   labelPosition: EFieldLabelPosition.Top,
   layout: 'vertical',
   order: 0,
-  rules: [],
+  rulesets: [],
   fields: [],
   ...overrides,
 });
@@ -97,5 +121,38 @@ export const makeFieldsetTaskAPI = (overrides: Partial<IFieldsetTaskAPI> = {}): 
   labelPosition: EFieldLabelPosition.Top,
   layout: 'vertical',
   fields: [] as IExtraField[],
+  ...overrides,
+});
+
+export const makeFieldRuleShowGroupAnd = (overrides: Partial<IFieldRuleShowGroupAnd> = {}): IFieldRuleShowGroupAnd => ({
+  apiName: 'field-rule-and-1',
+  field: '',
+  operator: EFieldRuleOperator.Equal,
+  value: '',
+  ...overrides,
+});
+
+export const makeFieldRuleValidatorGroupAnd = (
+  overrides: Partial<IFieldRuleValidatorGroupAnd> = {},
+): IFieldRuleValidatorGroupAnd => ({
+  apiName: 'field-rule-and-1',
+  operator: EFieldRuleOperator.Equal,
+  value: '',
+  ...overrides,
+});
+
+export const makeFieldRuleGroupOr = (overrides: Partial<IFieldRuleGroupOr> = {}): IFieldRuleGroupOr => ({
+  apiName: 'field-rule-or-1',
+  groupsAnd: [makeFieldRuleValidatorGroupAnd()],
+  ...overrides,
+});
+
+export const makeFieldRuleSet = (overrides: Partial<IFieldRuleSet> = {}): IFieldRuleSet => ({
+  apiName: 'field-rule-1',
+  name: 'Field Rule',
+  type: EFieldRuleType.Validator,
+  message: null,
+  order: 0,
+  groupsOr: [makeFieldRuleGroupOr()],
   ...overrides,
 });

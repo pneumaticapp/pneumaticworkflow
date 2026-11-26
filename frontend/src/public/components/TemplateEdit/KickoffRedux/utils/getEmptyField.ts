@@ -14,6 +14,7 @@ export const getEmptyField = (type: EExtraFieldType, formatMessage: IntlShape['f
     apiName: createFieldApiName(),
     userId: null,
     groupId: null,
+    rulesets: [],
   };
 
   const emptyFieldsMap: { [key in EExtraFieldType]: IExtraField } = {

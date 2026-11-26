@@ -6,12 +6,21 @@ import { useDispatch } from 'react-redux';
 import { PublicForm } from '../PublicForm';
 import { getPublicForm } from '../../../../../api/getPublicForm';
 import { runPublicForm } from '../../../../../api/runPublicForm';
+import { getNormalizedKickoff } from '../../../../../utils/mappers';
 import { MergedOutputList } from '../../../../MergedOutputList';
 import { NotificationManager } from '../../../../UI/Notifications';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
-import { makeFieldsetRuntime } from '../../../../../__stubs__/fieldsets.factory';
-import { IExtraField } from '../../../../../types/template';
-import { IFieldsetRuntime } from '../../../../../types/fieldset';
+import {
+  makeFieldsetBinding,
+  makeFieldsetRuleset,
+  makeFieldRuleShowGroupAnd,
+  makeFieldRuleGroupOr,
+  makeFieldRuleSet,
+} from '../../../../../__stubs__/fieldsets.factory';
+import { EExtraFieldType } from '../../../../../types/template';
+import type { IExtraField, IExtraFieldSelectionAPI } from '../../../../../types/template';
+import type { IPublicFormFieldResponse, IPublicFormFieldsetResponse } from '../../../../../types/publicForms';
+import { IFieldsetRuntime, EFieldRuleOperator, EFieldRuleType } from '../../../../../types/fieldset';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import { logger } from '../../../../../utils/logger';
 
@@ -101,8 +110,8 @@ const SUBMIT_LABEL = formatMsg('public-form.launch');
 
 const makePublicFormResponse = (
   overrides: {
-    fields?: IExtraField[];
-    fieldsets?: IFieldsetRuntime[];
+    fields?: IPublicFormFieldResponse[];
+    fieldsets?: IPublicFormFieldsetResponse[];
   } = {},
 ) => ({
   accountId: 1,
@@ -114,6 +123,14 @@ const makePublicFormResponse = (
     fields: overrides.fields || [],
     fieldsets: overrides.fieldsets || [],
   },
+});
+
+const makePublicFormFieldsetResponse = (
+  overrides: Partial<IPublicFormFieldsetResponse> = {},
+): IPublicFormFieldsetResponse => ({
+  ...makeFieldsetBinding(),
+  fields: [],
+  ...overrides,
 });
 
 const getLastMergedOutputListProps = () => {
@@ -158,7 +175,8 @@ describe('PublicForm', () => {
 
   describe('Fieldsets: rendering', () => {
     it('passes fieldsets to MergedOutputList', async () => {
-      const fieldset = makeFieldsetRuntime({
+      const fieldset = makePublicFormFieldsetResponse({
+        apiName: 'fs-1',
         fields: [makeExtraField({ apiName: 'fs-field-1', order: 1 })],
         order: 1,
       });
@@ -188,7 +206,7 @@ describe('PublicForm', () => {
 
   describe('Fieldsets: isHidden filtering', () => {
     it('filters out isHidden fields inside fieldsets', async () => {
-      const fieldset = makeFieldsetRuntime({
+      const fieldset = makePublicFormFieldsetResponse({
         fields: [
           makeExtraField({ apiName: 'fs-hidden', isHidden: true, order: 1 }),
           makeExtraField({ apiName: 'fs-visible', isHidden: false, order: 2 }),
@@ -220,7 +238,7 @@ describe('PublicForm', () => {
         makePublicFormResponse({
           fields: [makeExtraField({ apiName: 'k1', value: 'filled' })],
           fieldsets: [
-            makeFieldsetRuntime({
+            makePublicFormFieldsetResponse({
               fields: [makeExtraField({ apiName: 'fs-req', isRequired: true, value: '', order: 1 })],
               order: 1,
             }),
@@ -239,7 +257,7 @@ describe('PublicForm', () => {
         makePublicFormResponse({
           fields: [makeExtraField({ apiName: 'k1', value: 'filled' })],
           fieldsets: [
-            makeFieldsetRuntime({
+            makePublicFormFieldsetResponse({
               fields: [makeExtraField({ apiName: 'fs-req', isRequired: true, value: 'also filled', order: 1 })],
               order: 1,
             }),
@@ -257,13 +275,13 @@ describe('PublicForm', () => {
       (getPublicForm as jest.Mock).mockResolvedValue(
         makePublicFormResponse({
           fieldsets: [
-            makeFieldsetRuntime({
-              apiNameBinding: 'fs-ok',
+            makePublicFormFieldsetResponse({
+              apiName: 'fs-ok',
               fields: [makeExtraField({ apiName: 'ok-field', isRequired: true, value: 'filled', order: 1 })],
               order: 1,
             }),
-            makeFieldsetRuntime({
-              apiNameBinding: 'fs-bad',
+            makePublicFormFieldsetResponse({
+              apiName: 'fs-bad',
               fields: [makeExtraField({ apiName: 'bad-field', isRequired: true, value: '', order: 1 })],
               order: 2,
             }),
@@ -284,7 +302,7 @@ describe('PublicForm', () => {
         makePublicFormResponse({
           fields: [makeExtraField({ apiName: 'k1', value: 'kickoff-val' })],
           fieldsets: [
-            makeFieldsetRuntime({
+            makePublicFormFieldsetResponse({
               fields: [makeExtraField({ apiName: 'fs1', value: 'fs-val', order: 1 })],
               order: 1,
             }),
@@ -316,7 +334,7 @@ describe('PublicForm', () => {
       (getPublicForm as jest.Mock).mockResolvedValue(
         makePublicFormResponse({
           fieldsets: [
-            makeFieldsetRuntime({
+            makePublicFormFieldsetResponse({
               fields: [makeExtraField({ apiName: 'fs-edit-1', value: 'old-value', order: 1 })],
               order: 1,
             }),
@@ -384,6 +402,55 @@ describe('PublicForm', () => {
     });
   });
 
+  describe('Field show rulesets: dynamic visibility in public form', () => {
+    it('dynamically shows hidden field when dependent form field is filled', async () => {
+      const triggerField = makeExtraField({ apiName: 'pub-trigger', value: 'no' });
+      const showRuleset = makeFieldRuleSet({
+        type: EFieldRuleType.Show,
+        groupsOr: [
+          makeFieldRuleGroupOr({
+            groupsAnd: [
+              makeFieldRuleShowGroupAnd({
+                field: 'pub-trigger',
+                operator: EFieldRuleOperator.Equal,
+                value: 'yes',
+              }),
+            ],
+          }),
+        ],
+      });
+      const conditionalField = makeExtraField({
+        apiName: 'pub-details',
+        isHidden: true,
+        rulesets: [showRuleset],
+      });
+
+      (getPublicForm as jest.Mock).mockResolvedValue(
+        makePublicFormResponse({
+          fields: [triggerField, conditionalField],
+        }),
+      );
+
+      render(React.createElement(PublicForm, { type: 'shared' }));
+
+      await screen.findByRole('button', { name: SUBMIT_LABEL });
+
+      const mergedMock = MergedOutputList as jest.Mock;
+      let lastCallProps = mergedMock.mock.calls[mergedMock.mock.calls.length - 1][0];
+
+      expect(lastCallProps.fields).toHaveLength(1);
+      expect(lastCallProps.fields[0].apiName).toBe('pub-trigger');
+
+      act(() => {
+        lastCallProps.onEditField('pub-trigger')({ value: 'yes' });
+      });
+
+      lastCallProps = mergedMock.mock.calls[mergedMock.mock.calls.length - 1][0];
+      expect(lastCallProps.fields).toHaveLength(2);
+      expect(lastCallProps.fields.map((f: IExtraField) => f.apiName)).toEqual(['pub-trigger', 'pub-details']);
+    });
+  });
+
   describe('Fetch public form: error handling', () => {
     it('sets FormNotFound state and logs error via logger.info on failure', async () => {
       const apiError = new Error('Not found');
@@ -398,6 +465,152 @@ describe('PublicForm', () => {
       expect(logger.info).toHaveBeenCalledTimes(1);
       expect(logger.info).toHaveBeenCalledWith('Failed to fetch public form:', apiError);
       expect(logger.error).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Normalizing API selections from GET /templates/public', () => {
+    const rawSelections: IExtraFieldSelectionAPI[] = [
+      { value: 'Yes', apiName: 'selection-1' },
+      { value: 'From dataset', apiName: null },
+    ];
+
+    it('normalizes selection objects and null-apiName datasets to strings for kickoff.fields', async () => {
+      const rawCheckboxField: IPublicFormFieldResponse = {
+        ...makeExtraField({ apiName: 'checkbox-field', type: EExtraFieldType.Checkbox }),
+        selections: rawSelections,
+      };
+
+      (getPublicForm as jest.Mock).mockResolvedValue(makePublicFormResponse({ fields: [rawCheckboxField] }));
+
+      render(React.createElement(PublicForm, { type: 'shared' }));
+
+      await screen.findByRole('button', { name: SUBMIT_LABEL });
+
+      expect(MergedOutputList).toHaveBeenCalledTimes(1);
+      const mergedProps = getLastMergedOutputListProps();
+      expect(mergedProps.fields[0].selections).toEqual(['Yes', 'From dataset']);
+    });
+
+    it('normalizes selection objects and null-apiName datasets to strings for kickoff.fieldsets', async () => {
+      const rawFieldsetField: IPublicFormFieldResponse = {
+        ...makeExtraField({ apiName: 'fs-checkbox', type: EExtraFieldType.Checkbox, order: 1 }),
+        selections: rawSelections,
+      };
+      const rawFieldset: IPublicFormFieldsetResponse = makePublicFormFieldsetResponse({
+        order: 1,
+        fields: [rawFieldsetField],
+      });
+
+      (getPublicForm as jest.Mock).mockResolvedValue(makePublicFormResponse({ fieldsets: [rawFieldset] }));
+
+      render(React.createElement(PublicForm, { type: 'shared' }));
+
+      await screen.findByRole('button', { name: SUBMIT_LABEL });
+
+      expect(MergedOutputList).toHaveBeenCalledTimes(1);
+      const mergedProps = getLastMergedOutputListProps();
+      expect(mergedProps.fieldsets[0].fields[0].selections).toEqual(['Yes', 'From dataset']);
+    });
+  });
+
+  describe('Mapping API fieldsets from GET /templates/public to runtime format', () => {
+    it('maps apiName of each fieldset to apiNameBinding and drops apiName', async () => {
+      const firstRawFieldset = makePublicFormFieldsetResponse({ apiName: 'fieldset-first' });
+      const secondRawFieldset = makePublicFormFieldsetResponse({ apiName: 'fieldset-second' });
+
+      (getPublicForm as jest.Mock).mockResolvedValue(
+        makePublicFormResponse({ fieldsets: [firstRawFieldset, secondRawFieldset] }),
+      );
+
+      render(React.createElement(PublicForm, { type: 'shared' }));
+
+      await screen.findByRole('button', { name: SUBMIT_LABEL });
+
+      expect(MergedOutputList).toHaveBeenCalledTimes(1);
+      const { fieldsets: mappedFieldsets } = getLastMergedOutputListProps();
+      expect(mappedFieldsets.map((fieldset) => fieldset.apiNameBinding)).toEqual(['fieldset-first', 'fieldset-second']);
+      expect(mappedFieldsets[0]).not.toHaveProperty('apiName');
+      expect(mappedFieldsets[1]).not.toHaveProperty('apiName');
+    });
+
+    it('strips server-only sharedFieldsetId and rulesets fields', async () => {
+      const rawFieldset = makePublicFormFieldsetResponse({
+        apiName: 'fieldset-meta',
+        rulesets: [makeFieldsetRuleset()],
+      });
+
+      (getPublicForm as jest.Mock).mockResolvedValue(makePublicFormResponse({ fieldsets: [rawFieldset] }));
+
+      render(React.createElement(PublicForm, { type: 'shared' }));
+
+      await screen.findByRole('button', { name: SUBMIT_LABEL });
+
+      expect(MergedOutputList).toHaveBeenCalledTimes(1);
+      const { fieldsets: mappedFieldsets } = getLastMergedOutputListProps();
+      const [mappedFieldset] = mappedFieldsets;
+      expect(mappedFieldset.apiNameBinding).toBe('fieldset-meta');
+      expect(mappedFieldset).not.toHaveProperty('sharedFieldsetId');
+      expect(mappedFieldset).not.toHaveProperty('rulesets');
+    });
+  });
+
+  describe('Initializing default values for fieldset fields from GET /templates/public', () => {
+    it('initializes default values by field type when fieldset fields arrive without value', async () => {
+      const rawFieldset = makePublicFormFieldsetResponse({
+        fields: [
+          makeExtraField({ apiName: 'fs-url', type: EExtraFieldType.Url, value: undefined }),
+          makeExtraField({ apiName: 'fs-number', type: EExtraFieldType.Number, value: undefined }),
+          makeExtraField({ apiName: 'fs-checkbox', type: EExtraFieldType.Checkbox, value: undefined }),
+          makeExtraField({ apiName: 'fs-file', type: EExtraFieldType.File, value: undefined, attachments: undefined }),
+          makeExtraField({ apiName: 'fs-radio', type: EExtraFieldType.Radio, selections: ['Yes'], value: undefined }),
+        ],
+      });
+
+      (getPublicForm as jest.Mock).mockResolvedValue(makePublicFormResponse({ fieldsets: [rawFieldset] }));
+
+      render(React.createElement(PublicForm, { type: 'shared' }));
+
+      await screen.findByRole('button', { name: SUBMIT_LABEL });
+
+      expect(MergedOutputList).toHaveBeenCalledTimes(1);
+      const { fieldsets: mappedFieldsets } = getLastMergedOutputListProps();
+      expect(mappedFieldsets[0].fields).toEqual([
+        expect.objectContaining({ apiName: 'fs-url', value: '' }),
+        expect.objectContaining({ apiName: 'fs-number', value: '' }),
+        expect.objectContaining({ apiName: 'fs-checkbox', value: [] }),
+        expect.objectContaining({ apiName: 'fs-file', value: [], attachments: [] }),
+        expect.objectContaining({ apiName: 'fs-radio', value: null }),
+      ]);
+    });
+
+    it('passes empty string values for untouched url and number fieldset fields on submit', async () => {
+      const rawFieldset = makePublicFormFieldsetResponse({
+        fields: [
+          makeExtraField({ apiName: 'fs-url', type: EExtraFieldType.Url, value: undefined }),
+          makeExtraField({ apiName: 'fs-number', type: EExtraFieldType.Number, value: undefined }),
+        ],
+      });
+
+      (getPublicForm as jest.Mock).mockResolvedValue(makePublicFormResponse({ fieldsets: [rawFieldset] }));
+
+      render(React.createElement(PublicForm, { type: 'shared' }));
+
+      const submitButton = await screen.findByRole('button', { name: SUBMIT_LABEL });
+      userEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(runPublicForm).toHaveBeenCalledTimes(1);
+      });
+
+      expect(getNormalizedKickoff).toHaveBeenCalledTimes(1);
+      expect(getNormalizedKickoff).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fields: [
+            expect.objectContaining({ apiName: 'fs-url', value: '' }),
+            expect.objectContaining({ apiName: 'fs-number', value: '' }),
+          ],
+        }),
+      );
     });
   });
 });

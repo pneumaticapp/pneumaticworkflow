@@ -10,15 +10,17 @@ from django.db import IntegrityError, transaction
 from django.db.models import ObjectDoesNotExist
 
 from src.generics.validators import NoSchemaURLValidator
-from src.processes.enums import FieldType
+from src.processes.enums import FieldRuleType, FieldType
 from src.processes.messages import workflow as messages
 from src.processes.models.templates.fields import (
     FieldTemplate,
 )
-from src.processes.models.workflows.fieldset import FieldSetRule
 from src.processes.models.workflows.fields import TaskField
 from src.processes.services.base import BaseWorkflowService
 from src.processes.services.tasks.exceptions import TaskFieldException
+from src.processes.services.tasks.fields.field_ruleset import (
+    FieldRuleSetService,
+)
 from src.processes.services.tasks.selection import SelectionService
 from src.services.markdown import MarkdownService
 from src.storage.enums import AccessType, SourceType
@@ -298,9 +300,23 @@ class TaskFieldService(BaseWorkflowService):
             clear_value=value,
         )
 
+    def _has_show_rulesets(self) -> bool:
+        if hasattr(self, 'instance_template'):
+            return self.instance_template.rulesets.filter(
+                type=FieldRuleType.SHOW,
+            ).exists()
+        return self.instance.rulesets.filter(
+            type=FieldRuleType.SHOW,
+        ).exists()
+
     def _get_valid_value(self, raw_value: Any) -> FieldData:
         if raw_value in self.NULL_VALUES:
-            if self.instance.is_required:
+            if self.instance.is_hidden:
+                return FieldData()
+            if (
+                self.instance.is_required
+                and not self._has_show_rulesets()
+            ):
                 raise TaskFieldException(
                     api_name=self.instance.api_name,
                     message=messages.MSG_PW_0023,
@@ -351,8 +367,7 @@ class TaskFieldService(BaseWorkflowService):
             self._link_new_attachments(raw_value)
         elif self.instance.type in FieldType.TYPES_WITH_SELECTIONS:
             self._create_selections(instance_template)
-        if instance_template.rules.all().exists():
-            self._link_rules(instance_template, **kwargs)
+        self._create_rulesets(instance_template, **kwargs)
 
     def _link_new_attachments(
         self,
@@ -382,21 +397,23 @@ class TaskFieldService(BaseWorkflowService):
                 field_id=self.instance.id,
             )
 
-    def _link_rules(
+    def _create_rulesets(
         self,
         instance_template: FieldTemplate,
         **kwargs,
     ):
-
-        rule_api_names = set(
-            instance_template.rules.values_list('api_name', flat=True),
-        )
-        rules = FieldSetRule.objects.filter(
-            account=self.account,
-            fieldset_id=kwargs['fieldset_id'],
-            api_name__in=rule_api_names,
-        )
-        self.instance.rules.set(rules)
+        ruleset_templates = list(instance_template.rulesets.all())
+        for ruleset_template in ruleset_templates:
+            service = FieldRuleSetService(
+                user=self.user,
+                is_superuser=self.is_superuser,
+                auth_type=self.auth_type,
+            )
+            service.create(
+                instance_template=ruleset_template,
+                field=self.instance,
+                workflow_id=self.instance.workflow_id,
+            )
 
     def _remove_unused_attachments(
         self,

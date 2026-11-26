@@ -1,0 +1,67 @@
+.option-item {
+  cursor: default;
+
+  &::before {
+    display: none;
+  }
+}
+
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.label {
+  flex: 1;
+  padding: 0.6rem 0.8rem 0.6rem 1.2rem;
+  margin: -0.6rem 0 -0.6rem -1.2rem;
+  cursor: pointer;
+  border-radius: 0.4rem;
+  transition:
+    color 0.1s ease-in-out,
+    background-color 0.1s ease-in-out;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--pneumatic-color-link-hover);
+    background-color: var(--pneumatic-color-beige);
+  }
+}
+
+.divider {
+  flex-shrink: 0;
+  width: 0.1rem;
+  height: 2rem;
+  margin: 0 0.4rem;
+  background-color: var(--pneumatic-color-black16);
+}
+
+.confirmation-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.delete-button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.2rem 0.6rem 0.8rem;
+  margin: -0.6rem -1.2rem -0.6rem 0;
+  cursor: pointer;
+  border-radius: 0.4rem;
+  transition: background-color 0.1s ease-in-out;
+
+  &:hover,
+  &:focus-within {
+    background-color: var(--pneumatic-color-beige);
+  }
+}
+
+.delete-icon {
+  color: var(--pneumatic-color-notification1);
+}

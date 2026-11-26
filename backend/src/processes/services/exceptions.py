@@ -266,3 +266,20 @@ class FieldsetServiceException(BaseServiceException):
 class SharedFieldsetNotFoundException(FieldsetServiceException):
 
     default_message = fs_messages.MSG_FS_0008
+
+
+class FieldsetTemplateRuleSetServiceException(BaseServiceException):
+
+    pass
+
+
+class FieldTemplateRuleSetServiceException(BaseServiceException):
+
+    pass
+
+
+class FieldRuleCheckServiceException(BaseServiceException):
+
+    def __init__(self, field_api_name: str, message: str):
+        self.field_api_name = field_api_name
+        super().__init__(message=message)
