@@ -15,7 +15,7 @@ from src.processes.enums import (
     FieldType,
 )
 from src.processes.messages.workflow import (
-    MSG_PW_0092,
+    MSG_PW_0094,
 )
 from src.processes.models.workflows.fields import (
     FieldRuleGroupAnd,
@@ -414,7 +414,12 @@ class FieldRuleCheckService:
         fields_by_api_name: Dict[str, TaskField],
     ):
 
-        """ Raise FieldRuleCheckServiceException if validation fails. """
+        """ Raise FieldRuleCheckServiceException if validation fails.
+            Non-required fields with no value are skipped: validators
+            only apply when the user actually filled the field. """
+
+        if not self.field.is_required and not self.field.value:
+            return
 
         is_satisfied = self._check_ruleset_condition(
             ruleset,
@@ -423,7 +428,7 @@ class FieldRuleCheckService:
         if not is_satisfied:
             raise FieldRuleCheckServiceException(
                 field_api_name=self.field.api_name,
-                message=ruleset.message or MSG_PW_0092,
+                message=ruleset.message or MSG_PW_0094,
             )
 
     def apply_rulesets(

@@ -1052,3 +1052,191 @@ def test_create__kickoff_fieldset_expanded_fields_used_in_task_text__ok(
     )
     assert response.data['tasks'][0]['name'] == task_name
     assert response.data['tasks'][0]['description'] == task_description
+
+
+def test_create__fieldset_invalid_ruleset_value__validation_error(
+    mocker,
+    api_client,
+):
+
+    """
+    Service exception from an invalid fieldset ruleset value must
+    return 400 (not 500).
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account)
+    shared_fieldset = create_test_shared_fieldset(
+        account=account,
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template with bad ruleset value',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'fieldsets': [
+                    {
+                        'shared_fieldset_id': shared_fieldset.id,
+                        'order': 1,
+                        'fields': [
+                            {
+                                'type': FieldType.NUMBER,
+                                'name': 'Amount',
+                                'order': 1,
+                                'api_name': 'amount-field',
+                            },
+                        ],
+                        'rulesets': [
+                            {
+                                'order': 1,
+                                'fields': ['amount-field'],
+                                'groups_or': [
+                                    {
+                                        'groups_and': [
+                                            {
+                                                'operator': (
+                                                    FieldSetRuleOperator
+                                                    .SUM_EQUAL
+                                                ),
+                                                'value': 'NOT_A_NUMBER',
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'Step',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert — must be 400, not 500
+    assert response.status_code == 400
+
+
+def test_create__fieldset_invalid_ruleset_operator__validation_error(
+    mocker,
+    api_client,
+):
+
+    """POST /templates with an invalid fieldset rule operator
+    must return 400, not silently accept it."""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account)
+    api_client.token_authenticate(user)
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    shared_fieldset = create_test_shared_fieldset(account=account)
+    request_data = {
+        'name': 'Template with bad operator',
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id,
+                'role': OwnerRole.OWNER,
+            },
+        ],
+        'is_active': True,
+        'kickoff': {
+            'fieldsets': [
+                {
+                    'shared_fieldset_id': shared_fieldset.id,
+                    'api_name': 'fs-bad-op',
+                    'fields': [
+                        {
+                            'name': 'Number field',
+                            'type': FieldType.NUMBER,
+                            'order': 1,
+                            'api_name': 'num-field-1',
+                        },
+                    ],
+                    'rulesets': [
+                        {
+                            'api_name': 'bad-ruleset-1',
+                            'fields': ['num-field-1'],
+                            'groups_or': [
+                                {
+                                    'api_name': 'bad-or-1',
+                                    'groups_and': [
+                                        {
+                                            'api_name': 'bad-and-1',
+                                            'operator': 'NONEXISTENT',
+                                            'value': '10',
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'First step',
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
+    }
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 400

@@ -13,7 +13,12 @@ from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
 )
-from src.processes.enums import FieldRuleOperator, FieldRuleType, FieldType
+from src.processes.enums import (
+    FieldRuleOperator,
+    FieldRuleType,
+    FieldRuleValueType,
+    FieldType,
+)
 from src.processes.messages.template import (
     MSG_PT_0075,
     MSG_PT_0079,
@@ -47,12 +52,14 @@ class FieldTemplateRuleGroupAndSerializer(
             'field',
             'operator',
             'value',
+            'value_type',
         )
         create_or_update_fields = {
             'api_name',
             'field',
             'operator',
             'value',
+            'value_type',
             'group_or',
             'template',
             'account',
@@ -92,6 +99,15 @@ class FieldTemplateRuleGroupAndSerializer(
             'Value the source field is compared against.'
         ),
     )
+    value_type = DocChoiceField(
+        choices=FieldRuleValueType.CHOICES,
+        required=False,
+        allow_null=True,
+        help_text=(
+            'How to interpret `value` for a User field: '
+            '"user" or "group".'
+        ),
+    )
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
@@ -106,6 +122,11 @@ class FieldTemplateRuleGroupAndSerializer(
 
     def additional_validate_value(self, value, data: Dict[str, Any]):
         field = self.context.get('field')
+        source_api = data.get('field')
+        if source_api and (
+            not field or source_api != field.api_name
+        ):
+            return
         if field and field.type == FieldType.DATE and value:
             try:
                 datetime.fromtimestamp(int(value), tz=tz.utc)

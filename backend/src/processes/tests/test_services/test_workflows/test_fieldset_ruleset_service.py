@@ -13,6 +13,7 @@ from src.processes.messages.fieldset import (
     MSG_FS_0018,
     MSG_FS_0019,
     MSG_FS_0020,
+    MSG_FS_0021,
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.fieldset import (
@@ -542,7 +543,7 @@ def test_validate__and_logic__one_fails__raises():
     with pytest.raises(FieldsetServiceException) as ex:
         service.validate()
 
-    assert ex.value.message == MSG_FS_0012('60, 100')
+    assert ex.value.message == MSG_FS_0021
 
 
 def test_validate__required_empty_field__sum_zero__ok():
@@ -850,6 +851,7 @@ def test_create__skip_validation_false__validates():
 
     assert ex.value.message == MSG_FS_0002('100')
 
+
 def test_validate__custom_message__raises_exception():
 
     """ Validation uses custom ruleset message if provided """
@@ -997,7 +999,7 @@ def test_validate__sum_less_than__satisfied__ok():
 
 def test_validate__no_values_exist__validation_skipped_ok():
 
-    """ If all fields are empty and not required, validation passes """
+    """Empty non-required field skips validation."""
 
     # arrange
     account = create_test_account()
@@ -1443,9 +1445,228 @@ def test_validate__multi_sum_lt_failed__raises_msg_fs_0020():
     assert ex.value.message == MSG_FS_0020('10, 20')
 
 
+def test_validate__decimal_precision__ok():
+
+    """ Decimal sum avoids float accumulation errors (0.1 + 0.2 == 0.3) """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user)
+    fieldset = FieldSet.objects.create(
+        account=account,
+        workflow=workflow,
+        name='Finances',
+    )
+    field_1 = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+        name='Part 1',
+        type=FieldType.NUMBER,
+        value='0.1',
+    )
+    field_2 = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+        name='Part 2',
+        type=FieldType.NUMBER,
+        value='0.2',
+    )
+    ruleset = FieldSetRuleSet.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+    )
+    ruleset.fields.add(field_1, field_2)
+    group_or = FieldSetRuleGroupOr.objects.create(
+        account=account,
+        workflow=workflow,
+        ruleset=ruleset,
+    )
+    FieldSetRuleGroupAnd.objects.create(
+        account=account,
+        workflow=workflow,
+        group_or=group_or,
+        operator=FieldSetRuleOperator.SUM_EQUAL,
+        value='0.3',
+    )
+    service = FieldSetRuleSetService(user=user, instance=ruleset)
+
+    # act
+    result = service.validate()
+
+    # assert
+    assert result is True
+
+
+def test_validate__negative_value__ok():
+
+    """ Negative values are summed correctly (30 + (-30) == 0) """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user)
+    fieldset = FieldSet.objects.create(
+        account=account,
+        workflow=workflow,
+        name='Finances',
+    )
+    field_1 = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+        name='Income',
+        type=FieldType.NUMBER,
+        value='30',
+    )
+    field_2 = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+        name='Expense',
+        type=FieldType.NUMBER,
+        value='-30',
+    )
+    ruleset = FieldSetRuleSet.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+    )
+    ruleset.fields.add(field_1, field_2)
+    group_or = FieldSetRuleGroupOr.objects.create(
+        account=account,
+        workflow=workflow,
+        ruleset=ruleset,
+    )
+    FieldSetRuleGroupAnd.objects.create(
+        account=account,
+        workflow=workflow,
+        group_or=group_or,
+        operator=FieldSetRuleOperator.SUM_EQUAL,
+        value='0',
+    )
+    service = FieldSetRuleSetService(user=user, instance=ruleset)
+
+    # act
+    result = service.validate()
+
+    # assert
+    assert result is True
+
+
+def test_validate__required_blank_field__raises_exception():
+
+    """ Required blank field counts as existing, sum=0 ≠ target → raises """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user)
+    fieldset = FieldSet.objects.create(
+        account=account,
+        workflow=workflow,
+        name='Finances',
+    )
+    field = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+        name='Amount',
+        type=FieldType.NUMBER,
+        value='',
+        is_required=True,
+    )
+    ruleset = FieldSetRuleSet.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+    )
+    ruleset.fields.add(field)
+    group_or = FieldSetRuleGroupOr.objects.create(
+        account=account,
+        workflow=workflow,
+        ruleset=ruleset,
+    )
+    FieldSetRuleGroupAnd.objects.create(
+        account=account,
+        workflow=workflow,
+        group_or=group_or,
+        operator=FieldSetRuleOperator.SUM_EQUAL,
+        value='100',
+    )
+    service = FieldSetRuleSetService(user=user, instance=ruleset)
+
+    # act & assert
+    with pytest.raises(FieldsetServiceException) as ex:
+        service.validate()
+
+    assert ex.value.message == MSG_FS_0002('100')
+
+
+def test_validate__non_required_blank_field_skipped__ok():
+
+    """ Non-required blank field is skipped, only filled fields count """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user)
+    fieldset = FieldSet.objects.create(
+        account=account,
+        workflow=workflow,
+        name='Finances',
+    )
+    field_blank = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+        name='Optional',
+        type=FieldType.NUMBER,
+        value='',
+        is_required=False,
+    )
+    field_filled = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+        name='Required',
+        type=FieldType.NUMBER,
+        value='100',
+        is_required=True,
+    )
+    ruleset = FieldSetRuleSet.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+    )
+    ruleset.fields.add(field_blank, field_filled)
+    group_or = FieldSetRuleGroupOr.objects.create(
+        account=account,
+        workflow=workflow,
+        ruleset=ruleset,
+    )
+    FieldSetRuleGroupAnd.objects.create(
+        account=account,
+        workflow=workflow,
+        group_or=group_or,
+        operator=FieldSetRuleOperator.SUM_EQUAL,
+        value='100',
+    )
+    service = FieldSetRuleSetService(user=user, instance=ruleset)
+
+    # act
+    result = service.validate()
+
+    # assert
+    assert result is True
+
+
 def test_validate__mixed_ops_failed__raises_fallback():
 
-    """ Mixed operators fall back to MSG_FS_0012 """
+    """ Mixed operators fall back to MSG_FS_0021. """
 
     # arrange
     account = create_test_account()
@@ -1505,4 +1726,98 @@ def test_validate__mixed_ops_failed__raises_fallback():
     with pytest.raises(FieldsetServiceException) as ex:
         service.validate()
 
-    assert ex.value.message == MSG_FS_0012('100, 200')
+    assert ex.value.message == MSG_FS_0021
+
+
+def test_validate__sum_gt_zero__empty_non_required__skipped():
+
+    """Empty non-required field skips Sum Greater Than 0."""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user)
+    fieldset = FieldSet.objects.create(
+        account=account,
+        workflow=workflow,
+        name='Finances',
+    )
+    field = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+        name='Amount',
+        type=FieldType.NUMBER,
+        value='',
+        is_required=False,
+    )
+    ruleset = FieldSetRuleSet.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+    )
+    ruleset.fields.add(field)
+    group_or = FieldSetRuleGroupOr.objects.create(
+        account=account,
+        workflow=workflow,
+        ruleset=ruleset,
+    )
+    FieldSetRuleGroupAnd.objects.create(
+        account=account,
+        workflow=workflow,
+        group_or=group_or,
+        operator=FieldSetRuleOperator.SUM_GREATER_THAN,
+        value='0',
+    )
+    service = FieldSetRuleSetService(
+        user=user,
+        instance=ruleset,
+    )
+
+    # act
+    result = service.validate()
+
+    # assert
+    assert result is True
+
+
+def test_validate__no_fields_in_ruleset__skipped_ok():
+
+    """Ruleset without fields skips validation."""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user)
+    fieldset = FieldSet.objects.create(
+        account=account,
+        workflow=workflow,
+        name='Finances',
+    )
+    ruleset = FieldSetRuleSet.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+    )
+    group_or = FieldSetRuleGroupOr.objects.create(
+        account=account,
+        workflow=workflow,
+        ruleset=ruleset,
+    )
+    FieldSetRuleGroupAnd.objects.create(
+        account=account,
+        workflow=workflow,
+        group_or=group_or,
+        operator=FieldSetRuleOperator.SUM_EQUAL,
+        value='100',
+    )
+    service = FieldSetRuleSetService(
+        user=user,
+        instance=ruleset,
+    )
+
+    # act
+    result = service.validate()
+
+    # assert
+    assert result is True

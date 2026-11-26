@@ -21,6 +21,10 @@ from src.processes.serializers.workflows.kickoff_value import (
 from src.processes.services.base import (
     BaseWorkflowService,
 )
+from src.processes.messages import workflow as messages
+from src.processes.services.exceptions import (
+    FieldRuleCheckServiceException,
+)
 from src.processes.services.tasks.fields.field_ruleset_check import (
     FieldRuleCheckService,
 )
@@ -243,7 +247,19 @@ class WorkflowService(
             if field.is_hidden != was_hidden:
                 fields_to_update.append(field)
         if fields_to_update:
-            TaskField.objects.bulk_update(fields_to_update, ['is_hidden'])
+            TaskField.objects.bulk_update(
+                fields_to_update, ['is_hidden'],
+            )
+        for field in fields_by_api_name.values():
+            if (
+                field.is_required
+                and not field.is_hidden
+                and not field.value
+            ):
+                raise FieldRuleCheckServiceException(
+                    field_api_name=field.api_name,
+                    message=str(messages.MSG_PW_0023),
+                )
 
     def _create_actions(self, **kwargs):
         if kwargs.get('anonymous_id'):

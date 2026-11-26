@@ -13,7 +13,7 @@ from src.processes.enums import (
 from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
 from src.processes.messages.workflow import (
-    MSG_PW_0092,
+    MSG_PW_0094,
 )
 from src.processes.models.workflows.fields import (
     FieldRuleGroupAnd,
@@ -502,6 +502,120 @@ class TestFieldRuleCheckService:
             fields_by_api_name=field_map(field),
         )
 
+    def test_validator__non_required_empty__skipped(self):
+
+        """ Non-required field with no value skips validator. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+
+        field = TaskField.objects.create(
+            name='Amount',
+            api_name='amount-field',
+            type=FieldType.NUMBER,
+            value='',
+            is_required=False,
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=field,
+            name='Must be > 0',
+            type=FieldRuleType.VALIDATOR,
+            message='Value must be greater than 0',
+            order=1,
+            api_name='ruleset-opt-empty',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-opt-empty',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=group_or,
+            field=field.api_name,
+            operator=FieldRuleOperator.GREATER_THAN,
+            value='0',
+            api_name='group-and-opt-empty',
+        )
+
+        # act & assert: does not raise
+        FieldRuleCheckService(
+            ruleset.field, user.timezone,
+        ).apply_rulesets(
+            [ruleset],
+            fields_by_api_name=field_map(field),
+        )
+
+    def test_validator__non_required_filled__validated(self):
+
+        """ Non-required field with a value is still validated. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+
+        field = TaskField.objects.create(
+            name='Amount',
+            api_name='amount-field',
+            type=FieldType.NUMBER,
+            value='-5',
+            is_required=False,
+            workflow=workflow,
+            task=task,
+            account=account,
+        )
+        ruleset = FieldRuleSet.objects.create(
+            account=account,
+            workflow=workflow,
+            field=field,
+            name='Must be > 0',
+            type=FieldRuleType.VALIDATOR,
+            message='Value must be greater than 0',
+            order=1,
+            api_name='ruleset-opt-filled',
+        )
+        group_or = FieldRuleGroupOr.objects.create(
+            account=account,
+            workflow=workflow,
+            ruleset=ruleset,
+            api_name='group-or-opt-filled',
+        )
+        FieldRuleGroupAnd.objects.create(
+            account=account,
+            workflow=workflow,
+            group_or=group_or,
+            field=field.api_name,
+            operator=FieldRuleOperator.GREATER_THAN,
+            value='0',
+            api_name='group-and-opt-filled',
+        )
+
+        # act & assert
+        with pytest.raises(FieldRuleCheckServiceException) as exc_info:
+            FieldRuleCheckService(
+                ruleset.field, user.timezone,
+            ).apply_rulesets(
+                [ruleset],
+                fields_by_api_name=field_map(field),
+            )
+
+        assert exc_info.value.field_api_name == 'amount-field'
+        assert exc_info.value.message == (
+            'Value must be greater than 0'
+        )
+
     def test_validator_rule__empty_groups_and__passes(self):
 
         """ An OR group with no AND predicates satisfies the validator. """
@@ -682,7 +796,7 @@ class TestFieldRuleCheckService:
             )
 
         assert exc_info.value.field_api_name == 'age-field'
-        assert exc_info.value.message == MSG_PW_0092
+        assert exc_info.value.message == MSG_PW_0094
 
     def test_validator_rule__hidden_field__skipped(self):
         # arrange

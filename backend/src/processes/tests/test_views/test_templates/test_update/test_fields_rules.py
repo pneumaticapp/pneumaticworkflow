@@ -3,6 +3,7 @@ import pytest
 from src.processes.enums import (
     FieldRuleOperator,
     FieldRuleType,
+    FieldRuleValueType,
     FieldType,
     OwnerRole,
     OwnerType,
@@ -22,6 +23,7 @@ from src.processes.models.templates.fields import (
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_field_show_ruleset,
+    create_test_group,
     create_test_owner,
     create_test_template,
 )
@@ -2731,3 +2733,283 @@ def test_update__task_field_rules__validator_types_with_selections__ok(
     assert group_and_data['field'] is None
     assert group_and_data['operator'] == operator
     assert group_and_data['value'] == value
+
+
+def test_update__task_field_group_value_type__ok(mocker, api_client):
+
+    """ Update stores group id and value_type on a task rule. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    group = create_test_group(account=account)
+    template = create_test_template(user, is_active=True, tasks_count=1)
+    task = template.tasks.first()
+    source_field = FieldTemplate.objects.create(
+        type=FieldType.USER,
+        name='User field',
+        order=1,
+        is_required=True,
+        task=task,
+        api_name='user-field',
+        template=template,
+        account=account,
+    )
+    target_field = FieldTemplate.objects.create(
+        type=FieldType.STRING,
+        name='Target field',
+        order=2,
+        task=task,
+        api_name='target-field',
+        template=template,
+        account=account,
+    )
+    ruleset, group_or, group_and = create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=target_field,
+        source_field_api_name=source_field.api_name,
+        value=str(user.id),
+    )
+    group_and_id = group_and.id
+    group_id = str(group.id)
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data={
+            'id': template.id,
+            'name': template.name,
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fields': [
+                        {
+                            'name': source_field.name,
+                            'type': source_field.type,
+                            'order': source_field.order,
+                            'api_name': source_field.api_name,
+                            'is_required': True,
+                        },
+                        {
+                            'name': target_field.name,
+                            'type': target_field.type,
+                            'order': target_field.order,
+                            'api_name': target_field.api_name,
+                            'rulesets': [
+                                {
+                                    'api_name': ruleset.api_name,
+                                    'name': ruleset.name,
+                                    'type': FieldRuleType.SHOW,
+                                    'order': ruleset.order,
+                                    'groups_or': [
+                                        {
+                                            'api_name': group_or.api_name,
+                                            'groups_and': [
+                                                {
+                                                    'api_name': (
+                                                        group_and.api_name
+                                                    ),
+                                                    'field': (
+                                                        source_field.api_name
+                                                    ),
+                                                    'operator': (
+                                                        FieldRuleOperator.EQUAL
+                                                    ),
+                                                    'value': group_id,
+                                                    'value_type': (
+                                                        FieldRuleValueType
+                                                        .GROUP
+                                                    ),
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    fields = response.data['tasks'][0]['fields']
+    field_data = next(
+        item for item in fields
+        if item['api_name'] == target_field.api_name
+    )
+    group_and_data = (
+        field_data['rulesets'][0]['groups_or'][0]['groups_and'][0]
+    )
+    assert group_and_data['value'] == group_id
+    assert group_and_data['value_type'] == FieldRuleValueType.GROUP
+
+    group_and.refresh_from_db()
+    assert group_and.id == group_and_id
+    assert group_and.value == group_id
+    assert group_and.value_type == FieldRuleValueType.GROUP
+
+
+def test_update__kickoff_field_group_value_type__ok(mocker, api_client):
+
+    """ Update stores group id and value_type on a kickoff rule. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    group = create_test_group(account=account)
+    template = create_test_template(user, is_active=True, tasks_count=1)
+    kickoff = template.kickoff_instance
+    task = template.tasks.first()
+    source_field = FieldTemplate.objects.create(
+        type=FieldType.USER,
+        name='User field',
+        order=1,
+        is_required=True,
+        kickoff=kickoff,
+        api_name='user-field',
+        template=template,
+        account=account,
+    )
+    target_field = FieldTemplate.objects.create(
+        type=FieldType.STRING,
+        name='Target field',
+        order=2,
+        kickoff=kickoff,
+        api_name='target-field',
+        template=template,
+        account=account,
+    )
+    ruleset, group_or, group_and = create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=target_field,
+        source_field_api_name=source_field.api_name,
+        value=str(user.id),
+    )
+    group_and_id = group_and.id
+    group_id = str(group.id)
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data={
+            'id': template.id,
+            'name': template.name,
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'id': kickoff.id,
+                'fields': [
+                    {
+                        'name': source_field.name,
+                        'type': source_field.type,
+                        'order': source_field.order,
+                        'api_name': source_field.api_name,
+                        'is_required': True,
+                    },
+                    {
+                        'name': target_field.name,
+                        'type': target_field.type,
+                        'order': target_field.order,
+                        'api_name': target_field.api_name,
+                        'rulesets': [
+                            {
+                                'api_name': ruleset.api_name,
+                                'name': ruleset.name,
+                                'type': FieldRuleType.SHOW,
+                                'order': ruleset.order,
+                                'groups_or': [
+                                    {
+                                        'api_name': group_or.api_name,
+                                        'groups_and': [
+                                            {
+                                                'api_name': group_and.api_name,
+                                                'field': source_field.api_name,
+                                                'operator': (
+                                                    FieldRuleOperator.EQUAL
+                                                ),
+                                                'value': group_id,
+                                                'value_type': (
+                                                    FieldRuleValueType.GROUP
+                                                ),
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    fields = response.data['kickoff']['fields']
+    field_data = next(
+        item for item in fields
+        if item['api_name'] == target_field.api_name
+    )
+    group_and_data = (
+        field_data['rulesets'][0]['groups_or'][0]['groups_and'][0]
+    )
+    assert group_and_data['value'] == group_id
+    assert group_and_data['value_type'] == FieldRuleValueType.GROUP
+
+    group_and.refresh_from_db()
+    assert group_and.id == group_and_id
+    assert group_and.value == group_id
+    assert group_and.value_type == FieldRuleValueType.GROUP

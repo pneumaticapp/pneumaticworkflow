@@ -383,15 +383,20 @@ class FieldSetTemplateService(TemplateRulesetsMixin, BaseModelService):
         fieldset_data['api_name'] = create_api_name(
             FieldsetTemplate.api_name_prefix,
         )
-        fields_map: Dict[str, str] = {}
-        updated_fields_data = []
-        for field_data in fieldset_data.get('fields', []):
-            new_api_name = create_api_name(
+        fields_map: Dict[str, str] = {
+            fd['api_name']: create_api_name(
                 FieldTemplate.api_name_prefix,
             )
-            fields_map[field_data['api_name']] = new_api_name
-            field_data['api_name'] = new_api_name
-            for selection_data in field_data.get('selections', []):
+            for fd in fieldset_data.get('fields', [])
+        }
+        updated_fields_data = []
+        for field_data in fieldset_data.get('fields', []):
+            field_data['api_name'] = (
+                fields_map[field_data['api_name']]
+            )
+            for selection_data in field_data.get(
+                'selections', [],
+            ):
                 selection_data['api_name'] = create_api_name(
                     FieldTemplateSelection.api_name_prefix,
                 )
@@ -399,17 +404,28 @@ class FieldSetTemplateService(TemplateRulesetsMixin, BaseModelService):
                 ruleset_data['api_name'] = create_api_name(
                     FieldTemplateRuleSet.api_name_prefix,
                 )
-                for group_or_data in ruleset_data.get('groups_or', []):
+                for group_or_data in ruleset_data.get(
+                    'groups_or', [],
+                ):
                     group_or_data['api_name'] = create_api_name(
                         FieldTemplateRuleGroupOr.api_name_prefix,
                     )
-                    for group_and_data in group_or_data.get('groups_and', []):
-                        group_and_data['api_name'] = create_api_name(
-                            FieldTemplateRuleGroupAnd.api_name_prefix,
+                    for group_and_data in group_or_data.get(
+                        'groups_and', [],
+                    ):
+                        group_and_data['api_name'] = (
+                            create_api_name(
+                                FieldTemplateRuleGroupAnd
+                                .api_name_prefix,
+                            )
                         )
-                        old_api_name = group_and_data['field']
-                        if old_api_name:
-                            group_and_data['field'] = fields_map[old_api_name]
+                        old_ref = group_and_data.get(
+                            'field',
+                        )
+                        if old_ref and old_ref in fields_map:
+                            group_and_data['field'] = (
+                                fields_map[old_ref]
+                            )
 
             updated_fields_data.append(field_data)
         fieldset_data['fields'] = updated_fields_data

@@ -10,7 +10,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import ObjectDoesNotExist
 
 from src.generics.validators import NoSchemaURLValidator
-from src.processes.enums import FieldType
+from src.processes.enums import FieldRuleType, FieldType
 from src.processes.messages import workflow as messages
 from src.processes.models.templates.fields import (
     FieldTemplate,
@@ -300,9 +300,19 @@ class TaskFieldService(BaseWorkflowService):
             clear_value=value,
         )
 
+    def _has_show_rulesets(self) -> bool:
+        if not hasattr(self, 'instance_template'):
+            return False
+        return self.instance_template.rulesets.filter(
+            type=FieldRuleType.SHOW,
+        ).exists()
+
     def _get_valid_value(self, raw_value: Any) -> FieldData:
         if raw_value in self.NULL_VALUES:
-            if self.instance.is_required:
+            if (
+                self.instance.is_required
+                and not self._has_show_rulesets()
+            ):
                 raise TaskFieldException(
                     api_name=self.instance.api_name,
                     message=messages.MSG_PW_0023,
