@@ -35,28 +35,26 @@ const CONSENT_FAILURES_PER_MINUTE = 10;
 const OAUTH_PATHS = new Set(['/register', '/token', '/authorize']);
 
 function normalizePath(path: string): string {
-  return path
-    .toLowerCase()
-    .replace(/\/+$/, '')
-    .replace(/^\/mcp\//, '/');
+  return path.toLowerCase().replace(/\/+$/, '');
 }
 
 function isMcpPath(path: string): boolean {
-  return /^\/mcp\/?$/i.test(path);
+  return path === '/';
 }
 
 // Route labels never contain path parameters: upload links carry their capability token in the path.
 function routeOf(path: string): string {
   const lower = normalizePath(path);
+  if (lower === '') {
+    return 'mcp';
+  }
   if (lower.startsWith('/upload/')) {
     return 'upload';
   }
   if (lower.startsWith('/.well-known/')) {
     return 'metadata';
   }
-  return ['/mcp', '/token', '/authorize', '/register', '/healthz', '/metrics'].includes(lower)
-    ? lower.slice(1)
-    : 'other';
+  return ['/token', '/authorize', '/register', '/healthz', '/metrics'].includes(lower) ? lower.slice(1) : 'other';
 }
 
 function sendJsonRpcError(res: Response, status: number, code: number, message: string, retryAfter?: string) {
@@ -102,14 +100,6 @@ function metricsRoute(token: string): RequestHandler {
 const securityHeaders: RequestHandler = (_req, res, next) => {
   // same-origin keeps form posts' Origin header intact while never leaking URLs to other sites.
   res.set({ 'Cache-Control': 'no-store', 'Referrer-Policy': 'same-origin', 'X-Content-Type-Options': 'nosniff' });
-  next();
-};
-
-// Standalone clients discover OAuth at the issuer root, without nginx rewriting the request.
-const normalizeDiscovery: RequestHandler = (req, _res, next) => {
-  if (req.path.startsWith('/.well-known/oauth-')) {
-    req.url = `/mcp${req.url}`;
-  }
   next();
 };
 
@@ -282,8 +272,7 @@ export function createHttpApp(
   );
 
   router.use(handleErrors);
-  app.use(normalizeDiscovery);
-  app.use('/mcp', router);
+  app.use(router);
   app.use(handleErrors);
 
   return app;

@@ -92,7 +92,7 @@ Requires a configured Pneumatic installation and Docker Compose. Run commands fr
 
    Replace `https://mcp.example.com` with `MCP_PUBLIC_URL` if set, otherwise `FRONTEND_URL`. Health returns `{"status":"ok"}`; unauthenticated `/mcp` returns **401** with `WWW-Authenticate`; OAuth metadata contains your public origin. These checks do not verify backend access: connect a client and call `get_current_user` next.
 
-The bundled nginx has one proxy location, `/mcp/`. It internally normalizes `/mcp` to `/mcp/` and forwards the public `/.well-known/oauth-*` discovery namespace through that same entry without redirecting the client. Express handles OAuth, uploads, metadata and MCP requests inside one `/mcp` router; nginx does not enumerate the application endpoints. The standard public discovery URLs remain `/.well-known/oauth-protected-resource/mcp` and `/.well-known/oauth-authorization-server`. A standalone process also accepts these root discovery URLs and normalizes them into the same router. `/healthz` and `/metrics` remain internal container routes. With the connector stopped, its nginx routes return 502.
+The bundled nginx has one proxy location, `/mcp/`. It internally normalizes `/mcp` to `/mcp/`, forwards the public `/.well-known/oauth-*` discovery namespace through that same entry without redirecting the client, and strips the `/mcp` prefix before proxying. The connector serves OAuth, uploads, metadata and MCP requests from its root (the MCP endpoint is `/`); nginx does not enumerate the application endpoints. Public URLs keep the `/mcp` prefix, and the standard public discovery URLs remain `/.well-known/oauth-protected-resource/mcp` and `/.well-known/oauth-authorization-server`. `/healthz` and `/metrics` remain internal container routes. With the connector stopped, its nginx routes return 502.
 
 To disable it, empty `MCP_ENABLE`, run `./start.sh` and answer no; the script rewrites `COMPOSE_PROFILES` without `mcp`. Setting `MCP_ENABLE=no` by hand leaves `COMPOSE_PROFILES` as is; with direct Compose commands, remove `mcp` from the enabled profiles yourself. Neither stops an already running container: remove it with `docker compose --profile mcp rm -sf mcp`.
 
@@ -127,7 +127,7 @@ docker run -d --name pneumatic-mcp --restart unless-stopped \
   pneumatic-mcp:local node dist/index.js
 ```
 
-Put a TLS reverse proxy in front of `127.0.0.1:3000`. Forward `/mcp` and its subpaths. Forward public OAuth discovery requests either unchanged or internally rewritten from `/.well-known/oauth-*` to `/mcp/.well-known/oauth-*`, as in the bundled [MCP proxy location](../nginx/includes/location_mcp.conf). Preserve `Host`, set trusted forwarding headers, disable response buffering and allow request bodies of at least 26 MiB. Keep upload-token paths out of access logs. `PUBLIC_URL` must match the externally reachable origin.
+Put a TLS reverse proxy in front of `127.0.0.1:3000`. Forward `/mcp` and its subpaths with the `/mcp` prefix stripped (`/mcp` becomes `/`, `/mcp/token` becomes `/token`), and forward public `/.well-known/oauth-*` discovery requests unchanged, as in the bundled [nginx configuration](../nginx/includes/location_frontend_common.conf). Preserve `Host`, set trusted forwarding headers, disable response buffering and allow request bodies of at least 26 MiB. Keep upload-token paths out of access logs. `PUBLIC_URL` must match the externally reachable origin.
 
 ### Connect a client
 

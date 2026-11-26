@@ -71,7 +71,7 @@ jobs:
             sleep 1
           done
           curl -fsS http://127.0.0.1:3000/healthz
-          status=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:3000/mcp -H 'Content-Type: application/json' --data '{}')
+          status=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:3000/ -H 'Content-Type: application/json' --data '{}')
           test "$status" = 401
       - if: failure()
         run: cat server.log || true

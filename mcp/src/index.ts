@@ -28,7 +28,7 @@ function main() {
       process.exit(1);
     }
     log('info', 'listening', {
-      address: `http://${config.host}:${config.port}/mcp`,
+      address: `http://${config.host}:${config.port}/`,
       publicUrl: new URL('/mcp', config.publicUrl).href,
       apiUrl: config.pneumatic.apiUrl,
     });

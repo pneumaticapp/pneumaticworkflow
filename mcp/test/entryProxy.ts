@@ -1,15 +1,29 @@
-import { createServer, request } from 'node:http';
+import { createServer, request, type RequestListener } from 'node:http';
+
+// Mirrors the bundled nginx: public MCP paths reach the connector without the /mcp prefix.
+function toUpstreamPath(path: string): string | null {
+  const pathname = new URL(path, 'http://localhost').pathname;
+  if (pathname.startsWith('/.well-known/oauth-')) {
+    return path;
+  }
+  if (pathname === '/mcp' || pathname.startsWith('/mcp/')) {
+    return path.replace(/^\/mcp\/?/, '/');
+  }
+  return null;
+}
+
+// Serves public URLs in-process; internal routes such as /healthz pass through unchanged.
+export function behindEntry(app: RequestListener): RequestListener {
+  return (req, res) => {
+    req.url = toUpstreamPath(req.url ?? '/') ?? req.url;
+    app(req, res);
+  };
+}
 
 export function createEntryProxy(upstream: string) {
   return createServer((req, res) => {
-    let path = req.url ?? '/';
-    const pathname = new URL(path, 'http://localhost').pathname;
-    if (pathname.startsWith('/.well-known/oauth-')) {
-      path = `/mcp${path}`;
-    } else if (pathname === '/mcp') {
-      path = path.replace(/^\/mcp(?=\?|$)/, '/mcp/');
-    }
-    if (!new URL(path, 'http://localhost').pathname.startsWith('/mcp/')) {
+    const path = toUpstreamPath(req.url ?? '/');
+    if (path === null) {
       res.writeHead(404).end('frontend');
       return;
     }

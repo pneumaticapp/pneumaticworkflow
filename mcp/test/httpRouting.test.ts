@@ -76,7 +76,7 @@ async function connect(token: string) {
 }
 
 describe('public MCP entry', () => {
-  it('discovers OAuth through standard public URLs and the namespaced upstream', async () => {
+  it('discovers OAuth through standard public URLs without the /mcp prefix upstream', async () => {
     const response = await fetch(`${baseUrl}/mcp`);
     expect(response.status).toBe(401);
     const metadataUrl = /resource_metadata="([^"]+)"/.exec(response.headers.get('www-authenticate')!)![1]!;
@@ -92,9 +92,9 @@ describe('public MCP entry', () => {
     });
     expect(receivedPaths).toEqual(
       expect.arrayContaining([
-        '/mcp/',
-        '/mcp/.well-known/oauth-protected-resource/mcp',
-        '/mcp/.well-known/oauth-authorization-server',
+        '/',
+        '/.well-known/oauth-protected-resource/mcp',
+        '/.well-known/oauth-authorization-server',
       ]),
     );
   });
@@ -151,14 +151,14 @@ describe('public MCP entry', () => {
   it('preserves queries and keeps unrelated paths outside the MCP upstream', async () => {
     const response = await fetch(`${baseUrl}/.well-known/oauth-protected-resource/mcp?client=a%2Fb`);
     expect(response.status).toBe(200);
-    expect(receivedPaths.at(-1)).toBe('/mcp/.well-known/oauth-protected-resource/mcp?client=a%2Fb');
+    expect(receivedPaths.at(-1)).toBe('/.well-known/oauth-protected-resource/mcp?client=a%2Fb');
     const count = receivedPaths.length;
     for (const path of ['/mcpx', '/mcp-other', '/auth/signup/', '/.well-known/acme-challenge/test']) {
       expect(await (await fetch(`${baseUrl}${path}`)).text()).toBe('frontend');
     }
     expect(receivedPaths).toHaveLength(count);
     expect((await fetch(`${baseUrl}/mcp/unknown`)).status).toBe(404);
-    expect(receivedPaths.at(-1)).toBe('/mcp/unknown');
+    expect(receivedPaths.at(-1)).toBe('/unknown');
   });
 
   it('serves a one-time browser upload through the public entry', async () => {

@@ -16,6 +16,7 @@ import { VERSION } from '../src/core/version.js';
 import { createHttpApp } from '../src/http/app.js';
 import { createPneumaticClient } from '../src/pneumatic/client.js';
 import { buildServer } from '../src/server.js';
+import { behindEntry } from './entryProxy.js';
 import { createFakePneumatic, VALID_API_KEY } from './fakePneumatic.js';
 
 const METRICS_TOKEN = 'metrics-token-123456';
@@ -35,21 +36,23 @@ beforeAll(async () => {
   writeFileSync(replayFile, '');
   server.on(
     'request',
-    createHttpApp(
-      {
-        transport: 'http',
-        pneumatic: { apiUrl: fake.apiUrl, filesUrl: fake.filesUrl },
-        host: '127.0.0.1',
-        port,
-        publicUrl: new URL(baseUrl),
-        tokenSecret: randomBytes(32).toString('hex'),
-        replayFile,
-        allowedRedirectHosts: ['claude.ai'],
-        rateLimitPerMinute: 0,
-        trustProxy: false,
-        metricsToken: METRICS_TOKEN,
-      },
-      fake.fetchFn,
+    behindEntry(
+      createHttpApp(
+        {
+          transport: 'http',
+          pneumatic: { apiUrl: fake.apiUrl, filesUrl: fake.filesUrl },
+          host: '127.0.0.1',
+          port,
+          publicUrl: new URL(baseUrl),
+          tokenSecret: randomBytes(32).toString('hex'),
+          replayFile,
+          allowedRedirectHosts: ['claude.ai'],
+          rateLimitPerMinute: 0,
+          trustProxy: false,
+          metricsToken: METRICS_TOKEN,
+        },
+        fake.fetchFn,
+      ),
     ),
   );
 });

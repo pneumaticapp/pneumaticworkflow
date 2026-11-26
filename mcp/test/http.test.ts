@@ -21,6 +21,7 @@ import { createSealer } from '../src/http/sealer.js';
 import { createFileReplayStore } from '../src/stores/fileReplayStore.js';
 import { createMemoryUploadStore } from '../src/stores/memoryUploadStore.js';
 import { delayed } from './delayed.js';
+import { behindEntry } from './entryProxy.js';
 import { createFakePneumatic, VALID_API_KEY } from './fakePneumatic.js';
 
 const REDIRECT_URI = 'https://claude.ai/api/mcp/auth_callback';
@@ -51,7 +52,7 @@ beforeAll(async () => {
   if (config.transport !== 'http') {
     throw new Error('HTTP configuration expected');
   }
-  server.on('request', createHttpApp(config, fake.fetchFn));
+  server.on('request', behindEntry(createHttpApp(config, fake.fetchFn)));
 });
 
 afterAll(async () => {
@@ -116,7 +117,7 @@ async function connect(token: string) {
 }
 
 describe('discovery', () => {
-  it('keeps standalone discovery compatible with the namespaced router', async () => {
+  it('serves discovery metadata with and without the /mcp prefix', async () => {
     for (const path of ['/.well-known/oauth-protected-resource/mcp', '/.well-known/oauth-authorization-server']) {
       const external = await fetch(`${baseUrl}${path}`);
       const namespaced = await fetch(`${baseUrl}/mcp${path}`);
@@ -571,21 +572,23 @@ describe('authorization flow', () => {
       const url = `http://127.0.0.1:${port}`;
       slowServer.on(
         'request',
-        createHttpApp(
-          {
-            transport: 'http',
-            pneumatic: { apiUrl: fake.apiUrl },
-            host: '127.0.0.1',
-            port,
-            publicUrl: new URL(url),
-            tokenSecret,
-            replayFile: ledger,
-            allowedRedirectHosts: ['claude.ai'],
-            rateLimitPerMinute: 0,
-            trustProxy: false,
-          },
-          fake.fetchFn,
-          { replay: delayed(createFileReplayStore(ledger)) },
+        behindEntry(
+          createHttpApp(
+            {
+              transport: 'http',
+              pneumatic: { apiUrl: fake.apiUrl },
+              host: '127.0.0.1',
+              port,
+              publicUrl: new URL(url),
+              tokenSecret,
+              replayFile: ledger,
+              allowedRedirectHosts: ['claude.ai'],
+              rateLimitPerMinute: 0,
+              trustProxy: false,
+            },
+            fake.fetchFn,
+            { replay: delayed(createFileReplayStore(ledger)) },
+          ),
         ),
       );
       const { body: client } = await register({}, url);
@@ -721,7 +724,7 @@ describe('health', () => {
         res.status(500).end();
       };
       app.use(handleError);
-      isolatedServer.on('request', app);
+      isolatedServer.on('request', behindEntry(app));
       expect((await fetch(`${url}/healthz`)).status).toBe(200);
 
       const { body: client } = await register({}, url);
@@ -753,15 +756,15 @@ describe('health', () => {
 });
 
 describe('MCP endpoint', () => {
-  it('keeps application routes under the MCP namespace', async () => {
-    const registration = await fetch(`${baseUrl}/mcp/register`, {
+  it('serves application routes from the root', async () => {
+    const registration = await fetch(`${baseUrl}/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ redirect_uris: [REDIRECT_URI] }),
     });
     expect(registration.status).toBe(201);
-    expect((await fetch(`${baseUrl}/mcp/`)).status).toBe(401);
-    for (const path of ['/register', '/authorize', '/token', '/upload/invalid', '/mcpx']) {
+    expect((await fetch(`${baseUrl}/`)).status).toBe(401);
+    for (const path of ['/upload/invalid', '/mcpx', '/unknown']) {
       expect((await fetch(`${baseUrl}${path}`, { method: 'POST' })).status).toBe(404);
     }
   });
@@ -807,20 +810,22 @@ describe('MCP endpoint', () => {
       const url = `http://127.0.0.1:${port}`;
       limitedServer.on(
         'request',
-        createHttpApp(
-          {
-            transport: 'http',
-            pneumatic: { apiUrl: fake.apiUrl },
-            host: '127.0.0.1',
-            port,
-            publicUrl: new URL(url),
-            tokenSecret,
-            replayFile: join(replayDirectory, 'used.json'),
-            allowedRedirectHosts: ['claude.ai'],
-            rateLimitPerMinute: 2,
-            trustProxy: false,
-          },
-          fake.fetchFn,
+        behindEntry(
+          createHttpApp(
+            {
+              transport: 'http',
+              pneumatic: { apiUrl: fake.apiUrl },
+              host: '127.0.0.1',
+              port,
+              publicUrl: new URL(url),
+              tokenSecret,
+              replayFile: join(replayDirectory, 'used.json'),
+              allowedRedirectHosts: ['claude.ai'],
+              rateLimitPerMinute: 2,
+              trustProxy: false,
+            },
+            fake.fetchFn,
+          ),
         ),
       );
       const post = () =>
@@ -955,21 +960,23 @@ describe('browser uploads', () => {
       const url = `http://127.0.0.1:${port}`;
       racingServer.on(
         'request',
-        createHttpApp(
-          {
-            transport: 'http',
-            pneumatic: { apiUrl: fake.apiUrl, filesUrl: fake.filesUrl },
-            host: '127.0.0.1',
-            port,
-            publicUrl: new URL(url),
-            tokenSecret,
-            replayFile: join(replayDirectory, 'used.json'),
-            allowedRedirectHosts: ['claude.ai'],
-            rateLimitPerMinute: 0,
-            trustProxy: false,
-          },
-          fake.fetchFn,
-          { uploads: delayed(createMemoryUploadStore()) },
+        behindEntry(
+          createHttpApp(
+            {
+              transport: 'http',
+              pneumatic: { apiUrl: fake.apiUrl, filesUrl: fake.filesUrl },
+              host: '127.0.0.1',
+              port,
+              publicUrl: new URL(url),
+              tokenSecret,
+              replayFile: join(replayDirectory, 'used.json'),
+              allowedRedirectHosts: ['claude.ai'],
+              rateLimitPerMinute: 0,
+              trustProxy: false,
+            },
+            fake.fetchFn,
+            { uploads: delayed(createMemoryUploadStore()) },
+          ),
         ),
       );
       const client = new Client({ name: 'test', version: '1.0.0' });
