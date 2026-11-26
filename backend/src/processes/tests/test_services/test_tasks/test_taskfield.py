@@ -18,8 +18,9 @@ from src.processes.models.templates.fields import (
     FieldTemplateSelection,
 )
 from src.processes.models.workflows.fields import (
-    TaskField,
+    FieldRuleSet,
     FieldSelection,
+    TaskField,
 )
 from src.processes.services.tasks.exceptions import (
     TaskFieldException,
@@ -2647,6 +2648,226 @@ def test__get_valid_value__not_required_and_null_value__ok(
     # assert
     assert result == FieldData()
     get_valid_string_value_mock.assert_not_called()
+
+
+@pytest.mark.parametrize('raw_value', ['', None, []])
+def test__get_valid_value__hidden_required_null__ok(
+    mocker,
+    raw_value,
+):
+
+    """Hidden required field with null value — returns empty FieldData."""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        is_required=True,
+        is_hidden=True,
+        workflow=workflow,
+        account=account,
+    )
+    get_valid_string_value_mock = mocker.patch(
+        'src.processes.services.tasks.fields.field.'
+        'TaskFieldService._get_valid_string_value',
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+
+    # act
+    result = service._get_valid_value(raw_value=raw_value)
+
+    # assert
+    assert result == FieldData()
+    get_valid_string_value_mock.assert_not_called()
+
+
+@pytest.mark.parametrize('raw_value', ['', None, []])
+def test__get_valid_value__required_null_has_show_ruleset__ok(
+    mocker,
+    raw_value,
+):
+
+    """Required field with null value but has Show ruleset — no raise."""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        is_required=True,
+        workflow=workflow,
+        account=account,
+    )
+    FieldRuleSet.objects.create(
+        account=account,
+        workflow=workflow,
+        field=task_field,
+        name='Show when filled',
+        type=FieldRuleType.SHOW,
+        order=0,
+        api_name='ruleset-show-1',
+    )
+    get_valid_string_value_mock = mocker.patch(
+        'src.processes.services.tasks.fields.field.'
+        'TaskFieldService._get_valid_string_value',
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+
+    # act
+    result = service._get_valid_value(raw_value=raw_value)
+
+    # assert
+    assert result == FieldData()
+    get_valid_string_value_mock.assert_not_called()
+
+
+def test__has_show_rulesets__instance_has_show__true():
+
+    """Runtime field has Show ruleset (no template) — returns True."""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        workflow=workflow,
+        account=account,
+    )
+    FieldRuleSet.objects.create(
+        account=account,
+        workflow=workflow,
+        field=task_field,
+        name='Show rule',
+        type=FieldRuleType.SHOW,
+        order=0,
+        api_name='ruleset-show-1',
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+
+    # act
+    result = service._has_show_rulesets()
+
+    # assert
+    assert result is True
+
+
+def test__has_show_rulesets__instance_no_rulesets__false():
+
+    """Runtime field has no rulesets (no template) — returns False."""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        workflow=workflow,
+        account=account,
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+
+    # act
+    result = service._has_show_rulesets()
+
+    # assert
+    assert result is False
+
+
+def test__has_show_rulesets__template_has_show__true():
+
+    """instance_template has Show ruleset — returns True."""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    task_template = template.tasks.first()
+    field_template = FieldTemplate.objects.create(
+        task=task_template,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        name='Field',
+        template=template,
+        account=account,
+    )
+    FieldTemplateRuleSet.objects.create(
+        account=account,
+        template=template,
+        field=field_template,
+        name='Show rule',
+        type=FieldRuleType.SHOW,
+        order=0,
+        api_name='ruleset-show-tpl',
+    )
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        workflow=workflow,
+        account=account,
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+    service.instance_template = field_template
+
+    # act
+    result = service._has_show_rulesets()
+
+    # assert
+    assert result is True
+
+
+def test__has_show_rulesets__template_no_show__false():
+
+    """instance_template has no Show rulesets — returns False."""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    task_template = template.tasks.first()
+    field_template = FieldTemplate.objects.create(
+        task=task_template,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        name='Field',
+        template=template,
+        account=account,
+    )
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        workflow=workflow,
+        account=account,
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+    service.instance_template = field_template
+
+    # act
+    result = service._has_show_rulesets()
+
+    # assert
+    assert result is False
 
 
 def test__create_rulesets__one_ruleset__ok():

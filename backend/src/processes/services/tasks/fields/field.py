@@ -301,14 +301,18 @@ class TaskFieldService(BaseWorkflowService):
         )
 
     def _has_show_rulesets(self) -> bool:
-        if not hasattr(self, 'instance_template'):
-            return False
-        return self.instance_template.rulesets.filter(
+        if hasattr(self, 'instance_template'):
+            return self.instance_template.rulesets.filter(
+                type=FieldRuleType.SHOW,
+            ).exists()
+        return self.instance.rulesets.filter(
             type=FieldRuleType.SHOW,
         ).exists()
 
     def _get_valid_value(self, raw_value: Any) -> FieldData:
         if raw_value in self.NULL_VALUES:
+            if self.instance.is_hidden:
+                return FieldData()
             if (
                 self.instance.is_required
                 and not self._has_show_rulesets()
