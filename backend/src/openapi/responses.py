@@ -6,6 +6,7 @@ from drf_spectacular.utils import (
 from rest_framework import serializers
 
 from src.openapi.examples import (
+    FIELD_VALUE_ERROR_EXAMPLE,
     FORBIDDEN_EXAMPLE,
     NOT_FOUND_EXAMPLE,
     TOO_MANY_REQUESTS_EXAMPLE,
@@ -45,6 +46,14 @@ VALIDATION_ERROR = error_response(
     serializer=ValidationErrorSerializer,
     description='Validation error',
     example=VALIDATION_ERROR_EXAMPLE,
+)
+FIELD_VALUE_ERROR = OpenApiResponse(
+    response=ValidationErrorSerializer,
+    description=(
+        'Validation error. Field value errors include '
+        'details.api_name of the field.'
+    ),
+    examples=[VALIDATION_ERROR_EXAMPLE, FIELD_VALUE_ERROR_EXAMPLE],
 )
 FIELD_VALIDATION_ERROR = OpenApiResponse(
     response={

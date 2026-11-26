@@ -149,12 +149,48 @@ TEMPLATE_PREVIEW_EXAMPLE = OpenApiExample(
 
 
 WORKFLOW_RUN_EXAMPLE = OpenApiExample(
-    'Run workflow',
+    'Minimal: one kickoff field',
+    description=(
+        'Replace kickoff keys with api_name values from '
+        'GET /templates/{id}/fields. Values use the same formats as '
+        'task output (see "Field values" in the API description).'
+    ),
     value={
         'name': 'Onboard: Jane Doe',
         'is_urgent': False,
         'kickoff': {
             'employee-name': 'Jane Doe',
+        },
+    },
+    request_only=True,
+)
+
+WORKFLOW_RUN_ALL_TYPES_EXAMPLE = OpenApiExample(
+    'All kickoff field types',
+    description=(
+        'One kickoff key per field type. Replace keys, selection texts, '
+        'user email/group and file URLs with values from the template '
+        'kickoff metadata and your deployment.'
+    ),
+    value={
+        'name': 'Approve purchase',
+        'is_urgent': False,
+        'kickoff': {
+            'short-answer': 'New laptop',
+            'details': 'Line one\nLine two',
+            'amount': 1250.5,
+            'due-date': 1767225600,
+            'website': 'https://example.com/spec',
+            'decision': 'Approved',
+            'department': 'Engineering',
+            'approvals': ['Legal', 'Finance'],
+            'attachments': [
+                (
+                    '[invoice.pdf]'
+                    '(https://app.example.com/files/a1b2c3d4e5f60789)'
+                ),
+            ],
+            'reviewer': 'jane@example.com',
         },
     },
     request_only=True,
@@ -171,14 +207,139 @@ WORKFLOW_COMPLETE_EXAMPLE = OpenApiExample(
     request_only=True,
 )
 
+# Field formats: see "Field values" in src/openapi/reference.py
+
 TASK_COMPLETE_EXAMPLE = OpenApiExample(
-    'Complete task',
+    'Minimal: one string field',
+    description=(
+        'Replace the output key with a field api_name from '
+        'GET /v2/tasks/{id} (output[].api_name).'
+    ),
     value={
         'output': {
             'result': 'Done',
         },
     },
     request_only=True,
+)
+
+TASK_COMPLETE_ALL_TYPES_EXAMPLE = OpenApiExample(
+    'All field types',
+    description=(
+        'One output key per field type. Replace keys, selection texts, '
+        'user email/group and file URLs using GET /v2/tasks/{id} '
+        '(output[].api_name, type, selections) and your file service.'
+    ),
+    value={
+        'output': {
+            'short-answer': 'New laptop',
+            'details': 'Line one\nLine two',
+            'amount': 1250.5,
+            'due-date': 1767225600,
+            'website': 'https://example.com/spec',
+            'decision': 'Approved',
+            'department': 'Engineering',
+            'approvals': ['Legal', 'Finance'],
+            'attachments': [
+                (
+                    '[invoice.pdf]'
+                    '(https://app.example.com/files/a1b2c3d4e5f60789)'
+                ),
+            ],
+            'reviewer': 'jane@example.com',
+        },
+    },
+    request_only=True,
+)
+
+TASK_COMPLETE_SELECTIONS_EXAMPLE = OpenApiExample(
+    'Selection fields (radio, dropdown, checkbox)',
+    description=(
+        'Send selection value texts from output[].selections, not '
+        'selection ids. Checkbox must be an array of strings.'
+    ),
+    value={
+        'output': {
+            'decision': 'Approved',
+            'department': 'Engineering',
+            'approvals': ['Legal', 'Finance'],
+        },
+    },
+    request_only=True,
+)
+
+TASK_COMPLETE_FILE_EXAMPLE = OpenApiExample(
+    'File field (upload first)',
+    description=(
+        '1) POST multipart file to the file service /upload and read '
+        'public_url from the response. 2) Send an array of Markdown '
+        'links "[name](public_url)". The file id in the URL must be '
+        'at least 8 characters.'
+    ),
+    value={
+        'output': {
+            'attachments': [
+                (
+                    '[invoice.pdf]'
+                    '(https://app.example.com/files/a1b2c3d4e5f60789)'
+                ),
+            ],
+        },
+    },
+    request_only=True,
+)
+
+TASK_COMPLETE_USER_EXAMPLE = OpenApiExample(
+    'User field (email or group name)',
+    description=(
+        'Send an account user email or a group name (case-insensitive). '
+        'Numeric user ids are rejected.'
+    ),
+    value={
+        'output': {
+            'reviewer': 'jane@example.com',
+        },
+    },
+    request_only=True,
+)
+
+TASK_COMPLETE_CLEAR_OPTIONAL_EXAMPLE = OpenApiExample(
+    'Clearing optional fields',
+    description=(
+        'Optional fields accept null, an empty string or an empty array. '
+        'Required fields must still be filled.'
+    ),
+    value={
+        'output': {
+            'details': None,
+            'website': '',
+            'approvals': [],
+        },
+    },
+    request_only=True,
+)
+
+FIELD_VALUE_ERROR_EXAMPLE = OpenApiExample(
+    'Invalid field value',
+    description=(
+        'A bad field value returns validation_error with '
+        'details.api_name of the failing field.'
+    ),
+    value={
+        'code': 'validation_error',
+        'message': (
+            'The date value must be an integer or a floating-point number.'
+        ),
+        'details': {
+            'reason': (
+                'The date value must be an integer or a '
+                'floating-point number.'
+            ),
+            'api_name': 'due-date',
+        },
+    },
+    response_only=True,
+    status_codes=['400'],
 )
 
 DATASET_CREATE_EXAMPLE = OpenApiExample(

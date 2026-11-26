@@ -349,29 +349,6 @@ class TaskRevertRequestSerializer(TaskRevertSerializer):
     )
 
 
-@extend_schema_serializer(examples=[
-    OpenApiExample(
-        'Complete with typed output fields',
-        description=(
-            'For a task that defines these output api_name values. '
-            'Replace the keys, selections, user and file URL with values '
-            'from your task metadata and deployment.'
-        ),
-        value={
-            'output': {
-                'result': 'Approved',
-                'amount': 1250.5,
-                'meeting-date': 1767225600,
-                'review-options': ['Legal', 'Finance'],
-                'reviewer': 'reviewer@example.com',
-                'document': [
-                    '[invoice.pdf](https://app.example.com/files/file-id)',
-                ],
-            },
-        },
-        request_only=True,
-    ),
-])
 class TaskCompleteSerializer(
     CustomValidationErrorMixin,
     serializers.Serializer,
@@ -380,14 +357,9 @@ class TaskCompleteSerializer(
     output = serializers.DictField(
         required=False,
         help_text=(
-            'Task output values keyed by field api_name. Read the task '
-            'output metadata for types, required flags and selections. '
-            'string: text up to 140 characters; text/url: string; '
-            'number: number or numeric string; date: Unix seconds number; '
-            'radio/dropdown: selection string; checkbox: array of '
-            'selection strings; file: array of Markdown file-service '
-            'links; user: account user email or group name. '
-            'Required fields must be populated; '
-            'empty optional fields accept null, an empty string or array.'
+            'Task output values keyed by field api_name (see '
+            'GET /v2/tasks/{id} output). Required fields must be filled; '
+            'empty optional fields accept null, "" or []. Value format '
+            'per field type: see "Field values" in the API description.'
         ),
     )

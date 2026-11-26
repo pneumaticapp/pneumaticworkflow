@@ -7,11 +7,7 @@ from django.core.validators import MinValueValidator
 from django.db import transaction
 from django.db.models import Q, Prefetch
 from django.utils import timezone
-from drf_spectacular.utils import (
-    OpenApiExample,
-    extend_schema_field,
-    extend_schema_serializer,
-)
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError
 
@@ -146,27 +142,6 @@ class WorkflowListSerializer(WorkflowOwnersMixin, serializers.ModelSerializer):
         return []
 
 
-@extend_schema_serializer(examples=[
-    OpenApiExample(
-        'Run with typed kickoff fields',
-        description=(
-            'For a template that defines these kickoff api_name values. '
-            'Replace keys and selections using the template metadata.'
-        ),
-        value={
-            'name': 'Approve purchase',
-            'kickoff': {
-                'request-title': 'New equipment',
-                'amount': 1250.5,
-                'department': 'Engineering',
-                'approvals': ['Legal', 'Finance'],
-                'request-date': 1767225600,
-                'requester': 'requester@example.com',
-            },
-        },
-        request_only=True,
-    ),
-])
 class WorkflowCreateSerializer(
     CustomValidationErrorMixin,
     WorkflowSerializerMixin,
