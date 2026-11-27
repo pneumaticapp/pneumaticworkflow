@@ -173,10 +173,10 @@ class WorkflowCreateSerializer(
         allow_null=True,
         help_text=(
             'Kickoff values keyed by field api_name (see '
-            'GET /templates/{id} kickoff.fields). Required fields must '
-            'be filled; empty optional fields accept null, "" or []. '
-            'Value format per field type: see "Field values" in the '
-            'API description.'
+            'kickoff.fields of the template in GET /templates). '
+            'Required fields must be filled; empty optional fields '
+            'accept null, "" or []. Value format per field type: see '
+            '"Field values" in the API description.'
         ),
     )
     due_date_tsp = TimeStampField(required=False, allow_null=True)
@@ -245,10 +245,11 @@ class WorkflowUpdateSerializer(
         allow_empty=True,
         help_text=(
             'Updated kickoff values keyed by field api_name (see '
-            'GET /templates/{id} kickoff.fields). Omitted keys retain '
-            'their values. Required fields must be filled; empty '
-            'optional fields accept null, "" or []. Value format per '
-            'field type: see "Field values" in the API description.'
+            'kickoff.fields of the template in GET /templates). '
+            'Omitted keys retain their values. Required fields must '
+            'be filled; empty optional fields accept null, "" or []. '
+            'Value format per field type: see "Field values" in the '
+            'API description.'
         ),
     )
     is_urgent = serializers.BooleanField(required=False)

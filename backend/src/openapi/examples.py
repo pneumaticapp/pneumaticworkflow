@@ -152,9 +152,12 @@ WORKFLOW_RUN_EXAMPLE = OpenApiExample(
     'Minimal: one kickoff field',
     description=(
         'Replace kickoff keys with api_name values from '
-        'GET /templates/{id} kickoff.fields[] (api_name, type, '
-        'is_required, selections[].value; dataset fields use that '
-        "dataset's items). Values use the same formats as task "
+        'GET /templates?is_active=true&search=<template name> '
+        '(matching item kickoff.fields[]: api_name, type, '
+        'is_required, selections as value strings, dataset). '
+        "Dataset fields use that dataset's items. Template owners "
+        'can also use GET /templates/{id} (selections are objects '
+        'with a value key). Values use the same formats as task '
         'output (see "Field values" in the API description).'
     ),
     value={
@@ -171,10 +174,13 @@ WORKFLOW_RUN_ALL_TYPES_EXAMPLE = OpenApiExample(
     'All kickoff field types',
     description=(
         'One kickoff key per field type. Replace keys, selection texts, '
-        'user email/group and file URLs using GET /templates/{id} '
-        'kickoff.fields[] (api_name, type, is_required, '
-        'selections[].value; dataset fields use that dataset\'s '
-        'items) and your file service.'
+        'user email/group and file URLs using '
+        'GET /templates?is_active=true&search=<template name> '
+        '(matching item kickoff.fields[]: api_name, type, '
+        'is_required, selections as value strings, dataset; dataset '
+        "fields use that dataset's items) and your file service. "
+        'Template owners can also use GET /templates/{id} '
+        '(selections are objects with a value key).'
     ),
     value={
         'name': 'Approve purchase',
