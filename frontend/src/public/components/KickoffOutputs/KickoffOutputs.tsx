@@ -50,9 +50,17 @@ export function KickoffOutputs({
 }: IKickoffOutputs) {
   if ((!outputs || !isArrayWithItems(outputs)) && !isArrayWithItems(fieldsets)) return null;
 
+  const visibleOutputs = (outputs || []).filter((field) => !field.isHidden);
+  const visibleFieldsets = (fieldsets || [])
+    .map((fieldset) => ({
+      ...fieldset,
+      fields: fieldset.fields.filter((field) => !field.isHidden),
+    }))
+    .filter((fieldset) => isArrayWithItems(fieldset.fields));
+
   const orderedOutputs: TOutputItem[] = [
-    ...(outputs || []).map((field): TOutputItem => ({ kind: 'field', order: field.order, data: field })),
-    ...(fieldsets || []).map((fs): TOutputItem => ({ kind: 'fieldset', order: fs.order, data: fs })),
+    ...visibleOutputs.map((field): TOutputItem => ({ kind: 'field', order: field.order, data: field })),
+    ...visibleFieldsets.map((fieldset): TOutputItem => ({ kind: 'fieldset', order: fieldset.order, data: fieldset })),
   ].sort((a, b) => b.order - a.order);
 
   if (isOnlyAttachmentsShown) {

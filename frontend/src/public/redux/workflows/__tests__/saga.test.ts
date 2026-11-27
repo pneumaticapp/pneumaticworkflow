@@ -6,6 +6,7 @@ import { makeFieldsetRuntime, makeFieldsetTaskAPI } from '../../../__stubs__/fie
 import { makeTemplateResponse } from '../../../__stubs__/templates.factory';
 import { makeWorkflowResponse } from '../../../__stubs__/workflows.factory';
 import * as deleteApi from '../../../api/deleteWorkflow';
+import { editWorkflow as editWorkflowApi } from '../../../api/editWorkflow';
 import * as finishWorkflowApi from '../../../api/finishWorkflow';
 import { getTemplate } from '../../../api/getTemplate';
 import { getTemplateSteps } from '../../../api/getTemplateSteps';
@@ -15,6 +16,8 @@ import { getClonedKickoff } from '../../../components/Workflows/WorkflowsGridPag
 import { getRunnableWorkflow, loadDatasetsMap } from '../../../components/TemplateEdit/utils/getRunnableWorkflow';
 import { ERoutes } from '../../../constants/routes';
 import { EExtraFieldType, IKickoff } from '../../../types/template';
+import type { IWorkflowDetailsClient, IWorkflowEditData } from '../../../types/workflow';
+import { toDateString } from '../../../utils/dateTime';
 import { history } from '../../../utils/history';
 import { mapTemplateFieldsetsToRuntime } from '../../../utils/mapTemplateFieldsetsToRuntime';
 import { handleLoadTemplateVariables } from '../../templates/saga';
@@ -22,6 +25,7 @@ import {
   watchCloneWorkflow,
   cloneWorkflowSaga,
   deleteWorkflowSaga,
+  editWorkflowInWork,
   watchDeleteWorfklow,
   watchReturnWorkflowToTask,
   returnWorkflowToTaskSaga,
@@ -30,13 +34,20 @@ import {
   handleOpenWorkflowLogPopup,
 } from '../saga';
 import {
+  changeWorkflow,
   cloneWorkflowAction,
   deleteWorkflowAction,
+  editWorkflow as editWorkflowAction,
   loadFilterSteps,
   openWorkflowLogPopup,
   returnWorkflowToTaskAction,
+  setWorkflowEdit,
   setWorkflowFinished,
 } from '../slice';
+
+jest.mock('../../../api/editWorkflow', () => ({
+  editWorkflow: jest.fn(),
+}));
 
 jest.mock('../../../api/getWorkflow', () => ({
   getWorkflow: jest.fn(),
@@ -69,9 +80,13 @@ jest.mock('../../templates/saga', () => ({
   }),
 }));
 
-jest.mock('../../../utils/dateTime', () => ({
-  toTspDate: jest.fn(),
-}));
+jest.mock('../../../utils/dateTime', () => {
+  const actual = jest.requireActual('../../../utils/dateTime');
+  return {
+    ...actual,
+    toTspDate: jest.fn(),
+  };
+});
 
 jest.mock('../../../utils/logger', () => ({
   logger: { info: jest.fn(), error: jest.fn() },
@@ -323,5 +338,120 @@ describe('fetchFilterSteps — fieldsets variables loading for filters', () => {
 
     expect(handleLoadTemplateVariables).toHaveBeenCalledTimes(1);
     expect(handleLoadTemplateVariables).toHaveBeenCalledWith(TEMPLATE_ID);
+  });
+});
+
+describe('editWorkflowInWork — mapping PATCH /workflows/:id response', () => {
+  interface IDispatchedAction {
+    type: string;
+    payload?: unknown;
+  }
+
+  const DATE_TSP_SEP_01_2024 = 1725148800;
+  const USER_TIMEZONE = 'America/New_York';
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('maps backend fieldsets and timestamp dates from editWorkflow response before updating store', async () => {
+    const expectedDateString = toDateString(DATE_TSP_SEP_01_2024, USER_TIMEZONE);
+    const utcDateString = toDateString(DATE_TSP_SEP_01_2024, 'UTC');
+    const notificationSuccessSpy = jest.spyOn(NotificationManager, 'success').mockImplementation(() => undefined);
+
+    const backendWorkflowResponse = makeWorkflowResponse({
+      id: 1,
+      name: 'Updated Workflow',
+      kickoff: {
+        id: 10,
+        description: 'Kickoff desc',
+        output: [
+          makeExtraField({
+            apiName: 'plain-date',
+            type: EExtraFieldType.Date,
+            value: DATE_TSP_SEP_01_2024,
+            isHidden: false,
+          }),
+        ],
+        fieldsets: [
+          makeFieldsetTaskAPI({
+            id: 77,
+            apiName: 'backend-fieldset-1',
+            fields: [
+              makeExtraField({
+                apiName: 'fs-date',
+                type: EExtraFieldType.Date,
+                value: DATE_TSP_SEP_01_2024,
+                isHidden: true,
+              }),
+            ],
+          }),
+        ],
+      },
+    });
+
+    (editWorkflowApi as jest.Mock).mockResolvedValueOnce(backendWorkflowResponse);
+
+    const dispatched: IDispatchedAction[] = [];
+    const action = editWorkflowAction({
+      workflowId: 1,
+      kickoff: {
+        description: 'Kickoff desc',
+        fields: [],
+        fieldsets: [],
+      },
+    });
+
+    function* wrapper() {
+      yield call(editWorkflowInWork, action);
+    }
+
+    try {
+      await runSaga(
+        {
+          dispatch: (dispatchedAction: IDispatchedAction) => {
+            dispatched.push(dispatchedAction);
+          },
+          getState: () => ({
+            workflows: {
+              workflowsList: { items: [], count: 0, offset: 0 },
+              workflow: null,
+            },
+            accounts: { users: [] },
+            authUser: { timezone: USER_TIMEZONE },
+            task: { data: null },
+          }),
+        },
+        wrapper,
+      ).toPromise();
+    } finally {
+      notificationSuccessSpy.mockRestore();
+    }
+
+    expect(editWorkflowApi).toHaveBeenCalledTimes(1);
+
+    const changeWorkflowDispatched = dispatched.find((item) => item.type === changeWorkflow.type);
+    if (!changeWorkflowDispatched) {
+      throw new Error('changeWorkflow action was not dispatched');
+    }
+    const updatedWorkflow = changeWorkflowDispatched.payload as IWorkflowDetailsClient;
+    const mappedFieldsets = updatedWorkflow.kickoff.fieldsets || [];
+
+    expect(mappedFieldsets).toHaveLength(1);
+    expect(mappedFieldsets[0].apiNameBinding).toBe('backend-fieldset-1');
+    expect('id' in mappedFieldsets[0]).toBe(false);
+
+    expect(typeof expectedDateString).toBe('string');
+    expect(expectedDateString).not.toBe(utcDateString);
+    expect(updatedWorkflow.kickoff.output[0].value).toBe(expectedDateString);
+    expect(mappedFieldsets[0].fields[0].value).toBe(expectedDateString);
+    expect(mappedFieldsets[0].fields[0].isHidden).toBe(true);
+
+    const setWorkflowEditDispatched = dispatched.find((item) => item.type === setWorkflowEdit.type);
+    if (!setWorkflowEditDispatched) {
+      throw new Error('setWorkflowEdit action was not dispatched');
+    }
+    const updatedWorkflowEdit = setWorkflowEditDispatched.payload as IWorkflowEditData;
+    expect(updatedWorkflowEdit.kickoff?.fields[0].value).toBe(expectedDateString);
   });
 });

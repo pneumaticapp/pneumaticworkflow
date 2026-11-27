@@ -410,7 +410,7 @@ function* saveWorkflowLogComment({ payload: { text } }: PayloadAction<ISendWorkf
   }
 }
 
-function* editWorkflowInWork({ payload }: PayloadAction<TEditWorkflowPayload>) {
+export function* editWorkflowInWork({ payload }: PayloadAction<TEditWorkflowPayload>) {
   const {
     workflowsList: { items, count, offset },
   }: ReturnType<typeof getWorkflowsStore> = yield select(getWorkflowsStore);
@@ -457,8 +457,10 @@ function* editWorkflowInWork({ payload }: PayloadAction<TEditWorkflowPayload>) {
         }
       : formattedPayload;
 
-    const editedWorkflow: IEditWorkflowResponse = yield editWorkflow(normalizedPayload);
-    const formattedEditedWorkflow = formatDateToISOInWorkflow(editedWorkflow);
+    const editedWorkflow: TWorkflowDetailsResponse = yield editWorkflow(normalizedPayload);
+    const timezone: ReturnType<typeof getUserTimezone> = yield select(getUserTimezone);
+    const mappedEditedWorkflow = mapBackendWorkflowToRedux(editedWorkflow, timezone);
+    const formattedEditedWorkflow = formatDateToISOInWorkflow(mappedEditedWorkflow);
     const formattedWorkflow = getWorkflowAddComputedPropsToRedux(formattedEditedWorkflow) as IWorkflowDetailsClient;
 
     const newEditingProcess = {

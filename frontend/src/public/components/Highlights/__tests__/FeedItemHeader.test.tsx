@@ -500,6 +500,89 @@ describe('FeedItemHeader', () => {
       expect(getLastKickoffOutputsProps().isTruncated).toBe(false);
       expect(screen.queryByRole('button', { name: 'ellipsis' })).not.toBeInTheDocument();
     });
+
+    describe('Hidden fields (isHidden) in FeedItemOutputs', () => {
+      it('excludes hidden fields from KickoffOutputs and does not show extra Ellipsis', () => {
+        const outputs = [
+          makeField({ apiName: 'visible-plain', value: 'shown', isHidden: false, order: 2 }),
+          makeField({ apiName: 'hidden-plain', value: 'stale', isHidden: true, order: 1 }),
+        ];
+        const fieldsets = [
+          makeFieldset({
+            apiNameBinding: 'fs-hidden',
+            name: 'Hidden FS',
+            fields: [makeField({ apiName: 'hidden-fs-field', value: 'stale-fs', isHidden: true, order: 1 })],
+          }),
+        ];
+
+        const props = makeBaseProps({
+          type: EWorkflowLogEvent.WorkflowRun,
+          workflow: makeWorkflow({
+            id: 1,
+            description: null,
+            output: outputs,
+            fieldsets,
+          }),
+        });
+
+        render(React.createElement(FeedItemHeader, props));
+
+        expect(KickoffOutputs).toHaveBeenCalledTimes(1);
+        const passedProps = getLastKickoffOutputsProps();
+        expect(passedProps.outputs).toEqual([expect.objectContaining({ apiName: 'visible-plain' })]);
+        expect(passedProps.fieldsets).toEqual([]);
+
+        expect(Ellipsis).not.toHaveBeenCalled();
+        expect(screen.queryByRole('button', { name: 'ellipsis' })).not.toBeInTheDocument();
+      });
+
+      it('keeps fields with isHidden=false and isHidden=undefined while filtering out isHidden=true', () => {
+        const outputs = [
+          makeField({ apiName: 'hidden-field', value: 'stale', isHidden: true, order: 3 }),
+          makeField({ apiName: 'visible-false', value: 'ok-false', isHidden: false, order: 2 }),
+          makeField({ apiName: 'visible-undef', value: 'ok-undef', isHidden: undefined, order: 1 }),
+        ];
+
+        const props = makeBaseProps({
+          type: EWorkflowLogEvent.WorkflowRun,
+          workflow: makeWorkflow({
+            id: 1,
+            description: null,
+            output: outputs,
+            fieldsets: [],
+          }),
+        });
+
+        render(React.createElement(FeedItemHeader, props));
+
+        expect(KickoffOutputs).toHaveBeenCalledTimes(1);
+        const passedProps = getLastKickoffOutputsProps();
+        expect(passedProps.outputs).toEqual([
+          expect.objectContaining({ apiName: 'visible-false' }),
+          expect.objectContaining({ apiName: 'visible-undef' }),
+        ]);
+      });
+
+      it('passes empty outputs and fieldsets to KickoffOutputs without Ellipsis when all filled fields are hidden', () => {
+        const props = makeBaseProps({
+          type: EWorkflowLogEvent.WorkflowRun,
+          workflow: makeWorkflow({
+            id: 1,
+            description: null,
+            output: [makeField({ apiName: 'only-hidden', value: 'stale', isHidden: true, order: 1 })],
+            fieldsets: [],
+          }),
+        });
+
+        render(React.createElement(FeedItemHeader, props));
+
+        expect(KickoffOutputs).toHaveBeenCalledTimes(1);
+        const passedProps = getLastKickoffOutputsProps();
+        expect(passedProps.outputs).toEqual([]);
+        expect(passedProps.fieldsets).toEqual([]);
+        expect(Ellipsis).not.toHaveBeenCalled();
+      });
+    });
   });
 
   describe('AddedPerformerGroup', () => {
