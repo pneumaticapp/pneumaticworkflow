@@ -7,11 +7,7 @@ from django.core.validators import MinValueValidator
 from django.db import transaction
 from django.db.models import Q, Prefetch
 from django.utils import timezone
-from drf_spectacular.utils import (
-    OpenApiExample,
-    extend_schema_field,
-    extend_schema_serializer,
-)
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError
 
@@ -146,27 +142,6 @@ class WorkflowListSerializer(WorkflowOwnersMixin, serializers.ModelSerializer):
         return []
 
 
-@extend_schema_serializer(examples=[
-    OpenApiExample(
-        'Run with typed kickoff fields',
-        description=(
-            'For a template that defines these kickoff api_name values. '
-            'Replace keys and selections using the template metadata.'
-        ),
-        value={
-            'name': 'Approve purchase',
-            'kickoff': {
-                'request-title': 'New equipment',
-                'amount': 1250.5,
-                'department': 'Engineering',
-                'approvals': ['Legal', 'Finance'],
-                'request-date': 1767225600,
-                'requester': 'requester@example.com',
-            },
-        },
-        request_only=True,
-    ),
-])
 class WorkflowCreateSerializer(
     CustomValidationErrorMixin,
     WorkflowSerializerMixin,
@@ -197,15 +172,11 @@ class WorkflowCreateSerializer(
         allow_empty=True,
         allow_null=True,
         help_text=(
-            'Values keyed by kickoff field api_name. Read the template '
-            'kickoff fields for types, required flags and selections. '
-            'string: text up to 140 characters; text/url: string; '
-            'number: number or numeric string; date: Unix seconds number; '
-            'radio/dropdown: selection string; checkbox: selection strings '
-            'array; file: array of Markdown file-service links; user: '
-            'account user email or group name. Null, an empty string or '
-            'an empty array clears an '
-            'optional field. Required fields cannot be empty.'
+            'Kickoff values keyed by field api_name (see '
+            'kickoff.fields of the template in GET /templates). '
+            'Required fields must be filled; empty optional fields '
+            'accept null, "" or []. Value format per field type: see '
+            '"Field values" in the API description.'
         ),
     )
     due_date_tsp = TimeStampField(required=False, allow_null=True)
@@ -273,12 +244,12 @@ class WorkflowUpdateSerializer(
         required=False,
         allow_empty=True,
         help_text=(
-            'Updated kickoff values keyed by field api_name. Omitted keys '
-            'retain their values. Use the template kickoff field types '
-            'and selections; dates are numeric Unix seconds, checkbox '
-            'values are arrays of selection strings and files are arrays '
-            'of Markdown file-service links. Null, an empty string or an '
-            'empty array clears an optional field.'
+            'Updated kickoff values keyed by field api_name (see '
+            'kickoff.fields of the template in GET /templates). '
+            'Omitted keys retain their values. Required fields must '
+            'be filled; empty optional fields accept null, "" or []. '
+            'Value format per field type: see "Field values" in the '
+            'API description.'
         ),
     )
     is_urgent = serializers.BooleanField(required=False)

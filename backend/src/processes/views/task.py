@@ -40,8 +40,9 @@ from src.openapi.permission_docs import (
     ACCESS_TASK_REVERT,
 )
 from src.openapi.responses import (
-    FIELD_VALIDATION_ERROR,
     EMPTY,
+    FIELD_VALIDATION_ERROR,
+    FIELD_VALUE_ERROR,
     FORBIDDEN,
     NOT_FOUND,
     UNAUTHORIZED,
@@ -55,7 +56,14 @@ from src.openapi.misc_contract_serializers import (
     TASK_WEBHOOK_EXAMPLE_PARAMS,
     TaskWebhookPayloadExampleSerializer,
 )
-from src.openapi.examples import TASK_COMPLETE_EXAMPLE
+from src.openapi.examples import (
+    TASK_COMPLETE_ALL_TYPES_EXAMPLE,
+    TASK_COMPLETE_CLEAR_OPTIONAL_EXAMPLE,
+    TASK_COMPLETE_EXAMPLE,
+    TASK_COMPLETE_FILE_EXAMPLE,
+    TASK_COMPLETE_SELECTIONS_EXAMPLE,
+    TASK_COMPLETE_USER_EXAMPLE,
+)
 from src.processes.enums import WorkflowEventType
 from src.processes.filters import (
     TaskWebhookFilterSet,
@@ -722,10 +730,17 @@ class TaskViewSet(
             f'{ACCESS_TASK_COMPLETE}'
         ),
         request=TaskCompleteSerializer,
-        examples=[TASK_COMPLETE_EXAMPLE],
+        examples=[
+            TASK_COMPLETE_EXAMPLE,
+            TASK_COMPLETE_ALL_TYPES_EXAMPLE,
+            TASK_COMPLETE_SELECTIONS_EXAMPLE,
+            TASK_COMPLETE_FILE_EXAMPLE,
+            TASK_COMPLETE_USER_EXAMPLE,
+            TASK_COMPLETE_CLEAR_OPTIONAL_EXAMPLE,
+        ],
         responses={
             200: TaskSerializer,
-            400: VALIDATION_ERROR,
+            400: FIELD_VALUE_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,

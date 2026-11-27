@@ -47,6 +47,7 @@ from src.openapi.permission_docs import (
 )
 from src.openapi.responses import (
     EMPTY,
+    FIELD_VALUE_ERROR,
     FORBIDDEN,
     NOT_FOUND,
     TOO_MANY_REQUESTS,
@@ -67,6 +68,7 @@ from src.openapi.examples import (
     TEMPLATE_CREATE_EXAMPLE,
     TEMPLATE_DRAFT_EXAMPLE,
     TEMPLATE_PREVIEW_EXAMPLE,
+    WORKFLOW_RUN_ALL_TYPES_EXAMPLE,
     WORKFLOW_RUN_EXAMPLE,
 )
 from src.processes.filters import (
@@ -687,10 +689,13 @@ class TemplateViewSet(
         summary='Run workflow from template',
         description=ACCESS_TEMPLATE_ACCESS,
         request=WorkflowCreateSerializer,
-        examples=[WORKFLOW_RUN_EXAMPLE],
+        examples=[
+            WORKFLOW_RUN_EXAMPLE,
+            WORKFLOW_RUN_ALL_TYPES_EXAMPLE,
+        ],
         responses={
             200: WorkflowDetailsSerializer,
-            400: VALIDATION_ERROR,
+            400: FIELD_VALUE_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
