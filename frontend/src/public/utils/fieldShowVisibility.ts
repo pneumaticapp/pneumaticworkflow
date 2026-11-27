@@ -1,12 +1,34 @@
 import type { IFieldRuleShowGroupAnd } from '../types/fieldset';
-import { EFieldRuleOperator, EFieldRuleType } from '../types/fieldset';
+import { EFieldRuleOperator, EFieldRuleType, EFieldRuleValueType } from '../types/fieldset';
 import type { IExtraField } from '../types/template';
+import { EExtraFieldType } from '../types/template';
 
 export const checkDependentFieldValue = (
   dependentField: IExtraField,
   operator: EFieldRuleOperator,
   expectedValue: string,
+  valueType?: EFieldRuleValueType | null,
 ): boolean => {
+  if (dependentField.type === EExtraFieldType.User) {
+    switch (operator) {
+      case EFieldRuleOperator.Exist:
+      case EFieldRuleOperator.NotExist: {
+        const hasValue = Boolean(dependentField.userId || dependentField.groupId);
+        return operator === EFieldRuleOperator.Exist ? hasValue : !hasValue;
+      }
+
+      case EFieldRuleOperator.Equal:
+      case EFieldRuleOperator.NotEqual: {
+        const selectedId = valueType === EFieldRuleValueType.Group ? dependentField.groupId : dependentField.userId;
+        const isEqual = Boolean(selectedId) && String(selectedId) === expectedValue;
+        return operator === EFieldRuleOperator.Equal ? isEqual : !isEqual;
+      }
+
+      default:
+        return false;
+    }
+  }
+
   const { value, attachments } = dependentField;
 
   switch (operator) {
@@ -56,7 +78,7 @@ export const isFieldHidden = (field: IExtraField, fieldsMap: Map<string, IExtraF
         if (!dependentField) {
           return false;
         }
-        return checkDependentFieldValue(dependentField, groupAnd.operator, groupAnd.value);
+        return checkDependentFieldValue(dependentField, groupAnd.operator, groupAnd.value, groupAnd.valueType);
       }),
     ),
   );

@@ -5,7 +5,13 @@ import {
   getVisibleFields,
   getVisibleFieldsByShowRules,
 } from '../fieldShowVisibility';
-import { EFieldRuleOperator, EFieldRuleType, IFieldRuleGroupOr, IFieldRuleSet } from '../../types/fieldset';
+import {
+  EFieldRuleOperator,
+  EFieldRuleType,
+  EFieldRuleValueType,
+  IFieldRuleGroupOr,
+  IFieldRuleSet,
+} from '../../types/fieldset';
 import { EExtraFieldType, IExtraField } from '../../types/template';
 import { makeExtraField } from '../../__stubs__/fields.factory';
 import {
@@ -336,5 +342,174 @@ describe('getVisibleFieldsByShowRules: wrapper for updateFieldsHidden + getVisib
     const result2 = getVisibleFieldsByShowRules([triggerField, alwaysVisibleField], [fieldset]);
     expect(result2.visibleFields).toHaveLength(2);
     expect(result2.visibleFieldsets[0].fields).toHaveLength(0);
+  });
+});
+
+describe('checkDependentFieldValue: user field conditions', () => {
+  it('compares userId for equal and not_equal operators when valueType is User', () => {
+    const matchedUser = makeExtraField({
+      type: EExtraFieldType.User,
+      value: 'test@admin.com',
+      userId: 1,
+      groupId: null,
+    });
+    const otherUser = makeExtraField({ type: EExtraFieldType.User, value: 'bob@test.com', userId: 2, groupId: null });
+    const sameIdGroup = makeExtraField({ type: EExtraFieldType.User, value: 'Group 1', userId: null, groupId: 1 });
+
+    expect(checkDependentFieldValue(matchedUser, EFieldRuleOperator.Equal, '1', EFieldRuleValueType.User)).toBe(true);
+    expect(checkDependentFieldValue(matchedUser, EFieldRuleOperator.NotEqual, '1', EFieldRuleValueType.User)).toBe(
+      false,
+    );
+    expect(checkDependentFieldValue(otherUser, EFieldRuleOperator.Equal, '1', EFieldRuleValueType.User)).toBe(false);
+    expect(checkDependentFieldValue(otherUser, EFieldRuleOperator.NotEqual, '1', EFieldRuleValueType.User)).toBe(true);
+    expect(checkDependentFieldValue(sameIdGroup, EFieldRuleOperator.Equal, '1', EFieldRuleValueType.User)).toBe(false);
+    expect(checkDependentFieldValue(sameIdGroup, EFieldRuleOperator.NotEqual, '1', EFieldRuleValueType.User)).toBe(
+      true,
+    );
+  });
+
+  it('compares groupId for equal and not_equal operators when valueType is Group', () => {
+    const matchedGroup = makeExtraField({ type: EExtraFieldType.User, value: 'Sales', userId: 1, groupId: 42 });
+    const otherGroup = makeExtraField({ type: EExtraFieldType.User, value: 'Support', userId: null, groupId: 7 });
+    const sameIdUser = makeExtraField({
+      type: EExtraFieldType.User,
+      value: 'user@test.com',
+      userId: 42,
+      groupId: null,
+    });
+
+    expect(checkDependentFieldValue(matchedGroup, EFieldRuleOperator.Equal, '42', EFieldRuleValueType.Group)).toBe(
+      true,
+    );
+    expect(checkDependentFieldValue(matchedGroup, EFieldRuleOperator.NotEqual, '42', EFieldRuleValueType.Group)).toBe(
+      false,
+    );
+    expect(checkDependentFieldValue(otherGroup, EFieldRuleOperator.Equal, '42', EFieldRuleValueType.Group)).toBe(false);
+    expect(checkDependentFieldValue(otherGroup, EFieldRuleOperator.NotEqual, '42', EFieldRuleValueType.Group)).toBe(
+      true,
+    );
+    expect(checkDependentFieldValue(sameIdUser, EFieldRuleOperator.Equal, '42', EFieldRuleValueType.Group)).toBe(false);
+    expect(checkDependentFieldValue(sameIdUser, EFieldRuleOperator.NotEqual, '42', EFieldRuleValueType.Group)).toBe(
+      true,
+    );
+  });
+
+  it('reads only userId for equal and not_equal when valueType is null or omitted', () => {
+    const userField = makeExtraField({ type: EExtraFieldType.User, value: 'admin@test.com', userId: 1, groupId: null });
+    const groupField = makeExtraField({ type: EExtraFieldType.User, value: 'Group 1', userId: null, groupId: 1 });
+
+    expect(checkDependentFieldValue(userField, EFieldRuleOperator.Equal, '1', null)).toBe(true);
+    expect(checkDependentFieldValue(userField, EFieldRuleOperator.Equal, '1')).toBe(true);
+    expect(checkDependentFieldValue(groupField, EFieldRuleOperator.Equal, '1', null)).toBe(false);
+    expect(checkDependentFieldValue(groupField, EFieldRuleOperator.NotEqual, '1', null)).toBe(true);
+  });
+
+  it('handles empty User fields with null and undefined ids across all operators', () => {
+    const emptyNullField = makeExtraField({ type: EExtraFieldType.User, value: '', userId: null, groupId: null });
+    const emptyUndefinedField = makeExtraField({
+      type: EExtraFieldType.User,
+      value: '',
+      userId: undefined,
+      groupId: undefined,
+    });
+
+    [emptyNullField, emptyUndefinedField].forEach((emptyField) => {
+      expect(checkDependentFieldValue(emptyField, EFieldRuleOperator.Exist, '', null)).toBe(false);
+      expect(checkDependentFieldValue(emptyField, EFieldRuleOperator.NotExist, '', null)).toBe(true);
+      expect(checkDependentFieldValue(emptyField, EFieldRuleOperator.Equal, '1', EFieldRuleValueType.User)).toBe(false);
+      expect(checkDependentFieldValue(emptyField, EFieldRuleOperator.NotEqual, '1', EFieldRuleValueType.User)).toBe(
+        true,
+      );
+      expect(checkDependentFieldValue(emptyField, EFieldRuleOperator.Equal, '1', EFieldRuleValueType.Group)).toBe(
+        false,
+      );
+      expect(checkDependentFieldValue(emptyField, EFieldRuleOperator.NotEqual, '1', EFieldRuleValueType.Group)).toBe(
+        true,
+      );
+    });
+  });
+
+  it('checks presence via userId or groupId for exist and not_exist operators', () => {
+    const userOnlyId = makeExtraField({ type: EExtraFieldType.User, value: '', userId: 5, groupId: null });
+    const groupOnlyId = makeExtraField({ type: EExtraFieldType.User, value: '', userId: null, groupId: 9 });
+
+    expect(checkDependentFieldValue(userOnlyId, EFieldRuleOperator.Exist, '', null)).toBe(true);
+    expect(checkDependentFieldValue(userOnlyId, EFieldRuleOperator.NotExist, '', null)).toBe(false);
+    expect(checkDependentFieldValue(groupOnlyId, EFieldRuleOperator.Exist, '', null)).toBe(true);
+    expect(checkDependentFieldValue(groupOnlyId, EFieldRuleOperator.NotExist, '', null)).toBe(false);
+  });
+
+  it('returns false for unsupported operators on User fields', () => {
+    const userField = makeExtraField({
+      type: EExtraFieldType.User,
+      value: 'test@admin.com',
+      userId: 1,
+      groupId: null,
+    });
+
+    expect(checkDependentFieldValue(userField, EFieldRuleOperator.Contain, 'admin', EFieldRuleValueType.User)).toBe(
+      false,
+    );
+  });
+});
+
+describe('isFieldHidden and getVisibleFieldsByShowRules: User field show rules', () => {
+  it('forwards valueType and switches field visibility between user and group with the same id', () => {
+    const userShowRuleset = makeFieldRuleSet({
+      type: EFieldRuleType.Show,
+      groupsOr: [
+        makeFieldRuleGroupOr({
+          groupsAnd: [
+            makeFieldRuleShowGroupAnd({
+              field: 'assignee',
+              operator: EFieldRuleOperator.Equal,
+              value: '1',
+              valueType: EFieldRuleValueType.User,
+            }),
+          ],
+        }),
+      ],
+    });
+    const groupShowRuleset = makeFieldRuleSet({
+      type: EFieldRuleType.Show,
+      groupsOr: [
+        makeFieldRuleGroupOr({
+          groupsAnd: [
+            makeFieldRuleShowGroupAnd({
+              field: 'assignee',
+              operator: EFieldRuleOperator.Equal,
+              value: '1',
+              valueType: EFieldRuleValueType.Group,
+            }),
+          ],
+        }),
+      ],
+    });
+
+    const assigneeField = makeExtraField({
+      apiName: 'assignee',
+      type: EExtraFieldType.User,
+      value: '',
+      userId: null,
+      groupId: null,
+    });
+    const userDependentField = makeExtraField({ apiName: 'for-user', isHidden: true, rulesets: [userShowRuleset] });
+    const groupDependentField = makeExtraField({ apiName: 'for-group', isHidden: true, rulesets: [groupShowRuleset] });
+    const fieldsMap = new Map<string, IExtraField>([['assignee', assigneeField]]);
+
+    expect(isFieldHidden(userDependentField, fieldsMap)).toBe(true);
+    expect(isFieldHidden(groupDependentField, fieldsMap)).toBe(true);
+
+    assigneeField.value = 'test@admin.com';
+    assigneeField.userId = 1;
+    assigneeField.groupId = null;
+    const afterUserSelect = getVisibleFieldsByShowRules([assigneeField, userDependentField, groupDependentField]);
+    expect(afterUserSelect.visibleFields.map((field) => field.apiName)).toEqual(['assignee', 'for-user']);
+
+    assigneeField.value = 'Group 1';
+    assigneeField.userId = null;
+    assigneeField.groupId = 1;
+    const afterGroupSelect = getVisibleFieldsByShowRules([assigneeField, userDependentField, groupDependentField]);
+    expect(afterGroupSelect.visibleFields.map((field) => field.apiName)).toEqual(['assignee', 'for-group']);
   });
 });
