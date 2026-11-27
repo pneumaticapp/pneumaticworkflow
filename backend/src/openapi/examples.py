@@ -152,8 +152,10 @@ WORKFLOW_RUN_EXAMPLE = OpenApiExample(
     'Minimal: one kickoff field',
     description=(
         'Replace kickoff keys with api_name values from '
-        'GET /templates/{id}/fields. Values use the same formats as '
-        'task output (see "Field values" in the API description).'
+        'GET /templates/{id} kickoff.fields[] (api_name, type, '
+        'is_required, selections[].value; dataset fields use that '
+        "dataset's items). Values use the same formats as task "
+        'output (see "Field values" in the API description).'
     ),
     value={
         'name': 'Onboard: Jane Doe',
@@ -169,8 +171,10 @@ WORKFLOW_RUN_ALL_TYPES_EXAMPLE = OpenApiExample(
     'All kickoff field types',
     description=(
         'One kickoff key per field type. Replace keys, selection texts, '
-        'user email/group and file URLs with values from the template '
-        'kickoff metadata and your deployment.'
+        'user email/group and file URLs using GET /templates/{id} '
+        'kickoff.fields[] (api_name, type, is_required, '
+        'selections[].value; dataset fields use that dataset\'s '
+        'items) and your file service.'
     ),
     value={
         'name': 'Approve purchase',
@@ -273,8 +277,8 @@ TASK_COMPLETE_FILE_EXAMPLE = OpenApiExample(
     description=(
         '1) POST multipart file to the file service /upload and read '
         'public_url from the response. 2) Send an array of Markdown '
-        'links "[name](public_url)". The file id in the URL must be '
-        'at least 8 characters.'
+        'links "[name](public_url)" using exactly that public_url. '
+        'A bare filename, bare URL or file id is rejected.'
     ),
     value={
         'output': {

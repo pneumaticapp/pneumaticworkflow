@@ -172,15 +172,11 @@ class WorkflowCreateSerializer(
         allow_empty=True,
         allow_null=True,
         help_text=(
-            'Values keyed by kickoff field api_name. Read the template '
-            'kickoff fields for types, required flags and selections. '
-            'string: text up to 140 characters; text/url: string; '
-            'number: number or numeric string; date: Unix seconds number; '
-            'radio/dropdown: selection string; checkbox: selection strings '
-            'array; file: array of Markdown file-service links; user: '
-            'account user email or group name. Null, an empty string or '
-            'an empty array clears an '
-            'optional field. Required fields cannot be empty.'
+            'Kickoff values keyed by field api_name (see '
+            'GET /templates/{id} kickoff.fields). Required fields must '
+            'be filled; empty optional fields accept null, "" or []. '
+            'Value format per field type: see "Field values" in the '
+            'API description.'
         ),
     )
     due_date_tsp = TimeStampField(required=False, allow_null=True)
@@ -248,12 +244,11 @@ class WorkflowUpdateSerializer(
         required=False,
         allow_empty=True,
         help_text=(
-            'Updated kickoff values keyed by field api_name. Omitted keys '
-            'retain their values. Use the template kickoff field types '
-            'and selections; dates are numeric Unix seconds, checkbox '
-            'values are arrays of selection strings and files are arrays '
-            'of Markdown file-service links. Null, an empty string or an '
-            'empty array clears an optional field.'
+            'Updated kickoff values keyed by field api_name (see '
+            'GET /templates/{id} kickoff.fields). Omitted keys retain '
+            'their values. Required fields must be filled; empty '
+            'optional fields accept null, "" or []. Value format per '
+            'field type: see "Field values" in the API description.'
         ),
     )
     is_urgent = serializers.BooleanField(required=False)
