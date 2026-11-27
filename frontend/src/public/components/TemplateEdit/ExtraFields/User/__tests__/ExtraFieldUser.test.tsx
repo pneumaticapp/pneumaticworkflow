@@ -10,6 +10,7 @@ import { EUserDropdownOptionType, TUserListItem, EUserStatus } from '../../../..
 
 import { FieldLabel } from '../../utils/FieldLabel';
 import { EFieldLabelPosition } from '../../../../../types/fieldset';
+import { getRegularGroupsList } from '../../../../../redux/selectors/groups';
 
 jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
@@ -65,7 +66,7 @@ describe('ExtraFieldUser', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useSelector as jest.Mock).mockImplementation((selector) => {
-      if (typeof selector === 'function' && selector.name === 'getRegularGroupsList') return mockGroups;
+      if (selector === getRegularGroupsList) return mockGroups;
       return mockUsers;
     });
   });

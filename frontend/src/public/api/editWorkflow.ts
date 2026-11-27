@@ -2,7 +2,7 @@ import { commonRequest } from './commonRequest';
 import { mapRequestBody, getNormalizedKickoff } from '../utils/mappers';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import type { TEditWorkflowPayload } from '../redux/workflows/types';
-import type { IWorkflowDetails, WorkflowWithTsp } from '../types/workflow';
+import type { IWorkflowDetails, TWorkflowDetailsResponse, WorkflowWithTsp } from '../types/workflow';
 
 export interface IEditWorkflowResponse extends WorkflowWithTsp<IWorkflowDetails> {}
 
@@ -19,7 +19,7 @@ export function editWorkflow({ name, kickoff, workflowId, isUrgent, dueDateTsp }
     ...(typeof dueDateTsp !== 'undefined' && { dueDateTsp }),
   };
 
-  return commonRequest<IEditWorkflowResponse>(
+  return commonRequest<TWorkflowDetailsResponse>(
     url,
     {
       method: 'PATCH',

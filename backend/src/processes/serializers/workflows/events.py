@@ -9,7 +9,9 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.workflows.field import (
     TaskFieldEventSerializer,
 )
-from src.processes.serializers.workflows.fieldset import FieldSetSerializer
+from src.processes.serializers.workflows.fieldset import (
+    FieldSetEventSerializer,
+)
 from src.processes.serializers.workflows.task_performer import (
     TaskUserGroupPerformerSerializer,
     get_performers_for_task,
@@ -91,13 +93,13 @@ class TaskEventJsonSerializer(serializers.ModelSerializer):
             ).data
         return None
 
-    @extend_schema_field(FieldSetSerializer(many=True))
+    @extend_schema_field(FieldSetEventSerializer(many=True))
     def get_fieldsets(self, instance):
         if (
             self.context['event_type'] == WorkflowEventType.TASK_COMPLETE
             and instance.fieldsets.exists()
         ):
-            return FieldSetSerializer(
+            return FieldSetEventSerializer(
                 instance=instance.fieldsets.all(),
                 many=True,
             ).data

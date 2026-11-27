@@ -46,6 +46,11 @@ export const SelectMenu = <T extends string>({
   activeValueLabelId,
 }: ISelectMenuProps<T>) => {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
+
+  if (isDisabled && isDropdownOpen) {
+    setIsDropdownOpen(false);
+  }
+
   const getIntlId = (value: T) => `sorting.${value}`;
 
   const handleClickItem = (value: T) => () => {
@@ -69,12 +74,14 @@ export const SelectMenu = <T extends string>({
         'dropdown-menu-right dropdown',
         containerClassName,
       )}
+      disabled={isDisabled}
       isOpen={isDropdownOpen}
       setActiveFromChild={isDropdownOpen}
       toggle={handleToggleDropdown}
     >
       <DropdownToggle
         tag="button"
+        disabled={isDisabled}
         className={classnames(styles['active-value'], toggleClassName, isDisabled && styles['active-value_disabled'])}
       >
         {Icon && <Icon className={styles['icon']} />}

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import type { IExtraField, IRuntimeKickoffClient } from '../../types/template';
@@ -9,6 +9,7 @@ import { IntlMessages } from '../IntlMessages';
 import { checkExtraFieldsAreValid } from '../WorkflowEditPopup/utils/areKickoffFieldsValid';
 import { Loader } from '../UI/Loader';
 import { autoFocusFirstField } from '../../utils/autoFocusFirstField';
+import { getVisibleFieldsByShowRules } from '../../utils/fieldShowVisibility';
 import { MergedOutputList } from '../MergedOutputList';
 
 import { Button } from '../UI/Buttons/Button';
@@ -36,14 +37,22 @@ export function EditKickoff({
   onSave,
   onCancel,
 }: IEditKickoffProps) {
-  if (!kickoff || (!isArrayWithItems(kickoff.fields) && !isArrayWithItems(fieldsets))) return null;
-
   const { formatMessage } = useIntl();
-  const wrapperRef = React.useRef<HTMLFormElement>(null);
+  const wrapperRef = useRef<HTMLFormElement>(null);
+  const hasKickoffContent = Boolean(kickoff && (isArrayWithItems(kickoff.fields) || isArrayWithItems(fieldsets)));
+
+  const { visibleFields, visibleFieldsets } = useMemo(
+    () => getVisibleFieldsByShowRules(kickoff?.fields || [], fieldsets),
+    [kickoff?.fields, fieldsets],
+  );
 
   useEffect(() => {
-    autoFocusFirstField(wrapperRef.current);
-  }, []);
+    if (hasKickoffContent) {
+      autoFocusFirstField(wrapperRef.current);
+    }
+  }, [hasKickoffContent]);
+
+  if (!hasKickoffContent || !kickoff) return null;
 
   const renderButtons = () => {
     if (!onSave && !onCancel) return null;
@@ -54,8 +63,8 @@ export function EditKickoff({
           <Button
             type="submit"
             disabled={
-              !checkExtraFieldsAreValid(kickoff.fields) ||
-              fieldsets.some((fieldset) => !checkExtraFieldsAreValid(fieldset.fields))
+              !checkExtraFieldsAreValid(visibleFields) ||
+              visibleFieldsets.some((fieldset) => !checkExtraFieldsAreValid(fieldset.fields))
             }
             label={formatMessage({ id: 'kickoff-edit.buttons.save' })}
             buttonStyle="yellow"
@@ -83,8 +92,8 @@ export function EditKickoff({
         {kickoff.description && <p className={styles['kickoff__description']}>{kickoff.description}</p>}
         <div className={styles['kickoff__inputs']}>
           <MergedOutputList
-            fields={kickoff.fields}
-            fieldsets={fieldsets}
+            fields={visibleFields}
+            fieldsets={visibleFieldsets}
             onEditField={onEditField}
             onEditFieldsetField={onEditFieldsetField || onEditField}
             labelBackgroundColor={EInputNameBackgroundColor.White}

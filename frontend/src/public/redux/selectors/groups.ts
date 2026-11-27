@@ -1,3 +1,4 @@
+import { createSelector } from 'reselect';
 import type { RootState } from '../store';
 import type { EUserListSorting } from '../../types/user';
 import { EUserGroupType } from '../../types/team';
@@ -5,8 +6,9 @@ import type { IGroup } from '../../types/team';
 
 export const getGroupsList = (state: RootState): IGroup[] => state.groups.list;
 
-export const getRegularGroupsList = (state: RootState): IGroup[] =>
-  state.groups.list.filter((group) => group.type !== EUserGroupType.Personal);
+export const getRegularGroupsList = createSelector([getGroupsList], (groups) =>
+  groups.filter((group) => group.type !== EUserGroupType.Personal),
+);
 
 export const getGroupsIsLoading = (state: RootState): boolean => state.groups.isLoading;
 

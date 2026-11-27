@@ -14,6 +14,7 @@ export const getEmptyField = (type: EExtraFieldType, formatMessage: IntlShape['f
     apiName: createFieldApiName(),
     userId: null,
     groupId: null,
+    rulesets: [],
   };
 
   const emptyFieldsMap: { [key in EExtraFieldType]: IExtraField } = {
@@ -56,8 +57,6 @@ export const getEmptyField = (type: EExtraFieldType, formatMessage: IntlShape['f
       ...EMPTY_FIELD,
       name: formatMessage({ id: 'template.kick-off-form-user-field-tooltip-title' }),
       isRequired: true,
-      userId: 95,
-      groupId: null,
     },
     [EExtraFieldType.File]: {
       ...EMPTY_FIELD,

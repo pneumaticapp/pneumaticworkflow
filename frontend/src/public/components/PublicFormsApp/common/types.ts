@@ -1,15 +1,3 @@
-import type { IRuntimeKickoffClient } from '../../../types/template';
-
-export type IPublicFormKickoff = IRuntimeKickoffClient;
-
-export interface IPublicForm {
-  accountId: number;
-  name: string;
-  description: string;
-  kickoff: IPublicFormKickoff;
-  showCaptcha: boolean;
-}
-
 export enum EPublicFormState {
   Loading = 'loading',
   FormNotFound = 'form-not-found',

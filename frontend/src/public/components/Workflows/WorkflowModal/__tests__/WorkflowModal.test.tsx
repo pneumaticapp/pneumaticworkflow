@@ -51,6 +51,9 @@ jest.mock('../../../KickoffEdit', () => ({
   EditKickoffContainer: jest.fn(() => React.createElement('div', { 'data-testid': 'edit-kickoff' })),
 }));
 
+type TEditKickoffModuleMock = { EditKickoffContainer: jest.Mock };
+const { EditKickoffContainer: editKickoffContainerMock }: TEditKickoffModuleMock = require('../../../KickoffEdit');
+
 jest.mock('../../WorkflowLog', () => ({
   WorkflowLog: jest.fn(() => null),
 }));
@@ -258,7 +261,7 @@ describe('WorkflowModal', () => {
 
     it('view mode without fieldsets: KickoffOutputs receives fieldsets=[]', () => {
       const workflow = makeWorkflow({
-        kickoff: { id: 1, description: '', output: [] },
+        kickoff: { id: 1, description: '', output: [], fieldsets: [] },
       });
 
       renderWithIntl(
@@ -429,6 +432,100 @@ describe('WorkflowModal', () => {
           }),
         }),
       );
+    });
+  });
+
+  describe('Re-entering Kickoff edit after workflow updates', () => {
+    it('reinitializes workflowEdit and fieldsetFields from updated workflow with the same kickoff.id', () => {
+      const oldPlainField = makeField({ apiName: 'plain-1', value: 'old-plain', isHidden: false });
+      const oldFieldset: IFieldsetRuntime = makeFieldset({
+        apiNameBinding: 'fs-1',
+        order: 1,
+        fields: [makeField({ apiName: 'fs-f1', value: 'old-fs', isHidden: false })],
+      });
+
+      const freshPlainField = makeField({ apiName: 'plain-1', value: 'fresh-plain', isHidden: true });
+      const freshFieldset: IFieldsetRuntime = makeFieldset({
+        apiNameBinding: 'fs-1',
+        order: 1,
+        fields: [makeField({ apiName: 'fs-f1', value: 'fresh-fs', isHidden: true })],
+      });
+
+      const initialWorkflow = makeWorkflow({
+        kickoff: { id: 1, description: '', output: [oldPlainField], fieldsets: [oldFieldset] },
+      });
+      const updatedWorkflow = makeWorkflow({
+        kickoff: { id: 1, description: '', output: [freshPlainField], fieldsets: [freshFieldset] },
+      });
+
+      const viewEditWithCustomName: IWorkflowEdit = {
+        ...makeViewWorkflowEdit([oldPlainField]),
+        workflow: {
+          ...makeViewWorkflowEdit([oldPlainField]).workflow,
+          name: 'Custom Workflow Name',
+        },
+      };
+
+      const { rerender } = renderWithIntl(
+        React.createElement(WorkflowModal, {
+          ...baseProps,
+          workflow: initialWorkflow,
+          workflowEdit: viewEditWithCustomName,
+        }),
+      );
+
+      rerender(
+        React.createElement(
+          IntlProvider,
+          { locale: 'en', messages: enMessages },
+          React.createElement(WorkflowModal, {
+            ...baseProps,
+            workflow: updatedWorkflow,
+            workflowEdit: viewEditWithCustomName,
+          }),
+        ),
+      );
+
+      baseProps.setWorkflowEdit.mockClear();
+      baseProps.setIsEditKickoff.mockClear();
+
+      const kickoffOutputsMock = KickoffOutputs as jest.Mock;
+      const lastKickoffOutputsProps = kickoffOutputsMock.mock.calls[kickoffOutputsMock.mock.calls.length - 1][0];
+
+      act(() => {
+        lastKickoffOutputsProps.onEdit();
+      });
+
+      expect(baseProps.setWorkflowEdit).toHaveBeenCalledTimes(1);
+      expect(baseProps.setWorkflowEdit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Custom Workflow Name',
+          kickoff: expect.objectContaining({
+            fields: [expect.objectContaining({ apiName: 'plain-1', value: 'fresh-plain', isHidden: true })],
+          }),
+        }),
+      );
+      expect(baseProps.setIsEditKickoff).toHaveBeenCalledTimes(1);
+      expect(baseProps.setIsEditKickoff).toHaveBeenCalledWith(true);
+
+      rerender(
+        React.createElement(
+          IntlProvider,
+          { locale: 'en', messages: enMessages },
+          React.createElement(WorkflowModal, {
+            ...baseProps,
+            workflow: updatedWorkflow,
+            workflowEdit: makeEditWorkflowEdit([freshPlainField]),
+          }),
+        ),
+      );
+
+      expect(editKickoffContainerMock).toHaveBeenCalledTimes(1);
+      const editKickoffProps = editKickoffContainerMock.mock.calls[0][0];
+      expect(editKickoffProps.fieldsets).toHaveLength(1);
+      expect(editKickoffProps.fieldsets[0].fields).toEqual([
+        expect.objectContaining({ apiName: 'fs-f1', value: 'fresh-fs', isHidden: true }),
+      ]);
     });
   });
 });

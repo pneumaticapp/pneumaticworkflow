@@ -1,14 +1,103 @@
 import type { IExtraField } from './template';
 
-export enum EFieldsetRuleType {
-  SumEqual = 'sum_equal',
+export enum EFieldRuleValueType {
+  User = 'user',
+  Group = 'group',
 }
 
-export interface IFieldsetTemplateRule {
+export interface IBaseRuleGroupAnd {
   apiName: string;
-  type: EFieldsetRuleType;
-  value: string | null;
+  field?: string | null;
+  operator: string | null;
+  value: string;
+  valueType?: EFieldRuleValueType | null;
+}
+
+export interface IBaseRuleGroupOr {
+  apiName: string;
+  groupsAnd: IBaseRuleGroupAnd[];
+}
+
+export interface IBaseRuleSet {
+  apiName: string;
+  groupsOr: IBaseRuleGroupOr[];
+}
+
+export enum EFieldsetRulesetNumericOperator {
+  SumEqual = 'sum_equal',
+  SumGreaterThan = 'sum_greater_than',
+  SumLessThan = 'sum_less_than',
+}
+
+export enum EFieldRuleOperator {
+  Equal = 'equals',
+  NotEqual = 'not_equals',
+  Exist = 'exists',
+  NotExist = 'not_exists',
+  Contain = 'contains',
+  NotContain = 'not_contains',
+  GreaterThan = 'more_than',
+  LessThan = 'less_than',
+}
+
+export enum ERuleCombinator {
+  And = 'and',
+  Or = 'or',
+}
+
+export interface IFieldsetRuleGroupAnd {
+  apiName: string;
+  operator: EFieldsetRulesetNumericOperator | null;
+  value: string;
+}
+
+export interface IFieldsetRuleGroupOr {
+  apiName: string;
+  groupsAnd: IFieldsetRuleGroupAnd[];
+}
+
+export interface IFieldsetRuleSet {
+  apiName: string;
+  message?: string | null;
+  order: number;
   fields: string[];
+  groupsOr: IFieldsetRuleGroupOr[];
+}
+
+export enum EFieldRuleType {
+  Show = 'show',
+  Validator = 'validator',
+}
+
+export interface IFieldRuleShowGroupAnd {
+  apiName: string;
+  field: string;
+  operator: EFieldRuleOperator;
+  value: string;
+  valueType?: EFieldRuleValueType | null;
+}
+
+export interface IFieldRuleValidatorGroupAnd {
+  apiName: string;
+  operator: EFieldRuleOperator | null;
+  value: string;
+  valueType?: EFieldRuleValueType | null;
+}
+
+export type IFieldRuleGroupAnd = IFieldRuleShowGroupAnd | IFieldRuleValidatorGroupAnd;
+
+export interface IFieldRuleGroupOr {
+  apiName: string;
+  groupsAnd: IFieldRuleGroupAnd[];
+}
+
+export interface IFieldRuleSet {
+  apiName: string;
+  name: string;
+  type: EFieldRuleType;
+  message: string | null;
+  order: number;
+  groupsOr: IFieldRuleGroupOr[];
 }
 
 export interface IFieldsetField {
@@ -22,6 +111,7 @@ export interface IFieldsetField {
   apiName: string;
   default?: string;
   dataset?: number | null;
+  rulesets?: IFieldRuleSet[];
 }
 
 export enum EFieldLabelPosition {
@@ -39,7 +129,7 @@ export interface IFieldsetCatalogItem {
   layout: TFieldSetLayout;
   order: number;
   title: string;
-  rules: IFieldsetTemplateRule[];
+  rulesets?: IFieldsetRuleSet[];
   fields: IFieldsetField[];
   usage: { id: number; name: string }[];
 }
@@ -52,7 +142,7 @@ export interface IFieldsetBindingClient extends Omit<IFieldsetBinding, 'apiName'
   apiNameBinding: string;
 }
 
-export interface IFieldsetRuntime extends Omit<IFieldsetBindingClient, 'fields' | 'sharedFieldsetId' | 'rules'> {
+export interface IFieldsetRuntime extends Omit<IFieldsetBindingClient, 'fields' | 'sharedFieldsetId' | 'rulesets'> {
   fields: IExtraField[];
 }
 
@@ -99,7 +189,7 @@ export interface ICreateFieldsetParams {
   order?: number;
   labelPosition?: EFieldLabelPosition;
   layout?: TFieldSetLayout;
-  rules?: Omit<IFieldsetTemplateRule, 'apiName'>[];
+  rulesets?: Omit<IFieldsetRuleSet, 'apiName'>[];
   fields?: Omit<IFieldsetField, 'apiName'>[];
 }
 
@@ -112,7 +202,7 @@ export interface IUpdateFieldsetParams {
   title?: string;
   labelPosition?: EFieldLabelPosition;
   layout?: TFieldSetLayout;
-  rules?: IFieldsetTemplateRule[];
+  rulesets?: IFieldsetRuleSet[];
   fields?: IFieldsetField[];
   signal?: AbortSignal;
   onSuccess?: () => void;

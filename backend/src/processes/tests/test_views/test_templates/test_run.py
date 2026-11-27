@@ -21,7 +21,6 @@ from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
     DueDateRule,
-    FieldSetRuleType,
     FieldType,
     OwnerRole,
     OwnerType,
@@ -32,13 +31,22 @@ from src.processes.enums import (
     WorkflowStatus,
     LabelPosition,
     FieldSetLayout,
+    FieldSetRuleOperator,
+    FieldRuleOperator,
+    FieldRuleType,
 )
 from src.processes.messages import workflow as messages
-from src.processes.messages.fieldset import MSG_FS_0002
+from src.processes.messages.fieldset import (
+    MSG_FS_0002,
+    MSG_FS_0003,
+    MSG_FS_0017,
+    MSG_FS_0018,
+)
 from src.processes.messages.workflow import (
     MSG_PW_0028,
     MSG_PW_0030,
     MSG_PW_0031,
+    MSG_PW_0094,
 )
 from src.processes.models.templates.conditions import (
     ConditionTemplate,
@@ -48,11 +56,15 @@ from src.processes.models.templates.conditions import (
 from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
+    FieldTemplateRuleSet,
+    FieldTemplateRuleGroupOr,
+    FieldTemplateRuleGroupAnd,
 )
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.raw_due_date import RawDueDateTemplate
 from src.processes.models.templates.template import Template
 from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.kickoff import KickoffValue
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
@@ -81,7 +93,9 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
     create_wf_completed_webhook,
-    create_wf_created_webhook, create_test_shared_fieldset,
+    create_wf_created_webhook,
+    create_test_shared_fieldset,
+    create_test_field_show_ruleset,
 )
 from src.utils.dates import date_format
 from src.utils.validation import ErrorCode
@@ -5339,7 +5353,7 @@ def test_run__kickoff_with_one_fieldset__ok(mocker, api_client):
     fs_order = 3
     label_position = LabelPosition.LEFT
     layout = FieldSetLayout.HORIZONTAL
-    rule_type = FieldSetRuleType.SUM_EQUAL
+    rule_operator = FieldSetRuleOperator.SUM_EQUAL
     rule_value = '100'
     shared_fieldset = create_test_shared_fieldset(
         account=account,
@@ -5348,7 +5362,7 @@ def test_run__kickoff_with_one_fieldset__ok(mocker, api_client):
         name=fs_name,
         label_position=label_position,
         layout=layout,
-        rule_type=rule_type,
+        rule_operator=rule_operator,
         rule_value=rule_value,
     )
     fieldset_template = create_test_fieldset_template(
@@ -5587,7 +5601,7 @@ def test_run__kickoff_fieldset_sum_equal__ok(
         template=template,
         kickoff=template.kickoff_instance,
         order=0,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
     field_1 = fieldset_template.fields.first()
@@ -5602,9 +5616,8 @@ def test_run__kickoff_fieldset_sum_equal__ok(
         ),
         account=user.account,
     )
-    rule_template = fieldset_template.rules.first()
-    field_1.rules.add(rule_template)
-    field_2.rules.add(rule_template)
+    ruleset_template = fieldset_template.rulesets.first()
+    ruleset_template.fields.add(field_1, field_2)
     wf_run_mock = mocker.patch(
         'src.processes.services.workflow_action.'
         'WorkflowEventService.workflow_run_event',
@@ -5634,7 +5647,7 @@ def test_run__kickoff_fieldset_sum_equal__ok(
     )
     fieldset = kickoff_value.fieldsets.first()
     assert fieldset.fields.count() == 2
-    assert fieldset.rules.count() == 1
+    assert fieldset.rulesets.count() == 1
     wf_run_mock.assert_called_once()
     analytics_mock.assert_called_once()
 
@@ -5659,7 +5672,7 @@ def test_run__kickoff_fieldset_sum_equal__validation_error(
         template=template,
         kickoff=template.kickoff_instance,
         order=0,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
     field_1 = fieldset_template.fields.first()
@@ -5674,9 +5687,8 @@ def test_run__kickoff_fieldset_sum_equal__validation_error(
         ),
         account=user.account,
     )
-    rule_template = fieldset_template.rules.first()
-    field_1.rules.add(rule_template)
-    field_2.rules.add(rule_template)
+    ruleset_template = fieldset_template.rulesets.first()
+    ruleset_template.fields.add(field_1, field_2)
     wf_run_mock = mocker.patch(
         'src.processes.services.workflow_action.'
         'WorkflowEventService.workflow_run_event',
@@ -5704,3 +5716,1847 @@ def test_run__kickoff_fieldset_sum_equal__validation_error(
     assert response.data['message'] == MSG_FS_0002('100')
     wf_run_mock.assert_not_called()
     analytics_mock.assert_not_called()
+
+
+def test_run__field_rulesets_copied_to_workflow_fields__ok(
+    mocker,
+    api_client,
+):
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    source_field = FieldTemplate.objects.create(
+        name='Source',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='source-field',
+        account=account,
+    )
+    task_template = template.tasks.first()
+    target_field = FieldTemplate.objects.create(
+        name='Target',
+        type=FieldType.STRING,
+        task=task_template,
+        template=template,
+        order=1,
+        api_name='target-field',
+        account=account,
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=target_field,
+        source_field_api_name=source_field.api_name,
+        ruleset_api_name='target-ruleset',
+        group_or_api_name='target-group-or',
+        group_and_api_name='target-group-and',
+        name='Show target',
+        operator=FieldRuleOperator.EQUAL,
+        value='yes',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                source_field.api_name: 'yes',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    target_task_field = TaskField.objects.get(
+        workflow=workflow,
+        api_name='target-field',
+    )
+    ruleset = target_task_field.rulesets.first()
+    assert ruleset is not None
+    assert ruleset.api_name == 'target-ruleset'
+    assert ruleset.name == 'Show target'
+    assert ruleset.type == FieldRuleType.SHOW
+    assert ruleset.order == 0
+
+    group_or = ruleset.groups_or.first()
+    assert group_or is not None
+    assert group_or.api_name == 'target-group-or'
+
+    group_and = group_or.groups_and.first()
+    assert group_and is not None
+    assert group_and.api_name == 'target-group-and'
+    assert group_and.field == source_field.api_name
+    assert group_and.operator == FieldRuleOperator.EQUAL
+    assert group_and.value == 'yes'
+
+
+def test_run__field_ruleset_show_rule__updates_is_hidden(
+    mocker,
+    api_client,
+):
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    source_field = FieldTemplate.objects.create(
+        name='Source',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='source-field',
+        account=account,
+    )
+    task_template = template.tasks.first()
+    target_field = FieldTemplate.objects.create(
+        name='Target',
+        type=FieldType.STRING,
+        task=task_template,
+        template=template,
+        order=1,
+        api_name='target-field',
+        account=account,
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=target_field,
+        source_field_api_name=source_field.api_name,
+        ruleset_api_name='target-ruleset',
+        operator=FieldRuleOperator.EQUAL,
+        value='yes',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                source_field.api_name: 'no',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    target_task_field = TaskField.objects.get(
+        workflow=workflow,
+        api_name='target-field',
+    )
+    assert target_task_field.is_hidden is True
+
+
+def test_run__kickoff_field_ruleset_validator_fails__validation_error(
+    mocker,
+    api_client,
+):
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    field = FieldTemplate.objects.create(
+        name='Score',
+        type=FieldType.NUMBER,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='score-field',
+        account=account,
+    )
+    ruleset = FieldTemplateRuleSet.objects.create(
+        account=account,
+        template=template,
+        field=field,
+        api_name='score-validator-ruleset',
+        name='Score validator',
+        type=FieldRuleType.VALIDATOR,
+        message='Score must be greater than 10',
+        order=0,
+    )
+    group_or = FieldTemplateRuleGroupOr.objects.create(
+        account=account,
+        template=template,
+        ruleset=ruleset,
+        api_name='score-val-group-or',
+    )
+    FieldTemplateRuleGroupAnd.objects.create(
+        account=account,
+        template=template,
+        group_or=group_or,
+        api_name='score-val-group-and',
+        field=field.api_name,
+        operator=FieldRuleOperator.GREATER_THAN,
+        value='10',
+    )
+    wf_run_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                field.api_name: 5,
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == 'Score must be greater than 10'
+    assert response.data['details']['api_name'] == 'score-field'
+    assert not Workflow.objects.filter(template=template).exists()
+    wf_run_mock.assert_not_called()
+    analytics_mock.assert_not_called()
+
+
+def test_run__field_ruleset_show_rule__source_yes__target_visible(
+    mocker,
+    api_client,
+):
+
+    """ Show rule: source='yes' matches → target visible. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    source_field = FieldTemplate.objects.create(
+        name='Source',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='source-field',
+        account=account,
+    )
+    task_template = template.tasks.first()
+    target_field = FieldTemplate.objects.create(
+        name='Target',
+        type=FieldType.STRING,
+        task=task_template,
+        template=template,
+        order=1,
+        api_name='target-field',
+        account=account,
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=target_field,
+        source_field_api_name=source_field.api_name,
+        ruleset_api_name='target-ruleset',
+        operator=FieldRuleOperator.EQUAL,
+        value='yes',
+    )
+    wf_run_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                source_field.api_name: 'yes',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(
+        id=response.data['id'],
+    )
+    target_task_field = TaskField.objects.get(
+        workflow=workflow,
+        api_name='target-field',
+    )
+    assert target_task_field.is_hidden is False
+    wf_run_mock.assert_called_once_with(
+        workflow=workflow,
+        user=user,
+    )
+    analytics_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+
+
+def test_run__field_without_show_rulesets__is_hidden_default_false(
+    mocker,
+    api_client,
+):
+
+    """ Field without show rulesets has is_hidden=False. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    task_template = template.tasks.first()
+    FieldTemplate.objects.create(
+        name='Target',
+        type=FieldType.STRING,
+        task=task_template,
+        template=template,
+        order=1,
+        api_name='target-field',
+        account=account,
+    )
+    wf_run_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={'kickoff': {}},
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(
+        id=response.data['id'],
+    )
+    target_task_field = TaskField.objects.get(
+        workflow=workflow,
+        api_name='target-field',
+    )
+    assert target_task_field.is_hidden is False
+    wf_run_mock.assert_called_once_with(
+        workflow=workflow,
+        user=user,
+    )
+    analytics_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+
+
+def test_run__two_show_rulesets_one_passes__target_visible(
+    mocker,
+    api_client,
+):
+
+    """ Two show rulesets (OR), one passes → visible. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    source_field = FieldTemplate.objects.create(
+        name='Source',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='source-field',
+        account=account,
+    )
+    task_template = template.tasks.first()
+    target_field = FieldTemplate.objects.create(
+        name='Target',
+        type=FieldType.STRING,
+        task=task_template,
+        template=template,
+        order=1,
+        api_name='target-field',
+        account=account,
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=target_field,
+        source_field_api_name=source_field.api_name,
+        ruleset_api_name='target-ruleset-1',
+        group_or_api_name='target-group-or-1',
+        group_and_api_name='target-group-and-1',
+        name='Show rule 1',
+        operator=FieldRuleOperator.EQUAL,
+        value='yes',
+        order=0,
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=target_field,
+        source_field_api_name=source_field.api_name,
+        ruleset_api_name='target-ruleset-2',
+        group_or_api_name='target-group-or-2',
+        group_and_api_name='target-group-and-2',
+        name='Show rule 2',
+        operator=FieldRuleOperator.EQUAL,
+        value='foo',
+        order=1,
+    )
+    wf_run_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                source_field.api_name: 'yes',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(
+        id=response.data['id'],
+    )
+    target_task_field = TaskField.objects.get(
+        workflow=workflow,
+        api_name='target-field',
+    )
+    assert target_task_field.is_hidden is False
+    wf_run_mock.assert_called_once_with(
+        workflow=workflow,
+        user=user,
+    )
+    analytics_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+
+
+def test_run__two_show_rulesets_none_passes__target_hidden(
+    mocker,
+    api_client,
+):
+
+    """ Two show rulesets (OR), none passes → hidden. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    source_field = FieldTemplate.objects.create(
+        name='Source',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='source-field',
+        account=account,
+    )
+    task_template = template.tasks.first()
+    target_field = FieldTemplate.objects.create(
+        name='Target',
+        type=FieldType.STRING,
+        task=task_template,
+        template=template,
+        order=1,
+        api_name='target-field',
+        account=account,
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=target_field,
+        source_field_api_name=source_field.api_name,
+        ruleset_api_name='target-ruleset-1',
+        group_or_api_name='target-group-or-1',
+        group_and_api_name='target-group-and-1',
+        name='Show rule 1',
+        operator=FieldRuleOperator.EQUAL,
+        value='foo',
+        order=0,
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=target_field,
+        source_field_api_name=source_field.api_name,
+        ruleset_api_name='target-ruleset-2',
+        group_or_api_name='target-group-or-2',
+        group_and_api_name='target-group-and-2',
+        name='Show rule 2',
+        operator=FieldRuleOperator.EQUAL,
+        value='bar',
+        order=1,
+    )
+    wf_run_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                source_field.api_name: 'no',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(
+        id=response.data['id'],
+    )
+    target_task_field = TaskField.objects.get(
+        workflow=workflow,
+        api_name='target-field',
+    )
+    assert target_task_field.is_hidden is True
+    wf_run_mock.assert_called_once_with(
+        workflow=workflow,
+        user=user,
+    )
+    analytics_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+
+
+def test_run__kickoff_field_ruleset_validator_passes__ok(
+    mocker,
+    api_client,
+):
+
+    """ Validator GT 10 passes with value=15. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    field = FieldTemplate.objects.create(
+        name='Score',
+        type=FieldType.NUMBER,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='score-field',
+        account=account,
+    )
+    ruleset = FieldTemplateRuleSet.objects.create(
+        account=account,
+        template=template,
+        field=field,
+        api_name='score-validator-ruleset',
+        name='Score validator',
+        type=FieldRuleType.VALIDATOR,
+        message='Score must be greater than 10',
+        order=0,
+    )
+    group_or = FieldTemplateRuleGroupOr.objects.create(
+        account=account,
+        template=template,
+        ruleset=ruleset,
+        api_name='score-val-group-or',
+    )
+    FieldTemplateRuleGroupAnd.objects.create(
+        account=account,
+        template=template,
+        group_or=group_or,
+        api_name='score-val-group-and',
+        field=field.api_name,
+        operator=FieldRuleOperator.GREATER_THAN,
+        value='10',
+    )
+    wf_run_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                field.api_name: 15,
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(
+        id=response.data['id'],
+    )
+    wf_run_mock.assert_called_once_with(
+        workflow=workflow,
+        user=user,
+    )
+    analytics_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+
+
+def test_run__kickoff_field_ruleset_validator_no_message__default_msg(
+    mocker,
+    api_client,
+):
+
+    """ Validator without message uses default MSG_PW_0094. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    field = FieldTemplate.objects.create(
+        name='Score',
+        type=FieldType.NUMBER,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='score-field',
+        account=account,
+    )
+    ruleset = FieldTemplateRuleSet.objects.create(
+        account=account,
+        template=template,
+        field=field,
+        api_name='score-validator-ruleset',
+        name='Score validator',
+        type=FieldRuleType.VALIDATOR,
+        order=0,
+    )
+    group_or = FieldTemplateRuleGroupOr.objects.create(
+        account=account,
+        template=template,
+        ruleset=ruleset,
+        api_name='score-val-group-or',
+    )
+    FieldTemplateRuleGroupAnd.objects.create(
+        account=account,
+        template=template,
+        group_or=group_or,
+        api_name='score-val-group-and',
+        field=field.api_name,
+        operator=FieldRuleOperator.GREATER_THAN,
+        value='10',
+    )
+    wf_run_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                field.api_name: 5,
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert (
+        response.data['code']
+        == ErrorCode.VALIDATION_ERROR
+    )
+    assert (
+        response.data['message'] == str(MSG_PW_0094)
+    )
+    assert not Workflow.objects.filter(
+        template=template,
+    ).exists()
+    wf_run_mock.assert_not_called()
+    analytics_mock.assert_not_called()
+
+
+def test_run__kickoff_field_hidden_skips_validator__ok(
+    mocker,
+    api_client,
+):
+
+    """ Hidden kickoff field skips validator. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    source_field = FieldTemplate.objects.create(
+        name='Source',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='source-field',
+        account=account,
+    )
+    target_field = FieldTemplate.objects.create(
+        name='Score',
+        type=FieldType.NUMBER,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=2,
+        api_name='score-field',
+        account=account,
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=target_field,
+        source_field_api_name=source_field.api_name,
+        ruleset_api_name='show-ruleset',
+        operator=FieldRuleOperator.EQUAL,
+        value='yes',
+    )
+    val_ruleset = FieldTemplateRuleSet.objects.create(
+        account=account,
+        template=template,
+        field=target_field,
+        api_name='val-ruleset',
+        name='Score validator',
+        type=FieldRuleType.VALIDATOR,
+        message='Score must be greater than 10',
+        order=1,
+    )
+    val_group_or = (
+        FieldTemplateRuleGroupOr.objects.create(
+            account=account,
+            template=template,
+            ruleset=val_ruleset,
+            api_name='val-group-or',
+        )
+    )
+    FieldTemplateRuleGroupAnd.objects.create(
+        account=account,
+        template=template,
+        group_or=val_group_or,
+        api_name='val-group-and',
+        field=target_field.api_name,
+        operator=FieldRuleOperator.GREATER_THAN,
+        value='10',
+    )
+    wf_run_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                source_field.api_name: 'no',
+                target_field.api_name: 5,
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(
+        id=response.data['id'],
+    )
+    wf_run_mock.assert_called_once_with(
+        workflow=workflow,
+        user=user,
+    )
+    analytics_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+
+
+def test_run__kickoff_fieldset_sum_greater_than__fail(
+    mocker,
+    api_client,
+):
+
+    """ Fieldset sum_greater_than 30+10=40 < 50 → 400. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    fieldset_template = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        order=0,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='50',
+    )
+    ruleset = fieldset_template.rulesets.first()
+    group_or = ruleset.groups_or.first()
+    group_and = group_or.groups_and.first()
+    group_and.operator = (
+        FieldSetRuleOperator.SUM_GREATER_THAN
+    )
+    group_and.save()
+    field_1 = fieldset_template.fields.first()
+    field_2 = FieldTemplate.objects.create(
+        name='Second number',
+        type=FieldType.NUMBER,
+        fieldset=fieldset_template,
+        template=template,
+        order=2,
+        api_name=(
+            f'{fieldset_template.api_name}-field-2'
+        ),
+        account=user.account,
+    )
+    ruleset.fields.add(field_1, field_2)
+    wf_run_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                field_1.api_name: 30,
+                field_2.api_name: 10,
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert (
+        response.data['code']
+        == ErrorCode.VALIDATION_ERROR
+    )
+    assert (
+        response.data['message'] == MSG_FS_0017('50')
+    )
+    wf_run_mock.assert_not_called()
+    analytics_mock.assert_not_called()
+
+
+def test_run__kickoff_fieldset_sum_greater_than__ok(
+    mocker,
+    api_client,
+):
+
+    """ Fieldset sum_greater_than 30+30=60 > 50 → 200. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    fieldset_template = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        order=0,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='50',
+    )
+    ruleset = fieldset_template.rulesets.first()
+    group_or = ruleset.groups_or.first()
+    group_and = group_or.groups_and.first()
+    group_and.operator = (
+        FieldSetRuleOperator.SUM_GREATER_THAN
+    )
+    group_and.save()
+    field_1 = fieldset_template.fields.first()
+    field_2 = FieldTemplate.objects.create(
+        name='Second number',
+        type=FieldType.NUMBER,
+        fieldset=fieldset_template,
+        template=template,
+        order=2,
+        api_name=(
+            f'{fieldset_template.api_name}-field-2'
+        ),
+        account=user.account,
+    )
+    ruleset.fields.add(field_1, field_2)
+    wf_run_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                field_1.api_name: 30,
+                field_2.api_name: 30,
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(
+        id=response.data['id'],
+    )
+    wf_run_mock.assert_called_once_with(
+        workflow=workflow,
+        user=user,
+    )
+    analytics_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+
+
+def test_run__kickoff_fieldset_sum_less_than__fail(
+    mocker,
+    api_client,
+):
+
+    """ Fieldset sum_less_than 60+50=110 > 100 → 400. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    fieldset_template = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        order=0,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='100',
+    )
+    ruleset = fieldset_template.rulesets.first()
+    group_or = ruleset.groups_or.first()
+    group_and = group_or.groups_and.first()
+    group_and.operator = (
+        FieldSetRuleOperator.SUM_LESS_THAN
+    )
+    group_and.save()
+    field_1 = fieldset_template.fields.first()
+    field_2 = FieldTemplate.objects.create(
+        name='Second number',
+        type=FieldType.NUMBER,
+        fieldset=fieldset_template,
+        template=template,
+        order=2,
+        api_name=(
+            f'{fieldset_template.api_name}-field-2'
+        ),
+        account=user.account,
+    )
+    ruleset.fields.add(field_1, field_2)
+    wf_run_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                field_1.api_name: 60,
+                field_2.api_name: 50,
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert (
+        response.data['code']
+        == ErrorCode.VALIDATION_ERROR
+    )
+    assert (
+        response.data['message']
+        == MSG_FS_0018('100')
+    )
+    wf_run_mock.assert_not_called()
+    analytics_mock.assert_not_called()
+
+
+def test_run__kickoff_fieldset_sum_all_empty_not_required__ok(
+    mocker,
+    api_client,
+):
+
+    """Empty non-required fields skip sum validation."""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    fieldset_template = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        order=0,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='100',
+    )
+    field_1 = fieldset_template.fields.first()
+    field_2 = FieldTemplate.objects.create(
+        name='Second number',
+        type=FieldType.NUMBER,
+        fieldset=fieldset_template,
+        template=template,
+        order=2,
+        api_name=(
+            f'{fieldset_template.api_name}-field-2'
+        ),
+        account=user.account,
+    )
+    ruleset_template = fieldset_template.rulesets.first()
+    ruleset_template.fields.add(field_1, field_2)
+    wf_run_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={'kickoff': {}},
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(
+        id=response.data['id'],
+    )
+    wf_run_mock.assert_called_once_with(
+        workflow=workflow,
+        user=user,
+    )
+    analytics_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+
+
+def test_run__kickoff_fieldset_sum_non_numeric_value__validation_error(
+    mocker,
+    api_client,
+):
+
+    """ Non-numeric field in sum fieldset → 400. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    fieldset_template = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        order=0,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='100',
+    )
+    field_1 = fieldset_template.fields.first()
+    field_2 = FieldTemplate.objects.create(
+        name='Text field',
+        type=FieldType.STRING,
+        fieldset=fieldset_template,
+        template=template,
+        order=2,
+        api_name=(
+            f'{fieldset_template.api_name}-field-2'
+        ),
+        account=user.account,
+    )
+    ruleset_template = fieldset_template.rulesets.first()
+    ruleset_template.fields.add(field_1, field_2)
+    wf_run_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                field_1.api_name: 50,
+                field_2.api_name: 'abc',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert (
+        response.data['code']
+        == ErrorCode.VALIDATION_ERROR
+    )
+    assert (
+        response.data['message'] == str(MSG_FS_0003)
+    )
+    wf_run_mock.assert_not_called()
+    analytics_mock.assert_not_called()
+
+
+def test_run__fieldset_rulesets_copied_to_runtime__ok(
+    mocker,
+    api_client,
+):
+
+    """ Fieldset rulesets copied to runtime on run. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    fieldset_template = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        order=0,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='100',
+    )
+    field_1 = fieldset_template.fields.first()
+    field_2 = FieldTemplate.objects.create(
+        name='Second number',
+        type=FieldType.NUMBER,
+        fieldset=fieldset_template,
+        template=template,
+        order=2,
+        api_name=(
+            f'{fieldset_template.api_name}-field-2'
+        ),
+        account=user.account,
+    )
+    ruleset_template = fieldset_template.rulesets.first()
+    ruleset_template.fields.add(field_1, field_2)
+    wf_run_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                field_1.api_name: 60,
+                field_2.api_name: 40,
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(
+        id=response.data['id'],
+    )
+    kickoff_value = KickoffValue.objects.get(
+        workflow=workflow,
+    )
+    fieldset = kickoff_value.fieldsets.first()
+    assert fieldset is not None
+    assert fieldset.rulesets.count() == 1
+    ruleset = fieldset.rulesets.first()
+    assert ruleset is not None
+    group_or = ruleset.groups_or.first()
+    assert group_or is not None
+    group_and = group_or.groups_and.first()
+    assert group_and is not None
+    assert group_and.operator == (
+        FieldSetRuleOperator.SUM_EQUAL
+    )
+    assert group_and.value == '100'
+    assert ruleset.fields.count() == 2
+    wf_run_mock.assert_called_once_with(
+        workflow=workflow,
+        user=user,
+    )
+    analytics_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+
+
+def test_run__required_field_with_show_rule_hidden__ok(
+    mocker,
+    api_client,
+):
+
+    """ Required kickoff field hidden by Show rule does not block run. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    source_field = FieldTemplate.objects.create(
+        name='Trigger',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='trigger-field',
+        account=account,
+    )
+    required_field = FieldTemplate.objects.create(
+        name='Must fill',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=2,
+        api_name='must-field',
+        account=account,
+        is_required=True,
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=required_field,
+        source_field_api_name=source_field.api_name,
+        ruleset_api_name='show-must-ruleset',
+        operator=FieldRuleOperator.EQUAL,
+        value='show',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act — trigger != 'show', so required field stays hidden
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                source_field.api_name: 'no',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+
+
+def test_run__required_field_with_show_rule_visible__validation_error(
+    mocker,
+    api_client,
+):
+
+    """ Required kickoff field revealed by Show rule blocks if empty. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    source_field = FieldTemplate.objects.create(
+        name='Trigger',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='trigger-field',
+        account=account,
+    )
+    required_field = FieldTemplate.objects.create(
+        name='Must fill',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=2,
+        api_name='must-field',
+        account=account,
+        is_required=True,
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=required_field,
+        source_field_api_name=source_field.api_name,
+        ruleset_api_name='show-must-ruleset',
+        operator=FieldRuleOperator.EQUAL,
+        value='show',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act — trigger == 'show', required field visible but empty
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                source_field.api_name: 'show',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['details']['api_name'] == 'must-field'
+
+
+def test_run__required_task_field_with_kickoff_show_rule__ok(
+    mocker,
+    api_client,
+):
+
+    """ Required field on Step 1 does not block run when
+        kickoff has a Show ruleset. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    kickoff_field = FieldTemplate.objects.create(
+        name='Status',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='ko-status',
+        account=account,
+    )
+    kickoff_hidden = FieldTemplate.objects.create(
+        name='Info',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=2,
+        api_name='ko-info',
+        account=account,
+        is_required=False,
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=kickoff_hidden,
+        source_field_api_name=kickoff_field.api_name,
+        ruleset_api_name='show-info-ruleset',
+        operator=FieldRuleOperator.EQUAL,
+        value='yes',
+    )
+    task_template = template.tasks.first()
+    FieldTemplate.objects.create(
+        name='Step1 Required',
+        type=FieldType.STRING,
+        task=task_template,
+        template=template,
+        order=1,
+        api_name='step1-req',
+        account=account,
+        is_required=True,
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                kickoff_field.api_name: 'no',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    step1_field = TaskField.objects.get(
+        workflow=workflow,
+        api_name='step1-req',
+    )
+    assert step1_field.is_required is True
+    assert step1_field.value == ''
+
+
+def test_run__required_task_field_with_show_rule__not_blocked(
+    mocker,
+    api_client,
+):
+
+    """ Required task field with its own Show rule does not
+        block run even when show condition makes it visible. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    kickoff_field = FieldTemplate.objects.create(
+        name='Trigger',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='ko-trigger',
+        account=account,
+    )
+    task_template = template.tasks.first()
+    task_field = FieldTemplate.objects.create(
+        name='Task Required',
+        type=FieldType.STRING,
+        task=task_template,
+        template=template,
+        order=1,
+        api_name='task-req',
+        account=account,
+        is_required=True,
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=task_field,
+        source_field_api_name=kickoff_field.api_name,
+        ruleset_api_name='show-task-req',
+        operator=FieldRuleOperator.EQUAL,
+        value='yes',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act — trigger = 'yes' makes task field visible
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                kickoff_field.api_name: 'yes',
+            },
+        },
+    )
+
+    # assert — run succeeds, task field not validated at kickoff
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    task_field_wf = TaskField.objects.get(
+        workflow=workflow,
+        api_name='task-req',
+    )
+    assert task_field_wf.is_required is True
+    assert task_field_wf.is_hidden is False
+    assert task_field_wf.value == ''
+
+
+def test_run__two_steps_required_field_on_step2__ok(
+    mocker,
+    api_client,
+):
+
+    """ Required field on Step 2 does not block run when
+        kickoff has a Show ruleset. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=2,
+    )
+    kickoff_field = FieldTemplate.objects.create(
+        name='Status',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='ko-status-2',
+        account=account,
+    )
+    kickoff_hidden = FieldTemplate.objects.create(
+        name='Detail',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=2,
+        api_name='ko-detail',
+        account=account,
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=kickoff_hidden,
+        source_field_api_name=kickoff_field.api_name,
+        ruleset_api_name='show-detail-ruleset',
+        operator=FieldRuleOperator.EQUAL,
+        value='yes',
+    )
+    task_template_2 = template.tasks.get(number=2)
+    FieldTemplate.objects.create(
+        name='Step2 Required',
+        type=FieldType.STRING,
+        task=task_template_2,
+        template=template,
+        order=1,
+        api_name='step2-req',
+        account=account,
+        is_required=True,
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                kickoff_field.api_name: 'no',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+
+
+def test_run__required_kickoff_fieldset_field_show_rule_visible__error(
+    mocker,
+    api_client,
+):
+
+    """ Required kickoff-fieldset field with Show rule that makes it
+        visible must be validated (empty → 400). """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    source_field = FieldTemplate.objects.create(
+        name='Trigger',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='trigger-fs',
+        account=account,
+    )
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        order=1,
+    )
+    fs_field = fieldset_template.fields.first()
+    fs_field.is_required = True
+    fs_field.save(update_fields=['is_required'])
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=fs_field,
+        source_field_api_name=source_field.api_name,
+        ruleset_api_name='show-fs-field-ruleset',
+        operator=FieldRuleOperator.EQUAL,
+        value='show',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act — trigger='show' makes fieldset field visible but empty
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                source_field.api_name: 'show',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['details']['api_name'] == fs_field.api_name
+
+
+def test_run__required_kickoff_fieldset_field_show_rule_hidden__ok(
+    mocker,
+    api_client,
+):
+
+    """ Required kickoff-fieldset field with Show rule that keeps it
+        hidden should not block run. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    source_field = FieldTemplate.objects.create(
+        name='Trigger',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='trigger-fsh',
+        account=account,
+    )
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        order=1,
+    )
+    fs_field = fieldset_template.fields.first()
+    fs_field.is_required = True
+    fs_field.save(update_fields=['is_required'])
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=fs_field,
+        source_field_api_name=source_field.api_name,
+        ruleset_api_name='show-fsh-ruleset',
+        operator=FieldRuleOperator.EQUAL,
+        value='show',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act — trigger != 'show' → fieldset field stays hidden
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                source_field.api_name: 'no',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200

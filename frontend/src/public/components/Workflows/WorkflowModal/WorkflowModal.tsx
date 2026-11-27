@@ -298,6 +298,12 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflo
     const { fieldsetFields } = this.state;
     const initialEditKickoff = getEditKickoff(initialKickoff);
 
+    const handleStartEditKickoff = () => {
+      setWorkflowEdit({ ...workflowEditData, kickoff: initialEditKickoff });
+      this.setState({ fieldsetFields: WorkflowModal.getFieldsetsFromProps(this.props) });
+      setIsEditKickoff(true);
+    };
+
     if (!isKickoffEditing) {
       return (
         <KickoffOutputs
@@ -306,7 +312,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflo
           description={initialKickoff?.description}
           outputs={initialKickoff?.output}
           fieldsets={initialKickoff?.fieldsets || []}
-          onEdit={canEdit ? () => setIsEditKickoff(true) : undefined}
+          onEdit={canEdit ? handleStartEditKickoff : undefined}
         />
       );
     }

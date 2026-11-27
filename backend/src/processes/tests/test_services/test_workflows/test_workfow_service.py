@@ -466,3 +466,79 @@ def test_create_workflow_name__without_user__guest_name():
 
     # assert
     assert result == f'WF by {MSG_PW_0091}'
+
+
+class _FakeFieldset:
+    """Minimal fieldset stub for _is_field_in_scope tests."""
+
+    def __init__(self, kickoff_id=None, task_id=None):
+        self.kickoff_id = kickoff_id
+        self.task_id = task_id
+
+
+class _FakeField:
+    """Minimal field stub for _is_field_in_scope tests."""
+
+    def __init__(self, kickoff_id=None, task_id=None, fieldset=None):
+        self.kickoff_id = kickoff_id
+        self.task_id = task_id
+        self.fieldset = fieldset
+
+
+def test_is_field_in_scope__kickoff_field__kickoff_scope__true():
+    field = _FakeField(kickoff_id=1)
+    assert WorkflowService._is_field_in_scope(field, task_id=None) is True
+
+
+def test_is_field_in_scope__kickoff_fieldset_field__kickoff_scope__true():
+    fieldset = _FakeFieldset(kickoff_id=1)
+    field = _FakeField(fieldset=fieldset)
+    assert WorkflowService._is_field_in_scope(field, task_id=None) is True
+
+
+def test_is_field_in_scope__task_field__kickoff_scope__false():
+    field = _FakeField(task_id=10)
+    assert WorkflowService._is_field_in_scope(field, task_id=None) is False
+
+
+def test_is_field_in_scope__task_fieldset_field__kickoff_scope__false():
+    fieldset = _FakeFieldset(task_id=10)
+    field = _FakeField(fieldset=fieldset)
+    assert WorkflowService._is_field_in_scope(field, task_id=None) is False
+
+
+def test_is_field_in_scope__task_field__same_task_scope__true():
+    field = _FakeField(task_id=10)
+    assert WorkflowService._is_field_in_scope(field, task_id=10) is True
+
+
+def test_is_field_in_scope__task_fieldset_field__same_task_scope__true():
+    fieldset = _FakeFieldset(task_id=10)
+    field = _FakeField(fieldset=fieldset)
+    assert WorkflowService._is_field_in_scope(field, task_id=10) is True
+
+
+def test_is_field_in_scope__task_field__other_task_scope__false():
+    field = _FakeField(task_id=10)
+    assert WorkflowService._is_field_in_scope(field, task_id=20) is False
+
+
+def test_is_field_in_scope__task_fieldset_field__other_task_scope__false():
+    fieldset = _FakeFieldset(task_id=10)
+    field = _FakeField(fieldset=fieldset)
+    assert WorkflowService._is_field_in_scope(field, task_id=20) is False
+
+
+def test_is_field_in_scope__kickoff_field__task_scope__false():
+    field = _FakeField(kickoff_id=1)
+    assert WorkflowService._is_field_in_scope(field, task_id=10) is False
+
+
+def test_is_field_in_scope__no_fieldset_no_ids__kickoff_scope__false():
+    field = _FakeField()
+    assert WorkflowService._is_field_in_scope(field, task_id=None) is False
+
+
+def test_is_field_in_scope__no_fieldset_no_ids__task_scope__false():
+    field = _FakeField()
+    assert WorkflowService._is_field_in_scope(field, task_id=10) is False

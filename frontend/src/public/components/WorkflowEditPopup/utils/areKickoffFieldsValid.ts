@@ -9,7 +9,9 @@ export const checkExtraFieldsAreValid = <T extends IExtraField[]>(fields?: T) =>
     return true;
   }
 
-  const numberOfErrorFields = fields.filter((field) => hasFieldError(field, EExtraFieldMode.ProcessRun)).length;
+  const numberOfErrorFields = fields.filter(
+    (field) => !field.isHidden && hasFieldError(field, EExtraFieldMode.ProcessRun),
+  ).length;
 
   return numberOfErrorFields === 0;
 };

@@ -9,7 +9,25 @@ import type { TDropdownOption } from '../../../UI';
 import { Dropdown } from '../../../UI';
 import type { IKickoffDropdownProps } from './types';
 
+import type { IFieldRuleSet } from '../../../../types/fieldset';
+import { DeletableDropdownOption } from './DeletableDropdownOption';
+import deletableOptionStyles from './DeletableDropdownOption.css';
 import styles from '../../KickoffRedux/KickoffRedux.css';
+
+const renderRulesetOption =
+  (
+    ruleset: IFieldRuleSet,
+    onOpenFieldRules?: (ruleset?: IFieldRuleSet) => void,
+    onDeleteFieldRuleset?: (rulesetApiName: string) => void,
+  ) =>
+  (closeDropdown?: () => void) => (
+    <DeletableDropdownOption
+      label={ruleset.name}
+      onClick={() => onOpenFieldRules?.(ruleset)}
+      onDelete={() => onDeleteFieldRuleset?.(ruleset.apiName)}
+      closeDropdown={closeDropdown}
+    />
+  );
 
 export function ExtraFieldDropdown({
   apiName,
@@ -26,12 +44,15 @@ export function ExtraFieldDropdown({
   datasetOptions,
   selectedDatasetId,
   onDatasetSelect,
+  fieldRulesets,
+  onOpenFieldRules,
+  onDeleteFieldRuleset,
 }: IKickoffDropdownProps) {
   const { formatMessage } = useIntl();
 
-  const handleOptionClick = (handler: () => void) => (closeDropdown: () => void) => {
-    closeDropdown();
-    handler();
+  const handleOptionClick = (handler?: () => void) => (closeDropdown?: () => void) => {
+    closeDropdown?.();
+    handler?.();
   };
 
   const getDatasetSubOptions = (): TDropdownOption[] | undefined => {
@@ -126,6 +147,23 @@ export function ExtraFieldDropdown({
               />
             </div>
           ),
+        },
+        {
+          label: formatMessage({ id: 'fieldsets.field-rulesets-submenu' }),
+          Icon: ArrowRightIcon,
+          className: classnames(styles['dataset-submenu'], styles['dropdown-item-rules']),
+          subOptions: [
+            {
+              label: formatMessage({ id: 'fieldsets.field-rulesets-add-new' }),
+              onClick: handleOptionClick(() => onOpenFieldRules?.()),
+            },
+            ...(fieldRulesets || []).map((ruleset, index) => ({
+              mapKey: `field-ruleset-${ruleset.apiName}`,
+              className: deletableOptionStyles['option-item'],
+              label: renderRulesetOption(ruleset, onOpenFieldRules, onDeleteFieldRuleset),
+              withUpperline: index === 0,
+            })),
+          ],
         },
         {
           label: formatMessage({ id: 'template.kick-off-form-delete-component' }),

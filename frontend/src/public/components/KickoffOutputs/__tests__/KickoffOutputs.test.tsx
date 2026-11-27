@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { KickoffOutputs, EKickoffOutputsViewModes } from '../KickoffOutputs';
 import { makeExtraField } from '../../../__stubs__/fields.factory';
 import { makeFieldsetRuntime } from '../../../__stubs__/fieldsets.factory';
+import { intlMock } from '../../../__stubs__/intlMock';
 import { EExtraFieldType, IExtraField } from '../../../types/template';
 import { Attachments } from '../../Attachments';
 
@@ -363,6 +364,156 @@ describe('KickoffOutputs', () => {
           url: 'https://files.example.com/from-fs',
         }),
       ]);
+    });
+  });
+
+  describe('Hidden fields (isHidden)', () => {
+    const formatMsg = (id: string) => intlMock.formatMessage({ id });
+    const KICKOFF_TITLE = formatMsg('template.kick-off-form-title');
+    const EDIT_KICKOFF_LABEL = formatMsg('kickoff-output.edit.edit-kickoff');
+
+    it('skips hidden fields among plain fields and inside fieldsets', () => {
+      const outputs = [
+        makeExtraField({ apiName: 'plain-hidden', name: 'Plain Hidden', value: 'stale', isHidden: true, order: 3 }),
+        makeExtraField({ apiName: 'plain-visible', name: 'Plain Visible', value: 'ok', isHidden: false, order: 2 }),
+        makeExtraField({ apiName: 'plain-undef', name: 'Plain Undef', value: 'ok2', isHidden: undefined, order: 1 }),
+      ];
+      const fieldset = makeFieldsetRuntime({
+        apiNameBinding: 'fs-mixed',
+        title: 'Mixed Group',
+        order: 4,
+        fields: [
+          makeExtraField({ apiName: 'fs-hidden', name: 'FS Hidden', value: 'stale', isHidden: true, order: 3 }),
+          makeExtraField({ apiName: 'fs-visible', name: 'FS Visible', value: 'ok', isHidden: false, order: 2 }),
+          makeExtraField({ apiName: 'fs-undef', name: 'FS Undef', value: 'ok2', isHidden: undefined, order: 1 }),
+        ],
+      });
+
+      render(
+        React.createElement(KickoffOutputs, {
+          viewMode: EKickoffOutputsViewModes.Short,
+          outputs,
+          fieldsets: [fieldset],
+        }),
+      );
+
+      expect(screen.queryByTestId('text-output-plain-hidden')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('text-output-fs-hidden')).not.toBeInTheDocument();
+
+      expect(screen.getByText('Mixed Group')).toBeInTheDocument();
+      expect(screen.getByTestId('text-output-plain-visible')).toBeInTheDocument();
+      expect(screen.getByTestId('text-output-plain-undef')).toBeInTheDocument();
+      expect(screen.getByTestId('text-output-fs-visible')).toBeInTheDocument();
+      expect(screen.getByTestId('text-output-fs-undef')).toBeInTheDocument();
+    });
+
+    it('hides fieldset header when all its fields have isHidden=true', () => {
+      const hiddenFieldset = makeFieldsetRuntime({
+        apiNameBinding: 'fs-all-hidden',
+        title: 'All Hidden Title',
+        description: 'All Hidden Description',
+        order: 2,
+        fields: [makeExtraField({ apiName: 'fs-h1', name: 'Hidden', value: 'stale', isHidden: true })],
+      });
+      const visibleField = makeExtraField({ apiName: 'plain-ok', name: 'Plain OK', value: 'shown', order: 1 });
+
+      render(
+        React.createElement(KickoffOutputs, {
+          viewMode: EKickoffOutputsViewModes.Short,
+          outputs: [visibleField],
+          fieldsets: [hiddenFieldset],
+        }),
+      );
+
+      expect(screen.queryByText('All Hidden Title')).not.toBeInTheDocument();
+      expect(screen.queryByText('All Hidden Description')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('text-output-fs-h1')).not.toBeInTheDocument();
+      expect(screen.getByTestId('text-output-plain-ok')).toBeInTheDocument();
+    });
+
+    it('excludes attachments from hidden file fields in isOnlyAttachmentsShown mode', () => {
+      const hiddenAttachment = { id: 'h-1', url: 'hidden.pdf', name: 'hidden.pdf', size: 10 };
+      const visibleAttachment = { id: 'v-1', url: 'visible.pdf', name: 'visible.pdf', size: 20 };
+      const hiddenFsAttachment = { id: 'h-2', url: 'hidden-fs.pdf', name: 'hidden-fs.pdf', size: 30 };
+
+      const outputs = [
+        makeExtraField({
+          apiName: 'file-hidden',
+          type: EExtraFieldType.File,
+          isHidden: true,
+          order: 3,
+          attachments: [hiddenAttachment],
+        }),
+        makeExtraField({
+          apiName: 'file-visible',
+          type: EExtraFieldType.File,
+          isHidden: false,
+          order: 2,
+          attachments: [visibleAttachment],
+        }),
+      ];
+      const fieldset = makeFieldsetRuntime({
+        apiNameBinding: 'fs-files',
+        order: 1,
+        fields: [
+          makeExtraField({
+            apiName: 'fs-file-hidden',
+            type: EExtraFieldType.File,
+            isHidden: true,
+            attachments: [hiddenFsAttachment],
+          }),
+        ],
+      });
+
+      render(
+        React.createElement(KickoffOutputs, {
+          ...baseProps,
+          outputs,
+          fieldsets: [fieldset],
+        }),
+      );
+
+      expect(Attachments as jest.Mock).toHaveBeenCalledTimes(1);
+      expect(getAttachmentsProps()).toEqual([visibleAttachment]);
+    });
+
+    it('skips hidden field with highest order and shows first visible field in isTruncated mode', () => {
+      const outputs = [
+        makeExtraField({ apiName: 'top-hidden', name: 'Top Hidden', value: 'stale', isHidden: true, order: 10 }),
+        makeExtraField({ apiName: 'next-visible', name: 'Next Visible', value: 'shown', isHidden: false, order: 5 }),
+      ];
+
+      render(
+        React.createElement(KickoffOutputs, {
+          viewMode: EKickoffOutputsViewModes.Short,
+          outputs,
+          fieldsets: [],
+          isTruncated: true,
+        }),
+      );
+
+      expect(screen.queryByTestId('text-output-top-hidden')).not.toBeInTheDocument();
+      expect(screen.getByTestId('text-output-next-visible')).toBeInTheDocument();
+    });
+
+    it('keeps Kickoff header and Edit button in Detailed mode when all fields are hidden', () => {
+      const onEdit = jest.fn();
+      const outputs = [
+        makeExtraField({ apiName: 'only-hidden', name: 'Only Hidden', value: 'stale', isHidden: true, order: 1 }),
+      ];
+
+      render(
+        React.createElement(KickoffOutputs, {
+          viewMode: EKickoffOutputsViewModes.Detailed,
+          outputs,
+          fieldsets: [],
+          onEdit,
+        }),
+      );
+
+      expect(screen.getByText(KICKOFF_TITLE)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: EDIT_KICKOFF_LABEL })).toBeInTheDocument();
+      expect(screen.queryByTestId('text-output-only-hidden')).not.toBeInTheDocument();
     });
   });
 });

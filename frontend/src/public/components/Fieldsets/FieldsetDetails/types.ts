@@ -1,7 +1,7 @@
 import type { RouteComponentProps } from 'react-router-dom';
 
 import type { IExtraField } from '../../../types/template';
-import type { EFieldLabelPosition, IFieldsetTemplateRule } from '../../../types/fieldset';
+import type { EFieldLabelPosition, IFieldsetCatalogItem, IFieldsetRuleSet } from '../../../types/fieldset';
 
 export interface IFieldsetDetailsRouteParams {
   id: string;
@@ -9,20 +9,24 @@ export interface IFieldsetDetailsRouteParams {
 
 export type TFieldsetDetailsProps = RouteComponentProps<IFieldsetDetailsRouteParams>;
 
-export type TDetailFieldsetState = {
+export type TFieldsetDetailsFormProps = {
+  fieldset: IFieldsetCatalogItem;
+};
+
+export type TLocalFieldsetState = {
   title: string;
   description: string;
   labelPosition: EFieldLabelPosition;
   fields: IExtraField[];
-  rules: IFieldsetTemplateRule[];
+  rulesets: IFieldsetRuleSet[];
 };
 
-export type TDetailFieldsetChanges = {
+export type TFieldsetChanges = {
   title?: string;
   description?: string;
   labelPosition?: EFieldLabelPosition;
   fields?: IExtraField[];
-  rules?: IFieldsetTemplateRule[];
+  rulesets?: IFieldsetRuleSet[];
 };
 
 export type TFieldsetUnsavedChangesModalProps = {

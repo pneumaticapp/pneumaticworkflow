@@ -5,9 +5,18 @@ import { enMessages } from '../../../lang/locales/en_US';
 
 import { EditKickoff } from '../KickoffEdit';
 import { makeExtraField } from '../../../__stubs__/fields.factory';
-import { makeFieldsetRuntime } from '../../../__stubs__/fieldsets.factory';
-import { IExtraField } from '../../../types/template';
-import { IFieldsetRuntime } from '../../../types/fieldset';
+import {
+  makeFieldRuleGroupOr,
+  makeFieldRuleSet,
+  makeFieldRuleShowGroupAnd,
+  makeFieldsetRuntime,
+} from '../../../__stubs__/fieldsets.factory';
+import { intlMock } from '../../../__stubs__/intlMock';
+import { EExtraFieldType } from '../../../types/template';
+import type { IExtraField } from '../../../types/template';
+import { EFieldRuleOperator, EFieldRuleType, EFieldRuleValueType } from '../../../types/fieldset';
+import type { IFieldsetRuntime } from '../../../types/fieldset';
+import { autoFocusFirstField } from '../../../utils/autoFocusFirstField';
 import { MergedOutputList } from '../../MergedOutputList';
 
 jest.mock('../../MergedOutputList', () => ({
@@ -260,5 +269,228 @@ describe('KickoffEdit', () => {
       }),
       expect.anything(),
     );
+  });
+
+  describe('Show rules, Save validation, and autofocus on mount', () => {
+    const formatMsg = (id: string) => intlMock.formatMessage({ id });
+    const SAVE_LABEL = formatMsg('kickoff-edit.buttons.save');
+
+    const makeShowRuleset = (
+      field: string,
+      operator: EFieldRuleOperator,
+      value: string,
+      valueType?: EFieldRuleValueType | null,
+    ) =>
+      makeFieldRuleSet({
+        type: EFieldRuleType.Show,
+        groupsOr: [
+          makeFieldRuleGroupOr({
+            groupsAnd: [
+              makeFieldRuleShowGroupAnd({
+                field,
+                operator,
+                value,
+                ...(valueType !== undefined && { valueType }),
+              }),
+            ],
+          }),
+        ],
+      });
+
+    it('hides and shows plain and fieldset fields by Show rule in MergedOutputList', () => {
+      const showByTrigger = [makeShowRuleset('trigger', EFieldRuleOperator.Equal, 'yes')];
+      const dependentPlain = makeField('dep-plain', 2, { isHidden: false, rulesets: showByTrigger });
+      const dependentFieldsetField = makeField('dep-fs', 1, { isHidden: false, rulesets: showByTrigger });
+      const fieldsets = [makeFieldset({ fields: [dependentFieldsetField], order: 3 })];
+
+      const { rerender } = renderWithIntl(
+        <EditKickoff
+          {...baseProps}
+          kickoff={{
+            description: '',
+            fields: [makeField('trigger', 1, { value: 'no' }), dependentPlain],
+            fieldsets: [],
+          }}
+          fieldsets={fieldsets}
+          onEditFieldsetField={jest.fn(() => jest.fn())}
+        />,
+      );
+
+      expect(MergedOutputList).toHaveBeenCalledTimes(1);
+      expect(MergedOutputList).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          fields: [expect.objectContaining({ apiName: 'trigger' })],
+          fieldsets: [expect.objectContaining({ fields: [] })],
+        }),
+        expect.anything(),
+      );
+
+      rerender(
+        <IntlProvider locale="en" messages={enMessages}>
+          <EditKickoff
+            {...baseProps}
+            kickoff={{
+              description: '',
+              fields: [makeField('trigger', 1, { value: 'yes' }), dependentPlain],
+              fieldsets: [],
+            }}
+            fieldsets={fieldsets}
+            onEditFieldsetField={jest.fn(() => jest.fn())}
+          />
+        </IntlProvider>,
+      );
+
+      expect(MergedOutputList).toHaveBeenCalledTimes(2);
+      expect(MergedOutputList).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          fields: [
+            expect.objectContaining({ apiName: 'trigger' }),
+            expect.objectContaining({ apiName: 'dep-plain', isHidden: false }),
+          ],
+          fieldsets: [
+            expect.objectContaining({
+              fields: [expect.objectContaining({ apiName: 'dep-fs', isHidden: false })],
+            }),
+          ],
+        }),
+        expect.anything(),
+      );
+    });
+
+    it('shows dependent fieldset field only when groupId matches for User/Group rule', () => {
+      const showByGroup = [makeShowRuleset('assignee', EFieldRuleOperator.Equal, '7', EFieldRuleValueType.Group)];
+      const dependentFieldsetField = makeField('group-dep', 1, { rulesets: showByGroup });
+      const fieldsets = [makeFieldset({ fields: [dependentFieldsetField], order: 2 })];
+
+      const { rerender } = renderWithIntl(
+        <EditKickoff
+          {...baseProps}
+          kickoff={{
+            description: '',
+            fields: [
+              makeField('assignee', 1, {
+                type: EExtraFieldType.User,
+                userId: 7,
+                groupId: null,
+              }),
+            ],
+            fieldsets: [],
+          }}
+          fieldsets={fieldsets}
+          onEditFieldsetField={jest.fn(() => jest.fn())}
+        />,
+      );
+
+      expect(MergedOutputList).toHaveBeenCalledTimes(1);
+      expect(MergedOutputList).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          fieldsets: [expect.objectContaining({ fields: [] })],
+        }),
+        expect.anything(),
+      );
+
+      rerender(
+        <IntlProvider locale="en" messages={enMessages}>
+          <EditKickoff
+            {...baseProps}
+            kickoff={{
+              description: '',
+              fields: [
+                makeField('assignee', 1, {
+                  type: EExtraFieldType.User,
+                  userId: null,
+                  groupId: 7,
+                }),
+              ],
+              fieldsets: [],
+            }}
+            fieldsets={fieldsets}
+            onEditFieldsetField={jest.fn(() => jest.fn())}
+          />
+        </IntlProvider>,
+      );
+
+      expect(MergedOutputList).toHaveBeenCalledTimes(2);
+      expect(MergedOutputList).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          fieldsets: [
+            expect.objectContaining({
+              fields: [expect.objectContaining({ apiName: 'group-dep', isHidden: false })],
+            }),
+          ],
+        }),
+        expect.anything(),
+      );
+    });
+
+    it('enables Save when empty required fields are hidden by Show rule', () => {
+      const showByTrigger = [makeShowRuleset('trigger', EFieldRuleOperator.Equal, 'yes')];
+      const kickoff = {
+        description: '',
+        fields: [
+          makeField('trigger', 1, { value: 'no' }),
+          makeField('req-plain', 2, { isRequired: true, isHidden: false, value: '', rulesets: showByTrigger }),
+        ],
+        fieldsets: [],
+      };
+      const fieldsets = [
+        makeFieldset({
+          fields: [makeField('req-fs', 1, { isRequired: true, isHidden: false, value: '', rulesets: showByTrigger })],
+          order: 3,
+        }),
+      ];
+
+      renderWithIntl(
+        <EditKickoff
+          {...baseProps}
+          kickoff={kickoff}
+          fieldsets={fieldsets}
+          onEditFieldsetField={jest.fn(() => jest.fn())}
+        />,
+      );
+
+      expect(screen.getByRole('button', { name: SAVE_LABEL })).not.toBeDisabled();
+    });
+
+    it('disables Save when empty required field becomes visible by Show rule', () => {
+      const showByTrigger = [makeShowRuleset('trigger', EFieldRuleOperator.Equal, 'yes')];
+      const kickoff = {
+        description: '',
+        fields: [
+          makeField('trigger', 1, { value: 'yes' }),
+          makeField('req-plain', 2, { isRequired: true, isHidden: true, value: '', rulesets: showByTrigger }),
+        ],
+        fieldsets: [],
+      };
+
+      renderWithIntl(<EditKickoff {...baseProps} kickoff={kickoff} />);
+
+      expect(screen.getByRole('button', { name: SAVE_LABEL })).toBeDisabled();
+    });
+
+    it('calls autoFocusFirstField with form element when kickoff appears after null', () => {
+      const { rerender } = renderWithIntl(<EditKickoff {...baseProps} kickoff={null} fieldsets={[]} />);
+
+      expect(screen.queryByTestId('merged-output-list')).not.toBeInTheDocument();
+      expect(autoFocusFirstField).not.toHaveBeenCalled();
+
+      rerender(
+        <IntlProvider locale="en" messages={enMessages}>
+          <EditKickoff
+            {...baseProps}
+            kickoff={{
+              description: '',
+              fields: [makeField('f1', 1)],
+              fieldsets: [],
+            }}
+            fieldsets={[]}
+          />
+        </IntlProvider>,
+      );
+
+      expect(screen.getByTestId('merged-output-list')).toBeInTheDocument();
+      expect(autoFocusFirstField).toHaveBeenCalledTimes(1);
+      expect(autoFocusFirstField).toHaveBeenCalledWith(expect.any(HTMLFormElement));
+    });
   });
 });

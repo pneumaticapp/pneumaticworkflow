@@ -32,6 +32,8 @@ export function FeedItemOutputs({ kickoff, isTextExpanded, onExpand, task, type 
   }
 
   const hasValue = (output: IExtraField) => {
+    if (output.isHidden) return false;
+
     const value = output.type === EExtraFieldType.User ? output.userId || output.groupId : output.value;
     const hasFileValue = output.type === EExtraFieldType.File && Boolean(output.markdownValue);
 

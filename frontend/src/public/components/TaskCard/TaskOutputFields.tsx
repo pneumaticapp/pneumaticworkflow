@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { ETaskCardState } from '../../redux/task/types';
 import { EInputNameBackgroundColor } from '../../types/workflow';
 import { isArrayWithItems } from '../../utils/helpers';
 import { IntlMessages } from '../IntlMessages';
 import { MergedOutputList } from '../MergedOutputList';
+import { getVisibleFieldsByShowRules } from '../../utils/fieldShowVisibility';
 import type { ITaskOutputFieldsProps } from './types';
 
 import styles from './TaskCard.css';
@@ -20,10 +21,13 @@ export function TaskOutputFields({
   status,
   taskId,
 }: ITaskOutputFieldsProps) {
-  const visibleOutputs = outputValues.filter((field) => !field.isHidden);
+  const { visibleFields: visibleOutputs, visibleFieldsets } = useMemo(
+    () => getVisibleFieldsByShowRules(outputValues, fieldsetOutputValues),
+    [outputValues, fieldsetOutputValues],
+  );
 
   if (
-    (!isArrayWithItems(visibleOutputs) && !isArrayWithItems(fieldsetOutputValues)) ||
+    (!isArrayWithItems(visibleOutputs) && !isArrayWithItems(visibleFieldsets)) ||
     status === ETaskCardState.Completed
   ) {
     return null;
@@ -37,7 +41,7 @@ export function TaskOutputFields({
       <MergedOutputList
         key={taskId}
         fields={visibleOutputs}
-        fieldsets={fieldsetOutputValues}
+        fieldsets={visibleFieldsets}
         onEditField={editField}
         onEditFieldsetField={editFieldsetField}
         labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
