@@ -2,5 +2,5 @@
   "singleQuote": true,
   "printWidth": 120,
   "sortPackageJson": false,
-  "ignorePatterns": ["dist/**", "node_modules/**", "package-lock.json"]
+  "ignorePatterns": ["dist/**", "node_modules/**", "package-lock.json", "docker-compose.yml", "Dockerfile"]
 }
