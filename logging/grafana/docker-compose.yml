@@ -2,8 +2,8 @@
 #
 # This file belongs to the machine that STORES the journal, not to the machine
 # that runs Pneumatic - the same split as logging/elasticsearch. The
-# application side is two lines in its .env, described in the Logging section
-# of default.env:
+# application side is two lines in its .env, described in the Configuration
+# section of logging/README.md:
 #
 #   LOGS_BACKEND=otlp
 #   LOGS_OTLP_EXPORT_ENDPOINT=http://<this machine>:3100/otlp

@@ -1,0 +1,119 @@
+# CI for the MCP connector on pull requests into master that touch mcp/,
+# start.sh or this workflow: lint, types, tests and build; a runtime smoke
+# check; a local Docker image build that is not pushed; and a new pull request
+# comment. A failed run is visible on the pull request and does not block merge.
+name: MCP connector CI
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'mcp/**'
+      - 'start.sh'
+      - '.github/workflows/mcp-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mcp-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: mcp
+
+jobs:
+  check:
+    name: Lint, types and tests (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Development tooling (vitest 5) needs Node 22.12+.
+        node: ['22', '24']
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: mcp/package-lock.json
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+
+  runtime:
+    name: Runtime smoke (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['20.19', '22', '24']
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: mcp/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - name: Start the HTTP server and check health
+        env:
+          MCP_TRANSPORT: http
+          PORT: '3000'
+          TOKEN_SECRET: ci-only-secret-0123456789abcdef0123456789
+          OAUTH_REPLAY_FILE: ${{ runner.temp }}/replay.json
+        run: |
+          : > "$OAUTH_REPLAY_FILE"
+          node dist/index.js > server.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/healthz; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:3000/healthz
+          status=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:3000/ -H 'Content-Type: application/json' --data '{}')
+          test "$status" = 401
+      - if: failure()
+        run: cat server.log || true
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: mcp
+          push: false
+          tags: pneumatic-mcp:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  report:
+    name: Pull request comment
+    needs: [check, runtime, docker]
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const results = {
+              'Lint, types and tests': '${{ needs.check.result }}',
+              'Runtime smoke': '${{ needs.runtime.result }}',
+              'Docker image': '${{ needs.docker.result }}',
+            };
+            const failed = Object.entries(results).filter(([, status]) => status !== 'success');
+            const url = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = failed.length === 0
+              ? `MCP CI passed.\n\n${url}`
+              : `MCP CI failed.\n\n${failed.map(([name, status]) => `- ${name}: ${status}`).join('\n')}\n\n${url}`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });

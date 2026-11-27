@@ -193,8 +193,8 @@ services:
       FILE_POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
       FILE_POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
-      FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-postgres}
-      FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
+      FILE_POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      FILE_POSTGRES_PORT: ${POSTGRES_PORT:-5432}
       LOGS_BACKEND: ${LOGS_BACKEND:-}
       LOGS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/4"
       LOGS_OTLP_ENDPOINT: ${LOGS_OTLP_ENDPOINT:-http://otel-collector:4318}
@@ -326,8 +326,8 @@ services:
       FILE_POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
       FILE_POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
-      FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-postgres}
-      FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
+      FILE_POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      FILE_POSTGRES_PORT: ${POSTGRES_PORT:-5432}
       LOGS_BACKEND: ${LOGS_BACKEND:-}
       LOGS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/4"
       LOGS_OTLP_ENDPOINT: ${LOGS_OTLP_ENDPOINT:-http://otel-collector:4318}
@@ -454,8 +454,8 @@ services:
       FILE_POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
       FILE_POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
-      FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-postgres}
-      FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
+      FILE_POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      FILE_POSTGRES_PORT: ${POSTGRES_PORT:-5432}
       LOGS_BACKEND: ${LOGS_BACKEND:-}
       LOGS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/4"
       LOGS_OTLP_ENDPOINT: ${LOGS_OTLP_ENDPOINT:-http://otel-collector:4318}
@@ -560,8 +560,8 @@ services:
       POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
       POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
       POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
-      POSTGRES_HOST: ${FILE_POSTGRES_HOST:-postgres}
-      POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
       STORAGE_TYPE: ${FILE_STORAGE_TYPE:-local}
       SEAWEEDFS_S3_ENDPOINT: ${FILE_SEAWEEDFS_S3_ENDPOINT:-http://seaweedfs-filer:8333}
       SEAWEEDFS_S3_ACCESS_KEY: ${FILE_SEAWEEDFS_S3_ACCESS_KEY:-any-secret-key-will-work}
@@ -648,11 +648,39 @@ services:
       - pneumatic
     restart: always
 
-  # The collector of the audit journal. Off by default: it starts only
-  # with the profile named after LOGS_BACKEND, which start.sh passes on
-  # its own (by hand: COMPOSE_PROFILES, see default.env). The store it
-  # writes into lives on a machine of its own - logging/grafana for Loki
-  # and Grafana, logging/elasticsearch for Elasticsearch and Kibana.
+  mcp:
+    build:
+      context: ./mcp
+    image: pneumaticworkflow/pneumatic-mcp:${TAG:-stable}
+    container_name: pneumatic-mcp
+    profiles: ["mcp"]
+    environment:
+      NODE_ENV: production
+      MCP_TRANSPORT: http
+      HOST: 0.0.0.0
+      OAUTH_REPLAY_FILE: /state/replay.json
+      OAUTH_REPLAY_CREATE_ON_EMPTY_VOLUME: "true"
+      BACKEND_PRIVATE_URL: ${BACKEND_PRIVATE_URL:-http://pneumatic-nginx}
+      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://localhost/files}
+      PNEUMATIC_FILES_URL: http://pneumatic-file-service:${FILE_PORT:-8000}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      PUBLIC_URL: ${MCP_PUBLIC_URL:-${FRONTEND_URL:-http://localhost}}
+      OAUTH_ALLOWED_REDIRECT_HOSTS: ${MCP_OAUTH_ALLOWED_REDIRECT_HOSTS:-}
+      TOKEN_SECRET: ${MCP_SECRET:-}
+      RATE_LIMIT_PER_MINUTE: ${MCP_RATE_LIMIT_PER_MINUTE:-120}
+      TOOLSETS: ${MCP_TOOLSETS:-}
+      READ_ONLY: ${MCP_READ_ONLY:-false}
+      LOG_LEVEL: ${MCP_LOG_LEVEL:-info}
+    entrypoint: ["/app/mcp-entrypoint.sh"]
+    command: node dist/index.js
+    volumes:
+      - ./mcp/.state:/state
+    expose:
+      - 3000
+    networks:
+      - pneumatic
+    restart: always
+
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.160.0
     container_name: pneumatic-otel-collector
@@ -672,8 +700,7 @@ services:
       LOGS_ELASTICSEARCH_INDEX: ${LOGS_ELASTICSEARCH_INDEX:-logs-pneumatic.events.otel-default}
     volumes:
       - ./otel-collector:/etc/otel:ro
-      # The disk queue of LOGS_BACKEND=elasticsearch, see default.env
-      - otel-queue:/var/lib/otelcol
+      - ./otel-queue:/var/lib/otelcol
     expose:
       - 4318     # OTLP/HTTP receiver
       - 13133    # health_check extension
@@ -687,6 +714,5 @@ networks:
 volumes:
   backend-staticfiles:
   backend-socket:
-  otel-queue:
 
 

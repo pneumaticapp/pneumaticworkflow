@@ -1,0 +1,15 @@
+{
+  "name": "pneumatic",
+  "version": "0.1.0",
+  "description": "Manage Pneumatic workflows, tasks, templates and files from your AI assistant.",
+  "author": {
+    "name": "Pneumatic Software Inc.",
+    "email": "support@pneumatic.app"
+  },
+  "homepage": "https://github.com/pneumaticapp/pneumaticworkflow/blob/master/mcp/README.md",
+  "repository": "https://github.com/pneumaticapp/pneumaticworkflow",
+  "license": "Apache-2.0",
+  "keywords": ["mcp", "workflows", "tasks", "productivity"],
+  "logo": "distribution/icon.png",
+  "mcpServers": "distribution/mcp.json"
+}

@@ -1,10 +1,11 @@
 .idea
-.env
+*.env
 postgres
 redis
 rabbitmq
 file-postgres
 seaweedfs
+otel-queue
 nginx/logs
 nginx/keys
 nginx/config/nginx.conf

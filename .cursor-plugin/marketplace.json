@@ -1,0 +1,14 @@
+{
+  "name": "pneumatic",
+  "owner": {
+    "name": "Pneumatic Software Inc.",
+    "email": "support@pneumatic.app"
+  },
+  "plugins": [
+    {
+      "name": "pneumatic",
+      "source": "mcp",
+      "description": "Manage Pneumatic workflows, tasks, templates and files from your AI assistant."
+    }
+  ]
+}
