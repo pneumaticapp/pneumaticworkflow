@@ -977,3 +977,217 @@ def test_complete__field_rule_show_rule__updates_is_hidden(api_client):
     assert target_field.is_hidden is False
     source_field.refresh_from_db()
     assert source_field.value == 'yes'
+
+
+def test_complete__required_field_on_next_step__not_blocked(api_client):
+
+    """ Required field on Step 2 does not block completing Step 1
+        when Step 1 has a Show ruleset. """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(owner, tasks_count=2)
+    task_1 = workflow.tasks.get(number=1)
+    task_2 = workflow.tasks.get(number=2)
+
+    source_field = TaskField.objects.create(
+        name='Trigger',
+        api_name='trigger-field',
+        type=FieldType.STRING,
+        value='',
+        workflow=workflow,
+        task=task_1,
+        account=account,
+    )
+    hidden_field = TaskField.objects.create(
+        name='Hidden on Step1',
+        api_name='hidden-step1',
+        type=FieldType.STRING,
+        workflow=workflow,
+        task=task_1,
+        account=account,
+        is_hidden=True,
+    )
+    ruleset = FieldRuleSet.objects.create(
+        account=account,
+        workflow=workflow,
+        field=hidden_field,
+        name='Show when trigger=yes',
+        type=FieldRuleType.SHOW,
+        order=1,
+        api_name='ruleset-show-hidden',
+    )
+    group_or = FieldRuleGroupOr.objects.create(
+        account=account,
+        workflow=workflow,
+        ruleset=ruleset,
+        api_name='group-or-hidden',
+    )
+    FieldRuleGroupAnd.objects.create(
+        account=account,
+        workflow=workflow,
+        group_or=group_or,
+        field=source_field.api_name,
+        operator=FieldRuleOperator.EQUAL,
+        value='yes',
+        api_name='group-and-hidden',
+    )
+    TaskField.objects.create(
+        name='Step2 Required',
+        api_name='step2-req',
+        type=FieldType.STRING,
+        workflow=workflow,
+        task=task_2,
+        account=account,
+        is_required=True,
+        value='',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/v2/tasks/{task_1.id}/complete',
+        data={'output': {source_field.api_name: 'no'}},
+    )
+
+    # assert
+    assert response.status_code == status.HTTP_200_OK
+
+
+def test_complete__required_field_show_rule_visible__validation_error(
+    api_client,
+):
+
+    """ Required field on current task with Show rule that makes it
+        visible must still be validated (empty → 400). """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+
+    source_field = TaskField.objects.create(
+        name='Trigger',
+        api_name='trigger',
+        type=FieldType.STRING,
+        value='',
+        workflow=workflow,
+        task=task,
+        account=account,
+    )
+    required_field = TaskField.objects.create(
+        name='Must fill',
+        api_name='must-fill',
+        type=FieldType.STRING,
+        workflow=workflow,
+        task=task,
+        account=account,
+        is_required=True,
+        is_hidden=True,
+        value='',
+    )
+    ruleset = FieldRuleSet.objects.create(
+        account=account,
+        workflow=workflow,
+        field=required_field,
+        name='Show when trigger=show',
+        type=FieldRuleType.SHOW,
+        order=1,
+        api_name='ruleset-show-must',
+    )
+    group_or = FieldRuleGroupOr.objects.create(
+        account=account,
+        workflow=workflow,
+        ruleset=ruleset,
+        api_name='group-or-must',
+    )
+    FieldRuleGroupAnd.objects.create(
+        account=account,
+        workflow=workflow,
+        group_or=group_or,
+        field=source_field.api_name,
+        operator=FieldRuleOperator.EQUAL,
+        value='show',
+        api_name='group-and-must',
+    )
+    api_client.token_authenticate(owner)
+
+    # act — trigger='show' makes required_field visible but it's empty
+    response = api_client.post(
+        f'/v2/tasks/{task.id}/complete',
+        data={'output': {source_field.api_name: 'show'}},
+    )
+
+    # assert
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['details']['api_name'] == 'must-fill'
+
+
+def test_complete__required_field_show_rule_hidden__ok(api_client):
+
+    """ Required field on current task with Show rule that keeps it
+        hidden should not block task completion. """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+
+    source_field = TaskField.objects.create(
+        name='Trigger',
+        api_name='trigger-h',
+        type=FieldType.STRING,
+        value='',
+        workflow=workflow,
+        task=task,
+        account=account,
+    )
+    required_field = TaskField.objects.create(
+        name='Must fill',
+        api_name='must-fill-h',
+        type=FieldType.STRING,
+        workflow=workflow,
+        task=task,
+        account=account,
+        is_required=True,
+        is_hidden=True,
+        value='',
+    )
+    ruleset = FieldRuleSet.objects.create(
+        account=account,
+        workflow=workflow,
+        field=required_field,
+        name='Show when trigger=show',
+        type=FieldRuleType.SHOW,
+        order=1,
+        api_name='ruleset-show-hidden',
+    )
+    group_or = FieldRuleGroupOr.objects.create(
+        account=account,
+        workflow=workflow,
+        ruleset=ruleset,
+        api_name='group-or-hidden',
+    )
+    FieldRuleGroupAnd.objects.create(
+        account=account,
+        workflow=workflow,
+        group_or=group_or,
+        field=source_field.api_name,
+        operator=FieldRuleOperator.EQUAL,
+        value='show',
+        api_name='group-and-hidden',
+    )
+    api_client.token_authenticate(owner)
+
+    # act — trigger != 'show' → required_field stays hidden
+    response = api_client.post(
+        f'/v2/tasks/{task.id}/complete',
+        data={'output': {source_field.api_name: 'no'}},
+    )
+
+    # assert
+    assert response.status_code == status.HTTP_200_OK

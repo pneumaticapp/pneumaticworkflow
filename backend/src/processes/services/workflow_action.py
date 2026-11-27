@@ -1291,7 +1291,10 @@ class WorkflowActionService:
                 is_superuser=self.is_superuser,
                 instance=self.workflow,
             )
-            service.apply_field_rulesets(rulesets=rulesets)
+            service.apply_field_rulesets(
+                rulesets=rulesets,
+                task_id=task.id,
+            )
 
             AnalyticService.task_completed(
                 user=self.user,

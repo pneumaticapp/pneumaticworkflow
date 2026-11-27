@@ -215,11 +215,16 @@ class WorkflowService(
     def apply_field_rulesets(
         self,
         rulesets: Optional[Iterable] = None,
+        task_id: Optional[int] = None,
     ):
 
         """ Call inside the transaction that saved the kickoff values and
             before the workflow event: a failed kickoff validator must roll
             the change back. Task field validators are checked on complete.
+
+            task_id — when set, only the given task's fields are
+            validated for required+visible+empty; when None (kickoff
+            scope) only kickoff fields are validated.
         """
 
         if rulesets is None:
@@ -250,7 +255,14 @@ class WorkflowService(
             TaskField.objects.bulk_update(
                 fields_to_update, ['is_hidden'],
             )
-        for field in fields_by_api_name.values():
+        for field_rules in rules_by_field.values():
+            if not any(r.type_show for r in field_rules):
+                continue
+            field = fields_by_api_name[
+                field_rules[0].field.api_name
+            ]
+            if not self._is_field_in_scope(field, task_id):
+                continue
             if (
                 field.is_required
                 and not field.is_hidden
@@ -260,6 +272,28 @@ class WorkflowService(
                     field_api_name=field.api_name,
                     message=str(messages.MSG_PW_0023),
                 )
+
+    @staticmethod
+    def _is_field_in_scope(
+        field: 'TaskField',
+        task_id: Optional[int] = None,
+    ) -> bool:
+        """ Check if field belongs to the validation scope.
+            task_id=None → kickoff scope (kickoff fields only).
+            task_id=<id> → task scope (that task's fields only).
+        """
+        fieldset = getattr(field, 'fieldset', None)
+        if task_id is None:
+            if field.kickoff_id is not None:
+                return True
+            return bool(
+                fieldset and fieldset.kickoff_id is not None,
+            )
+        if field.task_id == task_id:
+            return True
+        return bool(
+            fieldset and fieldset.task_id == task_id,
+        )
 
     def _create_actions(self, **kwargs):
         if kwargs.get('anonymous_id'):

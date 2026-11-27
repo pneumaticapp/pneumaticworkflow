@@ -7051,7 +7051,6 @@ def test_run__fieldset_rulesets_copied_to_runtime__ok(
     )
 
 
-
 def test_run__required_field_with_show_rule_hidden__ok(
     mocker,
     api_client,
@@ -7185,3 +7184,379 @@ def test_run__required_field_with_show_rule_visible__validation_error(
     # assert
     assert response.status_code == 400
     assert response.data['details']['api_name'] == 'must-field'
+
+
+def test_run__required_task_field_with_kickoff_show_rule__ok(
+    mocker,
+    api_client,
+):
+
+    """ Required field on Step 1 does not block run when
+        kickoff has a Show ruleset. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    kickoff_field = FieldTemplate.objects.create(
+        name='Status',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='ko-status',
+        account=account,
+    )
+    kickoff_hidden = FieldTemplate.objects.create(
+        name='Info',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=2,
+        api_name='ko-info',
+        account=account,
+        is_required=False,
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=kickoff_hidden,
+        source_field_api_name=kickoff_field.api_name,
+        ruleset_api_name='show-info-ruleset',
+        operator=FieldRuleOperator.EQUAL,
+        value='yes',
+    )
+    task_template = template.tasks.first()
+    FieldTemplate.objects.create(
+        name='Step1 Required',
+        type=FieldType.STRING,
+        task=task_template,
+        template=template,
+        order=1,
+        api_name='step1-req',
+        account=account,
+        is_required=True,
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                kickoff_field.api_name: 'no',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    step1_field = TaskField.objects.get(
+        workflow=workflow,
+        api_name='step1-req',
+    )
+    assert step1_field.is_required is True
+    assert step1_field.value == ''
+
+
+def test_run__required_task_field_with_show_rule__not_blocked(
+    mocker,
+    api_client,
+):
+
+    """ Required task field with its own Show rule does not
+        block run even when show condition makes it visible. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    kickoff_field = FieldTemplate.objects.create(
+        name='Trigger',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='ko-trigger',
+        account=account,
+    )
+    task_template = template.tasks.first()
+    task_field = FieldTemplate.objects.create(
+        name='Task Required',
+        type=FieldType.STRING,
+        task=task_template,
+        template=template,
+        order=1,
+        api_name='task-req',
+        account=account,
+        is_required=True,
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=task_field,
+        source_field_api_name=kickoff_field.api_name,
+        ruleset_api_name='show-task-req',
+        operator=FieldRuleOperator.EQUAL,
+        value='yes',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act — trigger = 'yes' makes task field visible
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                kickoff_field.api_name: 'yes',
+            },
+        },
+    )
+
+    # assert — run succeeds, task field not validated at kickoff
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    task_field_wf = TaskField.objects.get(
+        workflow=workflow,
+        api_name='task-req',
+    )
+    assert task_field_wf.is_required is True
+    assert task_field_wf.is_hidden is False
+    assert task_field_wf.value == ''
+
+
+def test_run__two_steps_required_field_on_step2__ok(
+    mocker,
+    api_client,
+):
+
+    """ Required field on Step 2 does not block run when
+        kickoff has a Show ruleset. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=2,
+    )
+    kickoff_field = FieldTemplate.objects.create(
+        name='Status',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='ko-status-2',
+        account=account,
+    )
+    kickoff_hidden = FieldTemplate.objects.create(
+        name='Detail',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=2,
+        api_name='ko-detail',
+        account=account,
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=kickoff_hidden,
+        source_field_api_name=kickoff_field.api_name,
+        ruleset_api_name='show-detail-ruleset',
+        operator=FieldRuleOperator.EQUAL,
+        value='yes',
+    )
+    task_template_2 = template.tasks.get(number=2)
+    FieldTemplate.objects.create(
+        name='Step2 Required',
+        type=FieldType.STRING,
+        task=task_template_2,
+        template=template,
+        order=1,
+        api_name='step2-req',
+        account=account,
+        is_required=True,
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                kickoff_field.api_name: 'no',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+
+
+def test_run__required_kickoff_fieldset_field_show_rule_visible__error(
+    mocker,
+    api_client,
+):
+
+    """ Required kickoff-fieldset field with Show rule that makes it
+        visible must be validated (empty → 400). """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    source_field = FieldTemplate.objects.create(
+        name='Trigger',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='trigger-fs',
+        account=account,
+    )
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        order=1,
+    )
+    fs_field = fieldset_template.fields.first()
+    fs_field.is_required = True
+    fs_field.save(update_fields=['is_required'])
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=fs_field,
+        source_field_api_name=source_field.api_name,
+        ruleset_api_name='show-fs-field-ruleset',
+        operator=FieldRuleOperator.EQUAL,
+        value='show',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act — trigger='show' makes fieldset field visible but empty
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                source_field.api_name: 'show',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['details']['api_name'] == fs_field.api_name
+
+
+def test_run__required_kickoff_fieldset_field_show_rule_hidden__ok(
+    mocker,
+    api_client,
+):
+
+    """ Required kickoff-fieldset field with Show rule that keeps it
+        hidden should not block run. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    source_field = FieldTemplate.objects.create(
+        name='Trigger',
+        type=FieldType.STRING,
+        kickoff=template.kickoff_instance,
+        template=template,
+        order=1,
+        api_name='trigger-fsh',
+        account=account,
+    )
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        order=1,
+    )
+    fs_field = fieldset_template.fields.first()
+    fs_field.is_required = True
+    fs_field.save(update_fields=['is_required'])
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=fs_field,
+        source_field_api_name=source_field.api_name,
+        ruleset_api_name='show-fsh-ruleset',
+        operator=FieldRuleOperator.EQUAL,
+        value='show',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act — trigger != 'show' → fieldset field stays hidden
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                source_field.api_name: 'no',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200

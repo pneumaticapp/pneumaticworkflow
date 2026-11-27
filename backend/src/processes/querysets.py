@@ -990,6 +990,7 @@ class TaskFieldQuerySet(BaseFieldQuerySet):
         ).select_related(
             'account',
             'workflow',
+            'fieldset',
         ).prefetch_related(
             'storage_attachments',
         )
